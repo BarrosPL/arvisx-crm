@@ -1,0 +1,141 @@
+# DeskcommCRM no Easypanel (servico `crm`). Baseado no docker-compose.prod.yml do upstream, sem Caddy
+# (o Traefik do Easypanel faz o HTTPS), sem voz/telefonia. Imagens publicas do upstream (tag stable).
+# Requer o servico `supabase-crm` no ar (cria a rede arvisx-crm-net). Variaveis vem do .env do Easypanel.
+x-logging: &log
+  driver: json-file
+  options: {max-size: "10m", max-file: "3"}
+
+services:
+  # Aplica o schema (baseline.sql) uma vez e cria o primeiro admin. Idempotente; termina e sai.
+  init:
+    image: postgres:17-alpine
+    restart: "no"
+    mem_limit: 256m
+    environment:
+      SUPABASE_DB_URL: ${SUPABASE_DB_URL}
+      SUPABASE_INTERNAL_URL: http://arvisx-supabase-gw:8000
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      OWNER_EMAIL: ${OWNER_EMAIL}
+      OWNER_PASSWORD: ${OWNER_PASSWORD}
+    volumes:
+      - ../../../supabase/baseline.sql:/baseline.sql:ro
+      - ./init.sh:/init.sh:ro
+    command: ["sh", "/init.sh"]
+    logging: *log
+    networks: [crm]
+
+  app:
+    image: ${APP_IMAGE:-ghcr.io/melgarafael/deskcommcrm:stable}
+    pull_policy: ${APP_PULL_POLICY:-always}
+    restart: unless-stopped
+    mem_limit: 768m
+    env_file: .env
+    environment:
+      SUPABASE_DB_ADMIN_URL: ""
+      EVENT_LOG_WORKER_DRAINS: "true"
+    depends_on:
+      init: {condition: service_completed_successfully}
+      srh: {condition: service_started}
+      waha: {condition: service_started}
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(3000,'127.0.0.1').on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 40s
+    logging: *log
+    # `easypanel`: o Traefik chega ao app por ela. `crm`: alcanca o banco/gateway do Supabase.
+    networks:
+      internal: {}
+      crm: {}
+      easypanel: {aliases: [arvisx-crm-app]}
+
+  worker:
+    image: ${WORKER_IMAGE:-ghcr.io/melgarafael/deskcomm-worker:stable}
+    pull_policy: ${WORKER_PULL_POLICY:-always}
+    restart: unless-stopped
+    mem_limit: 512m
+    stop_grace_period: 40s
+    env_file: .env
+    environment:
+      WAHA_API_BASE_URL: http://waha:3000
+      SUPABASE_DB_ADMIN_URL: ""
+    depends_on:
+      init: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8787/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging: *log
+    networks: [internal, crm]
+
+  waha:
+    image: ${WAHA_IMAGE:-devlikeapro/waha:latest-2026.7.2}
+    restart: unless-stopped
+    mem_limit: 1280m
+    environment:
+      WAHA_API_KEY: "sha512:${WAHA_API_KEY_SHA512}"
+      WHATSAPP_HOOK_URL: http://app:3000/api/v1/webhooks/waha
+      WHATSAPP_HOOK_EVENTS: "message.any,message.ack,message.edited,message.revoked,message.reaction,session.status,state.change"
+      WHATSAPP_HOOK_HMAC_KEY: ${WAHA_HMAC_SECRET}
+      WHATSAPP_DEFAULT_ENGINE: ${WAHA_DEFAULT_ENGINE:-NOWEB}
+      WAHA_DASHBOARD_ENABLED: "false"
+      WHATSAPP_RESTART_ALL_SESSIONS: "True"
+    volumes:
+      - waha-data:/app/.sessions
+      - waha-media:/app/.media
+    logging: *log
+    networks: [internal]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    mem_limit: 128m
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    logging: *log
+    networks: [internal]
+
+  srh:
+    image: hiett/serverless-redis-http@sha256:5b0bb9239fce53abf87b2018a7a0deb9ec7bd900c5360738fe5fbeeb426f9150
+    restart: unless-stopped
+    mem_limit: 128m
+    environment:
+      SRH_MODE: env
+      SRH_TOKEN: ${SRH_TOKEN}
+      SRH_CONNECTION_STRING: "redis://redis:6379"
+    depends_on:
+      redis: {condition: service_healthy}
+    logging: *log
+    networks: [internal]
+
+  scheduler:
+    image: ${SCHEDULER_IMAGE:-ghcr.io/melgarafael/deskcomm-scheduler:stable}
+    pull_policy: ${SCHEDULER_PULL_POLICY:-always}
+    restart: unless-stopped
+    mem_limit: 64m
+    depends_on:
+      app: {condition: service_healthy}
+    environment:
+      TZ: UTC
+      INTERNAL_SECRET: ${INTERNAL_SECRET}
+    logging: *log
+    networks: [internal]
+
+volumes:
+  waha-data:
+  waha-media:
+
+networks:
+  internal: {}
+  crm:
+    external: true
+    name: arvisx-crm-net
+  easypanel:
+    external: true

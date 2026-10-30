@@ -6,7 +6,8 @@ Mudancas (todas mecanicas, para nao divergir do upstream):
 - bind de dados vira volume nomeado (dados fora do checkout git);
 - binds de configuracao apontam para ./api ./db ./pooler ./functions (layout deste repo);
 - limite de memoria por servico (mem_limit), para um servico nao derrubar os agentes;
-- api-gw tambem entra na rede externa `easypanel` (alias arvisx-supabase-gw) para o CRM alcancar;
+- api-gw entra na rede externa `easypanel` (dominio publico via Traefik) e na rede privada `arvisx-crm-net`;
+- db entra so na rede privada `arvisx-crm-net` (alias arvisx-supabase-db), onde o CRM o alcanca;
 - realtime ganha o alias de rede que o envoy espera (antes vinha do container_name).
 Rodar: python3 gerar_compose.py   (usa PyYAML)
 """
@@ -65,13 +66,19 @@ gw = out["services"]["api-gw"]
 gw["networks"] = {
     "default": {"aliases": ["envoy", "kong"]},
     "easypanel": {"aliases": ["arvisx-supabase-gw"]},
+    "crm": {"aliases": ["arvisx-supabase-gw"]},
+}
+# banco so na rede privada do CRM (nunca na `easypanel`, que e compartilhada com os outros apps)
+out["services"]["db"]["networks"] = {
+    "default": {},
+    "crm": {"aliases": ["arvisx-supabase-db"]},
 }
 
 vols = out.get("volumes") or {}
 for v in ("db-data", "storage-data", "snippets-data"):
     vols[v] = None
 out["volumes"] = vols
-out["networks"] = {"easypanel": {"external": True}}
+out["networks"] = {"easypanel": {"external": True}, "crm": {"name": "arvisx-crm-net"}}
 
 cab = (
     "# GERADO por gerar_compose.py a partir de UPSTREAM-docker-compose.yml. Nao editar a mao.\n"

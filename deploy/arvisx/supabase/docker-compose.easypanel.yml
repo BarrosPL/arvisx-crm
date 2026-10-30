@@ -52,6 +52,9 @@ services:
       easypanel:
         aliases:
         - arvisx-supabase-gw
+      crm:
+        aliases:
+        - arvisx-supabase-gw
     healthcheck:
       test:
       - CMD-SHELL
@@ -348,6 +351,11 @@ services:
     - -c
     - log_min_messages=fatal
     mem_limit: 1536m
+    networks:
+      default: {}
+      crm:
+        aliases:
+        - arvisx-supabase-db
   supavisor:
     image: supabase/supavisor:2.9.13
     restart: unless-stopped
@@ -405,3 +413,5 @@ volumes:
 networks:
   easypanel:
     external: true
+  crm:
+    name: arvisx-crm-net
