@@ -24,7 +24,7 @@ services:
     logging: *log
     networks: [crm]
 
-  app:
+  crm-app:
     image: ${APP_IMAGE:-ghcr.io/melgarafael/deskcommcrm:stable}
     pull_policy: ${APP_PULL_POLICY:-always}
     restart: unless-stopped
@@ -45,10 +45,12 @@ services:
       start_period: 40s
     logging: *log
     # `easypanel`: o Traefik chega ao app por ela. `crm`: alcanca o banco/gateway do Supabase.
+    # `app` so na rede interna (scheduler e WAHA chamam http://app:3000); na `easypanel` (compartilhada) o nome do
+    # servico vira DNS, por isso o servico se chama crm-app.
     networks:
-      internal: {}
+      internal: {aliases: [app]}
       crm: {}
-      easypanel: {aliases: [arvisx-crm-app]}
+      easypanel: {}
 
   worker:
     image: ${WORKER_IMAGE:-ghcr.io/melgarafael/deskcomm-worker:stable}
@@ -121,7 +123,7 @@ services:
     restart: unless-stopped
     mem_limit: 64m
     depends_on:
-      app: {condition: service_healthy}
+      crm-app: {condition: service_healthy}
     environment:
       TZ: UTC
       INTERNAL_SECRET: ${INTERNAL_SECRET}
