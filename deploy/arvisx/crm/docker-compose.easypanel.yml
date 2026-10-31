@@ -10,7 +10,7 @@ services:
   init:
     image: postgres:17-alpine
     restart: "no"
-    mem_limit: 256m
+    mem_limit: 384m
     environment:
       SUPABASE_DB_URL: ${SUPABASE_DB_URL}
       SUPABASE_INTERNAL_URL: http://arvisx-supabase-gw:8000
@@ -19,6 +19,9 @@ services:
       OWNER_PASSWORD: ${OWNER_PASSWORD}
     volumes:
       - ../../../supabase/baseline.sql:/baseline.sql:ro
+      - ../../../supabase/migrations:/migrations:ro
+      - ./migracoes-pos-baseline.txt:/migracoes-pos-baseline.txt:ro
+      - crm-backups:/backup
       - ./init.sh:/init.sh:ro
     command: ["sh", "/init.sh"]
     logging: *log
@@ -131,6 +134,7 @@ services:
     networks: [internal]
 
 volumes:
+  crm-backups:
   waha-data:
   waha-media:
 

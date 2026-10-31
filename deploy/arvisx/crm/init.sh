@@ -21,6 +21,38 @@ else
   log "baseline aplicado"
 fi
 
+# Migracoes posteriores ao baseline (a imagem stable do upstream e mais nova que o baseline do fork).
+# Lista em migracoes-pos-baseline.txt; cada arquivo roda uma vez, em transacao, e fica registrado.
+psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -q -c \
+  "create table if not exists public.arvisx_migracoes_aplicadas (nome text primary key, aplicada_em timestamptz not null default now());"
+pend=""
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  ja="$(psql "$SUPABASE_DB_URL" -tAc "select 1 from public.arvisx_migracoes_aplicadas where nome = '$f'")"
+  [ "$ja" = "1" ] || pend="$pend $f"
+done < /migracoes-pos-baseline.txt
+if [ -n "$pend" ]; then
+  mkdir -p /backup
+  bk="/backup/antes-migracoes-$(date +%Y%m%d-%H%M%S).dump"
+  log "backup do banco em $bk"
+  # Falha aqui NAO derruba o deploy: o CRM sobe no schema atual (cada arquivo roda em transacao unica).
+  if pg_dump -Fc -d "$SUPABASE_DB_URL" -f "$bk"; then
+    for f in $pend; do
+      log "aplicando $f"
+      if psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -q -1 -f "/migrations/$f"; then
+        psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -q -c "insert into public.arvisx_migracoes_aplicadas (nome) values ('$f')"
+      else
+        log "FALHOU: $f (parei aqui; as seguintes ficam pendentes)"; break
+      fi
+    done
+    log "fim das migracoes"
+  else
+    log "backup falhou; nao migrei nada"
+  fi
+else
+  log "sem migracoes pendentes"
+fi
+
 apk add --no-cache curl >/dev/null 2>&1 || { log "nao consegui instalar curl"; exit 1; }
 log "aguardando o Auth"
 n=0
