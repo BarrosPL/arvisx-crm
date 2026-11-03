@@ -69,17 +69,62 @@
     .topo .acoes .demo { display: none; }
 
     /* hero */
-    .hero { padding: clamp(48px, 9vw, 104px) var(--lado) 0; position: relative; overflow: hidden; }
-    .hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 50% at 70% 0%, rgba(212, 175, 55, .13), transparent 70%); pointer-events: none; }
+    .hero { padding: clamp(48px, 9vw, 104px) var(--lado) 0; position: relative; overflow: hidden; isolation: isolate; }
+    .hero::before { content: ""; position: absolute; inset: -20% -10% 0; z-index: -2; background:
+      radial-gradient(42% 38% at 72% 12%, rgba(212, 175, 55, .22), transparent 70%),
+      radial-gradient(30% 30% at 18% 70%, rgba(212, 175, 55, .10), transparent 70%),
+      radial-gradient(36% 36% at 85% 70%, rgba(44, 53, 70, .55), transparent 70%);
+      animation: aurora 16s ease-in-out infinite alternate; pointer-events: none; }
+    .hero::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+      background-image: radial-gradient(rgba(238, 240, 243, .14) 1px, transparent 1.2px); background-size: 26px 26px;
+      -webkit-mask-image: radial-gradient(70% 60% at 60% 30%, #000 20%, transparent 100%); mask-image: radial-gradient(70% 60% at 60% 30%, #000 20%, transparent 100%);
+      animation: deriva 40s linear infinite; }
+    @keyframes aurora { from { transform: translate3d(-2%, 0, 0) scale(1); } to { transform: translate3d(3%, 4%, 0) scale(1.08); } }
+    @keyframes deriva { from { background-position: 0 0; } to { background-position: 26px 26px; } }
     .hero .miolo { position: relative; display: grid; gap: 40px; }
-    .hero h1 em { font-style: normal; color: var(--ouro-claro); }
+    .hero h1 em { font-style: normal; color: var(--ouro-claro); background: linear-gradient(90deg, var(--ouro-claro), var(--ouro) 45%, var(--ouro-claro) 90%); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: brilho 6s linear infinite; }
+    @keyframes brilho { to { background-position: -200% 0; } }
     .hero .sub { color: var(--apoio); font-size: 18px; max-width: 46ch; margin: 20px 0 28px; }
     .hero .acoes { display: flex; flex-wrap: wrap; gap: 10px; }
     .hero .nota { margin-top: 18px; color: var(--fraco); font-size: 13px; }
-    .hero .vitrine { position: relative; }
-    .hero .balao { position: absolute; left: 12px; bottom: 14px; max-width: 290px; padding: 12px 14px; border-radius: 12px; background: var(--painel); border: 1px solid var(--linha-forte); box-shadow: 0 20px 40px -16px rgba(0,0,0,.8); font-size: 13.5px; line-height: 1.45; }
-    .hero .balao b { display: flex; align-items: center; gap: 8px; color: var(--ouro-claro); font: 700 11px/1 var(--sans); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
-    .hero .balao b::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ouro); box-shadow: 0 0 0 3px rgba(212,175,55,.25); }
+    .hero .entra { animation: subir .8s cubic-bezier(.2, .7, .2, 1) both; animation-delay: var(--d, 0s); }
+    @keyframes subir { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+    .hero .vitrine { position: relative; perspective: 1400px; animation: chegar 1.1s cubic-bezier(.2, .7, .2, 1) both .3s; }
+    @keyframes chegar { from { opacity: 0; transform: translateY(34px) scale(.97); } to { opacity: 1; transform: none; } }
+    .hero .vitrine::before { content: ""; position: absolute; inset: 12% -6% -8%; z-index: -1; border-radius: 50%; background: radial-gradient(closest-side, rgba(212, 175, 55, .28), transparent); filter: blur(30px); animation: pulsar 5s ease-in-out infinite; }
+    @keyframes pulsar { 0%, 100% { opacity: .7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.06); } }
+    .hero .janela { transform: rotateY(-6deg) rotateX(2deg); transform-origin: 60% 50%; animation: flutuar 7s ease-in-out infinite 1.4s; }
+    @keyframes flutuar { 0%, 100% { transform: rotateY(-6deg) rotateX(2deg) translateY(0); } 50% { transform: rotateY(-5deg) rotateX(1.5deg) translateY(-10px); } }
+    .hero .janela .barra span::after { content: ""; display: inline-block; width: 7px; height: 7px; margin-left: 8px; border-radius: 50%; background: #3fcf8e; animation: ping 2.2s ease-out infinite; vertical-align: middle; }
+    @keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(63, 207, 142, .55); } 100% { box-shadow: 0 0 0 9px rgba(63, 207, 142, 0); } }
+
+    /* conversa animada sobre a captura */
+    .conversa { position: absolute; left: 12px; bottom: 14px; width: min(300px, calc(100% - 24px)); display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; }
+    .conversa .msg { max-height: 0; margin-top: 0; opacity: 0; overflow: hidden; transform: translateY(10px); border-radius: 12px; font-size: 13.5px; line-height: 1.45; animation-duration: 13s; animation-timing-function: cubic-bezier(.2, .7, .2, 1); animation-iteration-count: infinite; animation-fill-mode: both; }
+    .conversa .miolo-msg { padding: 10px 13px; }
+    .conversa .lead { align-self: flex-start; background: #1b2230; border: 1px solid var(--linha-forte); color: var(--texto); animation-name: msg-lead; }
+    .conversa .digitando { align-self: flex-end; background: var(--painel); border: 1px solid rgba(212, 175, 55, .45); animation-name: msg-digitando; }
+    .conversa .digitando .miolo-msg { display: flex; gap: 4px; padding: 12px 14px; }
+    .conversa .digitando i { width: 6px; height: 6px; border-radius: 50%; background: var(--ouro); animation: pontinho 1.1s ease-in-out infinite; }
+    .conversa .digitando i:nth-child(2) { animation-delay: .18s; } .conversa .digitando i:nth-child(3) { animation-delay: .36s; }
+    @keyframes pontinho { 0%, 100% { opacity: .3; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
+    .conversa .ia { align-self: flex-end; background: var(--painel); border: 1px solid rgba(212, 175, 55, .45); box-shadow: 0 20px 40px -16px rgba(0, 0, 0, .8); color: var(--texto); animation-name: msg-ia; }
+    .conversa .ia b { display: flex; align-items: center; gap: 7px; color: var(--ouro-claro); font: 700 10.5px/1 var(--sans); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 5px; }
+    .conversa .ia b::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--ouro); box-shadow: 0 0 0 3px rgba(212, 175, 55, .25); }
+    .conversa .toast { align-self: stretch; background: #0f1a14; border: 1px solid rgba(63, 207, 142, .45); color: var(--texto); font-size: 12.5px; animation-name: msg-toast; }
+    .conversa .toast .miolo-msg { display: flex; align-items: center; gap: 9px; padding: 9px 12px; }
+    .conversa .toast i { flex: none; width: 18px; height: 18px; border-radius: 50%; background: #3fcf8e; color: #06130c; display: grid; place-items: center; font: 700 11px/1 var(--sans); font-style: normal; }
+    .conversa .toast em { font-style: normal; color: var(--apoio); }
+    @keyframes msg-lead      { 0%, 6%  { max-height: 0; margin-top: 0; opacity: 0; transform: translateY(10px); } 10%, 92% { max-height: 120px; margin-top: 8px; opacity: 1; transform: none; } 96%, 100% { max-height: 0; margin-top: 0; opacity: 0; } }
+    @keyframes msg-digitando { 0%, 14% { max-height: 0; margin-top: 0; opacity: 0; transform: translateY(10px); } 18%, 30% { max-height: 60px; margin-top: 8px; opacity: 1; transform: none; } 33%, 100% { max-height: 0; margin-top: 0; opacity: 0; } }
+    @keyframes msg-ia        { 0%, 32% { max-height: 0; margin-top: 0; opacity: 0; transform: translateY(10px); } 36%, 92% { max-height: 160px; margin-top: 8px; opacity: 1; transform: none; } 96%, 100% { max-height: 0; margin-top: 0; opacity: 0; } }
+    @keyframes msg-toast     { 0%, 50% { max-height: 0; margin-top: 0; opacity: 0; transform: translateY(10px); } 54%, 92% { max-height: 80px; margin-top: 8px; opacity: 1; transform: none; } 96%, 100% { max-height: 0; margin-top: 0; opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) {
+      .hero::before, .hero::after, .hero h1 em, .hero .entra, .hero .vitrine, .hero .vitrine::before, .hero .janela, .hero .janela .barra span::after, .conversa .msg, .conversa .digitando i { animation: none !important; }
+      .hero .janela { transform: none; }
+      .conversa .msg { max-height: 200px; margin-top: 8px; opacity: 1; transform: none; }
+      .conversa .digitando { display: none; }
+    }
 
     /* dor */
     .dor .grade { grid-template-columns: 1fr; }
@@ -200,21 +245,26 @@
     <section class="hero">
       <div class="miolo">
         <div>
-          <p class="eyebrow">CRM com agentes de IA</p>
-          <h1>O WhatsApp chega. A IA atende e vende. <em>Seu CRM organiza tudo.</em></h1>
-          <p class="sub">Para assessorias, escritórios e consultorias que vendem pelo WhatsApp. A Arvisx configura o CRM para o seu negócio e cuida dos agentes de IA por você.</p>
-          <div class="acoes">
+          <p class="eyebrow entra">CRM com agentes de IA</p>
+          <h1 class="entra" style="--d:.08s">O WhatsApp chega. A IA atende e vende. <em>Seu CRM organiza tudo.</em></h1>
+          <p class="sub entra" style="--d:.18s">Para assessorias, escritórios e consultorias que vendem pelo WhatsApp. A Arvisx configura o CRM para o seu negócio e cuida dos agentes de IA por você.</p>
+          <div class="acoes entra" style="--d:.28s">
             <a class="btn primario" href="{{LINK_CTA}}">Agendar demonstração<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
             <a class="btn secundario" href="/login">Já sou cliente</a>
           </div>
-          <p class="nota">Mensalidade com a configuração inclusa. Sem taxa de setup.</p>
+          <p class="nota entra" style="--d:.38s">Mensalidade com a configuração inclusa. Sem taxa de setup.</p>
         </div>
         <div class="vitrine">
           <figure class="janela">
             <div class="barra" aria-hidden="true"><i></i><i></i><i></i><span>crm.arvisx.com.br</span></div>
             <img src="img/crm-funil.png" alt="Funil do Arvisx CRM com as etapas de um serviço de cidadania: contrato assinado, documentação, tradução e apostila, protocolo" width="1440" height="900" />
           </figure>
-          <div class="balao" aria-hidden="true"><b>Agente de IA no WhatsApp</b>Oi, Marina! Vi que você quer saber sobre cidadania italiana. Me conta de quem é o sobrenome na família para eu entender o seu caso?</div>
+          <div class="conversa" aria-hidden="true">
+            <div class="msg lead"><div class="miolo-msg">Oi! Quero saber sobre cidadania italiana. Como funciona?</div></div>
+            <div class="msg digitando"><div class="miolo-msg"><i></i><i></i><i></i></div></div>
+            <div class="msg ia"><div class="miolo-msg"><b>Agente de IA</b>Oi, Marina! Que bom. Me conta de quem é o sobrenome italiano na família, para eu entender o seu caso?</div></div>
+            <div class="msg toast"><div class="miolo-msg"><i>&#10003;</i><span>Lead criado no funil <em>Cidadania Italiana &middot; Primeiro contato</em></span></div></div>
+          </div>
         </div>
       </div>
     </section>
