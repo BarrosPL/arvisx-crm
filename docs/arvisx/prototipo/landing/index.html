@@ -142,6 +142,13 @@
     .faq details[open] summary::after { transform: rotate(45deg); }
     .faq details p { padding: 0 20px 18px; color: var(--apoio); font-size: 15px; }
 
+    /* aviso de cookies */
+    .aviso-cookies { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 30; display: none; gap: 14px; align-items: center; padding: 14px 16px; border-radius: 14px; background: var(--painel); border: 1px solid var(--linha-forte); box-shadow: 0 24px 48px -16px rgba(0,0,0,.8); font-size: 14px; color: var(--apoio); }
+    .aviso-cookies.visivel { display: grid; }
+    .aviso-cookies a { color: var(--ouro-claro); text-decoration: underline; text-underline-offset: 3px; }
+    .aviso-cookies .btn { min-height: 40px; padding: 0 16px; font-size: 14px; }
+    @media (min-width: 640px) { .aviso-cookies { left: auto; max-width: 560px; grid-template-columns: 1fr auto; } }
+
     /* rodapé */
     .rodape { border-top: 1px solid var(--linha); background: var(--painel); padding: clamp(40px, 6vw, 64px) var(--lado) 28px; }
     .rodape .colunas { display: grid; gap: 32px; }
@@ -150,8 +157,6 @@
     .rodape b { display: block; font: 700 11px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ouro-claro); margin-bottom: 14px; }
     .rodape nav { display: grid; gap: 10px; align-content: start; color: var(--apoio); font-size: 14.5px; font-weight: 600; }
     .rodape nav a:hover { color: var(--texto); }
-    .rodape .comece p { color: var(--apoio); font-size: 14.5px; margin-bottom: 14px; }
-    .rodape .comece .btn { width: 100%; margin-bottom: 8px; }
     .rodape .base { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--linha); color: var(--fraco); font-size: 13px; }
     .rodape .base a { color: var(--apoio); font-weight: 600; }
     .rodape .base a:hover { color: var(--texto); }
@@ -163,7 +168,6 @@
       .quem .grade { grid-template-columns: repeat(4, 1fr); }
       .topo .acoes .demo { display: inline-flex; }
       .rodape .colunas { grid-template-columns: 1fr 1fr; }
-      .rodape .comece .btn { width: auto; margin-right: 8px; }
     }
     @media (min-width: 980px) {
       .topo nav { display: flex; }
@@ -173,7 +177,7 @@
       .crm .tela.inv .texto { order: 2; }
       .cuidado .miolo { grid-template-columns: 1.1fr 1fr; align-items: center; gap: 48px; }
       .agentes .grade { grid-template-columns: repeat(4, 1fr); }
-      .rodape .colunas { grid-template-columns: 1.3fr .8fr 1fr; gap: 48px; }
+      .rodape .colunas { grid-template-columns: 1.4fr .8fr 1fr; gap: 48px; }
     }
   </style>
 </head>
@@ -387,18 +391,33 @@
           <a href="#para-quem">Para quem é</a>
           <a href="#faq">Perguntas frequentes</a>
         </nav>
-        <div class="comece">
-          <b>Comece por aqui</b>
-          <p>Veja o Arvisx CRM com o cenário da sua empresa.</p>
-          <a class="btn primario" href="{{LINK_CTA}}">Agendar demonstração</a>
-          <a class="btn secundario" href="/login">Entrar no CRM</a>
-        </div>
+        <nav class="legal" aria-label="Legal">
+          <b>Legal</b>
+          <a href="termos-de-uso.html">Termos de uso</a>
+          <a href="privacidade-e-cookies.html">Política de privacidade e cookies</a>
+          <a href="https://arvisx.com.br/">Arvisx AI</a>
+        </nav>
       </div>
       <div class="base">
-        <span>Arvisx CRM é um produto da <a href="https://arvisx.com.br/">Arvisx AI</a>.</span>
-        <span>O elo inteligente do seu ecossistema.</span>
+        <span>© 2026 Arvisx AI. Todos os direitos reservados.</span>
+        <span>Arvisx CRM é um produto da <a href="https://arvisx.com.br/">Arvisx AI</a>. O elo inteligente do seu ecossistema.</span>
       </div>
     </div>
   </footer>
+  <div class="aviso-cookies" id="aviso-cookies" role="region" aria-label="Aviso de cookies">
+    <p>Usamos apenas cookies necessários para o funcionamento do CRM e para lembrar as suas preferências. Nada de rastreamento. <a href="privacidade-e-cookies.html">Saiba mais</a>.</p>
+    <button class="btn primario" type="button" id="aceitar-cookies">Entendi</button>
+  </div>
+  <script>
+    (function () {
+      var chave = "arvisx-crm-aviso-cookies", aviso = document.getElementById("aviso-cookies");
+      try { if (localStorage.getItem(chave)) return; } catch (e) {}
+      aviso.classList.add("visivel");
+      document.getElementById("aceitar-cookies").addEventListener("click", function () {
+        try { localStorage.setItem(chave, new Date().toISOString()); } catch (e) {}
+        aviso.classList.remove("visivel");
+      });
+    })();
+  </script>
 </body>
 </html>

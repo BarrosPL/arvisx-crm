@@ -1,0 +1,42 @@
+/* Páginas legais do Arvisx CRM: mesma paleta e tipografia da landing. */
+:root {
+  --fundo: #0b0f15; --painel: #10151e; --painel-2: #161c27; --linha: #212938; --linha-forte: #2c3546;
+  --texto: #eef0f3; --apoio: #a2abb9; --fraco: #6c7586;
+  --ouro: #d4af37; --ouro-claro: #f1d47c; --ouro-fg: #0f131a;
+  --display: "Archivo", "Manrope", system-ui, sans-serif; --sans: "Manrope", system-ui, sans-serif;
+  --lado: clamp(18px, 5vw, 72px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body { background: var(--fundo); color: var(--texto); font: 400 16px/1.65 var(--sans); }
+a { color: var(--ouro-claro); text-decoration: underline; text-underline-offset: 3px; }
+img { display: block; max-width: 100%; height: auto; }
+.topo { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 64px; padding: 0 var(--lado); background: rgba(11, 15, 21, .86); backdrop-filter: blur(12px); border-bottom: 1px solid var(--linha); }
+.topo .marca img { height: 26px; width: auto; }
+.topo a { text-decoration: none; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border-radius: 10px; font: 700 14px/1 var(--sans); border: 1px solid var(--linha-forte); color: var(--texto); text-decoration: none; }
+.btn:hover { background: var(--painel-2); }
+.doc { max-width: 760px; margin: 0 auto; padding: clamp(40px, 7vw, 80px) var(--lado) 64px; }
+.doc .eyebrow { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 14px; color: var(--ouro-claro); font: 700 11px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; }
+.doc .eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ouro); }
+.doc h1 { font-family: var(--display); font-stretch: 112%; font-weight: 650; letter-spacing: -.03em; line-height: 1.08; font-size: clamp(30px, 5vw, 44px); }
+.doc .atualizado { color: var(--fraco); font-size: 13.5px; margin: 12px 0 36px; }
+.doc .resumo { padding: 18px 20px; border-radius: 14px; background: var(--painel); border: 1px solid var(--linha); color: var(--apoio); font-size: 15px; margin-bottom: 36px; }
+.doc .resumo b { color: var(--texto); }
+.doc h2 { font-family: var(--display); font-stretch: 108%; font-weight: 650; letter-spacing: -.02em; font-size: 22px; margin: 36px 0 12px; }
+.doc h3 { font-size: 16px; font-weight: 700; margin: 22px 0 8px; }
+.doc p, .doc li { color: var(--apoio); }
+.doc p { margin-bottom: 12px; }
+.doc ul, .doc ol { padding-left: 22px; margin-bottom: 12px; }
+.doc li { margin-bottom: 6px; }
+.doc li::marker { color: var(--ouro); }
+.doc strong { color: var(--texto); font-weight: 700; }
+.doc table { width: 100%; border-collapse: collapse; font-size: 14.5px; margin: 12px 0 18px; }
+.doc th, .doc td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--linha); vertical-align: top; color: var(--apoio); }
+.doc th { color: var(--texto); font-weight: 700; background: var(--painel); }
+.doc .campo { color: var(--ouro-claro); background: rgba(212, 175, 55, .1); border: 1px dashed rgba(212, 175, 55, .45); border-radius: 6px; padding: 0 6px; font-weight: 600; white-space: nowrap; }
+.rodape { border-top: 1px solid var(--linha); background: var(--painel); padding: 24px var(--lado); }
+.rodape .miolo { max-width: 1140px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; color: var(--fraco); font-size: 13px; }
+.rodape nav { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.rodape a { color: var(--apoio); font-weight: 600; text-decoration: none; }
+.rodape a:hover { color: var(--texto); }
