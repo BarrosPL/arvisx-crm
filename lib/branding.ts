@@ -93,7 +93,17 @@ export function resolveBranding(
  * escrita, só pintada de outro jeito.
  */
 export function marcaEhADoProduto(marca: Pick<Branding, "name" | "logoUrl">): boolean {
-  return marca.logoUrl === null && marca.name === DEFAULT_APP_NAME;
+  return marca.logoUrl === null && normalizarNome(marca.name) === normalizarNome(DEFAULT_APP_NAME);
+}
+
+/**
+ * "Arvisx CRM", "ARVISX  CRM" e "ArvisX CRM" são a mesma marca escrita de
+ * jeitos diferentes: quem configurou o nome do produto com outra caixa não
+ * quis uma marca própria, e sem isto o logo do produto sumia da barra e do
+ * login (medido na instalação do Easypanel em 03/11/2026).
+ */
+function normalizarNome(nome: string): string {
+  return nome.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
 export function branding(): Branding {

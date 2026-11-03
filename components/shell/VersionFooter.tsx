@@ -25,14 +25,12 @@ export function VersionFooter({
   if (!data) return null;
 
   const label = data.current_version.replace(/^v/i, "");
+  // Sem número de versão (imagem `latest` do fork, sem release), o rodapé não
+  // tem o que dizer: antes escrevia "Versão ainda não confirmada" e "Execução
+  // não confirmada", dois avisos de engenharia na tela de quem só usa o CRM.
+  if (!label) return null;
   const personalizada = data.identity?.customized === true;
-  const titulo = label
-    ? `${t("Versão")} ${label}${personalizada ? ` · ${t("Personalizada")}` : ""}`
-    : t("Versão ainda não confirmada");
-  // Só acende quando existe versão nova de verdade. `off_release` sozinho não
-  // conta: uma instalação de desenvolvimento sem versão publicada mais nova
-  // ficava com o ponto pulsando pra sempre, e o texto "Nova versão · " com o
-  // número vazio, apontando para uma tela que não tem o que oferecer.
+  const titulo = `${t("Versão")} ${label}${personalizada ? ` · ${t("Personalizada")}` : ""}`;
   const alerta = data.is_owner && data.update_available;
 
   const instalada = (
@@ -43,10 +41,7 @@ export function VersionFooter({
       )}
       title={titulo}
     >
-      {collapsed && label ? label.split(".").slice(0, 2).join(".") : titulo}
-      {data.identity && data.identity.status !== "confirmed" && (
-        <span className="block text-[10px]">{t("Execução não confirmada")}</span>
-      )}
+      {collapsed ? label.split(".").slice(0, 2).join(".") : titulo}
     </p>
   );
   if (!alerta) return instalada;
