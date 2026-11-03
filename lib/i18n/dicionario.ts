@@ -10296,7 +10296,6 @@ export const DICIONARIO: Traducoes = {
   "O CRM da ArvisX": { es: "El CRM de ArvisX" },
   "O WhatsApp chega.": { es: "El WhatsApp llega." },
   "A": { es: "La" },
-  "IA": { es: "IA" },
   "atende e vende.": { es: "atiende y vende." },
   "Inbox com a IA e a equipe lado a lado": { es: "Inbox con la IA y el equipo lado a lado" },
   "Funil, agenda e propostas no mesmo lugar": { es: "Embudo, agenda y propuestas en el mismo lugar" },
