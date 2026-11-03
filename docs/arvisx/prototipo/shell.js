@@ -65,7 +65,7 @@
   const lateral = document.querySelector("aside.lateral");
   if (lateral) {
     lateral.innerHTML = `
-      <div class="marca"><span class="lockup" aria-label="ARVISX CRM"><img src="${raiz}/marca/arvisx-simbolo-branco.png" alt=""><b>ARVISX<em>CRM</em></b></span></div>
+      <div class="marca"><img src="${raiz}/marca/arvisx-crm-oficial-escuro.png" alt="ARVISX CRM" style="height:26px;width:auto"></div>
       <nav aria-label="Navegação principal">
         ${GRUPOS.map((g) => `
           <div class="grupo" data-grupo="${g.id}">

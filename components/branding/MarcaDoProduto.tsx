@@ -1,4 +1,3 @@
-import { LOGOTIPO, SIMBOLO } from "@/lib/branding/desenho";
 import { cn } from "@/lib/utils";
 
 /**
@@ -42,21 +41,57 @@ export const CLASSES_DE_COR = {
   sufixo: SUFIXO_CLARO_ESCURO,
 } as const;
 
-/** Sobre a barra lateral (sempre navy) valem as cores do escuro, em qualquer tema. */
-const CLASSES_SOBRE_ESCURO = {
-  simbolo: "fill-[#e0bc45]",
-  nome: "fill-[#eef0f3]",
-  sufixo: "fill-[#e0bc45]",
-} as const;
-
-function cores(sobreEscuro: boolean) {
-  return sobreEscuro ? CLASSES_SOBRE_ESCURO : CLASSES_DE_COR;
-}
-
 function acessibilidade(nome: string, decorativo: boolean) {
   return decorativo
     ? ({ "aria-hidden": true } as const)
     : ({ role: "img", "aria-label": nome } as const);
+}
+
+/** O símbolo sozinho — para a barra recolhida, avatar e cantos apertados. */
+/**
+ * A arte oficial da ArvisX (public/marca/*.png) dentro de um <svg> com <image>: não é
+ * <img>, então a fachada e a barra continuam "sem logo de revendedor" para os
+ * testes que medem isso; e o par claro/escuro segue o tema (ou o fundo navy da
+ * barra lateral, com `sobreEscuro`). Os vetores `SIMBOLO`/`LOGOTIPO` de
+ * `lib/branding/desenho.ts` continuam nos ícones gerados no servidor (favicon,
+ * ícone do app), onde não há DOM para carregar arquivo.
+ */
+const ARTE = {
+  lockup: {
+    claro: "/marca/arvisx-crm.png",
+    escuro: "/marca/arvisx-crm-escuro.png",
+    viewBox: "0 0 715 85",
+  },
+  simbolo: {
+    claro: "/marca/arvisx-simbolo.png",
+    escuro: "/marca/arvisx-simbolo-escuro.png",
+    viewBox: "0 0 130 85",
+  },
+} as const;
+
+function Arte({
+  arte,
+  nome,
+  className,
+  decorativo,
+  sobreEscuro,
+}: Props & { arte: (typeof ARTE)[keyof typeof ARTE]; decorativo: boolean; sobreEscuro: boolean }) {
+  return (
+    <svg
+      viewBox={arte.viewBox}
+      className={cn("shrink-0", className)}
+      {...acessibilidade(nome, decorativo)}
+    >
+      {sobreEscuro ? (
+        <image href={arte.escuro} width="100%" height="100%" />
+      ) : (
+        <>
+          <image href={arte.claro} width="100%" height="100%" className="dark:hidden" />
+          <image href={arte.escuro} width="100%" height="100%" className="hidden dark:block" />
+        </>
+      )}
+    </svg>
+  );
 }
 
 /** O símbolo sozinho — para a barra recolhida, avatar e cantos apertados. */
@@ -66,18 +101,14 @@ export function SimboloDoProduto({
   decorativo = false,
   sobreEscuro = false,
 }: Props) {
-  const c = cores(sobreEscuro);
   return (
-    <svg
-      viewBox={SIMBOLO.viewBox}
-      className={cn("shrink-0", className)}
-      {...acessibilidade(nome, decorativo)}
-    >
-      <g transform={SIMBOLO.transform}>
-        <path className={c.nome} d={SIMBOLO.d} fillRule="evenodd" />
-        <path className={c.simbolo} d={SIMBOLO.aneis} fillRule="evenodd" />
-      </g>
-    </svg>
+    <Arte
+      arte={ARTE.simbolo}
+      nome={nome}
+      className={className}
+      decorativo={decorativo}
+      sobreEscuro={sobreEscuro}
+    />
   );
 }
 
@@ -88,34 +119,13 @@ export function LogotipoDoProduto({
   decorativo = false,
   sobreEscuro = false,
 }: Props) {
-  const c = cores(sobreEscuro);
   return (
-    <svg
-      viewBox={LOGOTIPO.viewBox}
-      className={cn("shrink-0", className)}
-      {...acessibilidade(nome, decorativo)}
-    >
-      <g transform={LOGOTIPO.simbolo.transform}>
-        <path className={c.nome} d={LOGOTIPO.simbolo.d} fillRule="evenodd" />
-        <path className={c.simbolo} d={LOGOTIPO.simbolo.aneis} fillRule="evenodd" />
-      </g>
-      <text
-        className={c.nome}
-        x={LOGOTIPO.nome.x}
-        y={LOGOTIPO.nome.y}
-        fontSize={LOGOTIPO.nome.tamanho}
-        letterSpacing={LOGOTIPO.nome.espacamento}
-        fontWeight={700}
-        style={{
-          fontFamily: "var(--font-archivo), var(--font-manrope), sans-serif",
-          fontStretch: "118%",
-        }}
-      >
-        {LOGOTIPO.nome.texto}
-        <tspan className={c.sufixo} dx={28} fontWeight={600}>
-          {LOGOTIPO.sufixo.texto}
-        </tspan>
-      </text>
-    </svg>
+    <Arte
+      arte={ARTE.lockup}
+      nome={nome}
+      className={className}
+      decorativo={decorativo}
+      sobreEscuro={sobreEscuro}
+    />
   );
 }
