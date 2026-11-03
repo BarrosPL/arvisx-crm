@@ -49,7 +49,7 @@ export default async function LoginPage({
             logo de revendedor, quem assina a tela é o painel ao lado. */}
         {marcaEhADoProduto({ name: marca.nome, logoUrl: marca.logoUrl }) ? (
           <div className="flex h-16 w-16 items-center justify-center rounded-[18px] border border-border bg-surface shadow-sm">
-            <SimboloDoProduto nome={marca.nome} decorativo className="h-11 w-auto" />
+            <SimboloDoProduto nome={marca.nome} decorativo sobreClaro className="h-11 w-auto" />
           </div>
         ) : null}
         <h1 className="text-2xl font-semibold tracking-tight">{t("Entrar")}</h1>

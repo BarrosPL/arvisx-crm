@@ -18,6 +18,63 @@
 .painel-a .p1 { right: 18%; top: 22%; } .painel-a .p2 { right: 36%; bottom: 30%; width: 5px; height: 5px; } .painel-a .p3 { right: 9%; bottom: 44%; width: 4px; height: 4px; opacity: .7; }
 .painel-a::after { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 50% at 80% 70%, rgba(212, 175, 55, .10), transparent 70%); pointer-events: none; }
 
+/* A animada: o painel ganha a vida da landing — aurora dourada lenta, grade de
+   pontos à deriva, pontos que respiram, marca d'água que flutua e entrada
+   escalonada do texto. Tudo leve (transform/opacity) e some com reduced-motion. */
+.painel-a.animada { overflow: hidden; isolation: isolate; }
+.painel-a.animada::before {
+  content: ""; position: absolute; inset: -20%; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(42% 38% at 72% 18%, rgba(212, 175, 55, .22), transparent 70%),
+    radial-gradient(30% 30% at 18% 72%, rgba(212, 175, 55, .10), transparent 70%),
+    radial-gradient(36% 36% at 85% 70%, rgba(44, 53, 70, .55), transparent 70%);
+  animation: lg-aurora 16s ease-in-out infinite alternate;
+}
+.painel-a.animada::after {
+  background-image: radial-gradient(rgba(238, 240, 243, .14) 1px, transparent 1.2px);
+  background-size: 26px 26px; z-index: 0;
+  -webkit-mask-image: radial-gradient(70% 60% at 65% 35%, #000 20%, transparent 100%);
+  mask-image: radial-gradient(70% 60% at 65% 35%, #000 20%, transparent 100%);
+  animation: lg-deriva 40s linear infinite;
+}
+.painel-a.animada .marca-dagua { z-index: 0; animation: lg-flutuar 9s ease-in-out infinite; }
+.painel-a.animada .ponto { z-index: 1; animation: lg-pontinho 3.2s ease-in-out infinite; }
+.painel-a.animada .p2 { animation-delay: .9s; }
+.painel-a.animada .p3 { animation-delay: 1.7s; }
+.painel-a.animada .p4 { right: 52%; top: 36%; width: 4px; height: 4px; opacity: .6; animation-delay: 2.3s; }
+.painel-a.animada .p5 { right: 24%; bottom: 14%; width: 6px; height: 6px; opacity: .8; animation-delay: .4s; }
+.painel-a.animada .logo-topo,
+.painel-a.animada .texto > *,
+.painel-a.animada .provas li { animation: lg-subir .7s cubic-bezier(.2, .7, .2, 1) both; }
+.painel-a.animada .texto .etiqueta { animation-delay: .1s; }
+.painel-a.animada .texto h1 { animation-delay: .2s; }
+.painel-a.animada .texto p:not(.etiqueta) { animation-delay: .32s; }
+.painel-a.animada .texto .fio { animation-delay: .42s; transform-origin: left; }
+.painel-a.animada .provas li:nth-child(1) { animation-delay: .5s; }
+.painel-a.animada .provas li:nth-child(2) { animation-delay: .6s; }
+.painel-a.animada .provas li:nth-child(3) { animation-delay: .7s; }
+@keyframes lg-aurora { from { transform: translate3d(-2%, 0, 0) scale(1); } to { transform: translate3d(3%, 4%, 0) scale(1.08); } }
+@keyframes lg-deriva { from { background-position: 0 0; } to { background-position: 26px 52px; } }
+@keyframes lg-flutuar { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-14px) rotate(-1.5deg); } }
+@keyframes lg-pontinho { 0%, 100% { opacity: .55; transform: scale(1); box-shadow: 0 0 14px 3px rgba(212, 175, 55, .25); } 50% { opacity: 1; transform: scale(1.35); box-shadow: 0 0 22px 6px rgba(212, 175, 55, .45); } }
+@keyframes lg-subir { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+/* A órbitas: no lugar da marca d'água em PNG (borrada quando ampliada), três
+   anéis vetoriais inclinados — eco dos anéis do símbolo — girando em
+   velocidades diferentes, cada um com um satélite dourado; núcleo que respira. */
+.painel-a.orbitas .orbita-cena { position: absolute; right: -16%; top: 6%; width: 70%; max-width: 680px; aspect-ratio: 1; z-index: 0; pointer-events: none; opacity: .9; }
+.painel-a.orbitas .anel { transform-origin: 360px 360px; }
+.painel-a.orbitas .a1 { transform: rotate(-24deg); animation: lg-girar 28s linear infinite; }
+.painel-a.orbitas .a2 { transform: rotate(32deg); animation: lg-girar-inv 22s linear infinite; }
+.painel-a.orbitas .a3 { transform: rotate(-70deg); animation: lg-girar 16s linear infinite; }
+.painel-a.orbitas .nucleo { transform-origin: 360px 360px; animation: lg-respirar 6s ease-in-out infinite; }
+.painel-a.orbitas .halo { transform-origin: 360px 360px; animation: lg-halo 3s ease-out infinite; }
+@keyframes lg-girar { from { transform: rotate(-24deg); } to { transform: rotate(336deg); } }
+@keyframes lg-girar-inv { from { transform: rotate(32deg); } to { transform: rotate(-328deg); } }
+@keyframes lg-respirar { 0%, 100% { transform: scale(1); opacity: .8; } 50% { transform: scale(1.18); opacity: 1; } }
+@keyframes lg-halo { from { transform: scale(1); opacity: .8; } to { transform: scale(4); opacity: 0; } }
+@media (max-width: 860px) { .painel-a.orbitas .orbita-cena { display: none; } }
+
 /* B: o produto na tela, em moldura inclinada */
 .painel-b { overflow: hidden; }
 .painel-b .vitrine { position: relative; z-index: 2; margin-top: auto; }

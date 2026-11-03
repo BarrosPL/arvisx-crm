@@ -69,8 +69,21 @@ export default async function PublicLayout({ children }: { children: React.React
         casa, e o formulário no claro. No celular o painel vira uma faixa no
         topo. O bloco do logo (chip `dark:bg-white`, `data-testid`) e o
         `LogotipoDoProduto` continuam os mesmos: os testes de marca medem por eles.
+
+        `data-theme="light"` AQUI, e não no `<html>`: a fachada é a vitrine da
+        marca e tem uma aparência só — painel navy, formulário claro —, não
+        segue o tema do sistema de quem chega (com o Windows escuro ela ficava
+        inteira preta). Os tokens do tema claro são declarados por
+        `[data-theme="light"]` em app/globals.css, então a subárvore os herda;
+        o `color-scheme` acompanha para os controles nativos (campo, autofill,
+        barra de rolagem). As variantes `dark:` do chip do logo seguem o
+        `<html>`, como antes: o painel é escuro nos dois temas e o chip claro
+        continua sendo medido por tests/e2e/logo-moldura-no-tema-escuro.spec.ts.
       */}
-      <div className="grid min-h-screen grid-cols-1 bg-background lg:grid-cols-[1.1fr_1fr]">
+      <div
+        data-theme="light"
+        className="grid min-h-screen grid-cols-1 bg-background text-text [color-scheme:light] lg:grid-cols-[1.1fr_1fr]"
+      >
         <section className="relative flex flex-col justify-between gap-6 overflow-hidden bg-sidebar px-6 py-7 text-white lg:px-14 lg:py-10">
           <div className="flex justify-start [&_img]:max-h-12">
             {marca.logoUrl || marca.logoDarkUrl ? (

@@ -25,6 +25,13 @@ type Props = {
   readonly decorativo?: boolean;
   /** `true` sobre fundo sempre escuro (a barra lateral): usa as cores do tema escuro nos dois temas. */
   readonly sobreEscuro?: boolean;
+  /**
+   * `true` sobre fundo sempre claro (o chip da fachada de entrada, que fixa
+   * `data-theme="light"` numa subárvore): usa a arte clara nos dois temas. As
+   * variantes `dark:` seguem o `<html>`, não a subárvore, então sem isto o
+   * símbolo branco apareceria sobre o chip branco quando o sistema é escuro.
+   */
+  readonly sobreClaro?: boolean;
 };
 
 const SIMBOLO_CLARO_ESCURO = "fill-[#d4af37] dark:fill-[#e0bc45]";
@@ -75,7 +82,13 @@ function Arte({
   className,
   decorativo,
   sobreEscuro,
-}: Props & { arte: (typeof ARTE)[keyof typeof ARTE]; decorativo: boolean; sobreEscuro: boolean }) {
+  sobreClaro,
+}: Props & {
+  arte: (typeof ARTE)[keyof typeof ARTE];
+  decorativo: boolean;
+  sobreEscuro: boolean;
+  sobreClaro: boolean;
+}) {
   return (
     <svg
       viewBox={arte.viewBox}
@@ -84,6 +97,8 @@ function Arte({
     >
       {sobreEscuro ? (
         <image href={arte.escuro} width="100%" height="100%" />
+      ) : sobreClaro ? (
+        <image href={arte.claro} width="100%" height="100%" />
       ) : (
         <>
           <image href={arte.claro} width="100%" height="100%" className="dark:hidden" />
@@ -100,6 +115,7 @@ export function SimboloDoProduto({
   className,
   decorativo = false,
   sobreEscuro = false,
+  sobreClaro = false,
 }: Props) {
   return (
     <Arte
@@ -108,6 +124,7 @@ export function SimboloDoProduto({
       className={className}
       decorativo={decorativo}
       sobreEscuro={sobreEscuro}
+      sobreClaro={sobreClaro}
     />
   );
 }
@@ -118,6 +135,7 @@ export function LogotipoDoProduto({
   className,
   decorativo = false,
   sobreEscuro = false,
+  sobreClaro = false,
 }: Props) {
   return (
     <Arte
@@ -126,6 +144,7 @@ export function LogotipoDoProduto({
       className={className}
       decorativo={decorativo}
       sobreEscuro={sobreEscuro}
+      sobreClaro={sobreClaro}
     />
   );
 }

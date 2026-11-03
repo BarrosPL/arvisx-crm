@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Login · opção A órbitas (sem marca d'água)</title>
+<meta name="grupo" content="Entrada">
+<meta name="ordem" content="13">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../login-opcoes.css">
+</head>
+<body data-rota="/login">
+<div class="publico">
+  <section class="lado painel-a animada orbitas">
+    <img class="logo-topo" src="../marca/arvisx-crm-oficial-escuro.png" alt="ARVISX CRM">
+    <div class="texto">
+      <p class="etiqueta">O CRM DA ARVISX</p>
+      <h1>O WhatsApp chega.<br>A <em>IA</em> atende e vende.</h1>
+      <p>Agentes de IA que atendem, qualificam e vendem no WhatsApp, dentro do CRM da sua empresa.</p>
+      <div class="fio"></div>
+    </div>
+    <ul class="provas">
+      <li><i class="ph ph-tray"></i>Inbox com a IA e a equipe lado a lado</li>
+      <li><i class="ph ph-kanban"></i>Funil, agenda e propostas no mesmo lugar</li>
+      <li><i class="ph ph-shield-check"></i>Seus dados no seu servidor, com LGPD</li>
+    </ul>
+    <svg class="orbita-cena" viewBox="0 0 720 720" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="ouro" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#f1d47c"/><stop offset=".5" stop-color="#d4af37"/><stop offset="1" stop-color="#b87a2e"/>
+        </linearGradient>
+        <radialGradient id="nucleo" cx=".5" cy=".5" r=".5">
+          <stop offset="0" stop-color="#f1d47c" stop-opacity=".9"/><stop offset=".4" stop-color="#d4af37" stop-opacity=".35"/><stop offset="1" stop-color="#d4af37" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle class="nucleo" cx="360" cy="360" r="120" fill="url(#nucleo)"/>
+      <g class="anel a1"><ellipse cx="360" cy="360" rx="300" ry="112" fill="none" stroke="url(#ouro)" stroke-width="1.4" opacity=".55"/><circle cx="660" cy="360" r="5" fill="#f1d47c"/></g>
+      <g class="anel a2"><ellipse cx="360" cy="360" rx="230" ry="86" fill="none" stroke="url(#ouro)" stroke-width="1.2" opacity=".45"/><circle cx="130" cy="360" r="4" fill="#d4af37"/></g>
+      <g class="anel a3"><ellipse cx="360" cy="360" rx="150" ry="56" fill="none" stroke="url(#ouro)" stroke-width="1" opacity=".4"/><circle cx="510" cy="360" r="3" fill="#f1d47c"/></g>
+      <circle class="centro" cx="360" cy="360" r="7" fill="#f1d47c"/>
+      <circle class="centro halo" cx="360" cy="360" r="7" fill="none" stroke="#d4af37" stroke-width="1"/>
+    </svg>
+        <span class="ponto p1"></span><span class="ponto p2"></span><span class="ponto p3"></span><span class="ponto p4"></span><span class="ponto p5"></span>
+  </section>
+  <section class="formulario">
+    <div>
+      <div class="icone-app"><img src="../marca/arvisx-simbolo-oficial.png" alt=""></div>
+      <h2>Entrar</h2>
+      <form class="form" novalidate>
+        <div class="campo"><label for="email">Email</label><input id="email" type="email" autocomplete="email"></div>
+        <div class="campo"><label for="senha">Senha</label><div style="position:relative"><input id="senha" type="password" style="padding-right:44px"><button type="button" aria-label="Mostrar senha" class="olho"><i class="ph ph-eye"></i></button></div></div>
+        <button type="submit" class="btn primario g bloco">Entrar</button>
+      </form>
+      <p class="rodape-form"><a href="#">Esqueci minha senha</a></p>
+    </div>
+  </section>
+</div>
+</body>
+</html>
