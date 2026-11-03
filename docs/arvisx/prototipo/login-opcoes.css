@@ -1,0 +1,59 @@
+/* Opções do painel do login (protótipo). O formulário é o mesmo nas três. */
+
+.publico .lado { display: flex; flex-direction: column; justify-content: space-between; gap: 32px; padding: 40px 56px; min-height: 100vh; }
+.publico .lado .logo-topo { height: 34px; width: auto; align-self: flex-start; position: relative; z-index: 2; }
+.publico .lado .texto { position: relative; z-index: 2; max-width: 46ch; }
+.publico .lado .etiqueta { display: flex; align-items: center; gap: 8px; color: var(--ouro); font: 600 10.5px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; margin-bottom: 18px; }
+.publico .lado .etiqueta::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ouro); }
+.publico .lado h1 { font-size: 40px; max-width: 14ch; }
+.publico .lado h1 em { font-style: normal; background: linear-gradient(100deg, var(--ouro-claro), var(--ouro) 45%, var(--bronze)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.publico .lado .fio { background: var(--navy-linha); margin: 24px 0 0; max-width: 120px; }
+.publico .lado .provas { position: relative; z-index: 2; display: grid; gap: 10px; color: #a2abb9; font-size: 14px; }
+.publico .lado .provas li { display: flex; align-items: center; gap: 10px; }
+.publico .lado .provas i { font-size: 18px; color: var(--ouro); }
+.publico .lado .ponto { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: var(--ouro); box-shadow: 0 0 18px 4px rgba(212, 175, 55, .35); }
+
+/* A: a marca como arte, em marca d'água, cortada pela borda */
+.painel-a .marca-dagua { position: absolute; right: -8%; bottom: -6%; width: 62%; max-width: 620px; opacity: .14; filter: saturate(.6); pointer-events: none; }
+.painel-a .p1 { right: 18%; top: 22%; } .painel-a .p2 { right: 36%; bottom: 30%; width: 5px; height: 5px; } .painel-a .p3 { right: 9%; bottom: 44%; width: 4px; height: 4px; opacity: .7; }
+.painel-a::after { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 50% at 80% 70%, rgba(212, 175, 55, .10), transparent 70%); pointer-events: none; }
+
+/* B: o produto na tela, em moldura inclinada */
+.painel-b { overflow: hidden; }
+.painel-b .vitrine { position: relative; z-index: 2; margin-top: auto; }
+.painel-b .moldura { position: relative; width: 112%; max-width: none; border-radius: 12px; overflow: hidden; border: 1px solid rgba(212, 175, 55, .35); box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .9), 0 0 0 1px rgba(255, 255, 255, .04); transform: perspective(1400px) rotateY(-10deg) rotateX(4deg); transform-origin: left center; background: var(--painel); }
+.painel-b .moldura img { display: block; width: 100%; }
+.painel-b .moldura::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 55%, rgba(11, 15, 21, .85)); }
+.painel-b .texto h1 { font-size: 34px; }
+.painel-b .flutuante { position: absolute; right: 8%; bottom: 26%; z-index: 3; width: 260px; padding: 12px 14px; border-radius: 12px; background: var(--painel); color: var(--texto); box-shadow: var(--sombra-alta); font-size: 12.5px; }
+.painel-b .flutuante .quem { display: flex; align-items: center; gap: 8px; font: 600 10.5px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ouro-escuro); margin-bottom: 6px; }
+.painel-b .flutuante .avatar { width: 22px; height: 22px; font-size: 8px; }
+
+/* C: a conversa como ilustração (HTML), com o elo atrás */
+.painel-c .cena { position: relative; z-index: 2; margin-top: auto; min-height: 300px; }
+.painel-c .elo { position: absolute; left: 50%; top: 50%; width: 420px; transform: translate(-50%, -50%); opacity: .22; filter: blur(.5px); pointer-events: none; }
+.painel-c .balao { position: absolute; max-width: 300px; padding: 10px 14px; border-radius: 14px; font-size: 13.5px; line-height: 1.45; box-shadow: var(--sombra-alta); }
+.painel-c .balao .hora { display: block; text-align: right; font: 500 10.5px/1 var(--mono); margin-top: 6px; opacity: .6; }
+.painel-c .balao.cliente { left: 0; top: 10%; background: var(--painel); color: var(--texto); border-bottom-left-radius: 4px; }
+.painel-c .balao.ia { right: 0; top: 38%; background: var(--painel); color: var(--texto); border: 1px solid #ecd9a0; box-shadow: inset 3px 0 0 var(--ouro), var(--sombra-alta); border-bottom-right-radius: 4px; }
+.painel-c .balao.ia .quem { display: block; font: 600 10.5px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ouro-escuro); margin-bottom: 5px; }
+.painel-c .balao.sistema { left: 12%; bottom: 0; background: rgba(212, 175, 55, .12); border: 1px solid rgba(212, 175, 55, .35); color: var(--ouro-claro); font: 600 11.5px/1.4 var(--mono); letter-spacing: .04em; }
+.painel-c .balao.sistema i { margin-right: 6px; color: var(--ouro); }
+
+/* Formulário: ícone do app acima do título, título mais abaixo, sem subtítulo */
+.publico .formulario > div { max-width: 380px; }
+.publico .formulario .icone-app { width: 64px; height: 64px; border-radius: 18px; background: var(--painel); border: 1px solid var(--linha); display: grid; place-items: center; margin: 0 0 22px; box-shadow: var(--sombra); }
+.publico .formulario .icone-app img { width: 44px; height: auto; }
+.publico .formulario h2 { margin-bottom: 22px; }
+.publico .formulario .olho { position: absolute; right: 0; top: 0; width: 44px; height: 38px; display: grid; place-items: center; color: var(--fraco); font-size: 20px; }
+.publico .formulario .rodape-form { text-align: center; margin-top: 22px; font-size: 13.5px; }
+.publico .formulario .rodape-form a { color: var(--apoio); text-decoration: underline; text-underline-offset: 4px; }
+
+@media (max-width: 860px) {
+  .publico .lado { padding: 24px 20px; min-height: 0; gap: 20px; }
+  .publico .lado h1 { font-size: 28px; }
+  .publico .lado .provas, .painel-a .marca-dagua, .painel-b .flutuante, .painel-c .elo { display: none; }
+  .painel-b .moldura { width: 100%; transform: none; }
+  .painel-c .cena { min-height: 200px; }
+  .painel-c .balao { position: relative; left: auto; right: auto; top: auto; bottom: auto; margin-bottom: 10px; max-width: none; }
+}
