@@ -14,7 +14,7 @@
 .publico .lado .ponto { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: var(--ouro); box-shadow: 0 0 18px 4px rgba(212, 175, 55, .35); }
 
 /* A: a marca como arte, em marca d'água, cortada pela borda */
-.painel-a .marca-dagua { position: absolute; right: -8%; bottom: -6%; width: 62%; max-width: 620px; opacity: .14; filter: saturate(.6); pointer-events: none; }
+.painel-a .marca-dagua { position: absolute; right: -6%; bottom: -8%; width: 66%; max-width: 680px; opacity: .16; pointer-events: none; }
 .painel-a .p1 { right: 18%; top: 22%; } .painel-a .p2 { right: 36%; bottom: 30%; width: 5px; height: 5px; } .painel-a .p3 { right: 9%; bottom: 44%; width: 4px; height: 4px; opacity: .7; }
 .painel-a::after { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 50% at 80% 70%, rgba(212, 175, 55, .10), transparent 70%); pointer-events: none; }
 

@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { EntrarComGoogle } from "@/components/auth/EntrarComGoogle";
+import { SimboloDoProduto } from "@/components/branding/MarcaDoProduto";
+import { marcaEhADoProduto } from "@/lib/branding";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { verifyInviteToken } from "@/lib/auth/invite-token";
 import { marcaDaSaida } from "@/lib/branding/saida";
@@ -19,7 +21,8 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string; reset?: string; error?: string }>;
 }) {
   const { next, reset, error } = await searchParams;
-  const invite = typeof next === "string" ? next.match(/^\/team\/accept-invite\/([^/?#]+)$/)?.[1] : undefined;
+  const invite =
+    typeof next === "string" ? next.match(/^\/team\/accept-invite\/([^/?#]+)$/)?.[1] : undefined;
   const convite = invite ? verifyInviteToken(invite) : null;
   // Fora da árvore de `app/app/layout.tsx` — sem `IdiomaProvider` do lado do
   // servidor (o cliente já tem o seu, montado em `app/(public)/layout.tsx`).
@@ -41,9 +44,18 @@ export default async function LoginPage({
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1.5 text-center">
+      <div className="space-y-5">
+        {/* O ícone do app sobre o título, só quando a marca é a do produto: com
+            logo de revendedor, quem assina a tela é o painel ao lado. */}
+        {marcaEhADoProduto({ name: marca.nome, logoUrl: marca.logoUrl }) ? (
+          <div className="flex h-16 w-16 items-center justify-center rounded-[18px] border border-border bg-surface shadow-sm">
+            <SimboloDoProduto nome={marca.nome} decorativo className="h-11 w-auto" />
+          </div>
+        ) : null}
         <h1 className="text-2xl font-semibold tracking-tight">{t("Entrar")}</h1>
-        <p className="text-sm text-muted-foreground">{marca.nome}</p>
+        {/* O nome da instalação fica para o leitor de tela (e para quem mede a
+            marca branca); visualmente o painel ao lado já o traz. */}
+        <p className="sr-only">{marca.nome}</p>
       </div>
       {reset === "success" && (
         <div

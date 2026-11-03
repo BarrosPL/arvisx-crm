@@ -1,4 +1,5 @@
 import { LogotipoDoProduto } from "@/components/branding/MarcaDoProduto";
+import { Inbox, Kanban, ShieldCheck } from "@/lib/ui/icons";
 import { marcaEhADoProduto } from "@/lib/branding";
 import { marcaDaSaida } from "@/lib/branding/saida";
 import { createClient } from "@/lib/supabase/server";
@@ -56,7 +57,9 @@ export default async function PublicLayout({ children }: { children: React.React
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const locale = await idiomaDoVisitante((user?.user_metadata?.locale as string | undefined) ?? null);
+  const locale = await idiomaDoVisitante(
+    (user?.user_metadata?.locale as string | undefined) ?? null,
+  );
   const t = (texto: string) => traduzir(texto, locale);
 
   return (
@@ -70,9 +73,9 @@ export default async function PublicLayout({ children }: { children: React.React
       <div className="grid min-h-screen grid-cols-1 bg-background lg:grid-cols-[1.1fr_1fr]">
         <section className="relative flex flex-col justify-between gap-6 overflow-hidden bg-sidebar px-6 py-7 text-white lg:px-14 lg:py-10">
           <div className="flex justify-start [&_img]:max-h-12">
-          {marca.logoUrl || marca.logoDarkUrl ? (
-            <div className="flex justify-start">
-              {/*
+            {marca.logoUrl || marca.logoDarkUrl ? (
+              <div className="flex justify-start">
+                {/*
                 <img> em vez de next/image pelo mesmo motivo da barra lateral: a URL
                 é de quem hospeda e o `next/image` exige allowlist de domínios
                 fechada em BUILD — a imagem pré-buildada do self-host recusaria o
@@ -88,70 +91,104 @@ export default async function PublicLayout({ children }: { children: React.React
                 "primeira <img> da página", e uma asserção de negação com seletor
                 largo passa sozinha assim que outra imagem entra na tela.
               */}
-              <div
-                className={
-                  marca.logoDarkUrl
-                    ? "rounded-md"
-                    : "rounded-md dark:bg-white dark:px-3 dark:py-2 dark:shadow-sm"
-                }
-              >
-                {marca.logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    data-testid="logo-da-fachada"
-                    src={marca.logoUrl}
-                    alt={marca.nome}
-                    className={
-                      marca.logoDarkUrl
-                        ? "h-auto max-h-20 w-auto max-w-[12rem] object-contain dark:hidden"
-                        : "h-auto max-h-20 w-auto max-w-[12rem] object-contain"
-                    }
-                  />
-                ) : (
-                  <span className="dark:hidden">{marca.nome}</span>
-                )}
-                {marca.logoDarkUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    data-testid="logo-escuro-da-fachada"
-                    src={marca.logoDarkUrl}
-                    alt={marca.nome}
-                    className="hidden h-auto max-h-20 w-auto max-w-[12rem] object-contain dark:block"
-                  />
-                ) : null}
+                <div
+                  className={
+                    marca.logoDarkUrl
+                      ? "rounded-md"
+                      : "rounded-md dark:bg-white dark:px-3 dark:py-2 dark:shadow-sm"
+                  }
+                >
+                  {marca.logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      data-testid="logo-da-fachada"
+                      src={marca.logoUrl}
+                      alt={marca.nome}
+                      className={
+                        marca.logoDarkUrl
+                          ? "h-auto max-h-20 w-auto max-w-[12rem] object-contain dark:hidden"
+                          : "h-auto max-h-20 w-auto max-w-[12rem] object-contain"
+                      }
+                    />
+                  ) : (
+                    <span className="dark:hidden">{marca.nome}</span>
+                  )}
+                  {marca.logoDarkUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      data-testid="logo-escuro-da-fachada"
+                      src={marca.logoDarkUrl}
+                      alt={marca.nome}
+                      className="hidden h-auto max-h-20 w-auto max-w-[12rem] object-contain dark:block"
+                    />
+                  ) : null}
+                </div>
               </div>
-            </div>
-          ) : marcaEhADoProduto({ name: marca.nome, logoUrl: null }) ? (
-            <div className="flex justify-start">
-              <LogotipoDoProduto nome={marca.nome} sobreEscuro className="h-10 w-auto" />
-            </div>
-          ) : null}
+            ) : marcaEhADoProduto({ name: marca.nome, logoUrl: null }) ? (
+              <div className="flex justify-start">
+                <LogotipoDoProduto nome={marca.nome} sobreEscuro className="h-10 w-auto" />
+              </div>
+            ) : null}
           </div>
-          <div className="hidden lg:block">
-            <p className="max-w-[12ch] font-display text-4xl leading-[1.05] font-semibold tracking-[-0.03em] text-white">
-              {t("O elo inteligente do seu")}{" "}
+          <div className="relative z-[1] hidden lg:block">
+            <p className="mb-4 flex items-center gap-2 font-mono text-[10.5px] tracking-[0.18em] text-cta uppercase before:h-1.5 before:w-1.5 before:rounded-full before:bg-cta">
+              {t("O CRM da ArvisX")}
+            </p>
+            <p className="max-w-[14ch] font-display text-4xl leading-[1.05] font-semibold tracking-[-0.03em] text-white">
+              {t("O WhatsApp chega.")}
+              <br />
+              {t("A")}{" "}
               <span className="bg-[linear-gradient(100deg,#f1d47c,#d4af37_45%,#b87a2e)] bg-clip-text text-transparent">
-                {t("ecossistema")}
-              </span>
-              .
+                {t("IA")}
+              </span>{" "}
+              {t("atende e vende.")}
             </p>
             <p className="mt-4 max-w-[44ch] text-[15px] text-sidebar-foreground">
-              {t("Agentes de IA que atendem, qualificam e vendem no WhatsApp, dentro do CRM da sua empresa.")}
+              {t(
+                "Agentes de IA que atendem, qualificam e vendem no WhatsApp, dentro do CRM da sua empresa.",
+              )}
             </p>
             <div className="relative mt-6 h-px w-28 bg-sidebar-border after:absolute after:top-[-3px] after:left-0 after:h-[7px] after:w-[7px] after:rounded-full after:bg-cta" />
           </div>
+          <ul className="relative z-[1] hidden gap-2.5 text-sm text-sidebar-foreground lg:grid">
+            <li className="flex items-center gap-2.5">
+              <Inbox size={18} className="text-cta" aria-hidden />
+              {t("Inbox com a IA e a equipe lado a lado")}
+            </li>
+            <li className="flex items-center gap-2.5">
+              <Kanban size={18} className="text-cta" aria-hidden />
+              {t("Funil, agenda e propostas no mesmo lugar")}
+            </li>
+            <li className="flex items-center gap-2.5">
+              <ShieldCheck size={18} className="text-cta" aria-hidden />
+              {t("Seus dados no seu servidor, com LGPD")}
+            </li>
+          </ul>
+          {/* A marca em marca d'água: fundo em CSS, e não <img>, porque a fachada
+              "sem <img>" é como tests/e2e/marca-logo.spec.ts mede "sem logo de revendedor". */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-[6%] -bottom-[8%] hidden aspect-[1040/716] w-[66%] max-w-[680px] bg-contain bg-no-repeat opacity-[0.16] lg:block"
+            style={{ backgroundImage: "url(/marca/arvisx-simbolo-fundo.webp)" }}
+          />
+          <span
+            aria-hidden
+            className="absolute top-[22%] right-[18%] hidden h-2 w-2 rounded-full bg-cta shadow-[0_0_18px_4px_rgba(212,175,55,0.35)] lg:block"
+          />
+          <span
+            aria-hidden
+            className="absolute right-[36%] bottom-[30%] hidden h-[5px] w-[5px] rounded-full bg-cta shadow-[0_0_18px_4px_rgba(212,175,55,0.35)] lg:block"
+          />
+          <span
+            aria-hidden
+            className="absolute right-[9%] bottom-[44%] hidden h-1 w-1 rounded-full bg-cta opacity-70 shadow-[0_0_18px_4px_rgba(212,175,55,0.35)] lg:block"
+          />
           <p className="hidden font-mono text-[11px] tracking-[0.08em] text-sidebar-muted uppercase lg:block">
             {marca.nome}
           </p>
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-36 -bottom-36 hidden h-[460px] w-[460px] rounded-full border border-cta/35 before:absolute before:top-[-5px] before:left-1/2 before:h-2.5 before:w-2.5 before:rounded-full before:bg-cta after:absolute after:inset-[60px] after:rounded-full after:border after:border-cta/20 lg:block"
-          />
         </section>
         <div className="flex items-center justify-center p-6 lg:p-10">
-          <div className="w-full max-w-sm space-y-6">
-            {children}
-          </div>
+          <div className="w-full max-w-sm space-y-6">{children}</div>
         </div>
       </div>
     </IdiomaProvider>
