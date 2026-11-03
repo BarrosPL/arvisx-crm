@@ -42,6 +42,7 @@
     ".next",
     "dist",
     "scripts/**",
+    "deploy/**",
     "**/*.test.ts",
     "**/*.test.tsx",
     "tests/**"
