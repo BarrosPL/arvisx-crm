@@ -202,7 +202,7 @@ export function SidebarContent({
           collapsed ? (
             <SimboloDoProduto nome={nome} sobreEscuro className="h-8 w-8" />
           ) : (
-            <LogotipoDoProduto nome={nome} sobreEscuro className="h-8 w-auto" />
+            <LogotipoDoProduto nome={nome} sobreEscuro className="h-auto w-full max-w-[170px]" />
           )
         ) : (
           <span
