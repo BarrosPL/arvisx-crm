@@ -7,6 +7,8 @@ import { IdiomaProvider } from "@/lib/i18n/IdiomaProvider";
 import { idiomaDoVisitante } from "@/lib/i18n/idiomaAnonimo";
 import { traduzir } from "@/lib/i18n/dicionario";
 
+import "./fachada.css";
+
 /**
  * A casca das telas de acesso — login, cadastro, recuperação, MFA, confirmar acesso.
  *
@@ -84,8 +86,8 @@ export default async function PublicLayout({ children }: { children: React.React
         data-theme="light"
         className="grid min-h-screen grid-cols-1 bg-background text-text [color-scheme:light] lg:grid-cols-[1.1fr_1fr]"
       >
-        <section className="relative flex flex-col justify-between gap-6 overflow-hidden bg-sidebar px-6 py-7 text-white lg:px-14 lg:py-10">
-          <div className="flex justify-start [&_img]:max-h-12">
+        <section className="fachada-painel relative flex flex-col justify-between gap-6 overflow-hidden bg-sidebar px-6 py-7 text-white lg:px-14 lg:py-10">
+          <div className="relative z-[1] flex justify-start [&_img]:max-h-12">
             {marca.logoUrl || marca.logoDarkUrl ? (
               <div className="flex justify-start">
                 {/*
@@ -156,7 +158,7 @@ export default async function PublicLayout({ children }: { children: React.React
               </span>{" "}
               {t("atende e vende.")}
             </p>
-            <p className="mt-4 max-w-[44ch] text-[15px] text-sidebar-foreground">
+            <p className="mt-4 max-w-[34ch] text-[15px] text-sidebar-foreground">
               {t(
                 "Agentes de IA que atendem, qualificam e vendem no WhatsApp, dentro do CRM da sua empresa.",
               )}
@@ -177,24 +179,78 @@ export default async function PublicLayout({ children }: { children: React.React
               {t("Seus dados no seu servidor, com LGPD")}
             </li>
           </ul>
-          {/* A marca em marca d'água: fundo em CSS, e não <img>, porque a fachada
-              "sem <img>" é como tests/e2e/marca-logo.spec.ts mede "sem logo de revendedor". */}
-          <div
+          {/*
+            O serviço em si, no lugar de uma marca d'água: um cartão de WhatsApp
+            em que o lead escreve, o agente responde e o CRM registra o lead no
+            funil, em loop (app/(public)/fachada.css). Decorativo (`aria-hidden`)
+            e sem <img>: a fachada "sem <img>" é como tests/e2e/marca-logo.spec.ts
+            mede "sem logo de revendedor". Só no desktop; no celular o painel é
+            uma faixa com o logo.
+          */}
+          <div aria-hidden className="fa-telefone hidden lg:block">
+            <div className="fa-cabeca">
+              <span className="fa-avatar">M</span>
+              <div className="fa-quem">
+                <b>Marina Costa</b>
+                <span>{t("Agente de IA atendendo")}</span>
+              </div>
+              <svg
+                className="fa-zap"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 20l1.5-4.5A8 8 0 1 1 8.5 18.5z" />
+              </svg>
+            </div>
+            <div className="fa-conversa">
+              <div className="fa-msg fa-lead">
+                <div className="fa-miolo">
+                  {t("Oi! Vi o anúncio de vocês. Como funciona e quanto custa?")}
+                </div>
+              </div>
+              <div className="fa-msg fa-digitando">
+                <div className="fa-miolo">
+                  <i />
+                  <i />
+                  <i />
+                </div>
+              </div>
+              <div className="fa-msg fa-ia">
+                <div className="fa-miolo">
+                  <b>{t("Agente de IA")}</b>
+                  {t(
+                    "Oi, Marina! Que bom que chegou. Me conta o que você precisa, que eu já te explico como funciona e te passo os valores?",
+                  )}
+                </div>
+              </div>
+              <div className="fa-msg fa-toast">
+                <div className="fa-miolo">
+                  <i>&#10003;</i>
+                  <span>
+                    {t("Lead criado no funil")}{" "}
+                    <em>
+                      {t("Vendas")} &middot; {t("Primeiro contato")}
+                    </em>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <span
             aria-hidden
-            className="pointer-events-none absolute -right-[6%] -bottom-[8%] hidden aspect-[1040/716] w-[66%] max-w-[680px] bg-contain bg-no-repeat opacity-[0.16] lg:block"
-            style={{ backgroundImage: "url(/marca/arvisx-simbolo-fundo.webp)" }}
+            className="fa-ponto absolute top-[22%] right-[18%] hidden h-2 w-2 rounded-full bg-cta shadow-[0_0_18px_4px_rgba(212,175,55,0.35)] lg:block"
           />
           <span
             aria-hidden
-            className="absolute top-[22%] right-[18%] hidden h-2 w-2 rounded-full bg-cta shadow-[0_0_18px_4px_rgba(212,175,55,0.35)] lg:block"
+            className="fa-ponto absolute right-[36%] bottom-[30%] hidden h-[5px] w-[5px] rounded-full bg-cta shadow-[0_0_18px_4px_rgba(212,175,55,0.35)] lg:block"
           />
           <span
             aria-hidden
-            className="absolute right-[36%] bottom-[30%] hidden h-[5px] w-[5px] rounded-full bg-cta shadow-[0_0_18px_4px_rgba(212,175,55,0.35)] lg:block"
-          />
-          <span
-            aria-hidden
-            className="absolute right-[9%] bottom-[44%] hidden h-1 w-1 rounded-full bg-cta opacity-70 shadow-[0_0_18px_4px_rgba(212,175,55,0.35)] lg:block"
+            className="fa-ponto absolute top-[36%] right-[52%] hidden h-1 w-1 rounded-full bg-cta opacity-70 shadow-[0_0_18px_4px_rgba(212,175,55,0.35)] lg:block"
           />
           <p className="hidden font-mono text-[11px] tracking-[0.08em] text-sidebar-muted uppercase lg:block">
             {marca.nome}

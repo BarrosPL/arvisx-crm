@@ -134,7 +134,7 @@ export default async function HomePage() {
               <div className="conversa" aria-hidden="true">
                 <div className="msg lead">
                   <div className="miolo-msg">
-                    Oi! Quero saber sobre cidadania italiana. Como funciona?
+                    Oi! Vi o anúncio de vocês. Como funciona e quanto custa?
                   </div>
                 </div>
                 <div className="msg digitando">
@@ -146,15 +146,15 @@ export default async function HomePage() {
                 </div>
                 <div className="msg ia">
                   <div className="miolo-msg">
-                    <b>Agente de IA</b>Oi, Marina! Que bom. Me conta de quem é o sobrenome italiano
-                    na família, para eu entender o seu caso?
+                    <b>Agente de IA</b>Oi, Marina! Que bom que chegou. Me conta o que você precisa,
+                    que eu já te explico como funciona e te passo os valores?
                   </div>
                 </div>
                 <div className="msg toast">
                   <div className="miolo-msg">
                     <i>&#10003;</i>
                     <span>
-                      Lead criado no funil <em>Cidadania Italiana &middot; Primeiro contato</em>
+                      Lead criado no funil <em>Vendas &middot; Primeiro contato</em>
                     </span>
                   </div>
                 </div>
