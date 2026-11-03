@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>ARVISX CRM | O CRM com agentes de IA que atendem e vendem no WhatsApp</title>
+  <meta name="description" content="ARVISX CRM: inbox do WhatsApp com agentes de IA, funis, follow-ups automáticos, agenda, propostas e análise, na sua marca e no seu servidor." />
+  <meta name="grupo" content="Entrada" />
+
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css?v=20261103" />
+  <style>
+    /* O que esta página acrescenta à folha do site: a marca do produto no topo e
+       a vitrine de telas. O resto é a mesma folha de arvisx.com.br. */
+    .topo .marca img { height: 26px; width: auto; }
+    .rodape .marca img { height: 22px; width: auto; }
+    .prova-marca { height: 24px; width: auto; }
+
+    .telas { padding: clamp(64px, 9vw, 120px) var(--lado); }
+    .telas .cabeca { margin-bottom: 40px; }
+    .vitrine { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; max-width: var(--largura); margin: 0 auto; }
+    .tela {
+      position: relative; border-radius: var(--r-lg); overflow: hidden;
+      border: 1px solid var(--linha); background: var(--painel);
+      box-shadow: 0 40px 80px -40px rgba(0, 0, 0, .8);
+    }
+    .tela img { width: 100%; height: 100%; object-fit: cover; object-position: top left; display: block; }
+    .tela.principal { grid-row: span 2; aspect-ratio: 16 / 10; }
+    .tela.lado { aspect-ratio: 16 / 9; }
+    .tela figcaption {
+      position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 18px;
+      background: linear-gradient(to top, rgba(7, 9, 13, .92), rgba(7, 9, 13, 0));
+      font: 500 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--apoio);
+    }
+    .tela figcaption b { color: var(--ouro); font-weight: 500; }
+    .tela::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      box-shadow: inset 0 0 0 1px rgba(212, 175, 55, .12);
+    }
+
+    .marca-propria { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+    .amostras { display: grid; gap: 12px; }
+    .amostra {
+      display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+      border: 1px solid var(--linha); border-radius: var(--r); background: var(--painel);
+    }
+    .amostra i { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; font: 600 11px/1 var(--mono); color: #0f131a; flex: none; }
+    .amostra b { display: block; font-weight: 700; }
+    .amostra small { color: var(--apoio); font-size: 12.5px; }
+    .amostra .botao-mini { margin-left: auto; height: 26px; padding: 0 10px; border-radius: 6px; font: 600 11px/26px var(--sans); color: #0f131a; }
+
+    @media (max-width: 900px) {
+      .vitrine { grid-template-columns: 1fr; }
+      .tela.principal { grid-row: auto; }
+      .marca-propria { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <a class="pular" href="#inicio">Pular para o conteúdo</a>
+
+  <header class="topo" id="topo">
+    <a class="marca" href="#inicio" aria-label="ARVISX CRM, início">
+      <img src="img/arvisx-crm.png" alt="ARVISX CRM" />
+    </a>
+
+    <button class="menu" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="links">
+      <span></span><span></span>
+    </button>
+
+    <nav class="links" id="links" aria-label="Principal">
+      <a href="#recursos">Recursos</a>
+      <a href="#agentes">Agentes de IA</a>
+      <a href="#telas">Por dentro</a>
+      <a href="#marca">Sua marca</a>
+      <a href="https://arvisx.com.br/">ARVISX AI</a>
+      <a class="cta cta-menu" href="#contato">Agendar demonstração <b>↗</b></a>
+    </nav>
+
+    <a class="cta" href="#contato">Agendar demonstração <b>↗</b></a>
+    <span class="topo-progresso" aria-hidden="true"></span>
+  </header>
+
+  <main>
+    <!-- ------------------------------- hero ------------------------------- -->
+    <section class="hero" id="inicio">
+      <canvas class="hero-campo" aria-hidden="true"></canvas>
+      <div class="hero-grade" aria-hidden="true"></div>
+
+      <div class="hero-corpo">
+        <div class="hero-texto">
+          <p class="etiqueta" data-decifrar>O CRM DA ARVISX</p>
+          <h1><span class="oco">O WhatsApp chega.</span><br />A <strong>IA</strong> <span class="junto">atende e vende.</span></h1>
+          <p class="hero-sub">
+            Um CRM com agentes de inteligência artificial nativos: eles respondem,
+            qualificam, agendam e fazem follow-up no WhatsApp, enquanto o seu
+            time vê tudo no mesmo lugar — funil, agenda, propostas e resultado.
+          </p>
+          <div class="acoes">
+            <a class="botao primario" href="#contato">Agendar uma demonstração <span>↗</span></a>
+            <a class="botao fantasma" href="#recursos">Ver o que ele faz <span>↓</span></a>
+          </div>
+          <p class="hero-nota">INBOX · AGENTES · FUNIS · FOLLOW-UP · AGENDA · ANÁLISE — NUM SISTEMA SÓ</p>
+        </div>
+
+        <div class="nucleo" data-nucleo aria-hidden="true"></div>
+      </div>
+
+      <div class="marcas">
+        <p>Operações do ecossistema ARVISX que já atendem com IA</p>
+        <div class="esteira" data-esteira>
+          <ul>
+            <li><img src="img/clientes/voce-na-europa.png" alt="Você na Europa" /></li>
+            <li><img src="img/clientes/vem-de-visto.png" alt="Vem de Visto" /></li>
+            <li><img src="img/clientes/perrotti.png" alt="Perrotti Sociedade de Advogados" /></li>
+            <li><img src="img/clientes/nesso-viaggi.png" alt="Nesso Viaggi" /></li>
+            <li><img src="img/clientes/alvance.png" alt="Alvance Consórcio e Seguros" /></li>
+            <li><img src="img/clientes/daiana-perrotti.png" alt="Daiana Perrotti" /></li>
+            <li><img src="img/clientes/renan-perrotti.png" alt="Renan Perrotti" /></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <svg class="fio" aria-hidden="true"></svg>
+
+    <!-- ------------------------------ prova ------------------------------- -->
+    <section class="prova revelar">
+      <img class="prova-marca" src="img/arvisx-crm.png" alt="ARVISX CRM" />
+      <p>Não é um chatbot preso a uma ferramenta. <strong>É a operação comercial inteira, com a IA dentro.</strong></p>
+      <span class="prova-linha" aria-hidden="true"></span>
+    </section>
+
+    <!-- ----------------------------- recursos ------------------------------ -->
+    <section class="secao" id="recursos">
+      <div class="cabeca">
+        <p class="etiqueta" data-decifrar>O QUE VEM DENTRO</p>
+        <h2 class="revelar">Tudo que a venda precisa,<br />em <em>uma tela.</em></h2>
+        <p class="cabeca-texto revelar">
+          Conversa, funil, agenda, proposta e número: o ARVISX CRM junta o que
+          hoje mora em cinco ferramentas, e põe um agente de IA trabalhando em
+          cada etapa.
+        </p>
+      </div>
+
+      <div class="servicos">
+        <article class="servico revelar" data-luz>
+          <div class="servico-topo"><span>01</span><a href="#contato" aria-label="Saber mais sobre o Inbox">↗</a></div>
+          <svg class="icone ic-sinal" viewBox="0 0 48 48" aria-hidden="true">
+            <path class="ic-onda o1" d="M17 17a10 10 0 0 0 0 14M31 17a10 10 0 0 1 0 14" />
+            <path class="ic-onda o2" d="M11 11a18.5 18.5 0 0 0 0 26M37 11a18.5 18.5 0 0 1 0 26" />
+            <circle class="ic-centro" cx="24" cy="24" r="4" />
+          </svg>
+          <h3>Inbox do WhatsApp com IA</h3>
+          <p>As conversas de WhatsApp com você e a IA atendendo lado a lado. Fila, atendentes, notas internas e passagem para humano com resumo.</p>
+        </article>
+
+        <article class="servico revelar" data-luz>
+          <div class="servico-topo"><span>02</span><a href="#contato" aria-label="Saber mais sobre Funis">↗</a></div>
+          <svg class="icone ic-funil" viewBox="0 0 48 48" aria-hidden="true">
+            <rect class="ic-barra" x="6" y="9" width="36" height="7" rx="2" />
+            <rect class="ic-barra" x="12" y="20.5" width="24" height="7" rx="2" />
+            <rect class="ic-barra" x="18" y="32" width="12" height="7" rx="2" />
+          </svg>
+          <h3>Funis e contatos</h3>
+          <p>Quadro por etapas com valor, dono, probabilidade e tempo parado. Ficha completa do cliente com histórico, tags e carteira.</p>
+        </article>
+
+        <article class="servico revelar" data-luz>
+          <div class="servico-topo"><span>03</span><a href="#contato" aria-label="Saber mais sobre Agentes">↗</a></div>
+          <svg class="icone ic-ia" viewBox="0 0 48 48" aria-hidden="true">
+            <path class="ic-traco" d="M12 12 24 24M36 12 24 24M12 36 24 24M36 36 24 24M12 12h24M12 36h24" />
+            <circle class="ic-no" cx="12" cy="12" r="3.2" /><circle class="ic-no" cx="36" cy="12" r="3.2" />
+            <circle class="ic-no" cx="12" cy="36" r="3.2" /><circle class="ic-no" cx="36" cy="36" r="3.2" />
+            <circle class="ic-centro" cx="24" cy="24" r="5" />
+          </svg>
+          <h3>Agentes de IA configuráveis</h3>
+          <p>Instruções, modelo, base de conhecimento, skills e roteadores. Publicação com versão, teste antes de ir ao ar e orçamento mensal.</p>
+        </article>
+
+        <article class="servico revelar" data-luz>
+          <div class="servico-topo"><span>04</span><a href="#contato" aria-label="Saber mais sobre Follow-ups">↗</a></div>
+          <svg class="icone ic-auto" viewBox="0 0 48 48" aria-hidden="true">
+            <g class="ic-giro">
+              <path class="ic-traco" d="M38 20a15 15 0 0 0-27.4-5.6M10 28a15 15 0 0 0 27.4 5.6" />
+              <path class="ic-traco" d="M10 8v7h7M38 40v-7h-7" />
+            </g>
+            <circle class="ic-centro" cx="24" cy="24" r="4" />
+          </svg>
+          <h3>Follow-ups e Radar</h3>
+          <p>Fluxos que retomam a conversa que esfriou, para nenhuma morrer no silêncio. O Radar mostra quem está em risco antes de perder.</p>
+        </article>
+
+        <article class="servico revelar" data-luz>
+          <div class="servico-topo"><span>05</span><a href="#contato" aria-label="Saber mais sobre Agenda e propostas">↗</a></div>
+          <svg class="icone ic-agenda" viewBox="0 0 48 48" aria-hidden="true">
+            <circle class="ic-traco" cx="24" cy="25" r="16" />
+            <path class="ic-traco" d="M24 4v4M16 4.5l1.5 3.5M32 4.5 30.5 8" />
+            <path class="ic-ponteiro" d="M24 25V15" /><path class="ic-ponteiro-curto" d="M24 25h7" />
+            <circle class="ic-centro" cx="24" cy="25" r="2.4" />
+          </svg>
+          <h3>Agenda, propostas e campanhas</h3>
+          <p>A IA marca, confirma e remarca. Propostas saem de modelos com revisão humana. Campanhas falam com a lista certa no ritmo do número.</p>
+        </article>
+
+        <article class="servico revelar" data-luz>
+          <div class="servico-topo"><span>06</span><a href="#contato" aria-label="Saber mais sobre Análise">↗</a></div>
+          <svg class="icone ic-dados" viewBox="0 0 48 48" aria-hidden="true">
+            <path class="ic-traco" d="M5 42h38" />
+            <rect class="ic-coluna c1" x="8" y="30" width="6" height="12" rx="1.5" />
+            <rect class="ic-coluna c2" x="17" y="23" width="6" height="19" rx="1.5" />
+            <rect class="ic-coluna c3" x="26" y="16" width="6" height="26" rx="1.5" />
+            <rect class="ic-coluna c4" x="35" y="7" width="6" height="35" rx="1.5" />
+          </svg>
+          <h3>Análise e evolução da IA</h3>
+          <p>Funil e desempenho por atendente, custo da IA, Meta Ads, e onde o agente erra e o que falta ensinar.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- --------------------------- fluxo / sistema ------------------------- -->
+    <section class="secao sistema" id="fluxo">
+      <div class="sistema-texto">
+        <p class="etiqueta" data-decifrar>O CAMINHO DO LEAD</p>
+        <h2 class="revelar">Da primeira mensagem<br />ao <em>fechamento.</em></h2>
+        <p class="revelar">
+          Cada mensagem entra pelo WhatsApp, passa pelo agente, vira negócio no
+          funil e segue com follow-up até a proposta. Quando precisa de gente, a
+          conversa chega ao atendente com o resumo pronto.
+        </p>
+        <a class="botao primario revelar" href="#contato">Quero ver funcionando <span>↗</span></a>
+      </div>
+
+      <div class="fluxo revelar" data-fluxo>
+        <div class="fluxo-topo">
+          <span>ARVISX CRM / FLUXO</span>
+          <b>OPERAÇÃO ATIVA <i aria-hidden="true"></i></b>
+        </div>
+
+        <div class="fluxo-trilho">
+          <div class="etapa entrada"><span>01</span><b>Mensagem no WhatsApp</b><i>→</i></div>
+          <div class="etapa entrada"><span>02</span><b>Anúncio, site ou loja</b><i>→</i></div>
+          <div class="etapa"><span>03</span><b>Agente de IA atende e qualifica</b><i>IA</i></div>
+          <div class="etapa"><span>04</span><b>Negócio no funil</b><i>→</i></div>
+          <div class="etapa"><span>05</span><b>Agenda &amp; Follow-up</b><i>→</i></div>
+          <div class="etapa"><span>06</span><b>Proposta &amp; Desempenho</b><i>→</i></div>
+        </div>
+
+        <div class="fluxo-pe">
+          <span>LEADS EM MOVIMENTO</span>
+          <b>● ONLINE</b>
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------ telas -------------------------------- -->
+    <section class="telas" id="telas">
+      <div class="cabeca">
+        <p class="etiqueta" data-decifrar>POR DENTRO</p>
+        <h2 class="revelar">Feito para quem fica<br />o dia inteiro <em>na tela.</em></h2>
+        <p class="cabeca-texto revelar">
+          Claro, direto e no celular também. O atendente vê a conversa, a ficha e
+          o funil sem trocar de aba; o gestor vê o número.
+        </p>
+      </div>
+
+      <div class="vitrine revelar">
+        <figure class="tela principal">
+          <img src="img/telas/inbox.png" alt="Inbox do ARVISX CRM: lista de conversas, conversa aberta com o agente de IA e ficha do contato" />
+          <figcaption><b>Inbox</b> · a IA atende, a fila mostra quem espera, a ficha fica ao lado</figcaption>
+        </figure>
+        <figure class="tela lado">
+          <img src="img/telas/funil-quadro.png" alt="Quadro do funil de vendas com etapas, valores e negócios esfriando" />
+          <figcaption><b>Funis</b> · valor, dono, probabilidade e o que esfriou</figcaption>
+        </figure>
+        <figure class="tela lado">
+          <img src="img/telas/agente-editor.png" alt="Editor do agente de IA: instruções, freios e publicação" />
+          <figcaption><b>Agentes</b> · instruções, freios, teste e publicação com versão</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ------------------------------ agentes ------------------------------- -->
+    <section class="secao" id="agentes">
+      <div class="cabeca">
+        <p class="etiqueta" data-decifrar>AGENTES DE INTELIGÊNCIA ARTIFICIAL</p>
+        <h2 class="revelar">Quem atende por você,<br /><em>sem deixar escapar.</em></h2>
+        <p class="cabeca-texto revelar">
+          Cada agente tem instruções, limites e ferramentas próprias. Eles
+          conversam, consultam a base da sua empresa, executam ações e sabem a
+          hora de chamar uma pessoa.
+        </p>
+      </div>
+
+      <div class="agentes" data-agentes>
+        <article class="agente revelar">
+          <div class="agente-topo">
+            <div class="agente-ic" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.6 9.6 0 0 1-2.9-.4L3 21l1.6-4.6A8.2 8.2 0 0 1 3 11.5 8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z" />
+                <path d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01" />
+              </svg>
+            </div>
+            <span>01</span>
+          </div>
+          <h3>Primeiro atendimento</h3>
+          <p>Responde em segundos no WhatsApp, entende a intenção, coleta os dados certos e abre o negócio no funil.</p>
+          <small class="rota"><span>WHATSAPP</span> → <span>FUNIL</span> → <span>PRÓXIMA AÇÃO</span></small>
+        </article>
+
+        <article class="agente revelar">
+          <div class="agente-topo">
+            <div class="agente-ic" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h18l-7 8.2V20l-4 1.5v-8.8z" /></svg>
+            </div>
+            <span>02</span>
+          </div>
+          <h3>Qualificação por roteiro</h3>
+          <p>Conduz as perguntas que você define e guarda as respostas na ficha do cliente. Roteadores decidem qual agente pega qual conversa.</p>
+          <small class="rota"><span>WHATSAPP</span> → <span>FUNIL</span> → <span>PRÓXIMA AÇÃO</span></small>
+        </article>
+
+        <article class="agente revelar">
+          <div class="agente-topo">
+            <div class="agente-ic" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4" /><path d="m9 15 2 2 4-4" /></svg>
+            </div>
+            <span>03</span>
+          </div>
+          <h3>Agendamento</h3>
+          <p>Consulta a agenda da equipe, marca, confirma e remarca; avisa no WhatsApp cada horário marcado e manda o resumo das 7h.</p>
+          <small class="rota"><span>WHATSAPP</span> → <span>AGENDA</span> → <span>PRÓXIMA AÇÃO</span></small>
+        </article>
+
+        <article class="agente revelar">
+          <div class="agente-topo">
+            <div class="agente-ic" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2.5H7a2.5 2.5 0 0 0-2.5 2.5v14A2.5 2.5 0 0 0 7 21.5h10a2.5 2.5 0 0 0 2.5-2.5V8z" /><path d="M14 2.5V8h5.5M8.5 13h7M8.5 17h4.5" /></svg>
+            </div>
+            <span>04</span>
+          </div>
+          <h3>Proposta</h3>
+          <p>Prepara a proposta a partir da conversa e do modelo da empresa. Você confere antes de enviar; nada sai sem aprovação.</p>
+          <small class="rota"><span>CONVERSA</span> → <span>PROPOSTA</span> → <span>APROVAÇÃO</span></small>
+        </article>
+
+        <article class="agente revelar">
+          <div class="agente-topo">
+            <div class="agente-ic" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+            </div>
+            <span>05</span>
+          </div>
+          <h3>Follow-up</h3>
+          <p>Retoma a conversa que esfriou no tempo certo, com texto da IA ou fixo, e para na hora que o cliente responde.</p>
+          <small class="rota"><span>SILÊNCIO</span> → <span>RETOMADA</span> → <span>RESPOSTA</span></small>
+        </article>
+
+        <article class="agente revelar">
+          <div class="agente-topo">
+            <div class="agente-ic" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 7v5c0 5 3.4 8.4 8 9 4.6-.6 8-4 8-9V7z" /><path d="m9 12 2 2 4-4" /></svg>
+            </div>
+            <span>06</span>
+          </div>
+          <h3>Passagem para humano</h3>
+          <p>Quando trava em algo que só uma pessoa resolve, abre um caso com o resumo, o que já tentou e o que o cliente quer, e segue conversando até a resposta.</p>
+          <small class="rota"><span>IA</span> → <span>CASO</span> → <span>ATENDENTE</span></small>
+        </article>
+      </div>
+    </section>
+
+    <!-- ---------------------------- marca própria --------------------------- -->
+    <section class="secao" id="marca">
+      <div class="marca-propria">
+        <div>
+          <p class="etiqueta" data-decifrar>SUA MARCA, SEU SERVIDOR</p>
+          <h2 class="revelar">O CRM com o <em>seu nome.</em></h2>
+          <p class="cabeca-texto revelar" style="margin: 0 0 24px">
+            Nome, cor e logo da sua empresa em todas as telas, nos e-mails e no
+            ícone do celular. Os dados ficam num servidor seu, com LGPD de fábrica:
+            anonimização, exportação e auditoria de quem fez o quê.
+          </p>
+          <a class="botao fantasma revelar" href="#contato">Falar sobre a implantação <span>↗</span></a>
+        </div>
+
+        <div class="amostras revelar">
+          <div class="amostra">
+            <i style="background: #d4af37">AX</i>
+            <div><b>ARVISX CRM</b><small>Padrão da plataforma</small></div>
+            <span class="botao-mini" style="background: #d4af37">Entrar</span>
+          </div>
+          <div class="amostra">
+            <i style="background: #0f766e; color: #fff">CV</i>
+            <div><b>Clínica Vitalis</b><small>Sua cor em botões, links e foco</small></div>
+            <span class="botao-mini" style="background: #0f766e; color: #fff">Entrar</span>
+          </div>
+          <div class="amostra">
+            <i style="background: #2563eb; color: #fff">OS</i>
+            <div><b>Odonto Sul</b><small>Logo próprio na barra e no login</small></div>
+            <span class="botao-mini" style="background: #2563eb; color: #fff">Entrar</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------- método -------------------------------- -->
+    <section class="secao metodo" id="metodo">
+      <div class="cabeca">
+        <p class="etiqueta" data-decifrar>COMO COMEÇA</p>
+        <h2 class="revelar">Do diagnóstico ao agente no ar<br /><em>em dias, não meses.</em></h2>
+      </div>
+
+      <div class="passos" data-passos>
+        <span class="passos-trilho" aria-hidden="true"><i></i></span>
+        <article class="passo">
+          <span>01</span>
+          <h3>Diagnóstico</h3>
+          <p>Mapeamos canais, oferta, equipe e o caminho que o lead faz hoje.</p>
+        </article>
+        <article class="passo">
+          <span>02</span>
+          <h3>Implantação</h3>
+          <p>Servidor, número de WhatsApp conectado, funil e marca da sua empresa.</p>
+        </article>
+        <article class="passo">
+          <span>03</span>
+          <h3>Agente treinado</h3>
+          <p>Instruções, base de conhecimento, roteiros e follow-ups do seu negócio.</p>
+        </article>
+        <article class="passo">
+          <span>04</span>
+          <h3>Operação assistida</h3>
+          <p>Acompanhamos os primeiros atendimentos e ajustamos pelos números.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ------------------------------- contato -------------------------------- -->
+    <section class="contato" id="contato">
+      <div class="contato-orbitas" aria-hidden="true"><span></span><span></span><span></span></div>
+
+      <div class="contato-texto">
+        <p class="etiqueta" data-decifrar>VEJA COM OS SEUS DADOS</p>
+        <h2 class="revelar">Uma conversa, e você vê<br />o agente <em>atendendo.</em></h2>
+        <p class="revelar">Agende uma demonstração: mostramos o ARVISX CRM com o cenário da sua empresa e desenhamos a implantação.</p>
+        <a class="botao primario grande revelar" href="https://instagram.com/arvisxai" target="_blank" rel="noopener">Agendar demonstração <span>↗</span></a>
+
+        <div class="redes revelar">
+          <a href="https://instagram.com/arvisxai" target="_blank" rel="noopener" aria-label="Instagram @arvisxai" title="Instagram @arvisxai">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="5.2" /><circle cx="12" cy="12" r="4.1" /><circle cx="17.4" cy="6.6" r="1.15" fill="currentColor" stroke="none" />
+            </svg>
+          </a>
+        </div>
+
+        <small>ARVISX CRM • UM PRODUTO ARVISX AI</small>
+      </div>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    <a class="marca" href="#inicio"><img src="img/arvisx-crm.png" alt="ARVISX CRM" /></a>
+    <p>O elo inteligente do seu ecossistema.</p>
+    <nav aria-label="Rodapé">
+      <a href="#recursos">Recursos</a>
+      <a href="#agentes">Agentes de IA</a>
+      <a href="#marca">Sua marca</a>
+      <a href="https://arvisx.com.br/">ARVISX AI</a>
+      <a href="#contato">Contato</a>
+    </nav>
+  </footer>
+
+  <script src="js/main.js?v=20261103" defer></script>
+  <script src="js/hero.js?v=20261103" defer></script>
+</body>
+</html>
