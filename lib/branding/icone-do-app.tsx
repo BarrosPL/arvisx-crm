@@ -89,9 +89,9 @@ export async function gerarIconeDoApp(
             width={Math.round(caixa * 0.78)}
             height={Math.round(caixa * 0.78)}
           >
-            <g fill={CORES_DA_MARCA.claro.simbolo} transform={SIMBOLO.transform}>
-              <path d={SIMBOLO.d} />
-              <rect {...SIMBOLO.modulo} />
+            <g transform={SIMBOLO.transform}>
+              <path d={SIMBOLO.d} fill={CORES_DA_MARCA.claro.nome} fillRule="evenodd" />
+              <path d={SIMBOLO.aneis} fill={CORES_DA_MARCA.claro.simbolo} fillRule="evenodd" />
             </g>
           </svg>
         ) : (

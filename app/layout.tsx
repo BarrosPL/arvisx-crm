@@ -49,11 +49,30 @@ const atkinson = localFont({
   variable: "--font-atkinson",
 });
 
-const plexMono = localFont({
+// ArvisX: Manrope no texto, Archivo (eixo de largura) nos títulos, JetBrains Mono
+// em números e etiquetas. A Atkinson continua carregada para quem ainda a cita.
+const manrope = localFont({
+  src: "./fonts/manrope-200-800-latin.woff2",
+  weight: "200 800",
+  style: "normal",
+  display: "swap",
+  variable: "--font-manrope",
+});
+
+const archivo = localFont({
   src: [
-    { path: "./fonts/ibm-plex-mono-400-latin-latin-ext.woff2", weight: "400", style: "normal" },
-    { path: "./fonts/ibm-plex-mono-500-latin-latin-ext.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/archivo-variable-latin.woff2", style: "normal" },
+    { path: "./fonts/archivo-variable-latin-ext.woff2", style: "normal" },
   ],
+  weight: "100 900",
+  display: "swap",
+  variable: "--font-archivo",
+});
+
+const plexMono = localFont({
+  src: "./fonts/jetbrains-mono-100-800-latin.woff2",
+  weight: "100 800",
+  style: "normal",
   display: "swap",
   variable: "--font-mono",
 });
@@ -336,7 +355,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       lang="pt-BR"
       data-theme="light"
       suppressHydrationWarning
-      className={`${atkinson.variable} ${plexMono.variable}`}
+      className={`${atkinson.variable} ${manrope.variable} ${archivo.variable} ${plexMono.variable}`}
     >
       <head>
         {/* Primeiro de tudo: a cor da instalação, antes do CSS e do script de tema. */}

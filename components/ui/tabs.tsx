@@ -31,7 +31,7 @@ const TabsList = React.forwardRef<
       // fora. Não é `h-auto lg:h-9`: quem já passa `h-auto` (Conexões, Inbox)
       // perderia o `h-auto` no computador, porque o `tailwind-merge` derruba o
       // da base e deixa o `lg:h-9` de pé.
-      "inline-flex h-9 max-w-full items-center max-lg:h-auto justify-center overflow-x-auto rounded-lg bg-muted p-1 text-muted-foreground",
+      "inline-flex h-9 max-w-full items-center max-lg:h-auto justify-start gap-1 overflow-x-auto border-b border-border text-muted-foreground",
       className,
     )}
     {...props}
@@ -63,7 +63,7 @@ const TabsTrigger = React.forwardRef<
       //
       // `lg:` é o mesmo corte que `components/ui/button.tsx` usa para separar
       // "quem aciona é dedo" de "quem aciona é cursor".
-      "inline-flex min-h-11 items-center justify-center rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap ring-offset-background transition-[background-color,color,box-shadow] duration-fast focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm lg:min-h-0",
+      "inline-flex min-h-11 items-center justify-center rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap ring-offset-background transition-[background-color,color,box-shadow] duration-fast focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50 relative data-[state=active]:text-foreground data-[state=active]:after:absolute data-[state=active]:after:inset-x-2 data-[state=active]:after:-bottom-px data-[state=active]:after:h-0.5 data-[state=active]:after:rounded-t data-[state=active]:after:bg-cta lg:min-h-0",
       className,
     )}
     {...props}

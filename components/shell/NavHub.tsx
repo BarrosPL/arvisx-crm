@@ -111,13 +111,13 @@ export function NavHub({
               const Icon = item.icon;
               return (
                 <Link key={item.href} href={item.href} className="block">
-                  <Card className="flex h-full gap-3 p-4 transition-colors hover:border-border-strong">
-                    <Icon
-                      size={20}
-                      weight="regular"
+                  <Card className="flex h-full gap-3.5 p-4 transition-[border-color,transform,box-shadow] hover:-translate-y-px hover:border-cta hover:shadow-lg">
+                    <span
                       aria-hidden
-                      className="mt-0.5 shrink-0 text-muted-foreground"
-                    />
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sidebar text-cta"
+                    >
+                      <Icon size={19} weight="regular" />
+                    </span>
                     <div>
                       <h3 className="text-sm font-semibold">{traduzir(item.label, locale)}</h3>
                       <p className="mt-1 text-xs text-muted-foreground">

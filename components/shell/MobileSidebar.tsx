@@ -57,7 +57,7 @@ export function GavetaDeNavegacao({ comoAba = false }: { comoAba?: boolean }) {
             comoAba
               ? // Como aba: ocupa a vaga inteira na fila do rodapé, ícone em
                 // cima e rótulo embaixo, igual às outras quatro.
-                "flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1 text-muted-foreground"
+                "flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1 text-sidebar-muted hover:bg-sidebar-hover hover:text-white"
               : // Como hambúrguer: 44px de alvo, e só no celular — acima de `md`
                 // a barra lateral já está na tela.
                 "h-11 w-11 md:hidden",
@@ -77,7 +77,7 @@ export function GavetaDeNavegacao({ comoAba = false }: { comoAba?: boolean }) {
       </SheetTrigger>
       <SheetContent
         side="left"
-        className="flex w-72 max-w-[calc(100vw-2rem)] flex-col gap-0 p-0 sm:max-w-xs [&_a]:min-h-11 [&_h2>button]:min-h-11"
+        className="flex w-72 max-w-[calc(100vw-2rem)] flex-col gap-0 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground sm:max-w-xs [&_a]:min-h-11 [&_h2>button]:min-h-11"
       >
         <SheetTitle className="sr-only">{t("Navegação principal")}</SheetTitle>
         <SidebarContent

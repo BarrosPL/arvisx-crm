@@ -10293,6 +10293,11 @@ export const DICIONARIO: Traducoes = {
     es: "Confirmamos tu cuenta, pero hubo un error al preparar tu entorno. Intenta entrar de nuevo en unos instantes.",
   },
   "Esqueci minha senha": { es: "Olvidé mi contraseña" },
+  "O elo inteligente do seu": { es: "El enlace inteligente de tu" },
+  "ecossistema": { es: "ecosistema" },
+  "Agentes de IA que atendem, qualificam e vendem no WhatsApp, dentro do CRM da sua empresa.": {
+    es: "Agentes de IA que atienden, califican y venden por WhatsApp, dentro del CRM de tu empresa.",
+  },
   "Recuperar acesso": { es: "Recuperar acceso" },
   "Use um código de recuperação para reconfigurar sua autenticação em duas etapas.": {
     es: "Usa un código de recuperación para reconfigurar tu autenticación en dos pasos.",

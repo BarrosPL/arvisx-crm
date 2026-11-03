@@ -32,63 +32,79 @@
 
 :root {
   /* Surfaces (light) */
-  --color-bg: #faf9f6;
+  --color-bg: #f7f6f2;
   --color-surface: #ffffff;
-  --color-surface-elevated: #f5f3ee;
-  --color-overlay: rgba(28, 26, 22, 0.42);
+  --color-surface-elevated: #f1efe9;
+  --color-overlay: rgba(15, 19, 26, 0.45);
 
   /* Text (light) */
-  --color-text: #1c1a16;
-  --color-text-muted: #5d594f;
-  --color-text-subtle: #7d786c;
+  --color-text: #0f131a;
+  --color-text-muted: #5b6372;
+  --color-text-subtle: #8a91a0;
 
   /* Borders (light) */
-  --color-border: #e7e3da;
-  --color-border-strong: #d2cdbf;
+  --color-border: #e4e1d8;
+  --color-border-strong: #cfcbbf;
 
   /* Accent — Sage (11 stops) */
-  --color-accent-50: #f3f6f1;
-  --color-accent-100: #e4ebe0;
-  --color-accent-200: #c8d6c1;
-  --color-accent-300: #a4ba9a;
-  --color-accent-400: #82a077;
-  --color-accent-500: #67885d;
-  --color-accent-600: #506d48;
-  --color-accent-700: #41573b;
-  --color-accent-800: #374731;
-  --color-accent-900: #2f3c2b;
-  --color-accent-950: #171f15;
+  --color-accent-50: #f2f5f9;
+  --color-accent-100: #dfe5ed;
+  --color-accent-200: #bbc6d6;
+  --color-accent-300: #8e9eb7;
+  --color-accent-400: #657999;
+  --color-accent-500: #455a7a;
+  --color-accent-600: #283a55;
+  --color-accent-700: #243247;
+  --color-accent-800: #222c3d;
+  --color-accent-900: #202835;
+  --color-accent-950: #171d25;
   --color-accent: var(--color-accent-600);
   --color-accent-fg: #ffffff;
   --color-accent-soft: var(--color-accent-100);
   --color-accent-hover: var(--color-accent-700);
 
+  /* ArvisX — ação principal (ouro) e casca escura. `--color-cta*` é o que o botão
+     primário pinta; numa instalação com cor própria, `cssDaMarca` sobrescreve os
+     três com o accent calculado, para a marca do revendedor valer no botão também. */
+  --color-brand: #d4af37;
+  --color-cta: #d4af37;
+  --color-cta-fg: #0f131a;
+  --color-cta-hover: #c7a32c;
+  --color-cta-leve: #fbf5e2;
+  --color-sidebar: #0f131a;
+  --color-sidebar-fg: #aab2c0;
+  --color-sidebar-muted: #6c7586;
+  --color-sidebar-border: #283a55;
+  --color-sidebar-hover: #151b26;
+  --color-sidebar-active: rgba(212, 175, 55, 0.1);
+  --color-sidebar-active-fg: #f1d47c;
+
   /* Neutrals — greige (11 stops, light) */
-  --color-neutral-50: #faf9f6;
-  --color-neutral-100: #f3f1ec;
-  --color-neutral-200: #e7e3da;
-  --color-neutral-300: #d2cdbf;
-  --color-neutral-400: #a9a395;
-  --color-neutral-500: #7d786c;
-  --color-neutral-600: #5d594f;
-  --color-neutral-700: #46433b;
-  --color-neutral-800: #2e2c26;
-  --color-neutral-900: #1c1a16;
-  --color-neutral-950: #0e0d0a;
+  --color-neutral-50: #f7f6f2;
+  --color-neutral-100: #f1efe9;
+  --color-neutral-200: #e4e1d8;
+  --color-neutral-300: #cfcbbf;
+  --color-neutral-400: #a8a69d;
+  --color-neutral-500: #8a91a0;
+  --color-neutral-600: #5b6372;
+  --color-neutral-700: #3f4653;
+  --color-neutral-800: #262c37;
+  --color-neutral-900: #0f131a;
+  --color-neutral-950: #07090d;
 
   /* States (light) */
-  --color-success: #5a8a5f;
-  --color-success-bg: rgba(90, 138, 95, 0.12);
-  --color-success-fg: #41673f;
-  --color-warning: #b07a2b;
-  --color-warning-bg: rgba(176, 122, 43, 0.12);
-  --color-warning-fg: #875a1a;
-  --color-error: #a94a3c;
-  --color-error-bg: rgba(169, 74, 60, 0.12);
-  --color-error-fg: #8a3a2e;
-  --color-info: #4a7a93;
-  --color-info-bg: rgba(74, 122, 147, 0.12);
-  --color-info-fg: #355d72;
+  --color-success: #2e8b57;
+  --color-success-bg: rgba(46, 139, 87, 0.12);
+  --color-success-fg: #1f6b41;
+  --color-warning: #c9811b;
+  --color-warning-bg: rgba(201, 129, 27, 0.12);
+  --color-warning-fg: #7d4d0d;
+  --color-error: #c93c3c;
+  --color-error-bg: rgba(201, 60, 60, 0.12);
+  --color-error-fg: #8c2626;
+  --color-info: #2f7fd6;
+  --color-info-bg: rgba(47, 127, 214, 0.12);
+  --color-info-fg: #1f4f85;
 
   /* Spacing (4-base) */
   --space-0: 0px;
@@ -115,11 +131,11 @@
   --radius-full: 9999px;
 
   /* Shadows — desaturated, neutral-based */
-  --shadow-xs: 0 1px 2px 0 rgba(20, 18, 14, 0.04);
-  --shadow-sm: 0 1px 2px 0 rgba(20, 18, 14, 0.05), 0 1px 1px 0 rgba(20, 18, 14, 0.03);
-  --shadow-md: 0 4px 12px -2px rgba(20, 18, 14, 0.06), 0 2px 4px -1px rgba(20, 18, 14, 0.04);
-  --shadow-lg: 0 12px 32px -6px rgba(20, 18, 14, 0.1), 0 4px 12px -2px rgba(20, 18, 14, 0.06);
-  --shadow-xl: 0 24px 48px -12px rgba(20, 18, 14, 0.16), 0 8px 16px -4px rgba(20, 18, 14, 0.08);
+  --shadow-xs: 0 1px 2px 0 rgba(15, 19, 26, 0.04);
+  --shadow-sm: 0 1px 2px 0 rgba(15, 19, 26, 0.05), 0 1px 1px 0 rgba(15, 19, 26, 0.03);
+  --shadow-md: 0 4px 12px -2px rgba(15, 19, 26, 0.06), 0 2px 4px -1px rgba(15, 19, 26, 0.04);
+  --shadow-lg: 0 12px 32px -6px rgba(15, 19, 26, 0.1), 0 4px 12px -2px rgba(15, 19, 26, 0.06);
+  --shadow-xl: 0 24px 48px -12px rgba(15, 19, 26, 0.16), 0 8px 16px -4px rgba(15, 19, 26, 0.08);
 
   /* Density — Aerada */
   --density-row: 56px;
@@ -263,47 +279,63 @@
    (lib/branding/css.ts), que só ganha consumidor com a tela de marca.
    ───────────────────────────────────────────────────────────────────────── */
 [data-theme="light"] {
-  --color-bg: #faf9f6;
+  --color-bg: #f7f6f2;
   --color-surface: #ffffff;
-  --color-surface-elevated: #f5f3ee;
-  --color-overlay: rgba(28, 26, 22, 0.42);
-  --color-text: #1c1a16;
-  --color-text-muted: #5d594f;
-  --color-text-subtle: #7d786c;
-  --color-border: #e7e3da;
-  --color-border-strong: #d2cdbf;
+  --color-surface-elevated: #f1efe9;
+  --color-overlay: rgba(15, 19, 26, 0.45);
+  --color-text: #0f131a;
+  --color-text-muted: #5b6372;
+  --color-text-subtle: #8a91a0;
+  --color-border: #e4e1d8;
+  --color-border-strong: #cfcbbf;
   --color-accent: var(--color-accent-600);
   --color-accent-fg: #ffffff;
   --color-accent-soft: var(--color-accent-100);
   --color-accent-hover: var(--color-accent-700);
-  --color-neutral-50: #faf9f6;
-  --color-neutral-100: #f3f1ec;
-  --color-neutral-200: #e7e3da;
-  --color-neutral-300: #d2cdbf;
-  --color-neutral-400: #a9a395;
-  --color-neutral-500: #7d786c;
-  --color-neutral-600: #5d594f;
-  --color-neutral-700: #46433b;
-  --color-neutral-800: #2e2c26;
-  --color-neutral-900: #1c1a16;
-  --color-neutral-950: #0e0d0a;
-  --color-success: #5a8a5f;
-  --color-success-bg: rgba(90, 138, 95, 0.12);
-  --color-success-fg: #41673f;
-  --color-warning: #b07a2b;
-  --color-warning-bg: rgba(176, 122, 43, 0.12);
-  --color-warning-fg: #875a1a;
-  --color-error: #a94a3c;
-  --color-error-bg: rgba(169, 74, 60, 0.12);
-  --color-error-fg: #8a3a2e;
-  --color-info: #4a7a93;
-  --color-info-bg: rgba(74, 122, 147, 0.12);
-  --color-info-fg: #355d72;
-  --shadow-xs: 0 1px 2px 0 rgba(20, 18, 14, 0.04);
-  --shadow-sm: 0 1px 2px 0 rgba(20, 18, 14, 0.05), 0 1px 1px 0 rgba(20, 18, 14, 0.03);
-  --shadow-md: 0 4px 12px -2px rgba(20, 18, 14, 0.06), 0 2px 4px -1px rgba(20, 18, 14, 0.04);
-  --shadow-lg: 0 12px 32px -6px rgba(20, 18, 14, 0.1), 0 4px 12px -2px rgba(20, 18, 14, 0.06);
-  --shadow-xl: 0 24px 48px -12px rgba(20, 18, 14, 0.16), 0 8px 16px -4px rgba(20, 18, 14, 0.08);
+
+  /* ArvisX — ação principal (ouro) e casca escura. `--color-cta*` é o que o botão
+     primário pinta; numa instalação com cor própria, `cssDaMarca` sobrescreve os
+     três com o accent calculado, para a marca do revendedor valer no botão também. */
+  --color-brand: #d4af37;
+  --color-cta: #d4af37;
+  --color-cta-fg: #0f131a;
+  --color-cta-hover: #c7a32c;
+  --color-cta-leve: #fbf5e2;
+  --color-sidebar: #0f131a;
+  --color-sidebar-fg: #aab2c0;
+  --color-sidebar-muted: #6c7586;
+  --color-sidebar-border: #283a55;
+  --color-sidebar-hover: #151b26;
+  --color-sidebar-active: rgba(212, 175, 55, 0.1);
+  --color-sidebar-active-fg: #f1d47c;
+  --color-neutral-50: #f7f6f2;
+  --color-neutral-100: #f1efe9;
+  --color-neutral-200: #e4e1d8;
+  --color-neutral-300: #cfcbbf;
+  --color-neutral-400: #a8a69d;
+  --color-neutral-500: #8a91a0;
+  --color-neutral-600: #5b6372;
+  --color-neutral-700: #3f4653;
+  --color-neutral-800: #262c37;
+  --color-neutral-900: #0f131a;
+  --color-neutral-950: #07090d;
+  --color-success: #2e8b57;
+  --color-success-bg: rgba(46, 139, 87, 0.12);
+  --color-success-fg: #1f6b41;
+  --color-warning: #c9811b;
+  --color-warning-bg: rgba(201, 129, 27, 0.12);
+  --color-warning-fg: #7d4d0d;
+  --color-error: #c93c3c;
+  --color-error-bg: rgba(201, 60, 60, 0.12);
+  --color-error-fg: #8c2626;
+  --color-info: #2f7fd6;
+  --color-info-bg: rgba(47, 127, 214, 0.12);
+  --color-info-fg: #1f4f85;
+  --shadow-xs: 0 1px 2px 0 rgba(15, 19, 26, 0.04);
+  --shadow-sm: 0 1px 2px 0 rgba(15, 19, 26, 0.05), 0 1px 1px 0 rgba(15, 19, 26, 0.03);
+  --shadow-md: 0 4px 12px -2px rgba(15, 19, 26, 0.06), 0 2px 4px -1px rgba(15, 19, 26, 0.04);
+  --shadow-lg: 0 12px 32px -6px rgba(15, 19, 26, 0.1), 0 4px 12px -2px rgba(15, 19, 26, 0.06);
+  --shadow-xl: 0 24px 48px -12px rgba(15, 19, 26, 0.16), 0 8px 16px -4px rgba(15, 19, 26, 0.08);
   --background: var(--color-bg);
   --foreground: var(--color-text);
   --card: var(--color-surface);
@@ -341,63 +373,76 @@
 
 [data-theme="dark"] {
   /* Surfaces (dark — drawn) */
-  --color-bg: #161510;
-  --color-surface: #1d1c17;
-  --color-surface-elevated: #272620;
+  --color-bg: #0b0f15;
+  --color-surface: #10151e;
+  --color-surface-elevated: #151b26;
   --color-overlay: rgba(0, 0, 0, 0.55);
 
   /* Text (dark) */
-  --color-text: #f5f4ef;
-  --color-text-muted: #8e8b7f;
-  --color-text-subtle: #605e54;
+  --color-text: #eef0f3;
+  --color-text-muted: #6c7586;
+  --color-text-subtle: #4a5261;
 
   /* Borders (dark) */
-  --color-border: #33312a;
-  --color-border-strong: #444239;
+  --color-border: #1d2531;
+  --color-border-strong: #283a55;
 
   /* Accent stays same hex stops; default shifts up for dark contrast */
-  --color-accent-50: #f3f6f1;
-  --color-accent-100: #e4ebe0;
-  --color-accent-200: #c8d6c1;
-  --color-accent-300: #a4ba9a;
-  --color-accent-400: #82a077;
-  --color-accent-500: #67885d;
-  --color-accent-600: #506d48;
-  --color-accent-700: #41573b;
-  --color-accent-800: #374731;
-  --color-accent-900: #2f3c2b;
-  --color-accent-950: #171f15;
+  --color-accent-50: #f2f5f9;
+  --color-accent-100: #dfe5ed;
+  --color-accent-200: #bbc6d6;
+  --color-accent-300: #8e9eb7;
+  --color-accent-400: #657999;
+  --color-accent-500: #455a7a;
+  --color-accent-600: #283a55;
+  --color-accent-700: #243247;
+  --color-accent-800: #222c3d;
+  --color-accent-900: #202835;
+  --color-accent-950: #171d25;
   --color-accent: var(--color-accent-400);
-  --color-accent-fg: #161510;
-  --color-accent-soft: rgba(130, 160, 119, 0.16);
+  --color-accent-fg: #0b0f15;
+  --color-accent-soft: rgba(101, 121, 153, 0.16);
   --color-accent-hover: var(--color-accent-300);
 
+  --color-brand: #d4af37;
+  --color-cta: #d4af37;
+  --color-cta-fg: #0f131a;
+  --color-cta-hover: #e0bc45;
+  --color-cta-leve: rgba(212, 175, 55, 0.14);
+  --color-sidebar: #0b0f15;
+  --color-sidebar-fg: #aab2c0;
+  --color-sidebar-muted: #6c7586;
+  --color-sidebar-border: #1d2531;
+  --color-sidebar-hover: #151b26;
+  --color-sidebar-active: rgba(212, 175, 55, 0.12);
+  --color-sidebar-active-fg: #f1d47c;
+
   /* Neutrals — greige (11 stops, dark) */
-  --color-neutral-50: #f5f4ef;
-  --color-neutral-100: #e6e4dc;
-  --color-neutral-200: #bbb8ac;
-  --color-neutral-300: #8e8b7f;
-  --color-neutral-400: #605e54;
-  --color-neutral-500: #444239;
-  --color-neutral-600: #33312a;
-  --color-neutral-700: #272620;
-  --color-neutral-800: #1d1c17;
-  --color-neutral-900: #161510;
-  --color-neutral-950: #0c0b08;
+  --color-neutral-50: #eef0f3;
+  --color-neutral-100: #d8dce3;
+  --color-neutral-200: #a2abb9;
+  --color-neutral-300: #6c7586;
+  --color-neutral-400: #4a5261;
+  --color-neutral-500: #283a55;
+  --color-neutral-600: #1d2531;
+  --color-neutral-700: #151b26;
+  --color-neutral-800: #10151e;
+  --color-neutral-900: #0b0f15;
+  --color-neutral-950: #07090d;
 
   /* States (dark) */
-  --color-success: #82a077;
-  --color-success-bg: rgba(130, 160, 119, 0.18);
-  --color-success-fg: #a4ba9a;
-  --color-warning: #d09455;
-  --color-warning-bg: rgba(208, 148, 85, 0.18);
-  --color-warning-fg: #e0ad77;
-  --color-error: #c87263;
-  --color-error-bg: rgba(200, 114, 99, 0.18);
-  --color-error-fg: #d99182;
-  --color-info: #7da9bf;
-  --color-info-bg: rgba(125, 169, 191, 0.18);
-  --color-info-fg: #9bbfd2;
+  --color-success: #4fa877;
+  --color-success-bg: rgba(79, 168, 119, 0.18);
+  --color-success-fg: #8fd4a8;
+  --color-warning: #e0a14a;
+  --color-warning-bg: rgba(224, 161, 74, 0.18);
+  --color-warning-fg: #f0c27b;
+  --color-error: #e07070;
+  --color-error-bg: rgba(224, 112, 112, 0.18);
+  --color-error-fg: #f0a0a0;
+  --color-info: #4ea8ff;
+  --color-info-bg: rgba(78, 168, 255, 0.18);
+  --color-info-fg: #8ec8ff;
 
   /* Shadows — heavier in dark */
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
@@ -426,7 +471,7 @@
   --input: var(--color-border);
   --ring: var(--color-accent-400);
   /* ---- Agenda · cor de pessoa (tema escuro) ----------------------------
-   * Mais claras e menos saturadas que as do claro: sobre `#161510` a versão
+   * Mais claras e menos saturadas que as do claro: sobre `#0b0f15` a versão
    * escura de cada matiz sumiria. Mesma ordem, mesmos nomes.
    */
   --agenda-pessoa-1: #f89080;
@@ -481,6 +526,18 @@
   --color-accent-foreground: var(--color-accent-fg);
   --color-accent-soft: var(--color-accent-soft);
   --color-accent-hover: var(--color-accent-hover);
+  --color-brand: var(--color-brand);
+  --color-cta: var(--color-cta);
+  --color-cta-foreground: var(--color-cta-fg);
+  --color-cta-hover: var(--color-cta-hover);
+  --color-cta-leve: var(--color-cta-leve);
+  --color-sidebar: var(--color-sidebar);
+  --color-sidebar-foreground: var(--color-sidebar-fg);
+  --color-sidebar-muted: var(--color-sidebar-muted);
+  --color-sidebar-border: var(--color-sidebar-border);
+  --color-sidebar-hover: var(--color-sidebar-hover);
+  --color-sidebar-active: var(--color-sidebar-active);
+  --color-sidebar-active-foreground: var(--color-sidebar-active-fg);
   --color-accent-50: var(--color-accent-50);
   --color-accent-100: var(--color-accent-100);
   --color-accent-200: var(--color-accent-200);
@@ -546,7 +603,8 @@
 
   /* Tipografia */
   --font-sans:
-    var(--font-atkinson), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    var(--font-manrope), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-archivo), var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Espaçamento. Os valores são px LITERAIS (`--space-6` = 24px), não rem — e
@@ -783,7 +841,7 @@
     background-color: var(--color-bg);
     color: var(--color-text);
     font-family:
-      var(--font-atkinson),
+      var(--font-manrope),
       ui-sans-serif,
       system-ui,
       -apple-system,
@@ -799,6 +857,15 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+  }
+
+  /* ArvisX: o título de página fala na Archivo expandida (o letreiro largo do
+     logo). Só a família e a largura vêm daqui; peso e tamanho continuam nas
+     classes de cada tela (`text-2xl font-semibold`), que vencem a base. */
+  h1 {
+    font-family: var(--font-archivo), var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+    font-stretch: 112%;
+    letter-spacing: -0.03em;
   }
 
   code,
@@ -988,7 +1055,7 @@
   .card-pulse {
     animation: none;
     /* Anel ESTÁTICO, não fundo: no tema claro `--color-accent-soft` é cor
-       sólida (#e4ebe0), e um overlay sólido sobre o card inteiro deixaria quem
+       sólida (#dfe5ed), e um overlay sólido sobre o card inteiro deixaria quem
        usa movimento reduzido 1,2s SEM LER o card. O caminho de acessibilidade
        é para ser igual, não pior — então o aviso é o mesmo anel, só que parado.
        Ele dura os PULSE_MS inteiros (useBoard.ts), NÃO os 320ms da animação:
@@ -1435,7 +1502,7 @@
    tem de respeitar isso.
 
    As rampas são desenhadas separadamente, não invertidas — no claro a 500
-   (#7d786c) é mais ESCURA que a 400 (#a9a395), e no escuro a 500 (#444239)
+   (#8a91a0) é mais ESCURA que a 400 (#a8a69d), e no escuro a 500 (#283a55)
    também é. Contra fundo claro, mais escuro = mais contraste; contra fundo
    escuro, mais escuro = MENOS contraste. Usar a 500 nos dois temas daria uma
    faixa que realça no claro e APAGA no escuro, caindo abaixo do piso justamente

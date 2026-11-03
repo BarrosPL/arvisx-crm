@@ -153,7 +153,7 @@ export function BarraInferior() {
         gaveta (`hidden md:block` no `AppShell`): acima de 768px a barra lateral
         já está na tela e uma segunda navegação seria redundante.
       */
-      className="ds-surge fixed inset-x-0 z-40 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur md:hidden"
+      className="ds-surge fixed inset-x-0 z-40 border-t border-sidebar-border bg-sidebar/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur md:hidden"
     >
       <ul className="flex items-stretch justify-around py-1">
         {abas.map((aba) => {
@@ -172,7 +172,7 @@ export function BarraInferior() {
                 className={cn(
                   "relative flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1",
                   "transition-[color,background-color] duration-fast",
-                  aqui ? "text-accent" : "text-muted-foreground",
+                  aqui ? "text-cta" : "text-sidebar-muted",
                 )}
               >
                 <Icone size={22} weight={aqui ? "fill" : "regular"} aria-hidden />

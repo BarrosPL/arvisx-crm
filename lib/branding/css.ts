@@ -171,6 +171,13 @@ function declaracoesDoTema(cor: CorResolvida, tema: "claro" | "escuro"): Declara
     ["--color-accent-fg", t.accentFg],
     ["--color-accent-hover", t.accentHover],
     ["--color-accent-soft", t.accentSoft],
+    // ArvisX: o botão principal e o filete ativo da barra lateral pintam com
+    // `--color-cta*`, que no produto é o ouro da marca. Com cor própria, os
+    // quatro seguem o accent calculado — a marca do revendedor vale no botão.
+    ["--color-cta", t.accent],
+    ["--color-cta-fg", t.accentFg],
+    ["--color-cta-hover", t.accentHover],
+    ["--color-cta-leve", t.accentSoft],
   );
   return saida;
 }

@@ -99,6 +99,13 @@ describe("serialização — os dois blocos", () => {
         "--color-accent-fg",
         "--color-accent-hover",
         "--color-accent-soft",
+        // ArvisX: o botão principal e o filete da barra lateral pintam com
+        // `--color-cta*` (ouro no produto); com marca própria os quatro seguem o
+        // accent calculado, e por isso entram no bloco ao lado dos papéis do accent.
+        "--color-cta",
+        "--color-cta-fg",
+        "--color-cta-hover",
+        "--color-cta-leve",
       ].sort(),
     );
     expect(claro["--color-brand"]).toBe("#2563eb");

@@ -24,11 +24,13 @@ type Props = {
   readonly className?: string;
   /** `true` quando o texto ao lado já nomeia a marca — evita ler duas vezes. */
   readonly decorativo?: boolean;
+  /** `true` sobre fundo sempre escuro (a barra lateral): usa as cores do tema escuro nos dois temas. */
+  readonly sobreEscuro?: boolean;
 };
 
-const SIMBOLO_CLARO_ESCURO = "fill-[#506d48] dark:fill-[#82a077]";
-const NOME_CLARO_ESCURO = "fill-[#1c1a16] dark:fill-[#f5f4ef]";
-const SUFIXO_CLARO_ESCURO = "fill-[#5d594f] dark:fill-[#8e8b7f]";
+const SIMBOLO_CLARO_ESCURO = "fill-[#d4af37] dark:fill-[#e0bc45]";
+const NOME_CLARO_ESCURO = "fill-[#0f131a] dark:fill-[#eef0f3]";
+const SUFIXO_CLARO_ESCURO = "fill-[#a8871f] dark:fill-[#e0bc45]";
 
 // As classes acima repetem os hexes de `CORES_DA_MARCA` porque o Tailwind só
 // gera utilitário para valor LITERAL no fonte. Quem impede os dois de divergirem
@@ -40,6 +42,17 @@ export const CLASSES_DE_COR = {
   sufixo: SUFIXO_CLARO_ESCURO,
 } as const;
 
+/** Sobre a barra lateral (sempre navy) valem as cores do escuro, em qualquer tema. */
+const CLASSES_SOBRE_ESCURO = {
+  simbolo: "fill-[#e0bc45]",
+  nome: "fill-[#eef0f3]",
+  sufixo: "fill-[#e0bc45]",
+} as const;
+
+function cores(sobreEscuro: boolean) {
+  return sobreEscuro ? CLASSES_SOBRE_ESCURO : CLASSES_DE_COR;
+}
+
 function acessibilidade(nome: string, decorativo: boolean) {
   return decorativo
     ? ({ "aria-hidden": true } as const)
@@ -47,43 +60,62 @@ function acessibilidade(nome: string, decorativo: boolean) {
 }
 
 /** O símbolo sozinho — para a barra recolhida, avatar e cantos apertados. */
-export function SimboloDoProduto({ nome, className, decorativo = false }: Props) {
+export function SimboloDoProduto({
+  nome,
+  className,
+  decorativo = false,
+  sobreEscuro = false,
+}: Props) {
+  const c = cores(sobreEscuro);
   return (
     <svg
       viewBox={SIMBOLO.viewBox}
       className={cn("shrink-0", className)}
       {...acessibilidade(nome, decorativo)}
     >
-      <g className={SIMBOLO_CLARO_ESCURO} transform={SIMBOLO.transform}>
-        <path d={SIMBOLO.d} />
-        <rect {...SIMBOLO.modulo} />
+      <g transform={SIMBOLO.transform}>
+        <path className={c.nome} d={SIMBOLO.d} fillRule="evenodd" />
+        <path className={c.simbolo} d={SIMBOLO.aneis} fillRule="evenodd" />
       </g>
     </svg>
   );
 }
 
 /** Símbolo + nome — para a barra aberta e a fachada de entrada. */
-export function LogotipoDoProduto({ nome, className, decorativo = false }: Props) {
+export function LogotipoDoProduto({
+  nome,
+  className,
+  decorativo = false,
+  sobreEscuro = false,
+}: Props) {
+  const c = cores(sobreEscuro);
   return (
     <svg
       viewBox={LOGOTIPO.viewBox}
       className={cn("shrink-0", className)}
       {...acessibilidade(nome, decorativo)}
     >
-      <g className={SIMBOLO_CLARO_ESCURO} transform={LOGOTIPO.simbolo.transform}>
-        <path d={LOGOTIPO.simbolo.d} />
-        <rect {...LOGOTIPO.simbolo.modulo} />
+      <g transform={LOGOTIPO.simbolo.transform}>
+        <path className={c.nome} d={LOGOTIPO.simbolo.d} fillRule="evenodd" />
+        <path className={c.simbolo} d={LOGOTIPO.simbolo.aneis} fillRule="evenodd" />
       </g>
-      <g className={NOME_CLARO_ESCURO}>
-        {LOGOTIPO.nome.map((g) => (
-          <path key={g.transform} transform={g.transform} d={g.d} />
-        ))}
-      </g>
-      <g className={SUFIXO_CLARO_ESCURO}>
-        {LOGOTIPO.sufixo.map((g) => (
-          <path key={g.transform} transform={g.transform} d={g.d} />
-        ))}
-      </g>
+      <text
+        className={c.nome}
+        x={LOGOTIPO.nome.x}
+        y={LOGOTIPO.nome.y}
+        fontSize={LOGOTIPO.nome.tamanho}
+        letterSpacing={LOGOTIPO.nome.espacamento}
+        fontWeight={700}
+        style={{
+          fontFamily: "var(--font-archivo), var(--font-manrope), sans-serif",
+          fontStretch: "118%",
+        }}
+      >
+        {LOGOTIPO.nome.texto}
+        <tspan className={c.sufixo} dx={28} fontWeight={600}>
+          {LOGOTIPO.sufixo.texto}
+        </tspan>
+      </text>
     </svg>
   );
 }

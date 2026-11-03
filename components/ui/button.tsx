@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 const buttonVariants = cva(
   [
     "inline-flex items-center justify-center gap-2 whitespace-nowrap",
-    "rounded-sm font-medium",
+    "rounded-md font-semibold",
     // `transform` SAIU da lista, e `translate` não entrou no lugar.
     //
     // O recuo do toque é `active:translate-y-px`, lá embaixo. No Tailwind 4 essa
@@ -41,15 +41,17 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-accent text-accent-foreground hover:bg-accent-hover shadow-xs",
-        default: "bg-accent text-accent-foreground hover:bg-accent-hover shadow-xs",
+        // ArvisX: a ação principal é OURO (`--color-cta`), que numa instalação com
+        // cor própria vira o accent calculado (ver `cssDaMarca`).
+        primary: "bg-cta text-cta-foreground hover:bg-cta-hover shadow-xs",
+        default: "bg-cta text-cta-foreground hover:bg-cta-hover shadow-xs",
         secondary:
-          "bg-surface-elevated text-text border border-border hover:border-accent hover:text-accent",
+          "bg-surface text-text border border-border-strong hover:bg-surface-elevated hover:border-accent",
         outline:
-          "bg-transparent text-text border border-border hover:border-accent hover:text-accent",
-        ghost: "bg-transparent text-text hover:bg-accent-soft hover:text-accent",
+          "bg-transparent text-text border border-border-strong hover:bg-surface-elevated hover:border-accent",
+        ghost: "bg-transparent text-text-muted hover:bg-surface-elevated hover:text-text",
         destructive: "bg-error text-white hover:brightness-95 shadow-xs",
-        link: "bg-transparent text-accent underline underline-offset-4 decoration-1 hover:decoration-2 h-auto p-0",
+        link: "bg-transparent text-accent underline underline-offset-4 decoration-cta decoration-1 hover:decoration-2 h-auto p-0",
       },
       // Alturas de toque: abaixo de `lg` (mesmo corte que o resto da casca
       // usa pra decidir "é celular/tablet, é mouse") toda variante bate os

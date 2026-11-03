@@ -137,7 +137,7 @@ export function SidebarContent({
     <>
       <div
         className={cn(
-          "flex h-14 items-center border-b px-4",
+          "flex h-14 items-center border-b border-sidebar-border px-4",
           collapsed ? "justify-center" : "justify-start",
         )}
       >
@@ -149,7 +149,7 @@ export function SidebarContent({
               // que é o valor padrão — sem isso, uma arte própria larga empurra o
               // botão de recolher para fora da barra em vez de encolher.
               "min-w-0 rounded-md",
-              !logoEscuro && "dark:bg-white dark:px-2 dark:py-1 dark:shadow-sm",
+              !logoEscuro && "bg-white px-2 py-1 shadow-sm dark:bg-white",
             )}
           >
             {/* <img> em vez de next/image de propósito: a URL vem de quem hospeda
@@ -174,7 +174,7 @@ export function SidebarContent({
                   // MESMA propriedade no CSS e só um sobrevive — a pegadinha que o
                   // review apontou, e por isso o teto é um único `min()`.
                   "h-7 w-auto max-w-[min(10rem,100%)] object-contain",
-                  logoEscuro && "dark:hidden",
+                  logoEscuro && "hidden",
                 )}
               />
             ) : (
@@ -183,7 +183,7 @@ export function SidebarContent({
               // estourava a barra. Uma linha com reticências, e o nome completo
               // continua no tooltip. `block` porque este wrapper não é flex: inline,
               // o `truncate` não corta e o nome passa por cima do botão.
-              <span className="block min-w-0 truncate dark:hidden" title={nome}>
+              <span className="block min-w-0 truncate text-text" title={nome}>
                 {nome}
               </span>
             )}
@@ -192,7 +192,7 @@ export function SidebarContent({
               <img
                 src={logoEscuro}
                 alt={nome}
-                className="hidden h-7 w-auto max-w-[min(10rem,100%)] object-contain dark:block"
+                className="block h-7 w-auto max-w-[min(10rem,100%)] object-contain"
               />
             ) : null}
           </div>
@@ -200,14 +200,14 @@ export function SidebarContent({
           // O desenho do produto, inline (ver `components/branding/MarcaDoProduto.tsx`):
           // logotipo com a barra aberta, só o símbolo com ela recolhida.
           collapsed ? (
-            <SimboloDoProduto nome={nome} className="h-8 w-8" />
+            <SimboloDoProduto nome={nome} sobreEscuro className="h-8 w-8" />
           ) : (
-            <LogotipoDoProduto nome={nome} className="h-8 w-auto" />
+            <LogotipoDoProduto nome={nome} sobreEscuro className="h-8 w-auto" />
           )
         ) : (
           <span
             className={cn(
-              "min-w-0 truncate font-semibold tracking-tight",
+              "min-w-0 truncate font-semibold tracking-tight text-white",
               collapsed && "sr-only",
             )}
             title={nome}
@@ -216,7 +216,7 @@ export function SidebarContent({
           </span>
         )}
         {collapsed && !marcaDoProduto && (
-          <span aria-hidden className="text-lg font-bold text-primary">
+          <span aria-hidden className="text-lg font-bold text-cta">
             {/* Spread e não `[0]`: nome começando com emoji ou acento composto
                 quebraria no meio do code point. Mesma regra de `resolveBranding`
                 — a inicial precisa acompanhar o nome que a barra mostra, senão
@@ -242,7 +242,7 @@ export function SidebarContent({
       {/* Issue #2722 — no trilho recolhido (64px) não cabe controle ao lado
           do símbolo: ele vira uma faixa imediatamente abaixo da marca. */}
       {showCollapseControl && collapsed && (
-        <div className="border-b px-2 py-1">
+        <div className="border-b border-sidebar-border px-2 py-1">
           <BotaoDeRecolher
             collapsed
             isPending={isPending}
@@ -313,14 +313,14 @@ export function SidebarContent({
                     type="button"
                     onClick={() => toggleGrupo(group.id)}
                     aria-expanded={aberto}
-                    className="flex w-full items-center justify-between rounded-md px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground"
+                    className="flex w-full items-center justify-between rounded-md px-3 py-1 font-mono text-[10.5px] font-medium tracking-[0.14em] text-sidebar-muted uppercase transition-colors hover:text-sidebar-foreground"
                   >
                     {t(group.label)}
                     <CaretDown
                       size={12}
                       weight="bold"
                       className={cn(
-                        "shrink-0 text-text-subtle transition-transform",
+                        "shrink-0 text-sidebar-muted transition-transform",
                         !aberto && "-rotate-90",
                       )}
                       aria-hidden
@@ -348,8 +348,8 @@ export function SidebarContent({
                           className={cn(
                             "relative flex items-center gap-3 rounded-md px-3 py-1 text-sm transition-colors",
                             isActive
-                              ? "bg-accent text-accent-foreground"
-                              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                              ? "relative bg-sidebar-active text-sidebar-active-foreground before:absolute before:top-1.5 before:-left-2 before:bottom-1.5 before:w-0.5 before:rounded-r before:bg-cta"
+                              : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-white",
                             collapsed && "justify-center px-2",
                           )}
                         >
@@ -377,8 +377,8 @@ export function SidebarContent({
                         className={cn(
                           "flex items-center gap-3 rounded-md px-3 py-1 text-sm transition-colors",
                           pathname === group.hub.href
-                            ? "bg-accent text-accent-foreground"
-                            : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                            ? "relative bg-sidebar-active text-sidebar-active-foreground before:absolute before:top-1.5 before:-left-2 before:bottom-1.5 before:w-0.5 before:rounded-r before:bg-cta"
+                            : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-white",
                           collapsed && "justify-center px-2",
                         )}
                       >
@@ -393,7 +393,7 @@ export function SidebarContent({
           );
         })}
       </nav>
-      <div className="border-t p-2">
+      <div className="border-t border-sidebar-border p-2">
         {rodape && (
           <Link
             href={rodape.href}
@@ -404,8 +404,8 @@ export function SidebarContent({
             className={cn(
               "mb-1 flex items-center gap-3 rounded-md px-3 py-1 text-sm transition-colors",
               pathname.startsWith(rodape.href)
-                ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                ? "relative bg-sidebar-active text-sidebar-active-foreground before:absolute before:top-1.5 before:-left-2 before:bottom-1.5 before:w-0.5 before:rounded-r before:bg-cta"
+                : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-white",
               collapsed && "justify-center px-2",
             )}
           >
@@ -509,7 +509,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
         // `duration-base` em vez do `duration-200` literal: 200ms é o mesmo
         // número, mas vindo de `--duration-base`. A Lei de movimento fecha a
         // tabela de durações, e número solto é o que a faz apodrecer.
-        "sticky top-[var(--faixas-de-cima,0px)] z-30 flex h-[calc(100dvh-var(--faixas-de-cima,0px))] shrink-0 flex-col border-r bg-card transition-[width] duration-base",
+        "sticky top-[var(--faixas-de-cima,0px)] z-30 flex h-[calc(100dvh-var(--faixas-de-cima,0px))] shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-base",
         collapsed ? "w-16" : "w-60",
       )}
     >

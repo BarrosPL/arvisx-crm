@@ -4,6 +4,7 @@ import { marcaDaSaida } from "@/lib/branding/saida";
 import { createClient } from "@/lib/supabase/server";
 import { IdiomaProvider } from "@/lib/i18n/IdiomaProvider";
 import { idiomaDoVisitante } from "@/lib/i18n/idiomaAnonimo";
+import { traduzir } from "@/lib/i18n/dicionario";
 
 /**
  * A casca das telas de acesso — login, cadastro, recuperação, MFA, confirmar acesso.
@@ -56,13 +57,21 @@ export default async function PublicLayout({ children }: { children: React.React
     data: { user },
   } = await supabase.auth.getUser();
   const locale = await idiomaDoVisitante((user?.user_metadata?.locale as string | undefined) ?? null);
+  const t = (texto: string) => traduzir(texto, locale);
 
   return (
     <IdiomaProvider locale={locale}>
-      <div className="flex min-h-screen items-center justify-center bg-background p-6">
-        <div className="w-full max-w-sm space-y-6">
+      {/*
+        ArvisX: a fachada é dividida — um painel navy com a marca e a frase da
+        casa, e o formulário no claro. No celular o painel vira uma faixa no
+        topo. O bloco do logo (chip `dark:bg-white`, `data-testid`) e o
+        `LogotipoDoProduto` continuam os mesmos: os testes de marca medem por eles.
+      */}
+      <div className="grid min-h-screen grid-cols-1 bg-background lg:grid-cols-[1.1fr_1fr]">
+        <section className="relative flex flex-col justify-between gap-6 overflow-hidden bg-sidebar px-6 py-7 text-white lg:px-14 lg:py-10">
+          <div className="flex justify-start [&_img]:max-h-12">
           {marca.logoUrl || marca.logoDarkUrl ? (
-            <div className="flex justify-center">
+            <div className="flex justify-start">
               {/*
                 <img> em vez de next/image pelo mesmo motivo da barra lateral: a URL
                 é de quem hospeda e o `next/image` exige allowlist de domínios
@@ -113,11 +122,36 @@ export default async function PublicLayout({ children }: { children: React.React
               </div>
             </div>
           ) : marcaEhADoProduto({ name: marca.nome, logoUrl: null }) ? (
-            <div className="flex justify-center">
-              <LogotipoDoProduto nome={marca.nome} className="h-12 w-auto" />
+            <div className="flex justify-start">
+              <LogotipoDoProduto nome={marca.nome} sobreEscuro className="h-10 w-auto" />
             </div>
           ) : null}
-          {children}
+          </div>
+          <div className="hidden lg:block">
+            <p className="max-w-[12ch] font-display text-4xl leading-[1.05] font-semibold tracking-[-0.03em] text-white">
+              {t("O elo inteligente do seu")}{" "}
+              <span className="bg-[linear-gradient(100deg,#f1d47c,#d4af37_45%,#b87a2e)] bg-clip-text text-transparent">
+                {t("ecossistema")}
+              </span>
+              .
+            </p>
+            <p className="mt-4 max-w-[44ch] text-[15px] text-sidebar-foreground">
+              {t("Agentes de IA que atendem, qualificam e vendem no WhatsApp, dentro do CRM da sua empresa.")}
+            </p>
+            <div className="relative mt-6 h-px w-28 bg-sidebar-border after:absolute after:top-[-3px] after:left-0 after:h-[7px] after:w-[7px] after:rounded-full after:bg-cta" />
+          </div>
+          <p className="hidden font-mono text-[11px] tracking-[0.08em] text-sidebar-muted uppercase lg:block">
+            {marca.nome}
+          </p>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-36 -bottom-36 hidden h-[460px] w-[460px] rounded-full border border-cta/35 before:absolute before:top-[-5px] before:left-1/2 before:h-2.5 before:w-2.5 before:rounded-full before:bg-cta after:absolute after:inset-[60px] after:rounded-full after:border after:border-cta/20 lg:block"
+          />
+        </section>
+        <div className="flex items-center justify-center p-6 lg:p-10">
+          <div className="w-full max-w-sm space-y-6">
+            {children}
+          </div>
         </div>
       </div>
     </IdiomaProvider>

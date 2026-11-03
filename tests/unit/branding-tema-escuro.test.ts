@@ -192,9 +192,17 @@ describe("o que o sistema ajustou, com as duas cores (#2482)", () => {
       it("controle: sem a segunda cor, os motivos são os da principal sozinha", () => {
         // Se o filtro alcançasse o caso de uma cor só, o verde perderia os
         // avisos do escuro que ele de fato pinta.
+        //
+        // Na Sage o segundo motivo era `redundancia_nao_cromatica_necessaria`: o
+        // `--color-success` escuro de lá (`#82a077`) era o próprio accent-400 do
+        // produto, e nenhum giro até 60° afastava esse verde do `#8a948b` que a
+        // semente dá no escuro. Na paleta ArvisX o success escuro é `#4fa877`,
+        // mais saturado e mais frio: ele ainda nasce colado (ΔE simulado 0,0301),
+        // mas 40° de giro bastam para folgar (0,0506) — então a derivação MOVE a
+        // semântica em vez de pedir ícone/rótulo. É o mesmo mecanismo, com saída.
         expect(sigla(caso.camada({ accent_hex: SEMENTE_CLARA, accent_dark_hex: null }))).toEqual([
           "accent_deslocado|escuro|--color-accent",
-          "redundancia_nao_cromatica_necessaria|escuro|success",
+          "semantica_deslocada|escuro|success",
         ]);
       });
     });

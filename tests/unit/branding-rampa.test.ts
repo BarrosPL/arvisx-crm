@@ -28,8 +28,9 @@ const CSS = fs.readFileSync(path.join(RAIZ, "app/globals.css"), "utf8");
  *
  * Copiar à mão criaria uma segunda fonte da verdade que envelhece em silêncio: quem
  * mexesse na paleta do design system veria este teste verde contra a paleta de ontem, e
- * a catraca deixaria de calibrar contra a régua. Lendo do arquivo, mudar a Sage quebra
- * este teste — que é exatamente o aviso que se quer.
+ * a catraca deixaria de calibrar contra a régua. Lendo do arquivo, mudar a paleta do
+ * produto quebra este teste — que é exatamente o aviso que se quer (foi o que aconteceu
+ * na troca da Sage `#506d48` pela navy ArvisX `#283a55`).
  */
 /**
  * O bloco `:root` sai por casamento de chaves, e não por `slice` entre duas
@@ -48,7 +49,7 @@ function blocoRoot(css: string): string {
   return css.slice(i, fim);
 }
 
-function stopsSageDoCss(): string[] {
+function stopsDoProdutoNoCss(): string[] {
   const raiz = blocoRoot(CSS);
   return GRAUS.map((g) => {
     const m = new RegExp(`--color-accent-${g}:\\s*(#[0-9a-f]{6})`, "i").exec(raiz);
@@ -103,18 +104,21 @@ describe("conversões de cor", () => {
 });
 
 describe("rampaDeSemente — catraca de calibração contra o design system", () => {
-  const esperados = stopsSageDoCss();
+  const esperados = stopsDoProdutoNoCss();
 
   it("lê 11 stops distintos do globals.css (guarda de vacuidade)", () => {
     // Sem isto, um regex quebrado devolveria lista vazia e a comparação abaixo passaria
     // por não ter o que comparar — instrumento morto tem cara de teste verde.
     expect(esperados).toHaveLength(11);
     expect(new Set(esperados).size).toBe(11);
-    expect(esperados[K]).toBe("#506d48");
+    expect(esperados[K]).toBe("#283a55");
   });
 
-  it("reproduz os 11 stops Sage a partir de #506d48 com Δ ≤ 2/255 por canal", () => {
-    const derivada = rampaDeSemente("#506d48");
+  it("reproduz os 11 stops ArvisX a partir de #283a55 com Δ ≤ 2/255 por canal", () => {
+    // A rampa do globals.css FOI gerada por `rampaDeSemente("#283a55")`, então hoje o
+    // Δ é 0; a tolerância de 2/255 continua para o dia em que a paleta for retocada à
+    // mão (na Sage, que foi desenhada antes da função, era onde o Δ vivia).
+    const derivada = rampaDeSemente("#283a55");
     const distancias = esperados.map((esperado, i) => distanciaPorCanal(esperado, derivada[i]!));
     expect(
       Math.max(...distancias),

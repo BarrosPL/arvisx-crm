@@ -37,7 +37,10 @@ export function VersionFooter({
 
   const instalada = (
     <p
-      className={cn("px-3 py-1 text-[11px] text-muted-foreground", collapsed && "px-0 text-center")}
+      className={cn(
+        "px-3 py-1 font-mono text-[10.5px] text-sidebar-muted",
+        collapsed && "px-0 text-center",
+      )}
       title={titulo}
     >
       {collapsed && label ? label.split(".").slice(0, 2).join(".") : titulo}
@@ -62,8 +65,8 @@ export function VersionFooter({
         )}
       >
         <span className="relative flex h-2 w-2 shrink-0">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cta/60" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-cta" />
         </span>
         {!collapsed && (
           <span className="truncate">
