@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ícones: hoje × propostas</title>
+<meta name="grupo" content="Entrada">
+<meta name="ordem" content="1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/duotone/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  body { padding: 32px; }
+  h1 { font-family: var(--display); font-stretch: 112%; font-weight: 650; letter-spacing: -.03em; font-size: 28px; margin-bottom: 6px; }
+  .intro { color: var(--apoio); max-width: 70ch; margin-bottom: 28px; }
+  .bloco { margin-bottom: 40px; }
+  .bloco > h2 { font-family: var(--display); font-stretch: 108%; font-weight: 620; font-size: 18px; letter-spacing: -.02em; margin-bottom: 4px; }
+  .bloco > p { color: var(--apoio); font-size: 13px; margin-bottom: 14px; max-width: 80ch; }
+  .opcoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  .opcao { border: 1px solid var(--linha); border-radius: var(--r-lg); overflow: hidden; background: var(--painel); }
+  .opcao > header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--linha); font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--apoio); }
+  .opcao > header b { color: var(--navy); font-family: var(--sans); text-transform: none; letter-spacing: 0; font-size: 13px; }
+  .opcao > header .tag { margin-left: auto; }
+  .amostra { padding: 14px; }
+
+  /* menu lateral (fundo navy) */
+  .menu { background: var(--navy); border-radius: 10px; padding: 10px; width: 100%; }
+  .menu .g { font: 500 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: #6c7586; padding: 6px 10px 8px; }
+  .menu a { display: flex; align-items: center; gap: 10px; height: 32px; padding: 0 10px; border-radius: 6px; color: #aab2c0; font-weight: 500; font-size: 14px; position: relative; }
+  .menu a i { font-size: 18px; }
+  .menu a .cont { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--sinal); color: #fff; font: 600 11px/20px var(--mono); text-align: center; }
+  .menu a.ativo { background: rgba(212,175,55,.10); color: var(--ouro-claro); }
+  .menu a.ativo::before { content: ""; position: absolute; left: -10px; top: 7px; bottom: 7px; width: 2px; background: var(--ouro); border-radius: 0 2px 2px 0; }
+  /* hoje */
+  .m-hoje a i { color: #7e8797; } .m-hoje a.ativo i { color: var(--ouro); }
+  /* A: ícones claros */
+  .m-a a i { color: #d8dce3; } .m-a a.ativo i { color: var(--ouro); } .m-a a { color: #d8dce3; }
+  /* B: ícones em ouro suave, texto claro */
+  .m-b a i { color: #e9cb62; opacity: .85; } .m-b a.ativo i { color: var(--ouro); opacity: 1; } .m-b a { color: #d8dce3; }
+  /* C: ícone duotone (preenchimento ouro 20%) */
+  .m-c a i { color: #e0bc45; } .m-c a { color: #d8dce3; } .m-c a.ativo i { color: var(--ouro); }
+  .m-c a.ativo { background: rgba(212,175,55,.14); }
+
+  /* cartões de hub (fundo claro) */
+  .hub { display: grid; gap: 10px; }
+  .hubc { display: flex; gap: 12px; padding: 12px; border: 1px solid var(--linha); border-radius: 12px; background: var(--painel); }
+  .hubc .ic { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; font-size: 19px; flex: none; }
+  .hubc h3 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+  .hubc p { color: var(--apoio); font-size: 12.5px; line-height: 1.4; }
+  .h-hoje .ic { background: var(--navy); color: var(--ouro); }
+  .h-a .ic { background: var(--ouro-suave); color: var(--ouro-escuro); border: 1px solid #ecd9a0; }
+  .h-b .ic { background: var(--ouro); color: var(--navy); }
+  .h-c .ic { background: #e8f1fb; color: var(--sinal); }
+  .h-c .hubc:nth-child(2) .ic { background: var(--ouro-suave); color: var(--ouro-escuro); }
+  .h-c .hubc:nth-child(3) .ic { background: #e6f4ec; color: var(--ok); }
+
+  /* barra de cima + barra inferior */
+  .topo-mini { display: flex; align-items: center; gap: 4px; padding: 8px 10px; border: 1px solid var(--linha); border-radius: 10px; background: var(--painel); }
+  .topo-mini .ic { width: 36px; height: 36px; border-radius: 6px; display: grid; place-items: center; font-size: 20px; position: relative; }
+  .topo-mini .ic .cont { position: absolute; top: 5px; right: 5px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--sinal); color: #fff; font: 600 10px/16px var(--mono); }
+  .topo-mini .busca { flex: 1; display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--linha); color: var(--fraco); font-size: 13px; }
+  .t-hoje .ic { color: var(--apoio); } .t-hoje .busca i { color: var(--fraco); }
+  .t-a .ic { color: var(--navy); } .t-a .busca i { color: var(--navy); }
+  .t-b .ic { color: var(--ouro-escuro); } .t-b .busca i { color: var(--ouro-escuro); }
+  .inferior { display: grid; grid-template-columns: repeat(5, 1fr); background: var(--navy); border-radius: 10px; padding: 8px 4px; margin-top: 10px; }
+  .inferior a { display: flex; flex-direction: column; align-items: center; gap: 3px; color: #7e8797; font: 600 10px/1 var(--sans); }
+  .inferior a i { font-size: 22px; }
+  .inferior a.ativo { color: var(--ouro); }
+  .i-a a { color: #d8dce3; } .i-a a.ativo { color: var(--ouro); }
+  .i-b a { color: #c9cfda; } .i-b a i { color: #e9cb62; } .i-b a.ativo { color: var(--ouro); } .i-b a.ativo i { color: var(--ouro); }
+
+  /* ícones de estado nas telas claras (botões, etiquetas, vazios) */
+  .estado { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .e-hoje .elo { border-color: var(--ouro); color: var(--ouro-escuro); }
+
+  /* ícone do app */
+  .apps { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
+  .app { text-align: center; font: 500 11px/1.4 var(--mono); color: var(--apoio); }
+  .app .q { width: 72px; height: 72px; border-radius: 18px; display: grid; place-items: center; margin: 0 auto 8px; box-shadow: 0 8px 20px -10px rgba(15,19,26,.5); }
+  .app .q img { width: 64px; height: auto; }
+  .app .q svg { width: 52px; height: 52px; }
+</style>
+</head>
+<body>
+  <h1>Ícones: hoje × propostas</h1>
+  <p class="intro">O que o cliente vê de ícone no CRM: menu lateral, barra de cima, barra do celular, cartões dos hubs, ícones de estado nas telas claras e o ícone do app. Em cada bloco, a coluna "hoje" é o que está no ar; as outras são opções. Escolha uma por bloco (pode misturar).</p>
+
+  <section class="bloco">
+    <h2>1. Menu lateral (fundo navy)</h2>
+    <p>Hoje os ícones ficam em cinza-azulado (#7e8797) sobre o navy: somem. As opções clareiam o ícone e deixam o ouro só para o item ativo, ou põem ouro em todos.</p>
+    <div class="opcoes">
+      <div class="opcao"><header><b>Hoje</b><span class="tag">cinza #7e8797</span></header><div class="amostra"><div class="menu m-hoje">
+        <div class="g">Atendimento</div>
+        <a class="ativo"><i class="ph ph-tray"></i>Inbox<span class="cont">3</span></a><a><i class="ph ph-clock-countdown"></i>Radar</a><a><i class="ph ph-calendar-blank"></i>Agenda</a><a><i class="ph ph-file-text"></i>Respostas rápidas</a>
+        <div class="g">CRM</div><a><i class="ph ph-kanban"></i>Funis</a><a><i class="ph ph-users"></i>Contatos</a><a><i class="ph ph-list-checks"></i>Tarefas</a>
+      </div></div></div>
+      <div class="opcao"><header><b>A · Ícones claros</b><span class="tag ouro">recomendada</span></header><div class="amostra"><div class="menu m-a">
+        <div class="g">Atendimento</div>
+        <a class="ativo"><i class="ph-fill ph-tray"></i>Inbox<span class="cont">3</span></a><a><i class="ph ph-clock-countdown"></i>Radar</a><a><i class="ph ph-calendar-blank"></i>Agenda</a><a><i class="ph ph-file-text"></i>Respostas rápidas</a>
+        <div class="g">CRM</div><a><i class="ph ph-kanban"></i>Funis</a><a><i class="ph ph-users"></i>Contatos</a><a><i class="ph ph-list-checks"></i>Tarefas</a>
+      </div></div></div>
+      <div class="opcao"><header><b>B · Ícones em ouro</b><span class="tag">texto claro</span></header><div class="amostra"><div class="menu m-b">
+        <div class="g">Atendimento</div>
+        <a class="ativo"><i class="ph-fill ph-tray"></i>Inbox<span class="cont">3</span></a><a><i class="ph ph-clock-countdown"></i>Radar</a><a><i class="ph ph-calendar-blank"></i>Agenda</a><a><i class="ph ph-file-text"></i>Respostas rápidas</a>
+        <div class="g">CRM</div><a><i class="ph ph-kanban"></i>Funis</a><a><i class="ph ph-users"></i>Contatos</a><a><i class="ph ph-list-checks"></i>Tarefas</a>
+      </div></div></div>
+      <div class="opcao"><header><b>C · Duotone em ouro</b><span class="tag">traço + fundo 20%</span></header><div class="amostra"><div class="menu m-c">
+        <div class="g">Atendimento</div>
+        <a class="ativo"><i class="ph-duotone ph-tray"></i>Inbox<span class="cont">3</span></a><a><i class="ph-duotone ph-clock-countdown"></i>Radar</a><a><i class="ph-duotone ph-calendar-blank"></i>Agenda</a><a><i class="ph-duotone ph-file-text"></i>Respostas rápidas</a>
+        <div class="g">CRM</div><a><i class="ph-duotone ph-kanban"></i>Funis</a><a><i class="ph-duotone ph-users"></i>Contatos</a><a><i class="ph-duotone ph-list-checks"></i>Tarefas</a>
+      </div></div></div>
+    </div>
+  </section>
+
+  <section class="bloco">
+    <h2>2. Cartões dos hubs (Ver tudo em CRM / IA / Análise / Configurações)</h2>
+    <p>Hoje cada cartão tem uma caixa navy com o ícone em ouro: pesa na tela clara. As opções clareiam a caixa.</p>
+    <div class="opcoes">
+      <div class="opcao"><header><b>Hoje</b><span class="tag">caixa navy</span></header><div class="amostra hub h-hoje">
+        <div class="hubc"><span class="ic"><i class="ph ph-kanban"></i></span><div><h3>Funis</h3><p>Seus funis de venda — clique em um para abrir o quadro de clientes.</p></div></div>
+        <div class="hubc"><span class="ic"><i class="ph ph-robot"></i></span><div><h3>Agentes</h3><p>Quem atende por você: instruções, modelo, ferramentas e publicação.</p></div></div>
+        <div class="hubc"><span class="ic"><i class="ph ph-chart-bar"></i></span><div><h3>Desempenho</h3><p>Funil e performance por atendente nos últimos 30 dias.</p></div></div>
+      </div></div>
+      <div class="opcao"><header><b>A · Caixa ouro-suave</b><span class="tag ouro">recomendada</span></header><div class="amostra hub h-a">
+        <div class="hubc"><span class="ic"><i class="ph ph-kanban"></i></span><div><h3>Funis</h3><p>Seus funis de venda — clique em um para abrir o quadro de clientes.</p></div></div>
+        <div class="hubc"><span class="ic"><i class="ph ph-robot"></i></span><div><h3>Agentes</h3><p>Quem atende por você: instruções, modelo, ferramentas e publicação.</p></div></div>
+        <div class="hubc"><span class="ic"><i class="ph ph-chart-bar"></i></span><div><h3>Desempenho</h3><p>Funil e performance por atendente nos últimos 30 dias.</p></div></div>
+      </div></div>
+      <div class="opcao"><header><b>B · Caixa ouro cheio</b><span class="tag">ícone navy</span></header><div class="amostra hub h-b">
+        <div class="hubc"><span class="ic"><i class="ph ph-kanban"></i></span><div><h3>Funis</h3><p>Seus funis de venda — clique em um para abrir o quadro de clientes.</p></div></div>
+        <div class="hubc"><span class="ic"><i class="ph ph-robot"></i></span><div><h3>Agentes</h3><p>Quem atende por você: instruções, modelo, ferramentas e publicação.</p></div></div>
+        <div class="hubc"><span class="ic"><i class="ph ph-chart-bar"></i></span><div><h3>Desempenho</h3><p>Funil e performance por atendente nos últimos 30 dias.</p></div></div>
+      </div></div>
+      <div class="opcao"><header><b>C · Cor por grupo</b><span class="tag">azul CRM · ouro IA · verde análise</span></header><div class="amostra hub h-c">
+        <div class="hubc"><span class="ic"><i class="ph ph-kanban"></i></span><div><h3>Funis</h3><p>Seus funis de venda — clique em um para abrir o quadro de clientes.</p></div></div>
+        <div class="hubc"><span class="ic"><i class="ph ph-robot"></i></span><div><h3>Agentes</h3><p>Quem atende por você: instruções, modelo, ferramentas e publicação.</p></div></div>
+        <div class="hubc"><span class="ic"><i class="ph ph-chart-bar"></i></span><div><h3>Desempenho</h3><p>Funil e performance por atendente nos últimos 30 dias.</p></div></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="bloco">
+    <h2>3. Barra de cima e barra do celular</h2>
+    <p>Sino, idioma, tema, lupa e as abas de baixo. Hoje ficam em cinza médio.</p>
+    <div class="opcoes">
+      <div class="opcao"><header><b>Hoje</b></header><div class="amostra">
+        <div class="topo-mini t-hoje"><span class="busca"><i class="ph ph-magnifying-glass"></i>Buscar...</span><span class="ic"><i class="ph ph-bell"></i><span class="cont">4</span></span><span class="ic" style="font:700 11.5px var(--mono)">PT</span><span class="ic"><i class="ph ph-sun"></i></span></div>
+        <div class="inferior i-hoje"><a class="ativo"><i class="ph-fill ph-tray"></i>Inbox</a><a><i class="ph ph-kanban"></i>Funis</a><a><i class="ph ph-calendar-blank"></i>Agenda</a><a><i class="ph ph-chart-bar"></i>Desempenho</a><a><i class="ph ph-dots-three-outline"></i>Mais</a></div>
+      </div></div>
+      <div class="opcao"><header><b>A · Navy em cima, claro embaixo</b><span class="tag ouro">recomendada</span></header><div class="amostra">
+        <div class="topo-mini t-a"><span class="busca"><i class="ph ph-magnifying-glass"></i>Buscar...</span><span class="ic"><i class="ph ph-bell"></i><span class="cont">4</span></span><span class="ic" style="font:700 11.5px var(--mono)">PT</span><span class="ic"><i class="ph ph-sun"></i></span></div>
+        <div class="inferior i-a"><a class="ativo"><i class="ph-fill ph-tray"></i>Inbox</a><a><i class="ph ph-kanban"></i>Funis</a><a><i class="ph ph-calendar-blank"></i>Agenda</a><a><i class="ph ph-chart-bar"></i>Desempenho</a><a><i class="ph ph-dots-three-outline"></i>Mais</a></div>
+      </div></div>
+      <div class="opcao"><header><b>B · Ouro em cima e embaixo</b></header><div class="amostra">
+        <div class="topo-mini t-b"><span class="busca"><i class="ph ph-magnifying-glass"></i>Buscar...</span><span class="ic"><i class="ph ph-bell"></i><span class="cont">4</span></span><span class="ic" style="font:700 11.5px var(--mono)">PT</span><span class="ic"><i class="ph ph-sun"></i></span></div>
+        <div class="inferior i-b"><a class="ativo"><i class="ph-fill ph-tray"></i>Inbox</a><a><i class="ph ph-kanban"></i>Funis</a><a><i class="ph ph-calendar-blank"></i>Agenda</a><a><i class="ph ph-chart-bar"></i>Desempenho</a><a><i class="ph ph-dots-three-outline"></i>Mais</a></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="bloco">
+    <h2>4. Ícones nas telas claras (botões, etiquetas, estados vazios, IA)</h2>
+    <p>Nas telas claras os ícones já acompanham a cor do texto. O que muda é o peso: regular (hoje) ou "duotone" com fundo ouro nos ícones de IA e de estado.</p>
+    <div class="opcoes">
+      <div class="opcao"><header><b>Hoje</b><span class="tag">regular, cor do texto</span></header><div class="amostra estado e-hoje">
+        <button class="btn primario"><i class="ph ph-plus"></i>Novo contato</button><button class="btn secundario"><i class="ph ph-upload-simple"></i>Importar CSV</button>
+        <span class="tag ouro"><i class="ph ph-robot"></i>Agente</span><span class="tag ok"><i class="ph ph-check-circle"></i>Conectado</span><span class="tag aviso"><i class="ph ph-thermometer-cold"></i>Esfriando</span>
+        <span class="avatar ia"><i class="ph ph-robot"></i></span>
+        <div class="vazio" style="padding:12px 0 0;flex-basis:100%"><div class="elo"><i class="ph ph-chat-circle"></i></div></div>
+      </div></div>
+      <div class="opcao"><header><b>A · Duotone nos ícones de IA e estado</b><span class="tag ouro">recomendada</span></header><div class="amostra estado">
+        <button class="btn primario"><i class="ph ph-plus"></i>Novo contato</button><button class="btn secundario"><i class="ph ph-upload-simple"></i>Importar CSV</button>
+        <span class="tag ouro"><i class="ph-duotone ph-robot"></i>Agente</span><span class="tag ok"><i class="ph-duotone ph-check-circle"></i>Conectado</span><span class="tag aviso"><i class="ph-duotone ph-thermometer-cold"></i>Esfriando</span>
+        <span class="avatar ia"><i class="ph-duotone ph-robot"></i></span>
+        <div class="vazio" style="padding:12px 0 0;flex-basis:100%"><div class="elo" style="background:var(--ouro-suave)"><i class="ph-duotone ph-chat-circle"></i></div></div>
+      </div></div>
+      <div class="opcao"><header><b>B · Preenchidos (fill)</b></header><div class="amostra estado">
+        <button class="btn primario"><i class="ph-fill ph-plus-circle"></i>Novo contato</button><button class="btn secundario"><i class="ph-fill ph-upload-simple"></i>Importar CSV</button>
+        <span class="tag ouro"><i class="ph-fill ph-robot"></i>Agente</span><span class="tag ok"><i class="ph-fill ph-check-circle"></i>Conectado</span><span class="tag aviso"><i class="ph-fill ph-thermometer-cold"></i>Esfriando</span>
+        <span class="avatar ia"><i class="ph-fill ph-robot"></i></span>
+        <div class="vazio" style="padding:12px 0 0;flex-basis:100%"><div class="elo"><i class="ph-fill ph-chat-circle"></i></div></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="bloco">
+    <h2>5. Ícone do app (celular, aba do navegador)</h2>
+    <p>Hoje o favicon é o "A" desenhado em vetor sobre fundo claro. Opções com o símbolo oficial.</p>
+    <div class="apps">
+      <div class="app"><div class="q" style="background:#f7f6f2;border:1px solid var(--linha)"><svg viewBox="0 0 216 216"><path fill="#0f131a" fill-rule="evenodd" d="M108 10L198 206H156L140 170H76L60 206H18Z M108 78L84 134H132Z"/><path fill="#d4af37" fill-rule="evenodd" d="M70 120c-38 0-68 13-68 30s30 30 68 30 68-13 68-30-30-30-68-30Zm0 13c30 0 53 8 53 17s-23 17-53 17-53-8-53-17 23-17 53-17ZM146 130c-38 0-68 13-68 30s30 30 68 30 68-13 68-30-30-30-68-30Zm0 13c30 0 53 8 53 17s-23 17-53 17-53-8-53-17 23-17 53-17Z"/></svg></div>hoje · vetor</div>
+      <div class="app"><div class="q" style="background:#0f131a"><img src="../marca/arvisx-simbolo-oficial-escuro.png" alt=""></div>A · navy</div>
+      <div class="app"><div class="q" style="background:#d4af37"><img src="../marca/arvisx-simbolo-oficial.png" alt=""></div>B · ouro</div>
+      <div class="app"><div class="q" style="background:#f7f6f2;border:1px solid var(--linha)"><img src="../marca/arvisx-simbolo-oficial.png" alt=""></div>C · claro</div>
+    </div>
+  </section>
+</body>
+</html>
