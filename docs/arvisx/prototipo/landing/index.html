@@ -142,20 +142,19 @@
     .faq details[open] summary::after { transform: rotate(45deg); }
     .faq details p { padding: 0 20px 18px; color: var(--apoio); font-size: 15px; }
 
-    /* chamada final */
-    .chamada { padding: 0 var(--lado) clamp(56px, 9vw, 112px); }
-    .chamada .miolo { position: relative; overflow: hidden; display: grid; gap: 24px; padding: clamp(32px, 6vw, 72px); border-radius: 24px; background: linear-gradient(135deg, #1a1f2a, #0f141c); border: 1px solid var(--linha-forte); }
-    .chamada h2 em { font-style: normal; color: var(--ouro-claro); }
-    .chamada p { color: var(--apoio); font-size: 17px; margin-top: 14px; max-width: 46ch; }
-    .chamada .acoes { display: flex; flex-wrap: wrap; gap: 10px; }
-    .chamada .marca-dagua { position: absolute; right: -8%; bottom: -34%; width: 46%; min-width: 260px; opacity: .14; pointer-events: none; }
-
     /* rodapé */
-    .rodape { border-top: 1px solid var(--linha); padding: 28px var(--lado) 40px; }
-    .rodape .miolo { display: flex; flex-wrap: wrap; gap: 18px 28px; align-items: center; justify-content: space-between; color: var(--apoio); font-size: 13.5px; }
-    .rodape img { height: 22px; width: auto; }
-    .rodape nav { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+    .rodape { border-top: 1px solid var(--linha); background: var(--painel); padding: clamp(40px, 6vw, 64px) var(--lado) 28px; }
+    .rodape .colunas { display: grid; gap: 32px; }
+    .rodape .marca-col img { height: 26px; width: auto; }
+    .rodape .marca-col p { color: var(--apoio); font-size: 14.5px; margin-top: 16px; max-width: 34ch; }
+    .rodape b { display: block; font: 700 11px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ouro-claro); margin-bottom: 14px; }
+    .rodape nav { display: grid; gap: 10px; align-content: start; color: var(--apoio); font-size: 14.5px; font-weight: 600; }
     .rodape nav a:hover { color: var(--texto); }
+    .rodape .comece p { color: var(--apoio); font-size: 14.5px; margin-bottom: 14px; }
+    .rodape .comece .btn { width: 100%; margin-bottom: 8px; }
+    .rodape .base { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--linha); color: var(--fraco); font-size: 13px; }
+    .rodape .base a { color: var(--apoio); font-weight: 600; }
+    .rodape .base a:hover { color: var(--texto); }
 
     @media (min-width: 640px) {
       .dor .grade, .agentes .grade { grid-template-columns: 1fr 1fr; }
@@ -163,6 +162,8 @@
       .como .passos { grid-template-columns: repeat(3, 1fr); }
       .quem .grade { grid-template-columns: repeat(4, 1fr); }
       .topo .acoes .demo { display: inline-flex; }
+      .rodape .colunas { grid-template-columns: 1fr 1fr; }
+      .rodape .comece .btn { width: auto; margin-right: 8px; }
     }
     @media (min-width: 980px) {
       .topo nav { display: flex; }
@@ -172,8 +173,7 @@
       .crm .tela.inv .texto { order: 2; }
       .cuidado .miolo { grid-template-columns: 1.1fr 1fr; align-items: center; gap: 48px; }
       .agentes .grade { grid-template-columns: repeat(4, 1fr); }
-      .chamada .miolo { grid-template-columns: 1.3fr 1fr; align-items: center; }
-      .chamada .acoes { justify-content: flex-end; }
+      .rodape .colunas { grid-template-columns: 1.3fr .8fr 1fr; gap: 48px; }
     }
   </style>
 </head>
@@ -370,27 +370,34 @@
       </div>
     </section>
 
-    <section class="chamada" id="contato">
-      <div class="miolo">
-        <div>
-          <p class="eyebrow">Veja com o seu cenário</p>
-          <h2>Uma conversa, e você vê o agente <em>atendendo.</em></h2>
-          <p>Agende uma demonstração. Mostramos o Arvisx CRM com o jeito que a sua empresa vende e desenhamos a implantação juntos.</p>
-        </div>
-        <div class="acoes">
-          <a class="btn primario" href="{{LINK_CTA}}">Agendar demonstração<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"/></svg></a>
-          <a class="btn secundario" href="/login">Entrar no CRM</a>
-        </div>
-        <img class="marca-dagua" src="../marca/arvisx-simbolo-fundo.webp" alt="" aria-hidden="true" width="1040" height="716" loading="lazy" />
-      </div>
-    </section>
   </main>
 
-  <footer class="rodape">
+  <footer class="rodape" id="contato">
     <div class="miolo">
-      <img src="../marca/arvisx-crm-oficial-escuro.png" alt="Arvisx CRM" width="715" height="85" />
-      <nav aria-label="Rodapé"><a href="#crm">O CRM</a><a href="#agentes">Agentes de IA</a><a href="#como-funciona">Como funciona</a><a href="#faq">Perguntas</a><a href="https://arvisx.com.br/">arvisx.com.br</a><a href="/login">Entrar</a></nav>
-      <span>Arvisx AI. O elo inteligente do seu ecossistema.</span>
+      <div class="colunas">
+        <div class="marca-col">
+          <img src="../marca/arvisx-crm-oficial-escuro.png" alt="Arvisx CRM" width="715" height="85" />
+          <p>O CRM com agentes de IA para quem vende serviço pelo WhatsApp. Configurado pela Arvisx, operado com você.</p>
+        </div>
+        <nav aria-label="Rodapé">
+          <b>Navegue</b>
+          <a href="#crm">O CRM</a>
+          <a href="#agentes">Agentes de IA</a>
+          <a href="#como-funciona">Como funciona</a>
+          <a href="#para-quem">Para quem é</a>
+          <a href="#faq">Perguntas frequentes</a>
+        </nav>
+        <div class="comece">
+          <b>Comece por aqui</b>
+          <p>Veja o Arvisx CRM com o cenário da sua empresa.</p>
+          <a class="btn primario" href="{{LINK_CTA}}">Agendar demonstração</a>
+          <a class="btn secundario" href="/login">Entrar no CRM</a>
+        </div>
+      </div>
+      <div class="base">
+        <span>Arvisx CRM é um produto da <a href="https://arvisx.com.br/">Arvisx AI</a>.</span>
+        <span>O elo inteligente do seu ecossistema.</span>
+      </div>
     </div>
   </footer>
 </body>
