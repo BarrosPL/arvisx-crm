@@ -122,10 +122,10 @@ button { background: none; border: 0; cursor: pointer; }
 .lateral li a {
   position: relative; display: flex; align-items: center; gap: 10px;
   height: 32px; padding: 0 10px; border-radius: var(--r-sm);
-  color: #aab2c0; font-weight: 500; white-space: nowrap;
+  color: #d8dce3; font-weight: 500; white-space: nowrap;
   transition: background .12s, color .12s;
 }
-.lateral li a i { font-size: 18px; color: #7e8797; flex: none; }
+.lateral li a i { font-size: 18px; color: #d8dce3; flex: none; }
 .lateral li a:hover { background: var(--navy-2); color: var(--inverso); }
 .lateral li a:hover i { color: #c9cfda; }
 .lateral li a[aria-current="page"] { background: rgba(212, 175, 55, .10); color: var(--ouro-claro); }
@@ -197,7 +197,7 @@ button { background: none; border: 0; cursor: pointer; }
 .topo > * { min-width: 0; }
 .topo .icone {
   position: relative; width: 36px; height: 36px; border-radius: var(--r-sm); display: grid; place-items: center;
-  color: var(--apoio); font-size: 20px;
+  color: var(--navy); font-size: 20px;
 }
 .topo .icone:hover { background: var(--painel-2); color: var(--texto); }
 .topo .icone.idioma { font: 700 11.5px/1 var(--mono); letter-spacing: .04em; }
@@ -613,7 +613,7 @@ a.cartao { display: block; }
     background: var(--navy); border-top: 1px solid var(--navy-linha);
     padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
   }
-  .barra-inferior a { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 0; color: #7e8797; font: 600 10px/1 var(--sans); }
+  .barra-inferior a { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 0; color: #d8dce3; font: 600 10px/1 var(--sans); }
   .barra-inferior a i { font-size: 22px; }
   .barra-inferior a[aria-current="page"] { color: var(--ouro); }
   .acoes-fixas { position: fixed; left: 0; right: 0; bottom: 62px; padding: 10px 16px; background: rgba(247,246,242,.95); border-top: 1px solid var(--linha); display: flex; gap: 8px; z-index: 25; }

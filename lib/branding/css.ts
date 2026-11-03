@@ -178,6 +178,7 @@ function declaracoesDoTema(cor: CorResolvida, tema: "claro" | "escuro"): Declara
     ["--color-cta-fg", t.accentFg],
     ["--color-cta-hover", t.accentHover],
     ["--color-cta-leve", t.accentSoft],
+    ["--color-cta-forte", t.accent],
   );
   return saida;
 }

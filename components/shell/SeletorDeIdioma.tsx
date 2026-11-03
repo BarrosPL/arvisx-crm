@@ -84,14 +84,13 @@ export function SeletorDeIdioma() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
+          className="text-text"
           size="icon"
           disabled={salvando}
           aria-label={`${t("Idioma")}: ${emVigor.rotuloCurto} — ${emVigor.nomeNativo}`}
           data-testid="seletor-de-idioma"
         >
-          <span className="text-xs font-semibold tabular-nums">
-            {emVigor.rotuloCurto}
-          </span>
+          <span className="text-xs font-semibold tabular-nums">{emVigor.rotuloCurto}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[180px]">

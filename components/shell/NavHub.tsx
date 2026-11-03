@@ -114,7 +114,7 @@ export function NavHub({
                   <Card className="flex h-full gap-3.5 p-4 transition-[border-color,transform,box-shadow] hover:-translate-y-px hover:border-cta hover:shadow-lg">
                     <span
                       aria-hidden
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sidebar text-cta"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cta/40 bg-cta-leve text-cta-forte"
                     >
                       <Icon size={19} weight="regular" />
                     </span>

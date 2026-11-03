@@ -71,8 +71,9 @@
   --color-cta-fg: #0f131a;
   --color-cta-hover: #c7a32c;
   --color-cta-leve: #fbf5e2;
+  --color-cta-forte: #a8871f;
   --color-sidebar: #0f131a;
-  --color-sidebar-fg: #aab2c0;
+  --color-sidebar-fg: #d8dce3;
   --color-sidebar-muted: #6c7586;
   --color-sidebar-border: #283a55;
   --color-sidebar-hover: #151b26;
@@ -301,8 +302,9 @@
   --color-cta-fg: #0f131a;
   --color-cta-hover: #c7a32c;
   --color-cta-leve: #fbf5e2;
+  --color-cta-forte: #a8871f;
   --color-sidebar: #0f131a;
-  --color-sidebar-fg: #aab2c0;
+  --color-sidebar-fg: #d8dce3;
   --color-sidebar-muted: #6c7586;
   --color-sidebar-border: #283a55;
   --color-sidebar-hover: #151b26;
@@ -409,8 +411,9 @@
   --color-cta-fg: #0f131a;
   --color-cta-hover: #e0bc45;
   --color-cta-leve: rgba(212, 175, 55, 0.14);
+  --color-cta-forte: #e0bc45;
   --color-sidebar: #0b0f15;
-  --color-sidebar-fg: #aab2c0;
+  --color-sidebar-fg: #d8dce3;
   --color-sidebar-muted: #6c7586;
   --color-sidebar-border: #1d2531;
   --color-sidebar-hover: #151b26;
@@ -531,6 +534,7 @@
   --color-cta-foreground: var(--color-cta-fg);
   --color-cta-hover: var(--color-cta-hover);
   --color-cta-leve: var(--color-cta-leve);
+  --color-cta-forte: var(--color-cta-forte);
   --color-sidebar: var(--color-sidebar);
   --color-sidebar-foreground: var(--color-sidebar-fg);
   --color-sidebar-muted: var(--color-sidebar-muted);

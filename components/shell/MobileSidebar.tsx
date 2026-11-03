@@ -57,7 +57,7 @@ export function GavetaDeNavegacao({ comoAba = false }: { comoAba?: boolean }) {
             comoAba
               ? // Como aba: ocupa a vaga inteira na fila do rodapé, ícone em
                 // cima e rótulo embaixo, igual às outras quatro.
-                "flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1 text-sidebar-muted hover:bg-sidebar-hover hover:text-white"
+                "flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1 text-sidebar-foreground hover:bg-sidebar-hover hover:text-white"
               : // Como hambúrguer: 44px de alvo, e só no celular — acima de `md`
                 // a barra lateral já está na tela.
                 "h-11 w-11 md:hidden",

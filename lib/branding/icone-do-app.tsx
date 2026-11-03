@@ -4,6 +4,7 @@ import { marcaEhADoProduto } from "@/lib/branding";
 import { logger } from "@/lib/logger";
 
 import { CORES_DA_MARCA, SIMBOLO } from "./desenho";
+import { SIMBOLO_OFICIAL } from "./simbolo-oficial";
 import { letraDoIcone } from "./icone";
 import {
   baseDoStorage,
@@ -83,6 +84,15 @@ export async function gerarIconeDoApp(
           // O src é data: gerado de bytes limitados do Storage da instalação.
           // eslint-disable-next-line @next/next/no-img-element
           <img src={imagem} alt="" width={caixa} height={caixa} style={{ objectFit: "contain" }} />
+        ) : produto && SIMBOLO_OFICIAL ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={SIMBOLO_OFICIAL}
+            alt=""
+            width={Math.round(caixa * 0.78)}
+            height={Math.round(caixa * 0.78)}
+            style={{ objectFit: "contain" }}
+          />
         ) : produto ? (
           <svg
             viewBox={SIMBOLO.viewBox}

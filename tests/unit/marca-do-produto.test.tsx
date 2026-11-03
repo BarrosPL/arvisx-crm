@@ -144,7 +144,8 @@ describe("o favicon segue a mesma regra", () => {
 
   it("desenha o símbolo quando a marca é a do produto, e a inicial quando não é", () => {
     expect(icone).toMatch(/marcaEhADoProduto\(\{ name: marca\.nome, logoUrl: marca\.logoUrl \}\)/);
-    expect(icone).toMatch(/<path d=\{SIMBOLO\.d\}/);
+    // Com a arte oficial o favicon é um <img> do símbolo; o vetor fica de reserva.
+    expect(icone).toMatch(/<img\s+src=\{SIMBOLO_OFICIAL\}[\s\S]*<path d=\{SIMBOLO\.d\}/);
     expect(icone).toMatch(/letraDoIcone\(marca\.nome\)/);
   });
 });

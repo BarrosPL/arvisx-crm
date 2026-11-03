@@ -106,6 +106,7 @@ describe("serialização — os dois blocos", () => {
         "--color-cta-fg",
         "--color-cta-hover",
         "--color-cta-leve",
+      "--color-cta-forte",
       ].sort(),
     );
     expect(claro["--color-brand"]).toBe("#2563eb");
