@@ -86,7 +86,7 @@ export default async function SignupPage({
                   "Esse convite expirou ou não é mais válido. Peça um novo a quem te convidou — esta instalação não aceita cadastro sem convite.",
                 )
               : t(
-                  "Esta instalação não aceita cadastro aberto. Se você foi convidado, use o link que chegou no seu e-mail — ele já vem com o convite.",
+                  "Esta instalação não aceita cadastro aberto. Se você foi convidado, use o link de convite que você recebeu.",
                 )}
           </p>
         </div>

@@ -138,8 +138,7 @@ test("[P0] primeira cobrança: conectar, assinar, atrasar, suspender e voltar so
     const pB = await ctxB.newPage();
     pB.setDefaultTimeout(20_000);
     const emailB = uniqueEmail("cobranca");
-    await pB.goto("/login");
-    await pB.getByRole("link", { name: "Criar conta" }).click();
+    await pB.goto("/signup");
     await pB.getByLabel("Nome da empresa").fill(EMPRESA);
     await pB.getByLabel("Email").fill(emailB);
     await pB.getByLabel("Senha", { exact: true }).fill(senha);

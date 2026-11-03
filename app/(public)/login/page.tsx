@@ -4,6 +4,7 @@ import { EntrarComGoogle } from "@/components/auth/EntrarComGoogle";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { verifyInviteToken } from "@/lib/auth/invite-token";
 import { marcaDaSaida } from "@/lib/branding/saida";
+import { estadoDoProvedorGoogle } from "@/lib/auth/provedor-google";
 import { createClient } from "@/lib/supabase/server";
 import { idiomaDoVisitante } from "@/lib/i18n/idiomaAnonimo";
 import { traduzir } from "@/lib/i18n/dicionario";
@@ -33,6 +34,10 @@ export default async function LoginPage({
   );
   const t = (texto: string) => traduzir(texto, idioma);
   const marca = await marcaDaSaida(null);
+  // O botão do Google só aparece quando o provedor está ligado no Supabase desta
+  // instalação; sem isso ele só renderia um erro ao clicar. ("desconhecido" = o
+  // Supabase não respondeu: também não mostra, para não prometer o que pode falhar.)
+  const googleLigado = (await estadoDoProvedorGoogle()) === "ligado";
 
   return (
     <div className="space-y-6">
@@ -145,7 +150,7 @@ export default async function LoginPage({
         </div>
       )}
       <LoginForm next={next} email={convite?.email} />
-      <EntrarComGoogle next={next} />
+      {googleLigado ? <EntrarComGoogle next={next} /> : null}
       <div className="space-y-2 text-center text-sm">
         <p>
           <Link
@@ -153,15 +158,6 @@ export default async function LoginPage({
             className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
           >
             {t("Esqueci minha senha")}
-          </Link>
-        </p>
-        <p className="text-muted-foreground">
-          {t("Não tem conta?")}{" "}
-          <Link
-            href={convite && invite ? `/signup?invite=${encodeURIComponent(invite)}` : "/signup"}
-            className="font-medium text-foreground underline underline-offset-4"
-          >
-            {t("Criar conta")}
           </Link>
         </p>
       </div>

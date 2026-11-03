@@ -52,20 +52,22 @@ describe("convite acompanha os dois caminhos", () => {
     expect(links[1]?.getAttribute("href")).toBe(`/login?next=${encodeURIComponent(destino)}`);
     expect(html).toContain("pessoa@example.test");
   });
-  it("login preenche só e-mail de convite válido e mantém cadastro vinculado", async () => {
+  it("login preenche só e-mail de convite válido e não oferece cadastro", async () => {
     const Page = (await import("@/app/(public)/login/page")).default;
     const html = renderToStaticMarkup(
       await Page({ searchParams: Promise.resolve({ next: destino }) }),
     );
     expect(html).toContain('value="pessoa@example.test"');
-    expect(html).toContain(`/signup?invite=${encodeURIComponent(token)}`);
+    // O login não leva mais a /signup (cadastro só pelo link de convite da
+    // página accept-invite); o convite segue vivo no campo de e-mail.
+    expect(html).not.toContain("/signup");
     const invalido = renderToStaticMarkup(
       await Page({ searchParams: Promise.resolve({ next: destino + "x" }) }),
     );
     expect(invalido).not.toContain('value="pessoa@example.test"');
     const semConvite = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({}) }));
     expect(semConvite).not.toContain('value="pessoa@example.test"');
-    expect(semConvite).toContain('href="/signup"');
+    expect(semConvite).not.toContain("/signup");
     const vencido = signInviteToken({
       invite_id: "e9f1fd0c-8d64-4d33-b7e2-793856166df2",
       organization_id: "9093db4b-9d09-4a65-8f76-caf4c0b09a13",
@@ -79,7 +81,7 @@ describe("convite acompanha os dois caminhos", () => {
       }),
     );
     expect(expirado).not.toContain('value="pessoa@example.test"');
-    expect(expirado).toContain('href="/signup"');
+    expect(expirado).not.toContain("/signup");
   });
   it("cadastro conserva convite quando a pessoa decide entrar", async () => {
     const Page = (await import("@/app/(public)/signup/page")).default;
