@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agenda</title>
+<meta name="grupo" content="Atendimento">
+<meta name="ordem" content="30">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* trilhas de cor das pessoas (1–4) */
+  :root { --t1: var(--ouro); --t2: var(--sinal); --t3: var(--ok); --t4: var(--bronze); }
+  .google-cartao { display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; flex-wrap: wrap; }
+  .google-cartao i.ph-google-logo { font-size: 16px; color: var(--apoio); }
+  .google-cartao .link-p { font-size: 12px; text-decoration: underline; text-underline-offset: 3px; color: var(--apoio); }
+  .google-cartao .btn { margin-left: auto; }
+  .periodo { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .periodo .nav { display: flex; align-items: center; gap: 4px; }
+  .periodo .nav .rotulo-periodo { font-weight: 700; font-size: 14px; margin: 0 6px; }
+  .periodo .nav .rotulo-periodo::first-letter { text-transform: uppercase; }
+  .periodo .dir { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .pessoas { display: flex; align-items: center; }
+  .pessoas .avatar { margin-left: -8px; box-shadow: 0 0 0 2px var(--fundo); cursor: pointer; }
+  .pessoas .avatar:first-child { margin-left: 0; }
+  .pessoas .avatar.t1 { background: var(--t1); color: var(--navy); }
+  .pessoas .avatar.t2 { background: var(--t2); color: #fff; }
+  .pessoas .avatar.t3 { background: var(--t3); color: #fff; }
+  .pessoas .avatar.t4 { background: var(--t4); color: #fff; }
+  .historico { margin-bottom: 16px; }
+  .historico .caixa-hist { max-height: 320px; overflow: auto; margin-top: 0; }
+  .historico .linha { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--linha); }
+  .historico .linha:last-child { border-bottom: 0; }
+  .historico .trilha { width: 3px; height: 34px; border-radius: 2px; flex: none; }
+  .historico .quando { width: 112px; flex: none; }
+  .historico .quando strong { display: block; font-size: 13px; font-weight: 600; }
+  .historico .quando span { font: 500 11px/1.4 var(--mono); color: var(--fraco); }
+  .historico .quem { flex: 1; min-width: 0; }
+  .historico .quem a { font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+  .historico .quem span { display: block; font-size: 11.5px; color: var(--fraco); }
+  .historico .acoes-h { display: flex; gap: 2px; flex: none; }
+  .grade-agenda { display: grid; grid-template-columns: 48px repeat(7, minmax(0, 1fr)); min-width: 0; }
+  .grade-agenda .horas { border-right: 1px solid var(--linha); position: sticky; left: 0; background: var(--painel); z-index: 3; }
+  .grade-agenda .horas .cab-h, .grade-agenda .dia .cab-d { height: 32px; border-bottom: 1px solid var(--linha); display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 12px; color: var(--apoio); }
+  .grade-agenda .dia .cab-d .n { font: 600 12px/1 var(--mono); color: var(--texto); }
+  .grade-agenda .dia.hoje .cab-d { color: var(--ouro-escuro); font-weight: 700; }
+  .grade-agenda .dia.hoje .cab-d .n { background: var(--navy); color: var(--ouro); border-radius: 6px; padding: 3px 5px; }
+  .grade-agenda .hora { height: 48px; position: relative; }
+  .grade-agenda .horas .hora span { position: absolute; top: -7px; right: 6px; font: 500 11px/1 var(--mono); color: var(--fraco); }
+  .grade-agenda .horas .hora:first-child span { top: 4px; }
+  .grade-agenda .dia { border-right: 1px solid var(--linha); min-width: 0; }
+  .grade-agenda .dia:last-child { border-right: 0; }
+  .grade-agenda .dia .corpo-d { position: relative; height: 720px; background: repeating-linear-gradient(to bottom, var(--linha) 0 1px, transparent 1px 48px); }
+  .grade-agenda .dia.hoje .corpo-d { background-color: rgba(212,175,55,.04); }
+  .grade-agenda .dia.fds .corpo-d { background-color: var(--fundo); }
+  .compromisso { position: absolute; left: 2px; right: 2px; border-radius: 4px; padding: 2px 6px; background: var(--painel-2); border-left: 3px solid var(--linha-forte); font-size: 11px; line-height: 1.25; overflow: hidden; text-align: left; box-shadow: 0 1px 2px rgba(15,19,26,.08); cursor: pointer; }
+  .compromisso strong { display: block; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .compromisso span { display: block; color: var(--apoio); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 10.5px; }
+  .compromisso.curto { padding: 1px 6px; display: flex; gap: 4px; align-items: center; }
+  .compromisso.curto strong { flex: none; }
+  .compromisso.t1 { border-left-color: var(--t1); background: var(--ouro-suave); }
+  .compromisso.t2 { border-left-color: var(--t2); background: var(--sinal-suave); }
+  .compromisso.t3 { border-left-color: var(--t3); background: var(--ok-suave); }
+  .compromisso.t4 { border-left-color: var(--t4); background: #f9efe2; }
+  .compromisso.pendente { border-style: dashed; border-width: 1px 1px 1px 3px; border-color: var(--aviso); border-left-color: var(--t4); background: var(--aviso-suave); }
+  .compromisso.cancelado { opacity: .55; text-decoration: line-through; }
+  .compromisso.realizado strong::after { content: " ✓"; color: var(--ok); }
+  .compromisso.google { background: repeating-linear-gradient(135deg, var(--painel-2) 0 6px, var(--painel-3) 6px 12px); border-left-color: var(--fraco); color: var(--apoio); cursor: default; }
+  .agora { position: absolute; left: 0; right: 0; height: 1px; background: var(--erro); z-index: 2; pointer-events: none; }
+  .agora::before { content: ""; position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: var(--erro); }
+  .rolagem-grade { overflow-x: auto; }
+  @media (max-width: 860px) {
+    .rolagem-grade .grade-agenda { min-width: 820px; }
+    .historico .quando { width: 86px; }
+    .historico .acoes-h { display: none; }
+    .historico .linha .tag { display: none; }
+    .historico .segmento { max-width: 100%; overflow-x: auto; white-space: nowrap; }
+    .historico .segmento button { flex: none; }
+    .google-cartao .btn { margin-left: 0; }
+  }
+</style>
+</head>
+<body data-rota="/app/agenda">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cartao google-cartao">
+        <i class="ph ph-google-logo"></i>
+        <span>Agenda conectada: <strong>ana.souza@clinicavitalis.com.br</strong></span>
+        <a href="#" class="link-p">Configurar suas agendas</a>
+        <button class="btn secundario p">Desconectar</button>
+      </div>
+
+      <div class="cabecalho" style="margin-bottom:16px">
+        <div>
+          <div class="eyebrow">Atendimento</div>
+          <h1>Agendamentos</h1>
+          <p>O que está marcado, com quem, e quem atende — seu e da equipe.</p>
+        </div>
+        <div class="acoes">
+          <button class="btn secundario p">Hoje</button>
+          <button class="btn primario"><i class="ph ph-calendar-plus"></i>Novo agendamento</button>
+        </div>
+      </div>
+      <div class="fio" style="margin-bottom:16px"></div>
+
+      <div class="periodo">
+        <div class="nav">
+          <button class="btn fantasma p icone" aria-label="Período anterior"><i class="ph ph-caret-left"></i></button>
+          <span class="rotulo-periodo"><span class="mono">23</span> de ago — <span class="mono">29</span> de ago</span>
+          <button class="btn fantasma p icone" aria-label="Próximo período"><i class="ph ph-caret-right"></i></button>
+        </div>
+        <div class="dir">
+          <div class="pessoas" aria-label="Filtrar por pessoa">
+            <span class="avatar t1" role="button" aria-label="Ver só a agenda de Ana Prado" title="Ana Prado">AP</span>
+            <span class="avatar t2" role="button" aria-label="Ver só a agenda de Bruno Sales" title="Bruno Sales">BS</span>
+            <span class="avatar t3" role="button" aria-label="Ver só a agenda de Clara Nunes" title="Clara Nunes">CN</span>
+            <span class="avatar t4" role="button" aria-label="Ver só a agenda de Davi Rocha" title="Davi Rocha">DR</span>
+          </div>
+          <div class="segmento" role="group" aria-label="Visão"><button type="button" aria-pressed="false">Dia</button><button type="button" aria-pressed="true">Semana</button><button type="button" aria-pressed="false">Mês</button></div>
+        </div>
+      </div>
+
+      <section class="historico">
+        <div class="segmento" role="tablist" aria-label="Filtrar o histórico" style="margin-bottom:12px">
+          <button role="tab" aria-pressed="true">Próximos <span class="tag mono" style="height:18px;padding:0 6px">5</span></button>
+          <button role="tab" aria-pressed="false">Aguardando confirmação <span class="tag mono" style="height:18px;padding:0 6px">1</span></button>
+          <button role="tab" aria-pressed="false">Passados <span class="tag mono" style="height:18px;padding:0 6px">4</span></button>
+          <button role="tab" aria-pressed="false">Cancelados <span class="tag mono" style="height:18px;padding:0 6px">1</span></button>
+        </div>
+        <div class="cartao caixa-hist">
+          <div class="linha">
+            <span class="trilha" style="background:var(--t1)"></span>
+            <div class="quando"><strong><span class="mono">26</span> de ago</strong><span>15:00 – 15:30</span></div>
+            <div class="quem"><a href="#">Rita Campos</a><span>Consulta · com Ana Prado</span></div>
+            <span class="avatar p t1" style="background:var(--t1);color:var(--navy)">AP</span>
+            <span class="tag">Confirmado</span>
+            <div class="acoes-h"><button class="btn fantasma p">Remarcar</button><button class="btn fantasma p">Cancelar</button></div>
+          </div>
+          <div class="linha">
+            <span class="trilha" style="background:var(--t1)"></span>
+            <div class="quando"><strong><span class="mono">26</span> de ago</strong><span>16:00 – 16:30</span></div>
+            <div class="quem"><a href="#">Léo Martins</a><span>Consulta · com Ana Prado</span></div>
+            <span class="avatar p" style="background:var(--t1);color:var(--navy)">AP</span>
+            <span class="tag">Confirmado</span>
+            <div class="acoes-h"><button class="btn fantasma p">Remarcar</button><button class="btn fantasma p">Cancelar</button></div>
+          </div>
+          <div class="linha">
+            <span class="trilha" style="background:var(--t4)"></span>
+            <div class="quando"><strong><span class="mono">26</span> de ago</strong><span>16:00 – 17:30</span></div>
+            <div class="quem"><a href="#">João Bento</a><span>Procedimento · com Davi Rocha</span></div>
+            <span class="avatar p" style="background:var(--t4)">DR</span>
+            <span class="tag aviso">Aguardando confirmação</span>
+            <div class="acoes-h"><button class="btn fantasma p">Remarcar</button><button class="btn fantasma p">Cancelar</button></div>
+          </div>
+          <div class="linha">
+            <span class="trilha" style="background:var(--t3)"></span>
+            <div class="quando"><strong><span class="mono">27</span> de ago</strong><span>11:00 – 12:00</span></div>
+            <div class="quem"><a href="#">Loja Verde</a><span>Call · com Clara Nunes</span></div>
+            <span class="avatar p" style="background:var(--t3)">CN</span>
+            <span class="tag">Confirmado</span>
+            <div class="acoes-h"><button class="btn fantasma p">Remarcar</button><button class="btn fantasma p">Cancelar</button></div>
+          </div>
+          <div class="linha">
+            <span class="trilha" style="background:var(--t4)"></span>
+            <div class="quando"><strong><span class="mono">28</span> de ago</strong><span>13:30 – 14:15</span></div>
+            <div class="quem"><a href="#">Sofia Braga</a><span>Consulta · com Davi Rocha</span></div>
+            <span class="avatar p" style="background:var(--t4)">DR</span>
+            <span class="tag">Confirmado</span>
+            <div class="acoes-h"><button class="btn fantasma p">Remarcar</button><button class="btn fantasma p">Cancelar</button></div>
+          </div>
+        </div>
+      </section>
+
+      <div class="cartao rolagem-grade">
+        <div class="grade-agenda">
+          <div class="horas">
+            <div class="cab-h"></div>
+            <div class="hora"><span>07:00</span></div><div class="hora"><span>08:00</span></div><div class="hora"><span>09:00</span></div><div class="hora"><span>10:00</span></div><div class="hora"><span>11:00</span></div><div class="hora"><span>12:00</span></div><div class="hora"><span>13:00</span></div><div class="hora"><span>14:00</span></div><div class="hora"><span>15:00</span></div><div class="hora"><span>16:00</span></div><div class="hora"><span>17:00</span></div><div class="hora"><span>18:00</span></div><div class="hora"><span>19:00</span></div><div class="hora"><span>20:00</span></div><div class="hora"><span>21:00</span></div>
+          </div>
+          <div class="dia fds"><div class="cab-d">dom <span class="n">23</span></div><div class="corpo-d"></div></div>
+          <div class="dia"><div class="cab-d">seg <span class="n">24</span></div><div class="corpo-d">
+            <button class="compromisso t1" style="top:96px;height:36px" aria-label="Avaliação inicial, 09:00 às 09:45, com Marina Alves"><strong>Avaliação inicial</strong><span><span class="mono">09:00 – 09:45</span> · Marina Alves</span></button>
+            <button class="compromisso t2 curto" style="top:168px;height:24px" aria-label="Retorno, 10:30 às 11:00, com Pedro Lima"><strong>Retorno</strong><span><span class="mono">10:30 – 11:00</span> · Pedro Lima</span></button>
+            <button class="compromisso t2 curto realizado" style="top:384px;height:24px" aria-label="Consulta, 15:00 às 15:30, com Vera Lins"><strong>Consulta</strong><span><span class="mono">15:00 – 15:30</span> · Vera Lins</span></button>
+          </div></div>
+          <div class="dia"><div class="cab-d">ter <span class="n">25</span></div><div class="corpo-d">
+            <button class="compromisso t3" style="top:336px;height:72px" aria-label="Visita ao imóvel, 14:00 às 15:30, com Família Souza"><strong>Visita ao imóvel</strong><span><span class="mono">14:00 – 15:30</span> · Família Souza</span></button>
+          </div></div>
+          <div class="dia hoje"><div class="cab-d">qua <span class="n">26</span></div><div class="corpo-d">
+            <div class="compromisso google" style="top:240px;height:48px" title="ocupado na agenda do Google"><strong>Ocupado</strong><span><span class="mono">12:00 – 13:00</span></span></div>
+            <div class="agora" style="top:366px" aria-label="Agora, 14:37"></div>
+            <button class="compromisso t1 curto" style="top:384px;height:24px" aria-label="Consulta, 15:00 às 15:30, com Rita Campos"><strong>Consulta</strong><span><span class="mono">15:00 – 15:30</span> · Rita Campos</span></button>
+            <button class="compromisso t1 curto" style="top:432px;height:24px;right:50%" aria-label="Encaixe, 16:00 às 16:30, com Léo Martins"><strong>Encaixe</strong><span>Léo Martins</span></button>
+            <button class="compromisso t4 pendente" style="top:432px;height:72px;left:50%" aria-label="Procedimento, 16:00 às 17:30, com João Bento"><strong>Procedimento</strong><span><span class="mono">16:00 – 17:30</span> · João Bento</span></button>
+          </div></div>
+          <div class="dia"><div class="cab-d">qui <span class="n">27</span></div><div class="corpo-d">
+            <button class="compromisso t2 curto cancelado" style="top:72px;height:24px" aria-label="Retorno, 08:30 às 09:00, com Ícaro Melo"><strong>Retorno</strong><span><span class="mono">08:30 – 09:00</span> · Ícaro Melo</span></button>
+            <button class="compromisso t3" style="top:192px;height:48px" aria-label="Reunião comercial, 11:00 às 12:00, com Loja Verde"><strong>Reunião comercial</strong><span><span class="mono">11:00 – 12:00</span> · Loja Verde</span></button>
+          </div></div>
+          <div class="dia"><div class="cab-d">sex <span class="n">28</span></div><div class="corpo-d">
+            <div class="compromisso google" style="top:96px;height:96px" title="ocupado na agenda do Google"><strong>Ocupado</strong><span><span class="mono">09:00 – 11:00</span></span></div>
+            <button class="compromisso t4" style="top:312px;height:36px" aria-label="Consulta, 13:30 às 14:15, com Sofia Braga"><strong>Consulta</strong><span><span class="mono">13:30 – 14:15</span> · Sofia Braga</span></button>
+          </div></div>
+          <div class="dia fds"><div class="cab-d">sáb <span class="n">29</span></div><div class="corpo-d"></div></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

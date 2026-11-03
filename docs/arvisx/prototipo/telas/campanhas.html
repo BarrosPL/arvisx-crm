@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Campanhas</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="60">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .barra-filtro { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--r); border: 1px solid var(--linha); background: var(--painel); margin-bottom: 16px; }
+  .barra-filtro label { font-weight: 600; font-size: 13px; color: var(--apoio); }
+  .barra-filtro select { height: 32px; padding: 0 28px 0 10px; border-radius: var(--r-sm); background: var(--painel); border: 1px solid var(--linha-forte); font-weight: 600; font-size: 12.5px; }
+  .campanha { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 18px; border-bottom: 1px solid var(--linha); }
+  .campanha:last-child { border-bottom: 0; }
+  .campanha:hover { background: var(--fundo); }
+  .campanha .esq { min-width: 0; }
+  .campanha .nome { font-weight: 700; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .campanha .sub { color: var(--apoio); font-size: 12.5px; margin-top: 2px; }
+  .campanha .dir { display: flex; align-items: center; gap: 12px; flex: none; }
+  .campanha .quando { color: var(--apoio); font-size: 12.5px; white-space: nowrap; }
+  @media (max-width: 860px) {
+    .campanha { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .campanha .dir { width: 100%; justify-content: space-between; }
+  }
+</style>
+</head>
+<body data-rota="/app/campaigns">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM</div>
+          <h1>Campanhas</h1>
+          <p>Escolha o público, escreva a mensagem e acompanhe quem recebeu.</p>
+        </div>
+        <div class="acoes">
+          <button class="btn secundario"><i class="ph ph-gear"></i>Configuração</button>
+          <button class="btn primario"><i class="ph ph-plus"></i>Nova campanha</button>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="barra-filtro">
+        <label for="situacao">Situação</label>
+        <select id="situacao"><option>Todas</option><option>Rascunho</option><option>Montando a lista</option><option>Pronta para iniciar</option><option>Agendada</option><option>Enviando</option><option>Pausada</option><option>Concluída</option><option>Cancelada</option><option>Falhou</option></select>
+      </div>
+
+      <div class="cartao">
+        <a href="#" class="campanha">
+          <div class="esq"><div class="nome">Reativação de clientes parados</div><div class="sub"><span class="mono">142</span> contatos na lista · <span class="mono">9</span> fora</div></div>
+          <div class="dir"><span class="quando">começou <span class="mono">03/11/2026, 09:00</span></span><span class="tag ok"><i class="ph ph-paper-plane-tilt"></i>Enviando</span></div>
+        </a>
+        <a href="#" class="campanha">
+          <div class="esq"><div class="nome">Lembrete de retorno semestral</div><div class="sub"><span class="mono">86</span> contatos na lista</div></div>
+          <div class="dir"><span class="quando">começa <span class="mono">05/11/2026, 09:00</span></span><span class="tag sinal"><i class="ph ph-clock"></i>Agendada</span></div>
+        </a>
+        <a href="#" class="campanha">
+          <div class="esq"><div class="nome">Promoção de clareamento de novembro</div><div class="sub"><span class="mono">210</span> contatos na lista · <span class="mono">14</span> fora</div></div>
+          <div class="dir"><span class="quando">criada <span class="mono">02/11/2026, 17:45</span></span><span class="tag sinal"><i class="ph ph-check-circle"></i>Pronta para iniciar</span></div>
+        </a>
+        <a href="#" class="campanha">
+          <div class="esq"><div class="nome">Aviso de feriado — clínica fechada dia 15</div><div class="sub">lista ainda não preparada</div></div>
+          <div class="dir"><span class="quando">criada <span class="mono">30/10/2026, 11:20</span></span><span class="tag"><i class="ph ph-clock"></i>Rascunho</span></div>
+        </a>
+        <a href="#" class="campanha">
+          <div class="esq"><div class="nome">Pesquisa de satisfação — pós-tratamento</div><div class="sub"><span class="mono">54</span> contatos na lista</div></div>
+          <div class="dir"><span class="quando">terminou <span class="mono">28/10/2026, 18:10</span></span><span class="tag ok"><i class="ph ph-check-circle"></i>Concluída</span></div>
+        </a>
+        <a href="#" class="campanha">
+          <div class="esq"><div class="nome">Reagendamento de faltas de outubro</div><div class="sub"><span class="mono">31</span> contatos na lista · <span class="mono">2</span> fora</div></div>
+          <div class="dir"><span class="quando">começou <span class="mono">20/10/2026, 10:00</span></span><span class="tag aviso"><i class="ph ph-pause"></i>Pausada</span></div>
+        </a>
+        <a href="#" class="campanha">
+          <div class="esq"><div class="nome">Convite — palestra sobre implantes</div><div class="sub"><span class="mono">120</span> contatos na lista · <span class="mono">5</span> fora</div></div>
+          <div class="dir"><span class="quando">começou <span class="mono">15/10/2026, 09:00</span></span><span class="tag erro"><i class="ph ph-warning"></i>Falhou</span></div>
+        </a>
+        <a href="#" class="campanha">
+          <div class="esq"><div class="nome">Convênio novo — Odonto Sul</div><div class="sub"><span class="mono">40</span> contatos na lista</div></div>
+          <div class="dir"><span class="quando">criada <span class="mono">10/10/2026, 15:02</span></span><span class="tag"><i class="ph ph-x"></i>Cancelada</span></div>
+        </a>
+      </div>
+      <div style="margin-top:14px"><button class="btn secundario p">Carregar mais</button></div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

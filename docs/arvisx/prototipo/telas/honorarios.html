@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Honorários</title>
+<meta name="grupo" content="Análise">
+<meta name="ordem" content="50">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .pilha { display: flex; flex-direction: column; gap: 16px; }
+  .form-linha { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+  .form-linha .campo { gap: 4px; }
+  .form-linha .campo label { font-size: 12px; color: var(--apoio); }
+  .form-linha .campo input, .form-linha .campo select { height: 34px; font-size: 13px; }
+  .form-linha .campo.c-valor input { width: 112px; font-family: var(--mono); }
+  .form-linha .campo.c-pct input { width: 80px; font-family: var(--mono); }
+  .form-linha .campo.c-rep input { width: 96px; font-family: var(--mono); }
+  .form-linha .campo.c-lead input { width: 192px; font-family: var(--mono); }
+  .form-linha .campo.c-num input { width: 64px; font-family: var(--mono); }
+  .form-linha .campo.c-data input { width: 150px; font-family: var(--mono); }
+  .form-linha.divisor { padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--linha); }
+  .cartao .tabela.semcab td:first-child { padding-left: 0; }
+  .cartao .tabela.semcab td:last-child { padding-right: 0; }
+  .cartao .tabela.semcab td { padding-top: 9px; padding-bottom: 9px; }
+  .contratos tr { cursor: pointer; }
+  .contratos tr[aria-selected="true"] td { background: var(--ouro-suave); }
+  .contratos td.data { text-align: right; color: var(--apoio); font-size: 12px; }
+  .conta-sel { margin-bottom: 14px; }
+  .conta-sel .campo { gap: 4px; max-width: 256px; }
+  .conta-sel .campo label { font-size: 12px; color: var(--apoio); }
+  .conta-sel .campo select { height: 34px; font-size: 13px; }
+  .parcelas td.st { color: var(--apoio); font-size: 12px; text-align: right; }
+  .parcelas td.ac { width: 96px; text-align: right; }
+  .parcelas td.ac .pagar { color: var(--ouro-escuro); font-size: 12px; font-weight: 600; }
+  @media (max-width: 860px) {
+    .form-linha .campo.c-lead input { width: 100%; } .form-linha .campo.c-lead { flex-basis: 100%; }
+    .cartao .tabela.semcab td { padding-left: 4px; padding-right: 4px; font-size: 12.5px; }
+    .contratos, .contratos tbody { display: block; }
+    .contratos tr { display: flex; flex-wrap: wrap; gap: 2px 10px; padding: 9px 4px; border-bottom: 1px solid var(--linha); }
+    .contratos td { display: block; padding: 0; border: 0; }
+    .contratos td.data { margin-left: auto; }
+    .contratos td:nth-child(2) { flex-basis: 100%; }
+    .parcelas td { white-space: nowrap; }
+  }
+</style>
+</head>
+<body data-rota="/app/honorarios">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Análise · Dinheiro</div>
+          <h1>Honorários</h1>
+          <p>O modelo de cobrança de cada caso e o calendário de parcelas.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <form class="cartao form-linha" style="padding:14px 18px">
+          <div class="campo"><label for="modelo">Modelo</label><select id="modelo"><option>Fixo</option><option>Êxito</option><option selected>Misto</option></select></div>
+          <div class="campo c-valor"><label for="vfixo">Valor fixo</label><input id="vfixo" type="text" inputmode="decimal" placeholder="0,00"></div>
+          <div class="campo c-pct"><label for="pexito">% de êxito</label><input id="pexito" type="text" inputmode="decimal" placeholder="10"></div>
+          <div class="campo c-rep"><label for="repasse">Repasse ao advogado (%)</label><input id="repasse" type="text" inputmode="decimal" placeholder="opcional"></div>
+          <div class="campo c-lead"><label for="lead">ID do lead (opcional)</label><input id="lead" type="text" placeholder="cole o ID do lead"></div>
+          <button type="submit" class="btn primario" disabled>Criar contrato</button>
+        </form>
+
+        <div class="cartao">
+          <div class="cab"><h2>Contratos</h2></div>
+          <div class="corpo">
+            <table class="tabela semcab contratos"><tbody>
+              <tr aria-selected="true"><td>Misto</td><td class="mono">R$ 5.000,00 + 20% de êxito</td><td class="data mono">03/11/2026</td></tr>
+              <tr><td>Fixo</td><td class="mono">R$ 3.000,00</td><td class="data mono">28/10/2026</td></tr>
+              <tr><td>Êxito</td><td class="mono">30% de êxito</td><td class="data mono">14/10/2026</td></tr>
+              <tr><td>Fixo</td><td class="mono">R$ 12.000,00</td><td class="data mono">02/10/2026</td></tr>
+            </tbody></table>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="cab"><h2>Parcelas</h2></div>
+          <div class="corpo">
+            <form class="form-linha divisor">
+              <div class="campo c-num"><label for="numero">Número</label><input id="numero" type="number" min="1" value="4"></div>
+              <div class="campo c-data"><label for="venc">Vencimento</label><input id="venc" type="date"></div>
+              <div class="campo c-valor"><label for="pvalor">Valor</label><input id="pvalor" type="text" inputmode="decimal" placeholder="0,00"></div>
+              <button type="submit" class="btn secundario" disabled>Adicionar parcela</button>
+            </form>
+            <div class="conta-sel"><div class="campo"><label for="conta">Conta para receber o pagamento</label><select id="conta"><option>Escolha</option><option selected>Banco</option><option>Caixa</option></select></div></div>
+            <table class="tabela semcab parcelas"><tbody>
+              <tr><td class="apoio mono">#1</td><td class="mono">10/11/2026</td><td class="num mono">R$ 1.666,67</td><td class="st">pago</td><td class="ac"></td></tr>
+              <tr><td class="apoio mono">#2</td><td class="mono">10/12/2026</td><td class="num mono">R$ 1.666,67</td><td class="st">pendente</td><td class="ac"><a href="#" class="pagar">Pagar</a></td></tr>
+              <tr><td class="apoio mono">#3</td><td class="mono">10/01/2027</td><td class="num mono">R$ 1.666,66</td><td class="st">pendente</td><td class="ac"><a href="#" class="pagar">Pagar</a></td></tr>
+            </tbody></table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

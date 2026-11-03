@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notificações</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="12">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .cartao .corpo > h2 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .cartao .corpo > p.desc { color: var(--apoio); font-size: 12.5px; margin-bottom: 14px; max-width: 72ch; }
+  .radios { display: grid; gap: 10px; }
+  .radios label { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+  .radios input { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--ouro); flex: none; }
+  .radios strong { display: block; font-size: 13.5px; }
+  .radios span { color: var(--apoio); font-size: 12.5px; }
+  .tabela th.c, .tabela td.c { text-align: center; }
+  .tabela td.c .chave { display: inline-block; vertical-align: middle; }
+  .chave.off { opacity: .45; }
+  .tabela .nota { color: var(--fraco); font-size: 12px; display: block; margin-top: 4px; }
+  .linha-chave .campo { margin-top: 10px; }
+  .sub-campo { padding: 0 0 14px; border-bottom: 1px solid var(--linha); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .sub-campo label { font-weight: 600; font-size: 13px; }
+  .sub-campo select { width: auto; min-width: 140px; }
+  .sons li { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 0; border-bottom: 1px solid var(--linha); }
+  .sons li:last-child { border-bottom: 0; }
+  .sons .texto { flex: 1; min-width: 220px; }
+  .sons .texto strong { display: block; font-size: 13.5px; }
+  .sons .texto span { color: var(--apoio); font-size: 12.5px; display: block; }
+  .sons .texto em { font-style: normal; color: var(--fraco); font-size: 12px; }
+  .sons .botoes { display: flex; gap: 6px; flex-wrap: wrap; }
+  .link-topo { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--ouro-escuro); font-weight: 600; }
+  @media (max-width: 860px) { .tabela th, .tabela td { padding: 10px 8px; } }
+</style>
+</head>
+<body data-rota="/app/settings/notifications">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua conta</div>
+          <h1>Notificações</h1>
+          <p>Canais e categorias.</p>
+        </div>
+        <div class="acoes"><a href="#" class="link-topo"><i class="ph ph-device-mobile"></i>Receber no celular: instalar o app</a></div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <!-- Bloco A -->
+        <div class="aviso-faixa aviso"><i class="ph ph-bell-ringing"></i><div>Email ainda não está disponível. In-app (toast) e Push (Chrome) já funcionam para as cinco categorias, inclusive com a aba fechada.</div></div>
+
+        <!-- Bloco B -->
+        <div class="cartao">
+          <div class="corpo">
+            <h2>O que os avisos mostram fora do app</h2>
+            <p class="desc">Vale para o celular bloqueado e para as notificações do computador, para toda a empresa. Só administradores podem mudar.</p>
+            <div class="radios">
+              <label><input type="radio" name="tela-bloqueada" value="oculto"><div><strong>Esconder tudo</strong><span>O aviso diz só que chegou algo. Nem o nome do cliente nem a mensagem aparecem.</span></div></label>
+              <label><input type="radio" name="tela-bloqueada" value="nome" checked><div><strong>Mostrar quem mandou (recomendado)</strong><span>Aparecem o nome e a foto do cliente, mas não o que ele escreveu.</span></div></label>
+              <label><input type="radio" name="tela-bloqueada" value="nome_e_previa"><div><strong>Mostrar quem mandou e a mensagem</strong><span>Aparecem o nome, a foto e o começo da mensagem.</span></div></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloco C -->
+        <div class="cartao">
+          <table class="tabela">
+            <thead><tr><th>Categoria</th><th class="c">Email</th><th class="c">In-app</th><th class="c">Push</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>Nova mensagem</strong><span class="nota">Desligar o push de mensagem desliga todos os avisos deste aparelho fora do app.</span></td>
+                <td class="c"><span class="chave off" role="switch" aria-checked="false" aria-label="Nova mensagem via email" aria-disabled="true"></span></td>
+                <td class="c"><span class="chave ligada" role="switch" aria-checked="true" aria-label="Nova mensagem via in_app"></span></td>
+                <td class="c"><span class="chave ligada" role="switch" aria-checked="true" aria-label="Nova mensagem via push"></span></td>
+              </tr>
+              <tr><td>Lead atribuído a você</td><td class="c"><span class="chave off" role="switch" aria-checked="false" aria-disabled="true"></span></td><td class="c"><span class="chave ligada" role="switch" aria-checked="true"></span></td><td class="c"><span class="chave ligada" role="switch" aria-checked="true"></span></td></tr>
+              <tr><td>Lead ganho</td><td class="c"><span class="chave off" role="switch" aria-checked="false" aria-disabled="true"></span></td><td class="c"><span class="chave ligada" role="switch" aria-checked="true"></span></td><td class="c"><span class="chave ligada" role="switch" aria-checked="true"></span></td></tr>
+              <tr><td>Lead perdido</td><td class="c"><span class="chave off" role="switch" aria-checked="false" aria-disabled="true"></span></td><td class="c"><span class="chave ligada" role="switch" aria-checked="true"></span></td><td class="c"><span class="chave ligada" role="switch" aria-checked="true"></span></td></tr>
+              <tr><td>Você foi mencionado</td><td class="c"><span class="chave off" role="switch" aria-checked="false" aria-disabled="true"></span></td><td class="c"><span class="chave ligada" role="switch" aria-checked="true"></span></td><td class="c"><span class="chave ligada" role="switch" aria-checked="true"></span></td></tr>
+              <tr><td>Ligação recebida</td><td class="c"><span class="chave off" role="switch" aria-checked="false" aria-disabled="true"></span></td><td class="c"><span class="chave ligada" role="switch" aria-checked="true"></span></td><td class="c"><span class="chave ligada" role="switch" aria-checked="true"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Bloco D -->
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Lembretes de tarefa</h2>
+            <p class="desc">O aviso fica na Central do responsável quando o prazo chega perto ou vence, mesmo que ninguém esteja com o site aberto. Se ele ligou o Push e esta instalação tem as chaves do Push (veja o aviso no topo da página), o aviso chega também no aparelho dele.</p>
+            <div class="linha-chave" style="border-bottom:0;padding-bottom:10px"><div><strong>Avisar quando a tarefa está perto do vencimento</strong></div><span class="chave ligada" role="switch" aria-checked="true"></span></div>
+            <div class="sub-campo"><label for="antecedencia">Antecedência do aviso</label><select id="antecedencia" class="entrada"><option value="15">15 minutos</option><option value="60" selected>1 hora</option><option value="1440">1 dia</option></select></div>
+            <div class="linha-chave"><div><strong>Avisar quando a tarefa vence sem conclusão</strong></div><span class="chave" role="switch" aria-checked="false"></span></div>
+            <div class="linha-chave"><div><strong>Receber também no WhatsApp</strong></div><span class="chave" role="switch" aria-checked="false"></span></div>
+            <p class="apoio pequeno" style="margin-top:12px">O WhatsApp sai pelo número da empresa, e só quando ele estiver conectado. O aviso vai para o seu contato cadastrado no CRM.</p>
+          </div>
+        </div>
+
+        <!-- Bloco E -->
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Sons dos avisos</h2>
+            <p class="desc">Tocam com o site aberto quando o aviso chega na Central. MP3, OGG ou WAV de até 1 MB.</p>
+            <ul class="sons">
+              <li>
+                <div class="texto"><strong>Etapa que avisa</strong><span>Quando um negócio entra numa etapa marcada para avisar na Central (por exemplo, o pedido confirmado).</span><em>Som do sistema</em></div>
+                <div class="botoes"><button class="btn fantasma p"><i class="ph ph-play"></i>Ouvir</button><button class="btn secundario p"><i class="ph ph-upload-simple"></i>Trocar som</button></div>
+              </li>
+              <li>
+                <div class="texto"><strong>Precisa de uma pessoa</strong><span>Quando o assistente passa a conversa para alguém da equipe, ou fica sem saldo no provedor de IA.</span><em>Som do sistema</em></div>
+                <div class="botoes"><button class="btn fantasma p"><i class="ph ph-play"></i>Ouvir</button><button class="btn secundario p"><i class="ph ph-upload-simple"></i>Trocar som</button></div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

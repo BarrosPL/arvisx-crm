@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desempenho</title>
+<meta name="grupo" content="Análise">
+<meta name="ordem" content="10">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .pilha { display: flex; flex-direction: column; gap: 24px; }
+  .secao-atrito > p { color: var(--apoio); margin-bottom: 4px; }
+  .regua { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; color: var(--apoio); font-size: 12.5px; margin: 8px 0 14px; }
+  .regua input { width: 72px; height: 28px; padding: 0 8px; border-radius: var(--r-sm); border: 1px solid var(--linha-forte); background: var(--painel); font-family: var(--mono); font-size: 12.5px; text-align: center; }
+  .par > .cab h3 { font-weight: 500; color: var(--apoio); }
+  .par > .corpo { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 18px; }
+  .par .efic .n { font-family: var(--display); font-stretch: 108%; font-weight: 650; font-size: 30px; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .par .efic .r { display: block; color: var(--apoio); margin-top: 6px; }
+  .par .efic .nota { display: block; color: var(--fraco); font-size: 12px; margin-top: 4px; }
+  .par .danos { border-left: 1px solid var(--linha); padding-left: 18px; }
+  .par .danos .rotulo { margin-bottom: 2px; }
+  .medida { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--linha); }
+  .medida:last-child { border-bottom: 0; }
+  .medida .t { font-size: 13px; }
+  .medida .t small { display: block; color: var(--fraco); font-size: 11.5px; margin-top: 2px; }
+  .medida .v { font-weight: 600; white-space: nowrap; }
+  .legenda { color: var(--fraco); font-size: 12px; margin-top: 12px; }
+  .cartao > .cab .sub { display: block; color: var(--apoio); font-size: 12px; margin-top: 3px; font-weight: 400; }
+  .tabela.simples th:first-child, .tabela.simples td:first-child { padding-left: 0; }
+  .tabela.simples th:last-child, .tabela.simples td:last-child { padding-right: 0; }
+  .tabela.simples th { background: transparent; }
+  .bloco-perda h3 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .nota-bloco { color: var(--apoio); font-size: 12.5px; margin-top: 10px; }
+  .nota-bloco strong { font-weight: 600; color: var(--texto); }
+  .meta-linha { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 8px; }
+  .meta-pe { display: flex; justify-content: space-between; color: var(--apoio); font-size: 12.5px; margin-top: 8px; flex-wrap: wrap; gap: 6px; }
+  .funil-linha { display: grid; grid-template-columns: 160px minmax(0, 1fr) 36px; gap: 12px; align-items: center; padding: 6px 0; }
+  .funil-linha .nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+  .funil-linha .n { text-align: right; }
+  .serie-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .grafico { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 0 8px; margin: 4px 0 8px; }
+  .grafico .eixo-y { display: flex; flex-direction: column; justify-content: space-between; color: var(--fraco); font: 500 11px/1 var(--mono); text-align: right; height: 220px; padding: 4px 0 10px; }
+  .grafico svg { width: 100%; height: 220px; }
+  .grafico .eixo-x { grid-column: 2; display: flex; justify-content: space-between; color: var(--fraco); font: 500 11px/1 var(--mono); margin-top: 6px; }
+  @media (max-width: 1100px) { .funil-linha { grid-template-columns: 120px minmax(0, 1fr) 36px; } }
+  @media (max-width: 860px) {
+    .par > .corpo { grid-template-columns: 1fr; gap: 14px; }
+    .par .danos { border-left: 0; padding-left: 0; border-top: 1px solid var(--linha); padding-top: 12px; }
+    .funil-linha { grid-template-columns: 96px minmax(0, 1fr) 32px; }
+    .tabela.cel-lista thead { display: none; }
+    .tabela.cel-lista, .tabela.cel-lista tbody, .tabela.cel-lista tr, .tabela.cel-lista td { display: block; }
+    .tabela.cel-lista tr { padding: 10px 0; border-bottom: 1px solid var(--linha); display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; }
+    .tabela.cel-lista td { padding: 0; border: 0; text-align: left; }
+    .tabela.cel-lista td.nome { grid-column: 1 / -1; }
+    .tabela.cel-lista td[data-rotulo]::before { content: attr(data-rotulo) " "; color: var(--fraco); font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; display: block; margin-bottom: 2px; }
+  }
+</style>
+</head>
+<body data-rota="/app/metrics">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Análise</div>
+          <h1>Desempenho</h1>
+          <p>Atrito, funil e performance por atendente nos últimos 30 dias.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="filtros">
+        <span class="apoio">Atendente</span>
+        <button class="filtro">Todos os atendentes<i class="ph ph-caret-down"></i></button>
+      </div>
+
+      <div class="pilha">
+        <!-- 5.1 Atrito -->
+        <section class="secao-atrito">
+          <h2 class="secao">Atrito</h2>
+          <p>O que o resultado custou para os dois lados. Base: <span class="mono">42</span> demandas encerradas nos últimos 30 dias, e <span class="mono">11</span> ainda abertas.</p>
+          <div class="regua">Contar como perdida no silêncio após <input type="number" value="48" aria-label="Horas de silêncio até considerar a conversa perdida"> horas sem resposta. <span class="fraco">(padrão do sistema)</span></div>
+
+          <div class="grade c2">
+            <div class="cartao par">
+              <div class="cab"><h3>Conversão</h3></div>
+              <div class="corpo">
+                <div class="efic"><span class="n">9</span><span class="r">Negócios ganhos</span></div>
+                <div class="danos">
+                  <span class="rotulo">O que isso custou</span>
+                  <div class="medida"><div class="t">Turnos até o desfecho (mediana)<small>Sobre as demandas encerradas no período.</small></div><span class="v mono">6,0</span></div>
+                  <div class="medida"><div class="t">Insistência do agente (média de retornos)<small>Quantas vezes o agente voltou ao cliente por conta própria. Medido sobre as 23 demandas que passaram por atendimento humano.</small></div><span class="v mono">1,4</span></div>
+                  <div class="medida"><div class="t">Insistência no pior caso<small>O cliente que mais recebeu retornos. A média esconde o exagero pontual.</small></div><span class="v mono">5</span></div>
+                  <div class="medida"><div class="t">Descadastros no período<small>Atrito máximo: a pessoa pediu para sair.</small></div><span class="v mono">1</span></div>
+                  <div class="medida"><div class="t">Conversas que morreram no silêncio (após 48h)<small>8 de 44 conversas em que falamos: a pessoa não respondeu e ninguém encerrou.</small></div><span class="v mono">18,2%</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cartao par">
+              <div class="cab"><h3>Automação</h3></div>
+              <div class="corpo">
+                <div class="efic"><span class="n">71,3%</span><span class="r">Respostas dadas pelo agente</span></div>
+                <div class="danos">
+                  <span class="rotulo">O que isso custou</span>
+                  <div class="medida"><div class="t">Passagens para humano<small>Confiança perdida na automação.</small></div><span class="v mono">14</span></div>
+                  <div class="medida"><div class="t">Respostas humanas fora do sistema<small>O time respondeu pelo celular, contornando a ferramenta.</small></div><span class="v mono">4,5%</span></div>
+                  <div class="medida"><div class="t">Clientes que repetiram depois da passagem<small>3 de 14 passagens em que o cliente voltou a falar: ele teve de repetir o que já tinha dito. Limiar de 0,7 e janela de 24h. Quem atende em visibility_mode='own' vê só as conversas dele.</small></div><span class="v mono">21,4%</span></div>
+                  <div class="medida"><div class="t">Perguntas que a pessoa teve de repetir<small>Piso: 5 de 212. Conta só a repergunta quase literal — reformulada com outras palavras escapa desta medida.</small></div><span class="v mono">2,3%</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cartao par">
+              <div class="cab"><h3>Custo humano</h3></div>
+              <div class="corpo">
+                <div class="efic"><span class="n">42</span><span class="r">Demandas encerradas</span><span class="nota">Sobre as demandas encerradas no período.</span></div>
+                <div class="danos">
+                  <span class="rotulo">O que isso custou</span>
+                  <div class="medida"><div class="t">Intervenções humanas por demanda</div><span class="v mono">1,2</span></div>
+                  <div class="medida"><div class="t">Espera na fila humana (mediana)</div><span class="v mono">3min 20s</span></div>
+                  <div class="medida"><div class="t">Espera na fila humana (p90)<small>O p90 é a experiência de quem espera mais — a mediana a esconde.</small></div><span class="v mono">12min</span></div>
+                  <div class="medida"><div class="t">Demandas abertas sem próximo passo<small>De 11 abertas agora. Cada uma é alguém esperando sem que nada esteja marcado para acontecer.</small></div><span class="v mono">4</span></div>
+                  <div class="medida"><div class="t">Demandas que precisaram subir de nível</div><span class="v mono">2</span></div>
+                  <div class="medida"><div class="t">Esperas sem nenhuma resposta por mais de 48h<small>9 de 132 falas do cliente. Quem sabe que vai esperar, espera; quem não sabe, desiste.</small></div><span class="v mono">6,8%</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cartao par">
+              <div class="cab"><h3>Contenção</h3></div>
+              <div class="corpo">
+                <div class="efic"><span class="n">318</span><span class="r">Mensagens enviadas pelo agente</span></div>
+                <div class="danos">
+                  <span class="rotulo">O que isso custou</span>
+                  <div class="medida"><div class="t">Vetos por execução<small>Quanto o sistema precisou ser contido de si mesmo antes de falar.</small></div><span class="v mono">0,3</span></div>
+                  <div class="medida"><div class="t">Mensagens enviadas por integração<small>Envios feitos por um sistema de fora com token de servidor. Como a automação, não entram no número do agente — e é por isso que ele cai onde há integração.</small></div><span class="v mono">—</span></div>
+                  <div class="medida"><div class="t">Mensagens enviadas por automação<small>Regra de automação, texto fixo do follow-up e lembrete de agenda: saiu sozinho e ninguém escreveu. Não entra no número do agente — é por isso que ele cai onde há automação.</small></div><span class="v mono">46</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="legenda">"—" significa que não houve dado suficiente para medir, e não que o valor seja zero.</p>
+        </section>
+
+        <!-- 5.2 Perdas -->
+        <div class="cartao">
+          <div class="cab"><div><h2>Perdas</h2><span class="sub">Por motivo, categoria e etapa de saída — quantidade e valor por moeda.</span></div></div>
+          <div class="corpo">
+            <div class="grade c3">
+              <div class="bloco-perda">
+                <h3>Por motivo</h3>
+                <table class="tabela simples compacta"><thead><tr><th>Motivo</th><th class="num">Negócios</th></tr></thead><tbody>
+                  <tr><td>Preço</td><td class="num mono">3</td></tr>
+                  <tr><td>Sem resposta do cliente</td><td class="num mono">2</td></tr>
+                  <tr><td>Sem motivo registrado</td><td class="num mono">1</td></tr>
+                </tbody></table>
+              </div>
+              <div class="bloco-perda">
+                <h3>Por categoria</h3>
+                <table class="tabela simples compacta"><thead><tr><th>Categoria</th><th class="num">Negócios</th></tr></thead><tbody>
+                  <tr><td>Concorrência</td><td class="num mono">3</td></tr>
+                  <tr><td>Ausência</td><td class="num mono">2</td></tr>
+                  <tr><td>Sem categoria</td><td class="num mono">1</td></tr>
+                </tbody></table>
+              </div>
+              <div class="bloco-perda">
+                <h3>Por etapa de saída</h3>
+                <table class="tabela simples compacta"><thead><tr><th>Etapa</th><th class="num">Negócios</th></tr></thead><tbody>
+                  <tr><td>Proposta enviada</td><td class="num mono">4</td></tr>
+                  <tr><td>Negociação</td><td class="num mono">2</td></tr>
+                </tbody></table>
+              </div>
+            </div>
+            <div class="bloco-perda" style="margin-top:20px">
+              <h3>Valor por moeda</h3>
+              <table class="tabela simples compacta"><thead><tr><th>Moeda</th><th class="num">Negócios</th><th class="num">Valor</th></tr></thead><tbody>
+                <tr><td class="mono">BRL</td><td class="num mono">6</td><td class="num mono">R$ 38.700,00</td></tr>
+              </tbody></table>
+              <p class="nota-bloco">Moedas nunca são somadas entre si: cada balde é o total da própria moeda.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5.3 Previsão -->
+        <div class="cartao">
+          <div class="cab"><div><h2>Previsão</h2><span class="sub">Chance de fechamento definida em cada etapa do funil.</span></div></div>
+          <div class="corpo">
+            <table class="tabela simples compacta rolavel"><thead><tr><th>Mês</th><th>Moeda</th><th class="num">Ponderado</th><th class="num">Bruto</th><th class="num">Negócios</th></tr></thead><tbody>
+              <tr><td class="mono">2026-11</td><td class="mono">BRL</td><td class="num mono">R$ 54.480,00</td><td class="num mono apoio">R$ 90.800,00</td><td class="num mono">3</td></tr>
+              <tr><td class="mono">2026-12</td><td class="mono">BRL</td><td class="num mono">R$ 139.200,00</td><td class="num mono apoio">R$ 174.000,00</td><td class="num mono">4</td></tr>
+            </tbody></table>
+            <p class="nota-bloco"><strong>Sem data prevista — entram, mas sem mês no cronograma</strong><br><span class="mono">BRL</span>: <span class="mono">R$ 8.790,00</span> · bruto <span class="mono">R$ 29.300,00</span> · <span class="mono">3</span> negócios</p>
+            <p class="nota-bloco"><strong>Sem chance definida na etapa — falta calibrar</strong><br><span class="mono">BRL</span>: <span class="mono">R$ 2.250,00</span> · <span class="mono">2</span> negócios</p>
+          </div>
+        </div>
+
+        <!-- 5.4 Meta do mês -->
+        <div class="cartao">
+          <div class="cab"><h2>Meta do mês · <span class="mono">11/2026</span></h2></div>
+          <div class="corpo">
+            <div class="meta-linha"><span>Empresa</span><span class="mono">60% da meta</span></div>
+            <div class="barra g"><span style="width:60%"></span></div>
+            <div class="meta-pe"><span><span class="mono">9</span> de <span class="mono">15</span> Vendas ganhas</span><span>Faltam <span class="mono">6</span> para a meta</span></div>
+          </div>
+        </div>
+
+        <!-- 5.5 Funil -->
+        <div class="cartao">
+          <div class="cab"><h2>Funil · <span class="mono">12</span> abertos</h2></div>
+          <div class="corpo">
+            <div class="funil-linha"><span class="nome">Primeiro contato</span><div class="barra"><span style="width:50%"></span></div><span class="n mono">2</span></div>
+            <div class="funil-linha"><span class="nome">Avaliação</span><div class="barra"><span style="width:75%"></span></div><span class="n mono">3</span></div>
+            <div class="funil-linha"><span class="nome">Proposta enviada</span><div class="barra"><span style="width:75%"></span></div><span class="n mono">3</span></div>
+            <div class="funil-linha"><span class="nome">Negociação</span><div class="barra"><span style="width:100%"></span></div><span class="n mono">4</span></div>
+          </div>
+        </div>
+
+        <!-- 5.6 Performance por atendente -->
+        <div class="cartao">
+          <div class="cab"><h2>Performance por atendente</h2></div>
+          <div class="corpo">
+            <table class="tabela simples compacta cel-lista"><thead><tr><th>Atendente</th><th class="num">Ganhos</th><th class="num">Perdidos</th><th class="num">Conversas</th><th class="num">1ª resposta (média / mediana)</th></tr></thead><tbody>
+              <tr><td class="nome">Ana Souza <span class="apoio">(você)</span></td><td class="num mono" data-rotulo="Ganhos">4</td><td class="num mono" data-rotulo="Perdidos">2</td><td class="num mono" data-rotulo="Conversas">31</td><td class="num mono" data-rotulo="1ª resposta">2min 10s · 1min 05s</td></tr>
+              <tr><td class="nome">Marcos Lima</td><td class="num mono" data-rotulo="Ganhos">3</td><td class="num mono" data-rotulo="Perdidos">2</td><td class="num mono" data-rotulo="Conversas">24</td><td class="num mono" data-rotulo="1ª resposta">4min 30s · 2min</td></tr>
+              <tr><td class="nome">Renata Borges</td><td class="num mono" data-rotulo="Ganhos">2</td><td class="num mono" data-rotulo="Perdidos">2</td><td class="num mono" data-rotulo="Conversas">18</td><td class="num mono" data-rotulo="1ª resposta">6min · 3min 20s</td></tr>
+            </tbody></table>
+          </div>
+        </div>
+
+        <!-- 5.7 Por canal -->
+        <div class="cartao">
+          <div class="cab"><h2>Por canal · <span class="mono">73</span> conversas</h2></div>
+          <div class="corpo">
+            <table class="tabela simples compacta cel-lista"><thead><tr><th>Canal</th><th class="num">Conversas</th><th class="num">1ª resposta (média)</th><th class="num">Sem resposta</th></tr></thead><tbody>
+              <tr><td class="nome">Vendas</td><td class="num mono" data-rotulo="Conversas">58</td><td class="num mono" data-rotulo="1ª resposta (média)">1min 40s</td><td class="num mono" data-rotulo="Sem resposta">3</td></tr>
+              <tr><td class="nome">Recepção <span class="apoio">(arquivado)</span></td><td class="num mono" data-rotulo="Conversas">15</td><td class="num mono" data-rotulo="1ª resposta (média)">5min</td><td class="num mono" data-rotulo="Sem resposta">2</td></tr>
+            </tbody></table>
+          </div>
+        </div>
+
+        <!-- 5.8 Ganhos por período -->
+        <div class="cartao">
+          <div class="cab serie-cab"><h2>Ganhos por período · <span class="mono">9</span></h2><button class="filtro" aria-label="Granularidade">Dia<i class="ph ph-caret-down"></i></button></div>
+          <div class="corpo">
+            <div class="grafico" role="img" aria-label="Ganhos por dia nos últimos 30 dias">
+              <div class="eixo-y"><span>2</span><span>1</span><span>0</span></div>
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                <line x1="0" y1="11" x2="100" y2="11" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+                <line x1="0" y1="53" x2="100" y2="53" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+                <line x1="0" y1="95" x2="100" y2="95" stroke="var(--linha)" vector-effect="non-scaling-stroke"/>
+                <polyline fill="none" stroke="var(--ouro)" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"
+                  points="0,95 3.45,53 6.9,95 10.34,95 13.79,95 17.24,53 20.69,95 24.14,95 27.59,95 31.03,95 34.48,11 37.93,95 41.38,95 44.83,95 48.28,95 51.72,95 55.17,95 58.62,53 62.07,95 65.52,95 68.97,95 72.41,95 75.86,95 79.31,11 82.76,95 86.21,95 89.66,53 93.1,95 96.55,95 100,53"/>
+              </svg>
+              <div class="eixo-x"><span>04/10</span><span>11/10</span><span>18/10</span><span>25/10</span><span>02/11</span></div>
+            </div>
+            <table class="tabela simples compacta"><thead><tr><th>Período</th><th class="num">Ganhos</th></tr></thead><tbody>
+              <tr><td class="mono">05/10</td><td class="num mono">1</td></tr>
+              <tr><td class="mono">09/10</td><td class="num mono">1</td></tr>
+              <tr><td class="mono">14/10</td><td class="num mono">2</td></tr>
+              <tr><td class="mono">21/10</td><td class="num mono">1</td></tr>
+              <tr><td class="mono">27/10</td><td class="num mono">2</td></tr>
+              <tr><td class="mono">30/10</td><td class="num mono">1</td></tr>
+              <tr><td class="mono">02/11</td><td class="num mono">1</td></tr>
+            </tbody></table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

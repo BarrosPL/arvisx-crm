@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contatos</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="40">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .tabela th.ord { cursor: pointer; }
+  .tabela th.ord i { font-size: 10px; margin-left: 4px; vertical-align: 0; }
+  .tabela td.sel, .tabela th.sel { width: 36px; padding-right: 0; }
+  .tabela input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--ouro); }
+  .etq { display: inline-flex; align-items: center; gap: 5px; height: 20px; padding: 0 7px; border-radius: 5px; font: 600 11px/1 var(--sans); background: var(--painel-2); color: var(--apoio); }
+  .etq .pt { width: 6px; height: 6px; border-radius: 50%; }
+  @media (max-width: 860px) {
+    .tabela thead { display: none; }
+    .tabela, .tabela tbody, .tabela tr, .tabela td { display: block; }
+    .tabela tr { padding: 10px 12px; border-bottom: 1px solid var(--linha); display: grid; grid-template-columns: 28px 1fr auto; gap: 2px 10px; }
+    .tabela td { padding: 0; border: 0; }
+    .tabela td.sel { grid-row: 1 / span 2; }
+    .tabela td.email, .tabela td.tags, .tabela td.acoes { display: none; }
+    .tabela td.nome { grid-column: 2; }
+    .tabela td.status { grid-column: 3; grid-row: 1; }
+    .tabela td.tel, .tabela td.ult { grid-column: 2; font-size: 12px; color: var(--apoio); }
+  }
+</style>
+</head>
+<body data-rota="/app/contacts">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM</div>
+          <h1>Contatos</h1>
+          <p>Customer 360 — busque, filtre e gerencie contatos.</p>
+        </div>
+        <div class="acoes">
+          <button class="btn secundario"><i class="ph ph-users-three"></i>Duplicados</button>
+          <button class="btn secundario"><i class="ph ph-upload-simple"></i>Importar CSV</button>
+          <button class="btn secundario"><i class="ph ph-arrows-clockwise"></i>Sincronizar agenda</button>
+          <button class="btn secundario"><i class="ph ph-download-simple"></i>Exportar<i class="ph ph-caret-down" style="font-size:12px"></i></button>
+          <button class="btn primario"><i class="ph ph-plus"></i>Novo contato</button>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="filtros">
+        <div class="busca-linha"><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Buscar por nome, email ou telefone…"></div>
+        <button class="filtro">Tag: todas<i class="ph ph-caret-down"></i></button>
+        <button class="filtro">Todas as origens<i class="ph ph-caret-down"></i></button>
+        <button class="filtro" aria-pressed="false">Pessoais</button>
+        <button class="filtro">25 por página<i class="ph ph-caret-down"></i></button>
+      </div>
+
+      <div class="cartao">
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th class="sel"><input type="checkbox" aria-label="Selecionar todos"></th>
+              <th class="ord">Nome<i class="ph ph-caret-up-down"></i></th>
+              <th class="ord">Email<i class="ph ph-caret-up-down"></i></th>
+              <th class="ord">Telefone<i class="ph ph-caret-up-down"></i></th>
+              <th>Tags</th>
+              <th class="ord">Última atividade<i class="ph ph-caret-down"></i></th>
+              <th>Status</th>
+              <th><span class="sr">Ações</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="sel"><input type="checkbox" aria-label="Selecionar Carlos — Clínica Vida Odonto"></td>
+              <td class="nome"><div class="pessoa"><span class="avatar claro">CV</span><div><a href="#" class="nome">Carlos — Clínica Vida Odonto</a></div></div></td>
+              <td class="email apoio">carlos@vidaodonto.com.br</td>
+              <td class="tel mono">+55 11 98811-4020</td>
+              <td class="tags"><span class="etq"><span class="pt" style="background:var(--ouro)"></span>protocolo</span> <span class="etq"><span class="pt" style="background:var(--sinal)"></span>manutencao</span></td>
+              <td class="ult apoio">hoje às 14:20</td>
+              <td class="status"><span class="tag ok">Ativo</span></td>
+              <td class="acoes"><button class="btn fantasma p icone" title="Abrir conversa no Inbox"><i class="ph ph-chat-circle"></i></button><button class="btn fantasma p icone" title="Editar contato"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" title="Excluir contato"><i class="ph ph-trash"></i></button></td>
+            </tr>
+            <tr>
+              <td class="sel"><input type="checkbox" aria-label="Selecionar Marina Costa"></td>
+              <td class="nome"><div class="pessoa"><span class="avatar claro">MC</span><div><a href="#" class="nome">Marina Costa</a></div></div></td>
+              <td class="email apoio">—</td>
+              <td class="tel mono">+55 11 97702-3318</td>
+              <td class="tags"><span class="etq"><span class="pt" style="background:#9b59b6"></span>clareamento</span></td>
+              <td class="ult apoio">hoje às 11:05</td>
+              <td class="status"><span class="tag ok">Ativo</span></td>
+              <td class="acoes"><button class="btn fantasma p icone" title="Abrir conversa no Inbox"><i class="ph ph-chat-circle"></i></button><button class="btn fantasma p icone" title="Editar contato"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" title="Excluir contato"><i class="ph ph-trash"></i></button></td>
+            </tr>
+            <tr>
+              <td class="sel"><input type="checkbox" aria-label="Selecionar Família Andrade"></td>
+              <td class="nome"><div class="pessoa"><span class="avatar claro">FA</span><div><a href="#" class="nome">Família Andrade</a></div></div></td>
+              <td class="email apoio">renata.andrade@gmail.com</td>
+              <td class="tel mono">+55 11 99120-7781</td>
+              <td class="tags"><span class="etq"><span class="pt" style="background:var(--ouro)"></span>implante</span> <span class="etq"><span class="pt" style="background:var(--ok)"></span>convenio</span> <span class="etq">+6</span></td>
+              <td class="ult apoio">ontem às 18:42</td>
+              <td class="status"><span class="tag">Cliente</span></td>
+              <td class="acoes"><button class="btn fantasma p icone" title="Abrir conversa no Inbox"><i class="ph ph-chat-circle"></i></button><button class="btn fantasma p icone" title="Editar contato"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" title="Excluir contato"><i class="ph ph-trash"></i></button></td>
+            </tr>
+            <tr>
+              <td class="sel"><input type="checkbox" aria-label="Selecionar Bruno Tavares"></td>
+              <td class="nome"><div class="pessoa"><span class="avatar claro">BT</span><div><a href="#" class="nome">Bruno Tavares</a></div></div></td>
+              <td class="email apoio">bruno.tavares@outlook.com</td>
+              <td class="tel mono">+55 21 98455-6190</td>
+              <td class="tags"><span class="etq"><span class="pt" style="background:var(--bronze)"></span>protocolo</span></td>
+              <td class="ult apoio">28/10/2026</td>
+              <td class="status"><span class="tag ok">Ativo</span></td>
+              <td class="acoes"><button class="btn fantasma p icone" title="Abrir conversa no Inbox"><i class="ph ph-chat-circle"></i></button><button class="btn fantasma p icone" title="Editar contato"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" title="Excluir contato"><i class="ph ph-trash"></i></button></td>
+            </tr>
+            <tr>
+              <td class="sel"><input type="checkbox" aria-label="Selecionar Helena Marques"></td>
+              <td class="nome"><div class="pessoa"><span class="avatar claro">HM</span><div><a href="#" class="nome">Helena Marques</a></div></div></td>
+              <td class="email apoio">—</td>
+              <td class="tel mono">+55 11 96644-0022</td>
+              <td class="tags"><span class="etq"><span class="pt" style="background:var(--sinal)"></span>ortodontia</span></td>
+              <td class="ult apoio">14/10/2026</td>
+              <td class="status"><span class="tag aviso">Bloqueado</span></td>
+              <td class="acoes"><button class="btn fantasma p icone" title="Abrir conversa no Inbox"><i class="ph ph-chat-circle"></i></button><button class="btn fantasma p icone" title="Editar contato"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" title="Excluir contato"><i class="ph ph-trash"></i></button></td>
+            </tr>
+            <tr>
+              <td class="sel"><input type="checkbox" aria-label="Selecionar Grupo Odonto Sul"></td>
+              <td class="nome"><div class="pessoa"><span class="avatar claro">GO</span><div><a href="#" class="nome">Grupo Odonto Sul</a></div></div></td>
+              <td class="email apoio">compras@odontosul.com.br</td>
+              <td class="tel mono">+55 51 3222-8800</td>
+              <td class="tags"><span class="etq"><span class="pt" style="background:var(--navy)"></span>corporativo</span></td>
+              <td class="ult apoio">hoje às 09:48</td>
+              <td class="status"><span class="tag ok">Ativo</span></td>
+              <td class="acoes"><button class="btn fantasma p icone" title="Iniciar conversa no Inbox"><i class="ph ph-chat-circle"></i></button><button class="btn fantasma p icone" title="Editar contato"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" title="Excluir contato"><i class="ph ph-trash"></i></button></td>
+            </tr>
+            <tr>
+              <td class="sel"><input type="checkbox" aria-label="Selecionar Cliente Anonimizado #14"></td>
+              <td class="nome"><div class="pessoa"><span class="avatar claro">—</span><div><a href="#" class="nome">Cliente Anonimizado #14</a></div></div></td>
+              <td class="email apoio">—</td>
+              <td class="tel mono">—</td>
+              <td class="tags">—</td>
+              <td class="ult apoio">12/03/2026</td>
+              <td class="status"><span class="tag erro">Anonimizado</span></td>
+              <td class="acoes"></td>
+            </tr>
+            <tr>
+              <td class="sel"><input type="checkbox" aria-label="Selecionar Patrícia Nunes"></td>
+              <td class="nome"><div class="pessoa"><span class="avatar claro">PN</span><div><a href="#" class="nome">Patrícia Nunes</a></div></div></td>
+              <td class="email apoio">patricia.nunes@uol.com.br</td>
+              <td class="tel mono">+55 11 99877-1203</td>
+              <td class="tags"><span class="etq"><span class="pt" style="background:var(--bronze)"></span>protese</span></td>
+              <td class="ult apoio">ontem às 09:10</td>
+              <td class="status"><span class="tag">Pessoal</span></td>
+              <td class="acoes"><button class="btn fantasma p icone" title="Abrir conversa no Inbox"><i class="ph ph-chat-circle"></i></button><button class="btn fantasma p icone" title="Editar contato"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" title="Excluir contato"><i class="ph ph-trash"></i></button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px">
+        <span class="apoio pequeno">25 contatos carregados — há mais resultados</span>
+        <button class="btn secundario p">Carregar mais</button>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

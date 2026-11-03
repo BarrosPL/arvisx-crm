@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plano e cobrança</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="33">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .pilha { display: grid; gap: 16px; max-width: 576px; }
+  .plano h2 { font-family: var(--display); font-stretch: 108%; font-weight: 620; letter-spacing: -.02em; font-size: 18px; margin-bottom: 4px; }
+  .plano .preco { color: var(--apoio); margin-bottom: 10px; }
+  .plano .situacao { font-weight: 700; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 8px; }
+  .uso { display: grid; grid-template-columns: auto 1fr; gap: 8px 20px; font-size: 13.5px; border-top: 1px solid var(--linha); padding-top: 14px; }
+  .uso dt { color: var(--apoio); }
+  .uso dd { font-weight: 600; }
+  .botoes { display: flex; gap: 8px; flex-wrap: wrap; }
+</style>
+</head>
+<body data-rota="/app/settings/billing">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua empresa</div>
+          <h1>Plano e cobrança</h1>
+          <p>Planos, faturas e cobrança.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <div class="cartao plano">
+          <div class="corpo">
+            <h2>Seu plano: Clínica Pro</h2>
+            <p class="preco"><span class="mono">R$ 297</span> por mês</p>
+            <p class="situacao"><span class="tag ok">Em dia</span></p>
+            <dl class="uso">
+              <dt>Pessoas</dt><dd><span class="mono">3</span> de <span class="mono">5</span></dd>
+              <dt>Números conectados</dt><dd><span class="mono">1</span> de <span class="mono">2</span></dd>
+              <dt>Uso de IA no mês</dt><dd><span class="mono">US$ 12,40</span> de <span class="mono">US$ 50</span></dd>
+            </dl>
+          </div>
+        </div>
+
+        <div class="botoes">
+          <button class="btn primario"><i class="ph ph-credit-card"></i>Gerenciar pagamento</button>
+          <button class="btn secundario">Trocar de plano</button>
+          <button class="btn fantasma">Cancelar assinatura</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

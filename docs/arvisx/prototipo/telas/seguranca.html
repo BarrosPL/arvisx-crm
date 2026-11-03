@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Segurança</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="11">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .cartao .corpo h2 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .cartao .corpo p.desc { color: var(--apoio); font-size: 12.5px; margin-bottom: 14px; max-width: 70ch; }
+  .cab-badge { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .cab-badge > div { min-width: 0; }
+  .politica { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .politica .campo.estreito input { width: 96px; }
+  .ajuda-l { color: var(--fraco); font-size: 12px; margin-top: 8px; max-width: 70ch; }
+  .caixa-aviso { background: var(--aviso-suave); border: 1px solid #f3d7ac; color: #7d4d0d; border-radius: var(--r); padding: 14px 16px; font-size: 13px; margin-bottom: 14px; }
+  .caixa-aviso strong { display: block; margin-bottom: 6px; }
+  .caixa-aviso p + p { margin-top: 8px; }
+  .dispositivos { border: 1px solid var(--linha); border-radius: var(--r-sm); font-size: 12.5px; margin-bottom: 12px; }
+  .dispositivos li { padding: 10px 12px; border-bottom: 1px solid var(--linha); }
+  .dispositivos li:last-child { border-bottom: 0; }
+  .dispositivos li strong { display: block; word-break: break-word; }
+  .dispositivos li span { color: var(--apoio); }
+  @media (max-width: 860px) {
+    .politica { flex-direction: column; align-items: stretch; }
+    .politica .campo.estreito input { width: 100%; }
+  }
+</style>
+</head>
+<body data-rota="/app/settings/security">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua conta</div>
+          <h1>Segurança</h1>
+          <p>A verificação em duas etapas da sua conta, os códigos de recuperação e as sessões abertas.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <!-- Card 1 -->
+        <div class="cartao">
+          <div class="corpo">
+            <div class="cab-badge">
+              <div>
+                <h2>Verificação em duas etapas</h2>
+                <p class="desc">Além da senha, o sistema pede um código de 6 dígitos que só existe no seu celular. É a proteção que segura uma senha vazada.</p>
+              </div>
+              <span class="tag ok">Ativada</span>
+            </div>
+            <button class="btn secundario p">Desligar</button>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Exigir da equipe</h2>
+            <p class="desc">Escolha quem precisa configurar a verificação em duas etapas. Ligue se a sua equipe mexe com dados de clientes — é a diferença entre uma senha vazada virar um susto ou virar um vazamento.</p>
+            <div class="politica">
+              <div class="campo">
+                <label for="mfa-papel-minimo">Nível mínimo</label>
+                <select id="mfa-papel-minimo">
+                  <option value="none" selected>Não exigir de ninguém</option>
+                  <option value="admin">Administrador</option>
+                  <option value="manager">Gerente</option>
+                  <option value="agent">Atendente</option>
+                  <option value="viewer">Somente leitura</option>
+                </select>
+              </div>
+              <div class="campo estreito">
+                <label for="mfa-carencia-dias">Dias de carência</label>
+                <input type="number" id="mfa-carencia-dias" min="0" max="30" value="0" class="mono" disabled>
+              </div>
+              <button class="btn primario" disabled>Salvar</button>
+            </div>
+            <p class="ajuda-l">O nível escolhido alcança esse papel e todos os acima dele. Quem já tem segundo fator continua provando a cada entrada, qualquer que seja esta escolha.</p>
+            <p class="ajuda-l">A carência vai de 0 a 30 dias: durante o prazo ninguém é bloqueado, e depois dele a tela trava até o cadastro. O prazo começa na mudança da regra ou na entrada da pessoa na empresa, o que for mais tarde.</p>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Códigos de recuperação</h2>
+            <p class="desc">Use se perder acesso ao autenticador. Cada código é de uso único.</p>
+            <button class="btn secundario">Regenerar códigos de recuperação</button>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Chamada de voz pelo WhatsApp</h2>
+            <p class="desc">Desligada. Ninguém consegue ligar nem receber chamadas por aqui.</p>
+            <div class="caixa-aviso">
+              <strong>Leia antes de ligar</strong>
+              <p>Para fazer chamadas, o sistema precisa conectar um segundo aparelho ao mesmo número de WhatsApp que você já usa para atender. Essa conexão não é feita pelo caminho oficial do WhatsApp.</p>
+              <p>O WhatsApp pode entender isso como uso indevido e bloquear a CONTA — não só a chamada. Se isso acontecer, você perde também as mensagens desse número, e recuperar depende do WhatsApp, não de nós.</p>
+              <p>Ligue apenas se a chamada de voz valer esse risco para o seu negócio. Você pode desligar a qualquer momento aqui mesmo — e o aparelho é desconectado na hora.</p>
+            </div>
+            <label class="caixa" style="margin-bottom:12px"><input type="checkbox"><span>Eu li o aviso acima e aceito o risco de o WhatsApp bloquear esta conta.</span></label>
+            <button class="btn navy p" disabled>Ligar chamada de voz</button>
+          </div>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Dispositivos confiáveis</h2>
+            <p class="desc">Navegadores onde você marcou “Confiar neste dispositivo”. Neles o login não pede o código por 30 dias.</p>
+            <ul class="dispositivos">
+              <li><strong>Mozilla/5.0 (Windows NT 10.0; Win64; x64) … Chrome/130</strong><span>Confiável até <span class="mono">28/11/2026</span></span></li>
+              <li><strong>Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) … Safari/605.1</strong><span>Confiável até <span class="mono">15/11/2026</span></span></li>
+            </ul>
+            <button class="btn secundario p">Esquecer todos os dispositivos</button>
+          </div>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Sessões ativas</h2>
+            <p class="desc">Listagem de sessões — em breve. Por enquanto, deslogue todos os dispositivos:</p>
+            <button class="btn secundario">Sair de todos os dispositivos</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

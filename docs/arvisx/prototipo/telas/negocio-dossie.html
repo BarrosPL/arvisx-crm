@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ficha do negócio (dossiê)</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="21">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .fundo-quadro { filter: blur(1px); opacity: .55; pointer-events: none; }
+  .veu { position: fixed; inset: 0; background: rgba(15, 19, 26, .35); z-index: 40; }
+  .dossie { position: fixed; top: 0; right: 0; bottom: 0; width: 100%; max-width: 480px; background: var(--painel); z-index: 41; box-shadow: var(--sombra-alta); display: flex; flex-direction: column; }
+  .dossie .cab { padding: 18px 22px 14px; border-bottom: 1px solid var(--linha); }
+  .dossie .cab .fechar { position: absolute; top: 14px; right: 14px; }
+  .dossie h2.titulo { font-family: var(--display); font-stretch: 108%; font-weight: 620; font-size: 17px; letter-spacing: -.02em; padding-right: 36px; line-height: 1.3; }
+  .dossie .vivo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; font-size: 12.5px; }
+  .dossie .vivo .valor { font: 600 14px/1 var(--mono); }
+  .dossie .vivo select { height: 28px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--linha-forte); font-size: 12.5px; }
+  .dossie .vivo .dono { display: inline-flex; align-items: center; gap: 6px; color: var(--apoio); }
+  .dossie .vivo a { margin-left: auto; }
+  .dossie .recalc { font: 500 11px/1 var(--mono); color: var(--fraco); margin-top: 10px; }
+  .dossie .corpo-rol { overflow-y: auto; flex: 1; }
+  .secao { padding: 14px 22px; border-bottom: 1px solid var(--linha); }
+  .secao > h3 { display: flex; align-items: center; justify-content: space-between; font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--apoio); margin-bottom: 12px; cursor: pointer; }
+  .secao > h3 .mais { font-size: 14px; color: var(--fraco); }
+  .secao > h3 .btn { font-family: var(--sans); letter-spacing: 0; text-transform: none; }
+  .secao > h3 .resumo { font-family: var(--sans); text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--fraco); margin-left: 6px; }
+  .acao-ia-bloco { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--r); background: var(--ouro-suave); border: 1px solid #ecd9a0; margin: 14px 22px 0; }
+  .acao-ia-bloco .txt { flex: 1; font-size: 13px; }
+  .acao-ia-bloco .txt strong { display: block; font: 600 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ouro-escuro); margin-bottom: 4px; }
+  .conv-mini { display: flex; align-items: center; gap: 10px; margin: 14px 22px 0; padding: 10px 12px; border: 1px solid var(--linha); border-radius: var(--r); }
+  .conv-mini i { font-size: 18px; color: var(--sinal); }
+  .conv-mini strong { display: block; font-size: 12.5px; }
+  .conv-mini span { font-size: 12px; color: var(--apoio); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+  .conv-mini .cont { margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--sinal); color: #fff; font: 600 10.5px/18px var(--mono); text-align: center; }
+  .dossie dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; font-size: 13px; }
+  .dossie dt { color: var(--fraco); }
+  .tarefa { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-top: 1px solid var(--linha); font-size: 13px; }
+  .tarefa:first-of-type { border-top: 0; }
+  .tarefa input { margin-top: 3px; accent-color: var(--ouro); }
+  .tarefa .meta { color: var(--fraco); font-size: 11.5px; margin-top: 2px; display: flex; gap: 8px; }
+  .tarefa.atrasada .meta .prazo { color: var(--erro); font-weight: 600; }
+</style>
+</head>
+<body data-rota="/app/kanban">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo fundo-quadro">
+      <div class="cabecalho" style="margin-bottom:16px"><div><div class="eyebrow">CRM · Funis</div><h1>CRM Vivo — Clínica</h1></div></div>
+      <div class="fio"></div>
+      <div class="kanban">
+        <section class="coluna"><div class="cab"><div><h3>Primeiro contato</h3></div><span class="cont">2</span></div><div class="cartoes"><div class="card-negocio"><div class="titulo">Marina Costa — clareamento</div><div class="valor">R$ 1.800</div></div><div class="card-negocio"><div class="titulo">Caio Ribeiro — dor de dente</div><div class="valor">R$ 450</div></div></div></section>
+        <section class="coluna"><div class="cab"><div><h3>Avaliação</h3></div><span class="cont">3</span></div><div class="cartoes"><div class="card-negocio"><div class="titulo">Rogério Paiva — avaliação inicial</div><div class="valor nulo">—</div></div><div class="card-negocio"><div class="titulo">Família Andrade — 4 tratamentos</div><div class="valor">R$ 21.500</div></div></div></section>
+        <section class="coluna"><div class="cab"><div><h3>Proposta enviada</h3></div><span class="cont">3</span></div><div class="cartoes"><div class="card-negocio"><div class="titulo">Bruno Tavares — protocolo superior</div><div class="valor">R$ 45.000</div></div></div></section>
+        <section class="coluna"><div class="cab"><div><h3>Negociação</h3></div><span class="cont">4</span></div><div class="cartoes"><div class="card-negocio" style="border-color:var(--ouro)"><div class="titulo">Carlos — Clínica Vida Odonto · manutenção de protocolo</div><div class="valor">R$ 28.000</div></div><div class="card-negocio"><div class="titulo">Grupo Odonto Sul — contrato corporativo</div><div class="valor">R$ 124.000</div></div></div></section>
+      </div>
+    </main>
+  </div>
+</div>
+<div class="veu"></div>
+<aside class="dossie" role="dialog" aria-label="Carlos — Clínica Vida Odonto · manutenção de protocolo">
+  <div class="cab" style="position:relative">
+    <button class="btn fantasma icone fechar" aria-label="Fechar"><i class="ph ph-x"></i></button>
+    <div class="eyebrow" style="display:flex;align-items:center;gap:8px;color:var(--ouro-escuro);font:600 10.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px">Tratamento · Negociação</div>
+    <h2 class="titulo">Carlos — Clínica Vida Odonto · manutenção de protocolo</h2>
+    <div class="vivo">
+      <span class="valor">R$ 28.000</span>
+      <select aria-label="Etapa do funil"><option>Primeiro contato</option><option>Avaliação</option><option>Proposta enviada</option><option selected>Negociação</option><option>Tratamento fechado</option><option>Perdido</option></select>
+      <span class="dono"><span class="avatar p ia">LA</span>Lia — AgendaPlus</span>
+      <span style="display:inline-flex;align-items:center;gap:6px;color:var(--apoio)"><span class="barra" style="width:64px;height:3px"><span style="width:72%"></span></span>Quente · 72%</span>
+      <a href="#" class="link pequeno">Editar campos</a>
+    </div>
+    <div class="recalc">Probabilidade recalculada automaticamente · 03/11/2026, 14:20</div>
+  </div>
+  <div class="corpo-rol">
+    <div class="acao-ia-bloco">
+      <span class="avatar p ia" style="margin-top:2px">LA</span>
+      <div class="txt"><strong>Propõe</strong>Confirmar a data da manutenção do protocolo e enviar o orçamento revisado</div>
+      <div style="display:flex;flex-direction:column;gap:6px"><button class="btn primario p">Aprovar</button><button class="btn fantasma p">Ignorar</button></div>
+    </div>
+    <a href="#" class="conv-mini"><i class="ph ph-chat-circle"></i><div style="min-width:0"><strong>Abrir conversa no Inbox</strong><span>Carlos: Fechado então, confirma a quarta às 15h?</span></div><span class="cont" aria-label="1 sem ler">1</span></a>
+
+    <section class="secao" style="margin-top:14px">
+      <h3>Contato <span class="mais">−</span></h3>
+      <div class="segmento" style="margin-bottom:12px"><button aria-pressed="true">Dados</button><button aria-pressed="false">Links</button></div>
+      <dl>
+        <dt>Nome</dt><dd>Carlos — Clínica Vida Odonto</dd>
+        <dt>Telefone</dt><dd><span class="mono">+55 11 98811-4020</span> · <a href="#" class="link">Abrir no WhatsApp</a></dd>
+        <dt>E-mail</dt><dd>carlos@vidaodonto.com.br</dd>
+      </dl>
+      <a href="#" class="link pequeno" style="display:inline-block;margin-top:10px">Ver ficha completa do contato</a>
+      <div style="margin-top:14px"><span class="rotulo">Pessoas relacionadas</span><p class="fraco pequeno">Nenhuma pessoa relacionada ainda.</p><button class="btn fantasma p" style="margin-top:6px"><i class="ph ph-plus"></i>Adicionar participante</button></div>
+    </section>
+
+    <section class="secao">
+      <h3>Dados do negócio <span class="mais">+</span></h3>
+    </section>
+
+    <section class="secao">
+      <h3 style="cursor:default">Tarefas <span class="resumo">· 2 abertas · 1 atrasada</span><button class="btn fantasma p" style="margin-left:auto"><i class="ph ph-plus"></i>Nova tarefa</button></h3>
+      <div class="tarefa atrasada"><input type="checkbox" aria-label="Marcar como concluída"><div><div>Enviar orçamento revisado da manutenção</div><div class="meta"><span class="prazo mono">31/10/2026</span><span>Alta</span><span>Eu</span></div></div></div>
+      <div class="tarefa"><input type="checkbox" aria-label="Marcar como concluída"><div><div>Confirmar data com o Carlos</div><div class="meta"><span class="mono">05/11/2026 15:00</span><span>Média</span><span>Ana Souza</span></div></div></div>
+    </section>
+
+    <section class="secao">
+      <h3>Linha do tempo <span class="mais">−</span></h3>
+      <ul class="timeline">
+        <li class="ouro"><div class="quando">Lia — AgendaPlus · 03 nov, 14:20</div><div class="oque"><strong>Próxima ação aprovada</strong> <span class="tag ouro" style="height:18px;font-size:10px;letter-spacing:.08em">AGORA</span></div></li>
+        <li><div class="quando">Ana Souza · 02 nov, 16:05</div><div class="oque"><strong>Mudou de estágio</strong> <span class="apoio">Proposta enviada → Negociação</span></div></li>
+        <li class="ouro"><div class="quando">Lia — AgendaPlus · 33 ações</div><div class="oque"><strong>Atendimento da IA</strong></div></li>
+        <li class="sinal"><div class="quando">Cliente · 19 ago, 09:12</div><div class="oque"><strong>Entrou no funil</strong></div></li>
+      </ul>
+      <a href="#" class="link pequeno">Ver tudo</a>
+    </section>
+
+    <section class="secao" style="border-bottom:0">
+      <h3 style="cursor:default">Propostas <button class="btn fantasma p" style="margin-left:auto"><i class="ph ph-plus"></i>Nova proposta</button></h3>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px"><span class="mono">0007/2026</span><span class="tag ok">Enviada</span></div>
+    </section>
+  </div>
+</aside>
+<script src="../shell.js"></script>
+</body>
+</html>

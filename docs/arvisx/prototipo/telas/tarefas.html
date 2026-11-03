@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tarefas</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="50">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .faixa { margin-bottom: 22px; }
+  .faixa > h2 { font: 600 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--apoio); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .faixa > h2 .cont { font-weight: 500; color: var(--fraco); letter-spacing: 0; }
+  .faixa.atrasadas > h2 { color: var(--erro); }
+  .tarefa { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 11px 14px; border-bottom: 1px solid var(--linha); }
+  .tarefa:last-child { border-bottom: 0; }
+  .tarefa:hover { background: var(--fundo); }
+  .tarefa input[type="checkbox"] { width: 16px; height: 16px; margin-top: 2px; border-radius: 4px; accent-color: var(--ouro); }
+  .tarefa .titulo { font-weight: 600; font-size: 13.5px; }
+  .tarefa .desc { color: var(--apoio); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tarefa .meta { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; margin-top: 5px; font-size: 11.5px; color: var(--apoio); }
+  .tarefa .meta i { font-size: 13px; color: var(--fraco); vertical-align: -2px; margin-right: 3px; }
+  .tarefa .meta .negocio { max-width: 16rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tarefa .meta .atrasada { color: var(--erro); font-weight: 700; }
+  .tarefa .tag { height: 18px; padding: 0 6px; font-size: 10.5px; }
+  .tarefa .acoes { display: flex; gap: 2px; visibility: hidden; }
+  .tarefa:hover .acoes { visibility: visible; }
+  .tarefa.encerrada { opacity: .6; }
+  .tarefa.encerrada .titulo { text-decoration: line-through; }
+  .controles { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .controles select { height: 34px; padding: 0 28px 0 10px; border-radius: var(--r-sm); background: var(--painel); border: 1px solid var(--linha-forte); font-weight: 600; font-size: 12.5px; }
+  @media (max-width: 860px) {
+    .so-desktop { display: none; }
+    .tarefa .acoes { visibility: visible; }
+    .tarefa .meta .negocio { max-width: 100%; }
+  }
+</style>
+</head>
+<body data-rota="/app/tasks">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM</div>
+          <h1>Tarefas</h1>
+          <p>O que ficou combinado, com prazo. Tarefa presa a um negócio aparece na linha do tempo dele.</p>
+        </div>
+        <div class="acoes controles">
+          <select aria-label="Situação"><option>Em aberto</option><option>Pendente</option><option>Em andamento</option><option>Concluída</option><option>Cancelada</option></select>
+          <select aria-label="Responsável"><option>Todos</option><option>Minhas</option><option>Ana Souza</option><option>Marcos Lima</option><option>Renata Borges</option><option>Sem responsável</option></select>
+          <div class="segmento so-desktop" role="group"><button type="button" aria-pressed="true"><i class="ph ph-list-checks" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>Lista</button><button type="button" aria-pressed="false"><i class="ph ph-calendar-blank" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>Calendário</button></div>
+          <button class="btn secundario p"><i class="ph ph-arrows-clockwise"></i>Atualizar</button>
+          <button class="btn primario"><i class="ph ph-plus"></i>Nova tarefa</button>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <section class="faixa atrasadas">
+        <h2>Atrasadas <span class="cont">2</span></h2>
+        <div class="cartao">
+          <div class="tarefa">
+            <input type="checkbox" aria-label="Marcar como concluída">
+            <div>
+              <div class="titulo">Ligar para Bruno Tavares sobre o protocolo superior</div>
+              <div class="desc">Ele pediu o parcelamento em 10x; confirmar com a Renata antes de responder.</div>
+              <div class="meta"><span class="tag aviso">Alta</span><span class="mono atrasada">30/10, 15:00</span><span><i class="ph ph-user-circle"></i>Eu</span><a href="#" class="negocio"><i class="ph ph-kanban"></i>Bruno Tavares — protocolo superior</a></div>
+            </div>
+            <div class="acoes"><button class="btn fantasma p icone" title="Editar a tarefa"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" title="Apagar a tarefa"><i class="ph ph-trash"></i></button></div>
+          </div>
+          <div class="tarefa">
+            <input type="checkbox" aria-label="Marcar como concluída">
+            <div>
+              <div class="titulo">Enviar orçamento revisado para Patrícia Nunes</div>
+              <div class="desc">Trocar a prótese fixa pela opção com coroa de zircônia, como ela pediu.</div>
+              <div class="meta"><span class="tag sinal">Média</span><span class="mono atrasada">01/11, 10:00</span><span><i class="ph ph-user-circle"></i>Marcos Lima</span><a href="#" class="negocio"><i class="ph ph-kanban"></i>Patrícia Nunes — prótese fixa</a></div>
+            </div>
+            <div class="acoes"><button class="btn fantasma p icone" title="Editar a tarefa"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" title="Apagar a tarefa"><i class="ph ph-trash"></i></button></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="faixa">
+        <h2>Hoje <span class="cont">2</span></h2>
+        <div class="cartao">
+          <div class="tarefa">
+            <input type="checkbox" aria-label="Marcar como concluída">
+            <div>
+              <div class="titulo">Confirmar a data da manutenção do protocolo com o Carlos</div>
+              <div class="desc">Ele sugeriu quarta às 15h. Ver se a Dra. Jéssica tem a agenda livre.</div>
+              <div class="meta"><span class="tag erro">Urgente</span><span class="mono">03/11, 16:30</span><span><i class="ph ph-user-circle"></i>Eu</span><a href="#" class="negocio"><i class="ph ph-kanban"></i>Carlos — Clínica Vida Odonto · manutenção de protocolo</a></div>
+            </div>
+            <div class="acoes"><button class="btn fantasma p icone" title="Editar a tarefa"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" title="Apagar a tarefa"><i class="ph ph-trash"></i></button></div>
+          </div>
+          <div class="tarefa">
+            <input type="checkbox" aria-label="Marcar como concluída">
+            <div>
+              <div class="titulo">Mandar as fotos do caso para a Família Andrade</div>
+              <div class="meta"><span class="tag sinal">Média</span><span class="mono">03/11, 18:00</span><span><i class="ph ph-user-circle"></i>Renata Borges</span><a href="#" class="negocio"><i class="ph ph-kanban"></i>Família Andrade — 4 tratamentos</a></div>
+            </div>
+            <div class="acoes"><button class="btn fantasma p icone" title="Editar a tarefa"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" title="Apagar a tarefa"><i class="ph ph-trash"></i></button></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="faixa">
+        <h2>Esta semana <span class="cont">2</span></h2>
+        <div class="cartao">
+          <div class="tarefa">
+            <input type="checkbox" aria-label="Marcar como concluída">
+            <div>
+              <div class="titulo">Agendar a avaliação inicial de Rogério Paiva</div>
+              <div class="meta"><span class="tag">Baixa</span><span class="mono">05/11, 09:00</span><span><i class="ph ph-user-circle"></i>Eu</span><a href="#" class="negocio"><i class="ph ph-kanban"></i>Rogério Paiva — avaliação inicial</a></div>
+            </div>
+            <div class="acoes"><button class="btn fantasma p icone" title="Editar a tarefa"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" title="Apagar a tarefa"><i class="ph ph-trash"></i></button></div>
+          </div>
+          <div class="tarefa">
+            <input type="checkbox" aria-label="Marcar como concluída">
+            <div>
+              <div class="titulo">Preparar o contrato corporativo do Grupo Odonto Sul</div>
+              <div class="desc">Minuta com 40 vidas e reajuste anual pelo IPCA; jurídico revisa antes do envio.</div>
+              <div class="meta"><span class="tag aviso">Alta</span><span class="mono">06/11, 14:00</span><span><i class="ph ph-user-circle"></i>Renata Borges</span><a href="#" class="negocio"><i class="ph ph-kanban"></i>Grupo Odonto Sul — contrato corporativo</a></div>
+            </div>
+            <div class="acoes"><button class="btn fantasma p icone" title="Editar a tarefa"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" title="Apagar a tarefa"><i class="ph ph-trash"></i></button></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="faixa">
+        <h2>Mais tarde <span class="cont">1</span></h2>
+        <div class="cartao">
+          <div class="tarefa">
+            <input type="checkbox" aria-label="Marcar como concluída">
+            <div>
+              <div class="titulo">Retomar contato com Helena Marques sobre a ortodontia</div>
+              <div class="meta"><span class="tag sinal">Média</span><span class="mono">12/11, 11:00</span><span><i class="ph ph-user-circle"></i>Marcos Lima</span><a href="#" class="negocio"><i class="ph ph-kanban"></i>Helena Marques — ortodontia adulto</a></div>
+            </div>
+            <div class="acoes"><button class="btn fantasma p icone" title="Editar a tarefa"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" title="Apagar a tarefa"><i class="ph ph-trash"></i></button></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="faixa">
+        <h2>Sem prazo <span class="cont">1</span></h2>
+        <div class="cartao">
+          <div class="tarefa">
+            <input type="checkbox" aria-label="Marcar como concluída">
+            <div>
+              <div class="titulo">Revisar a tabela de preços de clareamento</div>
+              <div class="meta"><span class="tag">Baixa</span><span>Sem prazo</span><span><i class="ph ph-user-circle"></i>Eu</span></div>
+            </div>
+            <div class="acoes"><button class="btn fantasma p icone" title="Editar a tarefa"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" title="Apagar a tarefa"><i class="ph ph-trash"></i></button></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="faixa">
+        <h2>Encerradas <span class="cont">1</span></h2>
+        <div class="cartao">
+          <div class="tarefa encerrada">
+            <input type="checkbox" checked aria-label="Reabrir a tarefa">
+            <div>
+              <div class="titulo">Enviar a proposta do implante unitário para Sônia Vasconcelos</div>
+              <div class="meta"><span class="tag sinal">Média</span><span class="mono">27/10, 10:00</span><span><i class="ph ph-user-circle"></i>Eu</span><a href="#" class="negocio"><i class="ph ph-kanban"></i>Sônia Vasconcelos — implante unitário</a></div>
+            </div>
+            <div class="acoes"><button class="btn fantasma p icone" title="Editar a tarefa"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" title="Apagar a tarefa"><i class="ph ph-trash"></i></button></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

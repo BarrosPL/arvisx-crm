@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solicitações LGPD</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="40">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .aviso-faixa { margin-bottom: 12px; }
+  .filtros .contador { margin-left: auto; color: var(--apoio); font-size: 13px; }
+  .tabela td.vence.urgente { color: var(--erro); font-weight: 600; }
+  .tabela td.acoes .btn { visibility: visible; }
+  @media (max-width: 860px) {
+    .filtros .contador { margin-left: 0; flex-basis: 100%; }
+    .tabela thead { display: none; }
+    .tabela, .tabela tbody, .tabela tr, .tabela td { display: block; }
+    .tabela tr { padding: 10px 12px; border-bottom: 1px solid var(--linha); display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+    .tabela td { padding: 0; border: 0; }
+    .tabela td.id, .tabela td.recebido, .tabela td.sla { display: none; }
+    .tabela td.sujeito { flex-basis: 100%; }
+    .tabela td.vence::before { content: "Vence "; color: var(--fraco); font-weight: 400; }
+    .tabela td.acoes { margin-left: auto; min-width: 44px; }
+  }
+</style>
+</head>
+<body data-rota="/app/lgpd/requests">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Dados e acesso</div>
+          <h1>Solicitações LGPD</h1>
+          <p>Anonimizações e solicitações de dados de titulares. Apenas admins.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="aviso-faixa erro" role="alert"><i class="ph ph-warning"></i><div><b>1</b> solicitação crítica — SLA vencido ou inferior a 2 dias. Ação imediata requerida.</div></div>
+      <div class="aviso-faixa aviso"><i class="ph ph-warning"></i><div><b>1</b> solicitação em alerta — mais de 50% do prazo consumido.</div></div>
+
+      <div class="filtros">
+        <button class="filtro">Status: todos<i class="ph ph-caret-down"></i></button>
+        <button class="filtro">Tipo: todos<i class="ph ph-caret-down"></i></button>
+        <button class="filtro">SLA: todos<i class="ph ph-caret-down"></i></button>
+        <span class="contador"><span class="mono">5</span> solicitações</span>
+      </div>
+
+      <div class="cartao">
+        <table class="tabela">
+          <thead>
+            <tr><th>ID</th><th>Tipo</th><th>Sujeito</th><th>Recebido</th><th>Vence</th><th>SLA</th><th>Status</th><th><span class="sr">Ações</span></th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="id mono">8c2f91ab</td>
+              <td><span class="tag">Anonimização cliente</span></td>
+              <td class="sujeito mono">ctt:3f9a1c2e</td>
+              <td class="recebido apoio"><span class="mono">16</span>d atrás</td>
+              <td class="vence urgente"><span class="mono">1</span>d atrasado</td>
+              <td class="sla"><span class="tag erro">Vencido</span></td>
+              <td><span class="tag">Processando</span></td>
+              <td class="acoes"><button class="btn fantasma p">Ver</button></td>
+            </tr>
+            <tr>
+              <td class="id mono">4d71e0c3</td>
+              <td><span class="tag">Solicitação dados</span></td>
+              <td class="sujeito mono">ctt:a81b4f07</td>
+              <td class="recebido apoio"><span class="mono">5</span>d atrás</td>
+              <td class="vence urgente">em <span class="mono">2</span>d</td>
+              <td class="sla"><span class="tag aviso">Alerta</span></td>
+              <td><span class="tag contorno">Revisão pendente</span></td>
+              <td class="acoes"><button class="btn fantasma p">Ver</button></td>
+            </tr>
+            <tr>
+              <td class="id mono">b19e5f44</td>
+              <td><span class="tag">Anonimização cliente</span></td>
+              <td class="sujeito mono">ctt:c02d77e9</td>
+              <td class="recebido apoio"><span class="mono">2</span>d atrás</td>
+              <td class="vence">em <span class="mono">13</span>d</td>
+              <td class="sla"><span class="tag ok">OK</span></td>
+              <td><span class="tag sinal">Recebido</span></td>
+              <td class="acoes"><button class="btn fantasma p">Ver</button></td>
+            </tr>
+            <tr>
+              <td class="id mono">e7a03c12</td>
+              <td><span class="tag">Solicitação dados</span></td>
+              <td class="sujeito mono">nuvemshop:48812</td>
+              <td class="recebido apoio"><span class="mono">3</span>h atrás</td>
+              <td class="vence">em <span class="mono">7</span>d</td>
+              <td class="sla"><span class="tag ok">OK</span></td>
+              <td><span class="tag sinal">Recebido</span></td>
+              <td class="acoes"><button class="btn fantasma p">Ver</button></td>
+            </tr>
+            <tr>
+              <td class="id mono">2f8c6d90</td>
+              <td><span class="tag">Anonimização cliente</span></td>
+              <td class="sujeito mono">ctt:5e3b9a14</td>
+              <td class="recebido apoio"><span class="mono">21</span>d atrás</td>
+              <td class="vence">—</td>
+              <td class="sla"><span class="tag ok">OK</span></td>
+              <td><span class="tag ok">Concluído</span></td>
+              <td class="acoes"><button class="btn fantasma p">Ver</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

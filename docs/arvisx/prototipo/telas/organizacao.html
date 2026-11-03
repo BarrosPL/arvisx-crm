@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Organização</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="30">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .cartao .corpo > h2 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .cartao .corpo > p.desc { color: var(--apoio); font-size: 12.5px; margin-bottom: 14px; max-width: 72ch; }
+  .bloco-chave { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .bloco-chave strong { display: block; font-size: 13px; }
+  .bloco-chave span { color: var(--fraco); font-size: 12px; }
+  .rodape-form { display: flex; justify-content: flex-end; }
+  fieldset.editor { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 14px 16px 16px; display: grid; gap: 12px; margin-bottom: 14px; }
+  fieldset.editor legend { font-weight: 700; font-size: 13px; padding: 0 6px; }
+  fieldset.editor p { color: var(--apoio); font-size: 12.5px; }
+  fieldset.editor details summary { cursor: pointer; font-weight: 600; font-size: 13px; color: var(--navy); }
+  fieldset.editor details ul { max-height: 256px; overflow-y: auto; margin-top: 10px; display: grid; gap: 10px; }
+  fieldset.editor details li strong { display: block; font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--apoio); margin-bottom: 6px; }
+  fieldset.editor details .caixa { font-size: 13px; margin: 4px 0; }
+  .cartao.perigo { border-color: #f0bcbc; }
+  .cartao.perigo h2 { color: var(--erro); }
+  .cartao.perigo p { color: var(--apoio); font-size: 13px; margin-bottom: 10px; max-width: 70ch; }
+  @media (max-width: 860px) { .rodape-form .btn { width: 100%; } }
+</style>
+</head>
+<body data-rota="/app/settings/tenant">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua empresa</div>
+          <h1>Organização</h1>
+          <p>Dados da empresa, retenção de mídia, DPO. Admin only.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <!-- 5.1 Dados da empresa -->
+        <form class="cartao">
+          <div class="corpo form c2">
+            <div class="campo"><label for="display_name">Nome de exibição</label><input type="text" id="display_name" value="Clínica Vitalis" required></div>
+            <div class="campo"><label for="legal_name">Razão social</label><input type="text" id="legal_name" value="Vitalis Odontologia Integrada Ltda." required></div>
+            <div class="campo"><label for="cnpj">CNPJ</label><input type="text" id="cnpj" class="mono" value="12.345.678/0001-90"></div>
+            <div class="campo"><label for="dpo_email">DPO email</label><input type="email" id="dpo_email" value="dpo@clinicavitalis.com.br"></div>
+            <div class="campo"><label for="timezone">Fuso horário</label>
+              <select id="timezone" class="mono">
+                <option>America/Asuncion</option><option>America/Argentina/Buenos_Aires</option><option>America/Montevideo</option><option>America/Santiago</option><option>America/La_Paz</option><option>America/Lima</option><option>America/Bogota</option><option>America/Guayaquil</option><option>America/Mexico_City</option><option selected>America/Sao_Paulo</option><option>America/Manaus</option><option>America/Belem</option><option>America/Recife</option><option>America/Fortaleza</option><option>Africa/Luanda</option><option>Europe/Lisbon</option><option>America/Cuiaba</option><option>America/Rio_Branco</option><option>Europe/Madrid</option><option>Europe/Rome</option><option>America/New_York</option><option>America/Los_Angeles</option><option>UTC</option>
+              </select>
+            </div>
+            <div class="campo"><label for="locale">Idioma</label>
+              <select id="locale"><option value="pt-BR" selected>Português (BR)</option><option value="es">Español</option><option value="tr">Türkçe</option><option value="zh-CN">简体中文</option><option value="en">English</option></select>
+            </div>
+            <div class="campo"><label for="currency">Moeda</label>
+              <select id="currency" class="mono"><option>AOA · Kz</option><option selected>BRL · R$</option><option>EUR · €</option><option>MXN · MX$</option><option>USD · US$</option></select>
+              <span class="ajuda">Vale para todo preço do catálogo. Produto já cadastrado guarda a moeda com que nasceu.</span>
+            </div>
+            <div class="campo"><label for="country">País</label>
+              <select id="country"><option value="BR" selected>Brasil</option><option value="PT">Portugal</option></select>
+              <span class="ajuda">De onde saem o documento do contato, a lei citada no documento de acesso e o prazo em dias úteis. Só aparecem países com a lei revisada — a lista é curta de propósito.</span>
+            </div>
+            <div class="campo"><label for="media_retention_days">Retenção de mídia (dias)</label><input type="number" id="media_retention_days" class="mono" min="30" max="3650" value="365"></div>
+            <div class="bloco-chave"><div><strong>Limpeza automática de mídia antiga</strong><span>Ligado: apaga a mídia e o anexo de nota interna com mais de 365 dias.</span></div><span class="chave ligada" role="switch" aria-checked="true"></span></div>
+            <div class="campo largo"><label for="privacy_policy_url">URL política de privacidade</label><input type="url" id="privacy_policy_url" value="https://clinicavitalis.com.br/privacidade"></div>
+            <div class="rodape-form largo"><button type="submit" class="btn primario">Salvar</button></div>
+          </div>
+        </form>
+
+        <!-- 5.3 Menu lateral -->
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Menu lateral</h2>
+            <p class="desc">Escolha as áreas que esta empresa mostra. Cada pessoa escolhe menos do que isto em Equipe — nunca mais — e as áreas essenciais continuam sempre visíveis. As permissões não mudam: o que o papel autoriza segue acessível por link, aviso e busca.</p>
+            <fieldset class="editor">
+              <legend>Interface</legend>
+              <p>Define quais áreas aparecem na navegação. As permissões continuam sendo determinadas pelo papel. Links de conversas e avisos podem abrir áreas autorizadas que estejam ocultas.</p>
+              <div class="campo">
+                <label for="perfil-interface">Perfil de interface</label>
+                <select id="perfil-interface"><option value="completa" selected>Completa</option><option value="simplificada">Simplificada</option></select>
+                <span class="ajuda">Trocar o perfil restaura sua seleção padrão. Perfil, segurança e acesso à equipe de quem administra continuam disponíveis.</span>
+              </div>
+              <details>
+                <summary>Personalizar áreas visíveis</summary>
+                <ul>
+                  <li><strong>Atendimento</strong><label class="caixa"><input type="checkbox" checked>Inbox</label><label class="caixa"><input type="checkbox" checked>Radar</label><label class="caixa"><input type="checkbox" checked>Agenda</label><label class="caixa"><input type="checkbox" checked>Respostas rápidas</label></li>
+                  <li><strong>CRM</strong><label class="caixa"><input type="checkbox" checked>Funis</label><label class="caixa"><input type="checkbox" checked>Campanhas</label><label class="caixa"><input type="checkbox" checked>Contatos</label><label class="caixa"><input type="checkbox" checked>Tarefas</label></li>
+                </ul>
+              </details>
+            </fieldset>
+            <button class="btn secundario p">Aplicar interface</button>
+          </div>
+        </div>
+
+        <!-- 5.4 Inbox -->
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Inbox</h2>
+            <p class="desc">Regras de atendimento que valem para esta empresa inteira. Não mudam permissões: papel e acesso continuam decidindo o que cada pessoa alcança.</p>
+            <label class="caixa" style="margin-bottom:14px"><input type="checkbox"><div><strong style="display:block;font-size:13.5px">Bloquear a caixa de mensagem até o atendente assumir a conversa</strong><span class="apoio pequeno">Com a opção ligada, quem abre uma conversa sem responsável não consegue digitar nem enviar até clicar em Assumir. O botão Assumir continua sempre visível, e quem já assumiu continua respondendo normalmente.</span></div></label>
+            <button class="btn secundario p">Aplicar regras de atendimento</button>
+          </div>
+        </div>
+
+        <!-- 5.5 Zona de perigo -->
+        <div class="cartao perigo">
+          <div class="corpo">
+            <h2>Zona de perigo</h2>
+            <p>Apaga de vez as mensagens, conversas, negócios, contatos, agendamentos e pedidos desta organização. Serve para recomeçar os testes do zero antes de atender de verdade.</p>
+            <p>Continuam de pé: as pessoas da equipe, as configurações, os funis e etapas, os agentes de IA e os canais de WhatsApp já conectados.</p>
+            <button class="btn perigo"><i class="ph ph-trash"></i>Apagar todos os dados de atendimento</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ARVISX CRM — protótipo de redesign</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<style>
+  :root { --navy:#0f131a; --navy-2:#151b26; --linha:#2c3646; --ouro:#d4af37; --ouro-claro:#f1d47c; --texto:#eef0f3; --apoio:#a2abb9; --fraco:#6c7586; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Manrope", system-ui, sans-serif; background: #07090d; color: var(--texto); height: 100vh; display: grid; grid-template-columns: 300px 1fr; overflow: hidden; }
+  aside { background: var(--navy); border-right: 1px solid var(--linha); display: flex; flex-direction: column; min-height: 0; }
+  aside .cab { padding: 18px 18px 14px; border-bottom: 1px solid var(--linha); }
+  aside .cab img { height: 24px; display: block; margin-bottom: 12px; }
+  aside .cab strong { font-family: "Archivo"; font-stretch: 112%; font-weight: 650; letter-spacing: -.02em; font-size: 15px; display: block; }
+  aside .cab span { color: var(--fraco); font: 500 11px/1.4 "JetBrains Mono", monospace; display: block; margin-top: 4px; }
+  aside nav { overflow-y: auto; flex: 1; padding: 10px; scrollbar-width: thin; scrollbar-color: var(--linha) transparent; }
+  aside h2 { font: 500 10.5px/1 "JetBrains Mono", monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--fraco); padding: 12px 10px 6px; }
+  aside ul { list-style: none; }
+  aside a { display: block; padding: 7px 10px; border-radius: 6px; color: var(--apoio); text-decoration: none; font-weight: 600; font-size: 13px; }
+  aside a small { display: block; color: var(--fraco); font: 500 10.5px/1.3 "JetBrains Mono", monospace; margin-top: 2px; }
+  aside a:hover { background: var(--navy-2); color: var(--texto); }
+  aside a.ativo { background: rgba(212,175,55,.12); color: var(--ouro-claro); box-shadow: inset 2px 0 0 var(--ouro); }
+  main { display: flex; flex-direction: column; min-width: 0; }
+  .barra { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--linha); background: var(--navy); }
+  .barra .titulo { font-weight: 700; margin-right: auto; }
+  .barra .titulo small { color: var(--fraco); font: 500 11px/1 "JetBrains Mono", monospace; margin-left: 10px; }
+  .barra button, .barra a { font: 600 12px/1 "Manrope"; color: var(--apoio); background: var(--navy-2); border: 1px solid var(--linha); border-radius: 6px; padding: 7px 10px; cursor: pointer; text-decoration: none; }
+  .barra button[aria-pressed="true"] { background: var(--ouro); border-color: var(--ouro); color: var(--navy); }
+  .palco { flex: 1; display: grid; place-items: center; padding: 20px; overflow: auto; background: radial-gradient(circle at 50% 0, #121824, #07090d 70%); }
+  .quadro { background: #fff; box-shadow: 0 30px 80px -30px rgba(0,0,0,.8); transition: width .2s, height .2s; border-radius: 4px; overflow: hidden; }
+  .quadro.celular { width: 390px; height: 844px; border-radius: 28px; border: 8px solid #1d2531; }
+  .quadro.desktop { width: 100%; height: 100%; max-width: 1440px; }
+  iframe { width: 100%; height: 100%; border: 0; display: block; background: #f7f6f2; }
+</style>
+</head>
+<body>
+<aside>
+  <div class="cab">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><img src="marca/arvisx-simbolo-branco.png" alt="" style="height:28px;margin:0"><b style="font-family:Archivo;font-stretch:118%;font-weight:700;letter-spacing:.14em;font-size:15px;color:#fff">ARVISX<em style="font-style:normal;color:#d4af37;font-weight:600;margin-left:4px">CRM</em></b></div>
+    <strong>Protótipo de redesign do CRM</strong>
+    <span>69 telas · só visual, conteúdo igual ao app</span>
+  </div>
+  <nav>
+  <h2>Entrada</h2>
+  <ul>
+    <li><a href="#login" data-arquivo="login.html">Entrar<small>/login</small></a></li>
+    <li><a href="#onboarding-welcome" data-arquivo="onboarding-welcome.html">Seu negócio<small>/onboarding/welcome</small></a></li>
+    <li><a href="#onboarding-whatsapp" data-arquivo="onboarding-whatsapp.html">O telefone dele<small>/onboarding/connect-whatsapp</small></a></li>
+    <li><a href="#onboarding-funil" data-arquivo="onboarding-funil.html">Onde ele organiza<small>/onboarding/funil</small></a></li>
+    <li><a href="#onboarding-done" data-arquivo="onboarding-done.html">Tudo pronto<small>/onboarding/done</small></a></li>
+  </ul>
+  <h2>Atendimento</h2>
+  <ul>
+    <li><a href="#inbox" data-arquivo="inbox.html">Inbox<small>/app/inbox</small></a></li>
+    <li><a href="#radar" data-arquivo="radar.html">Radar<small>/app/radar</small></a></li>
+    <li><a href="#agenda" data-arquivo="agenda.html">Agenda<small>/app/agenda</small></a></li>
+    <li><a href="#respostas-rapidas" data-arquivo="respostas-rapidas.html">Respostas rápidas<small>/app/templates</small></a></li>
+  </ul>
+  <h2>CRM</h2>
+  <ul>
+    <li><a href="#crm-hub" data-arquivo="crm-hub.html">CRM (ver tudo)<small>/app/crm</small></a></li>
+    <li><a href="#funis" data-arquivo="funis.html">Funis<small>/app/kanban</small></a></li>
+    <li><a href="#funil-quadro" data-arquivo="funil-quadro.html">Quadro do funil<small>/app/kanban</small></a></li>
+    <li><a href="#negocio-dossie" data-arquivo="negocio-dossie.html">Ficha do negócio (dossiê)<small>/app/kanban</small></a></li>
+    <li><a href="#contatos" data-arquivo="contatos.html">Contatos<small>/app/contacts</small></a></li>
+    <li><a href="#contato-ficha" data-arquivo="contato-ficha.html">Ficha do contato<small>/app/contacts</small></a></li>
+    <li><a href="#tarefas" data-arquivo="tarefas.html">Tarefas<small>/app/tasks</small></a></li>
+    <li><a href="#planos-de-tarefa" data-arquivo="planos-de-tarefa.html">Planos de tarefa<small>/app/tasks/planos</small></a></li>
+    <li><a href="#campanhas" data-arquivo="campanhas.html">Campanhas<small>/app/campaigns</small></a></li>
+    <li><a href="#campanha-nova" data-arquivo="campanha-nova.html">Nova campanha<small>/app/campaigns</small></a></li>
+    <li><a href="#prospeccao" data-arquivo="prospeccao.html">Prospecção<small>/app/prospecting</small></a></li>
+    <li><a href="#produtos" data-arquivo="produtos.html">Produtos<small>/app/products</small></a></li>
+    <li><a href="#propostas" data-arquivo="propostas.html">Propostas<small>/app/proposals</small></a></li>
+    <li><a href="#proposta-detalhe" data-arquivo="proposta-detalhe.html">Editor de proposta<small>/app/proposals</small></a></li>
+    <li><a href="#empresas" data-arquivo="empresas.html">Empresas<small>/app/companies</small></a></li>
+    <li><a href="#pessoas" data-arquivo="pessoas.html">Pessoas<small>/app/people</small></a></li>
+    <li><a href="#comandas" data-arquivo="comandas.html">Comandas<small>/app/comandas</small></a></li>
+    <li><a href="#importacoes" data-arquivo="importacoes.html">Importações<small>/app/imports</small></a></li>
+  </ul>
+  <h2>Agente de IA</h2>
+  <ul>
+    <li><a href="#ia-hub" data-arquivo="ia-hub.html">Agente de IA (ver tudo)<small>/app/ai</small></a></li>
+    <li><a href="#agentes" data-arquivo="agentes.html">Agentes de IA<small>/app/ai/agents</small></a></li>
+    <li><a href="#agente-editor" data-arquivo="agente-editor.html">Editor do agente<small>/app/ai/agents</small></a></li>
+    <li><a href="#followups" data-arquivo="followups.html">Follow-ups<small>/app/ai/followups</small></a></li>
+    <li><a href="#followup-editor" data-arquivo="followup-editor.html">Construtor de follow-up<small>/app/ai/followups</small></a></li>
+    <li><a href="#fluxos-de-atendimento" data-arquivo="fluxos-de-atendimento.html">Fluxos de atendimento<small>/app/ai/atendimento</small></a></li>
+    <li><a href="#roteadores" data-arquivo="roteadores.html">Roteadores<small>/app/ai/routers</small></a></li>
+    <li><a href="#credenciais" data-arquivo="credenciais.html">Chaves de acesso à IA<small>/app/ai/credentials</small></a></li>
+    <li><a href="#provedores" data-arquivo="provedores.html">Provedores de IA<small>/app/ai/providers</small></a></li>
+    <li><a href="#conhecimento" data-arquivo="conhecimento.html">O que o agente sabe<small>/app/ai/knowledge/sources</small></a></li>
+    <li><a href="#memoria" data-arquivo="memoria.html">Memória da IA<small>/app/ai/memory</small></a></li>
+    <li><a href="#skills" data-arquivo="skills.html">Skills da IA<small>/app/ai/skills</small></a></li>
+    <li><a href="#casos" data-arquivo="casos.html">Casos<small>/app/ai/cases</small></a></li>
+    <li><a href="#alertas" data-arquivo="alertas.html">Central de avisos<small>/app/ai/inbox</small></a></li>
+    <li><a href="#ia-propostas" data-arquivo="ia-propostas.html">Propostas (IA)<small>/app/ai/proposals</small></a></li>
+    <li><a href="#execucoes" data-arquivo="execucoes.html">Execuções de IA<small>/app/ai/runs</small></a></li>
+    <li><a href="#uso-e-orcamento" data-arquivo="uso-e-orcamento.html">Uso de IA<small>/app/ai/usage</small></a></li>
+  </ul>
+  <h2>Canais</h2>
+  <ul>
+    <li><a href="#conexoes" data-arquivo="conexoes.html">Conexões<small>/app/connections</small></a></li>
+    <li><a href="#nuvemshop" data-arquivo="nuvemshop.html">Nuvemshop<small>/app/integrations/nuvemshop</small></a></li>
+    <li><a href="#webhooks" data-arquivo="webhooks.html">Webhooks<small>/app/webhooks</small></a></li>
+  </ul>
+  <h2>Análise</h2>
+  <ul>
+    <li><a href="#analise-hub" data-arquivo="analise-hub.html">Análise (ver tudo)<small>/app/analise</small></a></li>
+    <li><a href="#desempenho" data-arquivo="desempenho.html">Desempenho<small>/app/metrics</small></a></li>
+    <li><a href="#atividades" data-arquivo="atividades.html">Atividades<small>/app/activities</small></a></li>
+    <li><a href="#meta-ads" data-arquivo="meta-ads.html">Meta Ads<small>/app/ads/meta</small></a></li>
+    <li><a href="#faturamento" data-arquivo="faturamento.html">Faturamento<small>/app/faturamento</small></a></li>
+    <li><a href="#honorarios" data-arquivo="honorarios.html">Honorários<small>/app/honorarios</small></a></li>
+    <li><a href="#evolucao-da-ia" data-arquivo="evolucao-da-ia.html">Evolução da IA<small>/app/ai/evolution</small></a></li>
+    <li><a href="#audit-log" data-arquivo="audit-log.html">Audit Log<small>/app/audit</small></a></li>
+  </ul>
+  <h2>Organização</h2>
+  <ul>
+    <li><a href="#configuracoes" data-arquivo="configuracoes.html">Configurações<small>/app/settings</small></a></li>
+    <li><a href="#perfil" data-arquivo="perfil.html">Perfil<small>/app/settings/profile</small></a></li>
+    <li><a href="#seguranca" data-arquivo="seguranca.html">Segurança<small>/app/settings/security</small></a></li>
+    <li><a href="#notificacoes" data-arquivo="notificacoes.html">Notificações<small>/app/settings/notifications</small></a></li>
+    <li><a href="#equipe" data-arquivo="equipe.html">Equipe<small>/app/team</small></a></li>
+    <li><a href="#equipe-convite" data-arquivo="equipe-convite.html">Convidar membros<small>/app/team</small></a></li>
+    <li><a href="#organizacao" data-arquivo="organizacao.html">Organização<small>/app/settings/tenant</small></a></li>
+    <li><a href="#marca" data-arquivo="marca.html">Marca<small>/app/settings/marca</small></a></li>
+    <li><a href="#tags" data-arquivo="tags.html">Tags<small>/app/settings/tags</small></a></li>
+    <li><a href="#plano-e-cobranca" data-arquivo="plano-e-cobranca.html">Plano e cobrança<small>/app/settings/billing</small></a></li>
+    <li><a href="#recursos-opcionais" data-arquivo="recursos-opcionais.html">Recursos opcionais<small>/app/settings/recursos</small></a></li>
+    <li><a href="#lgpd" data-arquivo="lgpd.html">Solicitações LGPD<small>/app/lgpd/requests</small></a></li>
+    <li><a href="#api-tokens" data-arquivo="api-tokens.html">API Tokens<small>/app/settings/api-tokens</small></a></li>
+    <li><a href="#extensoes" data-arquivo="extensoes.html">Extensões<small>/app/extensions</small></a></li>
+  </ul></nav>
+</aside>
+<main>
+  <div class="barra">
+    <span class="titulo" id="titulo"></span>
+    <button type="button" data-modo="desktop" aria-pressed="true">Desktop</button>
+    <button type="button" data-modo="celular" aria-pressed="false">Celular 390</button>
+    <a id="abrir" href="#" target="_blank" rel="noopener">Abrir em aba</a>
+  </div>
+  <div class="palco"><div class="quadro desktop" id="quadro"><iframe id="tela" title="Tela"></iframe></div></div>
+</main>
+<script>
+  const links = [...document.querySelectorAll("aside a")];
+  const iframe = document.getElementById("tela");
+  const quadro = document.getElementById("quadro");
+  const titulo = document.getElementById("titulo");
+  const abrir = document.getElementById("abrir");
+  function mostrar() {
+    const alvo = location.hash.slice(1) || links[0].getAttribute("href").slice(1);
+    const a = links.find((l) => l.getAttribute("href") === "#" + alvo) || links[0];
+    links.forEach((l) => l.classList.toggle("ativo", l === a));
+    const src = "telas/" + a.dataset.arquivo;
+    if (iframe.getAttribute("src") !== src) iframe.src = src;
+    abrir.href = src;
+    titulo.innerHTML = a.firstChild.textContent + "<small>" + a.querySelector("small").textContent + "</small>";
+  }
+  window.addEventListener("hashchange", mostrar);
+  mostrar();
+  document.querySelectorAll("[data-modo]").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll("[data-modo]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    quadro.className = "quadro " + b.dataset.modo;
+  }));
+</script>
+</body>
+</html>

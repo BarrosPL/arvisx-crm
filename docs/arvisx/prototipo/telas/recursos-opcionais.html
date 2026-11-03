@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recursos opcionais</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="34">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .secao { margin-bottom: 32px; }
+  .secao > p { color: var(--apoio); margin: -6px 0 12px; font-size: 13px; }
+  .recursos { display: grid; gap: 10px; }
+  .recurso { display: flex; justify-content: space-between; gap: 16px; padding: 14px 16px; }
+  .recurso .texto { min-width: 0; }
+  .recurso .texto strong { display: block; font-size: 13.5px; }
+  .recurso .texto p { color: var(--apoio); font-size: 12.5px; margin-top: 2px; }
+  .recurso .texto small { display: block; color: var(--fraco); font: 500 11px/1.4 var(--mono); margin-top: 6px; }
+  .recurso .lado { display: flex; align-items: center; gap: 8px; flex: none; }
+  @media (max-width: 860px) {
+    .recurso { flex-direction: column; }
+    .recurso .lado { justify-content: flex-end; }
+  }
+</style>
+</head>
+<body data-rota="/app/settings/recursos">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua empresa</div>
+          <h1>Recursos opcionais</h1>
+          <p>Tudo o que se liga e desliga, num lugar só. Cada recurso continua sendo ligado na tela dele: o botão Ajustar leva até lá.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <section class="secao">
+        <h2 class="secao">Módulos desta instalação</h2>
+        <p>Quem administra o servidor decide se eles existem aqui. Desligado, peça a essa pessoa.</p>
+        <ul class="recursos">
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Banco de dados externo</strong><p>O agente consulta o banco de outro sistema da empresa, como um ERP ou outro CRM.</p><small>Quem administra o servidor · Padrão: desligado</small></div><div class="lado"><span class="tag">Desligado por quem administra o servidor</span></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Fluxos de atendimento</strong><p>A IA conduz um roteiro de perguntas na conversa e grava as respostas na ficha do cliente.</p><small>Quem administra o servidor · Padrão: desligado</small></div><div class="lado"><span class="tag ok">Disponível nesta instalação</span><button class="btn secundario p" aria-label="Ajustar: Fluxos de atendimento">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Propostas comerciais</strong><p>A IA monta a proposta pelos modelos da empresa e o PDF sai pelo WhatsApp.</p><small>Quem administra o servidor · Padrão: desligado</small></div><div class="lado"><span class="tag ok">Disponível nesta instalação</span><button class="btn secundario p" aria-label="Ajustar: Propostas comerciais">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Empresas e pessoas (venda para empresas)</strong><p>Cadastro de empresas por CNPJ, das pessoas que decidem nelas e importação de planilha.</p><small>Quem administra o servidor · Padrão: desligado</small></div><div class="lado"><span class="tag">Desligado por quem administra o servidor</span></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Honorários</strong><p>Contratos de honorários com parcelas e o controle do que já foi pago.</p><small>Quem administra o servidor · Padrão: desligado</small></div><div class="lado"><span class="tag">Desligado por quem administra o servidor</span></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Comandas</strong><p>A comanda do atendimento: itens, forma de pagamento, comissões e fidelidade.</p><small>Quem administra o servidor · Padrão: desligado</small></div><div class="lado"><span class="tag">Desligado por quem administra o servidor</span></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Login do Codex por assinatura</strong><p>Conecta a assinatura do ChatGPT (o mesmo login do Codex): cada empresa conecta a própria conta, em Credenciais, com a chave de API da mesma empresa como reserva. Desligado por padrão.</p><small>Quem administra o servidor · Padrão: desligado</small></div><div class="lado"><span class="tag">Desligado por quem administra o servidor</span></div></li>
+        </ul>
+      </section>
+
+      <section class="secao">
+        <h2 class="secao">Da sua empresa</h2>
+        <ul class="recursos">
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>A conversa fica com quem atendeu</strong><p>Quem responde vira dono da conversa, e a IA se cala até alguém devolver.</p><small>Gerente ou administrador · Padrão: desligado</small></div><div class="lado"><span class="tag">Desligado</span><button class="btn secundario p" aria-label="Ajustar: A conversa fica com quem atendeu">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>A IA volta sozinha sem resposta da equipe</strong><p>Devolve a conversa ao agente depois de um tempo sem resposta de uma pessoa.</p><small>Gerente ou administrador · Padrão: desligado</small></div><div class="lado"><span class="tag">Desligado</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Atendente só vê os seus</strong><p>Restringe o que cada atendente enxerga nas conversas e no funil.</p><small>Gerente ou administrador · Padrão: desligado</small></div><div class="lado"><span class="tag">Desligado</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Quem fala aparece na mensagem</strong><p>Põe o nome do atendente ou da IA em negrito na linha de cima da mensagem ao cliente.</p><small>Gerente ou administrador · Padrão: desligado</small></div><div class="lado"><span class="tag">Desligado</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Para onde o card vai em cada passo</strong><p>Diz ao agente para qual etapa do funil levar o negócio quando qualifica ou agenda.</p><small>Gerente ou administrador · Padrão: desligado</small></div><div class="lado"><span class="tag sinal">Varia em cada item</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Avisar a equipe quando o negócio entra na etapa</strong><p>Abre um aviso na Central quando um card entra naquela etapa.</p><small>Gerente ou administrador · Padrão: desligado</small></div><div class="lado"><span class="tag sinal">Varia em cada item</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Reportar vendas à Meta</strong><p>Devolve ao anúncio da Meta as vendas que ele trouxe.</p><small>Administrador da empresa · Padrão: desligado</small></div><div class="lado"><span class="tag sinal">Veja na tela dele</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Enviar vendas pelo canal da conversa</strong><p>Sem conexão direta com a Meta, a venda sai pelo provedor do canal da conversa.</p><small>Administrador da empresa · Padrão: desligado</small></div><div class="lado"><span class="tag">Desligado</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Reportar vendas ao Google Ads</strong><p>Devolve a venda ao Google Ads, com o telefone protegido e só nas etapas escolhidas.</p><small>Administrador da empresa · Padrão: desligado</small></div><div class="lado"><span class="tag sinal">Veja na tela dele</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Endereço de captura de origem</strong><p>Um link que registra de qual campanha veio quem chama no WhatsApp.</p><small>Administrador da empresa · Padrão: desligado</small></div><div class="lado"><span class="tag sinal">Veja na tela dele</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Quem tem horário marcado vira cliente</strong><p>O contato com agendamento ganha a marca de cliente sozinho.</p><small>Administrador da empresa · Padrão: desligado</small></div><div class="lado"><span class="tag">Desligado</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Atendentes podem mexer na agenda dos colegas</strong><p>Qualquer atendente marca e remarca na agenda de outro.</p><small>Gerente ou administrador · Padrão: ligado</small></div><div class="lado"><span class="tag ok">Ligado</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Receber avisos no WhatsApp</strong><p>Os avisos da Central chegam num número de WhatsApp da equipe.</p><small>Administrador da empresa · Padrão: desligado</small></div><div class="lado"><span class="tag sinal">Veja na tela dele</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Acesso da IA por número</strong><p>Em cada número, a IA atende todo mundo, só números de teste, ninguém, ou só quem veio de uma origem.</p><small>Administrador da empresa · Padrão: varia</small></div><div class="lado"><span class="tag sinal">Varia em cada item</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Proteção de envio por número</strong><p>Janelas de resposta e de disparo, ritmo, teto diário, envio aos domingos e aquecimento de cada número.</p><small>Administrador da empresa · Padrão: varia</small></div><div class="lado"><span class="tag sinal">Varia em cada item</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Grupos na caixa de entrada</strong><p>Em cada número, escolhe quais grupos do WhatsApp aparecem nas conversas.</p><small>Administrador da empresa · Padrão: desligado</small></div><div class="lado"><span class="tag sinal">Varia em cada item</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Verificação em duas etapas obrigatória</strong><p>Exige a verificação em duas etapas de quem administra a empresa.</p><small>Administrador da empresa · Padrão: desligado</small></div><div class="lado"><span class="tag">Desligado</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Chamada de voz da empresa</strong><p>A empresa aceita o risco e liga a chamada de voz pelo WhatsApp, se o servidor oferecer.</p><small>Administrador da empresa · Padrão: desligado</small></div><div class="lado"><span class="tag sinal">Veja na tela dele</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Tronco SIP</strong><p>As credenciais do provedor de telefonia da empresa, se o servidor tiver telefonia.</p><small>Administrador da empresa · Padrão: desligado</small></div><div class="lado"><span class="tag sinal">Veja na tela dele</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Decisões rápidas por outro provedor</strong><p>Uma segunda inteligência decide as partes rápidas do atendimento.</p><small>Gerente ou administrador · Padrão: desligado</small></div><div class="lado"><span class="tag">Desligado</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Base de conhecimento com o Google</strong><p>Prepara a base de conhecimento com a chave do Google em vez da OpenAI. Trocar refaz a base.</p><small>Gerente ou administrador · Padrão: desligado</small></div><div class="lado"><span class="tag">Desligado</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Endereço aproximado do pino</strong><p>Com uma chave do Google, o pino de localização do cliente chega com rua e cidade aproximadas.</p><small>Administrador da empresa · Padrão: desligado</small></div><div class="lado"><span class="tag sinal">Veja na tela dele</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Teto de gasto de IA</strong><p>Teto mensal, aviso, e se a IA para ao chegar nele.</p><small>Gerente ou administrador · Padrão: varia</small></div><div class="lado"><span class="tag sinal">Veja na tela dele</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Quais menus aparecem</strong><p>Interface completa, simplificada ou só as portas escolhidas.</p><small>Administrador da empresa · Padrão: varia</small></div><div class="lado"><span class="tag sinal">Veja na tela dele</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Extensões</strong><p>Pacotes de fora do núcleo, instalados e ativados por empresa.</p><small>Administrador da empresa · Padrão: desligado</small></div><div class="lado"><span class="tag sinal">Veja na tela dele</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Proposta comercial da empresa</strong><p>Com o módulo do servidor ligado, a empresa liga as propostas para si.</p><small>Gerente ou administrador · Padrão: desligado</small></div><div class="lado"><span class="tag">Desligado</span><button class="btn secundario p">Ajustar</button></div></li>
+        </ul>
+      </section>
+
+      <section class="secao">
+        <h2 class="secao">Em cada agente</h2>
+        <p>Estes se ligam em cada agente, em Agente de IA › Agentes.</p>
+        <ul class="recursos">
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Passagem por assunto jurídico</strong><p>Por agente e decidido pelo admin: passar a conversa para uma pessoa quando o cliente falar de assunto jurídico (Procon, advogado, processo). Desligada, assunto jurídico passa a ser o trabalho normal deste agente e não é, sozinho, motivo de passagem — quem pede para falar com uma pessoa continua sendo passado. É OUTRA chave: a "chamar uma pessoa" de "Ajustes de cada agente" liga e desliga a ferramenta inteira; esta só tira a passagem por assunto jurídico.</p><small>Administrador da empresa · Padrão: ligado</small></div><div class="lado"><span class="tag sinal">Varia em cada item</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Ajustes de cada agente</strong><p>Ligar e desligar, #on/#off pelo celular, mensagens curtas, chamar uma pessoa, filtros de gatilho, ferramentas e voz.</p><small>Gerente ou administrador · Padrão: varia</small></div><div class="lado"><span class="tag sinal">Varia em cada item</span><button class="btn secundario p">Ajustar</button></div></li>
+          <li class="cartao sem-sombra recurso"><div class="texto"><strong>Roteiro que não recomeça</strong><p>Em cada roteiro, quem já respondeu não é perguntado de novo.</p><small>Gerente ou administrador · Padrão: varia</small></div><div class="lado"><span class="tag sinal">Varia em cada item</span><button class="btn secundario p">Ajustar</button></div></li>
+        </ul>
+      </section>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

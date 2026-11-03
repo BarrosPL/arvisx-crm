@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memória da IA</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="61">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .cartao > .cab.topo-card { align-items: flex-start; }
+  .cartao > .cab .desc { color: var(--apoio); font-size: 12.5px; margin-top: 3px; max-width: 70ch; }
+  .doc textarea { min-height: 220px; font-family: var(--mono); font-size: 13px; line-height: 1.6; }
+  .doc .rodape { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+  .doc .rodape .apoio { font-size: 12.5px; }
+  .versoes h3 { font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--apoio); margin-bottom: 8px; }
+  .versoes li { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: var(--r-sm); font-size: 12.5px; cursor: pointer; }
+  .versoes li:hover { background: var(--painel-2); }
+  .versoes li .v { font: 600 12px/1 var(--mono); color: var(--navy); min-width: 28px; }
+  .versoes li .data { color: var(--apoio); }
+  .aprend > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; padding: 14px 18px; border-bottom: 1px solid var(--linha); }
+  .aprend > li:last-child { border-bottom: 0; }
+  .aprend .titulo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 700; font-size: 13.5px; }
+  .aprend .data { color: var(--fraco); font-size: 12px; white-space: nowrap; }
+  .aprend .corpo-txt { grid-column: 1; color: var(--apoio); font-size: 13px; white-space: pre-wrap; }
+  .aprend .acao { grid-column: 2; grid-row: 1 / span 2; align-self: start; }
+  .lista-topo { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 18px; border-bottom: 1px solid var(--linha); font-size: 12.5px; }
+  @media (max-width: 860px) {
+    .aprend > li { grid-template-columns: 1fr; }
+    .aprend .acao { grid-column: 1; grid-row: auto; }
+    .aprend .acao .btn { width: 100%; }
+  }
+</style>
+</head>
+<body data-rota="/app/ai/memory">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Agente de IA</div>
+          <h1>Memória da IA</h1>
+          <p>Regras e aprendizados que TODOS os agentes de IA desta organização seguem em qualquer conversa — não é uma configuração de um agente específico.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div style="display:grid;gap:16px">
+        <div class="cartao doc">
+          <div class="cab topo-card">
+            <div>
+              <h2>Documento da organização</h2>
+              <p class="desc">O texto-base que qualquer agente de IA lê antes de responder — como a "política da casa" que todo atendente novo teria que decorar.</p>
+            </div>
+            <span class="tag ok">v3 ativa</span>
+          </div>
+          <div class="corpo">
+            <div class="campo">
+              <textarea placeholder="Ex.: Nunca prometa desconto sem confirmar com um humano. Horário de atendimento: 9h–18h, seg-sex. Sempre chame o cliente pelo primeiro nome.">Somos a Clínica Vitalis, clínica odontológica em São Paulo.
+
+Horário de atendimento: 8h–19h de segunda a sexta, 8h–13h aos sábados.
+Sempre chame o paciente pelo primeiro nome.
+Nunca prometa desconto sem confirmar com um humano. A política permite até 10%.
+Urgência com dor: ofereça o primeiro horário livre do dia, mesmo fora da agenda do dentista de origem.
+Não dê diagnóstico por mensagem — oriente a avaliação presencial.
+Convênios: só os da lista “Convênios aceitos”; se não estiver lá, diga que não atendemos.</textarea>
+            </div>
+            <div class="rodape">
+              <span class="apoio"><span class="mono">412</span> caracteres</span>
+              <button class="btn primario"><i class="ph ph-upload-simple"></i>Publicar versão</button>
+            </div>
+          </div>
+          <div class="pe" style="display:block">
+            <div class="versoes">
+              <h3>Histórico de versões</h3>
+              <ul>
+                <li><span class="v">v3</span><span class="data mono">03/11/2026 09:12</span><span class="tag ok">ativa</span></li>
+                <li><span class="v">v2</span><span class="data mono">21/10/2026 16:40</span></li>
+                <li><span class="v">v1</span><span class="data mono">02/09/2026 10:05</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="cab topo-card">
+            <div>
+              <h2>Aprendizados</h2>
+              <p class="desc">Fatos e correções pontuais que os agentes também levam em conta — adicionados à mão ou aprendidos automaticamente pelo sistema a partir de conversas reais.</p>
+            </div>
+          </div>
+          <div class="lista-topo">
+            <button class="btn secundario p"><i class="ph ph-plus"></i>Novo aprendizado</button>
+            <a href="#" class="link pequeno">Ver aprendizados arquivados</a>
+          </div>
+          <ol class="aprend">
+            <li>
+              <div class="titulo">Não oferecer desconto sem confirmar com um humano <span class="tag">manual</span></div>
+              <span class="data mono">28/10/2026</span>
+              <div class="corpo-txt">Se o paciente pedir desconto acima de 10%, diga que vai verificar com a equipe e abra um caso.</div>
+              <div class="acao"><button class="btn fantasma p">Arquivar</button></div>
+            </li>
+            <li>
+              <div class="titulo">Pacientes de convênio perguntam primeiro sobre cobertura <span class="tag sinal">aprendido automaticamente</span></div>
+              <span class="data mono">25/10/2026</span>
+              <div class="corpo-txt">Em 14 conversas o paciente perguntou se o convênio cobre antes de aceitar horário. Responder a cobertura antes de oferecer o horário reduz a troca de mensagens.</div>
+              <div class="acao"><button class="btn fantasma p">Arquivar</button></div>
+            </li>
+            <li>
+              <div class="titulo">A Dra. Renata não atende às quartas à tarde <span class="tag sinal">anotado pelo agente</span></div>
+              <span class="data mono">19/10/2026</span>
+              <div class="corpo-txt">A recepção corrigiu o agente duas vezes: ortodontia com a Dra. Renata só de manhã às quartas.</div>
+              <div class="acao"><button class="btn fantasma p">Arquivar</button></div>
+            </li>
+            <li>
+              <div class="titulo">Chamar o paciente pelo primeiro nome <span class="tag">manual</span></div>
+              <span class="data mono">02/09/2026</span>
+              <div class="corpo-txt">Nada de “senhor(a)” nem “prezado”. Primeiro nome, sem diminutivo.</div>
+              <div class="acao"><button class="btn fantasma p">Arquivar</button></div>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

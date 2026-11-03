@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pessoas</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="101">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .tabela td.atual { font-family: var(--mono); font-size: 11.5px; color: var(--apoio); white-space: nowrap; }
+  .tabela td { white-space: nowrap; }
+</style>
+</head>
+<body data-rota="/app/people">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM</div>
+          <h1>Pessoas</h1>
+          <p>Decisores e contatos — telefones ficam em Contatos.</p>
+        </div>
+        <div class="acoes"><button class="btn primario"><i class="ph ph-plus"></i>Nova pessoa</button></div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="filtros">
+        <div class="busca-linha"><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Buscar por nome ou e-mail"></div>
+      </div>
+
+      <div class="cartao">
+        <table class="tabela rolavel">
+          <thead><tr><th>Nome</th><th>E-mail</th><th>Atualizado</th></tr></thead>
+          <tbody>
+            <tr><td><div class="pessoa"><span class="avatar claro">RA</span><a href="#" class="nome">Renata Albuquerque</a></div></td><td class="apoio">renata@odontosul.com.br</td><td class="atual">02/11/2026, 16:40:10</td></tr>
+            <tr><td><div class="pessoa"><span class="avatar claro">CM</span><a href="#" class="nome">Carlos Mendes</a></div></td><td class="apoio">carlos@vidaodonto.com.br</td><td class="atual">02/11/2026, 11:20:33</td></tr>
+            <tr><td><div class="pessoa"><span class="avatar claro">FS</span><a href="#" class="nome">Fernanda Sartori</a></div></td><td class="apoio">fernanda.sartori@sorrisoecia.com.br</td><td class="atual">30/10/2026, 09:05:31</td></tr>
+            <tr><td><div class="pessoa"><span class="avatar claro">TB</span><a href="#" class="nome">Tiago Bastos</a></div></td><td class="apoio">—</td><td class="atual">29/10/2026, 14:22:08</td></tr>
+            <tr><td><div class="pessoa"><span class="avatar claro">LP</span><a href="#" class="nome">Luciana Prado</a></div></td><td class="apoio">luciana@bellapele.com.br</td><td class="atual">27/10/2026, 17:58:12</td></tr>
+            <tr><td><div class="pessoa"><span class="avatar claro">EA</span><a href="#" class="nome">Eduardo Andrade</a></div></td><td class="apoio">eduardo@coandrade.com.br</td><td class="atual">08/10/2026, 08:15:40</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

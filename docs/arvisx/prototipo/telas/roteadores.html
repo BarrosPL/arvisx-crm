@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roteadores</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="40">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .rot-card { display: flex; gap: 14px; padding: 16px; align-items: flex-start; min-width: 0; }
+  .rot-card .ic { width: 38px; height: 38px; border-radius: 10px; background: var(--navy); color: var(--ouro); display: grid; place-items: center; font-size: 19px; flex: none; }
+  .rot-card .txt { flex: 1; min-width: 0; }
+  .rot-card h3 { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 14.5px; font-weight: 700; }
+  .rot-card h3 span.n { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .rot-card .num { margin-top: 6px; color: var(--apoio); font-size: 12.5px; }
+  .rot-card .int { margin-top: 4px; color: var(--fraco); font-size: 12.5px; }
+</style>
+</head>
+<body data-rota="/app/ai/routers">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Agente de IA</div>
+          <h1>Roteadores</h1>
+          <p>Um roteador entende o que o cliente quer e entrega a conversa para o agente certo — plugado em um número de WhatsApp.</p>
+        </div>
+        <div class="acoes"><button class="btn primario"><i class="ph ph-plus"></i>Novo roteador</button></div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="grade c3">
+        <a href="#" class="cartao link rot-card">
+          <span class="ic"><i class="ph ph-signpost"></i></span>
+          <div class="txt">
+            <h3><span class="n">Roteador de vendas</span><span class="tag ok">ativo</span></h3>
+            <div class="num">Comercial · <span class="mono">+55 11 91234-5678</span></div>
+            <div class="int"><span class="mono">3</span> intenções</div>
+          </div>
+        </a>
+        <a href="#" class="cartao link rot-card">
+          <span class="ic"><i class="ph ph-signpost"></i></span>
+          <div class="txt">
+            <h3><span class="n">Roteador da recepção</span><span class="tag ok">ativo</span></h3>
+            <div class="num">Recepção Vitalis · <span class="mono">+55 11 98811-4020</span></div>
+            <div class="int"><span class="mono">1</span> intenção</div>
+          </div>
+        </a>
+        <a href="#" class="cartao link rot-card">
+          <span class="ic"><i class="ph ph-signpost"></i></span>
+          <div class="txt">
+            <h3><span class="n">Roteador de suporte</span><span class="tag">inativo</span></h3>
+            <div class="num">Número removido</div>
+            <div class="int">Sem intenções configuradas</div>
+          </div>
+        </a>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

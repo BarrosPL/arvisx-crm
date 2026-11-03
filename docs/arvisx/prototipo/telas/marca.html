@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marca</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="31">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .cartao .corpo > h2 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .cartao .corpo > p.desc { color: var(--apoio); font-size: 12.5px; margin-bottom: 14px; max-width: 72ch; }
+  .cartao .corpo .form { gap: 16px; margin-top: 12px; }
+  .linha-cor { display: flex; align-items: center; gap: 10px; }
+  .linha-cor .amostra { width: 40px; height: 40px; border-radius: var(--r-sm); border: 1px solid var(--linha-forte); flex: none; cursor: pointer; }
+  .campo .linha-cor input[type="text"] { width: 144px; }
+  .tira { display: flex; height: 56px; border-radius: var(--r-sm); overflow: hidden; margin: 10px 0; }
+  .tira span { flex: 1; }
+  .tira span.usado { box-shadow: inset 0 0 0 2px var(--painel); }
+  .legenda { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; }
+  .legenda li { display: flex; align-items: center; gap: 6px; }
+  .legenda .q { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--linha-forte); }
+  .legenda .fraco { font-size: 12px; }
+  .logo-linha { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .logo-linha input[type="file"] { font-size: 13px; }
+  .previa { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .previa > div { height: 96px; border-radius: var(--r); border: 1px solid var(--linha); display: grid; place-items: center; font-family: var(--display); font-stretch: 112%; font-weight: 650; font-size: 18px; letter-spacing: -.02em; position: relative; }
+  .previa > div.clara { background: var(--painel); color: var(--navy); }
+  .previa > div.escura { background: var(--navy); color: var(--inverso); border-color: var(--navy-linha); }
+  .previa > div small { position: absolute; left: 10px; bottom: 8px; font: 500 10.5px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; opacity: .6; }
+  .origem li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
+  .origem li:last-child { border-bottom: 0; }
+  .origem li span { color: var(--apoio); }
+  .avisos { display: grid; gap: 8px; margin-top: 14px; }
+  .avisos li { display: flex; gap: 8px; font-size: 13px; color: var(--apoio); }
+  .avisos li i { flex: none; font-size: 16px; margin-top: 1px; }
+  .avisos li.atencao { color: #7d4d0d; }
+  .lista-bullets { padding-left: 18px; list-style: disc; display: grid; gap: 8px; font-size: 13px; color: var(--apoio); }
+  .rodape-form { display: flex; justify-content: flex-end; gap: 12px; }
+  @media (max-width: 860px) { .previa { grid-template-columns: 1fr; } .rodape-form .btn { width: 100%; } }
+</style>
+</head>
+<body data-rota="/app/settings/marca">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua empresa</div>
+          <h1>Marca</h1>
+          <p>O nome e a cor que a sua empresa mostra para quem trabalha aqui dentro.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <form class="pilha">
+        <!-- 5.1 -->
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Como sua empresa aparece</h2>
+            <div class="form">
+              <div class="campo">
+                <label for="app_name">Nome da sua empresa</label>
+                <input type="text" id="app_name" maxlength="120" placeholder="ARVISX CRM" value="Clínica Vitalis">
+                <span class="ajuda">Aparece no menu lateral, para quem trabalha aqui. Deixe em branco para usar ARVISX CRM.</span>
+              </div>
+              <div class="campo">
+                <label for="accent_hex">Cor da sua marca</label>
+                <div class="linha-cor"><span class="amostra" style="background:#0f766e" title="Escolher a cor visualmente"></span><input type="text" id="accent_hex" class="mono" placeholder="#7a5cd6" value="#0f766e"></div>
+                <span class="ajuda">Deixe em branco para voltar à cor que o sistema já usa.</span>
+              </div>
+              <div class="campo">
+                <label for="accent_dark_hex">Cor da sua marca no tema escuro (opcional)</label>
+                <div class="linha-cor"><span class="amostra" style="background:#808080"></span><input type="text" id="accent_dark_hex" class="mono" placeholder="#7a5cd6"></div>
+                <span class="ajuda">Deixe em branco para os dois modos usarem a cor acima.</span>
+              </div>
+              <div>
+                <p class="apoio pequeno">A partir da sua cor o sistema monta esta escala e escolhe, dentro dela, o tom que vai nos botões:</p>
+                <div class="tira" role="img" aria-label="Escala de 11 tons gerada a partir da sua cor, do mais claro ao mais escuro. Os tons em uso estão descritos na lista abaixo.">
+                  <span style="background:#f0fdfa"></span><span style="background:#ccfbf1"></span><span style="background:#99f6e4"></span><span style="background:#5eead4"></span><span style="background:#2dd4bf" class="usado"></span><span style="background:#14b8a6"></span><span style="background:#0d9488"></span><span style="background:#0f766e" class="usado"></span><span style="background:#115e59"></span><span style="background:#134e4a"></span><span style="background:#042f2e"></span>
+                </div>
+                <ul class="legenda">
+                  <li><span class="q" style="background:#0f766e"></span>Sua cor <span class="mono fraco">#0f766e</span></li>
+                  <li><span class="q" style="background:#0f766e"></span>Botões no modo claro <span class="mono fraco">#0f766e</span></li>
+                  <li><span class="q" style="background:#2dd4bf"></span>Botões no modo escuro <span class="mono fraco">#2dd4bf</span></li>
+                </ul>
+                <p class="apoio pequeno" style="margin-top:10px">No modo escuro o sistema usa naturalmente um tom mais claro da escala, para a cor não se perder no fundo escuro.</p>
+              </div>
+              <div class="campo">
+                <label for="logo">Logo</label>
+                <div class="logo-linha"><input type="file" id="logo" accept="image/png,image/jpeg"><button type="button" class="btn secundario p">Remover</button></div>
+                <span class="ajuda">PNG ou JPG, até 512 KB. Prefira fundo transparente. SVG não é aceito: ele pode executar código quando aberto direto pelo endereço da imagem.</span>
+              </div>
+              <div class="campo">
+                <label for="logo_escuro">Logo para o tema escuro (opcional)</label>
+                <div class="logo-linha"><input type="file" id="logo_escuro" accept="image/png,image/jpeg"></div>
+                <span class="ajuda">Use uma versão legível sobre fundo escuro. Ela aparece sem moldura branca. Sem ela, o logo padrão mantém a proteção de contraste. PNG ou JPG, até 512 KB.</span>
+              </div>
+              <div>
+                <p class="apoio pequeno" style="margin-bottom:10px">Como o logo aparece nas duas aparências do sistema:</p>
+                <div class="previa">
+                  <div class="clara">Clínica Vitalis<small>Aparência clara</small></div>
+                  <div class="escura">Clínica Vitalis<small>Aparência escura</small></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5.2 -->
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Como seus e-mails saem</h2>
+            <p class="desc">Vale para os e-mails que as automações enviam ao seu cliente. O endereço de envio continua sendo o do sistema — o que muda é o nome que aparece e para onde vai a resposta.</p>
+            <div class="form">
+              <div class="campo">
+                <label for="email_from_name">Nome de exibição</label>
+                <input type="text" id="email_from_name" maxlength="120" placeholder="ARVISX CRM" value="Clínica Vitalis">
+                <span class="ajuda">É o que o cliente lê como remetente. Deixe em branco para usar o do sistema.</span>
+              </div>
+              <div class="campo">
+                <label for="email_reply_to">Responder para</label>
+                <input type="email" id="email_reply_to" placeholder="contato@suaempresa.com" value="contato@clinicavitalis.com.br">
+                <span class="ajuda">Para onde vai a resposta do cliente. Deixe em branco para usar o endereço do sistema.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5.3 -->
+        <div class="cartao">
+          <div class="corpo">
+            <h2>De onde vem cada coisa</h2>
+            <p class="desc">Considerando o que está nos campos acima.</p>
+            <ul class="origem">
+              <li><strong>Nome</strong><span>você definiu aqui</span></li>
+              <li><strong>Cor</strong><span>você definiu aqui</span></li>
+              <li><strong>Logo</strong><span>veio de quem instalou o sistema</span></li>
+            </ul>
+            <ul class="avisos">
+              <li><i class="ph ph-info"></i>No modo claro, os botões usam exatamente a sua cor — o sistema conferiu que o texto em cima dela fica legível.</li>
+              <li><i class="ph ph-info"></i>No modo escuro, os botões usam um tom mais claro que a sua cor — é o que mantém o texto em cima deles legível.</li>
+              <li><i class="ph ph-info"></i>A sua cor original continua no logo e nos destaques.</li>
+              <li class="atencao"><i class="ph ph-warning"></i>Sua cor ficou parecida com a que o sistema usa para indicar sucesso. Nesta versão ele ainda não afasta esses tons sozinho — vale conferir se os avisos continuam fáceis de distinguir.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 5.4 -->
+        <div class="cartao">
+          <div class="corpo">
+            <h2>O que isto ainda não muda</h2>
+            <ul class="lista-bullets" style="margin-top:10px">
+              <li>O título da aba do navegador continua com o nome do sistema, e não com o da sua empresa.</li>
+              <li>A tela de entrada é sempre a do sistema: quando alguém digita a senha, ainda não dá para saber de qual empresa ele é.</li>
+              <li>Os e-mails que este sistema envia (convite de time, pedidos de LGPD) já saem com o nome da sua empresa.</li>
+              <li>O envio continua saindo pelo servidor de e-mail do sistema: o endereço do remetente (o domínio) não muda, e um servidor de e-mail próprio da sua empresa ainda não é configurável por aqui.</li>
+              <li>O relatório de LGPD entregue ao cliente traz a RAZÃO SOCIAL da sua empresa, e não o nome aqui de cima — é ela que responde legalmente pelos dados. Confira o campo "Razão social" em Configurações → Organização.</li>
+              <li>O aplicativo de verificação em duas etapas continua registrando o nome do sistema: o cadastro acontece antes de saber de qual empresa a pessoa é.</li>
+              <li>O logo que você subir aqui aparece no menu lateral, para quem trabalha nesta empresa. A tela de entrada continua com o logo de quem instalou o sistema: ali ainda não dá para saber de qual empresa a pessoa é.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="rodape-form"><button type="submit" class="btn primario">Salvar</button></div>
+      </form>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

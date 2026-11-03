@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Extensões</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="50">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .cab-ext { display: flex; gap: 16px; align-items: flex-start; }
+  .cab-ext .ic { width: 44px; height: 44px; border-radius: 12px; background: var(--navy); color: var(--ouro); display: grid; place-items: center; font-size: 24px; flex: none; }
+  .filtro-barra { display: grid; grid-template-columns: 1fr 224px; gap: 10px; margin-bottom: 16px; }
+  .admissao { display: grid; grid-template-columns: 1.15fr .85fr; }
+  .admissao > div { padding: 18px; }
+  .admissao .dir { background: var(--ouro-suave); border-left: 1px solid #ecd9a0; border-radius: 0 var(--r-lg) var(--r-lg) 0; }
+  .admissao h2 { font-family: var(--display); font-stretch: 108%; font-weight: 620; letter-spacing: -.02em; font-size: 17px; margin: 10px 0 6px; }
+  .admissao p { color: var(--apoio); font-size: 13px; }
+  .admissao .arquivo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
+  .admissao .arquivo span { color: var(--apoio); font-size: 12.5px; }
+  .admissao h3 { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+  .admissao ul li { display: flex; gap: 8px; font-size: 12.5px; color: var(--apoio); margin-bottom: 6px; }
+  .admissao ul li i { flex: none; font-size: 15px; margin-top: 1px; }
+  .admissao ul li i.ok { color: var(--ok); }
+  .admissao ul li i.nao { color: var(--erro); }
+  .ext { padding: 18px; display: grid; gap: 14px; align-content: start; }
+  .ext .topo-ext { display: flex; gap: 12px; align-items: flex-start; }
+  .ext .topo-ext .ic { width: 40px; height: 40px; border-radius: 10px; background: var(--ouro-suave); color: var(--ouro-escuro); display: grid; place-items: center; font-size: 20px; flex: none; }
+  .ext .topo-ext h2 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .ext .topo-ext p { color: var(--apoio); font-size: 13px; margin-top: 2px; }
+  .ext dl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; background: var(--painel-2); border-radius: var(--r); padding: 12px 14px; font-size: 12.5px; }
+  .ext dl dt { font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--apoio); margin-bottom: 3px; }
+  .ext dl .largo { grid-column: 1 / -1; }
+  .ext h3 { font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--apoio); }
+  .ext .linha-chave { padding: 10px 0; }
+  .ext .caixa-chave { border: 1px solid var(--linha); border-radius: var(--r-sm); padding: 10px 12px; }
+  .ext .caixa-chave .linha-chave { padding: 0; border: 0; }
+  .ext .rodape-ext { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--linha); padding-top: 12px; }
+  .ext .plataforma { border-top: 1px solid var(--linha); padding-top: 12px; }
+  .ext .plataforma p { color: var(--apoio); font-size: 12.5px; margin: 6px 0 10px; }
+  .ext .plataforma .btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .ext .btn.remover { color: var(--erro); }
+  .atividade { margin-top: 32px; }
+  .atividade > p { color: var(--apoio); font-size: 13px; margin: -6px 0 12px; }
+  .op { padding: 14px 16px; display: grid; gap: 4px; }
+  .op h3 { font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .op .linha { font-size: 13px; }
+  .op .id { font: 500 11px/1.4 var(--mono); color: var(--fraco); }
+  @media (max-width: 860px) {
+    .filtro-barra, .admissao { grid-template-columns: 1fr; }
+    .admissao .dir { border-left: 0; border-top: 1px solid #ecd9a0; border-radius: 0 0 var(--r-lg) var(--r-lg); }
+    .ext dl { grid-template-columns: 1fr; }
+    .ext .rodape-ext { flex-direction: column-reverse; align-items: stretch; }
+  }
+</style>
+</head>
+<body data-rota="/app/extensions">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div class="cab-ext">
+          <span class="ic"><i class="ph ph-puzzle-piece"></i></span>
+          <div>
+            <div class="eyebrow">Configurações · Sua empresa</div>
+            <h1>Extensões</h1>
+            <p>Adicione guias ao CRM sem entregar dados ou executar código de terceiros. Antes de abrir Tarefas, o acesso e a ativação são conferidos novamente.</p>
+          </div>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao admissao" style="margin-bottom:24px">
+        <div>
+          <span class="tag sinal">Responsável pela instalação</span>
+          <h2>Oriente o trabalho com novos guias</h2>
+          <p>Adicione guias que orientam o trabalho e só podem abrir Tarefas, sem receber dados do CRM. Escolha um catálogo revisado de uma fonte em que você confia.</p>
+          <p style="margin-top:6px">O arquivo JSON pode ter até 512 KiB.</p>
+          <div class="arquivo"><button class="btn secundario"><i class="ph ph-upload-simple"></i>Escolher arquivo JSON</button><span>catalogo-deskcomm.json · <span class="mono">18</span> KB</span></div>
+          <button class="btn primario">Admitir catálogo</button>
+        </div>
+        <div class="dir">
+          <h3>Antes de admitir</h3>
+          <ul>
+            <li><i class="ph ph-check ok"></i>Registra quem admitiu, quando, a origem e a revisão do arquivo.</li>
+            <li><i class="ph ph-check ok"></i>Confere que o arquivo não mudou antes de qualquer instalação.</li>
+            <li><i class="ph ph-x nao"></i>O arquivo não comprova quem o publicou. Confirme a fonte antes de escolher.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="abas" role="tablist" aria-label="Seções de extensões">
+        <button role="tab" aria-selected="true">Instaladas</button>
+        <button role="tab" aria-selected="false">Catálogo</button>
+      </div>
+
+      <div class="filtro-barra">
+        <div class="busca-linha"><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Buscar por nome ou descrição" aria-label="Buscar extensões"></div>
+        <select class="entrada" aria-label="Filtrar por categoria"><option value="all" selected>Todas as categorias</option><option value="productivity">Produtividade</option><option value="sales">Vendas</option><option value="service">Atendimento</option></select>
+      </div>
+
+      <div class="grade c2">
+        <!-- Carrinho abandonado -->
+        <article class="cartao ext">
+          <div class="topo-ext">
+            <span class="ic"><i class="ph ph-lightbulb"></i></span>
+            <div><h2>Carrinho abandonado <span class="tag ok">Ativa</span></h2><p>O roteiro de quem chegou até o pagamento e parou: o que perguntar, quando insistir e quando deixar quieto.</p></div>
+          </div>
+          <dl>
+            <div><dt>Versão</dt><dd class="mono">1.0.0</dd></div>
+            <div><dt>Origem</dt><dd>https://extensoes.deskcomm.com.br</dd></div>
+            <div class="largo"><dt>Permissão</dt><dd>Abre Conversas e Funil; não lê seus dados.</dd></div>
+          </dl>
+          <h3>Nesta organização</h3>
+          <div class="linha-chave"><div><strong>Ativa no CRM</strong><span class="apoio">Os guias aparecem no hub do CRM.</span></div><span class="chave ligada" role="switch" aria-checked="true"></span></div>
+          <div class="campo"><label>Densidade dos cards</label><select><option value="comfortable" selected>Confortável</option><option value="compact">Compacta</option></select></div>
+          <div class="caixa-chave"><div class="linha-chave"><div><strong>Mostrar descrição nos cards</strong></div><span class="chave ligada" role="switch" aria-checked="true"></span></div></div>
+          <div class="rodape-ext"><button class="btn secundario p"><i class="ph ph-book-open"></i>Abrir guia</button><button class="btn navy p">Salvar configuração</button></div>
+          <div class="plataforma">
+            <h3>Em todas as organizações</h3>
+            <p><span class="mono">1</span> organização está com esta extensão ativa.</p>
+            <div class="btns"><button class="btn secundario p remover">Remover da instalação</button></div>
+          </div>
+        </article>
+
+        <!-- Primeira semana -->
+        <article class="cartao ext">
+          <div class="topo-ext">
+            <span class="ic"><i class="ph ph-book-open"></i></span>
+            <div><h2>Primeira semana no atendimento <span class="tag">Desativada</span></h2><p>O que alguém que entrou hoje precisa fazer nos primeiros cinco dias para atender sozinho sem quebrar nada.</p></div>
+          </div>
+          <dl>
+            <div><dt>Versão</dt><dd class="mono">1.0.0</dd></div>
+            <div><dt>Origem</dt><dd>https://extensoes.deskcomm.com.br</dd></div>
+            <div class="largo"><dt>Permissão</dt><dd>Abre Contatos e Tarefas; não lê seus dados.</dd></div>
+          </dl>
+          <h3>Nesta organização</h3>
+          <div class="linha-chave"><div><strong>Ativa no CRM</strong><span class="apoio">A configuração fica preservada enquanto estiver desativada.</span></div><span class="chave" role="switch" aria-checked="false"></span></div>
+          <div class="campo"><label>Densidade dos cards</label><select><option value="comfortable">Confortável</option><option value="compact" selected>Compacta</option></select></div>
+          <div class="caixa-chave"><div class="linha-chave"><div><strong>Mostrar descrição nos cards</strong></div><span class="chave" role="switch" aria-checked="false"></span></div></div>
+          <div class="rodape-ext"><span class="apoio pequeno">Ative para abrir o guia.</span><button class="btn navy p">Salvar configuração</button></div>
+          <div class="plataforma">
+            <h3>Em todas as organizações</h3>
+            <p>Nenhuma organização está com esta extensão ativa.</p>
+            <div class="btns"><button class="btn secundario p remover">Remover da instalação</button></div>
+          </div>
+        </article>
+
+        <!-- Retorno de paciente -->
+        <article class="cartao ext">
+          <div class="topo-ext">
+            <span class="ic"><i class="ph ph-list-checks"></i></span>
+            <div><h2>Retorno de paciente <span class="tag ok">Ativa</span></h2><p>Duas rotinas curtas para a recepção não perder quem tratou e não remarcou: quem falar hoje e quais encaixes a semana ainda tem.</p></div>
+          </div>
+          <dl>
+            <div><dt>Versão</dt><dd class="mono">1.0.0</dd></div>
+            <div><dt>Origem</dt><dd>https://extensoes.deskcomm.com.br</dd></div>
+            <div class="largo"><dt>Permissão</dt><dd>Abre Agenda e Conversas; não lê seus dados.</dd></div>
+          </dl>
+          <h3>Nesta organização</h3>
+          <div class="linha-chave"><div><strong>Ativa no CRM</strong><span class="apoio">Os guias aparecem no hub do CRM.</span></div><span class="chave ligada" role="switch" aria-checked="true"></span></div>
+          <div class="campo"><label>Densidade dos cards</label><select><option value="comfortable" selected>Confortável</option><option value="compact">Compacta</option></select></div>
+          <div class="caixa-chave"><div class="linha-chave"><div><strong>Mostrar descrição nos cards</strong></div><span class="chave ligada" role="switch" aria-checked="true"></span></div></div>
+          <div class="rodape-ext"><button class="btn secundario p"><i class="ph ph-book-open"></i>Abrir guia</button><button class="btn navy p">Salvar configuração</button></div>
+          <div class="plataforma">
+            <h3>Em todas as organizações</h3>
+            <p><span class="mono">1</span> organização está com esta extensão ativa.</p>
+            <div class="btns"><button class="btn secundario p remover">Remover da instalação</button></div>
+          </div>
+        </article>
+      </div>
+
+      <section class="atividade">
+        <h2 class="secao">Atividade recente</h2>
+        <p>Este histórico é compartilhado entre abas e mostra o resultado confirmado.</p>
+        <div class="grade" style="gap:10px">
+          <div class="cartao sem-sombra op">
+            <h3>Instalação <span class="tag ok">Concluída</span></h3>
+            <div class="linha">deskcomm/retorno-de-paciente@<span class="mono">1.0.0</span></div>
+            <div class="id">7b1e4c2a-9d3f-4a60-b8e1-2f6c0d9a5e13 · 02/11/2026 16:48</div>
+          </div>
+          <div class="cartao sem-sombra op">
+            <h3>Configuração <span class="tag ok">Concluída</span></h3>
+            <div class="linha">deskcomm/primeira-semana@<span class="mono">1.0.0</span> · <span class="mono">1</span> organizações desativadas</div>
+            <div class="id">c4d08f91-72ab-4e35-9c1d-8b5a3e6f0d27 · 30/10/2026 11:05</div>
+          </div>
+          <div class="cartao sem-sombra op">
+            <h3>Admissão de catálogo <span class="tag ok">Concluída</span></h3>
+            <div class="linha">Operação da plataforma</div>
+            <div class="id">0a9f6e3d-1c4b-4d82-a7e5-6b2c8d1f9e40 · 18/09/2026 09:12</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

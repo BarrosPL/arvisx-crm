@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skills da IA</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="62">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .cartao > .cab.topo-card { align-items: flex-start; }
+  .cartao > .cab .desc { color: var(--apoio); font-size: 12.5px; margin-top: 3px; max-width: 70ch; }
+  .skill { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 4px 12px; padding: 16px 18px; border-bottom: 1px solid var(--linha); }
+  .skill:last-child { border-bottom: 0; }
+  .skill .ic { width: 36px; height: 36px; border-radius: 50%; background: var(--navy); color: var(--ouro); display: grid; place-items: center; font-size: 18px; box-shadow: 0 0 0 2px var(--painel), 0 0 0 3.5px var(--ouro); grid-row: 1 / span 3; margin-top: 2px; }
+  .skill .nome { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .skill .nome strong { font: 600 13.5px/1.3 var(--mono); }
+  .skill .quando { color: var(--fraco); font-size: 12px; white-space: nowrap; }
+  .skill .desc-skill { grid-column: 2; color: var(--apoio); font-size: 13px; }
+  .skill .acoes { grid-column: 3; grid-row: 1 / span 3; display: flex; gap: 6px; align-self: start; }
+  .skill .nova { grid-column: 2 / span 2; margin-top: 10px; padding: 12px 14px; font-size: 12.5px; }
+  .skill .nova p { margin-bottom: 8px; }
+  .skill .nova ul { margin: 0 0 10px 16px; list-style: disc; color: #6b5510; }
+  .skill .nova li { padding: 1px 0; }
+  .skill .nova .mono { color: var(--ouro-escuro); font-weight: 600; }
+  .skill .quando.cel { display: none; }
+  .catalogo .skill .ic { box-shadow: none; background: var(--painel-3); color: var(--navy); }
+  @media (max-width: 860px) {
+    .skill { grid-template-columns: 36px minmax(0, 1fr); }
+    .skill .ic { grid-row: 1 / span 2; }
+    .skill .quando.lado { display: none; }
+    .skill .quando.cel { display: block; grid-column: 2; }
+    .skill .acoes { grid-column: 1 / span 2; grid-row: auto; margin-top: 10px; }
+    .skill .acoes .btn { flex: 1; }
+    .skill .nova { grid-column: 1 / span 2; }
+  }
+</style>
+</head>
+<body data-rota="/app/ai/skills">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Agente de IA</div>
+          <h1>Skills da IA</h1>
+          <p>Habilidades especializadas que seus agentes carregam só quando a conversa pede — instale prontas do catálogo ou envie a sua.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao" style="margin-bottom:16px">
+        <div class="cab topo-card">
+          <div>
+            <h2>Skills instaladas</h2>
+            <p class="desc">O que seus agentes já sabem fazer além da conversa comum — cada skill só entra em ação quando o assunto pede.</p>
+          </div>
+          <button class="btn secundario p"><i class="ph ph-upload-simple"></i>Enviar skill (.zip)</button>
+        </div>
+        <ul>
+          <li class="skill">
+            <span class="ic"><i class="ph ph-puzzle-piece"></i></span>
+            <div class="nome"><strong>agendamento-consulta</strong><span class="tag sinal">do catálogo</span></div>
+            <span class="quando lado">atualizada em <span class="mono">29/10/2026 14:02</span></span>
+            <div class="desc-skill">Marca, remarca e cancela consultas consultando a agenda da clínica.</div>
+            <span class="quando cel">atualizada em <span class="mono">29/10/2026 14:02</span></span>
+            <div class="acoes"><button class="btn secundario p"><i class="ph ph-pencil-simple"></i>Editar</button><button class="btn fantasma p"><i class="ph ph-trash"></i>Desinstalar</button></div>
+            <div class="cartao ouro sem-sombra nova">
+              <p>Há uma versão nova desta skill no catálogo. Se você editou esta cópia, suas alterações ficam só no Histórico de versões: ao adotar, a versão nova do catálogo passa a ser a ativa. Confira antes de adotar.</p>
+              <p><strong>Se você adotar a versão do catálogo, muda:</strong></p>
+              <ul>
+                <li>Descrição</li>
+                <li>Palavras-chave de ativação: <span class="mono">+remarcar, encaixe −horario</span></li>
+                <li>Procedimento (corpo): <span class="mono">+12 −3</span></li>
+              </ul>
+              <button class="btn primario p"><i class="ph ph-arrows-clockwise"></i>Adotar versão nova</button>
+            </div>
+          </li>
+          <li class="skill">
+            <span class="ic"><i class="ph ph-puzzle-piece"></i></span>
+            <div class="nome"><strong>catalogo-apresentacao</strong><span class="tag sinal">do catálogo</span></div>
+            <span class="quando lado">atualizada em <span class="mono">14/10/2026 09:30</span></span>
+            <div class="desc-skill">Apresenta procedimentos e valores a partir do catálogo de produtos, sem inventar preço.</div>
+            <span class="quando cel">atualizada em <span class="mono">14/10/2026 09:30</span></span>
+            <div class="acoes"><button class="btn secundario p"><i class="ph ph-pencil-simple"></i>Editar</button><button class="btn fantasma p"><i class="ph ph-trash"></i>Desinstalar</button></div>
+          </li>
+          <li class="skill">
+            <span class="ic"><i class="ph ph-puzzle-piece"></i></span>
+            <div class="nome"><strong>pos-operatorio-orientacoes</strong><span class="tag">manual</span></div>
+            <span class="quando lado">atualizada em <span class="mono">21/10/2026 17:45</span></span>
+            <div class="desc-skill">Orientações de pós-operatório por procedimento, com quando chamar a clínica.</div>
+            <span class="quando cel">atualizada em <span class="mono">21/10/2026 17:45</span></span>
+            <div class="acoes"><button class="btn secundario p"><i class="ph ph-pencil-simple"></i>Editar</button><button class="btn fantasma p"><i class="ph ph-trash"></i>Desinstalar</button></div>
+          </li>
+        </ul>
+        <div class="corpo" style="padding-top:0">
+          <div class="aviso-faixa info"><i class="ph ph-info"></i><span>Use Editar para ajustar o texto de uma skill instalada — cada salvamento cria uma versão nova e a anterior fica no histórico. Também dá para reenviar um .zip com o mesmo nome; a sua versão passa a valer no lugar da do catálogo.</span></div>
+        </div>
+      </div>
+
+      <div class="cartao catalogo">
+        <div class="cab topo-card">
+          <div>
+            <h2>Catálogo</h2>
+            <p class="desc">Skills prontas, mantidas pela plataforma, disponíveis para instalar com um clique.</p>
+          </div>
+        </div>
+        <ul>
+          <li class="skill">
+            <span class="ic"><i class="ph ph-puzzle-piece"></i></span>
+            <div class="nome"><strong>cobranca-lembrete</strong></div>
+            <span></span>
+            <div class="desc-skill">Lembra o cliente de uma cobrança em aberto e envia o link de pagamento.</div>
+            <div class="acoes"><button class="btn navy p"><i class="ph ph-download-simple"></i>Instalar</button></div>
+          </li>
+          <li class="skill">
+            <span class="ic"><i class="ph ph-puzzle-piece"></i></span>
+            <div class="nome"><strong>qualificacao-lead</strong></div>
+            <span></span>
+            <div class="desc-skill">Faz as perguntas de qualificação e registra as respostas na ficha do contato.</div>
+            <div class="acoes"><button class="btn navy p"><i class="ph ph-download-simple"></i>Instalar</button></div>
+          </li>
+          <li class="skill">
+            <span class="ic"><i class="ph ph-puzzle-piece"></i></span>
+            <div class="nome"><strong>convenio-cobertura</strong></div>
+            <span></span>
+            <div class="desc-skill">Explica o que cada convênio cobre antes de marcar a consulta.</div>
+            <div class="acoes"><button class="btn navy p"><i class="ph ph-download-simple"></i>Instalar</button></div>
+          </li>
+        </ul>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

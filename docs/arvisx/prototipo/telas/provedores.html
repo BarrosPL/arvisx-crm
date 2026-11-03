@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Provedores de IA</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="51">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .conteudo.media { margin: 0 auto; width: 100%; }
+  .pilha { display: grid; gap: 16px; }
+  .linha-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; }
+  .jev-cab { display: flex; align-items: flex-start; gap: 12px; }
+  .jev-cab > div { flex: 1; min-width: 0; }
+  .jev-cab .avatar { flex: none; }
+  .jev-cab h2 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  
+  .tarefa { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--linha); }
+  .tarefa:first-child { border-top: 0; }
+  .tarefa .txt { flex: 1; min-width: 0; }
+  .tarefa strong { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13.5px; }
+  .tarefa p { color: var(--apoio); font-size: 12.5px; margin-top: 3px; }
+  .tarefa .conc { font-size: 12.5px; margin-top: 6px; }
+  .tarefa .acoes-t { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .numeros { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .numeros div { padding: 12px 14px; border: 1px solid var(--linha); border-radius: var(--r); }
+  .numeros dt { font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--apoio); margin-bottom: 8px; }
+  .numeros dd { font-family: var(--display); font-stretch: 108%; font-weight: 650; font-size: 22px; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .papel { margin-top: 28px; }
+  .papel h2 { font-family: var(--display); font-stretch: 108%; font-weight: 620; letter-spacing: -.02em; font-size: 17px; }
+  .papel > p { color: var(--apoio); margin: 4px 0 12px; }
+  .usando { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 14px 18px; }
+  .usando .rot { font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--apoio); }
+  .usando .btn { margin-left: auto; }
+  .ponto-ia { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 16px; padding: 14px 18px; border-top: 1px solid var(--linha); }
+  .ponto-ia h3 { font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .ponto-ia p { color: var(--apoio); font-size: 12.5px; margin-top: 3px; }
+  .ponto-ia .modelo { text-align: right; }
+  .ponto-ia .modelo .mono { display: block; font-weight: 600; font-size: 12.5px; }
+  .ponto-ia .modelo span.origem { color: var(--fraco); font-size: 11.5px; }
+  .ponto-ia .falha { grid-column: 1 / -1; padding: 10px 12px; border-radius: var(--r-sm); background: var(--painel-2); font-size: 12.5px; color: var(--apoio); }
+  .ponto-ia .falha b { color: var(--texto); }
+  .ponto-ia .form-ponto { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 10px; align-items: end; }
+  .ponto-ia .form-ponto .largo { grid-column: 1 / -1; }
+  @media (max-width: 860px) {
+    .linha-form { grid-template-columns: 1fr; }
+    .ponto-ia { grid-template-columns: 1fr; }
+    .ponto-ia .modelo { text-align: left; }
+    .ponto-ia .form-ponto { grid-template-columns: 1fr; }
+    .usando .btn { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body data-rota="/app/ai/providers">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Agente de IA</div>
+          <h1>Provedores de IA</h1>
+          <p>Seu sistema usa inteligência artificial em <span class="mono">33</span> lugares diferentes. Aqui você vê qual está atendendo cada um — e troca, se quiser.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <!-- Modelo padrão -->
+        <div class="cartao">
+          <div class="cab"><h2>Modelo padrão</h2></div>
+          <div class="corpo form">
+            <p class="apoio pequeno">Vale em todo ponto que você não configurou individualmente — hoje, <span class="mono">29</span> de <span class="mono">33</span>. Trocar aqui muda todos eles de uma vez.</p>
+            <div class="linha-form">
+              <div class="campo"><label>Provedor</label><select><option selected>Anthropic (Claude)</option><option>OpenAI (GPT)</option><option>Google (Gemini)</option><option>OpenRouter</option><option>DeepSeek</option><option>Requesty</option></select></div>
+              <div class="campo"><label>Modelo</label><select><option selected>claude-sonnet-4-6</option><option>claude-opus-4-6</option><option>claude-haiku-4-5</option></select></div>
+              <button class="btn primario">Salvar padrão</button>
+            </div>
+            <p class="apoio pequeno"><span class="mono">3</span> pontos precisam de um modelo especialista (embedding ou áudio) e não seguem este padrão — configure cada um abaixo: Indexar o seu material, Buscar no seu material, Ouvir o áudio do cliente.</p>
+          </div>
+        </div>
+
+        <!-- Jev -->
+        <div class="cartao">
+          <div class="corpo form">
+            <div class="jev-cab"><span class="avatar g ia"><i class="ph ph-lightning"></i></span><div><h2>Jev — decisões rápidas <span class="tag sinal">Observando</span></h2><p class="apoio pequeno">O Jev (TypeSafe) não conversa com o cliente: a chave dele serve só para decisões rápidas.</p></div></div>
+            <div class="aviso-faixa aviso"><i class="ph ph-warning"></i><div>Se a sua empresa é da área da saúde: as mensagens que o Jev lê podem conter dado de saúde, que a LGPD trata como sensível. Antes de ligar, confira com quem cuida da LGPD da empresa se o contrato da TypeSafe cobre esse tipo de dado.</div></div>
+            <p class="pequeno" style="color:var(--ok);font-weight:600"><i class="ph ph-check"></i> Chave conferida com a TypeSafe</p>
+            <div class="campo"><label>De onde o Jev responde</label><select><option selected>TypeSafe AI (chave própria)</option><option>OpenRouter (reaproveita a credencial OpenRouter)</option></select><span class="ajuda">O Jev responde direto na TypeSafe AI, com a chave dele cadastrada em Credenciais.</span></div>
+            <p style="font-size:13.5px">Observando — a sua IA de sempre ainda decide. Compare os dois antes de deixar o Jev decidir.</p>
+
+            <div>
+              <div class="tarefa"><div class="txt"><strong>Medir o clima da conversa <span class="tag">Só observa</span></strong><p>Percebe, geralmente em menos de um segundo, se o cliente está irritado — e avisa para passar a conversa a uma pessoa.</p><p class="conc">Nos últimos <span class="mono">30</span> dias o Jev e a sua IA de sempre concordaram em <b class="mono">412 de 430</b> mensagens.</p><div class="acoes-t"><button class="btn secundario p">Deixar o Jev decidir</button><button class="btn fantasma p">Pausar esta tarefa</button></div></div></div>
+              <div class="tarefa"><div class="txt"><strong>Perceber tentativa de manipulação <span class="tag ok">Decide</span></strong><p>Percebe, na mensagem do cliente, quem tenta enganar o agente para ele fugir das suas regras — e soma esse sinal ao da sua IA de sempre, sem nunca apagá-lo.</p><div class="acoes-t"><button class="btn secundario p">Voltar a só observar</button><button class="btn fantasma p">Pausar esta tarefa</button></div></div></div>
+              <div class="tarefa"><div class="txt"><strong>Escolher qual agente atende <span class="tag">Só observa</span></strong><p>Lê a última mensagem do cliente, sozinha, e escolhe entre as intenções do seu roteador qual agente deve atender.</p><div class="campo" style="margin-top:8px;max-width:360px"><label>Como o roteador consulta as IAs</label><select><option selected>Comparar o Jev e a IA de sempre</option><option>Jev; IA de sempre só como reserva</option></select></div><a href="#" class="link pequeno" style="display:inline-block;margin-top:8px">Ver resultados do roteamento</a></div></div>
+              <div class="tarefa"><div class="txt"><strong>Perceber pedido para falar com uma pessoa <span class="tag">Só observa</span></strong><p>Lê a mensagem do cliente, sozinha, quando a regra de hoje não viu nela um pedido para falar com uma pessoa — e conta as mensagens com esse pedido que ela não reconheceu. Ele nunca passa a conversa sozinho.</p><div class="acoes-t"><button class="btn secundario p">Avisar a equipe</button><button class="btn fantasma p">Pausar esta tarefa</button></div></div></div>
+              <div class="tarefa"><div class="txt"><strong>Perceber pedido para parar de receber mensagens <span class="tag">Só observa</span></strong><p>Lê a mensagem do cliente, sozinha, quando a regra de hoje não viu nela um pedido para parar de receber mensagens — e conta as mensagens com esse pedido que ela não reconheceu. Quem bloqueia o contato é só a regra de hoje, quando o próprio cliente manda PARAR.</p><div class="acoes-t"><button class="btn secundario p">Avisar a equipe</button><button class="btn fantasma p">Pausar esta tarefa</button></div></div></div>
+              <div class="tarefa"><div class="txt"><strong>Ler a resposta ao follow-up <span class="tag ok">Decide</span></strong><p>Lê a resposta do cliente à mensagem do follow-up, sozinha, e diz em qual das saídas que você criou no fluxo ela se encaixa.</p><div class="acoes-t"><button class="btn secundario p">Voltar a só observar</button><button class="btn fantasma p">Pausar esta tarefa</button></div></div></div>
+              <div class="tarefa"><div class="txt"><strong>Conferir o campo antes de a IA gravar <span class="tag">Só observa</span></strong><p>Lê o que o cliente disse nas mensagens ainda sem resposta do turno e confere se o valor que a IA quer gravar no campo personalizado do negócio foi ele quem informou.</p><p class="conc apoio">Ainda não há mensagens medidas pelos dois. A comparação aparece aqui assim que houver.</p><div class="acoes-t"><button class="btn secundario p">Deixar o Jev decidir</button><button class="btn fantasma p">Pausar esta tarefa</button></div></div></div>
+              <div class="tarefa"><div class="txt"><strong>Perceber risco de segurança numa mensagem represada <span class="tag aviso">Pausada</span></strong><p>Lê a última mensagem do cliente quando o teto de envio adiou a resposta, só se a regra de urgência de hoje não viu nela um risco à segurança ou à saúde — e conta as mensagens com esse risco que ela não reconheceu. Ele nunca passa a conversa nem responde.</p><div class="acoes-t"><button class="btn secundario p">Religar</button></div></div></div>
+              <div class="tarefa"><div class="txt"><strong>Conferir afirmações de fato na resposta <span class="tag">Só observa</span> <span class="tag sinal">Nova</span></strong><p>Lê a resposta que o assistente vai enviar e confere, nas evidências consultadas neste turno, se o que ele afirma sobre o negócio está escrito ali — ou se o material diz o contrário.</p><div class="acoes-t"><button class="btn secundario p">Deixar o Jev decidir</button><button class="btn fantasma p">Pausar esta tarefa</button></div></div></div>
+            </div>
+
+            <div>
+              <span class="rotulo">Nos últimos 30 dias</span>
+              <dl class="numeros">
+                <div><dt>Respostas do Jev</dt><dd>1.284</dd></div>
+                <div><dt>Clientes irritados percebidos</dt><dd>37</dd></div>
+                <div><dt>Custo</dt><dd>US$ 0,42</dd></div>
+                <div><dt>Tempo médio</dt><dd>0,6 s</dd></div>
+                <div><dt>Vezes que a IA de sempre cobriu o Jev</dt><dd>3</dd></div>
+              </dl>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><a href="#" class="link pequeno">Ver as decisões do Jev</a><button class="btn fantasma p" style="margin-left:auto">Desligar</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seções por papel -->
+      <section class="papel">
+        <h2>Atender o cliente</h2>
+        <p>Escrever o que o cliente lê e agir no funil durante a conversa.</p>
+        <div class="cartao">
+          <div class="usando"><span class="rot">Usando:</span><span class="tag mono navy">claude-sonnet-4-6</span><span class="tag mono">gpt-4o-mini</span><button class="btn fantasma p">Ocultar</button></div>
+          <div class="ponto-ia">
+            <div><h3>Responder o cliente</h3><p>Escreve a mensagem que o cliente lê, com a versão publicada e o conhecimento do agente.</p><p class="pequeno">O Jev observa; o modelo abaixo ainda decide.</p></div>
+            <div class="modelo"><span class="mono">claude-sonnet-4-6</span><span class="origem">padrão da organização</span></div>
+            <div class="aviso-faixa ouro" style="grid-column:1/-1"><i class="ph ph-info"></i><div>Este ponto usa o modelo definido na versão publicada do agente. <a href="#" class="link">Configurar no agente</a></div></div>
+          </div>
+          <div class="ponto-ia">
+            <div><h3>Testar ou revisar resposta <span class="tag contorno">precisa de ferramentas</span></h3><p>Prepara uma resposta com a versão e o conhecimento do agente, sem aplicar alterações ao cliente.</p></div>
+            <div class="modelo"><span class="mono">claude-sonnet-4-6</span><span class="origem">padrão da organização</span></div>
+            <div class="falha"><b>Se falhar:</b> o teste do agente não roda e a revisão de resposta na conversa fica sem sugestão.</div>
+            <div class="form-ponto">
+              <div class="campo"><label>Provedor</label><select><option selected>Anthropic (Claude)</option></select></div>
+              <div class="campo"><label>Modelo</label><select><option selected>claude-sonnet-4-6</option><option>claude-haiku-4-5</option></select></div>
+              <div class="campo"><label>Chave</label><select><option selected>da instalação</option><option>Chave da clínica ••a1b2</option></select></div>
+              <button class="btn secundario">Salvar</button>
+              <div class="campo largo"><label>Endereço próprio (opcional)</label><input type="url" placeholder="https://mi-gateway.ejemplo.com/v1" class="mono"><span class="ajuda">Deixe em branco para usar o endereço oficial do provedor. Use isto para apontar para um gateway compatível com a API da OpenAI. Um endereço na rede do servidor só funciona se quem administra a instalação o tiver liberado em Administração › Destinos internos — e, mesmo liberado, ele não vale para o endereço que esta empresa escolhe aqui.</span></div>
+            </div>
+          </div>
+          <div class="ponto-ia">
+            <div><h3>Sugerir resposta ao atendente</h3><p>Escreve uma sugestão de resposta para quem atende aprovar antes de enviar.</p></div>
+            <div class="modelo"><span class="mono">gpt-4o-mini</span><span class="origem">configurado neste ponto</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="papel">
+        <h2>Entender a conversa</h2>
+        <p>Ler o que chegou e decidir o que aquilo significa para o negócio.</p>
+        <div class="cartao"><div class="usando"><span class="rot">Usando:</span><span class="tag mono navy">claude-sonnet-4-6</span><span class="tag mono">gpt-4o-mini</span><span class="apoio pequeno"><span class="mono">1</span> ponto deste grupo precisa da sua atenção.</span><button class="btn fantasma p">Configuração avançada (<span class="mono">8</span> pontos)</button></div></div>
+      </section>
+
+      <section class="papel">
+        <h2>Proteger a operação</h2>
+        <p>Barrar manipulação e promessa que a empresa não pode cumprir.</p>
+        <div class="cartao"><div class="usando"><span class="rot">Usando:</span><span class="tag mono navy">claude-sonnet-4-6</span><button class="btn fantasma p">Configuração avançada (<span class="mono">3</span> pontos)</button></div></div>
+      </section>
+
+      <section class="papel">
+        <h2>Lembrar e buscar</h2>
+        <p>Guardar o essencial da conversa e achar o material certo do seu negócio.</p>
+        <div class="cartao"><div class="usando"><span class="rot">Usando:</span><span class="tag mono navy">claude-sonnet-4-6</span><span class="tag mono">text-embedding-3-small</span><button class="btn fantasma p">Configuração avançada (<span class="mono">5</span> pontos)</button></div></div>
+      </section>
+
+      <section class="papel">
+        <h2>Ver e ouvir</h2>
+        <p>Transformar áudio, imagem e vídeo do cliente em texto que o agente entende.</p>
+        <div class="cartao"><div class="usando"><span class="rot">Usando:</span><span class="tag mono">whisper-1</span><span class="tag mono navy">claude-sonnet-4-6</span><button class="btn fantasma p">Configuração avançada (<span class="mono">2</span> pontos)</button></div></div>
+      </section>
+
+      <section class="papel">
+        <h2>Melhorar e testar</h2>
+        <p>Avaliar o próprio desempenho e conferir se a configuração está de pé.</p>
+        <div class="cartao"><div class="usando"><span class="rot">Usando:</span><span class="tag mono navy">claude-sonnet-4-6</span><button class="btn fantasma p">Configuração avançada (<span class="mono">6</span> pontos)</button></div></div>
+      </section>
+
+      <!-- Mapas -->
+      <div class="cartao" style="margin-top:32px">
+        <div class="cab"><h2>Mapas (Google)</h2><span class="tag contorno">Sem chave</span></div>
+        <div class="corpo form">
+          <p class="apoio pequeno">Quando o cliente manda a localização pelo WhatsApp, o sistema consulta o Google e o agente lê a rua e a cidade aproximadas — em vez de só as coordenadas. Sem chave, nada muda.</p>
+          <div class="campo"><label>Chave da Geocoding API</label><input type="password" placeholder="AIza…" class="mono"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn secundario">Salvar chave</button><button class="btn secundario">Testar</button><button class="btn fantasma" style="color:var(--erro)">Remover chave</button></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

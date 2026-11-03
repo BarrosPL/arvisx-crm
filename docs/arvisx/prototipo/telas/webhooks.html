@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Webhooks</title>
+<meta name="grupo" content="Canais">
+<meta name="ordem" content="30">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .linha-acao { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+  .fonte { padding: 16px; }
+  .fonte .cab-fonte { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .fonte h3 { font-size: 14px; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fonte .quando { color: var(--fraco); font-size: 12px; margin-top: 8px; }
+  .fonte .selo { display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; color: var(--ouro-escuro); font-size: 12px; }
+  .fonte .selo i { font-size: 13px; flex: none; }
+  @media (max-width: 860px) { .linha-acao .btn { width: 100%; } }
+</style>
+</head>
+<body data-rota="/app/webhooks">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Canais</div>
+          <h1>Webhooks</h1>
+          <p>Receba contatos de fora (landing pages, formulários) e crie automações que agem sozinhas.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="abas" role="tablist">
+        <a href="#" role="tab" aria-selected="true">Receber dados</a>
+        <a href="#" role="tab" aria-selected="false">Leads recebidos</a>
+        <a href="#" role="tab" aria-selected="false">Automações</a>
+        <a href="#" role="tab" aria-selected="false">Atividade</a>
+      </div>
+
+      <div class="linha-acao"><button class="btn primario"><i class="ph ph-plus"></i>Nova fonte</button></div>
+
+      <div class="grade c3">
+        <a href="#" class="cartao link fonte">
+          <div class="cab-fonte"><h3>Landing page de Black Friday</h3><span class="tag ok">Ativa</span></div>
+          <p class="quando">último recebimento há 2 minutos</p>
+        </a>
+        <a href="#" class="cartao link fonte">
+          <div class="cab-fonte"><h3>Formulário do site — Implantes</h3><span class="tag ok">Ativa</span></div>
+          <p class="quando">último recebimento há 3 horas</p>
+          <span class="selo" title="Ver no histórico o que foi alterado"><i class="ph ph-robot"></i>alterado pelo assistente há 2 dias — ver o que mudou</span>
+        </a>
+        <a href="#" class="cartao link fonte">
+          <div class="cab-fonte"><h3>Avaliação gratuita — Instagram</h3><span class="tag ok">Ativa</span></div>
+          <p class="quando">último recebimento há 1 dia</p>
+          <span class="selo" title="Ver no histórico o que foi alterado"><i class="ph ph-gear"></i>alterado automaticamente pelo sistema há 5 dias — ver o que mudou</span>
+        </a>
+        <a href="#" class="cartao link fonte">
+          <div class="cab-fonte"><h3>Clareamento — campanha de verão</h3><span class="tag">Pausada</span></div>
+          <p class="quando">último recebimento há 2 meses</p>
+        </a>
+        <a href="#" class="cartao link fonte">
+          <div class="cab-fonte"><h3>Convênios corporativos</h3><span class="tag ok">Ativa</span></div>
+          <p class="quando">nunca recebeu</p>
+        </a>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

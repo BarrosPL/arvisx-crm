@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Empresas</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="100">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .tabela td.cnpj { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+  .tabela td.atual { font-family: var(--mono); font-size: 11.5px; color: var(--apoio); white-space: nowrap; }
+  .tabela td:nth-child(4) { white-space: nowrap; }
+  @media (max-width: 860px) { .tabela td { white-space: nowrap; } }
+</style>
+</head>
+<body data-rota="/app/companies">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM</div>
+          <h1>Empresas</h1>
+          <p>Cadastro B2B com CNPJ e enriquecimento via BrasilAPI.</p>
+        </div>
+        <div class="acoes"><button class="btn primario"><i class="ph ph-plus"></i>Nova empresa</button></div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="filtros">
+        <div class="busca-linha"><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Buscar por nome ou CNPJ"></div>
+      </div>
+
+      <div class="cartao">
+        <table class="tabela rolavel">
+          <thead><tr><th>Nome fantasia</th><th>Razão social</th><th>CNPJ</th><th>Cidade/UF</th><th>Situação</th><th>Atualizado</th></tr></thead>
+          <tbody>
+            <tr><td><a href="#" class="nome">Odonto Sul</a></td><td>Grupo Odonto Sul Ltda</td><td class="cnpj">12.345.678/0001-90</td><td>Porto Alegre/RS</td><td><span class="tag ok">ATIVA</span></td><td class="atual">03/11/2026, 10:12:44</td></tr>
+            <tr><td><a href="#" class="nome">Vida Odonto</a></td><td>Clínica Vida Odonto Serviços Odontológicos Ltda</td><td class="cnpj">23.456.789/0001-01</td><td>São Paulo/SP</td><td><span class="tag ok">ATIVA</span></td><td class="atual">02/11/2026, 16:40:10</td></tr>
+            <tr><td><a href="#" class="nome">Sorriso & Cia</a></td><td>Sorriso e Companhia Odontologia ME</td><td class="cnpj">34.567.890/0001-12</td><td>Campinas/SP</td><td><span class="tag ok">ATIVA</span></td><td class="atual">30/10/2026, 09:05:31</td></tr>
+            <tr><td><a href="#" class="nome">Bella Pele</a></td><td>Clínica Bella Pele Estética Ltda</td><td class="cnpj">45.678.901/0001-23</td><td>São Paulo/SP</td><td><span class="tag aviso">pending</span></td><td class="atual">29/10/2026, 14:22:08</td></tr>
+            <tr><td><a href="#" class="nome">Implantec</a></td><td>Implantec Distribuidora de Materiais Ltda</td><td class="cnpj">56.789.012/0001-34</td><td>Curitiba/PR</td><td><span class="tag erro">BAIXADA</span></td><td class="atual">21/10/2026, 11:48:55</td></tr>
+            <tr><td><a href="#" class="nome">Dental Prime</a></td><td>—</td><td class="cnpj">67.890.123/0001-45</td><td>—</td><td><span class="tag erro">failed</span></td><td class="atual">15/10/2026, 18:30:02</td></tr>
+            <tr><td><a href="#" class="nome">Centro Odontológico Andrade</a></td><td>Centro Odontológico Andrade Ltda</td><td class="cnpj">78.901.234/0001-56</td><td>Santo André/SP</td><td><span class="tag">done</span></td><td class="atual">08/10/2026, 08:15:40</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

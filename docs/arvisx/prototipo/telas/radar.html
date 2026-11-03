@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radar</title>
+<meta name="grupo" content="Atendimento">
+<meta name="ordem" content="20">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .secoes { display: grid; gap: 12px; margin-bottom: 16px; }
+  .secao-risco { display: block; padding: 12px 16px; }
+  .secao-risco > p { font-size: 13.5px; font-weight: 600; }
+  .secao-risco strong { display: inline; }
+  .secao-risco > p.apoio { font-size: 12.5px; font-weight: 400; margin: 2px 0 8px; color: inherit; opacity: .8; }
+  .secao-risco ul { display: grid; gap: 4px; }
+  .secao-risco li { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; }
+  .secao-risco li a { font-weight: 600; text-decoration: underline; text-decoration-color: var(--ouro); text-underline-offset: 3px; }
+  .secao-risco li .quando { opacity: .75; }
+  .contadores { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .radar-lista > li { display: flex; align-items: flex-start; gap: 8px; padding-right: 12px; border-bottom: 1px solid var(--linha); }
+  .radar-lista > li:last-child { border-bottom: 0; }
+  .radar-lista > li:hover { background: var(--fundo); }
+  .radar-lista .principal-link { flex: 1; min-width: 0; display: flex; gap: 12px; padding: 12px 16px; }
+  .radar-lista .principal-link .tag { margin-top: 1px; flex: none; }
+  .radar-lista .titulo { font-weight: 700; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .radar-lista .meta { display: flex; flex-wrap: wrap; gap: 2px 8px; color: var(--apoio); font-size: 12.5px; margin-top: 2px; }
+  .radar-lista .meta i { font-size: 13px; vertical-align: -2px; margin-right: 3px; }
+  .radar-lista .passo { margin-top: 4px; font-size: 12.5px; display: flex; align-items: center; gap: 5px; }
+  .radar-lista .passo i { font-size: 14px; }
+  .radar-lista .passo.voo { color: var(--sinal); }
+  .radar-lista .passo.alerta { color: var(--aviso); }
+  .radar-lista .faixa { display: flex; align-items: center; gap: 8px; align-self: center; flex: none; }
+  .radar-lista .faixa > i { font-size: 16px; color: var(--fraco); }
+  @media (max-width: 860px) {
+    .radar-lista > li { flex-wrap: wrap; padding-right: 0; }
+    .radar-lista .faixa { width: 100%; justify-content: flex-end; padding: 0 16px 12px; }
+    .radar-lista .faixa:empty, .radar-lista .faixa.so-seta { display: none; }
+    .radar-lista .faixa > i { display: none; }
+    .radar-lista .titulo { white-space: normal; }
+  }
+</style>
+</head>
+<body data-rota="/app/radar">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Atendimento</div>
+          <h1>Radar de risco</h1>
+          <p>Demandas abertas que esfriaram e precisam de você. Se o assistente já agendou um retorno, aparece como “em voo”; sem próximo passo, é risco de perder o cliente.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="secoes">
+        <section class="aviso-faixa aviso secao-risco" id="radar-sem-proximo-passo">
+          <p><strong class="mono">2</strong> demandas abertas sem próximo passo</p>
+          <p class="apoio">Ninguém marcou o que acontece a seguir. Cada uma é alguém esperando sem que nada esteja combinado.</p>
+          <ul>
+            <li><a href="#">Helena Marques</a><span class="mono quando">aberta há 480h</span></li>
+            <li><a href="#">Marina Costa</a><span class="mono quando">aberta há 30h</span></li>
+          </ul>
+        </section>
+        <section class="aviso-faixa aviso secao-risco" id="radar-propostas-vencidas">
+          <p><strong class="mono">1</strong> proposta vencida sem retomada</p>
+          <p class="apoio">O cliente recebeu e não decidiu. Retome antes que esfrie de vez.</p>
+          <ul>
+            <li><a href="#" class="mono">0042/2026</a><span class="mono quando">venceu em 2026-10-01</span></li>
+          </ul>
+        </section>
+        <section class="aviso-faixa aviso secao-risco" id="radar-propostas-esperando-revisao">
+          <p><strong class="mono">1</strong> proposta esperando revisão</p>
+          <p class="apoio">Rascunhos que a IA terminou e ninguém revisou. Confira antes de enviar.</p>
+          <ul>
+            <li><a href="#">Protocolo superior — orçamento revisado</a><span class="quando">Bruno Tavares</span></li>
+          </ul>
+        </section>
+      </div>
+
+      <div class="contadores">
+        <span class="tag erro"><span class="mono">1</span> crítico</span>
+        <span class="tag aviso"><span class="mono">3</span> em risco</span>
+        <span class="tag sinal"><span class="mono">1</span> em voo</span>
+      </div>
+
+      <div class="cartao">
+        <ul class="radar-lista">
+          <li>
+            <a href="#" class="principal-link">
+              <span class="tag erro">Crítico</span>
+              <div style="min-width:0;flex:1">
+                <p class="titulo">Helena Marques — ortodontia adulto</p>
+                <p class="meta"><span>Helena Marques</span><span><i class="ph ph-clock-countdown"></i><span class="mono">parado há 20d</span></span><span>Sem dono</span></p>
+                <p class="passo alerta"><i class="ph ph-warning"></i>Sem próximo passo agendado</p>
+              </div>
+            </a>
+            <div class="faixa"><button class="btn secundario p">Assumir</button><i class="ph ph-arrow-right"></i></div>
+          </li>
+          <li>
+            <a href="#" class="principal-link">
+              <span class="tag aviso">Em risco</span>
+              <div style="min-width:0;flex:1">
+                <p class="titulo">Sônia Vasconcelos — implante unitário</p>
+                <p class="meta"><span>Sônia Vasconcelos</span><span><i class="ph ph-clock-countdown"></i><span class="mono">parado há 8d</span></span><span>Agente: Lia — AgendaPlus</span></p>
+                <p class="passo alerta"><i class="ph ph-warning"></i>Sem próximo passo agendado</p>
+              </div>
+            </a>
+            <div class="faixa"><button class="btn secundario p">Assumir</button><i class="ph ph-arrow-right"></i></div>
+          </li>
+          <li>
+            <a href="#" class="principal-link">
+              <span class="tag aviso">Em risco</span>
+              <div style="min-width:0;flex:1">
+                <p class="titulo">Bruno Tavares — protocolo superior</p>
+                <p class="meta"><span>Bruno Tavares</span><span><i class="ph ph-clock-countdown"></i><span class="mono">parado há 6d</span></span><span>Com atendente</span></p>
+                <p class="passo voo"><i class="ph ph-calendar-check"></i>Confirme a presença · cobrança aguardando</p>
+              </div>
+            </a>
+            <div class="faixa"><a href="#" class="link pequeno">Ver compromisso</a><i class="ph ph-arrow-right"></i></div>
+          </li>
+          <li>
+            <a href="#" class="principal-link">
+              <span class="tag aviso">Em risco</span>
+              <div style="min-width:0;flex:1">
+                <p class="titulo">Patrícia Nunes — prótese fixa</p>
+                <p class="meta"><span>Patrícia Nunes</span><span><i class="ph ph-clock-countdown"></i><span class="mono">parado há 60h</span></span><span>Com atendente</span></p>
+                <p class="passo alerta"><i class="ph ph-warning"></i>Sem próximo passo agendado</p>
+              </div>
+            </a>
+            <div class="faixa so-seta"><i class="ph ph-arrow-right"></i></div>
+          </li>
+          <li>
+            <a href="#" class="principal-link">
+              <span class="tag sinal">Em voo</span>
+              <div style="min-width:0;flex:1">
+                <p class="titulo">Carlos — Clínica Vida Odonto · manutenção de protocolo</p>
+                <p class="meta"><span>Carlos — Clínica Vida Odonto</span><span><i class="ph ph-clock-countdown"></i><span class="mono">parado há 30h</span></span><span>Agente: Lia — AgendaPlus</span></p>
+                <p class="passo voo"><i class="ph ph-paper-plane-tilt"></i>Assistente retorna em <span class="mono">5h</span></p>
+              </div>
+            </a>
+            <div class="faixa"><button class="btn secundario p">Assumir</button><i class="ph ph-arrow-right"></i></div>
+          </li>
+        </ul>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

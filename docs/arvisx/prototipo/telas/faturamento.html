@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Faturamento</title>
+<meta name="grupo" content="Análise">
+<meta name="ordem" content="40">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .pilha { display: flex; flex-direction: column; gap: 16px; }
+  .periodo { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+  .periodo .campo { gap: 4px; }
+  .periodo .campo label { font-size: 12px; color: var(--apoio); }
+  .periodo .campo input { width: 160px; font-family: var(--mono); font-size: 13px; }
+  .indicador.fraco-valor .valor { font-size: 22px; font-weight: 600; }
+  .resumo { color: var(--apoio); font-size: 13px; }
+  .aviso-txt { color: var(--fraco); font-size: 12px; }
+  .cartao .tabela.semcab td:first-child { padding-left: 0; }
+  .cartao .tabela.semcab td:last-child { padding-right: 0; }
+  .cartao .tabela.semcab td { padding-top: 8px; padding-bottom: 8px; }
+  .vazio-txt { color: var(--apoio); font-size: 13px; }
+  .form-lanc { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--linha); }
+  .form-lanc .campo { gap: 4px; }
+  .form-lanc .campo label { font-size: 12px; color: var(--apoio); }
+  .form-lanc .campo input, .form-lanc .campo select { height: 34px; font-size: 13px; }
+  .form-lanc .campo.valor input { width: 112px; font-family: var(--mono); }
+  .form-lanc .campo.data input { width: 150px; font-family: var(--mono); }
+  .form-lanc .campo.desc { flex: 1; min-width: 180px; }
+  .form-lanc .caixa { height: 34px; align-items: center; font-size: 13px; }
+  .lanc td .origem { color: var(--fraco); font-size: 11.5px; margin-left: 6px; }
+  .lanc td.st { color: var(--apoio); font-size: 12px; }
+  .lanc td.ac { white-space: nowrap; }
+  .lanc td.ac .pagar { color: var(--ouro-escuro); font-size: 12px; font-weight: 600; }
+  .lanc td.ac .remover { color: var(--fraco); margin-left: 8px; font-size: 16px; vertical-align: middle; }
+  @media (max-width: 860px) {
+    .cartao .tabela.semcab td { padding-left: 4px; padding-right: 4px; font-size: 12.5px; }
+    .cartao .tabela.semcab td.num { white-space: nowrap; }
+    .form-lanc .campo.desc { flex-basis: 100%; }
+    .lanc tr { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding: 8px 0; border-bottom: 1px solid var(--linha); }
+    .lanc, .lanc tbody { display: block; }
+    .lanc td { display: block; padding: 0; border: 0; }
+    .lanc td.desc { order: -1; flex-basis: 100%; }
+    .lanc td.ac { margin-left: auto; }
+    .lanc td.ac .pagar, .lanc td.ac .remover { display: inline-grid; place-items: center; min-height: 44px; min-width: 44px; }
+  }
+</style>
+</head>
+<body data-rota="/app/faturamento">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Análise · Dinheiro</div>
+          <h1>Faturamento</h1>
+          <p>Quanto entrou, de que forma, e quanto cada pessoa tem a receber.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <form class="periodo">
+          <div class="campo"><label for="de">De</label><input id="de" type="date" value="2026-11-01"></div>
+          <div class="campo"><label for="ate">Até</label><input id="ate" type="date" value="2026-11-03"></div>
+        </form>
+
+        <div class="grade c4">
+          <div class="cartao indicador"><span class="rotulo">Entrou</span><div class="valor">R$ 48.320,00</div></div>
+          <div class="cartao indicador fraco-valor"><span class="rotulo">Saiu</span><div class="valor">R$ 12.850,00</div></div>
+          <div class="cartao indicador"><span class="rotulo">Saldo</span><div class="valor">R$ 35.470,00</div></div>
+          <div class="cartao indicador fraco-valor"><span class="rotulo">Ticket médio</span><div class="valor">R$ 1.480,00</div></div>
+        </div>
+
+        <p class="resumo"><span class="mono">33</span> comanda(s) finalizada(s), <span class="mono">1</span> estornada(s) · <span class="mono">R$ 48.840,00</span> faturado</p>
+        <p class="aviso-txt">O faturado soma comandas; o que entrou soma lançamentos pagos. Os dois não precisam bater.</p>
+
+        <div class="grade c2">
+          <div class="cartao">
+            <div class="cab"><h2>Por forma de pagamento</h2></div>
+            <div class="corpo">
+              <table class="tabela semcab"><tbody>
+                <tr><td>Pix</td><td class="num apoio mono">15</td><td class="num mono">R$ 21.400,00</td><td class="num apoio mono">44%</td></tr>
+                <tr><td>Cartão de crédito</td><td class="num apoio mono">10</td><td class="num mono">R$ 18.640,00</td><td class="num apoio mono">38%</td></tr>
+                <tr><td>Cartão de débito</td><td class="num apoio mono">5</td><td class="num mono">R$ 5.900,00</td><td class="num apoio mono">12%</td></tr>
+                <tr><td>Dinheiro</td><td class="num apoio mono">3</td><td class="num mono">R$ 2.900,00</td><td class="num apoio mono">6%</td></tr>
+              </tbody></table>
+            </div>
+          </div>
+          <div class="cartao">
+            <div class="cab"><h2>Serviços que mais faturaram</h2></div>
+            <div class="corpo">
+              <table class="tabela semcab"><tbody>
+                <tr><td>Implante</td><td class="num apoio mono">6</td><td class="num mono" colspan="2">R$ 24.600,00</td></tr>
+                <tr><td>Protocolo</td><td class="num apoio mono">2</td><td class="num mono" colspan="2">R$ 11.200,00</td></tr>
+                <tr><td>Ortodontia</td><td class="num apoio mono">5</td><td class="num mono" colspan="2">R$ 6.750,00</td></tr>
+                <tr><td>Clareamento</td><td class="num apoio mono">7</td><td class="num mono" colspan="2">R$ 4.410,00</td></tr>
+                <tr><td>Avaliação</td><td class="num apoio mono">13</td><td class="num mono" colspan="2">R$ 1.880,00</td></tr>
+              </tbody></table>
+            </div>
+          </div>
+          <div class="cartao">
+            <div class="cab"><h2>Clientes que mais gastaram</h2></div>
+            <div class="corpo">
+              <table class="tabela semcab"><tbody>
+                <tr><td>Família Andrade</td><td class="num apoio mono">3</td><td class="num mono" colspan="2">R$ 9.800,00</td></tr>
+                <tr><td>Carlos — Clínica Vida Odonto</td><td class="num apoio mono">2</td><td class="num mono" colspan="2">R$ 7.200,00</td></tr>
+                <tr><td>Patrícia Nunes</td><td class="num apoio mono">1</td><td class="num mono" colspan="2">R$ 6.500,00</td></tr>
+                <tr><td>Sônia Vasconcelos</td><td class="num apoio mono">1</td><td class="num mono" colspan="2">R$ 4.300,00</td></tr>
+                <tr><td>Marina Costa</td><td class="num apoio mono">2</td><td class="num mono" colspan="2">R$ 1.800,00</td></tr>
+              </tbody></table>
+            </div>
+          </div>
+          <div class="cartao">
+            <div class="cab"><h2>Comissão por pessoa</h2></div>
+            <div class="corpo">
+              <table class="tabela semcab"><tbody>
+                <tr><td>Ana Souza</td><td class="num apoio mono">14</td><td class="num mono" colspan="2">R$ 2.410,00</td></tr>
+                <tr><td>Marcos Lima</td><td class="num apoio mono">11</td><td class="num mono" colspan="2">R$ 1.870,00</td></tr>
+                <tr><td>Renata Borges</td><td class="num apoio mono">8</td><td class="num mono" colspan="2">R$ 1.120,00</td></tr>
+              </tbody></table>
+            </div>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="cab"><h2>Lançamentos do período</h2></div>
+          <div class="corpo">
+            <form class="form-lanc">
+              <div class="campo"><label for="tipo">Tipo</label><select id="tipo"><option>Saída</option><option>Entrada</option></select></div>
+              <div class="campo"><label for="conta">Conta</label><select id="conta"><option>Escolha</option><option>Caixa</option><option>Banco</option></select></div>
+              <div class="campo desc"><label for="descricao">Descrição</label><input id="descricao" type="text"></div>
+              <div class="campo valor"><label for="valor">Valor</label><input id="valor" type="text" inputmode="decimal" placeholder="0,00"></div>
+              <div class="campo data"><label for="data">Data</label><input id="data" type="date" value="2026-11-03"></div>
+              <label class="caixa"><input type="checkbox" checked>Já pago</label>
+              <button type="submit" class="btn primario" disabled>Lançar</button>
+            </form>
+            <table class="tabela semcab lanc"><tbody>
+              <tr><td class="apoio mono">2026-11-03</td><td class="desc">Comanda #41<span class="origem">de comanda</span></td><td class="num mono">+R$ 1.800,00</td><td class="st">pago</td><td class="ac"></td></tr>
+              <tr><td class="apoio mono">2026-11-03</td><td class="desc">Material — resina e brocas</td><td class="num mono">-R$ 2.350,00</td><td class="st">pendente</td><td class="ac"><a href="#" class="pagar">Pagar</a><button type="button" class="remover" aria-label="Remover lançamento">×</button></td></tr>
+              <tr><td class="apoio mono">2026-11-02</td><td class="desc">Comanda #40<span class="origem">de comanda</span></td><td class="num mono">+R$ 6.500,00</td><td class="st">pago</td><td class="ac"></td></tr>
+              <tr><td class="apoio mono">2026-11-02</td><td class="desc">Aluguel — novembro</td><td class="num mono">-R$ 8.500,00</td><td class="st">pago</td><td class="ac"></td></tr>
+              <tr><td class="apoio mono">2026-11-01</td><td class="desc">Comanda #39<span class="origem">de comanda</span></td><td class="num mono">+R$ 4.300,00</td><td class="st">pago</td><td class="ac"></td></tr>
+              <tr><td class="apoio mono">2026-11-01</td><td class="desc">Salário — recepção</td><td class="num mono">-R$ 2.000,00</td><td class="st">pendente</td><td class="ac"><a href="#" class="pagar">Pagar</a><button type="button" class="remover" aria-label="Remover lançamento">×</button></td></tr>
+            </tbody></table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

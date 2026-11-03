@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tudo pronto</title>
+<meta name="grupo" content="Entrada">
+<meta name="ordem" content="23">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .onb { max-width: 760px; margin: 0 auto; padding: 32px 24px 64px; }
+  .onb-topo { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+  .onb-topo .lockup img { height: 36px; } .onb-topo .lockup b { font-size: 20px; }
+  .onb-topo .org { text-align: right; }
+  .onb-topo .org .rotulo { margin-bottom: 3px; }
+  .onb-topo .org strong { font-family: var(--display); font-stretch: 110%; font-weight: 650; letter-spacing: -.02em; font-size: 16px; }
+  .onb .passos { justify-content: space-between; margin: 20px 0 28px; }
+  .topo-pronto { text-align: center; }
+  .topo-pronto .elo { width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 50%; border: 2px solid var(--ouro); display: grid; place-items: center; color: var(--ouro-escuro); font-size: 26px; }
+  .topo-pronto h2 { font-family: var(--display); font-stretch: 112%; font-weight: 650; letter-spacing: -.03em; font-size: 26px; line-height: 1.1; color: var(--navy); }
+  .topo-pronto p { color: var(--apoio); margin-top: 6px; }
+  .resumo { max-width: 24rem; margin: 20px auto 0; display: grid; gap: 6px; font-size: 13.5px; }
+  .resumo li { display: flex; align-items: center; gap: 10px; }
+  .resumo li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
+  .resumo li.pulado { color: var(--apoio); }
+  .resumo li.pulado::before { background: var(--linha-forte); }
+  .mais { border-top: 1px solid var(--linha); margin-top: 24px; padding-top: 24px; }
+  .mais h3 { font-size: 13.5px; font-weight: 700; }
+  .mais > p { font-size: 12px; color: var(--apoio); margin: 2px 0 12px; }
+  .mais .grade { gap: 10px; }
+  .mais .item { padding: 12px; border: 1px solid var(--linha); border-radius: var(--r-sm); background: var(--painel); }
+  .mais .item a { font-size: 13.5px; font-weight: 700; }
+  .mais .item a small { font-weight: 500; color: var(--apoio); font-size: 12px; }
+  .mais .item p { font-size: 12px; color: var(--apoio); margin-top: 3px; }
+  .mais .item details { margin-top: 6px; font-size: 12px; }
+  .mais .item summary { cursor: pointer; color: var(--ouro-escuro); font-weight: 600; }
+  .fim { display: flex; justify-content: center; margin-top: 24px; }
+  @media (max-width: 860px) {
+    .onb { padding: 20px 16px 48px; }
+    .onb-topo img { height: 28px; }
+    .onb .passos li + li::before { width: 12px; margin: 0 4px; }
+    .onb .passos li { gap: 6px; }
+    .fim .btn { width: 100%; }
+  }
+</style>
+</head>
+<body data-rota="/onboarding/done">
+<div class="onb">
+  <header class="onb-topo">
+    <span class="lockup g escuro" aria-label="ARVISX CRM"><img src="../marca/arvisx-simbolo.png" alt=""><b>ARVISX<em>CRM</em></b></span>
+    <div class="org"><span class="rotulo">ARVISX CRM</span><strong>Clínica Vitalis</strong></div>
+  </header>
+  <div class="fio" style="margin:0"></div>
+  <ol class="passos" aria-label="Passos">
+    <li class="feito"><span class="n">1</span><span class="t">Seu negócio</span></li>
+    <li class="feito"><span class="n">2</span><span class="t">O telefone dele</span></li>
+    <li class="feito"><span class="n">3</span><span class="t">Treinar</span></li>
+    <li class="feito"><span class="n">4</span><span class="t">Onde ele organiza</span></li>
+    <li class="feito"><span class="n">5</span><span class="t">Ver ele atender</span></li>
+    <li class="feito"><span class="n">6</span><span class="t">Quem trabalha com ele</span></li>
+  </ol>
+
+  <main>
+    <section class="cartao"><div class="corpo">
+      <div class="topo-pronto">
+        <div class="elo"><i class="ph ph-check"></i></div>
+        <h2>Tudo pronto!</h2>
+        <p>Seu funcionário está montado. Daqui em diante é só acompanhar.</p>
+      </div>
+      <ul class="resumo">
+        <li>Seu negócio</li>
+        <li>O telefone dele</li>
+        <li>Treinar</li>
+        <li>Onde ele organiza</li>
+        <li>Ver ele atender</li>
+        <li class="pulado">Quem trabalha com ele (você pulou)</li>
+      </ul>
+
+      <section class="mais">
+        <h3>O que mais tem aqui</h3>
+        <p>Você não precisa mexer em nada disso agora. É só para saber que existe.</p>
+        <div class="grade c2">
+          <div class="item"><a href="#">As conversas <small>(Inbox)</small></a><p>É aqui que as conversas chegam, com você e ele atendendo lado a lado.</p><details><summary>Como funciona</summary></details></div>
+          <div class="item"><a href="#">O quadro de clientes <small>(Funis)</small></a><p>Cada cliente vira um card, e ele mesmo move o card conforme a conversa anda.</p><details><summary>Como funciona</summary></details></div>
+          <div class="item"><a href="#">Voltar a falar com quem sumiu <small>(Follow-ups)</small></a><p>Para nenhum cliente sumir no silêncio — ele volta a falar sozinho, na hora certa.</p><details><summary>Como funciona</summary></details></div>
+          <div class="item"><a href="#">O que está esfriando <small>(Radar)</small></a><p>Quem esfriou e ainda está aberto, para você agir antes de perder.</p><details><summary>Como funciona</summary></details></div>
+          <div class="item"><a href="#">Quando ele pede ajuda <small>(Alertas)</small></a><p>Quando ele trava em algo que só uma pessoa resolve, o pedido aparece aqui.</p><details><summary>Como funciona</summary></details></div>
+          <div class="item"><a href="#">Ser avisado no seu WhatsApp <small>(Aviso no WhatsApp)</small></a><p>Você não fica com o sistema aberto o dia todo — mas fica com o WhatsApp.</p><details><summary>Como funciona</summary></details></div>
+          <div class="item"><a href="#">As ideias dele <small>(Propostas)</small></a><p>Com o tempo ele sugere as próprias melhorias — e você decide se entram.</p><details><summary>Como funciona</summary></details></div>
+        </div>
+      </section>
+
+      <div class="fim"><button class="btn primario g">Começar a usar</button></div>
+    </div></section>
+  </main>
+</div>
+</body>
+</html>

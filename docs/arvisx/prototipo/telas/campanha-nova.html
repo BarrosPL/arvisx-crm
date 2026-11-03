@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nova campanha</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="61">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .cartao { margin-bottom: 16px; }
+  fieldset { border: 0; display: grid; gap: 10px; }
+  fieldset legend { font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+  .radio { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+  .radio input { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--ouro); }
+  .nota { color: var(--apoio); font-size: 12.5px; line-height: 1.5; }
+  .previa { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+  .previa strong { font-size: 13.5px; }
+  .motivos { color: var(--apoio); font-size: 12.5px; display: grid; gap: 3px; margin-top: 8px; }
+  .vars { display: grid; gap: 6px; font-size: 12.5px; color: var(--apoio); margin-top: 10px; }
+  .vars code { font-family: var(--mono); font-size: 11.5px; padding: 2px 6px; border-radius: 5px; background: var(--ouro-suave); color: var(--ouro-escuro); border: 1px solid #ecd9a0; cursor: pointer; }
+  .velocidade { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .velocidade label { display: block; border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 12px 14px; cursor: pointer; }
+  .velocidade label.ativa { border-color: var(--ouro); background: var(--ouro-suave); }
+  .velocidade label strong { display: flex; align-items: center; gap: 8px; font-size: 13.5px; margin-bottom: 4px; }
+  .velocidade label input { accent-color: var(--ouro); }
+  .velocidade label p { color: var(--apoio); font-size: 12.5px; line-height: 1.45; }
+  @media (max-width: 860px) { .velocidade { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body data-rota="/app/campaigns">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM · Campanhas</div>
+          <h1>Nova campanha</h1>
+          <p>Isto cria um rascunho. Nada é enviado antes de você preparar a lista e iniciar.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao">
+        <div class="cab"><h2>Informações</h2></div>
+        <div class="corpo form">
+          <div class="campo"><label for="nome">Nome da campanha</label><input id="nome" type="text" placeholder="Ex.: Reativação de clientes parados" value="Reativação de clientes parados"></div>
+          <div class="campo"><label for="numero">Enviar pelo número</label><select id="numero"><option>Escolha um número</option><option selected>Recepção — +55 11 98800-1010</option><option>Comercial — +55 11 97700-2020</option></select></div>
+          <fieldset>
+            <legend>Falar também por estes números</legend>
+            <p class="nota">A campanha reveza entre os números marcados, escolhendo a cada envio o que tem mais folga no teto do dia. Quem já conversa com você por um deles recebe por esse mesmo, para não chegar de um número desconhecido.</p>
+            <label class="caixa"><input type="checkbox" checked><span>Comercial — <span class="mono">+55 11 97700-2020</span></span></label>
+            <p class="nota">Atenção: o intervalo e os tetos da CAMPANHA somam todos os números. Para o rodízio aumentar o volume, deixe o ritmo da campanha em branco e cada número usa o dele.</p>
+          </fieldset>
+          <fieldset>
+            <legend>Base legal do envio</legend>
+            <p class="nota">Quem recebe pode perguntar por que recebeu, e a resposta precisa existir antes do envio.</p>
+            <label class="radio"><input type="radio" name="base" checked><span>Consentimento — estas pessoas pediram para receber</span></label>
+            <label class="radio"><input type="radio" name="base"><span>Interesse legítimo — com avaliação (LIA) registrada</span></label>
+          </fieldset>
+        </div>
+      </div>
+
+      <div class="cartao">
+        <div class="cab"><h2>Público</h2></div>
+        <div class="corpo">
+          <p class="nota" style="margin-bottom:14px">Escolha pelo menos um critério — uma lista sem recorte ninguém confere antes de apertar.</p>
+          <div class="form c2">
+            <div class="campo"><label>Com alguma destas etiquetas</label><input type="text" placeholder="separe por vírgula" value="cliente, protocolo"></div>
+            <div class="campo"><label>Sem nenhuma destas etiquetas</label><input type="text" placeholder="separe por vírgula" value="em-tratamento"></div>
+            <div class="campo"><label>Sem falar com a gente há (dias)</label><input type="number" class="mono" value="90"></div>
+            <div class="campo"><label>Com negócio no funil</label><select><option>Qualquer um</option><option selected>CRM Vivo — Clínica</option></select></div>
+            <div class="campo"><label>Na etapa</label><select><option selected>Qualquer etapa</option><option>Primeiro contato</option><option>Avaliação</option><option>Proposta enviada</option><option>Negociação</option></select></div>
+            <div class="campo"><label>Máximo de contatos nesta campanha</label><input type="number" class="mono" value="200"></div>
+          </div>
+          <div class="previa"><button class="btn secundario">Ver quantas pessoas</button><strong><span class="mono">142</span> podem receber · <span class="mono">9</span> ficam de fora</strong></div>
+          <div class="motivos">
+            <span><span class="mono">4</span> — Sem telefone no cadastro</span>
+            <span><span class="mono">3</span> — Pediu para não receber mensagens</span>
+            <span><span class="mono">2</span> — Mesmo telefone de outro contato da lista</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cartao">
+        <div class="cab"><h2>Mensagem</h2></div>
+        <div class="corpo">
+          <div class="campo"><textarea rows="6" placeholder="Escreva como você falaria com uma pessoa só.">{{saudacao}}, {{primeiro_nome|"tudo bem"}}! Faz um tempo que não nos falamos por aqui. A Clínica Vitalis está com agenda aberta para a revisão semestral — quer que eu veja um horário para você?</textarea></div>
+          <div class="vars">
+            <span><strong>Você pode usar:</strong></span>
+            <span><code>{{nome}}</code> — Nome do contato, como está no cadastro</span>
+            <span><code>{{primeiro_nome}}</code> — Só a primeira palavra do nome</span>
+            <span><code>{{saudacao}}</code> — Bom dia / Boa tarde / Boa noite, na hora do envio</span>
+            <span>Para não depender do dado, ponha um texto de reserva: <code>{{primeiro_nome|"aluno"}}</code>.</span>
+            <span>Quem não tiver o dado que a mensagem usa fica de fora, com o motivo na lista — mensagem com buraco não sai.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cartao">
+        <div class="cab"><h2>Quem responder</h2></div>
+        <div class="corpo">
+          <p class="nota" style="margin-bottom:14px">Em branco, tudo segue como hoje: o card nasce no funil do número e quem atende é o agente publicado nele.</p>
+          <div class="form c2">
+            <div class="campo"><label>Vira card no funil</label><select><option selected>Funil do número (padrão)</option><option>CRM Vivo — Clínica</option></select></div>
+            <div class="campo"><label>Na etapa</label><select><option selected>Primeira etapa do funil</option><option>Primeiro contato</option><option>Avaliação</option></select></div>
+            <div class="campo largo"><label>Quem atende a resposta</label><select><option selected>Agente publicado no número (padrão)</option><option>Lia — AgendaPlus</option><option>Bot Padrão E2E</option></select><span class="ajuda">Vale só para conversas que nascem desta campanha: quem já falava com você continua com quem o atendia. Quem aborda precisa saber dizer de onde veio o contato — essa resposta tem de estar no material do agente escolhido.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cartao">
+        <div class="cab"><h2>Ritmo desta campanha</h2></div>
+        <div class="corpo form">
+          <fieldset>
+            <legend>Velocidade de envio</legend>
+            <div class="velocidade">
+              <label class="ativa"><strong><input type="radio" name="vel" checked>Gradual</strong><p>Uma mensagem por minuto. O mais seguro para a qualidade do número: se a plataforma recusar o modelo, a campanha para antes de chegar a todos.</p></label>
+              <label><strong><input type="radio" name="vel" disabled>Rápido</strong><p>Número por QR envia uma mensagem por minuto: é a proteção contra banimento. O envio rápido é do número oficial.</p></label>
+            </div>
+          </fieldset>
+          <p class="nota">Em branco, vale o ritmo do número (Conexões › Proteção de envio). O que você puser aqui só pode deixar mais devagar.</p>
+          <div class="form c2">
+            <div class="campo"><label>Intervalo mínimo entre mensagens (segundos)</label><input type="number" class="mono" placeholder=""></div>
+            <div class="campo"><label>Máximo por dia</label><input type="number" class="mono" value="150"></div>
+            <div class="campo"><label>Máximo por hora</label><input type="number" class="mono" placeholder=""></div>
+            <div class="campo"><label>Enviar só a partir das (hora)</label><input type="number" class="mono" value="9"></div>
+            <div class="campo"><label>Parar de enviar às (hora)</label><input type="number" class="mono" value="18"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <button class="btn secundario">Cancelar</button>
+        <button class="btn primario">Salvar rascunho</button>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

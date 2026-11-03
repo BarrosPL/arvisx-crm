@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prospecção</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="70">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .prosp { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 20px; align-items: start; }
+  .col { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-content: start; min-width: 0; }
+  .col > * { min-width: 0; }
+  .tabela.rolavel { display: block; overflow-x: auto; }
+  .camp { display: block; width: 100%; text-align: left; border: 1px solid var(--linha); border-radius: var(--r); padding: 10px 12px; background: var(--painel); }
+  .camp:hover { border-color: var(--linha-forte); }
+  .camp[aria-pressed="true"] { border-color: var(--ouro); background: var(--ouro-suave); }
+  .camp strong { display: block; font-size: 13.5px; }
+  .camp span { color: var(--apoio); font-size: 12px; }
+  .contadores { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+  .contadores > div { padding: 12px; border: 1px solid var(--linha); border-radius: var(--r); background: var(--fundo); }
+  .contadores .v { font-family: var(--display); font-stretch: 108%; font-weight: 650; font-size: 24px; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .contadores .l { color: var(--apoio); font-size: 11.5px; margin-top: 6px; }
+  .ritmo { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--linha); margin-top: 16px; padding-top: 14px; font-size: 13px; }
+  .agente { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #ecd9a0; border-radius: var(--r); background: var(--ouro-suave); }
+  .agente strong { display: block; font-size: 13.5px; }
+  .agente span { color: var(--apoio); font-size: 12.5px; }
+  .controles { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+  .controles label { font-weight: 600; font-size: 13px; color: var(--apoio); }
+  .controles select { height: 30px; padding: 0 24px 0 10px; border-radius: var(--r-sm); background: var(--painel); border: 1px solid var(--linha-forte); font-weight: 600; font-size: 12.5px; }
+  .tabela td { vertical-align: top; font-size: 13px; }
+  .tabela .sub { white-space: normal; }
+  .tabela input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--ouro); }
+  .aud { display: grid; gap: 4px; }
+  .aud .score { font: 600 12px/1 var(--mono); }
+  .aud .ia { color: var(--ouro-escuro); font-size: 12px; }
+  @media (max-width: 1100px) { .prosp { grid-template-columns: 1fr; } .contadores { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+</style>
+</head>
+<body data-rota="/app/prospecting">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM</div>
+          <h1>Prospecção</h1>
+          <p>Encontre empresas, aborde aos poucos e acompanhe quem avança na conversa.</p>
+        </div>
+        <div class="acoes"><button class="btn secundario"><i class="ph ph-gear"></i>Configurar busca</button></div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="prosp">
+        <aside class="col">
+          <div class="cartao">
+            <div class="cab"><h2>1. Encontrar empresas</h2></div>
+            <div class="corpo form" style="gap:14px">
+              <div class="segmento" role="tablist" aria-label="Como trazer as empresas" style="display:flex"><button role="tab" aria-pressed="true" style="flex:1">Buscar no Google Maps</button><button role="tab" aria-pressed="false" style="flex:1">Usar minha planilha</button></div>
+              <div class="campo"><label>Público ou segmento</label><input type="text" placeholder="Ex.: clínicas de estética" value="clínicas de estética"></div>
+              <div class="campo"><label>Cidade ou região</label><input type="text" placeholder="Ex.: São Paulo, SP" value="São Paulo, SP"></div>
+              <div class="form c2" style="gap:12px">
+                <div class="campo"><label>Até quantas empresas</label><input type="number" class="mono" value="50"></div>
+                <div class="campo"><label>Teto da busca (US$)</label><input type="number" class="mono" value="2"></div>
+              </div>
+              <label class="caixa"><input type="checkbox" checked><span class="pequeno">Enriquecer com e-mails comerciais e redes encontradas no site</span></label>
+              <label class="caixa"><input type="checkbox" checked><span class="pequeno">Avaliar o site de cada empresa automaticamente</span></label>
+              <label class="caixa"><input type="checkbox"><span class="pequeno">Gerar a prévia da mensagem automaticamente (consome crédito de IA)</span></label>
+              <button class="btn navy bloco"><i class="ph ph-magnifying-glass"></i>Buscar empresas</button>
+            </div>
+          </div>
+
+          <div>
+            <h2 class="secao">Suas campanhas</h2>
+            <div style="display:grid;gap:8px">
+              <button class="camp" aria-pressed="true"><strong>clínicas de estética · São Paulo, SP</strong><span>Em andamento · <span class="mono">48</span> empresas</span></button>
+              <button class="camp" aria-pressed="false"><strong>Lista da feira de março</strong><span>Planilha · Abordagens concluídas · <span class="mono">120</span> empresas</span></button>
+              <button class="camp" aria-pressed="false"><strong>dentistas · Campinas, SP</strong><span>Busca concluída · Preparar campanha · <span class="mono">35</span> empresas</span></button>
+              <button class="camp" aria-pressed="false"><strong>clínicas odontológicas · Porto Alegre, RS</strong><span>Pausada · <span class="mono">22</span> empresas</span></button>
+            </div>
+          </div>
+        </aside>
+
+        <div class="col">
+          <div class="cartao">
+            <div class="corpo">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                <div><h2 class="secao" style="margin-bottom:4px">clínicas de estética · São Paulo, SP</h2><span class="apoio pequeno">Busca concluída · <span class="mono">US$ 1.25</span></span></div>
+                <span class="tag contorno">Em andamento</span>
+              </div>
+              <div class="contadores">
+                <div><div class="v">48</div><div class="l">Encontrados</div></div>
+                <div><div class="v">6</div><div class="l">Na fila</div></div>
+                <div><div class="v">9</div><div class="l">Responderam</div></div>
+                <div><div class="v">1</div><div class="l">Pediram para parar</div></div>
+                <div><div class="v">3</div><div class="l">Qualificados</div></div>
+                <div><div class="v">62</div><div class="l">Score médio</div></div>
+              </div>
+              <p class="fraco pequeno" style="margin-top:10px"><span class="mono">4</span> resultados repetidos ou indisponíveis foram desconsiderados.</p>
+              <div class="ritmo">
+                <span>Ritmo: <span class="mono">20</span> abordagens em <span class="mono">24</span> horas, com pelo menos <span class="mono">15</span> minutos entre elas.</span>
+                <div style="display:flex;gap:6px"><button class="btn secundario p"><i class="ph ph-pause"></i>Pausar abordagens</button><button class="btn fantasma p">Editar ritmo</button></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cartao">
+            <div class="cab"><h2>2. Preparar a abordagem</h2></div>
+            <div class="corpo" style="display:grid;gap:14px">
+              <div class="agente" aria-label="Agente selecionado">
+                <span class="avatar ia"><i class="ph ph-robot"></i></span>
+                <div style="flex:1;min-width:0"><strong>Prospector Estética — SP</strong><span>Conexão de saída: Comercial — <span class="mono">+55 11 97700-2020</span> · Funil: CRM Vivo — Clínica · Etapa inicial: Primeiro contato</span></div>
+                <span class="ia-tag">Agente</span>
+              </div>
+              <div style="display:flex;gap:16px;flex-wrap:wrap"><a href="#" class="link pequeno">Configurações avançadas do agente</a><a href="#" class="link pequeno">Configurar assistente de voz</a></div>
+              <div class="form c2">
+                <div class="campo"><label>Máximo em 24 horas</label><input type="number" class="mono" value="20"></div>
+                <div class="campo"><label>Intervalo mínimo (minutos)</label><input type="number" class="mono" value="15"></div>
+                <div class="campo largo"><label>Referência da avaliação de legítimo interesse</label><input type="text" class="mono" value="LIA-2026-03"></div>
+              </div>
+              <div><button class="btn primario"><i class="ph ph-sparkle"></i>Iniciar abordagens com IA</button></div>
+            </div>
+          </div>
+
+          <div class="cartao">
+            <div class="cab"><h2>3. Acompanhar resultados</h2><span class="apoio">Sites verificados: <span class="mono">44</span> de <span class="mono">48</span> · Prévias: <span class="mono">31</span> de <span class="mono">48</span></span></div>
+            <div class="corpo" style="padding-bottom:0">
+              <div class="controles" style="margin-top:0">
+                <label for="ordenar">Ordenar</label><select id="ordenar"><option>Recentes</option><option>Score</option></select>
+                <button class="btn secundario p">Marcar todas</button>
+                <button class="btn secundario p">Desmarcar todas</button>
+                <button class="btn secundario p">Verificar agora (<span class="mono">4</span>)</button>
+                <button class="btn fantasma p">Mostrar desmarcadas (<span class="mono">3</span>)</button>
+                <button class="btn fantasma p">Excluir desmarcadas (<span class="mono">3</span>)</button>
+              </div>
+            </div>
+            <div class="corpo sem">
+              <table class="tabela rolavel">
+                <thead><tr><th><input type="checkbox" checked aria-label="Alternar seleção de todas as empresas"> Abordar</th><th>Empresa</th><th>Informações</th><th>Progresso</th><th>Auditoria</th><th>Conversa</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><input type="checkbox" checked></td>
+                    <td><span class="nome">Clínica Bella Pele</span><span class="sub">Clínica de estética</span></td>
+                    <td><span class="mono">(11) 3456-7890</span><span class="sub">Rua Augusta, 1200 — São Paulo, SP</span><a href="#" class="link pequeno">Site da empresa</a><span class="sub"><span class="mono">4.7</span> ★ · <span class="mono">128</span> avaliações</span><span class="sub pequeno">contato@bellapele.com.br</span></td>
+                    <td><span class="tag ok">Respondeu</span><span class="sub">Mensagem: entregue</span><span class="sub">Saída oferecida</span></td>
+                    <td><div class="aud"><span>Auditoria do site</span><span class="score">Score <span class="mono">78</span></span><div style="display:flex;gap:4px"><button class="btn fantasma p">Ver detalhes</button><button class="btn fantasma p">Reanalisar site</button></div><span class="ia">Prévia da abordagem</span></div></td>
+                    <td><a href="#" class="link pequeno">Abrir no Inbox</a></td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" checked></td>
+                    <td><span class="nome">Espaço Lumina Estética</span><span class="sub">Clínica de estética</span></td>
+                    <td><span class="mono">(11) 2233-4411</span><span class="sub">Av. Paulista, 900 — São Paulo, SP</span><a href="#" class="link pequeno">Site da empresa</a><span class="sub"><span class="mono">4.9</span> ★ · <span class="mono">212</span> avaliações</span><span class="sub pequeno">atendimento@lumina.com.br</span></td>
+                    <td><span class="tag ouro">Qualificado</span><span class="sub">Mensagem: lida</span><span class="sub">Saída oferecida</span></td>
+                    <td><div class="aud"><span>Auditoria do site</span><span class="score">Score <span class="mono">91</span></span><div style="display:flex;gap:4px"><button class="btn fantasma p">Ver detalhes</button><button class="btn fantasma p">Reanalisar site</button></div><span class="ia">Prévia da abordagem</span></div></td>
+                    <td><a href="#" class="link pequeno">Abrir no Inbox</a></td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" checked></td>
+                    <td><span class="nome">Derma Vita Clínica</span><span class="sub">Dermatologia estética</span></td>
+                    <td><span class="mono">(11) 3777-0190</span><span class="sub">Rua Oscar Freire, 410 — São Paulo, SP</span><a href="#" class="link pequeno">Site da empresa</a><span class="sub"><span class="mono">4.5</span> ★ · <span class="mono">64</span> avaliações</span></td>
+                    <td><span class="tag sinal">Abordado</span><span class="sub">Mensagem: enviada</span><span class="sub">Saída oferecida</span></td>
+                    <td><div class="aud"><span>Auditoria do site</span><span class="score">Score <span class="mono">55</span></span><div style="display:flex;gap:4px"><button class="btn fantasma p">Ver detalhes</button><button class="btn fantasma p">Reanalisar site</button></div><span class="ia">Prévia da abordagem</span></div></td>
+                    <td><a href="#" class="link pequeno">Abrir no Inbox</a></td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" checked></td>
+                    <td><span class="nome">Studio Corpo & Face</span><span class="sub">Clínica de estética</span></td>
+                    <td><span class="mono">(11) 4002-8922</span><span class="sub">Rua Haddock Lobo, 75 — São Paulo, SP</span><a href="#" class="link pequeno">Site da empresa</a><span class="sub"><span class="mono">4.2</span> ★ · <span class="mono">31</span> avaliações</span></td>
+                    <td><span class="tag contorno">Na fila</span><span class="sub">Saída ainda não oferecida</span></td>
+                    <td><div class="aud"><span>Auditoria do site</span><span class="score">Score <span class="mono">40</span></span><div style="display:flex;gap:4px"><button class="btn fantasma p">Ver detalhes</button><button class="btn fantasma p">Reanalisar site</button></div><span class="ia">Gerando prévia…</span></div></td>
+                    <td><span class="fraco">—</span></td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox"></td>
+                    <td><span class="nome">Estética Nova Era</span><span class="sub">Clínica de estética</span></td>
+                    <td><span class="apoio">Sem telefone</span><span class="sub">Rua Pamplona, 300 — São Paulo, SP</span><span class="sub"><span class="mono">3.8</span> ★ · <span class="mono">12</span> avaliações</span></td>
+                    <td><span class="tag contorno">Encontrado</span><span class="sub">Saída ainda não oferecida</span></td>
+                    <td><div class="aud"><span>Auditoria do site</span><span class="fraco">A verificar</span><div style="display:flex;gap:4px"><button class="btn fantasma p">Ver detalhes</button><button class="btn fantasma p">Reanalisar site</button></div><span class="fraco pequeno">Prévia desligada nesta busca: o agente escreve a mensagem na hora do envio.</span></div></td>
+                    <td><span class="fraco">—</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

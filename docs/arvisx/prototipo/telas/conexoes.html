@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conexões</title>
+<meta name="grupo" content="Canais">
+<meta name="ordem" content="10">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .linha-topo { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .linha-topo .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+  .nota { color: var(--apoio); font-size: 13px; margin-bottom: 16px; }
+  .integrar { margin-bottom: 16px; }
+  .integrar .corpo p { color: var(--apoio); font-size: 12.5px; }
+  .integrar .corpo .aviso-faixa { margin-top: 12px; font-size: 12.5px; padding: 8px 12px; }
+  .link-cfg { display: inline-block; margin: 0 0 20px; }
+  .canal { display: flex; flex-direction: column; gap: 12px; padding: 16px; }
+  .canal .cab-canal { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .canal .cab-canal .nome { display: flex; align-items: center; gap: 6px; font-weight: 700; min-width: 0; }
+  .canal .cab-canal .nome i { color: var(--fraco); font-size: 16px; flex: none; }
+  .canal .cab-canal .nome span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .canal .tel { color: var(--apoio); font-size: 12px; margin-top: 2px; }
+  .canal .verif { color: var(--fraco); font-size: 11px; }
+  .canal .bloco { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+  .canal .bloco p { color: var(--apoio); font-size: 12px; }
+  .canal .bloco .titulo { font-size: 12px; font-weight: 600; color: var(--texto); }
+  .canal .chave-linha { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; }
+  .canal .chave-linha .chave { width: 32px; height: 18px; }
+  .canal .chave-linha .chave::after { width: 12px; height: 12px; }
+  .canal .chave-linha .chave.ligada::after { transform: translateX(14px); }
+  .canal .micro { color: var(--fraco); font-size: 11px; }
+  .canal .linha-hist { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .canal .linha-hist select { height: 30px; padding: 0 8px; border-radius: var(--r-sm); border: 1px solid var(--linha-forte); background: var(--painel); font-size: 12px; }
+  .canal .rodape { margin-top: auto; display: flex; gap: 6px; flex-wrap: wrap; padding-top: 4px; }
+  .canal .rodape .btn { height: 30px; padding: 0 10px; font-size: 12px; }
+  .canal .rodape .btn i { font-size: 14px; }
+  .canal .rodape .btn.icone { width: 30px; }
+  /* diálogo "Conectar novo WhatsApp" */
+  .veu { position: fixed; inset: 0; z-index: 40; background: rgba(15, 19, 26, .32); display: grid; place-items: center; padding: 16px; }
+  .dialogo { width: 100%; max-width: 448px; background: var(--painel); border-radius: var(--r-lg); box-shadow: var(--sombra-alta); padding: 22px 22px 18px; }
+  .dialogo h2 { font-family: var(--display); font-stretch: 108%; font-weight: 650; font-size: 18px; letter-spacing: -.02em; }
+  .dialogo > p { color: var(--apoio); font-size: 13px; margin-top: 4px; }
+  .dialogo .corpo-qr { min-height: 16rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; margin-top: 16px; }
+  .qr { width: 256px; height: 256px; max-width: 100%; border: 2px dashed var(--linha-forte); border-radius: var(--r); background: #fff; display: grid; place-items: center; color: var(--fraco); font: 500 13px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+  .dialogo .fechar { float: right; color: var(--fraco); font-size: 18px; margin: -6px -6px 0 0; }
+  @media (min-width: 861px) { .veu { justify-content: end; padding-right: 56px; } }
+  @media (max-width: 860px) { .veu { align-items: flex-start; padding-top: 72px; } .qr { width: 220px; height: 220px; } }
+</style>
+</head>
+<body data-rota="/app/connections">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Canais</div>
+          <h1>Conexões</h1>
+          <p>Por onde seu negócio fala com o cliente. Conecte números por QR ou o número oficial da Meta, e acompanhe a saúde de cada um.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="abas" role="tablist">
+        <a href="#" role="tab" aria-selected="true">Números por QR</a>
+        <a href="#" role="tab" aria-selected="false">API Oficial (Meta)</a>
+        <a href="#" role="tab" aria-selected="false">Provedor parceiro</a>
+        <a href="#" role="tab" aria-selected="false">Telefone</a>
+        <a href="#" role="tab" aria-selected="false">Redes sociais</a>
+        <a href="#" role="tab" aria-selected="false">Chamada de voz</a>
+      </div>
+
+      <div class="linha-topo">
+        <p class="apoio"><span class="mono">1</span> número conectado.</p>
+        <div class="acoes">
+          <button class="btn secundario p"><i class="ph ph-arrows-clockwise"></i>Atualizar saúde</button>
+          <button class="btn secundario p"><i class="ph ph-pause"></i>Pausar todas <span class="mono">(1)</span></button>
+          <button class="btn secundario p">Agendar pausa</button>
+          <button class="btn primario p"><i class="ph ph-plus"></i>Conectar novo WhatsApp</button>
+        </div>
+      </div>
+      <p class="nota">Novos canais começam em modo de teste, sem respostas automáticas até você autorizar números ou liberar o público.</p>
+
+      <div class="cartao integrar">
+        <div class="cab">
+          <h3>Para integrar</h3>
+          <button class="btn fantasma p icone" aria-label="Onde obter o token" title="Onde obter o token"><i class="ph ph-info"></i></button>
+        </div>
+        <div class="corpo">
+          <p>Estes dados conectam outro sistema ao mesmo número. O token não aparece aqui — o ícone ao lado diz onde obtê-lo no painel do provedor.</p>
+          <div class="aviso-faixa aviso"><i class="ph ph-warning"></i><span>Não compartilhe esta sessão. Crie uma conexão separada por QR no outro sistema.</span></div>
+        </div>
+      </div>
+
+      <a href="#" class="link link-cfg">Configurar responsáveis por número</a>
+
+      <div class="grade c3">
+        <!-- canal conectado -->
+        <article class="cartao canal">
+          <div>
+            <div class="cab-canal">
+              <div class="nome"><i class="ph ph-phone"></i><span>Vendas</span></div>
+              <span class="tag ok">Conectado</span>
+            </div>
+            <p class="tel mono">+5511999990000</p>
+          </div>
+          <p class="verif">Verificado <span class="mono">03/11/2026, 09:41:12</span></p>
+          <div class="bloco">
+            <span class="tag aviso">IA em modo de teste</span>
+            <p><span class="mono">2</span> números de teste autorizados</p>
+            <button class="btn secundario p">Configurar acesso da IA</button>
+          </div>
+          <div class="bloco">
+            <label class="chave-linha"><span class="chave ligada"></span>Guardar o histórico anterior à vinculação</label>
+            <p class="micro">Acervo ligado: o servidor do canal guarda as conversas deste número. Num número que já estava pareado, guarda daqui em diante; o histórico anterior (cerca de 1 ano) só chega numa vinculação nova. Ocupa disco lá e não é apagado quando o CRM anonimiza um contato.</p>
+          </div>
+          <div class="bloco">
+            <span class="titulo">Trazer conversas antigas para o atendimento</span>
+            <p>Período: últimos 30, 90, 180 ou 365 dias</p>
+            <div class="linha-hist"><select aria-label="Período"><option>30 dias</option><option>90 dias</option><option>180 dias</option><option>365 dias</option></select><button class="btn secundario p">Ver prévia</button></div>
+          </div>
+          <p class="apoio" style="font-size:12px">Somente as pessoas selecionadas recebem este número.</p>
+          <div class="rodape">
+            <button class="btn secundario"><i class="ph ph-pencil-simple"></i>Renomear</button>
+            <button class="btn secundario"><i class="ph ph-arrows-clockwise"></i>Reconectar</button>
+            <button class="btn secundario"><i class="ph ph-shield-check"></i>Proteção de envio</button>
+            <button class="btn secundario" aria-label="Pausar Vendas"><i class="ph ph-pause"></i>Pausar</button>
+            <button class="btn secundario"><i class="ph ph-users-three"></i>Grupos</button>
+            <button class="btn secundario icone" aria-label="Excluir Vendas"><i class="ph ph-trash"></i></button>
+          </div>
+        </article>
+
+        <!-- canal a conectar -->
+        <article class="cartao canal">
+          <div>
+            <div class="cab-canal">
+              <div class="nome"><i class="ph ph-phone"></i><span class="mono">org_7c2f91ab</span></div>
+              <span class="tag aviso">Escaneie o QR</span>
+            </div>
+          </div>
+          <p class="verif">Ainda não verificado</p>
+          <div class="bloco">
+            <span class="tag aviso">IA em modo de teste</span>
+            <p>Nenhum número autorizado — a IA não responde ninguém neste canal.</p>
+            <button class="btn secundario p">Configurar acesso da IA</button>
+          </div>
+          <div class="bloco">
+            <label class="chave-linha"><span class="chave"></span>Guardar o histórico anterior à vinculação</label>
+            <p class="micro">Acervo desligado: só as mensagens novas entram, como sempre.</p>
+          </div>
+          <div class="bloco">
+            <span class="titulo">Trazer conversas antigas para o atendimento</span>
+            <p>Ligue 'Guardar o histórico' e conecte o número de novo</p>
+          </div>
+          <p class="apoio" style="font-size:12px">Usa todos os atendentes elegíveis da organização.</p>
+          <div class="rodape">
+            <button class="btn secundario"><i class="ph ph-pencil-simple"></i>Renomear</button>
+            <button class="btn secundario"><i class="ph ph-arrows-clockwise"></i>Reconectar</button>
+            <button class="btn secundario"><i class="ph ph-shield-check"></i>Proteção de envio</button>
+            <button class="btn secundario" aria-label="Pausar org_7c2f91ab"><i class="ph ph-pause"></i>Pausar</button>
+            <button class="btn secundario"><i class="ph ph-users-three"></i>Grupos</button>
+            <button class="btn secundario icone" aria-label="Excluir org_7c2f91ab"><i class="ph ph-trash"></i></button>
+          </div>
+        </article>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Diálogo QR (aberto ao clicar em "Conectar novo WhatsApp") -->
+<div class="veu" role="dialog" aria-modal="true" aria-labelledby="qr-titulo">
+  <div class="dialogo">
+    <button class="fechar" aria-label="Fechar"><i class="ph ph-x"></i></button>
+    <h2 id="qr-titulo">Conectar novo WhatsApp</h2>
+    <p>Escolha QR Code ou código de pareamento e confirme no WhatsApp do celular.</p>
+    <div class="corpo-qr">
+      <div class="segmento" role="group" aria-label="Forma de conectar"><button type="button" aria-pressed="true">QR Code</button><button type="button" aria-pressed="false">Conectar por código</button></div>
+      <div class="qr" role="img" aria-label="QR Code para conectar WhatsApp">QR code</div>
+    </div>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

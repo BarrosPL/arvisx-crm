@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chaves de acesso à IA</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="50">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .cabecalho p { max-width: 84ch; }
+  .prov { margin-bottom: 28px; }
+  .prov h2 { display: flex; align-items: center; gap: 10px; font: 600 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--apoio); margin-bottom: 12px; }
+  .prov h2::after { content: ""; flex: 1; height: 1px; background: var(--linha); }
+  .cred { padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .cred .topo-card { display: flex; align-items: flex-start; gap: 12px; }
+  .cred .ic { width: 38px; height: 38px; border-radius: 10px; background: var(--navy); color: var(--ouro); display: grid; place-items: center; font-size: 19px; flex: none; }
+  .cred .quem { flex: 1; min-width: 0; }
+  .cred h3 { font-size: 14.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .cred h3 .mono { color: var(--apoio); font-weight: 500; }
+  .cred .acoes-cred { display: flex; gap: 2px; flex: none; }
+  .cred dl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+  .cred dt { font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--apoio); margin-bottom: 5px; }
+  .cred dd { font: 500 13px/1 var(--mono); }
+  .cred .usada { font-size: 12.5px; color: var(--apoio); }
+  .cred .erro-txt { font-size: 12px; color: var(--erro); }
+</style>
+</head>
+<body data-rota="/app/ai/credentials">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Agente de IA</div>
+          <h1>Chaves de acesso à IA</h1>
+          <p>A conta de inteligência artificial é sua: você contrata direto com Anthropic (Claude), OpenAI (GPT), OpenAI pela assinatura (ChatGPT), Google (Gemini), OpenRouter, DeepSeek ou Requesty e cola a chave aqui. A chave fica guardada criptografada e nunca mais aparece na tela depois de salva — nem para você. O Jev (TypeSafe) não conversa com o cliente: a chave dele serve só para decisões rápidas.</p>
+        </div>
+        <div class="acoes"><button class="btn primario"><i class="ph ph-plus"></i>Adicionar credencial</button></div>
+      </div>
+      <div class="fio"></div>
+
+      <section class="prov">
+        <h2>Anthropic (Claude)</h2>
+        <div class="grade c2">
+          <article class="cartao cred">
+            <div class="topo-card">
+              <span class="ic"><i class="ph ph-key"></i></span>
+              <div class="quem"><h3>Chave da clínica <span class="mono">…a1b2</span></h3><div style="margin-top:6px"><span class="tag navy">Validada</span></div></div>
+              <div class="acoes-cred"><button class="btn fantasma p icone" aria-label="Editar credencial"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" aria-label="Revalidar credencial"><i class="ph ph-arrows-clockwise"></i></button><button class="btn fantasma p icone" aria-label="Excluir credencial" disabled title="Em uso por 2 versão(ões) de agente. Para trocar a chave, use editar. Para excluir, nenhuma versão pode estar usando a chave — e versão já publicada ou substituída não aceita mais apontar para outra chave, então a exclusão fica travada enquanto esse histórico existir."><i class="ph ph-trash"></i></button></div>
+            </div>
+            <dl><div><dt>Modelos</dt><dd>12</dd></div><div><dt>Em uso por</dt><dd>2</dd></div></dl>
+          </article>
+        </div>
+      </section>
+
+      <section class="prov">
+        <h2>OpenAI (GPT)</h2>
+        <div class="grade c2">
+          <article class="cartao cred">
+            <div class="topo-card">
+              <span class="ic"><i class="ph ph-key"></i></span>
+              <div class="quem"><h3>Transcrição de áudio <span class="mono">…9f3c</span></h3><div style="margin-top:6px"><span class="tag navy">Validada</span></div></div>
+              <div class="acoes-cred"><button class="btn fantasma p icone" aria-label="Editar credencial"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" aria-label="Revalidar credencial"><i class="ph ph-arrows-clockwise"></i></button><button class="btn fantasma p icone" aria-label="Excluir credencial"><i class="ph ph-trash"></i></button></div>
+            </div>
+            <dl><div><dt>Modelos</dt><dd>48</dd></div><div><dt>Em uso por</dt><dd>0</dd></div></dl>
+          </article>
+        </div>
+      </section>
+
+      <section class="prov">
+        <h2>Google (Gemini)</h2>
+        <div class="grade c2">
+          <article class="cartao cred">
+            <div class="topo-card">
+              <span class="ic"><i class="ph ph-key"></i></span>
+              <div class="quem"><h3>Classificação barata <span class="mono">…Qk7m</span></h3><div style="margin-top:6px"><span class="tag contorno">Não validada</span></div></div>
+              <div class="acoes-cred"><button class="btn fantasma p icone" aria-label="Editar credencial"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" aria-label="Revalidar credencial"><i class="ph ph-arrows-clockwise"></i></button><button class="btn fantasma p icone" aria-label="Excluir credencial"><i class="ph ph-trash"></i></button></div>
+            </div>
+            <p class="usada">A validação não terminou. Clique em revalidar para testar a chave agora.</p>
+            <dl><div><dt>Modelos</dt><dd>—</dd></div><div><dt>Em uso por</dt><dd>0</dd></div></dl>
+          </article>
+        </div>
+      </section>
+
+      <section class="prov">
+        <h2>TypeSafe</h2>
+        <div class="grade c2">
+          <article class="cartao cred">
+            <div class="topo-card">
+              <span class="ic"><i class="ph ph-key"></i></span>
+              <div class="quem"><h3>Jev <span class="mono">…7k2d</span> <span class="ia-tag">Jev</span></h3><div style="margin-top:6px"><span class="tag navy">Validada</span></div></div>
+              <div class="acoes-cred"><button class="btn fantasma p icone" aria-label="Editar credencial"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" aria-label="Revalidar credencial"><i class="ph ph-arrows-clockwise"></i></button><button class="btn fantasma p icone" aria-label="Excluir credencial"><i class="ph ph-trash"></i></button></div>
+            </div>
+            <p class="usada">Usada em: Medir o clima da conversa, Escolher qual agente atende, Ler a resposta ao follow-up</p>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

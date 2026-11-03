@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quadro do funil</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="20">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .titulo-funil { display: inline-flex; align-items: center; gap: 8px; font-family: var(--display); font-stretch: 112%; font-weight: 650; letter-spacing: -.03em; font-size: 26px; line-height: 1.1; color: var(--navy); border-radius: var(--r-sm); padding: 2px 6px; margin-left: -6px; }
+  .titulo-funil:hover { background: var(--painel-2); }
+  .titulo-funil i { font-size: 16px; color: var(--fraco); }
+  .card-negocio .acao-ia { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; }
+  .card-negocio .acao-ia .txt { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ouro-escuro); font-weight: 600; }
+  .card-negocio .acao-ia .btn { height: 24px; padding: 0 8px; font-size: 11.5px; }
+  .card-negocio .conversa { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 11.5px; color: var(--apoio); }
+  .card-negocio .conversa i { font-size: 13px; color: var(--fraco); }
+  .card-negocio .conversa .txt { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-negocio .conversa .cont { min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--sinal); color: #fff; font: 600 10px/16px var(--mono); text-align: center; }
+  .card-negocio .dono { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--apoio); min-width: 0; }
+  .card-negocio .dono span.n { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 9rem; }
+  .card-negocio .dono.sem .avatar { background: transparent; border: 1.5px dashed var(--linha-forte); }
+  .card-negocio .medidor { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 11.5px; color: var(--apoio); }
+  .card-negocio .medidor .barra { width: 64px; height: 3px; }
+  .card-negocio .tarefas { font-size: 11px; color: var(--fraco); display: inline-flex; align-items: center; gap: 4px; }
+  .card-negocio .titulo { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-negocio .titulo::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--ouro); margin-right: 6px; vertical-align: 2px; }
+  .card-negocio .titulo.sem-tag::before { display: none; }
+  .coluna .cab .pt { width: 8px; height: 8px; border-radius: 50%; background: var(--linha-forte); flex: none; }
+  .lote { position: sticky; bottom: 16px; margin: 8px auto 0; width: fit-content; max-width: 100%; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 10px; border-radius: var(--r-lg); background: var(--navy); color: var(--inverso); box-shadow: var(--sombra-alta); }
+  .lote strong { font-size: 13px; margin-right: 6px; }
+  .lote .btn.secundario { background: var(--navy-2); border-color: var(--navy-linha); color: var(--inverso); }
+  .lote .btn.fantasma { color: #a2abb9; }
+</style>
+</head>
+<body data-rota="/app/kanban">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho" style="margin-bottom:16px">
+        <div>
+          <div class="eyebrow">CRM · Funis</div>
+          <button type="button" class="titulo-funil" aria-label="Trocar de funil: CRM Vivo — Clínica">CRM Vivo — Clínica <i class="ph ph-caret-up-down"></i></button>
+        </div>
+        <div class="acoes">
+          <div class="segmento" role="group"><button type="button" aria-pressed="true">Quadro</button><button type="button" aria-pressed="false">Lista</button><button type="button" aria-pressed="false">Calendário</button></div>
+          <button class="btn primario"><i class="ph ph-plus"></i>Novo Lead</button>
+        </div>
+      </div>
+      <div class="fio" style="margin-bottom:16px"></div>
+
+      <div class="filtros" style="margin-bottom:16px">
+        <div class="busca-linha" style="max-width:280px"><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Buscar por título…"></div>
+        <button class="filtro">Responsável: Todos<i class="ph ph-caret-down"></i></button>
+        <button class="filtro">Status: Todos<i class="ph ph-caret-down"></i></button>
+        <button class="filtro">Tag: todas<i class="ph ph-caret-down"></i></button>
+        <label class="filtro" style="cursor:pointer"><input type="checkbox" style="accent-color:var(--ouro)">Apenas atrasados</label>
+      </div>
+
+      <div class="kanban">
+        <!-- Primeiro contato -->
+        <section class="coluna">
+          <div class="cab"><span class="pt" style="background:var(--sinal)"></span><div><h3>Primeiro contato</h3><span class="soma">R$ 2.250</span></div><span class="cont">2</span></div>
+          <div class="cartoes">
+            <article class="card-negocio novo">
+              <div class="titulo sem-tag">Marina Costa — clareamento</div>
+              <div class="valor">R$ 1.800</div>
+              <div class="conversa"><i class="ph ph-chat-circle"></i><span class="txt">Oi! Vi no Instagram o clareamento, quanto fica?</span><span class="cont" aria-label="2 sem ler">2</span></div>
+              <div class="rodape"><span class="dono sem"><span class="avatar p"></span><span class="n">Sem responsável</span></span><span class="tempo">3h em Primeiro contato</span></div>
+            </article>
+            <article class="card-negocio">
+              <div class="titulo">Caio Ribeiro — dor de dente</div>
+              <div class="valor">R$ 450</div>
+              <div class="medidor"><div class="barra"><span style="width:72%"></span></div>Quente · 72%</div>
+              <div class="conversa"><i class="ph ph-chat-circle"></i><span class="txt">Consigo encaixar hoje à tarde?</span></div>
+              <div class="rodape"><span class="dono"><span class="avatar p ia">BP</span><span class="n">Bot Padrão E2E</span></span><span class="tempo">1h em Primeiro contato</span></div>
+            </article>
+          </div>
+        </section>
+        <!-- Avaliação -->
+        <section class="coluna">
+          <div class="cab"><span class="pt" style="background:var(--ouro)"></span><div><h3>Avaliação</h3><span class="soma">R$ 29.300 · ponderado R$ 8.790</span></div><span class="cont">3</span></div>
+          <div class="cartoes">
+            <article class="card-negocio">
+              <div class="titulo">Rogério Paiva — avaliação inicial</div>
+              <div class="valor nulo">—</div>
+              <div class="rodape"><span class="dono"><span class="avatar p ia">LA</span><span class="n">Lia — AgendaPlus</span></span><span class="tempo">5h em Avaliação</span></div>
+            </article>
+            <article class="card-negocio">
+              <div class="titulo">Família Andrade — 4 tratamentos</div>
+              <div class="valor">R$ 21.500</div>
+              <div class="medidor"><div class="barra"><span style="width:45%;background:var(--aviso)"></span></div>Morno · 45%</div>
+              <div class="rodape"><span class="dono"><span class="avatar p">ML</span><span class="n">Marcos Lima</span></span><span class="tarefas"><i class="ph ph-list-checks"></i>2 tarefas abertas · 1 atrasada</span></div>
+              <div class="rodape" style="margin-top:4px"><span></span><span class="tempo">12h em Avaliação</span></div>
+            </article>
+            <article class="card-negocio esfriando">
+              <div class="titulo">Patrícia Nunes — prótese fixa</div>
+              <div class="valor">R$ 7.800</div>
+              <div class="acao-ia"><i class="ph ph-thermometer-cold" style="color:var(--aviso)"></i><span class="txt" style="color:var(--aviso)">Sem resposta há 2 dias</span></div>
+              <div class="rodape"><span class="dono"><span class="avatar p">AS</span><span class="n">Ana Souza</span></span><span class="tempo">em Avaliação</span></div>
+            </article>
+          </div>
+        </section>
+        <!-- Proposta enviada -->
+        <section class="coluna">
+          <div class="cab"><span class="pt" style="background:var(--ouro-escuro)"></span><div><h3>Proposta enviada</h3><span class="soma">R$ 90.800 · ponderado R$ 54.480</span></div><span class="cont">3</span></div>
+          <div class="cartoes">
+            <article class="card-negocio">
+              <div class="titulo">Clínica Vitalis — pacote completo de implantes dentários com enxerto ósseo, protocolo superior e acompanhamento de 24 meses</div>
+              <div class="valor">R$ 38.900</div>
+              <div class="rodape"><span class="dono"><span class="avatar p">AS</span><span class="n">Ana Souza</span></span><span class="tempo">8h em Proposta enviada</span></div>
+            </article>
+            <article class="card-negocio esfriando">
+              <div class="titulo">Bruno Tavares — protocolo superior</div>
+              <div class="valor">R$ 45.000</div>
+              <div class="acao-ia"><i class="ph ph-thermometer-cold" style="color:var(--aviso)"></i><span class="txt" style="color:var(--aviso)">Sem resposta há 6 dias</span></div>
+              <div class="rodape"><span class="dono"><span class="avatar p">AS</span><span class="n">Ana Souza</span></span><span class="tempo">em Proposta enviada</span></div>
+            </article>
+            <article class="card-negocio esfriando">
+              <div class="titulo">Sônia Vasconcelos — implante unitário</div>
+              <div class="valor">R$ 6.900</div>
+              <div class="acao-ia"><i class="ph ph-thermometer-cold" style="color:var(--aviso)"></i><span class="txt" style="color:var(--aviso)">Sem resposta há 8 dias</span></div>
+              <div class="rodape"><span class="dono"><span class="avatar p ia">LA</span><span class="n">Lia — AgendaPlus</span></span><span class="tempo">em Proposta enviada</span></div>
+            </article>
+          </div>
+        </section>
+        <!-- Negociação -->
+        <section class="coluna">
+          <div class="cab"><span class="pt" style="background:var(--navy)"></span><div><h3>Negociação</h3><span class="soma">R$ 174.000 · ponderado R$ 139.200</span></div><span class="cont">4</span></div>
+          <div class="cartoes">
+            <article class="card-negocio" style="border-left:3px solid var(--ouro)">
+              <div class="titulo">Carlos — Clínica Vida Odonto · manutenção de protocolo</div>
+              <div class="valor">R$ 28.000</div>
+              <div class="acao-ia"><span class="ia-tag"></span><span class="txt" title="Confirmar a data da manutenção do protocolo e enviar o orçamento revisado">Propõe: Confirmar a data da manutenção do protocolo e enviar o orçamento revisado</span><button class="btn primario p">Aprovar</button><button class="btn fantasma p">Ignorar</button></div>
+              <div class="rodape"><span class="dono"><span class="avatar p ia">LA</span><span class="n">Lia — AgendaPlus</span></span><span class="tempo">30h em Negociação</span></div>
+            </article>
+            <article class="card-negocio">
+              <div class="titulo">Grupo Odonto Sul — contrato corporativo</div>
+              <div class="valor">R$ 124.000</div>
+              <div class="rodape"><span class="dono"><span class="avatar p">RB</span><span class="n">Renata Borges</span></span><span class="tempo">1h em Negociação</span></div>
+            </article>
+            <article class="card-negocio">
+              <div class="titulo">Clínica Vitalis — implantes</div>
+              <div class="valor">R$ 12.400</div>
+              <div class="conversa"><i class="ph ph-chat-circle"></i><span class="txt">Perfeito, então fechamos na sexta.</span></div>
+              <div class="rodape"><span class="dono"><span class="avatar p">AS</span><span class="n">Ana Souza</span></span><span class="tempo">2h em Negociação</span></div>
+            </article>
+            <article class="card-negocio parado">
+              <div class="titulo">Helena Marques — ortodontia adulto</div>
+              <div class="valor">R$ 9.600</div>
+              <div class="acao-ia"><i class="ph ph-thermometer-cold" style="color:var(--erro)"></i><span class="txt" style="color:var(--erro)">Sem resposta há 20 dias</span></div>
+              <div class="rodape"><span class="dono sem"><span class="avatar p"></span><span class="n">Sem responsável</span></span><span class="tempo">em Negociação</span></div>
+            </article>
+          </div>
+        </section>
+        <!-- Tratamento fechado -->
+        <section class="coluna ganho">
+          <div class="cab"><span class="pt" style="background:var(--ok)"></span><div><h3>Tratamento fechado</h3><span class="soma">R$ 61.900</span></div><span class="cont">1</span></div>
+          <div class="cartoes">
+            <article class="card-negocio"><div class="titulo">P A N A R O Especialista — protocolo inferior</div><div class="valor">R$ 61.900</div><div class="rodape"><span class="dono"><span class="avatar p">ML</span><span class="n">Marcos Lima</span></span><span class="tempo">3d em Tratamento fechado</span></div></article>
+          </div>
+        </section>
+        <section class="coluna perdido">
+          <div class="cab"><span class="pt" style="background:var(--erro)"></span><div><h3>Perdido</h3></div><span class="cont">0</span></div>
+          <div class="cartoes"><p class="fraco pequeno" style="text-align:center;padding:28px 0">vazio</p></div>
+        </section>
+      </div>
+
+      <div class="lote" role="region" aria-label="Ações em lote">
+        <strong>2 Pacientes selecionados</strong>
+        <button class="btn secundario p">Mover para…</button>
+        <button class="btn secundario p">Responsável…</button>
+        <button class="btn secundario p">Tag…</button>
+        <button class="btn secundario p">Marcar como perdido…</button>
+        <button class="btn perigo p">Excluir</button>
+        <button class="btn fantasma p">Cancelar</button>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

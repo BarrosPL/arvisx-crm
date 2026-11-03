@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API Tokens</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="41">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .tabela td.escopos { display: flex; flex-wrap: wrap; gap: 4px; }
+  .tabela td.acoes .btn { visibility: visible; }
+  .tabela td.prefixo code { font-family: var(--mono); font-size: 12.5px; }
+  @media (max-width: 860px) { .cabecalho .acoes, .cabecalho .acoes .btn { width: 100%; } }
+</style>
+</head>
+<body data-rota="/app/settings/api-tokens">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Dados e acesso</div>
+          <h1>API Tokens</h1>
+          <p>Tokens server-to-server. Plaintext exibido <strong>uma única vez</strong> na criação.</p>
+        </div>
+        <div class="acoes"><button class="btn primario"><i class="ph ph-plus"></i>Criar token</button></div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao">
+        <table class="tabela rolavel">
+          <thead>
+            <tr><th>Nome</th><th>Prefixo</th><th>Escopos</th><th>Status</th><th>Expira</th><th><span class="sr">Ações</span></th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="nome">Worker de import</td>
+              <td class="prefixo"><code>dsk_a1b2c3…</code></td>
+              <td class="escopos"><span class="tag mono">contacts:read</span><span class="tag mono">contacts:write</span><span class="tag mono">leads:write</span></td>
+              <td><span class="tag ok">Ativo</span></td>
+              <td class="mono">31/12/2026</td>
+              <td class="acoes"><button class="btn fantasma p">Revogar</button></td>
+            </tr>
+            <tr>
+              <td class="nome">Agente MCP — Lia</td>
+              <td class="prefixo"><code>dsk_e2eag_9f…</code></td>
+              <td class="escopos"><span class="tag mono">mcp:read</span><span class="tag mono">mcp:write</span><span class="tag mono">role:manager</span></td>
+              <td><span class="tag ok">Ativo</span></td>
+              <td class="mono">—</td>
+              <td class="acoes"><button class="btn fantasma p">Revogar</button></td>
+            </tr>
+            <tr>
+              <td class="nome">Relatório mensal (BI)</td>
+              <td class="prefixo"><code>dsk_7c4d10…</code></td>
+              <td class="escopos"><span class="tag mono">leads:read</span><span class="tag mono">messages:read</span><span class="tag mono">audit:read</span></td>
+              <td><span class="tag ok">Ativo</span></td>
+              <td class="mono">15/03/2027</td>
+              <td class="acoes"><button class="btn fantasma p">Revogar</button></td>
+            </tr>
+            <tr>
+              <td class="nome">Integração ERP antiga</td>
+              <td class="prefixo"><code>dsk_f03e5b…</code></td>
+              <td class="escopos"><span class="tag mono">contacts:read</span><span class="tag mono">messages:write</span></td>
+              <td><span class="tag erro">Revogado</span></td>
+              <td class="mono">—</td>
+              <td class="acoes"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

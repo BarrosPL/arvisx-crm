@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seu negócio</title>
+<meta name="grupo" content="Entrada">
+<meta name="ordem" content="20">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .onb { max-width: 760px; margin: 0 auto; padding: 32px 24px 64px; }
+  .onb-topo { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+  .onb-topo .lockup img { height: 36px; } .onb-topo .lockup b { font-size: 20px; }
+  .onb-topo .org { text-align: right; }
+  .onb-topo .org .rotulo { margin-bottom: 3px; }
+  .onb-topo .org strong { font-family: var(--display); font-stretch: 110%; font-weight: 650; letter-spacing: -.02em; font-size: 16px; }
+  .onb .passos { justify-content: space-between; margin: 20px 0 28px; }
+  .onb-cab { margin-bottom: 20px; }
+  .onb-cab h2 { font-family: var(--display); font-stretch: 112%; font-weight: 650; letter-spacing: -.03em; font-size: 26px; line-height: 1.1; color: var(--navy); }
+  .onb-cab p { color: var(--apoio); margin-top: 6px; max-width: 64ch; }
+  .onb .cartao + .cartao { margin-top: 16px; }
+  .rodape-nav { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 20px; }
+  .rodape-nav .so-dir { margin-left: auto; }
+  .pronto h3 { font-size: 13.5px; font-weight: 700; margin-bottom: 10px; }
+  .pronto li { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; padding: 4px 0; }
+  .pronto li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); margin-top: 7px; flex: none; }
+  .pronto li.pendente::before { background: var(--aviso); }
+  .pronto .pe-txt { font-size: 12px; color: var(--apoio); margin-top: 8px; }
+  @media (max-width: 860px) {
+    .onb { padding: 20px 16px 48px; }
+    .onb-topo img { height: 28px; }
+    .onb .passos li + li::before { width: 12px; margin: 0 4px; }
+    .onb .passos li { gap: 6px; }
+    .rodape-nav .btn { flex: 1; }
+  }
+</style>
+</head>
+<body data-rota="/onboarding/welcome">
+<div class="onb">
+  <header class="onb-topo">
+    <span class="lockup g escuro" aria-label="ARVISX CRM"><img src="../marca/arvisx-simbolo.png" alt=""><b>ARVISX<em>CRM</em></b></span>
+    <div class="org"><span class="rotulo">ARVISX CRM</span><strong>Minha Empresa</strong></div>
+  </header>
+  <div class="fio" style="margin:0"></div>
+  <ol class="passos" aria-label="Passos">
+    <li class="atual"><span class="n">1</span><span class="t">Seu negócio</span></li>
+    <li><span class="n">2</span><span class="t">O telefone dele</span></li>
+    <li><span class="n">3</span><span class="t">Treinar</span></li>
+    <li><span class="n">4</span><span class="t">Onde ele organiza</span></li>
+    <li><span class="n">5</span><span class="t">Ver ele atender</span></li>
+    <li><span class="n">6</span><span class="t">Quem trabalha com ele</span></li>
+  </ol>
+
+  <main>
+    <header class="onb-cab">
+      <h2>Boas-vindas ao ARVISX CRM</h2>
+      <p>Vamos montar quem vai atender seus clientes — e onde ele vai trabalhar.</p>
+    </header>
+
+    <section class="cartao pronto"><div class="corpo">
+      <h3>Você já instalou o sistema. Isto aqui já está de pé:</h3>
+      <ul>
+        <li>Servidor no ar e banco de dados instalado</li>
+        <li>Inteligência contratada: Anthropic</li>
+        <li>WhatsApp pronto para conectar seu número</li>
+        <li>Funil de vendas criado: Vendas</li>
+      </ul>
+      <p class="pe-txt">Agora é montar quem vai atender por você.</p>
+    </div></section>
+
+    <form class="cartao" novalidate><div class="corpo form">
+      <div class="campo">
+        <label for="nome">Como se chama o seu negócio?</label>
+        <input id="nome" type="text" value="Clínica Vitalis">
+        <span class="ajuda">É o nome que aparece para o seu time e nos relatórios. Pode ser clínica, loja, escritório — o que for seu.</span>
+      </div>
+      <div class="campo">
+        <label for="faz">O que vocês fazem?</label>
+        <input id="faz" type="text" placeholder="Ex.: clínica odontológica, ou venda de roupa fitness pelo WhatsApp" value="Clínica odontológica com foco em implantes e ortodontia">
+        <span class="ajuda">Uma linha basta. É com isso que seu funcionário aprende com quem ele está falando — e que a gente monta o quadro de clientes do seu jeito.</span>
+      </div>
+      <div class="campo">
+        <label for="fuso">Onde você atende</label>
+        <select id="fuso">
+          <option selected>São Paulo, Rio, Brasília, Sul e Sudeste</option>
+          <option>Recife, Salvador, Fortaleza e Nordeste</option>
+          <option>Belém e Pará</option>
+          <option>Manaus e Amazonas</option>
+          <option>Cuiabá e Mato Grosso</option>
+          <option>Rio Branco e Acre</option>
+          <option>Buenos Aires</option>
+          <option>Lisboa</option>
+          <option>Madri</option>
+          <option>Roma</option>
+          <option>Nova York</option>
+          <option>Los Angeles</option>
+          <option>Outro (horário universal)</option>
+        </select>
+        <span class="ajuda">Decide o horário em que seu funcionário pode falar com clientes.</span>
+      </div>
+      <label class="caixa"><input type="checkbox" checked><span>Li e aceito os <a href="#" class="link">Termos de Uso</a> e a <a href="#" class="link">Política de Privacidade</a>.</span></label>
+      <div class="rodape-nav" style="margin-top:4px"><button type="submit" class="btn primario so-dir">Continuar</button></div>
+    </div></form>
+  </main>
+</div>
+</body>
+</html>

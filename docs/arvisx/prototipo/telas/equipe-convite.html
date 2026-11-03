@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Convidar membros</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="21">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .duas { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: start; }
+  fieldset.editor { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 14px 16px 16px; display: grid; gap: 12px; }
+  fieldset.editor legend { font-weight: 700; font-size: 13px; padding: 0 6px; }
+  fieldset.editor p { color: var(--apoio); font-size: 12.5px; }
+  fieldset.editor details summary { cursor: pointer; font-weight: 600; font-size: 13px; color: var(--navy); }
+  fieldset.editor details ul { max-height: 256px; overflow-y: auto; margin-top: 10px; display: grid; gap: 10px; }
+  fieldset.editor details li strong { display: block; font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--apoio); margin-bottom: 6px; }
+  fieldset.editor details .caixa { font-size: 13px; margin: 4px 0; }
+  .resultados { color: var(--apoio); font-size: 13.5px; }
+  .resultados h2 { font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--texto); }
+  .resultados h2.falhas { color: var(--erro); }
+  .resultados ul.enviados li { border: 1px solid var(--linha); border-radius: var(--r-sm); padding: 8px 10px; margin-bottom: 8px; background: var(--painel); }
+  .resultados ul.enviados strong { display: block; color: var(--texto); }
+  .resultados ul.enviados span { font-size: 12px; color: var(--fraco); }
+  .resultados ul.enviados code { display: block; font-family: var(--mono); font-size: 11.5px; word-break: break-all; color: var(--apoio); margin-top: 4px; }
+  .resultados ul.falhas li { font-size: 13px; color: var(--texto); margin-bottom: 4px; }
+  @media (max-width: 860px) { .duas { grid-template-columns: 1fr; } .btn.enviar { width: 100%; } }
+</style>
+</head>
+<body data-rota="/app/team">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <a href="#" class="volta"><i class="ph ph-arrow-left"></i>Equipe</a>
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua empresa</div>
+          <h1>Convidar membros</h1>
+          <p>Cole até 20 emails (um por linha) e escolha a role compartilhada.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="duas">
+        <form class="form">
+          <div class="campo">
+            <label for="emails">Emails</label>
+            <textarea id="emails" rows="8" placeholder="alice@empresa.com&#10;bob@empresa.com">recepcao@clinicavitalis.com.br
+dra.camila@clinicavitalis.com.br</textarea>
+          </div>
+          <div class="campo">
+            <label for="role">Papel</label>
+            <select id="role">
+              <option value="viewer">Somente leitura</option>
+              <option value="agent" selected>Atendente</option>
+              <option value="manager">Gerente</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+          <fieldset class="editor">
+            <legend>Interface</legend>
+            <p>Define quais áreas aparecem na navegação. As permissões continuam sendo determinadas pelo papel. Links de conversas e avisos podem abrir áreas autorizadas que estejam ocultas.</p>
+            <div class="campo">
+              <label for="perfil-interface">Perfil de interface</label>
+              <select id="perfil-interface"><option value="completa" selected>Completa</option><option value="simplificada">Simplificada</option></select>
+              <span class="ajuda">Trocar o perfil restaura sua seleção padrão. Perfil, segurança e acesso à equipe de quem administra continuam disponíveis.</span>
+            </div>
+            <details>
+              <summary>Personalizar áreas visíveis</summary>
+              <ul>
+                <li><strong>Atendimento</strong>
+                  <label class="caixa"><input type="checkbox" checked>Inbox</label>
+                  <label class="caixa"><input type="checkbox" checked>Radar</label>
+                  <label class="caixa"><input type="checkbox" checked>Agenda</label>
+                  <label class="caixa"><input type="checkbox" checked>Respostas rápidas</label>
+                </li>
+                <li><strong>CRM</strong>
+                  <label class="caixa"><input type="checkbox" checked>Funis</label>
+                  <label class="caixa"><input type="checkbox" checked>Contatos</label>
+                  <label class="caixa"><input type="checkbox" checked>Tarefas</label>
+                </li>
+              </ul>
+            </details>
+          </fieldset>
+          <div><button type="submit" class="btn primario enviar"><i class="ph ph-paper-plane-tilt"></i>Enviar convites</button></div>
+        </form>
+
+        <div class="resultados">
+          <h2>Enviados (1)</h2>
+          <ul class="enviados">
+            <li><strong>recepcao@clinicavitalis.com.br</strong><span>Email enviado.</span></li>
+          </ul>
+          <h2 class="falhas">Falhas (1)</h2>
+          <ul class="falhas">
+            <li>dra.camila@clinicavitalis.com.br — Já é membro desta organização.</li>
+          </ul>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

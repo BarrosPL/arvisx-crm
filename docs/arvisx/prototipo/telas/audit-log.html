@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audit Log</title>
+<meta name="grupo" content="Análise">
+<meta name="ordem" content="70">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .filtros-card { margin-bottom: 16px; }
+  .filtros-card .corpo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; align-items: end; padding: 14px 18px; }
+  .filtros-card .campo { gap: 4px; }
+  .filtros-card .campo label { font-size: 12px; color: var(--apoio); }
+  .filtros-card .campo input { height: 36px; font-size: 13px; }
+  .filtros-card .campo input.mono { font-size: 12.5px; }
+  .log td { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+  .log td.meta, .log td.req { font-size: 10.5px; color: var(--fraco); }
+  .log td.meta { max-width: 420px; overflow: hidden; text-overflow: ellipsis; }
+  .log td.nulo { color: var(--fraco); }
+  .paginar { display: flex; justify-content: center; margin-top: 16px; }
+  @media (max-width: 1100px) { .filtros-card .corpo { grid-template-columns: repeat(2, minmax(0, 1fr)); } .filtros-card .corpo .btn { grid-column: 1 / -1; } }
+  @media (max-width: 860px) { .filtros-card .corpo { grid-template-columns: 1fr; } .log td.meta { max-width: 260px; } }
+</style>
+</head>
+<body data-rota="/app/audit">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Análise · O histórico que se consulta</div>
+          <h1>Audit Log</h1>
+          <p>Histórico append-only de mutações na organização. Manager+.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao filtros-card">
+        <div class="corpo">
+          <div class="campo"><label for="acao">Ação contém</label><input id="acao" type="text" class="mono" placeholder="ex: lead.created"></div>
+          <div class="campo"><label for="recurso">Tipo de recurso</label><input id="recurso" type="text" class="mono" placeholder="ex: contact"></div>
+          <div class="campo"><label for="de">De</label><input id="de" type="datetime-local" class="mono"></div>
+          <div class="campo"><label for="ate">Até</label><input id="ate" type="datetime-local" class="mono"></div>
+          <button class="btn secundario bloco"><i class="ph ph-download-simple"></i>Exportar CSV</button>
+        </div>
+      </div>
+
+      <div class="cartao" style="overflow-x:auto">
+        <table class="tabela compacta rolavel log">
+          <thead><tr><th>Quando</th><th>Ator</th><th>Ação</th><th>Recurso</th><th>Request ID</th><th>Metadata</th></tr></thead>
+          <tbody>
+            <tr><td>03/11/2026, 14:20:11</td><td>a1b2c3d4</td><td>lead.moved</td><td>crm_lead:7f3a9c21</td><td class="req">9e21f0ab</td><td class="meta">{"from_stage_id":"c3d1e5f7-2a4b-4c6d-8e9f-0a1b2c3d4e5f","to_stage_id":"d4e2f6a8-3b5c-4d7e-9f0a-1b2c3d4e5f6a"}</td></tr>
+            <tr><td>03/11/2026, 13:52:40</td><td>a1b2c3d4</td><td>contact.updated</td><td>contact:5b8e2d10</td><td class="req">4c7a19ef</td><td class="meta">{"fields":["name","email"]}</td></tr>
+            <tr><td>03/11/2026, 11:05:03</td><td>system</td><td>message.sent</td><td>message:0f9a6b3c</td><td class="req">b2d8e3c1</td><td class="meta">{"channel_session_id":"e5f3a7b9-4c6d-4e8f-a0b1-2c3d4e5f6a7b","kind":"text"}</td></tr>
+            <tr><td>03/11/2026, 09:48:27</td><td>f7e6d5c4</td><td>conversation.claimed</td><td>conversation:a3c9e1f2</td><td class="req">71ab02de</td><td class="meta">{"previous_assignee":null}</td></tr>
+            <tr><td>03/11/2026, 09:41:12</td><td>a1b2c3d4</td><td>channel.connected</td><td>channel_session:c8d2a4e6</td><td class="req">e3f90c17</td><td class="meta">{"provider":"waha","status":"WORKING"}</td></tr>
+            <tr><td>02/11/2026, 18:42:55</td><td>token:3d9f1a7c</td><td>lead.created</td><td>crm_lead:b1e4d7a0</td><td class="req">0d5c8e2b</td><td class="meta">{"source":"webhook","pipeline_id":"9a8b7c6d-5e4f-4a3b-2c1d-0e9f8a7b6c5d","stage_id":"1a2b3c4d-…</td></tr>
+            <tr><td>02/11/2026, 16:10:08</td><td>system</td><td>financeiro.lancamento_pago</td><td>financial_entry:6e2c9b4f</td><td class="req">c91e4f0a</td><td class="meta">{"account_id":"2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e","amount_cents":180000}</td></tr>
+            <tr><td>02/11/2026, 10:31:46</td><td>f7e6d5c4</td><td>ai_agent.published</td><td>ai_agent_version:d7a1f3e5</td><td class="req">5a6b7c8d</td><td class="meta">{"version":12}</td></tr>
+            <tr><td>01/11/2026, 15:03:19</td><td>platform_admin</td><td>member.role_changed</td><td>membership:4f8b2c6a</td><td class="req">8f1e2d3c</td><td class="meta">{"from":"agent","to":"manager"}</td></tr>
+            <tr><td>01/11/2026, 09:12:33</td><td>system</td><td>authz.denied</td><td class="nulo">—</td><td class="req">2c3d4e5f</td><td class="meta">{"route":"/api/v1/audit/export","required_role":"manager"}</td></tr>
+            <tr><td>31/10/2026, 17:45:02</td><td>a1b2c3d4</td><td>contact.merged</td><td>contact:9c0d1e2f</td><td class="req">d4e5f6a7</td><td class="meta">{"merged_from":"7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c0d"}</td></tr>
+            <tr><td>31/10/2026, 08:00:14</td><td>system</td><td>system.update_finished</td><td>organization:0a1b2c3d</td><td class="req nulo">—</td><td class="meta">{"version":"1.2.3"}</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="paginar"><button class="btn secundario">Carregar mais</button></div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Onde ele organiza</title>
+<meta name="grupo" content="Entrada">
+<meta name="ordem" content="22">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .onb { max-width: 760px; margin: 0 auto; padding: 32px 24px 64px; }
+  .onb-topo { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+  .onb-topo .lockup img { height: 36px; } .onb-topo .lockup b { font-size: 20px; }
+  .onb-topo .org { text-align: right; }
+  .onb-topo .org .rotulo { margin-bottom: 3px; }
+  .onb-topo .org strong { font-family: var(--display); font-stretch: 110%; font-weight: 650; letter-spacing: -.02em; font-size: 16px; }
+  .onb .passos { justify-content: space-between; margin: 20px 0 28px; }
+  .onb-cab { margin-bottom: 20px; }
+  .onb-cab h2 { font-family: var(--display); font-stretch: 112%; font-weight: 650; letter-spacing: -.03em; font-size: 26px; line-height: 1.1; color: var(--navy); }
+  .onb-cab p { color: var(--apoio); margin-top: 6px; max-width: 64ch; }
+  .rodape-nav { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 20px; align-items: center; }
+  .colunas { display: grid; gap: 8px; margin-top: 14px; }
+  .colunas li { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--linha); border-radius: var(--r-sm); background: var(--painel); }
+  .colunas li .num { width: 20px; flex: none; font: 600 11px/38px var(--mono); color: var(--fraco); }
+  .colunas li .campo { flex: 1; min-width: 0; }
+  .colunas li .obrig { font: 500 11px/30px var(--mono); color: var(--fraco); flex: none; }
+  .colunas li .btn { flex: none; }
+  .onb details { margin-top: 16px; font-size: 13px; }
+  .onb details summary { cursor: pointer; font-weight: 600; color: var(--apoio); }
+  .onb details p { margin-top: 6px; font-size: 12px; color: var(--apoio); }
+  .onb details .mono { color: var(--texto); }
+  .modelo { display: inline-block; margin-top: 16px; font-size: 13.5px; text-decoration: underline; text-underline-offset: 3px; }
+  @media (max-width: 860px) {
+    .onb { padding: 20px 16px 48px; }
+    .onb-topo img { height: 28px; }
+    .onb .passos li + li::before { width: 12px; margin: 0 4px; }
+    .onb .passos li { gap: 6px; }
+    .colunas li { flex-wrap: wrap; }
+    .colunas li .campo { flex-basis: calc(100% - 30px); }
+    .colunas li .btn, .colunas li .obrig { margin-left: 30px; }
+    .rodape-nav .btn { flex: 1; }
+  }
+</style>
+</head>
+<body data-rota="/onboarding/funil">
+<div class="onb">
+  <header class="onb-topo">
+    <span class="lockup g escuro" aria-label="ARVISX CRM"><img src="../marca/arvisx-simbolo.png" alt=""><b>ARVISX<em>CRM</em></b></span>
+    <div class="org"><span class="rotulo">ARVISX CRM</span><strong>Clínica Vitalis</strong></div>
+  </header>
+  <div class="fio" style="margin:0"></div>
+  <ol class="passos" aria-label="Passos">
+    <li class="feito"><span class="n">1</span><span class="t">Seu negócio</span></li>
+    <li class="feito"><span class="n">2</span><span class="t">O telefone dele</span></li>
+    <li class="feito"><span class="n">3</span><span class="t">Treinar</span></li>
+    <li class="atual"><span class="n">4</span><span class="t">Onde ele organiza</span></li>
+    <li><span class="n">5</span><span class="t">Ver ele atender</span></li>
+    <li><span class="n">6</span><span class="t">Quem trabalha com ele</span></li>
+  </ol>
+
+  <main>
+    <header class="onb-cab">
+      <h2>Onde ele organiza seus clientes</h2>
+      <p>Cada cliente vira um cartão que anda por essas colunas. Ele mesmo move o cartão conforme a conversa avança — por isso cada coluna diz também quando ele deve usá-la.</p>
+    </header>
+
+    <div class="aviso-faixa ok" style="margin-bottom:16px"><i class="ph ph-check-circle"></i><span>Seu funcionário montou este quadro olhando o que você me contou sobre o negócio. Ajuste o que quiser.</span></div>
+
+    <section class="cartao"><div class="corpo">
+      <div class="campo">
+        <label for="quadro">Nome do quadro</label>
+        <input id="quadro" type="text" value="Agendamentos">
+      </div>
+      <ol class="colunas">
+        <li><span class="num">1</span><div class="campo"><input type="text" value="Novo contato" aria-label="Nome da coluna 1"><span class="ajuda">Ele move o cliente para cá quando acabou de chamar e ninguém respondeu ainda.</span></div><button class="btn fantasma p">Remover</button></li>
+        <li><span class="num">2</span><div class="campo"><input type="text" value="Já respondi" aria-label="Nome da coluna 2"><span class="ajuda">Ele move o cliente para cá quando já foi respondido.</span></div><button class="btn fantasma p">Remover</button></li>
+        <li><span class="num">3</span><div class="campo"><input type="text" value="Entendendo o caso" aria-label="Nome da coluna 3"><span class="ajuda">Ele move o cliente para cá quando ele está entendendo o que a pessoa precisa.</span></div><button class="btn fantasma p">Remover</button></li>
+        <li><span class="num">4</span><div class="campo"><input type="text" value="Quer agendar" aria-label="Nome da coluna 4"><span class="ajuda">Ele move o cliente para cá quando já dá para saber o que oferecer.</span></div><button class="btn fantasma p">Remover</button></li>
+        <li><span class="num">5</span><div class="campo"><input type="text" value="Escolhendo horário" aria-label="Nome da coluna 5"><span class="ajuda">Ele move o cliente para cá quando está fechando preço, horário ou condições.</span></div><button class="btn fantasma p">Remover</button></li>
+        <li><span class="num">6</span><div class="campo"><input type="text" value="Consulta marcada" aria-label="Nome da coluna 6"><span class="ajuda">Ele move o cliente para cá quando fechou negócio.</span></div><span class="obrig">obrigatória</span></li>
+        <li><span class="num">7</span><div class="campo"><input type="text" value="Não vai marcar" aria-label="Nome da coluna 7"><span class="ajuda">Ele move o cliente para cá quando não fechou.</span></div><span class="obrig">obrigatória</span></li>
+      </ol>
+      <div style="margin-top:12px"><button class="btn secundario p"><i class="ph ph-plus"></i>Adicionar coluna</button></div>
+
+      <details>
+        <summary>O que veio na instalação (Vendas)</summary>
+        <p class="mono">Novo contato → Já respondi → Escolhendo o produto → Vai levar → Aguardando pagamento → Pedido pago → Não comprou</p>
+        <p>Este é o quadro padrão, feito para loja online. Ao continuar, ele é substituído pelo de cima.</p>
+      </details>
+
+      <a href="#" class="modelo">Prefiro começar de um modelo pronto</a>
+    </div></section>
+
+    <div class="rodape-nav">
+      <button class="btn fantasma">Pular por enquanto</button>
+      <button class="btn primario">Usar este quadro</button>
+    </div>
+  </main>
+</div>
+</body>
+</html>

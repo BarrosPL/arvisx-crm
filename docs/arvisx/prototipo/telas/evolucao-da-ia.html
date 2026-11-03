@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evolução da IA</title>
+<meta name="grupo" content="Análise">
+<meta name="ordem" content="60">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .pilha { display: flex; flex-direction: column; gap: 32px; }
+  .periodo { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 16px 18px; }
+  .periodo .txt strong { display: block; font-size: 13.5px; margin-bottom: 3px; }
+  .periodo .txt span { color: var(--apoio); font-size: 12.5px; }
+  .periodo .datas { display: flex; gap: 12px; }
+  .periodo .campo { gap: 4px; }
+  .periodo .campo label { font-size: 12px; color: var(--apoio); }
+  .periodo .campo input { width: 150px; height: 34px; font-family: var(--mono); font-size: 13px; }
+  .bloco { display: flex; flex-direction: column; gap: 14px; }
+  .bloco > header h2 { font-family: var(--display); font-stretch: 108%; font-weight: 620; letter-spacing: -.02em; font-size: 19px; display: flex; align-items: center; gap: 10px; }
+  .bloco > header p { color: var(--apoio); margin-top: 4px; }
+  .stat { padding: 16px 18px; }
+  .stat .rotulo { margin-bottom: 8px; }
+  .stat .v { font-family: var(--display); font-stretch: 108%; font-weight: 650; font-size: 26px; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .stat .sig { color: var(--apoio); font-size: 12px; line-height: 1.5; margin-top: 8px; }
+  .cartao > .cab .sub { display: block; color: var(--apoio); font-size: 12px; margin-top: 3px; font-weight: 400; }
+  .tl-apr { max-height: 320px; overflow-y: auto; }
+  .tl-apr li { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--linha); }
+  .tl-apr li:last-child { border-bottom: 0; }
+  .tl-apr li i { font-size: 18px; flex: none; margin-top: 1px; }
+  .tl-apr li .k { color: var(--fraco); font-size: 12px; }
+  .tl-apr li .t { font-size: 13.5px; margin-top: 2px; }
+  .graf { padding: 16px 18px; }
+  .graf h3 { font-size: 13.5px; font-weight: 700; }
+  .graf .sig { color: var(--apoio); font-size: 12px; margin-top: 3px; }
+  .graf .tot { font-family: var(--display); font-stretch: 108%; font-weight: 650; font-size: 24px; letter-spacing: -.03em; margin-top: 10px; font-variant-numeric: tabular-nums; }
+  .graf .tot small { font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--fraco); letter-spacing: 0; margin-left: 4px; }
+  .grafico { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 0 8px; margin-top: 10px; }
+  .grafico .eixo-y { display: flex; flex-direction: column; justify-content: space-between; color: var(--fraco); font: 500 11px/1 var(--mono); text-align: right; height: 160px; padding: 4px 0 8px; }
+  .grafico svg { width: 100%; height: 160px; }
+  .grafico .eixo-x { grid-column: 2; display: flex; justify-content: space-between; color: var(--fraco); font: 500 11px/1 var(--mono); margin-top: 6px; }
+  .rank .cab h3 { font-size: 13.5px; }
+  .rank li { padding: 7px 0; }
+  .rank li .t { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; margin-bottom: 5px; }
+  .rank li .t span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rank li .t .mono { color: var(--apoio); }
+  .rank .barra { height: 5px; }
+  .lacunas { display: flex; flex-direction: column; gap: 12px; }
+  .lacuna { display: flex; align-items: flex-start; gap: 12px; padding: 18px 20px; }
+  .lacuna > i { font-size: 20px; color: var(--aviso); flex: none; margin-top: 1px; }
+  .lacuna p { font-size: 13.5px; line-height: 1.55; }
+  .lacuna .link { display: inline-block; margin-top: 8px; font-size: 13px; }
+  @media (max-width: 860px) { .periodo .datas { width: 100%; } .periodo .campo { flex: 1; } .periodo .campo input { width: 100%; } }
+</style>
+</head>
+<body data-rota="/app/ai/evolution">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Análise · O histórico que se consulta</div>
+          <h1>Evolução da IA</h1>
+          <p>O que seu agente aprendeu no período, o que ele fez com isso, o que mudou no seu resultado — e o que ainda está travando.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <div class="cartao periodo">
+          <div class="txt"><strong>Período analisado</strong><span>Todos os números desta página são só deste intervalo. Mude as datas para comparar um mês com o outro.</span></div>
+          <div class="datas">
+            <div class="campo"><label for="evolution-de">De</label><input id="evolution-de" type="date" value="2026-10-05"></div>
+            <div class="campo"><label for="evolution-ate">Até</label><input id="evolution-ate" type="date" value="2026-11-03"></div>
+          </div>
+        </div>
+
+        <!-- Bloco 1 -->
+        <section class="bloco">
+          <header><h2><span class="ia-tag"></span>O que seu agente aprendeu</h2><p>Tudo o que entrou na cabeça dele neste período, e de onde veio.</p></header>
+          <div class="grade c3">
+            <div class="cartao stat"><span class="rotulo">Regras que você ensinou</span><div class="v">6</div><p class="sig">Instruções publicadas na Memória da IA. Valem para toda conversa, de todos os agentes.</p></div>
+            <div class="cartao stat"><span class="rotulo">Melhorias que você aprovou</span><div class="v">4</div><p class="sig">Sugestões que o sistema tirou dos próprios atendimentos e que você revisou e aceitou.</p></div>
+            <div class="cartao stat"><span class="rotulo">Habilidades instaladas</span><div class="v">2</div><p class="sig">Skills que o agente passou a carregar quando a conversa pede — por exemplo, fechar um agendamento.</p></div>
+          </div>
+          <div class="cartao">
+            <div class="cab"><div><h3>Linha do tempo do aprendizado</h3><span class="sub">Cada linha é uma coisa nova que o agente passou a saber, na ordem em que aconteceu.</span></div></div>
+            <div class="corpo" style="padding-top:4px;padding-bottom:4px">
+              <ol class="tl-apr">
+                <li><i class="ph ph-brain" style="color:var(--ouro-escuro)"></i><div><div class="k"><span class="mono">02/11</span> · Regra que você ensinou</div><div class="t">Nunca prometer desconto sem a aprovação da coordenação</div></div></li>
+                <li><i class="ph ph-lightbulb" style="color:var(--aviso)"></i><div><div class="k"><span class="mono">30/10</span> · Melhoria que você aprovou</div><div class="t">Quando o paciente perguntar sobre convênio, confirmar a operadora antes de responder sobre cobertura</div></div></li>
+                <li><i class="ph ph-puzzle-piece" style="color:var(--sinal)"></i><div><div class="k"><span class="mono">27/10</span> · Habilidade instalada</div><div class="t">Agendamento de avaliação</div></div></li>
+                <li><i class="ph ph-brain" style="color:var(--ouro-escuro)"></i><div><div class="k"><span class="mono">24/10</span> · Regra que você ensinou</div><div class="t">Horário de atendimento: segunda a sexta, das 8h às 19h; sábado até 13h</div></div></li>
+                <li><i class="ph ph-lightbulb" style="color:var(--aviso)"></i><div><div class="k"><span class="mono">21/10</span> · Melhoria que você aprovou</div><div class="t">Oferecer o parcelamento em até 12 vezes logo que o paciente citar o valor do implante</div></div></li>
+                <li><i class="ph ph-brain" style="color:var(--ouro-escuro)"></i><div><div class="k"><span class="mono">15/10</span> · Regra que você ensinou</div><div class="t">Chamar o paciente pelo primeiro nome</div></div></li>
+                <li><i class="ph ph-puzzle-piece" style="color:var(--sinal)"></i><div><div class="k"><span class="mono">09/10</span> · Habilidade instalada</div><div class="t">Envio de orçamento em PDF</div></div></li>
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <!-- Bloco 2 -->
+        <section class="bloco">
+          <header><h2>O que ele fez</h2><p>O trabalho do dia a dia: quantas vezes ele usou cada recurso que você deu a ele.</p></header>
+          <div class="grade c3">
+            <div class="cartao graf">
+              <h3>Habilidades usadas</h3><p class="sig">Quantas vezes o agente puxou uma habilidade especializada para dar conta da conversa.</p>
+              <div class="tot">75<small>no período</small></div>
+              <div class="grafico" role="img" aria-label="Habilidades usadas por dia">
+                <div class="eixo-y"><span>8</span><span>4</span><span>0</span></div>
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                  <line x1="0" y1="11" x2="100" y2="11" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+                  <line x1="0" y1="53" x2="100" y2="53" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+                  <line x1="0" y1="95" x2="100" y2="95" stroke="var(--linha)" vector-effect="non-scaling-stroke"/>
+                  <polyline fill="none" stroke="var(--ouro)" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="0,74 3.45,63.5 6.9,84.5 10.34,53 13.79,74 17.24,95 20.69,95 24.14,63.5 27.59,42.5 31.03,74 34.48,53 37.93,84.5 41.38,95 44.83,95 48.28,32 51.72,63.5 55.17,74 58.62,53 62.07,42.5 65.52,84.5 68.97,95 72.41,95 75.86,63.5 79.31,53 82.76,11 86.21,74 89.66,42.5 93.1,63.5 96.55,74 100,95"/>
+                </svg>
+                <div class="eixo-x"><span>05/10</span><span>19/10</span><span>03/11</span></div>
+              </div>
+            </div>
+            <div class="cartao graf">
+              <h3>Conversas encaminhadas</h3><p class="sig">Quantas vezes o sistema leu o que o cliente queria e escolheu qual atendimento devia responder.</p>
+              <div class="tot">193<small>no período</small></div>
+              <div class="grafico" role="img" aria-label="Conversas encaminhadas por dia">
+                <div class="eixo-y"><span>14</span><span>7</span><span>0</span></div>
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                  <line x1="0" y1="11" x2="100" y2="11" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+                  <line x1="0" y1="53" x2="100" y2="53" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+                  <line x1="0" y1="95" x2="100" y2="95" stroke="var(--linha)" vector-effect="non-scaling-stroke"/>
+                  <polyline fill="none" stroke="var(--sinal)" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="0,59 3.45,47 6.9,65 10.34,41 13.79,53 17.24,89 20.69,95 24.14,47 27.59,29 31.03,59 34.48,41 37.93,71 41.38,89 44.83,95 48.28,23 51.72,47 55.17,53 58.62,35 62.07,41 65.52,65 68.97,95 72.41,89 75.86,47 79.31,35 82.76,11 86.21,53 89.66,29 93.1,47 96.55,59 100,83"/>
+                </svg>
+                <div class="eixo-x"><span>05/10</span><span>19/10</span><span>03/11</span></div>
+              </div>
+            </div>
+            <div class="cartao graf">
+              <h3>Consultas aos seus materiais</h3><p class="sig">Quantas vezes o agente foi procurar a resposta no que você escreveu, em vez de improvisar.</p>
+              <div class="tot">142<small>no período</small></div>
+              <div class="grafico" role="img" aria-label="Consultas aos materiais por dia">
+                <div class="eixo-y"><span>11</span><span>5</span><span>0</span></div>
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                  <line x1="0" y1="11" x2="100" y2="11" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+                  <line x1="0" y1="53" x2="100" y2="53" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+                  <line x1="0" y1="95" x2="100" y2="95" stroke="var(--linha)" vector-effect="non-scaling-stroke"/>
+                  <polyline fill="none" stroke="var(--navy)" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="0,64.4 3.45,49.2 6.9,72.1 10.34,41.5 13.79,56.8 17.24,95 20.69,87.4 24.14,49.2 27.59,26.2 31.03,64.4 34.48,41.5 37.93,72.1 41.38,95 44.83,87.4 48.28,33.9 51.72,49.2 55.17,56.8 58.62,41.5 62.07,33.9 65.52,72.1 68.97,95 72.41,95 75.86,49.2 79.31,41.5 82.76,11 86.21,56.8 89.66,26.2 93.1,49.2 96.55,64.4 100,87.4"/>
+                </svg>
+                <div class="eixo-x"><span>05/10</span><span>19/10</span><span>03/11</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="cartao graf">
+            <h3>Consultas da equipe ao acervo</h3><p class="sig">Quantas vezes alguém da equipe perguntou ao acervo pela caixa ao lado da conversa. Não entra nos números do agente.</p>
+            <div class="tot">19<small>no período</small></div>
+            <div class="grafico" role="img" aria-label="Consultas da equipe ao acervo por dia">
+              <div class="eixo-y"><span>3</span><span>2</span><span>1</span><span>0</span></div>
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                <line x1="0" y1="11" x2="100" y2="11" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+                <line x1="0" y1="39" x2="100" y2="39" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+                <line x1="0" y1="67" x2="100" y2="67" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+                <line x1="0" y1="95" x2="100" y2="95" stroke="var(--linha)" vector-effect="non-scaling-stroke"/>
+                <polyline fill="none" stroke="var(--sinal)" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="0,67 3.45,95 6.9,95 10.34,39 13.79,67 17.24,95 20.69,95 24.14,67 27.59,95 31.03,95 34.48,39 37.93,95 41.38,95 44.83,95 48.28,67 51.72,67 55.17,95 58.62,39 62.07,95 65.52,95 68.97,95 72.41,95 75.86,67 79.31,95 82.76,11 86.21,95 89.66,67 93.1,39 96.55,67 100,95"/>
+              </svg>
+              <div class="eixo-x"><span>05/10</span><span>12/10</span><span>19/10</span><span>26/10</span><span>03/11</span></div>
+            </div>
+          </div>
+          <div class="grade c2">
+            <div class="cartao rank">
+              <div class="cab"><div><h3>Habilidades mais usadas</h3><span class="sub">Onde o agente mais precisou de conhecimento especializado.</span></div></div>
+              <div class="corpo" style="padding-top:8px;padding-bottom:8px">
+                <ul>
+                  <li><div class="t"><span>Agendamento de avaliação</span><span class="mono">38</span></div><div class="barra"><span style="width:100%"></span></div></li>
+                  <li><div class="t"><span>Envio de orçamento em PDF</span><span class="mono">21</span></div><div class="barra"><span style="width:55%"></span></div></li>
+                  <li><div class="t"><span>Consulta de convênio</span><span class="mono">11</span></div><div class="barra"><span style="width:29%"></span></div></li>
+                  <li><div class="t"><span>Remarcação de horário</span><span class="mono">5</span></div><div class="barra"><span style="width:13%"></span></div></li>
+                </ul>
+              </div>
+            </div>
+            <div class="cartao rank">
+              <div class="cab"><div><h3>Assuntos mais procurados</h3><span class="sub">O que os clientes mais quiseram, segundo o que o roteador entendeu de cada conversa.</span></div></div>
+              <div class="corpo" style="padding-top:8px;padding-bottom:8px">
+                <ul>
+                  <li><div class="t"><span>Implante dentário</span><span class="mono">64</span></div><div class="barra"><span style="width:100%"></span></div></li>
+                  <li><div class="t"><span>Clareamento</span><span class="mono">47</span></div><div class="barra"><span style="width:73%"></span></div></li>
+                  <li><div class="t"><span>Ortodontia</span><span class="mono">33</span></div><div class="barra"><span style="width:52%"></span></div></li>
+                  <li><div class="t"><span>Urgência / dor</span><span class="mono">26</span></div><div class="barra"><span style="width:41%"></span></div></li>
+                  <li><div class="t"><span>Convênio</span><span class="mono">15</span></div><div class="barra"><span style="width:23%"></span></div></li>
+                  <li><div class="t"><span>Prótese</span><span class="mono">8</span></div><div class="barra"><span style="width:13%"></span></div></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Bloco 3 -->
+        <section class="bloco">
+          <header><h2>O que mudou no resultado</h2><p>O que aconteceu com os seus negócios neste período. Para saber se melhorou, mude as datas acima e compare com o mês anterior.</p></header>
+          <div class="grade c3">
+            <div class="cartao stat"><span class="rotulo">Negócios fechados pelo agente</span><div class="v">5</div><p class="sig">Clientes que o agente marcou como fechados. Negócio que a sua equipe fechou na mão, movendo o cartão no quadro, não entra aqui.</p></div>
+            <div class="cartao stat"><span class="rotulo">Negócios perdidos pelo agente</span><div class="v">3</div><p class="sig">Clientes que o agente marcou como perdidos — contraponto necessário, porque ganhos sem perdidos ao lado enganam. Também não conta o que a sua equipe marcou na mão.</p></div>
+            <div class="cartao stat"><span class="rotulo">Mudanças de passo no atendimento</span><div class="v">41</div><p class="sig">Quantas vezes o agente registrou que um cliente mudou de passo no atendimento — o sinal de que a conversa andou, e não só aconteceu. Inclui as mudanças para fechado e para perdido, então não leia como só progresso. Cartão movido à mão no quadro não entra aqui.</p></div>
+            <div class="cartao stat"><span class="rotulo">Casos que precisaram de uma pessoa</span><div class="v">3,2 a cada 100</div><p class="sig">Conversas que o agente passou para um atendente humano, a cada 100 mensagens recebidas. Leia como estimativa: no geral o mesmo caso conta uma vez só, mesmo que o cliente peça ajuda várias vezes, mas em parte dos atendimentos ele pode contar mais de uma.</p></div>
+            <div class="cartao stat"><span class="rotulo">Custo da IA no período</span><div class="v">US$ 12,34</div><p class="sig">O que você pagou aos provedores de IA para tudo isto acontecer.</p></div>
+          </div>
+        </section>
+
+        <!-- Bloco 4 -->
+        <section class="bloco">
+          <header><h2>O que está travando</h2><p>Cada linha aqui é uma coisa que está limitando seu agente, e o que fazer a respeito — às vezes você mesmo, às vezes quem cuida da sua instalação.</p></header>
+          <ul class="lacunas">
+            <li class="cartao lacuna"><i class="ph ph-warning"></i><div><p>No funil "CRM Vivo — Clínica", <span class="mono">2</span> passos do atendimento não têm etapa correspondente: Em qualificação, Qualificado. Quando o agente chega em um desses passos, o card do cliente não se move — ele fica onde está. Às vezes isso é proposital: nem todo funil precisa de uma etapa para cada passo. Mas se você esperava ver esses clientes andarem sozinhos no quadro, é aqui que falta o vínculo — e você mesmo escolhe, passo a passo, para qual etapa o card vai.</p><a href="#" class="link">Escolher a etapa de cada passo</a></div></li>
+            <li class="cartao lacuna"><i class="ph ph-warning"></i><div><p><span class="mono">7</span> perguntas de clientes não encontraram resposta nos seus materiais. São os assuntos que ainda faltam escrever — cada um deles é uma conversa em que o agente teve que improvisar ou passar adiante.</p><a href="#" class="link">Abrir a base de conhecimento</a></div></li>
+            <li class="cartao lacuna"><i class="ph ph-warning"></i><div><p>Destas, <span class="mono">3</span> chegaram perto: havia material parecido, mas não parecido o bastante para o agente arriscar usar. Aqui o conteúdo provavelmente já existe — só está escrito com palavras diferentes das que o cliente usa. Vale reescrever esses materiais com as perguntas do jeito que chegam.</p><a href="#" class="link">Abrir a base de conhecimento</a></div></li>
+            <li class="cartao lacuna"><i class="ph ph-warning"></i><div><p>Em <span class="mono">4</span> conversas o agente não soube para qual atendimento encaminhar e usou o atendimento padrão. Se isso se repete, falta cadastrar esse assunto no roteador do seu número.</p><a href="#" class="link">Abrir os roteadores</a></div></li>
+          </ul>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

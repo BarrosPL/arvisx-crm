@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Execuções de IA</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="73">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .resumo .corpo { display: grid; gap: 10px; }
+  .resumo .frase { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .resumo .frase.erro { color: var(--erro); }
+  .resumo .frase i { font-size: 18px; }
+  .resumo li { display: flex; align-items: baseline; gap: 10px; font-size: 13px; color: var(--apoio); }
+  .resumo li .tag { flex: none; }
+  .exec { display: grid; gap: 12px; }
+  .exec .cartao { padding: 14px 18px; }
+  .exec .l1 { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .exec .l1 .ponto { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13.5px; }
+  .exec .l1 .modelo { font: 500 11.5px/1 var(--mono); color: var(--apoio); white-space: nowrap; }
+  .exec .numeros { color: var(--apoio); font-size: 12.5px; margin-top: 6px; }
+  .exec .falha { margin-top: 8px; display: grid; gap: 4px; font-size: 13px; }
+  .exec .falha strong { font-weight: 700; }
+  .exec details { margin-top: 6px; font-size: 12.5px; }
+  .exec details summary { cursor: pointer; color: var(--apoio); font-weight: 600; }
+  .exec details pre { margin-top: 6px; padding: 10px 12px; border-radius: var(--r-sm); background: var(--navy); color: var(--inverso); font: 400 12px/1.5 var(--mono); white-space: pre-wrap; word-break: break-word; }
+  .exec details .cod { color: var(--fraco); margin-top: 4px; }
+  .exec .pe-exec { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--linha); color: var(--fraco); font-size: 12px; }
+  .exec .pe-exec a { color: var(--apoio); text-decoration: underline; text-decoration-color: var(--linha-forte); text-underline-offset: 3px; }
+  .exec .cartao.falhou { box-shadow: inset 3px 0 0 var(--erro); }
+</style>
+</head>
+<body data-rota="/app/ai/runs">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Agente de IA</div>
+          <h1>Execuções de IA</h1>
+          <p>Tudo que a inteligência artificial fez por aqui — e, quando algo falhou, o que aconteceu e o que fazer.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="abas" role="tablist">
+        <a href="#" role="tab" aria-selected="true">Execuções</a>
+        <a href="#" role="tab" aria-selected="false">Roteamento</a>
+      </div>
+
+      <div class="cartao resumo" style="margin-bottom:16px">
+        <div class="corpo">
+          <div class="frase erro"><i class="ph ph-warning-circle"></i><span><span class="mono">2</span> de <span class="mono">48</span> execuções falharam.</span></div>
+          <ul>
+            <li><span class="tag mono erro">2×</span><span>o que fazer: aguarde um minuto e tente de novo; se repetir, aumente o limite de uso na conta do provedor.</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="filtros">
+        <button class="filtro">Ver só as falhas</button>
+        <button class="filtro">Só o Jev</button>
+      </div>
+
+      <div class="exec">
+        <div class="cartao">
+          <div class="l1"><div class="ponto"><span class="avatar p ia"><i class="ph ph-robot"></i></span>Responder o cliente</div><span class="modelo">anthropic · claude-sonnet-4-6</span></div>
+          <div class="numeros mono">1.842 tokens · 2.310 ms · US$ 0,0123</div>
+          <div class="pe-exec"><span class="mono">03/11/2026 14:21</span><a href="#">por que este modelo</a></div>
+        </div>
+
+        <div class="cartao falhou">
+          <div class="l1"><div class="ponto"><span class="avatar p ia"><i class="ph ph-robot"></i></span>Responder o cliente<span class="tag erro">falhou</span></div><span class="modelo">anthropic · claude-sonnet-4-6</span></div>
+          <div class="falha">
+            <div><strong>O que aconteceu:</strong> o cliente ficou sem resposta nesta vez; a conversa seguiu para a fila humana.</div>
+            <div><strong>O que fazer:</strong> aguarde um minuto e tente de novo; se repetir, aumente o limite de uso na conta do provedor.</div>
+          </div>
+          <details open>
+            <summary>Mensagem técnica do provedor</summary>
+            <pre>rate_limit_error: This request would exceed your organization's rate limit of 50 requests per minute.</pre>
+            <div class="cod mono">(código 429)</div>
+          </details>
+          <div class="pe-exec"><span class="mono">03/11/2026 14:18</span><a href="#">por que este modelo</a></div>
+        </div>
+
+        <div class="cartao">
+          <div class="l1"><div class="ponto"><span class="avatar p ia"><i class="ph ph-robot"></i></span>Classificar a intenção (Jev)</div><span class="modelo">google · gemini-2.5-flash</span></div>
+          <div class="numeros mono">312 tokens · 480 ms · US$ 0,0004</div>
+          <div class="pe-exec"><span class="mono">03/11/2026 14:17</span><a href="#">por que este modelo</a></div>
+        </div>
+
+        <div class="cartao">
+          <div class="l1"><div class="ponto"><span class="avatar p ia"><i class="ph ph-robot"></i></span>Resumir a conversa para o caso</div><span class="modelo">anthropic · claude-haiku-4-5</span></div>
+          <div class="numeros mono">2.960 tokens · 1.120 ms · US$ 0,0031</div>
+          <div class="pe-exec"><span class="mono">03/11/2026 12:04</span><a href="#">por que este modelo</a></div>
+        </div>
+
+        <div class="cartao">
+          <div class="l1"><div class="ponto"><span class="avatar p ia"><i class="ph ph-robot"></i></span>Preparar material do acervo</div><span class="modelo">openai · text-embedding-3-small</span></div>
+          <div class="numeros mono">8.410 tokens · 640 ms · US$ 0,0002</div>
+          <div class="pe-exec"><span class="mono">03/11/2026 09:40</span><a href="#">por que este modelo</a></div>
+        </div>
+
+        <div class="cartao falhou">
+          <div class="l1"><div class="ponto"><span class="avatar p ia"><i class="ph ph-robot"></i></span>Responder o cliente<span class="tag erro">falhou</span></div><span class="modelo">anthropic · claude-sonnet-4-6</span></div>
+          <div class="falha">
+            <div><strong>O que aconteceu:</strong> o cliente ficou sem resposta nesta vez; a conversa seguiu para a fila humana.</div>
+            <div><strong>O que fazer:</strong> aguarde um minuto e tente de novo; se repetir, aumente o limite de uso na conta do provedor.</div>
+          </div>
+          <details>
+            <summary>Mensagem técnica do provedor</summary>
+            <pre>rate_limit_error: This request would exceed your organization's rate limit of 50 requests per minute.</pre>
+            <div class="cod mono">(código 429)</div>
+          </details>
+          <div class="pe-exec"><span class="mono">02/11/2026 18:52</span><a href="#">por que este modelo</a></div>
+        </div>
+
+        <div class="cartao">
+          <div class="l1"><div class="ponto"><span class="avatar p ia"><i class="ph ph-robot"></i></span>Sugerir o próximo passo</div><span class="modelo">anthropic · claude-sonnet-4-6</span></div>
+          <div class="numeros mono">1.206 tokens · 1.760 ms · US$ 0,0087</div>
+          <div class="pe-exec"><span class="mono">02/11/2026 17:30</span><a href="#">por que este modelo</a></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

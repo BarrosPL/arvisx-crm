@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Funis</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="10">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .funil-linha { display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center; padding: 16px 18px; border-bottom: 1px solid var(--linha); }
+  .funil-linha:last-child { border-bottom: 0; }
+  .funil-linha:hover { background: var(--fundo); }
+  .funil-linha .ordem { display: flex; flex-direction: column; gap: 2px; }
+  .funil-linha .ordem button { width: 22px; height: 18px; border-radius: 4px; color: var(--fraco); display: grid; place-items: center; font-size: 12px; }
+  .funil-linha .ordem button:hover { background: var(--painel-2); color: var(--texto); }
+  .funil-linha .nome { font-family: var(--display); font-stretch: 106%; font-weight: 620; font-size: 16px; letter-spacing: -.015em; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .funil-linha .nome a:hover { text-decoration: underline; text-decoration-color: var(--ouro); text-underline-offset: 4px; }
+  .funil-linha .desc { color: var(--apoio); font-size: 12.5px; margin-top: 3px; }
+  .funil-linha .slug { font: 500 11.5px/1 var(--mono); color: var(--fraco); margin-top: 6px; }
+  .funil-linha .etapas { display: flex; gap: 4px; margin-top: 10px; }
+  .funil-linha .etapas span { height: 4px; flex: 1; max-width: 56px; border-radius: 2px; background: var(--painel-3); }
+  .funil-linha .etapas span.ouro { background: var(--ouro); }
+  .funil-linha .etapas span.ok { background: var(--ok); }
+  .funil-linha .acoes { display: flex; gap: 2px; visibility: hidden; }
+  .funil-linha:hover .acoes { visibility: visible; }
+  .funil-linha .acoes .btn { color: var(--apoio); }
+  @media (max-width: 860px) { .funil-linha { grid-template-columns: 1fr; } .funil-linha .ordem { flex-direction: row; } .funil-linha .acoes { visibility: visible; flex-wrap: wrap; } }
+</style>
+</head>
+<body data-rota="/app/kanban">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM</div>
+          <h1>Funis</h1>
+          <p>Seus funis de venda — clique em um para abrir o quadro de clientes.</p>
+        </div>
+        <div class="acoes">
+          <button class="btn secundario"><i class="ph ph-upload-simple"></i>Importar planilha</button>
+          <button class="btn primario"><i class="ph ph-plus"></i>Novo funil</button>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao" style="margin-bottom:20px">
+        <div class="corpo" style="display:flex;gap:10px;align-items:center">
+          <input class="entrada" type="text" placeholder="Nome do funil — ex.: Consultas, Obras, Matrículas" aria-label="Nome do novo funil" style="flex:1">
+          <button class="btn primario">Criar funil</button>
+          <button class="btn fantasma">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="cartao">
+        <div class="funil-linha">
+          <div class="ordem"><button aria-label="Subir «Pedidos» na lista"><i class="ph ph-caret-up"></i></button><button aria-label="Descer «Pedidos» na lista"><i class="ph ph-caret-down"></i></button></div>
+          <div>
+            <div class="nome"><a href="#">Pedidos</a><span class="tag ouro">Padrão</span></div>
+            <div class="desc">Pedidos da loja e orçamentos do WhatsApp.</div>
+            <div class="slug">/pedidos</div>
+            <div class="etapas"><span class="ouro"></span><span class="ouro"></span><span class="ouro"></span><span class="ok"></span><span></span></div>
+          </div>
+          <div class="acoes">
+            <button class="btn fantasma p icone" title="Renomear" aria-label="Renomear"><i class="ph ph-pencil-simple"></i></button>
+            <button class="btn fantasma p icone" title="Funil de clientes" aria-label="Funil de clientes"><i class="ph ph-check"></i></button>
+            <button class="btn fantasma p icone" title="Arquivar" aria-label="Arquivar"><i class="ph ph-archive"></i></button>
+          </div>
+        </div>
+        <div class="funil-linha">
+          <div class="ordem"><button aria-label="Subir «CRM Vivo — Clínica» na lista"><i class="ph ph-caret-up"></i></button><button aria-label="Descer «CRM Vivo — Clínica» na lista"><i class="ph ph-caret-down"></i></button></div>
+          <div>
+            <div class="nome"><a href="#">CRM Vivo — Clínica</a><span class="tag">Clientes</span></div>
+            <div class="desc">Board de demonstração do CRM Vivo. Determinístico e re-executável.</div>
+            <div class="slug">/crm-vivo-clinica</div>
+            <div class="etapas"><span class="ouro"></span><span class="ouro"></span><span class="ouro"></span><span class="ouro"></span><span class="ok"></span><span></span></div>
+          </div>
+          <div class="acoes">
+            <button class="btn fantasma p icone" title="Renomear" aria-label="Renomear"><i class="ph ph-pencil-simple"></i></button>
+            <button class="btn fantasma p icone" title="Tornar padrão" aria-label="Tornar padrão"><i class="ph ph-check"></i></button>
+            <button class="btn fantasma p icone" title="Deixar de ser funil de clientes" aria-label="Deixar de ser funil de clientes"><i class="ph ph-check"></i></button>
+            <button class="btn fantasma p icone" title="Arquivar" aria-label="Arquivar"><i class="ph ph-archive"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px">
+        <button class="btn fantasma p"><i class="ph ph-archive"></i>Funis arquivados (1)<i class="ph ph-caret-down"></i></button>
+      </div>
+
+      <p class="fraco pequeno" style="margin-top:16px">Quem já tem atendimento marcado entra pelo funil de clientes. Sem um funil marcado, entra pelo padrão.</p>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

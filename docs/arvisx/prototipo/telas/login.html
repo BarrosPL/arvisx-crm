@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entrar</title>
+<meta name="grupo" content="Entrada">
+<meta name="ordem" content="10">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+</head>
+<body data-rota="/login">
+<div class="publico">
+  <section class="lado">
+    <span class="lockup g" aria-label="ARVISX CRM"><img src="../marca/arvisx-simbolo-branco.png" alt=""><b>ARVISX<em>CRM</em></b></span>
+    <div>
+      <h1>O elo inteligente do seu <em>ecossistema</em>.</h1>
+      <p>Agentes de IA que atendem, qualificam e vendem no WhatsApp, dentro do CRM da sua empresa.</p>
+      <div class="fio"></div>
+    </div>
+    <p class="pe">ARVISX CRM · atendimento com IA</p>
+    <div class="anel" aria-hidden="true"></div>
+  </section>
+  <section class="formulario">
+    <div>
+      <h2>Entrar</h2>
+      <p class="apoio">ARVISX CRM</p>
+      <form class="form" novalidate>
+        <div class="campo">
+          <label for="email">Email</label>
+          <input id="email" type="email" autocomplete="email" autofocus>
+        </div>
+        <div class="campo">
+          <label for="senha">Senha</label>
+          <div style="position:relative">
+            <input id="senha" type="password" style="padding-right:44px">
+            <button type="button" aria-label="Mostrar senha" style="position:absolute;right:0;top:0;width:44px;height:38px;display:grid;place-items:center;color:var(--fraco)"><i class="ph ph-eye" style="font-size:20px"></i></button>
+          </div>
+        </div>
+        <button type="submit" class="btn primario g bloco">Entrar</button>
+      </form>
+      <div style="display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--fraco);font:600 10.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase">
+        <span style="flex:1;height:1px;background:var(--linha)"></span>ou<span style="flex:1;height:1px;background:var(--linha)"></span>
+      </div>
+      <button type="button" class="btn secundario g bloco"><i class="ph ph-google-logo"></i>Entrar com Google</button>
+      <div style="text-align:center;margin-top:24px;display:grid;gap:8px;font-size:13.5px">
+        <a href="#" class="apoio" style="text-decoration:underline;text-underline-offset:4px">Esqueci minha senha</a>
+        <span class="apoio">Não tem conta? <a href="#" class="link">Criar conta</a></span>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

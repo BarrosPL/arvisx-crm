@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meta Ads</title>
+<meta name="grupo" content="Análise">
+<meta name="ordem" content="30">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .filtros { align-items: flex-end; }
+  .filtros .campo { gap: 4px; }
+  .filtros .campo label { font-size: 12px; color: var(--apoio); font-weight: 600; }
+  .campanhas { overflow-x: auto; }
+  .campanhas .tabela { min-width: 1480px; }
+  .campanhas th:first-child, .campanhas td:first-child { position: sticky; left: 0; background: var(--painel); z-index: 1; }
+  .campanhas thead th:first-child { background: var(--painel-2); }
+  .campanhas td.camp { max-width: 22rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  .campanhas td .ind { display: block; color: var(--fraco); font-size: 11.5px; font-family: var(--sans); }
+  .campanhas th small { font-weight: 400; color: var(--fraco); text-transform: none; letter-spacing: 0; }
+  .campanhas .num, .campanhas td.st { white-space: nowrap; }
+  .campanhas .nulo { color: var(--fraco); }
+  .ativa { color: var(--ok); font-weight: 600; }
+  .problema { color: var(--aviso); font-weight: 600; }
+  .rodape-tabela { color: var(--fraco); font-size: 12px; margin-top: 10px; }
+  @media (max-width: 860px) { .campanhas td.camp { max-width: 9rem; } }
+</style>
+</head>
+<body data-rota="/app/ads/meta">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Análise</div>
+          <h1>Meta Ads</h1>
+          <p>O desempenho das campanhas que estão trazendo gente para cá. Os números vêm da plataforma no momento em que você clica em Atualizar — nada fica guardado aqui.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="filtros">
+        <div class="campo"><label for="conta">Conta de anúncios</label><button class="filtro" id="conta">Clínica Vitalis — Anúncios<i class="ph ph-caret-down"></i></button></div>
+        <div class="campo"><label for="periodo">Período</label><button class="filtro" id="periodo">Últimos 7 dias<i class="ph ph-caret-down"></i></button></div>
+        <button class="btn primario">Atualizar</button>
+      </div>
+
+      <div class="cartao campanhas">
+        <table class="tabela compacta">
+          <thead>
+            <tr>
+              <th>Campanha</th><th>Status</th><th>Veiculação</th><th class="num">Resultado</th><th class="num">Custo por Resultado</th><th class="num">Valor Gasto</th><th class="num">Impressões</th><th class="num">Alcance</th><th class="num">CPM</th><th class="num">CTR</th><th class="num" title="Visualizações da página ÷ cliques no link">Connect rate</th><th class="num">Frequência</th><th class="num">CPC</th><th class="num" title="Reproduções de vídeo ÷ impressões">Hook Rate <small>(reproduções)</small></th><th class="num">ThruPlays</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="camp" title="[Conversas] Implantes — SP capital">[Conversas] Implantes — SP capital</td><td class="st ativa">Ativa</td><td class="st ativa">Ativa</td>
+              <td class="num mono">42<span class="ind">Conversas iniciadas</span></td><td class="num mono">R$ 18,40</td><td class="num mono">R$ 772,80</td><td class="num mono">61.230</td><td class="num mono">38.914</td><td class="num mono">R$ 12,62</td><td class="num mono">1,23%</td><td class="num mono">71,40%</td><td class="num mono">1,57</td><td class="num mono">R$ 1,02</td><td class="num mono">28,10%</td><td class="num mono">3.412</td>
+            </tr>
+            <tr>
+              <td class="camp" title="[Conversas] Clareamento — remarketing">[Conversas] Clareamento — remarketing</td><td class="st ativa">Ativa</td><td class="st problema">Com problemas</td>
+              <td class="num mono">17<span class="ind">Conversas iniciadas</span></td><td class="num mono">R$ 21,45</td><td class="num mono">R$ 364,63</td><td class="num mono">24.870</td><td class="num mono">9.118</td><td class="num mono">R$ 14,66</td><td class="num mono">0,98%</td><td class="num mono">64,20%</td><td class="num mono">2,73</td><td class="num mono">R$ 1,49</td><td class="num nulo">—</td><td class="num nulo">—</td>
+            </tr>
+            <tr>
+              <td class="camp" title="[Cadastro] Avaliação gratuita — ortodontia">[Cadastro] Avaliação gratuita — ortodontia</td><td class="st">Pausada</td><td class="st">Campanha pausada</td>
+              <td class="num mono">9<span class="ind">Cadastros de formulário</span></td><td class="num mono">R$ 33,10</td><td class="num mono">R$ 297,90</td><td class="num mono">18.402</td><td class="num mono">12.055</td><td class="num nulo">—</td><td class="num nulo">—</td><td class="num nulo">—</td><td class="num mono">1,53</td><td class="num nulo">—</td><td class="num mono">19,80%</td><td class="num mono">1.106</td>
+            </tr>
+            <tr>
+              <td class="camp" title="[Alcance] Marca — Clínica Vitalis">[Alcance] Marca — Clínica Vitalis</td><td class="st ativa">Ativa</td><td class="st">Em análise</td>
+              <td class="num mono">52.310<span class="ind">Alcance</span></td><td class="num mono">R$ 0,01</td><td class="num mono">R$ 410,00</td><td class="num mono">88.950</td><td class="num mono">52.310</td><td class="num mono">R$ 4,61</td><td class="num mono">0,41%</td><td class="num nulo">—</td><td class="num mono">1,70</td><td class="num mono">R$ 1,12</td><td class="num nulo">—</td><td class="num nulo">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="rodape-tabela">Período: <span class="mono">2026-10-27</span> a <span class="mono">2026-11-02</span> · lido em <span class="mono">03/11/2026, 09:12:40</span></p>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Follow-ups</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="20">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .fluxo-card { display: flex; flex-direction: column; min-width: 0; }
+  .fluxo-card .topo-card { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 16px 0; }
+  .fluxo-card h3 { flex: 1; font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .fluxo-card .topo-card .tag { flex: none; }
+  .fluxo-card dl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; padding: 14px 16px 0; }
+  .fluxo-card dt { font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--apoio); margin-bottom: 5px; }
+  .fluxo-card dd { font: 500 13px/1 var(--mono); }
+  .fluxo-card .quando { padding: 12px 16px 14px; color: var(--fraco); font-size: 12.5px; }
+  .fluxo-card .pe-card { border-top: 1px solid var(--linha); padding: 10px 12px; display: flex; gap: 4px; flex-wrap: wrap; margin-top: auto; }
+  .fluxo-card .pe-card .btn.perigo { background: transparent; margin-left: auto; }
+  .acoes-aba { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  @media (max-width: 860px) { .acoes-aba { flex-direction: column; } .acoes-aba .btn { width: 100%; } }
+</style>
+</head>
+<body data-rota="/app/ai/followups">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Agente de IA</div>
+          <h1>Follow-ups</h1>
+          <p>Fluxos automáticos de reengajamento — silêncio, etapa, webhook ou resposta do contato, sem intervenção em cada mensagem.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="abas" role="tablist">
+        <button role="tab" aria-selected="true">Fluxos</button>
+        <button role="tab" aria-selected="false">Fila <span class="cont">4</span></button>
+      </div>
+
+      <div class="acoes-aba">
+        <button class="btn primario"><i class="ph ph-sparkle"></i>Começar de um modelo</button>
+        <button class="btn secundario"><i class="ph ph-plus"></i>Novo fluxo</button>
+        <button class="btn secundario"><i class="ph ph-upload-simple"></i>Importar fluxo</button>
+      </div>
+
+      <div class="grade c3">
+        <article class="cartao fluxo-card">
+          <a href="#" class="topo-card"><h3>Retomada de contato (demonstração)</h3><span class="tag ok">Ativo</span></a>
+          <dl>
+            <div><dt>Versão</dt><dd>publicada</dd></div>
+            <div><dt>Handoff</dt><dd>Pausar</dd></div>
+          </dl>
+          <div class="quando">Atualizado em <span class="mono">03/11/2026</span></div>
+          <div class="pe-card">
+            <button class="btn fantasma p">Renomear</button>
+            <button class="btn fantasma p"><i class="ph ph-copy"></i>Duplicar</button>
+            <button class="btn fantasma p"><i class="ph ph-download-simple"></i>Exportar</button>
+            <button class="btn perigo p"><i class="ph ph-trash"></i>Excluir</button>
+          </div>
+        </article>
+
+        <article class="cartao fluxo-card">
+          <a href="#" class="topo-card"><h3>Consulta · retomar quem sumiu na marcação</h3><span class="tag">Rascunho</span></a>
+          <dl>
+            <div><dt>Versão</dt><dd>—</dd></div>
+            <div><dt>Handoff</dt><dd>Pausar</dd></div>
+          </dl>
+          <div class="quando">Atualizado em <span class="mono">31/10/2026</span></div>
+          <div class="pe-card">
+            <button class="btn fantasma p">Renomear</button>
+            <button class="btn fantasma p"><i class="ph ph-copy"></i>Duplicar</button>
+            <button class="btn fantasma p"><i class="ph ph-download-simple"></i>Exportar</button>
+            <button class="btn perigo p"><i class="ph ph-trash"></i>Excluir</button>
+          </div>
+        </article>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

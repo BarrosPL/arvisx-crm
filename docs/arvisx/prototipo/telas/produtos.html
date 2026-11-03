@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Produtos</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="80">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .produto { display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-bottom: 1px solid var(--linha); }
+  .produto:last-child { border-bottom: 0; }
+  .produto:hover { background: var(--fundo); }
+  .produto .capa { width: 40px; height: 40px; border-radius: 8px; background: var(--painel-2); border: 1px solid var(--linha); display: grid; place-items: center; color: var(--fraco); font-size: 18px; flex: none; overflow: hidden; }
+  .produto .capa.foto { background: linear-gradient(135deg, var(--painel-3), var(--linha-forte)); }
+  .produto .texto { flex: 1; min-width: 0; }
+  .produto .nome { font-weight: 700; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .produto .sub { color: var(--apoio); font-size: 12px; }
+  .produto .preco { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 600; font-size: 13px; white-space: nowrap; }
+  .produto .acoes { display: flex; gap: 2px; flex: none; }
+  .produto.inativo .nome { color: var(--fraco); text-decoration: line-through; }
+  .produto.inativo .preco { color: var(--fraco); }
+  .fotos { border-top: 1px solid var(--linha); border-bottom: 1px solid var(--linha); background: var(--painel-2); padding: 14px 18px; }
+  .fotos .minis { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0; }
+  .fotos .mini { width: 112px; }
+  .fotos .mini .img { width: 112px; height: 112px; border-radius: 8px; background: linear-gradient(135deg, var(--painel-3), var(--linha-forte)); border: 1px solid var(--linha); display: grid; place-items: center; color: var(--fraco); font-size: 22px; }
+  .fotos .mini .img.sem { background: var(--painel); font-size: 11px; }
+  .fotos .mini .ctl { display: flex; justify-content: space-between; margin-top: 4px; }
+  .fotos .mini .ctl button { width: 26px; height: 26px; border-radius: 5px; display: grid; place-items: center; color: var(--apoio); font-size: 14px; }
+  .fotos .mini .ctl button:hover { background: var(--painel-3); color: var(--texto); }
+  @media (max-width: 860px) {
+    .produto { flex-wrap: wrap; }
+    .produto .acoes { width: 100%; justify-content: flex-end; }
+    .produto .acoes .btn { visibility: visible; }
+  }
+</style>
+</head>
+<body data-rota="/app/products">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM</div>
+          <h1>Produtos</h1>
+          <p>O catálogo da loja. É daqui que o atendente de IA tira o preço quando alguém pergunta.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="filtros" style="margin-bottom:6px">
+        <div class="busca-linha"><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Buscar por nome, código ou marca"></div>
+        <button class="btn primario"><i class="ph ph-plus"></i>Novo produto</button>
+        <button class="btn secundario"><i class="ph ph-upload-simple"></i>Importar planilha</button>
+      </div>
+      <a href="#" class="link pequeno" style="display:inline-block;margin-bottom:16px">Baixar planilha modelo</a>
+
+      <div class="cartao">
+        <ul>
+          <li>
+            <div class="produto">
+              <span class="capa foto"><i class="ph ph-image"></i></span>
+              <div class="texto"><div class="nome">Clareamento dental a laser</div><div class="sub"><span class="mono">SKU-0012</span> · Opalescence · sem controle de estoque</div></div>
+              <span class="preco">R$ 1.200,00</span>
+              <div class="acoes"><button class="btn fantasma p">Editar</button><button class="btn fantasma p" aria-expanded="true"><span>Fotos (<span class="mono">2</span>)</span></button><button class="btn fantasma p">Desativar</button></div>
+            </div>
+            <div class="fotos">
+              <p class="apoio pequeno">A primeira foto é a capa. O atendente de IA manda as fotos nesta ordem quando apresenta o produto.</p>
+              <div class="minis">
+                <div class="mini"><div class="img"><i class="ph ph-image"></i></div><div class="ctl"><button aria-label="Mover a foto para a esquerda"><i class="ph ph-arrow-left"></i></button><button aria-label="Remover a foto"><i class="ph ph-x"></i></button><button aria-label="Mover a foto para a direita"><i class="ph ph-arrow-right"></i></button></div></div>
+                <div class="mini"><div class="img sem">Sem prévia</div><div class="ctl"><button aria-label="Mover a foto para a esquerda"><i class="ph ph-arrow-left"></i></button><button aria-label="Remover a foto"><i class="ph ph-x"></i></button><button aria-label="Mover a foto para a direita"><i class="ph ph-arrow-right"></i></button></div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><button class="btn secundario p"><i class="ph ph-plus"></i>Adicionar foto</button><span class="fraco pequeno">JPG ou PNG, até 5 MB. No máximo 5 fotos.</span></div>
+            </div>
+          </li>
+          <li class="produto">
+            <span class="capa"><i class="ph ph-image"></i></span>
+            <div class="texto"><div class="nome">Implante unitário — titânio</div><div class="sub"><span class="mono">SKU-0031</span> · Neodent · <span class="mono">8</span> em estoque</div></div>
+            <span class="preco">R$ 3.500,00</span>
+            <div class="acoes"><button class="btn fantasma p">Editar</button><button class="btn fantasma p"><span>Fotos (<span class="mono">0</span>)</span></button><button class="btn fantasma p">Desativar</button></div>
+          </li>
+          <li class="produto">
+            <span class="capa foto"><i class="ph ph-image"></i></span>
+            <div class="texto"><div class="nome">Protocolo superior (12 dentes)</div><div class="sub"><span class="mono">SKU-0045</span> · Neodent · sem controle de estoque</div></div>
+            <span class="preco">R$ 38.900,00</span>
+            <div class="acoes"><button class="btn fantasma p">Editar</button><button class="btn fantasma p"><span>Fotos (<span class="mono">3</span>)</span></button><button class="btn fantasma p">Desativar</button></div>
+          </li>
+          <li class="produto">
+            <span class="capa"><i class="ph ph-image"></i></span>
+            <div class="texto"><div class="nome">Prótese fixa sobre implante</div><div class="sub"><span class="mono">SKU-0052</span> · Straumann · <span class="mono">3</span> em estoque</div></div>
+            <span class="preco">R$ 7.800,00</span>
+            <div class="acoes"><button class="btn fantasma p">Editar</button><button class="btn fantasma p"><span>Fotos (<span class="mono">0</span>)</span></button><button class="btn fantasma p">Desativar</button></div>
+          </li>
+          <li class="produto">
+            <span class="capa"><i class="ph ph-image"></i></span>
+            <div class="texto"><div class="nome">Aparelho ortodôntico metálico</div><div class="sub"><span class="mono">SKU-0060</span> · 3M · sem controle de estoque</div></div>
+            <span class="preco">R$ 4.200,00</span>
+            <div class="acoes"><button class="btn fantasma p">Editar</button><button class="btn fantasma p"><span>Fotos (<span class="mono">0</span>)</span></button><button class="btn fantasma p">Desativar</button></div>
+          </li>
+          <li class="produto">
+            <span class="capa foto"><i class="ph ph-image"></i></span>
+            <div class="texto"><div class="nome">Kit de higiene pós-cirúrgico</div><div class="sub"><span class="mono">SKU-0077</span> · Colgate · <span class="mono">42</span> em estoque</div></div>
+            <span class="preco">R$ 89,90</span>
+            <div class="acoes"><button class="btn fantasma p">Editar</button><button class="btn fantasma p"><span>Fotos (<span class="mono">1</span>)</span></button><button class="btn fantasma p">Desativar</button></div>
+          </li>
+          <li class="produto">
+            <span class="capa"><i class="ph ph-image"></i></span>
+            <div class="texto"><div class="nome">Limpeza e profilaxia</div><div class="sub"><span class="mono">SKU-0081</span> · Clínica Vitalis · sem controle de estoque</div></div>
+            <span class="preco">R$ 250,00</span>
+            <div class="acoes"><button class="btn fantasma p">Editar</button><button class="btn fantasma p"><span>Fotos (<span class="mono">0</span>)</span></button><button class="btn fantasma p">Desativar</button></div>
+          </li>
+          <li class="produto inativo">
+            <span class="capa"><i class="ph ph-image"></i></span>
+            <div class="texto"><div class="nome">Clareamento caseiro (moldeira)</div><div class="sub"><span class="mono">SKU-0019</span> · Whiteness · <span class="mono">0</span> em estoque</div></div>
+            <span class="preco">R$ 650,00</span>
+            <div class="acoes"><button class="btn fantasma p">Editar</button><button class="btn fantasma p"><span>Fotos (<span class="mono">0</span>)</span></button><button class="btn fantasma p">Reativar</button></div>
+          </li>
+        </ul>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;flex-wrap:wrap">
+        <span class="apoio pequeno"><span class="mono">1–20</span> de <span class="mono">57</span></span>
+        <div style="display:flex;gap:6px"><button class="btn secundario p" disabled>Página anterior</button><button class="btn secundario p">Próxima página</button></div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

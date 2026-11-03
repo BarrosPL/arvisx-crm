@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configurações</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="5">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .hub-secao { margin-bottom: 32px; }
+  .hub-secao h2 { display: flex; align-items: center; gap: 10px; font: 600 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--apoio); margin-bottom: 12px; }
+  .hub-secao h2::after { content: ""; flex: 1; height: 1px; background: var(--linha); }
+  .hub-card { display: flex; gap: 14px; padding: 16px; }
+  .hub-card .ic { width: 38px; height: 38px; border-radius: 10px; background: var(--navy); color: var(--ouro); display: grid; place-items: center; font-size: 19px; flex: none; }
+  .hub-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+  .hub-card p { color: var(--apoio); font-size: 12.5px; line-height: 1.45; }
+</style>
+</head>
+<body data-rota="/app/settings">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Organização</div>
+          <h1>Configurações</h1>
+          <p>Sua conta, os dados da empresa e quem tem acesso ao quê.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <section class="hub-secao">
+        <h2>Sua empresa</h2>
+        <div class="grade c3">
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-calendar-blank"></i></span><div><h3>Tipos de agendamento</h3><p>O que se pode marcar, quanto dura, onde acontece e quem atende.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-paper-plane-tilt"></i></span><div><h3>Aviso de agendamento</h3><p>Receber no WhatsApp cada horário marcado, remarcado ou cancelado, e o resumo das 7h.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-file-text"></i></span><div><h3>Propostas</h3><p>Configure a validade padrão e condições para propostas comerciais.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-file-text"></i></span><div><h3>Modelos de proposta</h3><p>Personalize os modelos da plataforma ou crie os da sua empresa, inclusive a partir de uma proposta que você já usa.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-chart-bar"></i></span><div><h3>Financeiro</h3><p>Contas, formas de pagamento e como cada lançamento é classificado.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-gauge"></i></span><div><h3>Meta de vendas</h3><p>Quanto a empresa quer vender no mês, para o Desempenho medir o progresso.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-users-three"></i></span><div><h3>Equipe</h3><p>Quem trabalha aqui, com qual papel e quanta conversa cada um aguenta.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-users-three"></i></span><div><h3>Distribuição de atendimento</h3><p>Quem recebe cada cliente novo, e o que cada atendente enxerga.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-flow-arrow"></i></span><div><h3>Automações</h3><p>O freio único do passo em que a IA escolhe entre as opções de uma regra, para a empresa inteira.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-tag"></i></span><div><h3>Tags</h3><p>O vocabulário de etiquetas da empresa: onde cada uma é usada e como renomear, juntar ou excluir.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-list-checks"></i></span><div><h3>Recursos opcionais</h3><p>Tudo o que se liga e desliga, se está ligado e onde se ajusta.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-buildings"></i></span><div><h3>Organização</h3><p>Dados da empresa, retenção de dados e encarregado de LGPD.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-chart-line-up"></i></span><div><h3>Conversões</h3><p>Devolver ao anúncio as vendas que ele trouxe, e marcar a origem de quem chega pelo site.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-megaphone"></i></span><div><h3>Meta Ads</h3><p>Conectar a conta de anúncios para ler o desempenho das campanhas.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-palette"></i></span><div><h3>Marca</h3><p>O nome e a cor que sua empresa mostra dentro do sistema.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-receipt"></i></span><div><h3>Plano e cobrança</h3><p>Pagamento, troca de plano e faturas da sua empresa.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-puzzle-piece"></i></span><div><h3>Extensões</h3><p>Guias instalados para orientar o trabalho no CRM, com permissões e estado visíveis.</p></div></a>
+        </div>
+      </section>
+
+      <section class="hub-secao">
+        <h2>Sua conta</h2>
+        <div class="grade c3">
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-user-circle"></i></span><div><h3>Perfil</h3><p>Seu nome, idioma, fuso horário e avatar.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-shield-check"></i></span><div><h3>Segurança</h3><p>Verificação em duas etapas, códigos de recuperação e sessões.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-bell"></i></span><div><h3>Notificações</h3><p>Por onde e sobre o quê você quer ser avisado.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-device-mobile"></i></span><div><h3>App no celular</h3><p>Instale o sistema na tela de início do celular e receba os avisos.</p></div></a>
+        </div>
+      </section>
+
+      <section class="hub-secao">
+        <h2>Dados e acesso</h2>
+        <div class="grade c3">
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-scales"></i></span><div><h3>LGPD</h3><p>Pedidos de exportação e exclusão de dados feitos por clientes.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-lock"></i></span><div><h3>API Tokens</h3><p>Chaves para outro sistema conversar com o seu CRM.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-phone"></i></span><div><h3>Trunk SIP</h3><p>Credenciais do provedor SIP para chamadas de voz por IA.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-plugs"></i></span><div><h3>Servidor MCP externo</h3><p>O endereço e a chave do sistema de fora que a IA da empresa pode consultar.</p></div></a>
+          <a href="#" class="cartao link hub-card"><span class="ic"><i class="ph ph-plugs-connected"></i></span><div><h3>Dados externos</h3><p>Conecte um banco de dados de outro sistema para o agente consultar em tempo real.</p></div></a>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

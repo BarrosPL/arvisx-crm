@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uso de IA</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="74">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .orcamento .cab { align-items: flex-start; }
+  .orcamento .cab .sub { color: var(--apoio); font-size: 12px; margin-top: 3px; }
+  .orcamento .gasto { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+  .orcamento .gasto .valor { font-size: 14px; }
+  .orcamento .gasto .valor strong { font-family: var(--display); font-stretch: 108%; font-weight: 650; font-size: 22px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .orcamento .gasto .dir { color: var(--apoio); font-size: 12.5px; text-align: right; max-width: 52ch; }
+  .orcamento .gasto .dir .pct { color: var(--texto); font-weight: 600; }
+  .filtros-uso { margin-bottom: 20px; }
+  .filtros-uso .form.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .indicador .rotulo { white-space: normal; }
+  .indicador .dica { margin-top: 8px; color: var(--apoio); font-size: 12px; line-height: 1.4; }
+  .graficos { margin-top: 20px; }
+  .graf .cab h2 { font-size: 13.5px; }
+  .graf .corpo { padding: 14px 18px 12px; }
+  .graf .area { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 10px; }
+  .graf .eixo-y { display: flex; flex-direction: column; justify-content: space-between; font: 500 10.5px/1 var(--mono); color: var(--fraco); text-align: right; padding: 4px 0 2px; }
+  .graf svg.grafico { width: 100%; height: 200px; display: block; }
+  .graf .eixo-x { grid-column: 2; display: flex; justify-content: space-between; font: 500 10.5px/1 var(--mono); color: var(--fraco); margin-top: 6px; }
+  .graf .legenda { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: var(--apoio); }
+  .graf .legenda span { display: inline-flex; align-items: center; gap: 6px; }
+  .graf .legenda i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  @media (max-width: 1100px) { .filtros-uso .form.c4 { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 860px) {
+    .filtros-uso .form.c4 { grid-template-columns: 1fr; }
+    .orcamento .gasto .dir { text-align: left; }
+    .graf svg.grafico { height: 160px; }
+  }
+</style>
+</head>
+<body data-rota="/app/ai/usage">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Agente de IA</div>
+          <h1>Uso de IA</h1>
+          <p>Quanto a inteligência artificial custou, quantas vezes foi chamada, quantos turnos o agente fez, quanto demora uma chamada e quantas vezes precisou chamar uma pessoa — nos últimos 30 dias.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao orcamento" style="margin-bottom:20px">
+        <div class="cab">
+          <div>
+            <h2>Orçamento mensal de IA</h2>
+            <div class="sub">Gasto de novembro de 2026 · valores em dólar (é a moeda em que o provedor de IA cobra)</div>
+          </div>
+          <button class="btn primario p"><i class="ph ph-pencil-simple"></i>Editar limite</button>
+        </div>
+        <div class="corpo">
+          <div class="barra sinal g"><span style="width:25%"></span></div>
+          <div class="gasto">
+            <div class="valor"><strong class="mono">US$ 12,34</strong> gastos de <span class="mono">US$ 50,00</span></div>
+            <div class="dir"><span class="pct mono">25%</span> do limite · Avisamos ao passar de 80% do limite. A IA não para.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="filtros-uso">
+        <div class="form c4">
+          <div class="campo"><label>Agente</label><select><option>Todos</option><option>Lia — AgendaPlus</option><option>Bot Padrão E2E</option></select></div>
+          <div class="campo"><label>Tipo de uso</label><select><option>Todas</option><option>Responder o cliente</option><option>Classificar a intenção (Jev)</option><option>Resumir a conversa para o caso</option><option>Preparar material do acervo</option><option>Sugerir o próximo passo</option></select></div>
+          <div class="campo"><label>De</label><input type="text" class="mono" value="05/10/2026"></div>
+          <div class="campo"><label>Até</label><input type="text" class="mono" value="03/11/2026"></div>
+        </div>
+      </div>
+
+      <div class="grade c3">
+        <div class="cartao indicador"><span class="rotulo">Custo no período</span><div class="valor">US$ 12,34</div></div>
+        <div class="cartao indicador"><span class="rotulo">Chamadas de IA</span><div class="valor">1.284</div><div class="dica">cada resposta do agente pode fazer várias</div></div>
+        <div class="cartao indicador"><span class="rotulo">Turnos do agente</span><div class="valor">312</div><div class="dica">custo médio por turno: <span class="mono">US$ 0,0395</span> · conta só os turnos que a fila ainda guarda (padrão: 90 dias)</div></div>
+        <div class="cartao indicador"><span class="rotulo">Taxa de cache</span><div class="valor">42,5<small>%</small></div><div class="dica">do texto enviado à IA veio do cache, que custa bem menos</div></div>
+        <div class="cartao indicador"><span class="rotulo">Passaram para uma pessoa</span><div class="valor">3,21<small>%</small></div><div class="dica">quanto mais alto, mais a IA precisou de ajuda</div></div>
+        <div class="cartao indicador"><span class="rotulo">Tempo de uma chamada à IA</span><div class="valor">4,2<small>s</small></div><div class="dica">a maioria responde em <span class="mono">1,8 s</span>; este é o pior caso comum</div></div>
+      </div>
+
+      <div class="grade c2 graficos">
+        <div class="cartao graf">
+          <div class="cab"><h2>Quanto gastou por dia (US$)</h2></div>
+          <div class="corpo">
+            <div class="area"><div class="eixo-y"><span>US$ 0,62</span><span>US$ 0,31</span><span>US$ 0,00</span></div><svg class="grafico" viewBox="0 0 600 200" preserveAspectRatio="none" aria-hidden="true"><line x1="0" x2="600" y1="194.0" y2="194.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="148.0" y2="148.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="102.0" y2="102.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="56.0" y2="56.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="10.0" y2="10.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><rect x="3.8" y="140.7" width="12.4" height="53.3" rx="2" fill="var(--ouro)"/><rect x="23.8" y="90.3" width="12.4" height="103.7" rx="2" fill="var(--ouro)"/><rect x="43.8" y="78.4" width="12.4" height="115.6" rx="2" fill="var(--ouro)"/><rect x="63.8" y="114.0" width="12.4" height="80.0" rx="2" fill="var(--ouro)"/><rect x="83.8" y="111.0" width="12.4" height="83.0" rx="2" fill="var(--ouro)"/><rect x="103.8" y="111.0" width="12.4" height="83.0" rx="2" fill="var(--ouro)"/><rect x="123.8" y="125.9" width="12.4" height="68.1" rx="2" fill="var(--ouro)"/><rect x="143.8" y="140.7" width="12.4" height="53.3" rx="2" fill="var(--ouro)"/><rect x="163.8" y="90.3" width="12.4" height="103.7" rx="2" fill="var(--ouro)"/><rect x="183.8" y="78.4" width="12.4" height="115.6" rx="2" fill="var(--ouro)"/><rect x="203.8" y="114.0" width="12.4" height="80.0" rx="2" fill="var(--ouro)"/><rect x="223.8" y="111.0" width="12.4" height="83.0" rx="2" fill="var(--ouro)"/><rect x="243.8" y="111.0" width="12.4" height="83.0" rx="2" fill="var(--ouro)"/><rect x="263.8" y="125.9" width="12.4" height="68.1" rx="2" fill="var(--ouro)"/><rect x="283.8" y="137.7" width="12.4" height="56.3" rx="2" fill="var(--ouro)"/><rect x="303.8" y="87.3" width="12.4" height="106.7" rx="2" fill="var(--ouro)"/><rect x="323.8" y="78.4" width="12.4" height="115.6" rx="2" fill="var(--ouro)"/><rect x="343.8" y="114.0" width="12.4" height="80.0" rx="2" fill="var(--ouro)"/><rect x="363.8" y="111.0" width="12.4" height="83.0" rx="2" fill="var(--ouro)"/><rect x="383.8" y="111.0" width="12.4" height="83.0" rx="2" fill="var(--ouro)"/><rect x="403.8" y="125.9" width="12.4" height="68.1" rx="2" fill="var(--ouro)"/><rect x="423.8" y="34.0" width="12.4" height="160.0" rx="2" fill="var(--ouro)"/><rect x="443.8" y="87.3" width="12.4" height="106.7" rx="2" fill="var(--ouro)"/><rect x="463.8" y="78.4" width="12.4" height="115.6" rx="2" fill="var(--ouro)"/><rect x="483.8" y="117.0" width="12.4" height="77.0" rx="2" fill="var(--ouro)"/><rect x="503.8" y="108.1" width="12.4" height="85.9" rx="2" fill="var(--ouro)"/><rect x="523.8" y="111.0" width="12.4" height="83.0" rx="2" fill="var(--ouro)"/><rect x="543.8" y="128.8" width="12.4" height="65.2" rx="2" fill="var(--ouro)"/><rect x="563.8" y="137.7" width="12.4" height="56.3" rx="2" fill="var(--ouro)"/><rect x="583.8" y="87.3" width="12.4" height="106.7" rx="2" fill="var(--ouro)"/></svg><div class="eixo-x"><span>05/10</span><span>12/10</span><span>19/10</span><span>26/10</span><span>03/11</span></div></div>
+            <div class="legenda"><span><i style="background:var(--ouro)"></i>Custo</span></div>
+          </div>
+        </div>
+        <div class="cartao graf">
+          <div class="cab"><h2>Volume de texto processado por dia</h2></div>
+          <div class="corpo">
+            <div class="area"><div class="eixo-y"><span>72 mil</span><span>36 mil</span><span>0</span></div><svg class="grafico" viewBox="0 0 600 200" preserveAspectRatio="none" aria-hidden="true"><line x1="0" x2="600" y1="194.0" y2="194.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="148.0" y2="148.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="102.0" y2="102.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="56.0" y2="56.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="10.0" y2="10.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><path d="M10.0,128.5 L30.0,83.8 L50.0,83.1 L70.0,118.6 L90.0,103.3 L110.0,98.1 L130.0,122.9 L150.0,148.4 L170.0,92.3 L190.0,67.7 L210.0,101.8 L230.0,109.7 L250.0,118.2 L270.0,127.2 L290.0,127.5 L310.0,75.4 L330.0,78.1 L350.0,121.3 L370.0,109.7 L390.0,98.8 L410.0,116.8 L430.0,34.0 L450.0,93.2 L470.0,73.7 L490.0,104.2 L510.0,100.2 L530.0,115.5 L550.0,135.2 L570.0,132.9 L590.0,73.3 L590.0,194 L10.0,194 Z" fill="var(--navy)" opacity=".10"/><path d="M10.0,128.5 L30.0,83.8 L50.0,83.1 L70.0,118.6 L90.0,103.3 L110.0,98.1 L130.0,122.9 L150.0,148.4 L170.0,92.3 L190.0,67.7 L210.0,101.8 L230.0,109.7 L250.0,118.2 L270.0,127.2 L290.0,127.5 L310.0,75.4 L330.0,78.1 L350.0,121.3 L370.0,109.7 L390.0,98.8 L410.0,116.8 L430.0,34.0 L450.0,93.2 L470.0,73.7 L490.0,104.2 L510.0,100.2 L530.0,115.5 L550.0,135.2 L570.0,132.9 L590.0,73.3" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg><div class="eixo-x"><span>05/10</span><span>12/10</span><span>19/10</span><span>26/10</span><span>03/11</span></div></div>
+            <div class="legenda"><span><i style="background:var(--navy)"></i>Tokens</span></div>
+          </div>
+        </div>
+        <div class="cartao graf">
+          <div class="cab"><h2>Quanto foi para uma pessoa (%)</h2></div>
+          <div class="corpo">
+            <div class="area"><div class="eixo-y"><span>7%</span><span>4%</span><span>0%</span></div><svg class="grafico" viewBox="0 0 600 200" preserveAspectRatio="none" aria-hidden="true"><line x1="0" x2="600" y1="194.0" y2="194.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="148.0" y2="148.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="102.0" y2="102.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="56.0" y2="56.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="10.0" y2="10.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><path d="M10.0,102.2 L30.0,94.3 L50.0,99.6 L70.0,115.3 L90.0,133.7 L110.0,112.7 L130.0,97.0 L150.0,94.3 L170.0,104.8 L190.0,123.2 L210.0,128.4 L230.0,107.4 L250.0,34.0 L270.0,97.0 L290.0,107.4 L310.0,128.4 L330.0,120.6 L350.0,102.2 L370.0,94.3 L390.0,99.6 L410.0,112.7 L430.0,136.3 L450.0,115.3 L470.0,99.6 L490.0,94.3 L510.0,102.2 L530.0,120.6 L550.0,131.0 L570.0,110.1 L590.0,97.0 L590.0,194 L10.0,194 Z" fill="var(--sinal)" opacity=".10"/><path d="M10.0,102.2 L30.0,94.3 L50.0,99.6 L70.0,115.3 L90.0,133.7 L110.0,112.7 L130.0,97.0 L150.0,94.3 L170.0,104.8 L190.0,123.2 L210.0,128.4 L230.0,107.4 L250.0,34.0 L270.0,97.0 L290.0,107.4 L310.0,128.4 L330.0,120.6 L350.0,102.2 L370.0,94.3 L390.0,99.6 L410.0,112.7 L430.0,136.3 L450.0,115.3 L470.0,99.6 L490.0,94.3 L510.0,102.2 L530.0,120.6 L550.0,131.0 L570.0,110.1 L590.0,97.0" fill="none" stroke="var(--sinal)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg><div class="eixo-x"><span>05/10</span><span>12/10</span><span>19/10</span><span>26/10</span><span>03/11</span></div></div>
+            <div class="legenda"><span><i style="background:var(--sinal)"></i>Handoff</span></div>
+          </div>
+        </div>
+        <div class="cartao graf">
+          <div class="cab"><h2>Tempo de uma chamada à IA por dia (segundos)</h2></div>
+          <div class="corpo">
+            <div class="area"><div class="eixo-y"><span>7 s</span><span>4 s</span><span>0 s</span></div><svg class="grafico" viewBox="0 0 600 200" preserveAspectRatio="none" aria-hidden="true"><line x1="0" x2="600" y1="194.0" y2="194.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="148.0" y2="148.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="102.0" y2="102.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="56.0" y2="56.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="10.0" y2="10.0" stroke="var(--linha)" stroke-width="1" vector-effect="non-scaling-stroke"/><path d="M10.0,81.5 L30.0,76.5 L50.0,79.0 L70.0,91.5 L90.0,96.5 L110.0,86.5 L130.0,76.5 L150.0,71.5 L170.0,76.5 L190.0,89.0 L210.0,91.5 L230.0,89.0 L250.0,81.5 L270.0,81.5 L290.0,79.0 L310.0,74.0 L330.0,81.5 L350.0,94.0 L370.0,99.0 L390.0,81.5 L410.0,74.0 L430.0,34.0 L450.0,81.5 L470.0,86.5 L490.0,89.0 L510.0,89.0 L530.0,84.0 L550.0,84.0 L570.0,74.0 L590.0,74.0" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/><path d="M10.0,154.0 L30.0,146.5 L50.0,144.0 L70.0,146.5 L90.0,151.5 L110.0,151.5 L130.0,146.5 L150.0,144.0 L170.0,146.5 L190.0,154.0 L210.0,146.5 L230.0,144.0 L250.0,146.5 L270.0,151.5 L290.0,151.5 L310.0,144.0 L330.0,144.0 L350.0,149.0 L370.0,154.0 L390.0,146.5 L410.0,144.0 L430.0,146.5 L450.0,151.5 L470.0,149.0 L490.0,144.0 L510.0,144.0 L530.0,149.0 L550.0,154.0 L570.0,146.5 L590.0,144.0" fill="none" stroke="var(--ouro)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg><div class="eixo-x"><span>05/10</span><span>12/10</span><span>19/10</span><span>26/10</span><span>03/11</span></div></div>
+            <div class="legenda"><span><i style="background:var(--ouro)"></i>p50 — a maioria responde em</span><span><i style="background:var(--navy)"></i>p95 — pior caso comum</span></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

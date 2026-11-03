@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Respostas rápidas</title>
+<meta name="grupo" content="Atendimento">
+<meta name="ordem" content="40">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .respostas { display: grid; gap: 8px; }
+  .resposta { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 14px 16px; border-radius: var(--r); }
+  .resposta .esq { display: flex; gap: 8px; min-width: 0; flex: 1; }
+  .resposta .alca { color: var(--fraco); font-size: 18px; margin-top: 1px; cursor: grab; flex: none; }
+  .resposta .linha1 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .resposta .linha1 strong { font-size: 13.5px; }
+  .resposta .corpo-msg { color: var(--apoio); font-size: 13px; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .resposta .corpo-msg code { font-family: var(--mono); font-size: 12px; color: var(--ouro-escuro); }
+  .resposta .dir { display: flex; gap: 2px; flex: none; }
+  @media (max-width: 860px) { .resposta { gap: 8px; padding: 12px; } .resposta .alca { display: none; } }
+</style>
+</head>
+<body data-rota="/app/templates">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Atendimento</div>
+          <h1>Respostas rápidas</h1>
+          <p>Scripts salvos para responder mais rápido; pessoais ou compartilhados com a equipe.</p>
+        </div>
+        <div class="acoes"><button class="btn primario"><i class="ph ph-plus"></i>Nova resposta rápida</button></div>
+      </div>
+      <div class="fio"></div>
+
+      <ul class="respostas">
+        <li class="cartao resposta">
+          <div class="esq">
+            <i class="ph ph-dots-six-vertical alca" aria-label="Arrastar para reordenar"></i>
+            <div style="min-width:0">
+              <div class="linha1"><strong>Saudação inicial</strong><span class="tag">Compartilhado</span></div>
+              <p class="corpo-msg">Oi <code>{{primeiro_nome}}</code>, tudo bem? Aqui é a Ana, da Clínica Vitalis. Como posso te ajudar hoje?</p>
+            </div>
+          </div>
+          <div class="dir"><button class="btn fantasma p icone" aria-label="Editar resposta rápida"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" aria-label="Excluir resposta rápida"><i class="ph ph-trash"></i></button></div>
+        </li>
+        <li class="cartao resposta">
+          <div class="esq">
+            <i class="ph ph-dots-six-vertical alca" aria-label="Arrastar para reordenar"></i>
+            <div style="min-width:0">
+              <div class="linha1"><strong>Horário de funcionamento</strong><span class="tag">Compartilhado</span></div>
+              <p class="corpo-msg">Atendemos de segunda a sexta, das 8h às 19h, e aos sábados das 8h às 13h. Quer que eu veja um horário para você?</p>
+            </div>
+          </div>
+          <div class="dir"><button class="btn fantasma p icone" aria-label="Editar resposta rápida"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" aria-label="Excluir resposta rápida"><i class="ph ph-trash"></i></button></div>
+        </li>
+        <li class="cartao resposta">
+          <div class="esq">
+            <i class="ph ph-dots-six-vertical alca" aria-label="Arrastar para reordenar"></i>
+            <div style="min-width:0">
+              <div class="linha1"><strong>Pedir dados</strong><span class="tag contorno">Pessoal</span></div>
+              <p class="corpo-msg">Para eu agendar a sua avaliação, me passa seu nome completo e a data de nascimento?</p>
+            </div>
+          </div>
+          <div class="dir"><button class="btn fantasma p icone" aria-label="Editar resposta rápida"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" aria-label="Excluir resposta rápida"><i class="ph ph-trash"></i></button></div>
+        </li>
+        <li class="cartao resposta">
+          <div class="esq">
+            <i class="ph ph-dots-six-vertical alca" aria-label="Arrastar para reordenar"></i>
+            <div style="min-width:0">
+              <div class="linha1"><strong>Como chegar</strong><span class="tag">Compartilhado</span><span class="tag contorno">Imagens <span class="mono">2</span></span></div>
+              <p class="corpo-msg">Estamos na Rua das Acácias, 120, sala 3 — em frente à praça. Segue o mapa:</p>
+            </div>
+          </div>
+          <div class="dir"><button class="btn fantasma p icone" aria-label="Editar resposta rápida"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" aria-label="Excluir resposta rápida"><i class="ph ph-trash"></i></button></div>
+        </li>
+        <li class="cartao resposta">
+          <div class="esq">
+            <i class="ph ph-dots-six-vertical alca" aria-label="Arrastar para reordenar"></i>
+            <div style="min-width:0">
+              <div class="linha1"><strong>Boas-vindas em áudio</strong><span class="tag contorno">Pessoal</span><span class="tag contorno">🎧 Áudio</span></div>
+              <p class="corpo-msg">Resposta rápida de áudio</p>
+            </div>
+          </div>
+          <div class="dir"><button class="btn fantasma p icone" aria-label="Editar resposta rápida"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" aria-label="Excluir resposta rápida"><i class="ph ph-trash"></i></button></div>
+        </li>
+        <li class="cartao resposta">
+          <div class="esq">
+            <i class="ph ph-dots-six-vertical alca" aria-label="Arrastar para reordenar"></i>
+            <div style="min-width:0">
+              <div class="linha1"><strong>Confirmação de consulta</strong><span class="tag">Compartilhado</span></div>
+              <p class="corpo-msg"><code>{{primeiro_nome}}</code>, sua consulta está confirmada para amanhã às 15h. Se precisar remarcar, é só responder aqui.</p>
+            </div>
+          </div>
+          <div class="dir"><button class="btn fantasma p icone" aria-label="Editar resposta rápida"><i class="ph ph-pencil-simple"></i></button><button class="btn fantasma p icone" aria-label="Excluir resposta rápida"><i class="ph ph-trash"></i></button></div>
+        </li>
+      </ul>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

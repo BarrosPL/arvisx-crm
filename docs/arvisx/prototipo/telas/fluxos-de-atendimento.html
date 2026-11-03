@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fluxos de atendimento</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="30">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  details.guia { margin-bottom: 20px; }
+  details.guia summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 14px 18px; font-weight: 700; font-size: 14px; }
+  details.guia summary::-webkit-details-marker { display: none; }
+  details.guia summary i.info { color: var(--ouro-escuro); font-size: 18px; }
+  details.guia summary i.seta { margin-left: auto; color: var(--fraco); font-size: 14px; transition: transform .15s; }
+  details.guia[open] summary i.seta { transform: rotate(180deg); }
+  details.guia .corpo-guia { padding: 0 18px 18px; border-top: 1px solid var(--linha); font-size: 13.5px; color: var(--apoio); }
+  details.guia .corpo-guia > p { margin-top: 14px; }
+  details.guia h3 { font-size: 13px; font-weight: 700; color: var(--texto); margin: 14px 0 6px; }
+  details.guia ol { list-style: decimal; padding-left: 22px; display: grid; gap: 4px; }
+  details.guia ul { list-style: disc; padding-left: 22px; display: grid; gap: 4px; }
+  details.guia ol::marker, details.guia li::marker { color: var(--ouro-escuro); font-family: var(--mono); font-weight: 600; font-size: 12px; }
+  .fluxo-card { display: flex; flex-direction: column; min-width: 0; }
+  .fluxo-card .topo-card { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 16px 0; }
+  .fluxo-card h3 { flex: 1; font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .fluxo-card .topo-card .tag { flex: none; }
+  .fluxo-card dl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; padding: 14px 16px 0; }
+  .fluxo-card dt { font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--apoio); margin-bottom: 5px; }
+  .fluxo-card dd { font: 500 13px/1 var(--mono); }
+  .fluxo-card .quando { padding: 12px 16px 14px; color: var(--fraco); font-size: 12.5px; }
+  .fluxo-card .pe-card { border-top: 1px solid var(--linha); padding: 10px 12px; display: flex; gap: 4px; flex-wrap: wrap; margin-top: auto; }
+  .fluxo-card .pe-card .btn.perigo { background: transparent; margin-left: auto; }
+  .acoes-aba { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  @media (max-width: 860px) { .acoes-aba { flex-direction: column; } .acoes-aba .btn { width: 100%; } }
+</style>
+</head>
+<body data-rota="/app/ai/atendimento">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Agente de IA</div>
+          <h1>Fluxos de atendimento</h1>
+          <p>Perguntas que a IA faz durante a conversa, em ordem, e o que fazer ao concluir — os dados ficam guardados por cliente.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <details class="guia cartao" open>
+        <summary><i class="ph ph-info info"></i>Como usar os fluxos de atendimento (guia rápido)<i class="ph ph-caret-down seta"></i></summary>
+        <div class="corpo-guia">
+          <p>É um roteiro de perguntas que a IA segue durante a conversa: ela pergunta uma coisa por vez, entende a resposta e guarda o dado no cadastro do cliente.</p>
+          <h3>Montando o roteiro</h3>
+          <ol>
+            <li>Crie o roteiro e dê um nome.</li>
+            <li>No Início, escreva as palavras-gatilho: quando a mensagem do cliente tiver uma delas, o roteiro começa sozinho. Ele também começa por uma intenção em IA › Roteadores, ou quando o card do cliente entra numa etapa do funil que você marcar.</li>
+            <li>Adicione uma Pergunta para cada dado, com uma chave curta (ex.: cidade), o tipo e se é obrigatória. O tipo CPF confere o dígito verificador.</li>
+            <li>Se quiser, adicione uma Skill — um procedimento da loja que a IA usa naquele passo.</li>
+            <li>Ligue as caixas em linha, do Início ao Fim. No Fim, escolha o que acontece ao concluir: nada, orientar a IA, chamar uma skill ou começar outro roteiro.</li>
+            <li>Publique.</li>
+          </ol>
+          <h3>Como a IA se comporta</h3>
+          <ul>
+            <li>Só grava uma resposta que esteja escrita na mensagem do cliente.</li>
+            <li>Se o cliente já disser um dado antes de ser perguntado, ela registra sem perguntar.</li>
+            <li>Se o cliente corrigir um dado, a resposta é atualizada (quando a pergunta permite correção).</li>
+            <li>Pergunta sem resposta é repetida até o máximo de tentativas; depois é encerrada e não trava o roteiro.</li>
+            <li>O roteiro para quando uma pessoa assume a conversa, quando o cliente pede para parar, e depois do prazo sem resposta (72 horas, se você não mudar).</li>
+          </ul>
+          <p>As respostas ficam nos campos do cliente e aparecem na ficha dele e na conversa. O que o cliente já respondeu não é perguntado de novo, em nenhum roteiro.</p>
+        </div>
+      </details>
+
+      <div class="acoes-aba">
+        <button class="btn primario"><i class="ph ph-plus"></i>Novo fluxo de atendimento</button>
+        <button class="btn secundario"><i class="ph ph-upload-simple"></i>Importar fluxo</button>
+      </div>
+
+      <div class="grade c3">
+        <article class="cartao fluxo-card">
+          <a href="#" class="topo-card"><h3>Agendamento de consulta</h3><span class="tag ok">Ativo</span></a>
+          <dl>
+            <div><dt>Versão</dt><dd>publicada</dd></div>
+            <div><dt>Handoff</dt><dd>Pausar</dd></div>
+          </dl>
+          <div class="quando">Atualizado em <span class="mono">28/10/2026</span></div>
+          <div class="pe-card">
+            <button class="btn fantasma p">Renomear</button>
+            <button class="btn fantasma p"><i class="ph ph-copy"></i>Duplicar</button>
+            <button class="btn fantasma p"><i class="ph ph-download-simple"></i>Exportar</button>
+            <button class="btn perigo p"><i class="ph ph-trash"></i>Excluir</button>
+          </div>
+        </article>
+
+        <article class="cartao fluxo-card">
+          <a href="#" class="topo-card"><h3>Cadastro do paciente novo</h3><span class="tag">Rascunho</span></a>
+          <dl>
+            <div><dt>Versão</dt><dd>—</dd></div>
+            <div><dt>Handoff</dt><dd>Pausar</dd></div>
+          </dl>
+          <div class="quando">Atualizado em <span class="mono">03/11/2026</span></div>
+          <div class="pe-card">
+            <button class="btn fantasma p">Renomear</button>
+            <button class="btn fantasma p"><i class="ph ph-copy"></i>Duplicar</button>
+            <button class="btn fantasma p"><i class="ph ph-download-simple"></i>Exportar</button>
+            <button class="btn perigo p"><i class="ph ph-trash"></i>Excluir</button>
+          </div>
+        </article>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

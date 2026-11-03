@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planos de tarefa</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="51">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .passo { border: 1px solid var(--linha); border-radius: var(--r); padding: 14px; display: grid; gap: 12px; background: var(--fundo); }
+  .passo .cab-passo { display: flex; align-items: center; justify-content: space-between; }
+  .passo .cab-passo strong { font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ouro-escuro); }
+  .passo .c3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .contador { text-align: right; font: 500 11px/1 var(--mono); color: var(--fraco); }
+  .plano { padding: 16px 18px; }
+  .plano .cab-plano { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .plano h2 { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .plano .passos-lista { margin-top: 10px; color: var(--apoio); font-size: 13px; display: grid; gap: 4px; }
+  .plano .passos-lista .n { font-family: var(--mono); font-size: .92em; color: var(--fraco); margin-right: 4px; }
+  @media (max-width: 860px) { .passo .c3 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body data-rota="/app/tasks/planos">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <a href="#" class="volta"><i class="ph ph-arrow-bend-up-left"></i>Tarefas</a>
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM · Tarefas</div>
+          <h1>Planos de tarefa</h1>
+          <p>Monte a sequência uma vez; a ação Aplicar um plano de tarefas aplica o plano ao negócio.</p>
+        </div>
+        <div class="acoes"><button class="btn primario"><i class="ph ph-plus"></i>Novo plano</button></div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao" style="margin-bottom:20px">
+        <div class="corpo form">
+          <div class="campo"><label for="nome-plano">Nome do plano</label><input id="nome-plano" type="text" placeholder="Proposta enviada" value="Proposta enviada"></div>
+          <div class="campo"><label for="desc-plano">Descrição (opcional)</label><textarea id="desc-plano" style="min-height:72px">Três toques depois que a proposta sai, para ela não esfriar.</textarea><div class="contador">61/280</div></div>
+
+          <h3 class="sub" style="margin:4px 0 0">Passos do plano</h3>
+          <div class="passo">
+            <div class="cab-passo"><strong>Passo 1</strong><button class="btn fantasma p">Remover passo</button></div>
+            <div class="campo"><label>Título</label><input type="text" placeholder="Ligar para {{contact.name}} sobre {{lead.title}}" value="Ligar para {{contact.name}} sobre {{lead.title}}"></div>
+            <div class="c3">
+              <div class="campo"><label>Vence em (dias)</label><input type="number" class="mono" value="1"></div>
+              <div class="campo"><label>Prioridade</label><select><option>Baixa</option><option>Média</option><option selected>Alta</option><option>Urgente</option></select></div>
+              <div class="campo"><label>Atribuir a</label><select><option selected>Dono do negócio</option><option>Ana Souza</option><option>Marcos Lima</option><option>Renata Borges</option></select></div>
+            </div>
+          </div>
+          <div class="passo">
+            <div class="cab-passo"><strong>Passo 2</strong><button class="btn fantasma p">Remover passo</button></div>
+            <div class="campo"><label>Título</label><input type="text" placeholder="Ligar para {{contact.name}} sobre {{lead.title}}" value="Enviar lembrete da proposta"></div>
+            <div class="c3">
+              <div class="campo"><label>Vence em (dias)</label><input type="number" class="mono" value="3"></div>
+              <div class="campo"><label>Prioridade</label><select><option>Baixa</option><option selected>Média</option><option>Alta</option><option>Urgente</option></select></div>
+              <div class="campo"><label>Atribuir a</label><select><option selected>Dono do negócio</option><option>Ana Souza</option><option>Marcos Lima</option><option>Renata Borges</option></select></div>
+            </div>
+          </div>
+          <div class="passo">
+            <div class="cab-passo"><strong>Passo 3</strong><button class="btn fantasma p">Remover passo</button></div>
+            <div class="campo"><label>Título</label><input type="text" placeholder="Ligar para {{contact.name}} sobre {{lead.title}}" value="Pedir decisão"></div>
+            <div class="c3">
+              <div class="campo"><label>Vence em (dias)</label><input type="number" class="mono" value="7"></div>
+              <div class="campo"><label>Prioridade</label><select><option>Baixa</option><option>Média</option><option selected>Alta</option><option>Urgente</option></select></div>
+              <div class="campo"><label>Atribuir a</label><select><option>Dono do negócio</option><option selected>Ana Souza</option><option>Marcos Lima</option><option>Renata Borges</option></select></div>
+            </div>
+          </div>
+          <div><button class="btn secundario"><i class="ph ph-plus"></i>Adicionar passo</button></div>
+          <p class="fraco pequeno">O que é salvo aqui é o que o editor de regras oferece na ação Aplicar um plano de tarefas.</p>
+        </div>
+        <div class="pe" style="justify-content:flex-end"><button class="btn fantasma">Cancelar</button><button class="btn navy">Salvar plano</button></div>
+      </div>
+
+      <div style="display:grid;gap:12px">
+        <div class="cartao plano">
+          <div class="cab-plano">
+            <div style="min-width:0"><h2>Proposta enviada</h2><p class="apoio">Três toques depois que a proposta sai, para ela não esfriar.</p></div>
+            <div style="display:flex;gap:4px;flex:none"><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Excluir</button></div>
+          </div>
+          <ol class="passos-lista">
+            <li><span class="n">1.</span>Ligar para {{contact.name}} sobre {{lead.title}} — Vence em (dias) <span class="mono">1</span></li>
+            <li><span class="n">2.</span>Enviar lembrete da proposta — Vence em (dias) <span class="mono">3</span></li>
+            <li><span class="n">3.</span>Pedir decisão — Vence em (dias) <span class="mono">7</span></li>
+          </ol>
+        </div>
+        <div class="cartao plano">
+          <div class="cab-plano">
+            <div style="min-width:0"><h2>Pós-cirúrgico de implante</h2><p class="apoio">Acompanhamento depois da cirurgia até a prótese definitiva.</p></div>
+            <div style="display:flex;gap:4px;flex:none"><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Excluir</button></div>
+          </div>
+          <ol class="passos-lista">
+            <li><span class="n">1.</span>Perguntar como {{contact.name}} passou a noite — Vence em (dias) <span class="mono">1</span></li>
+            <li><span class="n">2.</span>Marcar a retirada dos pontos — Vence em (dias) <span class="mono">7</span></li>
+            <li><span class="n">3.</span>Agendar a moldagem da prótese — Vence em (dias) <span class="mono">90</span></li>
+          </ol>
+        </div>
+        <div class="cartao plano">
+          <div class="cab-plano">
+            <div style="min-width:0"><h2>Orçamento parado</h2></div>
+            <div style="display:flex;gap:4px;flex:none"><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Excluir</button></div>
+          </div>
+          <ol class="passos-lista">
+            <li><span class="n">1.</span>Mandar mensagem perguntando se ficou alguma dúvida — Vence em (dias) <span class="mono">2</span></li>
+            <li><span class="n">2.</span>Oferecer parcelamento para {{lead.title}} — Vence em (dias) <span class="mono">5</span></li>
+          </ol>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

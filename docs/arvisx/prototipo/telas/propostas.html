@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Propostas</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="90">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .tabela td.titulo a { font-weight: 600; text-decoration: underline; text-decoration-color: var(--linha-forte); text-underline-offset: 3px; }
+  .tabela td.titulo a:hover { text-decoration-color: var(--ouro); }
+  @media (max-width: 860px) {
+    .tabela thead { display: none; }
+    .tabela, .tabela tbody, .tabela tr, .tabela td { display: block; }
+    .tabela tr { padding: 10px 14px; border-bottom: 1px solid var(--linha); display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; }
+    .tabela td { padding: 0; border: 0; }
+    .tabela td.titulo { grid-column: 1 / -1; }
+    .tabela td.numero, .tabela td.status { font-size: 12px; grid-column: 1; }
+    .tabela td.valor { grid-column: 2; grid-row: 2 / span 2; align-self: center; text-align: right; }
+  }
+</style>
+</head>
+<body data-rota="/app/proposals">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM</div>
+          <h1>Propostas</h1>
+        </div>
+        <div class="acoes"><button class="btn primario"><i class="ph ph-plus"></i>Nova proposta</button></div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao">
+        <table class="tabela">
+          <thead><tr><th>Número</th><th>Título</th><th>Status</th><th class="dir">Valor</th></tr></thead>
+          <tbody>
+            <tr><td class="numero apoio">Rascunho</td><td class="titulo"><a href="#">Protocolo superior — Bruno Tavares</a></td><td class="status"><span class="tag aviso">Aguardando revisão</span></td><td class="valor mono dir">R$ 45.000,00</td></tr>
+            <tr><td class="numero apoio">Rascunho</td><td class="titulo"><a href="#">Implante unitário — Sônia Vasconcelos</a></td><td class="status"><span class="tag aviso">Aguardando revisão</span></td><td class="valor mono dir">R$ 6.900,00</td></tr>
+            <tr><td class="numero mono">0007/2026 v1</td><td class="titulo"><a href="#">Implantes — Clínica Vitalis</a></td><td class="status"><span class="tag sinal">Enviada</span></td><td class="valor mono dir">R$ 12.400,00</td></tr>
+            <tr><td class="numero mono">0006/2026 v2</td><td class="titulo"><a href="#">Contrato corporativo — Grupo Odonto Sul</a></td><td class="status"><span class="tag sinal">Enviada</span></td><td class="valor mono dir">R$ 124.000,00</td></tr>
+            <tr><td class="numero mono">0006/2026 v1</td><td class="titulo"><a href="#">Contrato corporativo — Grupo Odonto Sul</a></td><td class="status"><span class="tag">Substituída</span></td><td class="valor mono dir">R$ 118.000,00</td></tr>
+            <tr><td class="numero mono">0005/2026 v1</td><td class="titulo"><a href="#">Manutenção de protocolo — Carlos — Clínica Vida Odonto</a></td><td class="status"><span class="tag ok">Aceita</span></td><td class="valor mono dir">R$ 28.000,00</td></tr>
+            <tr><td class="numero apoio">Rascunho</td><td class="titulo"><a href="#">4 tratamentos — Família Andrade</a></td><td class="status"><span class="tag">Rascunho</span></td><td class="valor mono dir">R$ 21.500,00</td></tr>
+            <tr><td class="numero mono">0004/2026 v1</td><td class="titulo"><a href="#">Prótese fixa — Patrícia Nunes</a></td><td class="status"><span class="tag erro">Recusada</span></td><td class="valor mono dir">R$ 7.800,00</td></tr>
+            <tr><td class="numero mono">0003/2026 v1</td><td class="titulo"><a href="#">Ortodontia adulto — Helena Marques</a></td><td class="status"><span class="tag aviso">Vencida</span></td><td class="valor mono dir">R$ 9.600,00</td></tr>
+            <tr><td class="numero mono">0002/2026 v1</td><td class="titulo"><a href="#">Clareamento — Marina Costa</a></td><td class="status"><span class="tag sinal">Enviando</span></td><td class="valor mono dir">R$ 1.800,00</td></tr>
+            <tr><td class="numero mono">0001/2026 v1</td><td class="titulo"><a href="#">Avaliação inicial — Rogério Paiva</a></td><td class="status"><span class="tag">Cancelada</span></td><td class="valor mono dir">R$ 450,00</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Central de avisos</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="71">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .lembrete .corpo { display: grid; gap: 14px; }
+  .lembrete .linha-form { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .lembrete .linha-form .campo { min-width: 160px; }
+  .lembrete .linha-form .campo select { height: 36px; }
+  .lista-topo { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .lista-topo .abas { margin-bottom: 0; border-bottom: 0; }
+  .nota-ordem { color: var(--fraco); font-size: 12px; padding: 10px 0 12px; border-top: 1px solid var(--linha); }
+  .aviso { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; padding: 14px 18px; border-bottom: 1px solid var(--linha); }
+  .aviso:last-child { border-bottom: 0; }
+  .aviso .titulo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 700; font-size: 13.5px; }
+  .aviso .meta { color: var(--fraco); font-size: 12px; }
+  .aviso .corpo-txt { color: var(--texto); font-size: 13px; }
+  .aviso .orient { color: var(--apoio); font-size: 12.5px; }
+  .aviso .links { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 2px; }
+  .aviso .acoes { grid-column: 2; grid-row: 1 / span 5; align-self: start; display: flex; gap: 6px; }
+  .aviso.critico { box-shadow: inset 3px 0 0 var(--erro); }
+  @media (max-width: 860px) {
+    .conteudo { padding-left: 0; padding-right: 0; }
+    .conteudo > .cabecalho, .conteudo > .fio { margin-left: 16px; margin-right: 16px; }
+    .lembrete, .lista-topo, .nota-ordem { margin-left: 16px; margin-right: 16px; }
+    .cartao.avisos { border-radius: 0; border-left: 0; border-right: 0; }
+    .lembrete .linha-form .campo { flex: 1 1 100%; }
+    .lembrete .linha-form .campo select { min-height: 44px; }
+    .aviso { grid-template-columns: 1fr; }
+    .aviso .acoes { grid-column: 1; grid-row: auto; margin-top: 6px; }
+    .aviso .acoes .btn { flex: 1; }
+  }
+</style>
+</head>
+<body data-rota="/app/ai/inbox">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Agente de IA</div>
+          <h1>Central de avisos</h1>
+          <p>O que o assistente precisou escalar para o time: conexões caídas, tarefas que falharam, atendimentos passados a humanos.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao lembrete" style="margin-bottom:20px">
+        <div class="cab"><h2>Lembrete de caso parado</h2></div>
+        <div class="corpo">
+          <p class="apoio pequeno">Quando um caso espera uma decisão da equipe, esta Central volta a avisar. O relógio começa quando o caso chega à equipe e recomeça quando o cliente responde.</p>
+          <label class="caixa"><input type="checkbox" checked><span>Lembrar a equipe dos casos parados</span></label>
+          <div class="linha-form">
+            <div class="campo"><label>Lembrar a cada</label><select><option>1 hora</option><option>2 horas</option><option selected>4 horas</option><option>8 horas</option><option>12 horas</option><option>1 dia</option><option>2 dias</option><option>3 dias</option></select></div>
+            <div class="campo"><label>Avisos por espera</label><select><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>10</option></select></div>
+            <button class="btn secundario p" style="height:36px">Salvar lembrete</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="lista-topo">
+        <div class="abas" role="tablist">
+          <button role="tab" aria-selected="true">Abertos <span class="cont">7</span></button>
+          <button role="tab" aria-selected="false">Resolvidos</button>
+        </div>
+        <button class="btn secundario p"><i class="ph ph-check"></i>Marcar todos resolvidos</button>
+      </div>
+      <div class="nota-ordem">Os mais graves primeiro; entre iguais, os mais recentes.</div>
+
+      <div class="cartao avisos">
+        <ul>
+          <li class="aviso critico">
+            <div class="titulo"><span class="tag erro">crítico</span>Conexão do WhatsApp caiu — precisa escanear o QR de novo</div>
+            <div class="meta">Conexão · há 25 min</div>
+            <div class="corpo-txt">O número <span class="mono">+55 11 98800-1234</span> (Recepção) desconectou. O assistente não recebe nem envia mensagens por ele até a conexão voltar.</div>
+            <div class="orient">Abra Conexões e escaneie o QR de novo com o celular desse número.</div>
+            <div class="links"><a href="#" class="link">Abrir conexões</a></div>
+            <div class="acoes"><button class="btn secundario p"><i class="ph ph-check"></i>Marcar resolvido</button></div>
+          </li>
+          <li class="aviso critico">
+            <div class="titulo"><span class="tag erro">crítico</span>O orçamento de IA foi atingido</div>
+            <div class="meta">Orçamento · há 1 hora</div>
+            <div class="corpo-txt">O gasto de novembro chegou a <span class="mono">US$ 50,00</span>, o limite definido. A IA parou de responder e as conversas em andamento foram para a fila de atendimento humano.</div>
+            <div class="orient">Aumente o limite em Uso e orçamento ou aguarde o mês virar. Cada conversa volta ao automático pelo cabeçalho dela.</div>
+            <div class="links"><a href="#" class="link">Abrir uso e orçamento</a></div>
+            <div class="acoes"><button class="btn secundario p"><i class="ph ph-check"></i>Marcar resolvido</button></div>
+          </li>
+          <li class="aviso">
+            <div class="titulo"><span class="tag aviso">atenção</span>O assistente prometeu algo a um cliente e ninguém ficou responsável</div>
+            <div class="meta">Promessa sem dono · há 3 horas</div>
+            <div class="corpo-txt">Nesta conversa o assistente combinou algo com o cliente e não registrou nenhum próximo passo para isso — não há retorno agendado.</div>
+            <div class="orient">Abra a conversa, veja o que foi combinado e decida quem faz.</div>
+            <div class="links"><a href="#" class="link">Abrir a conversa</a></div>
+            <div class="acoes"><button class="btn secundario p"><i class="ph ph-check"></i>Marcar resolvido</button></div>
+          </li>
+          <li class="aviso">
+            <div class="titulo"><span class="tag aviso">atenção</span>Um atendimento espera decisão da equipe</div>
+            <div class="meta">Caso parado · há 5 horas</div>
+            <div class="corpo-txt">O caso “Desconto acima da política”, de Carlos — Clínica Vida Odonto, espera uma decisão da equipe há 5 horas. Este é o <span class="mono">2º</span> de <span class="mono">3</span> lembretes.</div>
+            <div class="orient">Abra o caso e escolha o que fazer — a IA continua conversando com o cliente enquanto isso.</div>
+            <div class="links"><a href="#" class="link">Abrir o caso</a></div>
+            <div class="acoes"><button class="btn secundario p"><i class="ph ph-check"></i>Marcar resolvido</button></div>
+          </li>
+          <li class="aviso">
+            <div class="titulo"><span class="tag aviso">atenção</span>Uma tarefa venceu sem conclusão</div>
+            <div class="meta">Tarefa · há 1 dia</div>
+            <div class="corpo-txt">“Enviar orçamento do implante” para Família Andrade venceu ontem às <span class="mono">18:00</span> e segue aberta com Marcos Lima.</div>
+            <div class="orient">Conclua a tarefa ou mude o prazo para ela sair daqui.</div>
+            <div class="links"><a href="#" class="link">Abrir a tarefa</a></div>
+            <div class="acoes"><button class="btn secundario p"><i class="ph ph-check"></i>Marcar resolvido</button></div>
+          </li>
+          <li class="aviso">
+            <div class="titulo"><span class="tag sinal">informativo</span>O assistente passou um atendimento para um humano</div>
+            <div class="meta">Passagem para humano · há 1 dia</div>
+            <div class="corpo-txt"><span class="ia-tag">Lia — AgendaPlus</span> passou a conversa com Helena Marques para a fila humana: a cliente pediu para falar com uma pessoa.</div>
+            <div class="orient">Alguém da equipe precisa assumir a conversa no Inbox.</div>
+            <div class="links"><a href="#" class="link">Abrir a conversa</a></div>
+            <div class="acoes"><button class="btn secundario p"><i class="ph ph-check"></i>Marcar resolvido</button></div>
+          </li>
+          <li class="aviso">
+            <div class="titulo"><span class="tag sinal">informativo</span>Uma proposta está pronta para revisão</div>
+            <div class="meta">Proposta · há 2 dias</div>
+            <div class="corpo-txt">A proposta “Protocolo superior — Grupo Odonto Sul” foi gerada pelo assistente e espera a sua revisão antes do envio.</div>
+            <div class="orient">Revise valores e condições antes de enviar ao cliente.</div>
+            <div class="links"><a href="#" class="link">Abrir a proposta</a></div>
+            <div class="acoes"><button class="btn secundario p"><i class="ph ph-check"></i>Marcar resolvido</button></div>
+          </li>
+        </ul>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

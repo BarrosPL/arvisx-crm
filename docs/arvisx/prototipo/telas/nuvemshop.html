@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuvemshop</title>
+<meta name="grupo" content="Canais">
+<meta name="ordem" content="20">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .cab-loja { display: flex; align-items: flex-start; gap: 14px; }
+  .cab-loja .ic { width: 52px; height: 52px; border-radius: var(--r); border: 1px solid var(--linha); background: var(--painel); display: grid; place-items: center; color: var(--apoio); font-size: 28px; flex: none; }
+  .cartao > .cab { align-items: flex-start; }
+  .cartao > .cab .desc { color: var(--apoio); font-size: 12.5px; margin-top: 4px; }
+  .cartao > .cab h2 { display: flex; align-items: center; gap: 8px; }
+  .dados dt { font-weight: 700; display: inline; }
+  .dados dd { display: inline; color: var(--apoio); }
+  .dados div + div { margin-top: 10px; }
+</style>
+</head>
+<body data-rota="/app/integrations/nuvemshop">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div class="cab-loja">
+          <span class="ic"><i class="ph ph-storefront"></i></span>
+          <div>
+            <div class="eyebrow">Canais</div>
+            <h1>Nuvemshop</h1>
+            <p>Sincroniza pedidos, produtos e clientes via OAuth + webhooks.</p>
+          </div>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao">
+        <div class="cab">
+          <div>
+            <h2>Conectado <span class="tag mono">healthy</span></h2>
+            <p class="desc">Loja <span class="mono">#1234567</span> · última sync: <span class="mono">03/11/2026, 14:22:05</span></p>
+          </div>
+          <button class="btn secundario">Desconectar</button>
+        </div>
+        <div class="corpo">
+          <dl class="dados">
+            <div><dt>Escopos:</dt> <dd class="mono">read_orders, read_products, read_customers</dd></div>
+            <div><dt>Webhooks registrados:</dt> <dd><span class="mono">8 / 8</span></dd></div>
+          </dl>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Propostas (IA)</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="72">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .proposta { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 4px 12px; padding: 14px 18px; border-bottom: 1px solid var(--linha); align-items: start; }
+  .proposta:last-child { border-bottom: 0; }
+  .proposta .avatar { grid-row: 1 / span 2; margin-top: 2px; }
+  .proposta .l1 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13.5px; }
+  .proposta .l1 strong { font-weight: 700; }
+  .proposta .l1 .contato { color: var(--apoio); font-size: 12.5px; }
+  .proposta .l1 .quando { color: var(--fraco); font-size: 12px; }
+  .proposta .acao-txt { grid-column: 2; font-size: 13.5px; }
+  .proposta .acao-txt::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; border: 2px solid var(--ouro); margin-right: 8px; vertical-align: 0; }
+  .proposta .botoes { grid-column: 3; grid-row: 1 / span 2; display: flex; gap: 6px; }
+  @media (max-width: 860px) {
+    .proposta { grid-template-columns: 36px minmax(0, 1fr); }
+    .proposta .botoes { grid-column: 1 / span 2; grid-row: auto; margin-top: 8px; }
+    .proposta .botoes .btn { flex: 1; }
+  }
+</style>
+</head>
+<body data-rota="/app/ai/proposals">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Agente de IA</div>
+          <h1>Propostas</h1>
+          <p>Próximos passos que o assistente sugeriu e esperam sua decisão. Aprovar e ignorar são registrados — ignorar é uma decisão, não a falta dela.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="abas" role="tablist">
+        <button role="tab" aria-selected="true">Aguardando decisão <span class="cont">4</span></button>
+        <button role="tab" aria-selected="false">Já decididas</button>
+      </div>
+
+      <div class="cartao">
+        <ul>
+          <li class="proposta">
+            <span class="avatar ia"><i class="ph ph-robot"></i></span>
+            <div class="l1"><strong>Protocolo superior — Carlos</strong><span class="contato">· Carlos — Clínica Vida Odonto</span><span class="tag">Avaliação</span><span class="quando">proposta há 2 dias</span></div>
+            <div class="acao-txt">Ligar amanhã às 10h para confirmar o orçamento</div>
+            <div class="botoes"><button class="btn navy p"><i class="ph ph-check"></i>Aprovar</button><button class="btn secundario p"><i class="ph ph-x"></i>Ignorar</button></div>
+          </li>
+          <li class="proposta">
+            <span class="avatar ia"><i class="ph ph-robot"></i></span>
+            <div class="l1"><strong>Implante unitário — Família Andrade</strong><span class="contato">· Família Andrade</span><span class="tag">Negociação</span><span class="quando">proposta há 1 dia</span></div>
+            <div class="acao-txt">Enviar o orçamento revisado com o parcelamento em 10x que a Renata pediu</div>
+            <div class="botoes"><button class="btn navy p"><i class="ph ph-check"></i>Aprovar</button><button class="btn secundario p"><i class="ph ph-x"></i>Ignorar</button></div>
+          </li>
+          <li class="proposta">
+            <span class="avatar ia"><i class="ph ph-robot"></i></span>
+            <div class="l1"><strong>Clareamento — Marina Costa</strong><span class="contato">· Marina Costa</span><span class="tag">Novo</span><span class="quando">proposta há 5 horas</span></div>
+            <div class="acao-txt">Oferecer o horário de sexta às 16h, que ela disse preferir</div>
+            <div class="botoes"><button class="btn navy p"><i class="ph ph-check"></i>Aprovar</button><button class="btn secundario p"><i class="ph ph-x"></i>Ignorar</button></div>
+          </li>
+          <li class="proposta">
+            <span class="avatar ia"><i class="ph ph-robot"></i></span>
+            <div class="l1"><strong>Ortodontia — Caio Ribeiro</strong><span class="contato">· Caio Ribeiro</span><span class="tag">Avaliação</span><span class="quando">proposta há 3 horas</span></div>
+            <div class="acao-txt">Perguntar se o convênio cobre a avaliação antes de marcar</div>
+            <div class="botoes"><button class="btn navy p"><i class="ph ph-check"></i>Aprovar</button><button class="btn secundario p"><i class="ph ph-x"></i>Ignorar</button></div>
+          </li>
+        </ul>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

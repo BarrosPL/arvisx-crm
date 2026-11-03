@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atividades</title>
+<meta name="grupo" content="Análise">
+<meta name="ordem" content="20">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .pilha { display: flex; flex-direction: column; gap: 20px; }
+  .linha-topo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  /* marcador de ator: forma, nunca cor */
+  .ator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .ator.pessoa { background: var(--ouro); }
+  .ator.agente { border: 2px solid var(--ouro); }
+  .ator.auto { border: 1.5px dashed var(--linha-forte); }
+  .origem { padding: 16px; }
+  .origem .rot { display: flex; align-items: center; gap: 8px; color: var(--apoio); font-size: 12.5px; }
+  .origem .n { font-family: var(--display); font-stretch: 108%; font-weight: 650; font-size: 28px; letter-spacing: -.03em; line-height: 1; margin-top: 10px; font-variant-numeric: tabular-nums; }
+  .origem .p { color: var(--fraco); font-size: 12px; margin-top: 6px; }
+  .grafico-dias { display: flex; align-items: flex-end; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+  .grafico-dias .dia { flex: 1; min-width: 18px; max-width: 72px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .grafico-dias svg { width: 100%; height: 72px; }
+  .grafico-dias .d { color: var(--fraco); font: 500 10px/1 var(--mono); }
+  .linha-barra { padding: 7px 0; }
+  .linha-barra .t { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .linha-barra .t .nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+  .linha-barra .barra { height: 5px; }
+  .tl { display: flex; flex-direction: column; gap: 6px; }
+  .tl li { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; padding: 8px 10px; border: 1px solid var(--linha); border-radius: var(--r-sm); font-size: 13px; }
+  .tl li .quando { color: var(--fraco); font-size: 12px; }
+  .tl li .tipo { font-weight: 600; }
+  .tl li .quem, .tl li .contato { color: var(--apoio); font-size: 12px; }
+  .tl li .motivo { width: 100%; color: var(--apoio); font-size: 12px; }
+  .tl li .ator { align-self: center; }
+  .corte { color: var(--apoio); font-size: 12.5px; margin-top: 10px; }
+</style>
+</head>
+<body data-rota="/app/activities">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Análise</div>
+          <h1>Atividades</h1>
+          <p>O que aconteceu na operação no período — e quanto disso foi a equipe.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="abas" role="tablist">
+        <a href="#" role="tab" aria-selected="true">Atividades</a>
+        <a href="#" role="tab" aria-selected="false">Por etiqueta</a>
+      </div>
+
+      <div class="pilha">
+        <div class="linha-topo">
+          <button class="filtro" aria-label="Período">Últimos 7 dias<i class="ph ph-caret-down"></i></button>
+          <span class="apoio"><span class="mono">138</span> acontecimentos</span>
+        </div>
+
+        <div class="grade c3">
+          <div class="cartao origem"><div class="rot"><span class="ator pessoa"></span>A equipe</div><div class="n">61</div><div class="p mono">44%</div></div>
+          <div class="cartao origem"><div class="rot"><span class="ator agente"></span>Os agentes</div><div class="n">52</div><div class="p mono">38%</div></div>
+          <div class="cartao origem"><div class="rot"><span class="ator auto"></span>Automático</div><div class="n">25</div><div class="p mono">18%</div></div>
+        </div>
+
+        <div class="cartao">
+          <div class="cab"><h2>Quando</h2></div>
+          <div class="corpo">
+            <div class="grafico-dias" role="img" aria-label="Acontecimentos por dia">
+              <div class="dia" title="28/10: 14"><svg viewBox="0 0 10 72" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="36" width="10" height="36" fill="var(--ouro)" rx="1"/></svg><span class="d">28/10</span></div>
+              <div class="dia" title="29/10: 22"><svg viewBox="0 0 10 72" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="15" width="10" height="57" fill="var(--ouro)" rx="1"/></svg><span class="d">29/10</span></div>
+              <div class="dia" title="30/10: 28"><svg viewBox="0 0 10 72" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="0" width="10" height="72" fill="var(--ouro)" rx="1"/></svg><span class="d">30/10</span></div>
+              <div class="dia" title="31/10: 19"><svg viewBox="0 0 10 72" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="23" width="10" height="49" fill="var(--ouro)" rx="1"/></svg><span class="d">31/10</span></div>
+              <div class="dia" title="01/11: 6"><svg viewBox="0 0 10 72" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="57" width="10" height="15" fill="var(--ouro)" rx="1"/></svg><span class="d">01/11</span></div>
+              <div class="dia" title="02/11: 3"><svg viewBox="0 0 10 72" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="64" width="10" height="8" fill="var(--ouro)" rx="1"/></svg><span class="d">02/11</span></div>
+              <div class="dia" title="03/11: 46"><svg viewBox="0 0 10 72" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="0" width="10" height="72" fill="var(--ouro)" rx="1"/></svg><span class="d">03/11</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grade c2">
+          <div class="cartao">
+            <div class="cab"><h2>Quem fez</h2></div>
+            <div class="corpo">
+              <div class="linha-barra"><div class="t"><span class="ator agente"></span><span class="nome">Lia — AgendaPlus</span><span class="mono">38</span></div><div class="barra"><span style="width:28%"></span></div></div>
+              <div class="linha-barra"><div class="t"><span class="ator pessoa"></span><span class="nome">Ana Souza</span><span class="mono">29</span></div><div class="barra"><span style="width:21%"></span></div></div>
+              <div class="linha-barra"><div class="t"><span class="ator auto"></span><span class="nome">Automação</span><span class="mono">25</span></div><div class="barra"><span style="width:18%"></span></div></div>
+              <div class="linha-barra"><div class="t"><span class="ator pessoa"></span><span class="nome">Marcos Lima</span><span class="mono">19</span></div><div class="barra"><span style="width:14%"></span></div></div>
+              <div class="linha-barra"><div class="t"><span class="ator agente"></span><span class="nome">Bot Padrão E2E</span><span class="mono">14</span></div><div class="barra"><span style="width:10%"></span></div></div>
+              <div class="linha-barra"><div class="t"><span class="ator pessoa"></span><span class="nome">Renata Borges</span><span class="mono">13</span></div><div class="barra"><span style="width:9%"></span></div></div>
+            </div>
+          </div>
+          <div class="cartao">
+            <div class="cab"><h2>O que foi feito</h2></div>
+            <div class="corpo">
+              <div class="linha-barra"><div class="t"><span class="nome">Atendimento da IA</span><span class="mono">41</span></div><div class="barra"><span style="width:30%"></span></div></div>
+              <div class="linha-barra"><div class="t"><span class="nome">Mudou de estágio</span><span class="mono">23</span></div><div class="barra"><span style="width:17%"></span></div></div>
+              <div class="linha-barra"><div class="t"><span class="nome">Anotação</span><span class="mono">18</span></div><div class="barra"><span style="width:13%"></span></div></div>
+              <div class="linha-barra"><div class="t"><span class="nome">Agendamento marcado</span><span class="mono">12</span></div><div class="barra"><span style="width:9%"></span></div></div>
+              <div class="linha-barra"><div class="t"><span class="nome">Entrou no funil</span><span class="mono">11</span></div><div class="barra"><span style="width:8%"></span></div></div>
+              <div class="linha-barra"><div class="t"><span class="nome">Tarefa concluída</span><span class="mono">9</span></div><div class="barra"><span style="width:7%"></span></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="cab"><h2>Linha do tempo da operação</h2></div>
+          <div class="corpo">
+            <ul class="tl">
+              <li><span class="quando mono">03/11 14:20</span><span class="ator agente"></span><span class="tipo">Atendimento da IA</span><span class="quem">Lia — AgendaPlus</span><a href="#" class="link">Carlos — Clínica Vida Odonto · manutenção de protocolo</a><span class="contato">· Carlos — Clínica Vida Odonto</span></li>
+              <li><span class="quando mono">03/11 13:52</span><span class="ator pessoa"></span><span class="tipo">Mudou de estágio</span><span class="quem">Ana Souza</span><a href="#" class="link">Grupo Odonto Sul — contrato corporativo</a><span class="contato">· Grupo Odonto Sul</span></li>
+              <li><span class="quando mono">03/11 11:05</span><span class="ator agente"></span><span class="tipo">Agendamento marcado</span><span class="quem">Lia — AgendaPlus</span><a href="#" class="link">Marina Costa — clareamento</a><span class="contato">· Marina Costa</span></li>
+              <li><span class="quando mono">03/11 09:48</span><span class="ator auto"></span><span class="tipo">Negócio esfriou</span><span class="quem">Sistema</span><a href="#" class="link">Bruno Tavares — protocolo superior</a><span class="contato">· Bruno Tavares</span><span class="motivo">Sem resposta há 6 dias</span></li>
+              <li><span class="quando mono">02/11 18:42</span><span class="ator pessoa"></span><span class="tipo">Anotação</span><span class="quem">Marcos Lima</span><a href="#" class="link">Família Andrade — 4 tratamentos</a><span class="contato">· Família Andrade</span></li>
+              <li><span class="quando mono">02/11 16:10</span><span class="ator auto"></span><span class="tipo">Entrou no funil</span><span class="quem">Automação</span><a href="#" class="link">Caio Ribeiro — dor de dente</a><span class="contato">· Caio Ribeiro</span></li>
+              <li><span class="quando mono">02/11 10:31</span><span class="ator pessoa"></span><span class="tipo">Tarefa concluída</span><span class="quem">Renata Borges</span><a href="#" class="link">Patrícia Nunes — prótese fixa</a><span class="contato">· Patrícia Nunes</span></li>
+              <li><span class="quando mono">01/11 09:12</span><span class="ator agente"></span><span class="tipo">Passou para humano</span><span class="quem">Bot Padrão E2E</span><a href="#" class="link">Helena Marques — ortodontia adulto</a><span class="contato">· Helena Marques</span><span class="motivo">Cliente pediu para falar com uma pessoa</span></li>
+            </ul>
+            <p class="corte">A lista mostra só os mais recentes. No período houve <span class="mono">138</span> acontecimentos.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

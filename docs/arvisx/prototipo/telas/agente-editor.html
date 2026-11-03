@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor do agente</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="11">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .operacao { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; }
+  .operacao label { font-weight: 600; font-size: 13px; }
+  .operacao select { height: 36px; padding: 0 10px; border-radius: var(--r-sm); border: 1px solid var(--linha-forte); background: var(--painel); min-width: 300px; }
+  .operacao p { width: 100%; color: var(--apoio); font-size: 12.5px; }
+  .form-cab { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  .form-cab h2 { font-family: var(--display); font-stretch: 108%; font-weight: 620; letter-spacing: -.02em; font-size: 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .form-cab .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+  .papeis { margin-bottom: 20px; }
+  .coluna-form { display: grid; gap: 16px; align-content: start; }
+  .cartao .corpo .form { gap: 14px; }
+  .contador { font: 500 11px/1 var(--mono); color: var(--apoio); display: flex; gap: 10px; }
+  .pacote { border: 1px solid var(--linha); border-radius: var(--r); padding: 12px 14px; display: flex; gap: 12px; align-items: flex-start; }
+  .pacote .txt { flex: 1; min-width: 0; }
+  .pacote strong { display: flex; align-items: center; gap: 8px; font-size: 13.5px; }
+  .pacote p { color: var(--apoio); font-size: 12.5px; margin-top: 3px; }
+  .pacote .cont { font: 500 11px/1 var(--mono); color: var(--fraco); margin-top: 6px; display: block; }
+  .pacote .criticas { margin-top: 10px; padding: 10px 12px; border-radius: var(--r-sm); background: var(--erro-suave); border: 1px solid #f0bcbc; font-size: 12.5px; }
+  .pacote .criticas strong { color: var(--erro); font-size: 12px; margin-bottom: 6px; }
+  .pacote .criticas .caixa { margin-top: 6px; }
+  .faixa-cont { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 12px; border-radius: var(--r-sm); background: var(--painel-2); font-size: 12.5px; color: var(--apoio); margin-bottom: 12px; }
+  .faixa-cont b { color: var(--texto); }
+  .chips-palavras { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px; border: 1px solid var(--linha-forte); border-radius: var(--r-sm); min-height: 42px; }
+  .chips-palavras .chip { height: 26px; font-size: 12px; }
+  .chips-palavras .chip i { font-size: 12px; color: var(--fraco); }
+  .chip.sug { border-style: dashed; }
+  .dias { display: flex; gap: 6px; flex-wrap: wrap; }
+  .dias .chip { height: 28px; padding: 0 10px; }
+  .caixa-interna { border: 1px solid var(--linha); border-radius: var(--r); padding: 12px 14px; }
+  .caixa-interna .linha-chave { padding: 0; border: 0; }
+  .campo .mono { font-family: var(--mono); font-size: 12.5px; }
+  .base-item { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .base-item .pequeno { color: var(--fraco); }
+  fieldset { border: 0; }
+  fieldset legend { font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--apoio); margin-bottom: 8px; }
+  @media (max-width: 860px) {
+    .operacao label, .operacao select { width: 100%; min-width: 0; }
+    .operacao select { min-height: 44px; }
+    .papeis { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body data-rota="/app/ai/agents">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <a href="#" class="volta"><i class="ph ph-arrow-left"></i>Agentes</a>
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Agente de IA · Agentes</div>
+          <h1 style="display:flex;align-items:center;gap:12px"><span class="avatar g ia">LA</span>Lia — AgendaPlus</h1>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <!-- Operação do agente -->
+      <div class="cartao operacao" style="margin-bottom:20px">
+        <label for="modo">Operação do agente</label>
+        <select id="modo" aria-label="Modo de operação"><option>Assistido: revisar antes de enviar</option><option selected>Automático: responder com as regras do agente</option></select>
+        <button class="btn secundario p"><i class="ph ph-pause"></i>Pausar automático</button>
+        <p>O modo assistido prepara sugestões na conversa. Só a aprovação humana autoriza o envio.</p>
+      </div>
+
+      <!-- Abas -->
+      <div class="abas" role="tablist">
+        <button role="tab" aria-selected="true">Configuração</button>
+        <button role="tab" aria-selected="false">Teste</button>
+        <button role="tab" aria-selected="false">Capacidades</button>
+        <button role="tab" aria-selected="false">Execuções</button>
+        <button role="tab" aria-selected="false">Histórico</button>
+        <button role="tab" aria-selected="false">Propostas</button>
+      </div>
+
+      <!-- Cabeçalho do formulário -->
+      <div class="form-cab">
+        <div>
+          <h2>Lia — AgendaPlus <span class="tag">Publicado v3 + Rascunho v4</span></h2>
+          <p class="apoio pequeno" style="margin-top:4px">Marca, confirma e remarca consultas da Clínica Vitalis pelo WhatsApp, e passa para a recepção quando o paciente pede uma pessoa.</p>
+        </div>
+        <div class="acoes">
+          <button class="btn secundario">Descartar alterações</button>
+          <button class="btn secundario">Salvar rascunho</button>
+          <button class="btn primario"><i class="ph ph-rocket-launch"></i>Publicar v4</button>
+        </div>
+      </div>
+
+      <div class="abas papeis" role="tablist">
+        <button role="tab" aria-selected="true">Conversa com o cliente</button>
+        <button role="tab" aria-selected="false">Organiza o sistema</button>
+        <button role="tab" aria-selected="false">Confere antes de enviar</button>
+      </div>
+
+      <div class="grade c2">
+        <!-- COLUNA 1 -->
+        <div class="coluna-form">
+          <div class="cartao">
+            <div class="cab"><h3>Quem é este agente</h3></div>
+            <div class="corpo form">
+              <div class="campo"><label>Nome</label><input type="text" value="Lia — AgendaPlus" maxlength="120"></div>
+              <div class="campo"><label>Descrição</label><textarea rows="2" style="min-height:64px">Marca, confirma e remarca consultas da Clínica Vitalis pelo WhatsApp, e passa para a recepção quando o paciente pede uma pessoa.</textarea></div>
+              <div class="campo"><label>Ordem de preferência (0 a 1000)</label><input type="number" value="100" class="mono"><span class="ajuda">Quando mais de um agente puder atender a mesma conversa, o de número maior tenta primeiro. Se você só tem um agente, pode deixar como está.</span></div>
+            </div>
+          </div>
+
+          <div class="cartao">
+            <div class="cab"><h3>A inteligência que ele usa</h3></div>
+            <div class="corpo form">
+              <div class="campo"><label>Empresa de inteligência artificial</label><select><option selected>Anthropic (Claude)</option><option>OpenAI (GPT)</option><option>OpenAI pela assinatura (ChatGPT)</option><option>Google (Gemini)</option><option>OpenRouter</option><option>DeepSeek</option><option>Requesty</option></select></div>
+              <div class="campo"><label>Modelo</label><select><option selected>Claude Sonnet 4.6 · default</option><option>Claude Opus 4.6</option><option>Claude Haiku 4.5</option></select></div>
+              <div class="campo"><label>Chave de acesso</label><select><option selected>Chave da clínica · …a1b2 · validada</option><option>A chave desta instalação (anthropic)</option></select></div>
+            </div>
+          </div>
+
+          <div class="cartao">
+            <div class="cab"><h3>Por qual número ele atende</h3></div>
+            <div class="corpo form">
+              <div class="campo"><label>Número conectado</label><select><option selected>Recepção Vitalis · +55 11 98811-4020 · Conectado</option><option>Comercial · +55 11 91234-5678 · Conectado</option></select></div>
+            </div>
+          </div>
+
+          <div class="cartao">
+            <div class="cab"><h3>Freios de segurança</h3></div>
+            <div class="corpo form c2">
+              <div class="campo"><label>Ações por atendimento (1 a 25)</label><input type="number" value="10" class="mono"></div>
+              <div class="campo"><label>Volume de texto por atendimento</label><input type="number" value="50000" step="1000" class="mono"></div>
+              <div class="campo"><label>Custo máximo por atendimento (centavos)</label><input type="number" value="50" class="mono"></div>
+              <div class="campo"><label>Mensagens anteriores que ele lê</label><input type="number" value="20" class="mono"></div>
+              <div class="campo largo"><label>Tamanho máximo desse histórico</label><input type="number" value="8000" class="mono"></div>
+              <div class="campo largo"><label>Esperar antes de responder (segundos)</label><input type="number" placeholder="Vazio = padrão da instalação" min="0" max="60" class="mono"><span class="ajuda">Mensagens do mesmo contato dentro desse tempo viram uma resposta só. Vazio usa a janela padrão da instalação (máximo 60 segundos).</span></div>
+            </div>
+          </div>
+
+          <div class="cartao">
+            <div class="cab"><h3>Passar para uma pessoa</h3></div>
+            <div class="corpo form">
+              <div class="linha-chave" style="padding:0;border:0"><div><strong>Deixar o agente chamar uma pessoa quando perceber que não é caso dele</strong></div><span class="chave ligada" role="switch" aria-checked="true"></span></div>
+              <div class="linha-chave" style="padding:0;border:0"><div><strong>Passar para uma pessoa quando o cliente falar de assunto jurídico (Procon, advogado, processo)</strong><span class="apoio">Desligue se assunto jurídico é o trabalho normal deste agente. Quem pede para falar com uma pessoa continua sendo passado.</span></div><span class="chave ligada" role="switch" aria-checked="true"></span></div>
+              <div class="campo">
+                <label>Palavras que chamam uma pessoa na hora</label>
+                <div class="chips-palavras"><span class="chip">falar com humano<i class="ph ph-x"></i></span><span class="chip">atendente<i class="ph ph-x"></i></span><span class="chip">pessoa real<i class="ph ph-x"></i></span><span class="chip">recepção<i class="ph ph-x"></i></span></div>
+                <div style="display:flex;gap:8px"><input type="text" class="entrada" placeholder="Digite uma expressão e aperte Enter"><button class="btn secundario">Adicionar</button></div>
+                <div class="chips"><span class="chip sug">+ falar com humano</span><span class="chip sug">+ atendente</span><span class="chip sug">+ pessoa real</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cartao">
+            <div class="cab"><h3>Pedir ajuda sem sair da conversa</h3></div>
+            <div class="corpo">
+              <div class="linha-chave" style="padding:0;border:0"><div><strong>Deixar o agente pedir uma tarefa a alguém e seguir conversando</strong><span class="apoio">Diferente de passar a conversa: aqui o agente continua atendendo. Quando esbarra em algo que só uma pessoa resolve — aprovar um desconto, por exemplo — ele abre um pedido interno e retoma assim que for respondido.</span></div><span class="chave ligada" role="switch" aria-checked="true"></span></div>
+            </div>
+          </div>
+
+          <div class="cartao">
+            <div class="cab"><h3>Propostas comerciais</h3></div>
+            <div class="corpo">
+              <div class="linha-chave" style="padding:0;border:0"><div><strong>Deixar o agente rascunhar uma proposta quando o cliente pedir orçamento</strong></div><span class="chave" role="switch" aria-checked="false"></span></div>
+            </div>
+          </div>
+
+          <div class="cartao">
+            <div class="cab"><h3>Follow-up</h3></div>
+            <div class="corpo form">
+              <p class="apoio pequeno">Retomar sozinho quem parou de responder, para o interessado não sumir sem ninguém perceber.</p>
+              <div class="linha-chave" style="padding:0;border:0"><div><strong>Permitir que o agente marque novos retornos por conta própria</strong><span class="apoio">Desligar impede novos retornos prometidos pelo agente. Os fluxos configurados abaixo e a consulta ou o cancelamento de retornos existentes continuam disponíveis.</span></div><span class="chave ligada" role="switch" aria-checked="true"></span></div>
+              <div class="linha-chave" style="padding:0;border:0"><div><strong>Habilitar gatilhos automáticos de follow-up</strong><span class="apoio">Os fluxos abaixo só entram em ação para um cliente se este agente estiver publicado com follow-up habilitado.</span></div><span class="chave ligada" role="switch" aria-checked="true"></span></div>
+              <div class="caixa-interna form">
+                <div class="linha-chave"><div><strong>Só enviar follow-up nestes horários</strong></div><span class="chave ligada" role="switch" aria-checked="true"></span></div>
+                <div class="form c2">
+                  <div class="campo"><label>Início</label><input type="text" value="09:00" class="mono"></div>
+                  <div class="campo"><label>Fim</label><input type="text" value="18:00" class="mono"></div>
+                </div>
+                <div class="campo"><label>Dias</label><div class="dias"><span class="chip">Dom</span><span class="chip" aria-pressed="true">Seg</span><span class="chip" aria-pressed="true">Ter</span><span class="chip" aria-pressed="true">Qua</span><span class="chip" aria-pressed="true">Qui</span><span class="chip" aria-pressed="true">Sex</span><span class="chip">Sáb</span></div></div>
+              </div>
+              <fieldset>
+                <legend>Fluxos publicados</legend>
+                <label class="caixa"><input type="checkbox" checked>Retomada de contato (demonstração)</label>
+              </fieldset>
+            </div>
+          </div>
+
+          <div class="cartao">
+            <div class="cab"><h3>Comandos pelo celular</h3></div>
+            <div class="corpo form">
+              <p class="apoio pequeno">Ligado, QUALQUER mensagem enviada pelo WhatsApp do celular pausa a IA nesta conversa até alguém mandar #on — a pausa não vence sozinha. #off pausa sem precisar responder o cliente. Desligado, #on e #off são texto comum, e responder pelo celular pausa a IA só por um tempo.</p>
+              <div class="linha-chave" style="padding:0;border:0"><div><strong>Aceitar #on/#off enviados pelo celular</strong></div><span class="chave" role="switch" aria-checked="false"></span></div>
+              <p class="apoio pequeno">Atenção: o comando é digitado no chat do cliente e pode aparecer para ele. Vale por conversa, e a pausa só termina com #on ou pelo botão “devolver ao automático”.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- COLUNA 2 -->
+        <div class="coluna-form">
+          <div class="cartao">
+            <div class="cab"><h3>As instruções dele</h3><span class="contador"><span>1.234/20.000</span><span>≈ 310 tokens</span></span></div>
+            <div class="corpo">
+              <div class="campo"><textarea class="mono" rows="12" style="min-height:260px">Você é a Lia, assistente da Clínica Vitalis. Responda em pt-BR, de forma educada e clara, em parágrafos curtos.
+
+Seu trabalho é marcar, confirmar e remarcar consultas. Antes de prometer um horário, consulte a agenda. Nunca invente valor de procedimento: quando perguntarem preço, diga que a avaliação é gratuita e que o orçamento sai depois dela.
+
+Se o paciente pedir para falar com uma pessoa, ou falar de Procon, advogado ou processo, chame a recepção e entregue o resumo do que já aconteceu.
+
+Dúvidas sobre a clínica (endereço, horário, convênios): procure no material antes de responder.</textarea></div>
+            </div>
+          </div>
+
+          <div class="cartao">
+            <div class="cab"><h3>Estilo de resposta</h3></div>
+            <div class="corpo form">
+              <div class="linha-chave" style="padding:0;border:0"><div><strong>Responder em várias mensagens curtas (como uma pessoa digita)</strong><span class="apoio">Em vez de um bloco único, a resposta sai em bolhas separadas, espaçadas pelo mesmo ritmo anti-banimento do envio. O agente também é instruído a escrever em parágrafos curtos.</span></div><span class="chave ligada" role="switch" aria-checked="true"></span></div>
+              <div class="campo"><label>Tamanho máximo por bolha (80–4000)</label><input type="number" value="600" class="mono"></div>
+            </div>
+          </div>
+
+          <div class="cartao">
+            <div class="cab"><h3>O que o agente pode fazer</h3></div>
+            <div class="corpo form">
+              <p class="apoio pequeno">Ligue por jornada de trabalho. O agente só consegue fazer o que estiver ligado aqui — e o que estiver ligado, ele fará sozinho durante o atendimento.</p>
+              <div class="faixa-cont"><span><b class="mono">14 de 27</b> capacidades ligadas</span><span>Acima disso o agente erra na hora de escolher o que usar.</span></div>
+
+              <div class="pacote"><span class="chave ligada" role="switch" aria-checked="true"></span><div class="txt"><strong>Atender e responder</strong><p>O agente lê a conversa, entende o histórico e responde ao cliente sem pedir que ele repita o que já disse.</p><span class="cont">5 de 5 capacidades ligadas</span></div></div>
+              <div class="pacote"><span class="chave ligada" role="switch" aria-checked="true"></span><div class="txt"><strong>Vender e mover o funil <span class="tag aviso">parcial</span></strong><p>O agente registra a oportunidade, atualiza o negócio e move o cliente de etapa conforme a conversa avança.</p><span class="cont">4 de 6 capacidades ligadas</span>
+                <div class="criticas"><strong>Só ligando uma a uma — o pacote não liga por você:</strong>
+                  <label class="caixa"><input type="checkbox"><span>Encerrar o negócio como perdido <span class="tag erro">Efeito que não dá para desfazer</span> <span class="fraco">· negócios</span><br><span class="apoio">Marca o negócio como perdido com um motivo e tira o card do quadro.</span></span></label>
+                  <label class="caixa"><input type="checkbox" checked><span>Mover o card de etapa <span class="tag aviso">Altera dados</span> <span class="fraco">· funil</span><br><span class="apoio">Leva o negócio para outra etapa do mesmo funil.</span></span></label>
+                </div></div></div>
+              <div class="pacote"><span class="chave ligada" role="switch" aria-checked="true"></span><div class="txt"><strong>Não perder o cliente</strong><p>O agente agenda retornos e acompanha quem esfriou, para que nenhum interessado morra por falta de resposta.</p><span class="cont">3 de 3 capacidades ligadas</span></div></div>
+              <div class="pacote"><span class="chave ligada" role="switch" aria-checked="true"></span><div class="txt"><strong>Passar para um humano</strong><p>O agente reconhece quando não é o caso dele resolver, chama uma pessoa e entrega o resumo do que já aconteceu.</p><span class="cont">2 de 2 capacidades ligadas</span></div></div>
+              <div class="pacote"><span class="chave" role="switch" aria-checked="false"></span><div class="txt"><strong>Organizar a operação</strong><p>O agente mantém a casa em ordem: marcadores, etapas do funil, avisos automáticos e distribuição de trabalho.</p><span class="cont">0 de 7 capacidades ligadas</span></div></div>
+              <div class="pacote"><span class="chave" role="switch" aria-checked="false"></span><div class="txt"><strong>Aprender e evoluir</strong><p>O agente consulta o que a empresa já sabe, aprende com os atendimentos e sugere melhorias para você aprovar.</p><span class="cont">0 de 4 capacidades ligadas</span></div></div>
+              <a href="#" class="link pequeno">Escolher uma a uma (modo avançado)</a>
+            </div>
+          </div>
+
+          <div class="cartao">
+            <div class="cab"><h3>O que ele consulta antes de responder</h3></div>
+            <div class="corpo form">
+              <p class="apoio pequeno">Marque o material do seu negócio que este assistente pode ler. Ele procura ali antes de responder, em vez de improvisar — e cita de onde tirou.</p>
+              <label class="caixa base-item"><input type="checkbox" checked>Perguntas frequentes da clínica <span class="pequeno mono">42 trechos</span></label>
+              <label class="caixa base-item"><input type="checkbox" checked>Convênios aceitos e cobertura <span class="pequeno mono">18 trechos</span></label>
+              <label class="caixa base-item"><input type="checkbox">Tabela de procedimentos 2026 <span class="pequeno">ainda não preparado</span></label>
+              <div class="aviso-faixa aviso"><i class="ph ph-warning"></i><div>"Tabela de procedimentos 2026" está marcado mas ainda não foi preparado — o agente não vai achar nada nele. <a href="#" class="link">Ver o acervo</a></div></div>
+            </div>
+          </div>
+
+          <div class="cartao">
+            <div class="cab"><h3>Quando ele entra em ação</h3></div>
+            <div class="corpo form">
+              <div class="campo"><label>O que faz ele responder</label><div class="chips"><span class="chip" aria-pressed="true"><i class="ph ph-check"></i>Uma mensagem nova do cliente</span></div></div>
+              <div class="form c2">
+                <div class="linha-chave" style="padding:0;border:0"><div><strong>Não responder em grupos</strong></div><span class="chave ligada" role="switch" aria-checked="true"></span></div>
+                <div class="linha-chave" style="padding:0;border:0"><div><strong>Não responder às mensagens que saem do seu próprio número</strong></div><span class="chave ligada" role="switch" aria-checked="true"></span></div>
+              </div>
+              <div class="campo"><label>Só responder quando a mensagem falar de algo específico (opcional)</label><input type="text" placeholder="Ex.: pedido|status|orçamento" class="mono"><span class="ajuda">Deixe em branco para o agente responder a tudo. Se preencher, ele só entra quando a mensagem contiver uma dessas palavras — separe por barra vertical (|). Aceita expressão regular, para quem já conhece.</span></div>
+              <div class="campo"><label>Quantos atendimentos ao mesmo tempo</label><select><option selected>Um de cada vez por conversa</option><option>Um de cada vez por cliente</option></select></div>
+              <div class="caixa-interna form">
+                <div class="linha-chave"><div><strong>Só atender em horário de funcionamento</strong></div><span class="chave ligada" role="switch" aria-checked="true"></span></div>
+                <div class="form c2">
+                  <div class="campo largo"><label>Fuso horário</label><input type="text" value="America/Sao_Paulo" class="mono"></div>
+                  <div class="campo"><label>Início</label><input type="text" value="08:00" class="mono"></div>
+                  <div class="campo"><label>Fim</label><input type="text" value="20:00" class="mono"></div>
+                </div>
+                <div class="campo"><label>Dias</label><div class="dias"><span class="chip">Dom</span><span class="chip" aria-pressed="true">Seg</span><span class="chip" aria-pressed="true">Ter</span><span class="chip" aria-pressed="true">Qua</span><span class="chip" aria-pressed="true">Qui</span><span class="chip" aria-pressed="true">Sex</span><span class="chip">Sáb</span></div></div>
+                <div class="campo"><label>Mensagem fora do horário (opcional)</label><textarea placeholder="Ex.: Nosso atendimento funciona de segunda a sexta, das 8h às 18h. Recebemos sua mensagem e respondemos no próximo horário de atendimento." style="min-height:72px"></textarea><span class="ajuda">Quando o cliente escrever fora do horário, esta mensagem é enviada na hora — uma vez por cliente por período fechado, e nunca para quem pediu para parar. Deixe em branco para não enviar.</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

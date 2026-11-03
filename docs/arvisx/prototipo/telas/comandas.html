@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comandas</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="110">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .comandas { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 16px; align-items: start; }
+  .col { display: grid; gap: 12px; align-content: start; min-width: 0; }
+  .item-cmd { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 10px 12px; border: 1px solid var(--linha); border-radius: var(--r-sm); background: var(--painel); text-align: left; font-size: 13px; }
+  .item-cmd:hover { border-color: var(--linha-forte); }
+  .item-cmd[aria-pressed="true"] { border-color: var(--ouro); background: var(--ouro-suave); }
+  .item-cmd strong { display: block; font-family: var(--mono); font-size: 12.5px; }
+  .item-cmd .st { color: var(--apoio); font-size: 11.5px; }
+  .item-cmd .v { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 600; font-size: 12.5px; }
+  .pend { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--linha); font-size: 13px; }
+  .pend:last-child { border-bottom: 0; }
+  .pend input { width: 15px; height: 15px; margin-top: 3px; accent-color: var(--ouro); }
+  .pend .t { flex: 1; min-width: 0; }
+  .pend .t span { display: block; color: var(--apoio); font-size: 12px; }
+  .pend .sem { color: var(--erro); font-size: 12px; }
+  .pend .v { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+  .sel { height: 34px; padding: 0 28px 0 10px; border-radius: var(--r-sm); background: var(--painel); border: 1px solid var(--linha-forte); font-weight: 600; font-size: 12.5px; }
+  .itens td { font-size: 13.5px; }
+  .itens td .q { color: var(--apoio); margin-left: 4px; }
+  .itens td .com { display: block; color: var(--fraco); font-size: 11.5px; }
+  .itens tfoot td { font-weight: 700; border-top: 1px solid var(--linha-forte); }
+  .linha-form { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; padding: 14px 18px; border-top: 1px solid var(--linha); }
+  .linha-form .campo { min-width: 140px; }
+  .linha-form .campo.cresce { flex: 1; }
+  .linha-form .campo input, .linha-form .campo select { height: 34px; }
+  @media (max-width: 1100px) { .comandas { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body data-rota="/app/comandas">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM</div>
+          <h1>Comandas</h1>
+          <p>O que foi feito, por quem, e quanto o cliente paga.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="comandas">
+        <aside class="col">
+          <button class="btn primario bloco"><i class="ph ph-plus"></i>Nova comanda</button>
+          <ul style="display:grid;gap:4px">
+            <li><button class="item-cmd" aria-pressed="true"><div><strong>#12</strong><span class="st">Aberta</span></div><span class="v">R$ 180,00</span></button></li>
+            <li><button class="item-cmd" aria-pressed="false"><div><strong>#11</strong><span class="st">Finalizada</span></div><span class="v">R$ 1.200,00</span></button></li>
+            <li><button class="item-cmd" aria-pressed="false"><div><strong>#10</strong><span class="st">Cancelada</span></div><span class="v">R$ 0,00</span></button></li>
+            <li><button class="item-cmd" aria-pressed="false"><div><strong>#9</strong><span class="st">Finalizada</span></div><span class="v">R$ 3.500,00</span></button></li>
+            <li><button class="item-cmd" aria-pressed="false"><div><strong>#8</strong><span class="st">Finalizada</span></div><span class="v">R$ 250,00</span></button></li>
+            <li><button class="item-cmd" aria-pressed="false"><div><strong>#7</strong><span class="st">Finalizada</span></div><span class="v">R$ 89,90</span></button></li>
+          </ul>
+
+          <div class="cartao">
+            <div class="cab" style="display:block"><h2>Atendimentos sem comanda</h2><p class="apoio" style="margin-top:4px">Já aconteceram e ninguém faturou. Marque o que quer cobrar.</p></div>
+            <div class="corpo" style="padding:8px 18px 14px">
+              <label class="pend"><input type="checkbox" checked><div class="t">Limpeza<span class="mono">02/11/2026</span></div><span class="v">R$ 150,00</span></label>
+              <label class="pend"><input type="checkbox" checked><div class="t">Avaliação<span class="mono">01/11/2026</span></div><span class="v">R$ 0,00</span></label>
+              <label class="pend"><input type="checkbox"><div class="t">Retorno pós-cirúrgico<span class="mono">31/10/2026</span></div><span class="sem">sem preço no serviço</span></label>
+              <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><select class="sel" aria-label="Forma de pagamento" style="flex:1"><option>Forma de pagamento</option><option selected>Pix</option><option>Cartão de crédito</option><option>Dinheiro</option></select><button class="btn navy p">Faturar (<span class="mono">2</span>)</button></div>
+            </div>
+          </div>
+        </aside>
+
+        <div class="col">
+          <div class="cartao">
+            <div class="cab"><h2>Comanda #12</h2><span class="apoio"><span class="mono">120</span> ponto(s) · Aberta</span></div>
+            <div class="corpo sem">
+              <table class="tabela itens">
+                <tbody>
+                  <tr><td>Clareamento dental<span class="q">×1</span></td><td class="mono dir">R$ 900,00</td><td class="acoes" style="width:40px"><button class="btn fantasma p icone" aria-label="Remover item"><i class="ph ph-x"></i></button></td></tr>
+                  <tr><td>Avaliação<span class="com">comissão <span class="mono">10%</span></span></td><td class="mono dir">R$ 0,00</td><td class="acoes"><button class="btn fantasma p icone" aria-label="Remover item"><i class="ph ph-x"></i></button></td></tr>
+                  <tr><td>Kit de higiene pós-cirúrgico<span class="q">×2</span></td><td class="mono dir">R$ 179,80</td><td class="acoes"><button class="btn fantasma p icone" aria-label="Remover item"><i class="ph ph-x"></i></button></td></tr>
+                  <tr><td>Desconto — convênio<span class="com">comissão <span class="mono">0%</span></span></td><td class="mono dir">− R$ 899,80</td><td class="acoes"><button class="btn fantasma p icone" aria-label="Remover item"><i class="ph ph-x"></i></button></td></tr>
+                </tbody>
+                <tfoot><tr><td>Total</td><td class="mono dir">R$ 180,00</td><td></td></tr></tfoot>
+              </table>
+            </div>
+            <div class="linha-form">
+              <div class="campo"><label>Serviço</label><select><option selected>Avulso</option><option>Avaliação</option><option>Limpeza</option><option>Clareamento dental</option><option>Retorno pós-cirúrgico</option></select></div>
+              <div class="campo cresce"><label>Descrição</label><input type="text" placeholder=""></div>
+              <div class="campo" style="min-width:110px"><label>Valor</label><input type="text" class="mono" placeholder="0,00"></div>
+              <button class="btn secundario">Incluir</button>
+            </div>
+            <div class="linha-form">
+              <div class="campo"><label>Forma de pagamento</label><select><option>Escolha</option><option>Pix</option><option selected>Cartão de crédito</option><option>Dinheiro</option></select></div>
+              <div class="campo" style="min-width:120px"><label>Pontos de fidelidade</label><input type="number" class="mono" placeholder="0" value="18"></div>
+              <button class="btn navy">Finalizar</button>
+              <button class="btn fantasma">Cancelar comanda</button>
+            </div>
+            <div style="padding:0 18px 16px"><div class="aviso-faixa erro"><i class="ph ph-warning"></i><div>Esta forma de pagamento ainda não tem conta de destino. Defina em Configurações › Financeiro.</div></div></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

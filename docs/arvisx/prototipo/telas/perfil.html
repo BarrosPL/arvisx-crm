@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perfil</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="10">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .form-perfil { max-width: 576px; }
+  .campo input[disabled] { background: var(--painel-2); color: var(--apoio); }
+  .dupla { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .rodape-form { display: flex; justify-content: flex-end; margin-top: 4px; }
+  @media (max-width: 860px) { .rodape-form .btn { width: 100%; } }
+</style>
+</head>
+<body data-rota="/app/settings/profile">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua conta</div>
+          <h1>Perfil</h1>
+          <p>Informações pessoais. Email só pode ser trocado em breve.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <form class="form-perfil">
+        <div class="cartao">
+          <div class="corpo form">
+            <div class="campo">
+              <label for="email">Email</label>
+              <input type="email" id="email" value="ana.souza@clinicavitalis.com.br" disabled>
+              <span class="ajuda">Trocar email — em breve.</span>
+            </div>
+            <div class="campo">
+              <label for="full_name">Nome completo</label>
+              <input type="text" id="full_name" maxlength="120" value="Ana Souza">
+            </div>
+            <div class="dupla">
+              <div class="campo">
+                <label for="locale">Idioma</label>
+                <select id="locale">
+                  <option value="auto" selected>Seguir o idioma da empresa</option>
+                  <option value="pt-BR">Português (BR)</option>
+                  <option value="es">Español</option>
+                </select>
+              </div>
+              <div class="campo">
+                <label for="timezone">Fuso horário</label>
+                <select id="timezone" class="mono">
+                  <option>America/Asuncion</option>
+                  <option>America/Argentina/Buenos_Aires</option>
+                  <option>America/Montevideo</option>
+                  <option>America/Santiago</option>
+                  <option>America/La_Paz</option>
+                  <option>America/Lima</option>
+                  <option>America/Bogota</option>
+                  <option>America/Guayaquil</option>
+                  <option>America/Mexico_City</option>
+                  <option selected>America/Sao_Paulo</option>
+                  <option>America/Manaus</option>
+                  <option>America/Belem</option>
+                  <option>America/Recife</option>
+                  <option>America/Fortaleza</option>
+                  <option>Africa/Luanda</option>
+                  <option>Europe/Lisbon</option>
+                  <option>America/Cuiaba</option>
+                  <option>America/Rio_Branco</option>
+                  <option>Europe/Madrid</option>
+                  <option>Europe/Rome</option>
+                  <option>America/New_York</option>
+                  <option>America/Los_Angeles</option>
+                  <option>UTC</option>
+                </select>
+              </div>
+            </div>
+            <div class="campo">
+              <label for="avatar_url">Avatar URL</label>
+              <input type="url" id="avatar_url" placeholder="https://…">
+              <span class="ajuda">Upload de arquivo — em breve. Cole uma URL pública.</span>
+            </div>
+            <div class="rodape-form"><button type="submit" class="btn primario">Salvar</button></div>
+          </div>
+        </div>
+      </form>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

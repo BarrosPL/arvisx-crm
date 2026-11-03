@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ficha do contato</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="41">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .ficha-cab { display: flex; gap: 18px; align-items: flex-start; }
+  .ficha-cab .nome-grande { font-family: var(--display); font-stretch: 112%; font-weight: 650; letter-spacing: -.03em; font-size: 26px; line-height: 1.1; }
+  .ficha-cab .linha { color: var(--apoio); margin-top: 6px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .ficha-cab .linha .mono { color: var(--texto); }
+  .ficha-cab .etqs { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .dl2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; }
+  .dl2 dt { font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--apoio); margin-bottom: 5px; }
+  .dl2 dd { font-size: 13.5px; font-weight: 500; }
+  .conversa-bloco { display: flex; align-items: center; gap: 14px; padding: 14px 18px; }
+  .conversa-bloco .ic { width: 40px; height: 40px; border-radius: 10px; background: var(--sinal-suave); color: var(--sinal); display: grid; place-items: center; font-size: 20px; }
+  .conversa-bloco strong { display: block; font-size: 13px; }
+  .conversa-bloco span { color: var(--apoio); font-size: 12.5px; }
+  .conversa-bloco .cont { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--sinal); color: #fff; font: 600 11px/20px var(--mono); text-align: center; }
+  .escuta { padding: 16px 18px; }
+  .escuta h2 { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-stretch: 108%; font-weight: 620; font-size: 15px; letter-spacing: -.02em; }
+  .escuta .item { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid #ecd9a0; margin-top: 12px; }
+  .escuta .item .campo-nome { font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ouro-escuro); margin-bottom: 4px; }
+  @media (max-width: 860px) { .dl2 { grid-template-columns: 1fr; } .ficha-cab { flex-direction: column; } }
+</style>
+</head>
+<body data-rota="/app/contacts">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <a href="#" class="volta"><i class="ph ph-arrow-left"></i>Contatos</a>
+      <div class="cabecalho">
+        <div class="ficha-cab">
+          <span class="avatar gg claro">CV</span>
+          <div>
+            <h1 class="nome-grande">Carlos — Clínica Vida Odonto</h1>
+            <div class="linha"><span>carlos@vidaodonto.com.br</span><span>•</span><span class="mono">+55 11 98811-4020</span></div>
+            <div class="etqs"><span class="tag ouro">protocolo</span><span class="tag sinal">manutencao</span><span class="tag ok">Cliente</span></div>
+          </div>
+        </div>
+        <div class="acoes">
+          <button class="btn secundario"><i class="ph ph-user"></i>Marcar como pessoal</button>
+          <button class="btn secundario"><i class="ph ph-hand-palm"></i>Marcar como sempre humano</button>
+          <button class="btn secundario"><i class="ph ph-phone"></i>Chamar</button>
+          <button class="btn secundario"><i class="ph ph-arrows-merge"></i>Juntar com outra ficha</button>
+          <button class="btn navy"><i class="ph ph-pencil-simple"></i>Editar</button>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="grade lateral-dir">
+        <div style="display:grid;gap:16px;align-content:start">
+          <a href="#" class="cartao link conversa-bloco">
+            <span class="ic"><i class="ph ph-chat-circle"></i></span>
+            <div><strong>Abrir conversa no Inbox</strong><span>Carlos: Fechado então, confirma a quarta às 15h?</span></div>
+            <span class="cont" aria-label="1 sem ler">1</span>
+          </a>
+
+          <div class="cartao ouro escuta">
+            <h2><span class="ia-tag"></span>O assistente ouviu isto na conversa <small class="apoio" style="font-weight:500;font-size:12px">· 1 aguardando você</small></h2>
+            <p class="apoio pequeno" style="margin-top:4px">Nada foi salvo ainda. Confira o que a pessoa escreveu e decida.</p>
+            <div class="item">
+              <div><div class="campo-nome">Data de nascimento</div><div>14/03/1979 <span class="fraco">(hoje: —)</span></div></div>
+              <div style="display:flex;gap:6px"><button class="btn primario p">Está certo, salvar</button><button class="btn fantasma p">Descartar</button></div>
+            </div>
+          </div>
+
+          <div class="abas" role="tablist" style="margin-bottom:0">
+            <button role="tab" aria-selected="true">Visão geral</button>
+            <button role="tab" aria-selected="false">Timeline</button>
+            <button role="tab" aria-selected="false">LGPD</button>
+          </div>
+
+          <div class="cartao"><div class="corpo">
+            <dl class="dl2">
+              <div><dt>Nome</dt><dd>Carlos — Clínica Vida Odonto</dd></div>
+              <div><dt>Nome · WhatsApp</dt><dd>Carlos Vida Odonto</dd></div>
+              <div><dt>Email</dt><dd>carlos@vidaodonto.com.br</dd></div>
+              <div><dt>Telefone</dt><dd class="mono">+55 11 98811-4020</dd></div>
+              <div><dt>Data de nascimento</dt><dd>—</dd></div>
+              <div><dt>Origem</dt><dd>WhatsApp</dd></div>
+              <div><dt>Campanha</dt><dd>—</dd></div>
+              <div><dt>Última atividade</dt><dd class="mono">03/11/2026 14:20</dd></div>
+              <div><dt>Criado em</dt><dd class="mono">19/08/2026</dd></div>
+              <div><dt>Cliente desde</dt><dd class="mono">02/09/2026</dd></div>
+              <div style="grid-column:1/-1"><dt>Tags</dt><dd><span class="tag ouro">protocolo</span> <span class="tag sinal">manutencao</span></dd></div>
+            </dl>
+          </div></div>
+
+          <div class="cartao">
+            <div class="cab"><h2>Últimas compras</h2></div>
+            <ul class="lista">
+              <li><span class="avatar p ok" style="background:var(--ok-suave);color:var(--ok)"><i class="ph ph-check"></i></span><div class="texto"><strong>Protocolo superior — Clínica Vida Odonto</strong><span>Ganho em 02/09/2026</span></div><div class="dir"><span class="mono" style="color:var(--texto);font-weight:600">R$ 31.500</span><br><a href="#" class="link pequeno">Abrir negócio</a></div></li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="display:grid;gap:16px;align-content:start">
+          <div class="cartao">
+            <div class="cab"><h2>Carteira</h2></div>
+            <div class="corpo">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span class="avatar">AS</span><div><span class="rotulo" style="margin:0">Dono da carteira</span><strong>Ana Souza</strong></div></div>
+              <p class="apoio pequeno">O vendedor dono deste cliente. Sem dono, o atendimento segue o fluxo de sempre.</p>
+              <div class="campo" style="margin-top:12px"><select><option>Ana Souza</option><option>Marcos Lima</option><option>Renata Borges</option></select></div>
+              <button class="btn secundario p" style="margin-top:10px">Salvar carteira</button>
+            </div>
+          </div>
+          <div class="cartao">
+            <div class="cab"><h2>Respostas dos roteiros de atendimento</h2></div>
+            <div class="corpo" style="display:grid;gap:12px;font-size:13px">
+              <div><span class="rotulo">Já é paciente da clínica?</span>Sim, protocolo superior em 2026</div>
+              <div><span class="rotulo">Tem convênio?</span><span class="fraco">não respondido</span></div>
+              <div><span class="rotulo">Melhor horário para retorno</span>Tardes, depois das 14h</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

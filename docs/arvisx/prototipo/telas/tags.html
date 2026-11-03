@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tags</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="32">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .busca-form { display: flex; gap: 8px; max-width: 576px; margin-bottom: 12px; }
+  .busca-form .busca-linha { flex: 1; }
+  .contagem { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; color: var(--apoio); font-size: 13px; margin-bottom: 12px; }
+  .etq { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 6px; font: 600 12px/1 var(--sans); background: var(--painel-2); color: var(--texto); }
+  .etq .pt { width: 8px; height: 8px; border-radius: 50%; }
+  .tabela td.acoes-tag { white-space: nowrap; }
+  .tabela td.acoes-tag .btn { margin-right: 4px; }
+  .tabela td.num.zero { color: var(--fraco); }
+  .tabela td.num.regras { font-weight: 700; }
+  .cartao .corpo > h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .cartao .corpo > p.desc { color: var(--apoio); font-size: 12.5px; margin-bottom: 14px; max-width: 72ch; }
+  @media (max-width: 860px) {
+    .tabela td.leads, .tabela th.leads, .tabela td.convs, .tabela th.convs, .tabela td.regras, .tabela th.regras { display: none; }
+  }
+</style>
+</head>
+<body data-rota="/app/settings/tags">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua empresa</div>
+          <h1>Tags</h1>
+          <p>As etiquetas que os agentes, o Inbox e o funil usam nesta organização. Renomear ou juntar corrige também as regras de agente que escrevem a etiqueta, na mesma operação.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <form class="busca-form">
+        <div class="busca-linha"><i class="ph ph-magnifying-glass"></i><input type="search" name="busca" placeholder="Buscar etiquetas" aria-label="Buscar etiquetas" maxlength="60"></div>
+        <button type="submit" class="btn secundario">Buscar</button>
+      </form>
+      <div class="contagem"><span><span class="mono">14</span> etiquetas · Página <span class="mono">1 / 1</span></span></div>
+
+      <div class="cartao" style="margin-bottom:16px">
+        <table class="tabela rolavel">
+          <caption class="sr">Etiquetas da organização e onde são usadas</caption>
+          <thead><tr><th>Etiqueta</th><th class="num">Contatos</th><th class="num leads">Leads</th><th class="num convs">Conversas</th><th class="num regras">Regras de agente</th><th>Ações</th></tr></thead>
+          <tbody>
+            <tr><td><span class="etq"><span class="pt" style="background:#0091ff"></span>implante</span></td><td class="num mono">38</td><td class="num mono leads">21</td><td class="num mono convs">17</td><td class="num mono regras">2</td><td class="acoes-tag"><button class="btn secundario p">Cor</button><button class="btn secundario p">Renomear</button><button class="btn secundario p">Juntar</button><button class="btn secundario p">Excluir</button></td></tr>
+            <tr><td><span class="etq"><span class="pt" style="background:#00655a"></span>primeira-consulta</span></td><td class="num mono">64</td><td class="num mono leads">52</td><td class="num mono convs">49</td><td class="num mono regras">3</td><td class="acoes-tag"><button class="btn secundario p">Cor</button><button class="btn secundario p">Renomear</button><button class="btn secundario p">Juntar</button><button class="btn secundario p">Excluir</button></td></tr>
+            <tr><td><span class="etq"><span class="pt" style="background:#ffb224"></span>enxerto</span></td><td class="num mono">9</td><td class="num mono leads">6</td><td class="num mono convs">4</td><td class="num mono regras zero">0</td><td class="acoes-tag"><button class="btn secundario p">Cor</button><button class="btn secundario p">Renomear</button><button class="btn secundario p">Juntar</button><button class="btn secundario p">Excluir</button></td></tr>
+            <tr><td><span class="etq"><span class="pt" style="background:#3e63dd"></span>ortodontia</span></td><td class="num mono">27</td><td class="num mono leads">14</td><td class="num mono convs">12</td><td class="num mono regras">1</td><td class="acoes-tag"><button class="btn secundario p">Cor</button><button class="btn secundario p">Renomear</button><button class="btn secundario p">Juntar</button><button class="btn secundario p">Excluir</button></td></tr>
+            <tr><td><span class="etq"><span class="pt" style="background:#ab4aba"></span>clareamento</span></td><td class="num mono">19</td><td class="num mono leads">11</td><td class="num mono convs">8</td><td class="num mono regras">1</td><td class="acoes-tag"><button class="btn secundario p">Cor</button><button class="btn secundario p">Renomear</button><button class="btn secundario p">Juntar</button><button class="btn secundario p">Excluir</button></td></tr>
+            <tr><td><span class="etq"><span class="pt" style="background:#cf3716"></span>canal</span></td><td class="num mono">12</td><td class="num mono leads">7</td><td class="num mono convs">6</td><td class="num mono regras zero">0</td><td class="acoes-tag"><button class="btn secundario p">Cor</button><button class="btn secundario p">Renomear</button><button class="btn secundario p">Juntar</button><button class="btn secundario p">Excluir</button></td></tr>
+            <tr><td><span class="etq"><span class="pt" style="background:#6f6f6f"></span>protese</span></td><td class="num mono">15</td><td class="num mono leads">9</td><td class="num mono convs">7</td><td class="num mono regras zero">0</td><td class="acoes-tag"><button class="btn secundario p">Cor</button><button class="btn secundario p">Renomear</button><button class="btn secundario p">Juntar</button><button class="btn secundario p">Excluir</button></td></tr>
+            <tr><td><span class="etq">familia</span></td><td class="num mono">8</td><td class="num mono leads zero">0</td><td class="num mono convs">8</td><td class="num mono regras zero">0</td><td class="acoes-tag"><button class="btn secundario p">Cor</button><button class="btn secundario p">Renomear</button><button class="btn secundario p">Juntar</button><button class="btn secundario p">Excluir</button></td></tr>
+            <tr><td><span class="etq"><span class="pt" style="background:#00655a"></span>convenio</span></td><td class="num mono">41</td><td class="num mono leads">23</td><td class="num mono convs">20</td><td class="num mono regras">1</td><td class="acoes-tag"><button class="btn secundario p">Cor</button><button class="btn secundario p">Renomear</button><button class="btn secundario p">Juntar</button><button class="btn secundario p">Excluir</button></td></tr>
+            <tr><td><span class="etq"><span class="pt" style="background:#ffe629"></span>indicacao</span></td><td class="num mono">22</td><td class="num mono leads">18</td><td class="num mono convs">15</td><td class="num mono regras">1</td><td class="acoes-tag"><button class="btn secundario p">Cor</button><button class="btn secundario p">Renomear</button><button class="btn secundario p">Juntar</button><button class="btn secundario p">Excluir</button></td></tr>
+            <tr><td><span class="etq"><span class="pt" style="background:#ffb224"></span>protocolo</span></td><td class="num mono">11</td><td class="num mono leads">10</td><td class="num mono convs">9</td><td class="num mono regras">2</td><td class="acoes-tag"><button class="btn secundario p">Cor</button><button class="btn secundario p">Renomear</button><button class="btn secundario p">Juntar</button><button class="btn secundario p">Excluir</button></td></tr>
+            <tr><td><span class="etq"><span class="pt" style="background:#3e63dd"></span>corporativo</span></td><td class="num mono">3</td><td class="num mono leads">2</td><td class="num mono convs">2</td><td class="num mono regras zero">0</td><td class="acoes-tag"><button class="btn secundario p">Cor</button><button class="btn secundario p">Renomear</button><button class="btn secundario p">Juntar</button><button class="btn secundario p">Excluir</button></td></tr>
+            <tr><td><span class="etq"><span class="pt" style="background:#cf3716"></span>urgencia</span></td><td class="num mono">6</td><td class="num mono leads">4</td><td class="num mono convs">6</td><td class="num mono regras">1</td><td class="acoes-tag"><button class="btn secundario p">Cor</button><button class="btn secundario p">Renomear</button><button class="btn secundario p">Juntar</button><button class="btn secundario p">Excluir</button></td></tr>
+            <tr><td><span class="etq">manutencao</span> <span class="tag">em uso, fora do vocabulário</span></td><td class="num mono">5</td><td class="num mono leads">3</td><td class="num mono convs">2</td><td class="num mono regras zero">0</td><td class="acoes-tag"><button class="btn secundario p">Cor</button><button class="btn secundario p">Renomear</button><button class="btn secundario p">Juntar</button><button class="btn secundario p">Excluir</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="cartao" style="max-width:720px">
+        <div class="corpo">
+          <h3>Etiquetas de contato interno</h3>
+          <p class="desc">Contato marcado com uma destas etiquetas não vira card no funil e não recebe resposta da IA — equipe, sócio, família, fornecedor. A conversa continua normal na Inbox, inclusive para envio manual. Uma etiqueta por linha.</p>
+          <div class="campo" style="margin-bottom:12px">
+            <textarea rows="4" aria-label="Etiquetas de contato interno" placeholder="interno&#10;equipe&#10;familia" class="mono">interno
+equipe
+familia</textarea>
+            <span class="ajuda">Deixe em branco para nenhum contato ser interno — o comportamento de antes.</span>
+          </div>
+          <button class="btn primario">Salvar</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

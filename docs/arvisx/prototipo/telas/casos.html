@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Casos</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="70">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .casos { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 16px; align-items: start; }
+  .casos-lista .abas { margin-bottom: 0; padding: 0 8px; }
+  .caso { display: block; width: 100%; text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--linha); }
+  .caso:last-child { border-bottom: 0; }
+  .caso:hover { background: var(--fundo); }
+  .caso[aria-current="true"] { background: var(--ouro-suave); box-shadow: inset 3px 0 0 var(--ouro); }
+  .caso .l1 { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .caso .l1 strong { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .caso .l2 { color: var(--apoio); font-size: 12px; margin-top: 4px; }
+  .detalhe-cab { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .detalhe-cab h2 { font-family: var(--display); font-stretch: 110%; font-weight: 650; letter-spacing: -.025em; font-size: 20px; line-height: 1.15; }
+  .detalhe-cab .sub { color: var(--apoio); font-size: 12.5px; margin-top: 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .detalhe-cab .selos { display: flex; gap: 6px; flex-wrap: wrap; }
+  .caixas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .caixas .cx { padding: 14px 16px; border: 1px solid var(--linha); border-radius: var(--r); background: var(--painel); font-size: 13.5px; }
+  .caixas .cx .rotulo { margin-bottom: 8px; }
+  .opcoes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .opcao { display: block; padding: 12px 14px; border: 1px solid var(--linha-forte); border-radius: var(--r); cursor: pointer; background: var(--painel); }
+  .opcao strong { display: flex; align-items: center; gap: 8px; font-size: 13.5px; margin-bottom: 4px; }
+  .opcao input { accent-color: var(--ouro); margin: 0; }
+  .opcao span { display: block; color: var(--apoio); font-size: 12.5px; }
+  .opcao.marcada { border-color: var(--ouro); background: var(--ouro-suave); box-shadow: 0 0 0 3px rgba(212,175,55,.18); }
+  .pe-resposta { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+  .chat { display: flex; flex-direction: column; gap: 10px; }
+  .chat .balao { max-width: 80%; }
+  .chat .balao.ia .cit { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ecd9a0; color: var(--apoio); font-size: 12px; }
+  .chat .balao.ia .quem { display: flex; align-items: center; gap: 6px; }
+  .chat .balao.ia .quem::before { content: ""; width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--ouro); }
+  .pergunta { margin-top: 14px; }
+  .pergunta .pe-resposta { margin-top: 8px; }
+  .tempo { margin-top: 16px; }
+  .tempo h3 { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+  .tempo .timeline .oque { font-size: 13px; }
+  .tempo .timeline > li { padding-bottom: 14px; }
+  .volta-casos { display: none; }
+  @media (max-width: 1100px) { .casos { grid-template-columns: 300px minmax(0, 1fr); } }
+  @media (max-width: 860px) {
+    .casos { grid-template-columns: 1fr; }
+    .casos-lista, .cabecalho, .fio { display: none; }
+    .volta-casos { display: inline-flex; height: 44px; margin-bottom: 8px; }
+    .caixas, .opcoes { grid-template-columns: 1fr; }
+    .chat .balao { max-width: 92%; }
+  }
+</style>
+</head>
+<body data-rota="/app/ai/cases">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Agente de IA</div>
+          <h1>Casos</h1>
+          <p>Quando a IA trava em algo que só um humano resolve, ela abre um caso aqui — e continua conversando com o cliente enquanto espera sua resposta.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="casos">
+        <div class="cartao casos-lista">
+          <div class="abas" role="tablist">
+            <button role="tab" aria-selected="true">Abertos <span class="cont">3</span></button>
+            <button role="tab" aria-selected="false">Concluídos</button>
+          </div>
+          <ul>
+            <li><button class="caso" aria-current="true">
+              <div class="l1"><strong>Desconto acima da política</strong><span class="tag aviso">Aguardando você</span></div>
+              <div class="l2">Dúvida · Carlos — Clínica Vida Odonto · há 2 horas</div>
+            </button></li>
+            <li><button class="caso">
+              <div class="l1"><strong>Boleto do implante não abre</strong><span class="tag aviso">Aguardando você</span></div>
+              <div class="l2">Pagamento · Família Andrade · há 1 dia</div>
+            </button></li>
+            <li><button class="caso">
+              <div class="l1"><strong>Remarcar para sábado</strong><span class="tag sinal">Aguardando o cliente</span></div>
+              <div class="l2">Horário · Marina Costa · há 5 horas</div>
+            </button></li>
+          </ul>
+        </div>
+
+        <section class="detalhe" aria-label="Detalhes do caso">
+          <button class="btn fantasma volta-casos"><i class="ph ph-caret-left"></i>Voltar aos casos</button>
+          <div class="detalhe-cab">
+            <div>
+              <h2>Carlos — Clínica Vida Odonto</h2>
+              <div class="sub"><span class="mono">+55 11 98811-4020</span><span>·</span><a href="#" class="link">Ver conversa</a></div>
+            </div>
+            <div class="selos"><span class="tag aviso">Aguardando você</span></div>
+          </div>
+
+          <div class="caixas">
+            <div class="cx"><span class="rotulo">O que o cliente precisa</span>Carlos quer fechar o protocolo superior hoje, mas pede 20% de desconto à vista.</div>
+            <div class="cx"><span class="rotulo">Por que a IA travou</span>Pelo que está registrado, o cliente pediu um desconto acima da política. A IA travou porque a política permite até 10%.</div>
+          </div>
+
+          <div class="cartao" style="margin-bottom:16px">
+            <div class="cab"><h2>O que você quer fazer?</h2></div>
+            <div class="corpo">
+              <div class="opcoes" role="radiogroup">
+                <label class="opcao marcada"><strong><input type="radio" name="acao" checked>Concluí</strong><span>A IA avisa o cliente e encerra o assunto.</span></label>
+                <label class="opcao"><strong><input type="radio" name="acao">Preciso de info do cliente</strong><span>A IA pergunta ao cliente e o caso volta pra você quando ele responder.</span></label>
+                <label class="opcao"><strong><input type="radio" name="acao">Não consigo — passar pra humano</strong><span>Sai da IA: a conversa vira um atendimento humano de verdade.</span></label>
+              </div>
+              <div class="campo"><textarea rows="3" placeholder="Escreva sua resposta para a IA..." style="min-height:84px">Aprovado 15% à vista, só neste caso. Avise o Carlos e confirme a quarta às 15h.</textarea></div>
+              <div class="pe-resposta">
+                <span class="apoio pequeno">Escolha uma das opções acima para enviar.</span>
+                <button class="btn primario"><i class="ph ph-paper-plane-right"></i>Enviar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="cartao" style="margin-bottom:16px">
+            <div class="cab"><h2 style="display:flex;align-items:center;gap:8px"><i class="ph ph-chat-circle" style="font-size:16px;color:var(--ouro-escuro)"></i>Conversar sobre o caso</h2></div>
+            <div class="corpo">
+              <p class="apoio pequeno" style="margin-bottom:14px">Conversa interna. O cliente não vê nada disto, e a IA aqui não envia mensagem nem muda o caso.</p>
+              <div class="chat">
+                <div class="balao nos"><span class="quem">Pergunta da equipe</span>Por que a IA não resolveu sozinha?<span class="hora">14:32</span></div>
+                <div class="balao ia"><span class="quem">Lia — AgendaPlus</span>O Carlos pediu 20% à vista. O documento da organização limita desconto a 10% sem confirmação humana, então eu avisei que ia verificar com a equipe e abri o caso. Ele continua na conversa e já disse que fecha hoje se aprovar.<div class="cit">Trechos do acervo ligados à pergunta: Política de cancelamento e remarcação · Perguntas frequentes da clínica</div><span class="hora">14:32</span></div>
+              </div>
+              <div class="campo pergunta">
+                <label for="perg">Sua pergunta para a IA</label>
+                <textarea id="perg" rows="2" placeholder="Pergunte à IA sobre este caso…" style="min-height:60px"></textarea>
+                <div class="pe-resposta">
+                  <span class="apoio pequeno">Ctrl + Enter envia. Enter quebra linha.</span>
+                  <button class="btn secundario"><i class="ph ph-paper-plane-right"></i>Perguntar</button>
+                </div>
+                <span class="ajuda">As perguntas dos colegas aparecem aqui em alguns segundos.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tempo">
+            <h3>Linha do tempo</h3>
+            <ul class="timeline">
+              <li class="ouro"><div class="quando">há 2 horas</div><div class="oque"><strong>A IA abriu o caso:</strong> o cliente pediu 20% de desconto à vista; a política permite até 10%.</div></li>
+              <li class="ouro"><div class="quando">há 2 horas</div><div class="oque"><strong>A IA registrou o que aconteceu:</strong> avisou o cliente que vai confirmar com a equipe e manteve a conversa.</div></li>
+              <li class="sinal"><div class="quando">há 1 hora</div><div class="oque"><strong>O cliente respondeu:</strong> “Fechado então, confirma a quarta às 15h?”</div></li>
+              <li><div class="quando">há 40 min</div><div class="oque"><strong>Atualização do caso:</strong> Marcos Lima perguntou à IA pela conversa interna.</div></li>
+            </ul>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Construtor de follow-up</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="21">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .barra-pub { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 20px; background: var(--painel); border-bottom: 1px solid var(--linha); }
+  .barra-pub .esq { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+  .barra-pub h1 { font-family: var(--display); font-stretch: 108%; font-weight: 620; letter-spacing: -.02em; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .barra-pub .dir { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .barra-pub select { height: 34px; padding: 0 10px; border-radius: var(--r-sm); border: 1px solid var(--linha-forte); background: var(--painel); font-size: 13px; }
+  .construtor { display: grid; grid-template-columns: 224px minmax(0, 1fr) 384px; flex: 1; min-height: 0; }
+  .paleta { border-right: 1px solid var(--linha); background: var(--painel); padding: 14px 12px; overflow-y: auto; }
+  .paleta h2 { font: 600 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--apoio); margin-bottom: 10px; }
+  .paleta button { display: flex; align-items: center; gap: 10px; width: 100%; height: 34px; padding: 0 8px; border-radius: var(--r-sm); font-weight: 600; font-size: 12.5px; color: var(--texto); border: 1px solid var(--linha); background: var(--painel-2); margin-bottom: 6px; }
+  .paleta button:hover { border-color: var(--linha-forte); }
+  .pt-no { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; flex: none; color: #fff; }
+  .pt-no.ouro { background: var(--ouro); color: var(--navy); }
+  .pt-no.sinal { background: var(--sinal); }
+  .pt-no.ok { background: var(--ok); }
+  .pt-no.aviso { background: var(--aviso); }
+  .pt-no.erro { background: var(--erro); }
+  .canvas { position: relative; background-color: var(--fundo); background-image: radial-gradient(var(--linha-forte) 1px, transparent 1px); background-size: 18px 18px; overflow: auto; padding: 32px 24px 80px; }
+  .trilha { display: flex; flex-direction: column; align-items: center; gap: 0; width: fit-content; margin: 0 auto; }
+  .trilha .liga { width: 2px; height: 34px; background: var(--linha-forte); position: relative; }
+  .trilha .liga::after { content: ""; position: absolute; left: -3px; bottom: 0; border: 4px solid transparent; border-top: 6px solid var(--linha-forte); }
+  .trilha .ramos { display: flex; gap: 24px; align-items: flex-start; }
+  .trilha .ramo { display: flex; flex-direction: column; align-items: center; }
+  .trilha .ramo .rot { font: 500 11px/1 var(--mono); color: var(--apoio); margin: 6px 0 4px; }
+  .trilha .ramo .rot.fb { font-style: italic; color: var(--fraco); }
+  .no { position: relative; width: 224px; background: var(--painel); border: 1px solid var(--linha); border-left-width: 4px; border-radius: var(--r); padding: 10px 12px 10px 12px; box-shadow: var(--sombra); display: flex; gap: 10px; align-items: flex-start; }
+  .no .txt { min-width: 0; flex: 1; }
+  .no .rotulo-no { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .no .sub { color: var(--apoio); font-size: 11.5px; line-height: 1.35; margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .no .saidas { margin-top: 8px; display: grid; gap: 3px; font-size: 11.5px; }
+  .no .saidas span { display: flex; align-items: center; gap: 6px; }
+  .no .saidas span::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ouro); }
+  .no .saidas span.fb { font-style: italic; color: var(--fraco); }
+  .no .saidas span.fb::before { background: var(--linha-forte); }
+  .no.ouro { border-left-color: var(--ouro); }
+  .no.sinal { border-left-color: var(--sinal); }
+  .no.ok { border-left-color: var(--ok); }
+  .no.aviso { border-left-color: var(--aviso); }
+  .no.erro { border-left-color: var(--erro); }
+  .no.sel { box-shadow: 0 0 0 2px var(--painel), 0 0 0 4px var(--ouro), var(--sombra-alta); }
+  .controles { position: absolute; left: 16px; bottom: 16px; display: flex; flex-direction: column; background: var(--painel); border: 1px solid var(--linha); border-radius: var(--r-sm); box-shadow: var(--sombra); }
+  .controles button { width: 30px; height: 30px; display: grid; place-items: center; color: var(--apoio); border-bottom: 1px solid var(--linha); font-size: 14px; }
+  .controles button:last-child { border-bottom: 0; }
+  .add-no-cel { display: none; }
+  .painel-no { border-left: 1px solid var(--linha); background: var(--painel); overflow-y: auto; padding: 16px 18px 24px; }
+  .painel-no h2 { display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 700; }
+  .painel-no .nota { color: var(--fraco); font-size: 12px; margin: 4px 0 16px; }
+  .painel-no .form { gap: 14px; }
+  .painel-no .fechar { display: none; }
+  .modo-msg { display: grid; gap: 6px; }
+  .modo-msg label { display: flex; align-items: center; gap: 8px; font-weight: 500; font-size: 13px; cursor: pointer; }
+  .modo-msg input { accent-color: var(--ouro); }
+  .arquivo { display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 12px; border: 1px dashed var(--linha-forte); border-radius: var(--r-sm); color: var(--fraco); font-size: 12.5px; }
+  @media (max-width: 1100px) {
+    .construtor { grid-template-columns: minmax(0, 1fr) 340px; }
+    .paleta { display: none; }
+    .add-no-cel { display: inline-flex; position: absolute; left: 16px; bottom: 16px; }
+    .controles { left: auto; right: 16px; }
+  }
+  @media (max-width: 860px) {
+    .construtor { grid-template-columns: 1fr; }
+    .canvas { padding: 24px 16px 72px; }
+    .trilha .ramos { flex-direction: column; gap: 0; align-items: center; }
+    .trilha .ramo .rot { margin-top: 10px; }
+    .painel-no { border-left: 0; border-top: 1px solid var(--linha); position: relative; }
+    .painel-no .fechar { display: inline-flex; position: absolute; top: 10px; right: 10px; }
+    .barra-pub { padding: 10px 12px; }
+    .barra-pub .dir .btn, .barra-pub select { flex: 1; }
+  }
+</style>
+</head>
+<body data-rota="/app/ai/followups">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo cheia">
+      <!-- Barra de publicação -->
+      <div class="barra-pub">
+        <div class="esq">
+          <h1>Retomada de contato (demonstração)</h1>
+          <button class="btn fantasma p icone" aria-label="Renomear fluxo"><i class="ph ph-pencil-simple"></i></button>
+          <span class="tag ok">Ativo</span>
+          <span class="tag aviso">Alterações não salvas</span>
+        </div>
+        <div class="dir">
+          <button class="btn secundario p"><i class="ph ph-lightning"></i>Gatilho: Manual</button>
+          <select aria-label="Handoff"><option selected>Pausar durante handoff</option><option>Cancelar durante handoff</option><option>Permitir durante handoff</option></select>
+          <button class="btn secundario p">Salvar</button>
+          <button class="btn primario p"><i class="ph ph-rocket-launch"></i>Publicar</button>
+          <button class="btn secundario p">Desativar</button>
+          <button class="btn secundario p">Rollback</button>
+          <button class="btn secundario p"><i class="ph ph-arrows-out-cardinal"></i>Organizar</button>
+          <button class="btn perigo p"><i class="ph ph-trash"></i>Excluir nó</button>
+        </div>
+      </div>
+
+      <div class="construtor">
+        <!-- Paleta -->
+        <aside class="paleta">
+          <h2>Adicionar nó</h2>
+          <button><span class="pt-no ouro"><i class="ph ph-play"></i></span>Gatilho</button>
+          <button><span class="pt-no sinal"><i class="ph ph-clock"></i></span>Aguardar</button>
+          <button><span class="pt-no aviso"><i class="ph ph-git-branch"></i></span>Condição</button>
+          <button><span class="pt-no ouro"><i class="ph ph-brain"></i></span>Classificar (IA)</button>
+          <button><span class="pt-no sinal"><i class="ph ph-chat-circle"></i></span>Resposta (texto)</button>
+          <button><span class="pt-no aviso"><i class="ph ph-arrows-clockwise"></i></span>Repetir</button>
+          <button><span class="pt-no sinal"><i class="ph ph-question"></i></span>Pergunta</button>
+          <button><span class="pt-no ouro"><i class="ph ph-puzzle-piece"></i></span>Skill</button>
+          <button><span class="pt-no ok"><i class="ph ph-paper-plane-tilt"></i></span>Ação</button>
+          <button><span class="pt-no aviso"><i class="ph ph-bell"></i></span>Lembrete interno</button>
+          <button><span class="pt-no sinal"><i class="ph ph-funnel"></i></span>Mover lead no funil</button>
+          <button><span class="pt-no ouro"><i class="ph ph-tag"></i></span>Editar tag do lead</button>
+          <button><span class="pt-no erro"><i class="ph ph-flag"></i></span>Fim</button>
+        </aside>
+
+        <!-- Canvas -->
+        <div class="canvas">
+          <div class="trilha">
+            <div class="no ouro"><span class="pt-no ouro"><i class="ph ph-play"></i></span><div class="txt"><div class="rotulo-no">Início do fluxo</div><div class="sub">Início do fluxo</div></div></div>
+            <div class="liga"></div>
+            <div class="no sinal"><span class="pt-no sinal"><i class="ph ph-clock"></i></span><div class="txt"><div class="rotulo-no">Espera 1 dia</div><div class="sub">1 dia</div></div></div>
+            <div class="liga"></div>
+            <div class="no ok sel"><span class="pt-no ok"><i class="ph ph-paper-plane-tilt"></i></span><div class="txt"><div class="rotulo-no">Retoma o contato</div><div class="sub">Oi! Passando para saber se você ainda tem interesse. Posso ajudar em algo?</div></div></div>
+            <div class="liga"></div>
+            <div class="no sinal"><span class="pt-no sinal"><i class="ph ph-chat-circle"></i></span><div class="txt"><div class="rotulo-no">Espera a resposta</div><div class="sub">1 regra · espera 2 dias · grava resposta</div><div class="saidas"><span>Quer seguir</span><span class="fb">Sem resposta</span></div></div></div>
+            <div class="ramos">
+              <div class="ramo"><div class="rot">Quer seguir</div><div class="liga"></div><div class="no erro"><span class="pt-no erro"><i class="ph ph-flag"></i></span><div class="txt"><div class="rotulo-no">Encerra: quis seguir</div><div class="sub">Convertido</div></div></div></div>
+              <div class="ramo"><div class="rot fb">Sem resposta</div><div class="liga"></div><div class="no erro"><span class="pt-no erro"><i class="ph ph-flag"></i></span><div class="txt"><div class="rotulo-no">Encerra</div><div class="sub">Esgotado</div></div></div></div>
+            </div>
+          </div>
+          <button class="btn navy p add-no-cel"><i class="ph ph-plus"></i>Adicionar nó</button>
+          <div class="controles"><button aria-label="Aproximar"><i class="ph ph-plus"></i></button><button aria-label="Afastar"><i class="ph ph-minus"></i></button><button aria-label="Ajustar à tela"><i class="ph ph-arrows-out"></i></button><button aria-label="Travar"><i class="ph ph-lock"></i></button></div>
+        </div>
+
+        <!-- Painel do nó -->
+        <aside class="painel-no">
+          <button class="btn fantasma p icone fechar" aria-label="Fechar"><i class="ph ph-x"></i></button>
+          <h2><span class="pt-no ok"><i class="ph ph-paper-plane-tilt"></i></span>Ação</h2>
+          <p class="nota">Alterações aplicam no rascunho ao digitar — salve na barra de publicação.</p>
+          <div class="form">
+            <div class="campo"><label>Rótulo</label><input type="text" value="Retoma o contato" maxlength="60"></div>
+            <div class="campo"><label>Como escrever a mensagem</label>
+              <div class="modo-msg">
+                <label><input type="radio" name="modo">IA com instrução</label>
+                <label><input type="radio" name="modo" checked>Texto fixo</label>
+                <label><input type="radio" name="modo">Modelo de mensagem</label>
+              </div>
+            </div>
+            <div class="campo"><label>Texto enviado ao contato</label><textarea style="min-height:84px">Oi! Passando para saber se você ainda tem interesse. Posso ajudar em algo?</textarea><span class="ajuda">Sai exatamente assim, sem IA. No laço, {{volta}} e {{voltas}} viram o número da volta.</span></div>
+            <div class="campo"><label>Imagem, vídeo, áudio ou documento (opcional)</label><div class="arquivo"><i class="ph ph-paperclip"></i>Nenhum arquivo escolhido</div><span class="ajuda">Com uma imagem, um vídeo, um áudio ou um documento, o texto acima vira a legenda do arquivo (o áudio sai como mensagem de voz, sem legenda — o texto não vai junto). Depois de 24 horas sem resposta do cliente, a mídia não sai — só um modelo aprovado chega até ele.</span></div>
+            <div class="campo"><label>Modelo de mensagem</label><select><option selected>Nenhum</option><optgroup label="Textos prontos"><option>Boas-vindas</option></optgroup><optgroup label="Aprovados no WhatsApp"><option>retomada_consulta_v1</option></optgroup></select></div>
+            <label class="caixa"><input type="checkbox">Se a janela de 24 horas já tiver fechado, mandar este modelo aprovado no lugar da IA</label>
+            <button class="btn secundario bloco" style="color:var(--erro)"><i class="ph ph-trash"></i>Excluir nó</button>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

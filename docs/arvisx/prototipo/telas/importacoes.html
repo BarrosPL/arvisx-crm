@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Importações</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="111">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .upload { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .upload .campo { flex: 1; min-width: 220px; }
+  .arquivo { display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 12px; border-radius: var(--r-sm); background: var(--painel); border: 1px dashed var(--linha-forte); color: var(--apoio); font-size: 13px; }
+  .arquivo i { font-size: 16px; color: var(--fraco); }
+  .arquivo .n { color: var(--texto); font-weight: 600; }
+  .tabela td.num { font-family: var(--mono); font-size: 12.5px; }
+  .tabela td.data { font-family: var(--mono); font-size: 11.5px; color: var(--apoio); white-space: nowrap; }
+  .tabela td.arq a { font-weight: 600; }
+  .tabela td.arq a:hover { text-decoration: underline; text-decoration-color: var(--ouro); text-underline-offset: 3px; }
+  .tabela td { white-space: nowrap; }
+</style>
+</head>
+<body data-rota="/app/imports">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM</div>
+          <h1>Importações</h1>
+          <p>CSV ou XLSX com empresa, CNPJ, pessoa, cargo, telefone e e-mail.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao" style="margin-bottom:16px">
+        <div class="corpo">
+          <div class="upload">
+            <div class="campo"><label>Arquivo</label><div class="arquivo"><i class="ph ph-file-xls"></i><span class="n">empresas-feira-marco.xlsx</span><span class="fraco pequeno">· .csv, .xlsx</span></div></div>
+            <button class="btn primario"><i class="ph ph-upload-simple"></i>Importar</button>
+            <p class="apoio pequeno" style="width:100%">Lote processado: <span class="mono">104</span> ok, <span class="mono">11</span> conflitos, <span class="mono">5</span> falhas.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="cartao">
+        <table class="tabela rolavel">
+          <thead><tr><th>Arquivo</th><th>Status</th><th class="dir">Linhas</th><th class="dir">Sucesso</th><th class="dir">Conflitos</th><th class="dir">Falhas</th><th>Data</th></tr></thead>
+          <tbody>
+            <tr><td class="arq"><a href="#">empresas-feira-marco.xlsx</a></td><td><span class="tag ok mono">completed</span></td><td class="num dir">120</td><td class="num dir">104</td><td class="num dir">11</td><td class="num dir">5</td><td class="data">03/11/2026, 10:12:44</td></tr>
+            <tr><td class="arq"><a href="#">decisores-odonto-sul.csv</a></td><td><span class="tag sinal mono">processing</span></td><td class="num dir">48</td><td class="num dir">30</td><td class="num dir">0</td><td class="num dir">0</td><td class="data">03/11/2026, 09:58:02</td></tr>
+            <tr><td class="arq"><a href="#">clientes-associacao.csv</a></td><td><span class="tag erro mono">failed</span></td><td class="num dir">0</td><td class="num dir">0</td><td class="num dir">0</td><td class="num dir">0</td><td class="data">30/10/2026, 15:41:19</td></tr>
+            <tr><td class="arq"><a href="#">telefones-recepcao.xlsx</a></td><td><span class="tag mono">pending</span></td><td class="num dir">0</td><td class="num dir">0</td><td class="num dir">0</td><td class="num dir">0</td><td class="data">30/10/2026, 15:40:55</td></tr>
+            <tr><td class="arq"><a href="#">fornecedores-2026.xlsx</a></td><td><span class="tag ok mono">completed</span></td><td class="num dir">36</td><td class="num dir">36</td><td class="num dir">0</td><td class="num dir">0</td><td class="data">21/10/2026, 11:48:55</td></tr>
+            <tr><td class="arq"><a href="#">leads-congresso-setembro.csv</a></td><td><span class="tag ok mono">completed</span></td><td class="num dir">212</td><td class="num dir">180</td><td class="num dir">27</td><td class="num dir">5</td><td class="data">02/10/2026, 08:15:40</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

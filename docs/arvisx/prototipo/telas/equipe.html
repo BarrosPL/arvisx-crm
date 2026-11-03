@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Equipe</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="20">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .tabela select.entrada { width: 150px; height: 32px; padding: 0 8px; font-size: 13px; }
+  .tabela td.acoes .btn { visibility: visible; }
+  .secao { margin-top: 32px; }
+  .secao .cartao { overflow-x: auto; }
+  @media (min-width: 861px) { .secao .tabela { min-width: 1000px; } }
+  .secao h2 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+  .secao p.desc { color: var(--apoio); font-size: 12.5px; margin-bottom: 12px; }
+  .nao-saiu { color: var(--erro); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+  .nao-saiu i { font-size: 14px; }
+  @media (max-width: 860px) {
+    .tabela thead { display: none; }
+    .tabela, .tabela tbody, .tabela tr, .tabela td { display: block; }
+    .tabela tr { padding: 10px 12px; border-bottom: 1px solid var(--linha); display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+    .tabela td { padding: 0; border: 0; }
+    .tabela td.membro { flex-basis: 100%; }
+    .tabela td.ult::before { content: "Última atividade "; color: var(--fraco); }
+    .tabela td.env::before { content: "E-mail enviado "; color: var(--fraco); }
+    .tabela td.exp::before { content: "Expira em "; color: var(--fraco); }
+    .tabela td.interface-conv, .tabela td.enviado, .tabela td.por { display: none; }
+    .tabela td.acoes { margin-left: auto; }
+  }
+</style>
+</head>
+<body data-rota="/app/team">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua empresa</div>
+          <h1>Equipe</h1>
+          <p>Gestão de membros, roles e atendimento do tenant.</p>
+        </div>
+        <div class="acoes"><a href="#" class="btn primario"><i class="ph ph-user-plus"></i>Convidar membros</a></div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="abas" role="tablist">
+        <button role="tab" aria-selected="true">Membros</button>
+        <button role="tab" aria-selected="false">Atendimento</button>
+      </div>
+
+      <div class="cartao">
+        <table class="tabela">
+          <thead>
+            <tr><th>Membro</th><th>Papel</th><th>Interface</th><th>Status</th><th>Última atividade</th><th><span class="sr">Ações</span></th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="membro"><div class="pessoa"><span class="avatar claro">AS</span><div><span class="nome">Ana Souza</span><span class="sub">ana.souza@clinicavitalis.com.br</span></div></div></td>
+              <td><span class="tag">Administrador</span></td>
+              <td><button class="btn secundario p" aria-label="Interface de Ana Souza">Completa</button></td>
+              <td><span class="tag ok">Aceito</span></td>
+              <td class="ult mono">03/11/2026, 09:12</td>
+              <td class="acoes"><span class="fraco pequeno">você</span></td>
+            </tr>
+            <tr>
+              <td class="membro"><div class="pessoa"><span class="avatar claro">RB</span><div><span class="nome">Renata Borges</span><span class="sub">renata.borges@clinicavitalis.com.br</span></div></div></td>
+              <td><select class="entrada" aria-label="Papel de Renata Borges"><option>Somente leitura</option><option>Atendente</option><option selected>Gerente</option><option>Administrador</option></select></td>
+              <td><button class="btn secundario p" aria-label="Interface de Renata Borges">Completa</button></td>
+              <td><span class="tag ok">Aceito</span></td>
+              <td class="ult mono">03/11/2026, 08:40</td>
+              <td class="acoes"><button class="btn fantasma p icone" aria-label="Ações"><i class="ph ph-dots-three"></i></button></td>
+            </tr>
+            <tr>
+              <td class="membro"><div class="pessoa"><span class="avatar claro">ML</span><div><span class="nome">Marcos Lima</span><span class="sub">marcos.lima@clinicavitalis.com.br</span></div></div></td>
+              <td><select class="entrada" aria-label="Papel de Marcos Lima"><option>Somente leitura</option><option selected>Atendente</option><option>Gerente</option><option>Administrador</option></select></td>
+              <td><button class="btn secundario p" aria-label="Interface de Marcos Lima">Simplificada</button></td>
+              <td><span class="tag ok">Aceito</span></td>
+              <td class="ult mono">02/11/2026, 18:55</td>
+              <td class="acoes"><button class="btn fantasma p icone" aria-label="Ações"><i class="ph ph-dots-three"></i></button></td>
+            </tr>
+            <tr>
+              <td class="membro"><div class="pessoa"><span class="avatar claro">JP</span><div><span class="nome">Juliana Prado</span><span class="sub">juliana.prado@clinicavitalis.com.br</span></div></div></td>
+              <td><select class="entrada" aria-label="Papel de Juliana Prado"><option>Somente leitura</option><option selected>Atendente</option><option>Gerente</option><option>Administrador</option></select></td>
+              <td><button class="btn secundario p" aria-label="Interface de Juliana Prado">Personalizada</button></td>
+              <td><span class="tag contorno">Pendente</span></td>
+              <td class="ult">—</td>
+              <td class="acoes"><button class="btn fantasma p icone" aria-label="Ações"><i class="ph ph-dots-three"></i></button></td>
+            </tr>
+            <tr>
+              <td class="membro"><div class="pessoa"><span class="avatar claro">TF</span><div><span class="nome">Tiago Ferraz</span><span class="sub">tiago.ferraz@clinicavitalis.com.br</span></div></div></td>
+              <td><span class="tag">Somente leitura</span></td>
+              <td><button class="btn secundario p" aria-label="Interface de Tiago Ferraz">Completa</button></td>
+              <td><span class="tag erro">Revogado</span></td>
+              <td class="ult mono">14/10/2026, 11:03</td>
+              <td class="acoes"><button class="btn fantasma p icone" aria-label="Ações"><i class="ph ph-dots-three"></i></button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <section class="secao">
+        <h2>Convites</h2>
+        <p class="desc">Convites enviados e seu status. Um convite aceito vira membro na lista acima.</p>
+        <div class="cartao">
+          <table class="tabela">
+            <thead>
+              <tr><th>E-mail</th><th>Papel</th><th>Interface</th><th>Status</th><th>E-mail enviado</th><th>Enviado em</th><th>Expira em</th><th>Convidado por</th><th><span class="sr">Ações</span></th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="membro nome">juliana.prado@clinicavitalis.com.br</td>
+                <td><span class="tag">Atendente</span></td>
+                <td class="interface-conv">Personalizada</td>
+                <td><span class="tag contorno">Pendente</span></td>
+                <td class="env apoio">Sim</td>
+                <td class="enviado mono">01/11/2026, 10:20</td>
+                <td class="exp mono">08/11/2026, 10:20</td>
+                <td class="por">Ana Souza</td>
+                <td class="acoes"><button class="btn fantasma p icone" aria-label="Ações"><i class="ph ph-dots-three"></i></button></td>
+              </tr>
+              <tr>
+                <td class="membro nome">recepcao@clinicavitalis.com.br</td>
+                <td><span class="tag">Atendente</span></td>
+                <td class="interface-conv">Simplificada</td>
+                <td><span class="tag contorno">Pendente</span></td>
+                <td class="env"><span class="nao-saiu"><i class="ph ph-warning"></i>Não saiu</span> <button class="btn secundario p"><i class="ph ph-copy"></i>Copiar link</button></td>
+                <td class="enviado mono">30/10/2026, 16:05 <span class="fraco">(reenviado 1×)</span></td>
+                <td class="exp mono">06/11/2026, 16:05</td>
+                <td class="por">Ana Souza</td>
+                <td class="acoes"><button class="btn fantasma p icone" aria-label="Ações"><i class="ph ph-dots-three"></i></button></td>
+              </tr>
+              <tr>
+                <td class="membro nome">marcos.lima@clinicavitalis.com.br</td>
+                <td><span class="tag">Atendente</span></td>
+                <td class="interface-conv">Simplificada</td>
+                <td><span class="tag ok">Aceito</span></td>
+                <td class="env apoio">Sim</td>
+                <td class="enviado mono">12/10/2026, 09:30</td>
+                <td class="exp">—</td>
+                <td class="por">Ana Souza</td>
+                <td class="acoes"></td>
+              </tr>
+              <tr>
+                <td class="membro nome">dr.ferraz@gmail.com</td>
+                <td><span class="tag">Somente leitura</span></td>
+                <td class="interface-conv">Completa</td>
+                <td><span class="tag">Expirado</span></td>
+                <td class="env apoio">Sim</td>
+                <td class="enviado mono">20/09/2026, 14:12</td>
+                <td class="exp mono">27/09/2026, 14:12</td>
+                <td class="por">Renata Borges</td>
+                <td class="acoes"><button class="btn fantasma p icone" aria-label="Ações"><i class="ph ph-dots-three"></i></button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

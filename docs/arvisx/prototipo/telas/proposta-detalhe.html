@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor de proposta</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="91">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .titulo-grande { width: 100%; height: 52px; padding: 0 14px; border-radius: var(--r); background: var(--painel); border: 1px solid var(--linha-forte); font-family: var(--display); font-stretch: 112%; font-weight: 650; letter-spacing: -.03em; font-size: 22px; color: var(--navy); }
+  .titulo-grande:focus { outline: 0; border-color: var(--ouro); box-shadow: 0 0 0 3px rgba(212,175,55,.22); }
+  .modelo-linha { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-weight: 600; font-size: 13px; }
+  .modelo-linha select { height: 34px; padding: 0 28px 0 10px; border-radius: var(--r-sm); background: var(--painel); border: 1px solid var(--linha-forte); font-weight: 600; font-size: 12.5px; }
+  .secao-doc { padding: 14px 0; border-top: 1px solid var(--linha); }
+  .secao-doc h3 { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .secao-doc p { white-space: pre-wrap; font-size: 13.5px; line-height: 1.55; color: var(--texto); }
+  .pend-cab { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+  .pend-cab > div { flex: 1; min-width: 180px; }
+  .pend-cab .btn { margin-left: auto; align-self: center; }
+  .pendencias { display: grid; gap: 10px; }
+  .pendencias .lin { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+  .pendencias .lin label { font-size: 12.5px; font-weight: 600; grid-column: 1 / -1; }
+  .pendencias .lin .entrada { height: 34px; }
+  .itens td input { width: 100%; height: 32px; padding: 0 8px; border-radius: var(--r-sm); border: 1px solid var(--linha-forte); background: var(--painel); font-size: 13px; }
+  .itens td input.mono { font-family: var(--mono); font-size: 12.5px; text-align: right; }
+  .itens td.qtd input { width: 64px; }
+  .itens td.n { width: 120px; }
+  .total { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; border: 1px solid var(--linha); border-radius: var(--r); background: var(--painel-2); }
+  .total strong { font-size: 16px; }
+  .total .v { font-family: var(--display); font-stretch: 108%; font-weight: 650; font-size: 26px; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .assistente .linha { display: flex; gap: 8px; }
+  .assistente .linha .entrada { flex: 1; }
+  .mudanca { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid #ecd9a0; font-size: 13px; }
+  .mudanca .rem { font: 600 10.5px/1 var(--mono); letter-spacing: .1em; color: var(--erro); }
+  .aviso-preco { flex-wrap: wrap; }
+  .aviso-preco > div:first-of-type { flex: 1; min-width: 220px; }
+  .bloco { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .bloco > * { min-width: 0; }
+</style>
+</head>
+<body data-rota="/app/proposals">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho" style="margin-bottom:16px">
+        <div style="flex:1;min-width:0">
+          <div class="eyebrow">CRM · Propostas · <span class="mono" style="letter-spacing:0">0007/2026 v1</span></div>
+          <input class="titulo-grande" type="text" placeholder="Título da proposta" value="Implantes — Clínica Vitalis" aria-label="Título da proposta">
+        </div>
+        <div class="acoes"><span class="tag">Rascunho</span></div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="bloco">
+        <div class="cartao">
+          <div class="corpo">
+            <div class="modelo-linha">Modelo do documento <select><option selected>Proposta padrão — serviços</option><option>Orçamento simples</option><option>Contrato corporativo (desligado)</option></select></div>
+
+            <div class="aviso-faixa aviso" style="margin:14px 0;flex-direction:column;gap:10px">
+              <div class="pend-cab"><i class="ph ph-warning"></i><div><strong>Não é possível enviar — <span class="mono">1</span> pendência(s)</strong>O que falta preencher:</div><button class="btn secundario p"><span class="ia-tag" style="color:inherit"></span>Preencher com a conversa</button></div>
+              <div class="pendencias" style="padding-left:30px">
+                <div class="lin"><label>Nome do responsável pela clínica</label><input class="entrada" type="text" placeholder=""><button class="btn navy p">Preencher</button></div>
+              </div>
+            </div>
+
+            <div class="secao-doc"><h3>Apresentação</h3><p>A Clínica Vitalis agradece a oportunidade de apresentar esta proposta para a reabilitação com implantes dentários, planejada a partir da avaliação clínica e da tomografia realizadas em outubro.</p></div>
+            <div class="secao-doc"><h3>Escopo do tratamento</h3><p>Instalação de 2 implantes unitários em titânio na região posterior inferior, com enxerto ósseo prévio e coroas em zircônia sobre implante. Inclui consultas de acompanhamento por 12 meses.</p></div>
+            <div class="secao-doc"><h3>Investimento</h3><p>Os valores abaixo contemplam materiais, procedimentos cirúrgicos e protéticos e as consultas de retorno. Não inclui exames de imagem externos.</p></div>
+            <div class="secao-doc" style="padding-bottom:0"><h3>Condições</h3><p>Prazo de 30 dias, 50% adiantado e o restante na instalação das coroas.</p><div style="display:flex;gap:6px;margin-top:10px"><button class="btn secundario p">Salvar seção</button><button class="btn fantasma p">Voltar ao texto do modelo</button></div></div>
+          </div>
+        </div>
+
+        <div class="form">
+          <div class="campo"><label>Condições</label><textarea placeholder="Ex: Prazo de 30 dias, 50% adiantado" style="min-height:72px">Prazo de 30 dias, 50% adiantado</textarea></div>
+          <div class="form c2">
+            <div class="campo"><label>Válido até</label><input type="text" class="mono" value="30/11/2026"></div>
+            <div class="campo"><label>Prazo (dias úteis)</label><input type="number" class="mono" value="45"></div>
+            <div class="campo largo"><label>Forma de pagamento</label><input type="text" placeholder="Ex: 50% no aceite e 50% na entrega" value="50% no aceite e 50% na instalação das coroas"></div>
+          </div>
+        </div>
+
+        <div class="aviso-faixa aviso aviso-preco"><i class="ph ph-warning"></i><div><strong>O preço de Implante unitário — titânio mudou no catálogo (<span class="mono">R$ 3.500,00</span> → <span class="mono">R$ 3.650,00</span>).</strong>Ao salvar, o preço do catálogo será aplicado de qualquer forma.</div><div style="display:flex;gap:6px;margin-left:auto;align-self:center"><button class="btn secundario p">Atualizar preços</button><button class="btn fantasma p">Ignorar aviso</button></div></div>
+
+        <div class="cartao">
+          <div class="corpo sem">
+            <table class="tabela rolavel itens compacta">
+              <thead><tr><th>Descrição</th><th class="qtd">Qtd</th><th class="n">Preço unit.</th><th class="n">Desconto</th><th class="n dir">Subtotal</th></tr></thead>
+              <tbody>
+                <tr><td><input type="text" value="Implante unitário — titânio"></td><td class="qtd"><input type="text" class="mono" value="2"></td><td class="n"><input type="text" class="mono" value="3.500,00"></td><td class="n"><input type="text" class="mono" value="0,00"></td><td class="n mono dir">R$ 7.000,00</td></tr>
+                <tr><td><input type="text" value="Enxerto ósseo"></td><td class="qtd"><input type="text" class="mono" value="1"></td><td class="n"><input type="text" class="mono" value="2.400,00"></td><td class="n"><input type="text" class="mono" value="0,00"></td><td class="n mono dir">R$ 2.400,00</td></tr>
+                <tr><td><input type="text" value="Coroa em zircônia sobre implante"></td><td class="qtd"><input type="text" class="mono" value="2"></td><td class="n"><input type="text" class="mono" value="1.500,00"></td><td class="n"><input type="text" class="mono" value="0,00"></td><td class="n mono dir">R$ 3.000,00</td></tr>
+                <tr><td><input type="text" value="Consultas de acompanhamento (12 meses)"></td><td class="qtd"><input type="text" class="mono" value="1"></td><td class="n"><input type="text" class="mono" placeholder=""></td><td class="n"><input type="text" class="mono" value="0,00"></td><td class="n dir fraco">A definir</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pe" style="flex-wrap:wrap">
+            <button class="btn secundario p"><i class="ph ph-plus"></i>Item à mão</button>
+            <div class="busca-linha" style="flex:1;min-width:220px;height:34px"><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Buscar produto no catálogo…"></div>
+          </div>
+        </div>
+
+        <div class="total"><strong>Total</strong><span class="v">R$ 12.400,00</span></div>
+
+        <div class="aviso-faixa aviso"><i class="ph ph-clock"></i><div>Na fila do WhatsApp — sai assim que o canal conectar.</div></div>
+
+        <div class="cartao ouro assistente">
+          <div class="corpo">
+            <h2 class="secao" style="display:flex;align-items:center;gap:10px"><span class="ia-tag"></span>Assistente</h2>
+            <div class="linha"><input class="entrada" type="text" placeholder='Ex.: "baixa 10% e tira a hospedagem"' value="tira as consultas de acompanhamento e dá 5% no enxerto"><button class="btn navy">Gerar</button></div>
+            <div style="margin-top:12px">
+              <div class="mudanca"><span>Consultas de acompanhamento (12 meses)</span><span class="rem">REMOVIDO</span></div>
+              <div class="mudanca"><span>Enxerto ósseo — desconto <span class="mono">R$ 0,00</span> → <span class="mono">R$ 120,00</span></span><span class="mono">R$ 2.280,00</span></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px"><button class="btn secundario p">Aplicar</button><button class="btn fantasma p">Descartar</button></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primario" style="flex:1"><i class="ph ph-paper-plane-tilt"></i>Enviar ao cliente</button>
+          <button class="btn secundario">Descartar rascunho</button>
+        </div>
+        <div style="display:flex;justify-content:flex-end"><button class="btn secundario"><i class="ph ph-file-pdf"></i>Ver como o cliente recebe</button></div>
+        <button class="btn navy bloco">Salvar</button>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

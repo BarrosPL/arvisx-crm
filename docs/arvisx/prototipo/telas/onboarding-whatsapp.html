@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>O telefone dele</title>
+<meta name="grupo" content="Entrada">
+<meta name="ordem" content="21">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .onb { max-width: 760px; margin: 0 auto; padding: 32px 24px 64px; }
+  .onb-topo { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+  .onb-topo .lockup img { height: 36px; } .onb-topo .lockup b { font-size: 20px; }
+  .onb-topo .org { text-align: right; }
+  .onb-topo .org .rotulo { margin-bottom: 3px; }
+  .onb-topo .org strong { font-family: var(--display); font-stretch: 110%; font-weight: 650; letter-spacing: -.02em; font-size: 16px; }
+  .onb .passos { justify-content: space-between; margin: 20px 0 28px; }
+  .onb-cab { margin-bottom: 20px; }
+  .onb-cab h2 { font-family: var(--display); font-stretch: 112%; font-weight: 650; letter-spacing: -.03em; font-size: 26px; line-height: 1.1; color: var(--navy); }
+  .onb-cab p { color: var(--apoio); margin-top: 6px; max-width: 64ch; }
+  .rodape-nav { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 20px; }
+  .volta-escolha { font-size: 12px; text-decoration: underline; text-underline-offset: 3px; color: var(--apoio); }
+  .qr-caixa { margin-top: 14px; padding: 16px; border-radius: var(--r); border: 1px solid var(--linha); background: var(--painel-2); }
+  .qr-caixa .estado { font-size: 13.5px; font-weight: 700; }
+  .qr-caixa .expl { font-size: 12px; color: var(--apoio); margin-top: 3px; }
+  .qr-caixa .forma { display: flex; justify-content: center; margin-top: 14px; }
+  .qr { width: 224px; height: 224px; margin: 14px auto 0; border-radius: var(--r); border: 2px dashed var(--linha-forte); background: var(--painel); display: grid; place-items: center; color: var(--fraco); font: 600 11px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+  .saidas { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 8px; }
+  @media (max-width: 860px) {
+    .onb { padding: 20px 16px 48px; }
+    .onb-topo img { height: 28px; }
+    .onb .passos li + li::before { width: 12px; margin: 0 4px; }
+    .onb .passos li { gap: 6px; }
+    .qr { width: 192px; height: 192px; }
+    .saidas .btn { flex: 1; }
+  }
+</style>
+</head>
+<body data-rota="/onboarding/connect-whatsapp">
+<div class="onb">
+  <header class="onb-topo">
+    <span class="lockup g escuro" aria-label="ARVISX CRM"><img src="../marca/arvisx-simbolo.png" alt=""><b>ARVISX<em>CRM</em></b></span>
+    <div class="org"><span class="rotulo">ARVISX CRM</span><strong>Clínica Vitalis</strong></div>
+  </header>
+  <div class="fio" style="margin:0"></div>
+  <ol class="passos" aria-label="Passos">
+    <li class="feito"><span class="n">1</span><span class="t">Seu negócio</span></li>
+    <li class="atual"><span class="n">2</span><span class="t">O telefone dele</span></li>
+    <li><span class="n">3</span><span class="t">Treinar</span></li>
+    <li><span class="n">4</span><span class="t">Onde ele organiza</span></li>
+    <li><span class="n">5</span><span class="t">Ver ele atender</span></li>
+    <li><span class="n">6</span><span class="t">Quem trabalha com ele</span></li>
+  </ol>
+
+  <main>
+    <header class="onb-cab">
+      <h2>Dê um telefone a ele</h2>
+      <p>É por este número que ele vai atender seus clientes. Se você conecta pelo celular, tenha ele por perto.</p>
+      <p class="pequeno" style="margin-top:10px">Novos canais começam em modo de teste. Após concluir a configuração, abra Conexões para autorizar seus números de teste ou liberar o público.</p>
+    </header>
+
+    <section class="cartao"><div class="corpo">
+      <a href="#" class="volta-escolha">← Escolher outra forma</a>
+      <div class="qr-caixa">
+        <p class="estado">Pronto para conectar</p>
+        <p class="expl">Escolha QR Code ou código de pareamento e confirme no WhatsApp do celular.</p>
+        <div class="forma" role="group" aria-label="Forma de conectar">
+          <div class="segmento"><button type="button" aria-pressed="true">QR Code</button><button type="button" aria-pressed="false">Conectar por código</button></div>
+        </div>
+        <div class="qr" role="img" aria-label="Código QR para conectar o WhatsApp">QR code</div>
+        <p class="expl" style="text-align:center;margin-top:12px">Se essa opção não aparecer no celular, use o QR Code.</p>
+      </div>
+      <div class="saidas">
+        <button class="btn secundario">Pular por enquanto</button>
+        <button class="btn primario">Conectei em outro lugar</button>
+      </div>
+    </div></section>
+  </main>
+</div>
+</body>
+</html>
