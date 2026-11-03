@@ -222,6 +222,11 @@ export const PUBLIC_PATHS: RegExp[] = [
   // dois nomes de propósito: `/^\/legal/` deixaria qualquer sub-path futuro
   // nascer público de carona.
   /^\/legal\/(terms|privacy)$/,
+  // Documentos legais da VITRINE (a página inicial pública de
+  // crm.arvisx.com.br): o rodapé da landing e o aviso de cookies linkam os
+  // dois, e quem lê ainda não é cliente — não tem sessão para exigir. Âncorado
+  // nos dois nomes, pelo mesmo motivo de `/legal` acima.
+  /^\/(termos-de-uso|privacidade-e-cookies)$/,
 ];
 
 export function isPublicPath(pathname: string): boolean {

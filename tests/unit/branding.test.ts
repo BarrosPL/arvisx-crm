@@ -850,6 +850,17 @@ type CategoriaDeHost =
 type EntradaDeHost = { categoria: CategoriaDeHost; motivo: string };
 
 const HOSTS_DECLARADOS: Record<string, EntradaDeHost> = {
+  // ── a vitrine deste fork: crm.arvisx.com.br é o endereço do PRODUTO ──
+  "crm.arvisx.com.br": {
+    categoria: "PLATAFORMA",
+    motivo:
+      "endereço da própria página inicial pública (`app/page.tsx`): canonical e Open Graph apontam para ela mesma, como qualquer vitrine. Neste fork o produto é o Arvisx CRM e este é o domínio dele — não é domínio de cliente nem de contribuidor. O código não chama o host.",
+  },
+  "arvisx.com.br": {
+    categoria: "PLATAFORMA",
+    motivo:
+      "site institucional da Arvisx, linkado no rodapé da vitrine (`app/page.tsx`) como 'produto da Arvisx AI'. Link que a pessoa clica; o código não chama o host.",
+  },
   "chatgpt.com": {
     categoria: "CONSOLE",
     motivo:
@@ -1328,6 +1339,9 @@ describe("catraca de host de terceiro no código que embarca", () => {
       // Decisão escrita: painel de chaves da Requesty, o mesmo caso dos outros
       // CONSOLE (o link "Onde pegar a chave" da tela de Credenciais).
       "app.requesty.ai",
+      // Decisão escrita (vitrine deste fork): site institucional da Arvisx,
+      // linkado no rodapé da página inicial — clicado pela pessoa, nunca chamado.
+      "arvisx.com.br",
       // Decisão escrita (spec 24, auditoria de site): assinatura de construtor
       // detectada na amostra real da VPS — nunca chamada, nunca exibida.
       "automatizo.dev.br",
@@ -1347,6 +1361,9 @@ describe("catraca de host de terceiro no código que embarca", () => {
       // Decisão escrita: é o painel de chaves do Jev, o mesmo caso dos outros
       // CONSOLE — o link "Onde pegar a chave" da tela de Credenciais.
       "console.typesafe.ai",
+      // Decisão escrita (vitrine deste fork): endereço da própria página inicial
+      // (canonical e Open Graph apontam para ela mesma) — nunca chamado.
+      "crm.arvisx.com.br",
       "deskcomm.app",
       // Decisão escrita (spec 24, auditoria de site): marca agregador e conta
       // como link social no raio-X — nunca chamada, nunca exibida (a tela mostra

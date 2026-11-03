@@ -15,8 +15,6 @@ vi.mock("@/lib/supabase/server", () => ({
     auth: { getUser: async () => ({ data: { user: cena.usuario } }) },
   }),
 }));
-vi.mock("@/lib/i18n/idiomaAnonimo", () => ({ idiomaDoVisitante: async () => "pt-BR" }));
-vi.mock("@/lib/branding/saida", () => ({ marcaDaSaida: async () => ({ nome: "Marca da Revenda" }) }));
 
 import HomePage from "./page";
 
@@ -28,30 +26,39 @@ beforeEach(() => {
   cena.usuario = null;
 });
 
-describe("/ — a página inicial pública", () => {
-  // A verificação de um app que pede dados de conta Google abre o endereço
-  // principal SEM entrar. Antes, `/` era só um redirect para o painel e o
-  // revisor caía no login.
-  it("sem sessão: mostra o nome da marca, o que o produto faz e os links legais", async () => {
+describe("/ — a página inicial pública (a vitrine do Arvisx CRM)", () => {
+  it("sem sessão: mostra a promessa, o botão de entrar e os documentos legais", async () => {
     await montar();
 
-    expect(screen.getByRole("heading", { level: 1, name: "Marca da Revenda" })).toBeInTheDocument();
-    expect(screen.getByText(/Atendimento e vendas pelo WhatsApp/)).toBeInTheDocument();
-
-    const politica = screen
-      .getAllByRole("link", { name: "Política de Privacidade" })
-      .map((a) => a.getAttribute("href"));
-    expect(politica).toContain("/legal/privacy");
-    expect(screen.getByRole("link", { name: "Termos de Uso" })).toHaveAttribute(
-      "href",
-      "/legal/terms",
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "O WhatsApp chega. A IA atende e vende. Seu CRM organiza tudo.",
     );
-    expect(screen.getByRole("link", { name: "Entrar" })).toHaveAttribute("href", "/login");
+    // Quem já é cliente entra por aqui: o topo e o hero levam ao login.
+    const entrar = screen.getAllByRole("link", { name: /^(Entrar|Já sou cliente)$/ });
+    expect(entrar.length).toBeGreaterThanOrEqual(2);
+    for (const a of entrar) expect(a).toHaveAttribute("href", "/login");
+
+    expect(screen.getByRole("link", { name: "Termos de uso" })).toHaveAttribute(
+      "href",
+      "/termos-de-uso",
+    );
+    expect(screen.getByRole("link", { name: "Política de privacidade e cookies" })).toHaveAttribute(
+      "href",
+      "/privacidade-e-cookies",
+    );
   });
 
-  it("o nome vem da marca resolvida, não de texto fixo", async () => {
+  it("a landing é a da Arvisx: não há cadastro aberto nem link para /signup", async () => {
     await montar();
-    expect(document.body.textContent).toContain("Marca da Revenda");
+    const hrefs = screen.getAllByRole("link").map((a) => a.getAttribute("href"));
+    expect(hrefs).not.toContain("/signup");
+  });
+
+  it("as capturas do CRM têm texto alternativo", async () => {
+    await montar();
+    for (const img of screen.getAllByRole("img")) {
+      expect(img.getAttribute("alt")).toBeTruthy();
+    }
   });
 
   it("com sessão: segue direto para o painel, como sempre foi", async () => {
