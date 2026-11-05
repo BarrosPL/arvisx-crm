@@ -133,10 +133,45 @@ services:
     logging: *log
     networks: [internal]
 
+  # Chamada de voz do WhatsApp (WaCalls) — DESLIGADA POR PADRAO, nos moldes do docker-compose.prod.yml do upstream.
+  # Liga com `COMPOSE_PROFILES=voz` no .env deste servico; sem isso o compose nem cria o conteiner.
+  # Vincula um SEGUNDO APARELHO ao numero que atende (caminho nao oficial: risco de bloqueio da CONTA).
+  # Regras que valem aqui (tests/unit/portas-do-compose.test.ts, mesma logica):
+  #   - `crm-app` e `worker` NAO ganham `depends_on: wacalls` (profile inativo derrubaria o CRM inteiro);
+  #   - a API HTTP do WaCalls fica so na rede `internal` (nada de TCP publicado);
+  #   - a unica porta publicada e UDP, igual no host e no conteiner (o numero entra no candidato SDP do navegador);
+  #   - imagem do upstream fixada por digest, nunca republicada (docs/doctrine/packaging.md); `missing` porque digest e imutavel.
+  wacalls:
+    profiles: ["voz"]
+    image: ${WACALLS_IMAGE:-ghcr.io/jotadev66/wacalls@sha256:9ff52ef9455cf42125a911c38bb8c855f0cc205516cada2054e5c05546909022}
+    pull_policy: ${WACALLS_PULL_POLICY:-missing}
+    restart: unless-stopped
+    mem_limit: 256m
+    environment:
+      # O servico NAO sobe sem usuario e senha de admin (exigencia do upstream).
+      WACALLS_ADMIN_USER: ${WACALLS_ADMIN_USER:-}
+      WACALLS_ADMIN_PASSWORD: ${WACALLS_ADMIN_PASSWORD:-}
+      # Bearer que o app e o worker usam; o MESMO valor vai em WACALLS_API_TOKEN do .env deles.
+      WACALLS_API_TOKEN: ${WACALLS_API_TOKEN:-}
+      WACALLS_CORS_ORIGINS: ${WACALLS_CORS_ORIGINS:-}
+      WACALLS_TRUSTED_PROXIES: ${WACALLS_TRUSTED_PROXIES:-}
+      # IP PUBLICO da VPS, anunciado como candidato ICE; sem ele a ligacao conecta e fica muda.
+      WACALLS_PUBLIC_IP: ${WACALLS_PUBLIC_IP:-}
+      # Porta UDP fixa do audio (sem ela o upstream usa portas efemeras impossiveis de publicar).
+      WACALLS_WEBRTC_UDP_PORT: ${WACALLS_WEBRTC_UDP_PORT:-7881}
+    ports:
+      - "${WACALLS_WEBRTC_UDP_PORT:-7881}:${WACALLS_WEBRTC_UDP_PORT:-7881}/udp"
+    volumes:
+      # wacalls.db guarda a sessao do WhatsApp; apagar o volume desvincula os aparelhos.
+      - wacalls-data:/data
+    logging: *log
+    networks: [internal]
+
 volumes:
   crm-backups:
   waha-data:
   waha-media:
+  wacalls-data:
 
 networks:
   internal: {}
