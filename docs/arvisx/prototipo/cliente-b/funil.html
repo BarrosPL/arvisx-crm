@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Funis — ArvisX CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../cliente/cliente.css">
+<link rel="stylesheet" href="limpo.css">
+</head>
+<body data-grupo="crm" data-item="Funis">
+<div class="app">
+<div id="ilha"></div>
+
+<div class="cabeca">
+  <div>
+    <div class="olho">CRM · Funis</div>
+    <button class="titulo-pag" type="button" aria-label="Trocar de funil: CRM Vivo — Clínica">CRM Vivo — Clínica <i class="ph ph-caret-up-down" style="font-size:.55em;color:var(--fraco)"></i></button>
+  </div>
+  <div class="acoes">
+    <div class="seg" role="group"><button type="button" aria-pressed="true">Quadro</button><button type="button" aria-pressed="false">Lista</button><button type="button" aria-pressed="false">Calendário</button></div>
+    <button class="btn ouro"><i class="ph ph-plus"></i>Novo Lead</button>
+  </div>
+</div>
+
+<div class="estagios" aria-label="Etapas do funil">
+  <div class="estagio e1"><h4>Primeiro contato</h4><div class="q">2</div><div class="pond">R$ 2.250</div></div>
+  <div class="estagio e2"><h4>Avaliação</h4><div class="q">3</div><div class="pond">R$ 29.300 · pond. R$ 8.790</div></div>
+  <div class="estagio e3"><h4>Proposta enviada</h4><div class="q">3</div><div class="pond">R$ 90.800 · pond. R$ 54.480</div></div>
+  <div class="estagio e4"><h4>Negociação</h4><div class="q">4</div><div class="pond">R$ 174.000 · pond. R$ 139.200</div></div>
+  <div class="estagio e5"><h4>Tratamento fechado</h4><div class="q">1</div><div class="pond">R$ 61.900</div></div>
+  <div class="estagio e6"><h4>Perdido</h4><div class="q">0</div><div class="pond">—</div></div>
+</div>
+
+<div class="filtros">
+  <div class="campo-busca"><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Buscar por título…"></div>
+  <button class="pilula">Responsável: Todos<i class="ph ph-caret-down"></i></button>
+  <button class="pilula">Status: Todos<i class="ph ph-caret-down"></i></button>
+  <button class="pilula">Tag: todas<i class="ph ph-caret-down"></i></button>
+  <label class="pilula"><input type="checkbox">Apenas atrasados</label>
+</div>
+
+<div class="lanes">
+  <section class="lane">
+    <div class="cab"><span class="pt" style="background:#3d6fa5"></span><div><h3>Primeiro contato</h3><span class="soma">R$ 2.250</span></div><span class="cont">2</span></div>
+    <div class="cards">
+      <article class="card">
+        <span class="novo-ponto" aria-label="Novo"></span>
+        <div class="linha1"><span class="valor">R$ 1.800</span></div>
+        <div class="tit">Marina Costa — clareamento</div>
+        <div class="situ"><i class="ph ph-chat-circle"></i><span class="txt">Oi! Vi no Instagram o clareamento, quanto fica?</span><span class="cont" aria-label="2 sem ler">2</span></div>
+        <div class="pe"><span class="dono"><span class="avatar p vazio"></span><span class="n fraco">Sem responsável</span></span><span class="tempo">3h em Primeiro contato</span></div>
+      </article>
+      <article class="card">
+        <div class="linha1"><span class="valor">R$ 450</span><span class="avatar p ia" title="Bot Padrão E2E">BP</span></div>
+        <div class="tit">Caio Ribeiro — dor de dente</div>
+        <div class="medidor"><div class="barra"><span style="width:72%"></span></div>Quente · 72%</div>
+        <div class="situ"><i class="ph ph-chat-circle"></i><span class="txt">Consigo encaixar hoje à tarde?</span></div>
+        <div class="pe"><span class="dono"><span class="n">Bot Padrão E2E</span></span><span class="tempo">1h em Primeiro contato</span></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="lane">
+    <div class="cab"><span class="pt" style="background:#35577f"></span><div><h3>Avaliação</h3><span class="soma">R$ 29.300 · ponderado R$ 8.790</span></div><span class="cont">3</span></div>
+    <div class="cards">
+      <article class="card">
+        <div class="linha1"><span class="valor nulo">—</span><span class="avatar p ia" title="Lia — AgendaPlus">LA</span></div>
+        <div class="tit">Rogério Paiva — avaliação inicial</div>
+        <div class="pe"><span class="dono"><span class="n">Lia — AgendaPlus</span></span><span class="tempo">5h em Avaliação</span></div>
+      </article>
+      <article class="card">
+        <div class="linha1"><span class="valor">R$ 21.500</span><span class="avatar p" title="Marcos Lima">ML</span></div>
+        <div class="tit">Família Andrade — 4 tratamentos</div>
+        <div class="medidor"><div class="barra"><span style="width:45%;background:var(--aviso)"></span></div>Morno · 45%</div>
+        <div class="situ"><i class="ph ph-list-checks"></i><span class="txt">2 tarefas abertas · 1 atrasada</span></div>
+        <div class="pe"><span class="dono"><span class="n">Marcos Lima</span></span><span class="tempo">12h em Avaliação</span></div>
+      </article>
+      <article class="card frio-c">
+        <div class="linha1"><span class="valor">R$ 7.800</span><span class="avatar p" title="Ana Souza">AS</span></div>
+        <div class="tit">Patrícia Nunes — prótese fixa</div>
+        <div class="situ frio"><i class="ph ph-thermometer-cold"></i><span class="txt">Sem resposta há 2 dias</span></div>
+        <div class="pe"><span class="dono"><span class="n">Ana Souza</span></span><span class="tempo">em Avaliação</span></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="lane">
+    <div class="cab"><span class="pt" style="background:#2b4160"></span><div><h3>Proposta enviada</h3><span class="soma">R$ 90.800 · ponderado R$ 54.480</span></div><span class="cont">3</span></div>
+    <div class="cards">
+      <article class="card">
+        <div class="linha1"><span class="valor">R$ 38.900</span><span class="avatar p" title="Ana Souza">AS</span></div>
+        <div class="tit">Clínica Vitalis — pacote completo de implantes dentários com enxerto ósseo, protocolo superior e acompanhamento de 24 meses</div>
+        <div class="pe"><span class="dono"><span class="n">Ana Souza</span></span><span class="tempo">8h em Proposta enviada</span></div>
+      </article>
+      <article class="card frio-c">
+        <div class="linha1"><span class="valor">R$ 45.000</span><span class="avatar p" title="Ana Souza">AS</span></div>
+        <div class="tit">Bruno Tavares — protocolo superior</div>
+        <div class="situ frio"><i class="ph ph-thermometer-cold"></i><span class="txt">Sem resposta há 6 dias</span></div>
+        <div class="pe"><span class="dono"><span class="n">Ana Souza</span></span><span class="tempo">em Proposta enviada</span></div>
+      </article>
+      <article class="card frio-c">
+        <div class="linha1"><span class="valor">R$ 6.900</span><span class="avatar p ia" title="Lia — AgendaPlus">LA</span></div>
+        <div class="tit">Sônia Vasconcelos — implante unitário</div>
+        <div class="situ frio"><i class="ph ph-thermometer-cold"></i><span class="txt">Sem resposta há 8 dias</span></div>
+        <div class="pe"><span class="dono"><span class="n">Lia — AgendaPlus</span></span><span class="tempo">em Proposta enviada</span></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="lane">
+    <div class="cab"><span class="pt" style="background:#1d2c44"></span><div><h3>Negociação</h3><span class="soma">R$ 174.000 · ponderado R$ 139.200</span></div><span class="cont">4</span></div>
+    <div class="cards">
+      <article class="card proposta">
+        <div class="linha1"><span class="valor">R$ 28.000</span><span class="avatar p ia" title="Lia — AgendaPlus">LA</span></div>
+        <div class="tit">Carlos — Clínica Vida Odonto · manutenção de protocolo</div>
+        <div class="prop">
+          <span class="ia-tag">Propõe</span>
+          <span>Confirmar a data da manutenção do protocolo e enviar o orçamento revisado</span>
+          <div class="btns"><button class="btn ouro p">Aprovar</button><button class="btn fantasma p">Ignorar</button></div>
+        </div>
+        <div class="pe"><span class="dono"><span class="n">Lia — AgendaPlus</span></span><span class="tempo">30h em Negociação</span></div>
+      </article>
+      <article class="card">
+        <div class="linha1"><span class="valor">R$ 124.000</span><span class="avatar p" title="Renata Borges">RB</span></div>
+        <div class="tit">Grupo Odonto Sul — contrato corporativo</div>
+        <div class="pe"><span class="dono"><span class="n">Renata Borges</span></span><span class="tempo">1h em Negociação</span></div>
+      </article>
+      <article class="card">
+        <div class="linha1"><span class="valor">R$ 12.400</span><span class="avatar p" title="Ana Souza">AS</span></div>
+        <div class="tit">Clínica Vitalis — implantes</div>
+        <div class="situ"><i class="ph ph-chat-circle"></i><span class="txt">Perfeito, então fechamos na sexta.</span></div>
+        <div class="pe"><span class="dono"><span class="n">Ana Souza</span></span><span class="tempo">2h em Negociação</span></div>
+      </article>
+      <article class="card parado-c">
+        <div class="linha1"><span class="valor">R$ 9.600</span></div>
+        <div class="tit">Helena Marques — ortodontia adulto</div>
+        <div class="situ parado"><i class="ph ph-thermometer-cold"></i><span class="txt">Sem resposta há 20 dias</span></div>
+        <div class="pe"><span class="dono"><span class="avatar p vazio"></span><span class="n fraco">Sem responsável</span></span><span class="tempo">em Negociação</span></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="lane ganho">
+    <div class="cab"><span class="pt" style="background:var(--ok)"></span><div><h3>Tratamento fechado</h3><span class="soma">R$ 61.900</span></div><span class="cont">1</span></div>
+    <div class="cards">
+      <article class="card">
+        <div class="linha1"><span class="valor">R$ 61.900</span><span class="avatar p" title="Marcos Lima">ML</span></div>
+        <div class="tit">P A N A R O Especialista — protocolo inferior</div>
+        <div class="pe"><span class="dono"><span class="n">Marcos Lima</span></span><span class="tempo">3d em Tratamento fechado</span></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="lane perdido">
+    <div class="cab"><span class="pt" style="background:var(--erro)"></span><div><h3>Perdido</h3></div><span class="cont">0</span></div>
+    <div class="cards"><p class="fraco pequeno" style="text-align:center;padding:28px 0">vazio</p></div>
+  </section>
+</div>
+
+<div class="lote" role="region" aria-label="Ações em lote">
+  <strong>2 Pacientes selecionados</strong>
+  <button class="btn vidro p">Mover para…</button>
+  <button class="btn vidro p">Responsável…</button>
+  <button class="btn vidro p">Tag…</button>
+  <button class="btn vidro p">Marcar como perdido…</button>
+  <button class="btn perigo p">Excluir</button>
+  <button class="btn fantasma p" style="color:var(--claro-2)">Cancelar</button>
+</div>
+</div>
+<script src="cliente.js"></script>
+</body>
+</html>

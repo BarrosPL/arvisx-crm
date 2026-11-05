@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inbox</title>
+<meta name="grupo" content="Atendimento">
+<meta name="ordem" content="10">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="skin.css">
+<style>
+  .conversas .cab { padding: 12px 12px 0; border-bottom: 0; }
+  .conversas .filtros-conv { padding: 10px 12px 0; display: grid; gap: 8px; }
+  .conversas .filtros-conv .linha { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pilula { display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid var(--linha-forte); background: var(--painel); font-weight: 600; font-size: 12px; color: var(--apoio); white-space: nowrap; }
+  .pilula[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: var(--ouro-claro); }
+  .pilula.p { height: 28px; font-size: 11.5px; padding: 0 10px; }
+  .pilula i { font-size: 12px; }
+  .busca-pilula { flex: 1; display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 16px; background: var(--painel-2); color: var(--fraco); min-width: 0; }
+  .busca-pilula input { flex: 1; min-width: 0; border: 0; background: transparent; outline: 0; font-size: 12.5px; color: var(--texto); }
+  .abas-conv { display: flex; flex-wrap: wrap; gap: 0; padding: 8px 12px 0; border-bottom: 1px solid var(--linha); }
+  .abas-conv button { position: relative; padding: 8px 9px 9px; font-weight: 600; font-size: 12px; color: var(--apoio); white-space: nowrap; display: inline-flex; gap: 5px; align-items: center; }
+  .abas-conv button .n { font: 600 10.5px/1 var(--mono); color: var(--fraco); }
+  .abas-conv [aria-selected="true"] { color: var(--navy); }
+  .abas-conv [aria-selected="true"]::after { content: ""; position: absolute; left: 6px; right: 6px; bottom: -1px; height: 2px; background: var(--ouro); border-radius: 2px 2px 0 0; }
+  .abas-conv [aria-selected="true"] .n { color: var(--ouro-escuro); }
+  .conv { grid-template-columns: 40px 1fr; }
+  .conv .av { position: relative; }
+  .conv .av .st { position: absolute; left: -2px; bottom: -2px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--painel); background: var(--linha-forte); }
+  .conv .av .st.humano { background: var(--sinal); } .conv .av .st.auto { background: var(--ouro); } .conv .av .st.espera { background: var(--aviso); } .conv .av .st.fim { background: var(--painel-3); }
+  .conv .av .canal { position: absolute; right: -4px; bottom: -4px; width: 18px; height: 18px; border-radius: 50%; background: #25d366; color: #fff; display: grid; place-items: center; font-size: 11px; border: 2px solid var(--painel); }
+  .conv .fila { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; font: 500 11px/1 var(--mono); color: var(--apoio); }
+  .conv .fila .pos { height: 16px; padding: 0 5px; border-radius: 4px; background: var(--ouro-suave); color: var(--ouro-escuro); font-weight: 600; line-height: 16px; }
+  .conv .linha-nome { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .conv .linha-previa { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .conv .previa i { font-size: 12px; color: var(--ouro-escuro); vertical-align: -1px; margin-right: 3px; }
+  .conv .previa { margin-top: 1px; }
+  .conv .selos { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+  .conv .selos .tag { height: 18px; font-size: 10.5px; padding: 0 6px; }
+  .conv .selos .dono { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; color: var(--apoio); }
+  .conv .selos .dono .avatar { width: 16px; height: 16px; font-size: 7px; }
+  .sel-todas { display: flex; align-items: center; gap: 8px; padding: 8px 16px; font-size: 12px; color: var(--apoio); border-bottom: 1px solid var(--linha); }
+  .sel-todas input { accent-color: var(--ouro); }
+  .thread .cab { height: auto; min-height: 60px; flex-wrap: wrap; padding: 10px 16px; }
+  .thread .cab .ident { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .thread .cab .ident .wa { width: 20px; height: 20px; border-radius: 50%; background: #25d366; color: #fff; display: grid; place-items: center; font-size: 12px; flex: none; }
+  .thread .cab .l1 { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .thread .cab .l1 .tag { height: 18px; font-size: 10.5px; padding: 0 6px; }
+  .thread .cab .acoes .btn.p { height: 30px; }
+  .thread .cab .acoes { flex-wrap: wrap; gap: 4px; }
+  .passagem { align-self: stretch; margin: 6px 0; padding: 14px 16px; border-radius: var(--r-lg); background: var(--painel); border: 1px solid #ecd9a0; box-shadow: inset 3px 0 0 var(--ouro); }
+  .passagem h4 { display: flex; align-items: center; gap: 8px; font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ouro-escuro); margin-bottom: 10px; }
+  .passagem dl { display: grid; grid-template-columns: 150px 1fr; gap: 6px 14px; font-size: 13px; }
+  .passagem dt { color: var(--fraco); }
+  .passagem .aviso { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 8px 10px; border-radius: var(--r-sm); background: var(--aviso-suave); color: #7d4d0d; font-size: 12.5px; font-weight: 600; }
+  .passagem .aviso i { font-size: 16px; }
+  .passagem .pe { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .compositor .aviso-assumir { display: flex; align-items: center; gap: 8px; padding: 6px 10px; margin-bottom: 8px; border-radius: var(--r-sm); border-left: 2px solid var(--ouro); background: var(--ouro-suave); font-size: 12px; color: #6b5510; }
+  .compositor .modo .pilula.p[aria-pressed="true"] { background: var(--ouro); border-color: var(--ouro); color: var(--navy); }
+  .compositor .modo .pilula.nota[aria-pressed="true"] { background: #fff0b3; border-color: #f0dc8a; color: #5a4a0d; }
+  .painel-contato .faixa { position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: var(--painel); border-bottom: 1px solid var(--linha); font-size: 11.5px; color: var(--apoio); }
+  .painel-contato .faixa button { display: inline-flex; align-items: center; gap: 4px; color: var(--apoio); font-weight: 600; font-size: 11.5px; padding: 4px 6px; border-radius: 4px; }
+  .painel-contato .faixa button:hover { background: var(--painel-2); color: var(--texto); }
+  .painel-contato .bloco h3 { margin-bottom: 8px; }
+  .painel-contato .demanda { padding: 10px; border: 1px solid var(--linha); border-radius: var(--r-sm); font-size: 12.5px; }
+  .painel-contato .demanda .l { display: flex; justify-content: space-between; }
+  .painel-contato .demanda .l strong { font-weight: 700; }
+  .painel-contato .demanda .l span { color: var(--fraco); font: 500 11px/1.4 var(--mono); }
+  .painel-contato .lead { padding: 10px; border: 1px solid var(--linha); border-radius: var(--r-sm); font-size: 12.5px; }
+  .painel-contato .lead strong { display: block; }
+  .painel-contato .lead .v { font: 600 12.5px/1 var(--mono); margin-top: 4px; display: block; }
+  .painel-contato .lead .f { color: var(--apoio); margin-top: 2px; display: block; }
+  .painel-contato .ativ { display: grid; gap: 6px; }
+  .painel-contato .ativ div { padding: 8px 10px; border: 1px solid var(--linha); border-radius: var(--r-sm); font-size: 12px; }
+  .painel-contato .ativ strong { display: flex; align-items: center; gap: 6px; }
+  .painel-contato .ativ strong::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--navy); }
+  .painel-contato .ativ div.ia strong::before { background: transparent; border: 2px solid var(--ouro); }
+  .painel-contato .ativ span { display: block; color: var(--fraco); font: 500 10.5px/1.4 var(--mono); margin-top: 2px; }
+  .barra-cel { display: none; }
+  @media (max-width: 860px) {
+    .barra-cel { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-bottom: 1px solid var(--linha); background: var(--painel); }
+    .thread .cab .acoes { overflow-x: auto; flex-wrap: nowrap; width: 100%; padding-bottom: 2px; }
+    .passagem dl { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body data-rota="/app/inbox">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo cheia">
+      <div class="inbox aberta">
+        <!-- Coluna 1: lista -->
+        <section class="conversas" aria-label="Conversas">
+          <div class="cab">
+            <button class="btn secundario bloco"><i class="ph ph-chat-circle"></i>Iniciar conversa</button>
+          </div>
+          <div class="filtros-conv">
+            <div class="linha">
+              <div class="busca-pilula"><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Buscar por nome, telefone ou última mensagem…" aria-label="Buscar conversas"></div>
+              <button class="pilula" aria-pressed="false">Não lidos</button>
+              <button class="pilula" aria-pressed="false">Grupos</button>
+            </div>
+            <div class="linha">
+              <button class="pilula p" aria-label="Filtrar por número de WhatsApp">Todos os números<i class="ph ph-caret-down"></i></button>
+              <button class="pilula p">Todas as tags<i class="ph ph-caret-down"></i></button>
+              <button class="pilula p" aria-label="Filtrar por atendente">Todos os atendentes<i class="ph ph-caret-down"></i></button>
+            </div>
+          </div>
+          <div class="abas-conv" role="tablist">
+            <button role="tab" aria-selected="false">Automático<span class="n">4</span></button>
+            <button role="tab" aria-selected="true">Fila<span class="n">3</span></button>
+            <button role="tab" aria-selected="false">Minhas<span class="n">6</span></button>
+            <button role="tab" aria-selected="false">Todas</button>
+            <button role="tab" aria-selected="false">Fechadas</button>
+            <button role="tab" aria-selected="false">Arquivadas</button>
+          </div>
+          <div class="sel-todas"><input type="checkbox" aria-label="Selecionar todas as conversas visíveis">Selecionar todas</div>
+          <div class="lista-conv">
+            <div class="conv nao-lida" aria-current="true">
+              <div class="av"><span class="avatar g claro">MC</span><span class="st espera" title="Aguardando atendente"></span><span class="canal"><i class="ph-fill ph-whatsapp-logo"></i></span></div>
+              <div style="min-width:0">
+                <div class="fila"><span class="pos">1º</span>Aguardando há 12 minutos</div>
+                <div class="linha-nome"><span class="nome">Marina Costa</span><span class="hora">14:08</span></div>
+                <div class="linha-previa"><span class="previa"><i class="ph ph-robot"></i>Perfeito! Vou passar você para alguém da equipe confirmar o horário.</span><span class="cont" aria-label="2 sem ler">2</span></div>
+                <div class="selos"><span class="tag" style="background:#efe3f7;color:#6d3a92">clareamento</span><span class="tag contorno">Entrou por Vendas</span></div>
+              </div>
+            </div>
+            <div class="conv nao-lida">
+              <div class="av"><span class="avatar g claro">CR</span><span class="st espera" title="Aguardando atendente"></span><span class="canal"><i class="ph-fill ph-whatsapp-logo"></i></span></div>
+              <div style="min-width:0">
+                <div class="fila"><span class="pos">2º</span>Aguardando há 7 minutos</div>
+                <div class="linha-nome"><span class="nome">Caio Ribeiro</span><span class="hora">14:13</span></div>
+                <div class="linha-previa"><span class="previa">Consigo encaixar hoje à tarde? Tá doendo muito</span><span class="cont" aria-label="1 sem ler">1</span></div>
+                <div class="selos"><span class="tag erro" style="background:var(--erro-suave)">urgencia</span></div>
+              </div>
+            </div>
+            <div class="conv">
+              <div class="av"><span class="avatar g claro">GO</span><span class="st espera" title="Aguardando atendente"></span><span class="canal"><i class="ph-fill ph-whatsapp-logo"></i></span></div>
+              <div style="min-width:0">
+                <div class="fila"><span class="pos">3º</span>Aguardando há 2 minutos</div>
+                <div class="linha-nome"><span class="nome">Grupo Odonto Sul</span><span class="hora">14:18</span></div>
+                <div class="linha-previa"><span class="previa"><i class="ph ph-robot"></i>Entendi. Vou encaminhar a proposta corporativa para o comercial.</span></div>
+                <div class="selos"><span class="tag navy">corporativo</span><span class="tag contorno">Entrou por Vendas</span></div>
+              </div>
+            </div>
+            <div style="padding:12px;text-align:center"><button class="btn secundario p">Carregar mais</button></div>
+          </div>
+        </section>
+
+        <!-- Coluna 2: conversa -->
+        <section class="thread" aria-label="Conversa com Marina Costa">
+          <div class="barra-cel"><button class="btn fantasma p"><i class="ph ph-caret-left"></i>Conversas</button><button class="btn fantasma p"><i class="ph ph-identification-card"></i>Ficha</button></div>
+          <div class="cab">
+            <div class="ident">
+              <span class="wa"><i class="ph-fill ph-whatsapp-logo"></i></span>
+              <div style="min-width:0">
+                <div class="l1"><h2 class="nome" style="font-size:14px">Marina Costa</h2><span class="tag contorno">Aberta</span><span class="tag ouro">Janela 18h 42m</span><span class="tag contorno">Vendas</span></div>
+                <div class="sub" style="margin-top:3px"><span class="avatar p" style="background:transparent;border:1.5px dashed var(--linha-forte)"></span>Sem responsável</div>
+                <div class="sub mono" style="margin-top:2px"><i class="ph ph-phone"></i>+55 11 97702-3318</div>
+              </div>
+            </div>
+            <div class="acoes">
+              <button class="btn fantasma p icone" title="Buscar nesta conversa"><i class="ph ph-magnifying-glass"></i></button>
+              <button class="btn secundario p"><i class="ph ph-phone"></i>Chamar</button>
+              <button class="btn secundario p"><i class="ph ph-calendar-plus"></i>Agendar</button>
+              <button class="btn secundario p"><i class="ph ph-user-plus"></i>Convidar colega</button>
+              <button class="btn primario p" title="Você passa a responder esta conversa e o atendimento automático para aqui.">Assumir</button>
+              <button class="btn secundario p">Transferir</button>
+              <button class="btn secundario p"><i class="ph ph-clock"></i>Lembrar</button>
+              <button class="btn secundario p">Fechar</button>
+              <button class="btn fantasma p">Arquivar</button>
+            </div>
+          </div>
+          <div class="mensagens" role="region" aria-label="Mensagens da conversa">
+            <button class="btn fantasma p" style="align-self:center">Carregar mais antigas</button>
+            <div class="dia">Ontem</div>
+            <div class="balao deles">Oi! Vi no Instagram o clareamento, quanto fica?<span class="hora">18:51</span></div>
+            <div class="balao ia"><span class="quem">IA · Lia — AgendaPlus</span>Oi, Marina! Que bom que você veio. O clareamento a laser na Clínica Vitalis sai por R$ 1.800 em até 6x sem juros, com avaliação inclusa. Quer que eu veja um horário para você conhecer a clínica?<span class="hora">18:51 <i class="ph ph-checks" style="color:var(--sinal)"></i></span></div>
+            <div class="balao deles">Quero sim! Mas só consigo depois das 18h, vocês atendem?<span class="hora">19:04</span></div>
+            <div class="balao ia"><span class="quem">IA · Lia — AgendaPlus</span>Atendemos até as 20h de segunda a sexta. Posso reservar quinta às 18h30 para a avaliação?<span class="hora">19:04 <i class="ph ph-checks" style="color:var(--sinal)"></i></span></div>
+            <div class="dia">Hoje</div>
+            <div class="balao deles">Quinta não dá. Tem como ser sábado de manhã? E vocês parcelam no boleto?<span class="hora">14:06</span></div>
+            <div class="balao nota"><strong style="display:flex;align-items:center;gap:6px;font-size:11px"><i class="ph ph-note-pencil"></i>Ana Souza · Nota interna · só o time vê</strong>Sábado só com a Dra. Carla — ver se ela abre agenda em novembro. @Marcos confirma?<span class="hora">14:07</span></div>
+            <div class="balao ia"><span class="quem">IA · Lia — AgendaPlus</span>Perfeito! Vou passar você para alguém da equipe confirmar o horário de sábado e as condições de pagamento. Já já te respondem por aqui.<span class="hora">14:08 <i class="ph ph-checks" style="color:var(--sinal)"></i></span></div>
+            <div class="passagem">
+              <h4><span class="ia-tag"></span>Resumo da IA (confira)</h4>
+              <dl>
+                <dt>O cliente quer</dt><dd>Avaliação para clareamento a laser num sábado de manhã e saber se parcela no boleto.</dd>
+                <dt>A IA já tentou</dt><dd>Ofereceu quinta às 18h30 (recusado) e informou o preço de R$ 1.800 em até 6x.</dd>
+                <dt>Últimas palavras do cliente</dt><dd>“Quinta não dá. Tem como ser sábado de manhã? E vocês parcelam no boleto?”</dd>
+              </dl>
+              <div class="aviso"><i class="ph ph-check-circle"></i>O cliente já foi avisado de que uma pessoa vai assumir.</div>
+              <div class="pe"><button class="btn primario">Assumir e responder</button><span class="apoio pequeno">Role para cima para ver tudo o que foi dito.</span></div>
+            </div>
+          </div>
+          <div class="compositor">
+            <div class="aviso-assumir"><i class="ph ph-info"></i>Assuma esta conversa para responder.</div>
+            <div class="modo"><button class="pilula p" aria-pressed="true">Responder</button><button class="pilula p nota" aria-pressed="false">Nota interna</button></div>
+            <div class="caixa-msg">
+              <div class="ferr"><button aria-label="Anexar"><i class="ph ph-plus"></i></button><button aria-label="Emoji"><i class="ph ph-smiley"></i></button><button aria-label="Sugerir resposta" style="color:var(--ouro-escuro)"><i class="ph ph-sparkle"></i></button></div>
+              <textarea rows="1" placeholder="Escreva uma mensagem…" title="Enter envia · Shift+Enter quebra linha"></textarea>
+              <div class="ferr"><button aria-label="Gravar áudio"><i class="ph ph-microphone"></i></button></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Coluna 3: painel do contato -->
+        <aside class="painel-contato" aria-label="Ficha do contato">
+          <div class="faixa"><button><i class="ph ph-sliders-horizontal"></i>Personalizar lateral</button><button aria-label="Recolher painel do contato"><i class="ph ph-caret-double-right"></i>Recolher</button></div>
+          <div class="bloco">
+            <h3>Contato</h3>
+            <div style="display:flex;align-items:center;gap:10px"><span class="avatar g claro">MC</span><div><strong>Marina Costa</strong><div class="apoio pequeno mono">+55 11 97702-3318</div></div></div>
+            <div style="display:flex;gap:6px;align-items:center;margin-top:12px;flex-wrap:wrap"><a href="#" class="link pequeno">Marcar compromisso</a><button class="btn secundario p"><i class="ph ph-users"></i>Novo Lead</button><button class="btn fantasma p">Ver contato<i class="ph ph-arrow-right"></i></button></div>
+          </div>
+          <div class="bloco">
+            <h3>Tags do contato</h3>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="tag" style="background:#efe3f7;color:#6d3a92">clareamento</span><button class="btn secundario p"><i class="ph ph-tag"></i>Tags do contato</button></div>
+          </div>
+          <div class="bloco">
+            <h3>Carteira</h3>
+            <p class="pequeno">Sem vendedor dono. O atendimento segue o fluxo de sempre.</p>
+            <div class="campo" style="margin-top:8px"><select style="height:32px;font-size:12.5px"><option>Escolha o vendedor dono</option></select></div>
+          </div>
+          <div class="bloco">
+            <h3>Demandas abertas</h3>
+            <div class="demanda" style="border-color:#f3d7ac;background:rgba(253,241,224,.4)">
+              <div class="l"><strong>Aguardando o cliente</strong><span>há 3h</span></div>
+              <div class="apoio" style="margin-top:4px">Responder à nova mensagem do cliente</div>
+              <div style="display:flex;gap:4px;margin-top:8px"><button class="btn secundario p">Marcar próximo passo</button><button class="btn fantasma p">Encerrar demanda</button></div>
+            </div>
+          </div>
+          <div class="bloco">
+            <h3>Leads recentes</h3>
+            <div class="lead"><strong>Marina Costa — clareamento · Aberto</strong><span class="v">R$ 1.800,00</span><span class="f">CRM Vivo — Clínica · Primeiro contato</span></div>
+            <div class="campo" style="margin-top:10px"><label style="font-size:12px">Etapa do funil</label><select style="height:32px;font-size:12.5px"><option selected>Primeiro contato</option><option>Avaliação</option><option>Proposta enviada</option><option>Negociação</option><option>Tratamento fechado</option><option>Perdido</option></select></div>
+            <button class="btn secundario p bloco" style="margin-top:8px">Abrir no funil<i class="ph ph-arrow-right"></i></button>
+          </div>
+          <div class="bloco">
+            <h3>Follow-up</h3>
+            <div class="campo"><label style="font-size:12px">Fluxo de follow-up</label><select style="height:32px;font-size:12.5px"><option>Escolha o fluxo</option><option>Avaliação não marcada</option></select></div>
+            <button class="btn secundario p" style="margin-top:8px">Iniciar follow-up</button>
+          </div>
+          <div class="bloco">
+            <h3>Atividade</h3>
+            <div class="ativ">
+              <div class="ia"><strong>Passou para humano</strong>Cliente pediu sábado e boleto<span>Lia — AgendaPlus · 03/11/26 14:08</span></div>
+              <div class="ia"><strong>Atendimento da IA</strong><span>Lia — AgendaPlus · 02/11/26 18:51</span></div>
+              <div><strong>Entrou no funil</strong>Primeiro contato<span>Sistema · 02/11/26 18:51</span></div>
+            </div>
+          </div>
+          <div class="bloco" style="border-bottom:0">
+            <h3>Acervo</h3>
+            <p class="fraco pequeno" style="margin-bottom:8px">Pergunte como a IA perguntaria — a resposta vem com a origem de cada trecho.</p>
+            <div style="display:flex;gap:6px"><input class="entrada" type="text" placeholder="Pergunte ao acervo…" style="height:32px;font-size:12.5px"><button class="btn secundario p">Buscar</button></div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+<script src="skin.js"></script>
+</body>
+</html>

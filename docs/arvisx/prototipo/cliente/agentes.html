@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agentes de IA — ArvisX CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="cliente.css">
+</head>
+<body data-grupo="ia" data-item="Agentes">
+<div class="app">
+<div id="ilha"></div>
+
+<div class="cabeca">
+  <div>
+    <div class="olho">Agente de IA</div>
+    <h1 class="titulo-pag">Agentes de IA</h1>
+    <p>Configure o comportamento dos agentes que respondem no WhatsApp.</p>
+  </div>
+  <div class="acoes"><button class="btn ouro"><i class="ph ph-plus"></i>Criar novo</button></div>
+</div>
+
+<div class="filtros">
+  <div class="campo-busca"><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Buscar por nome…" aria-label="Buscar agentes"></div>
+  <button class="pilula">Status<i class="ph ph-caret-down"></i></button>
+  <label class="pilula"><input type="checkbox">Incluir arquivados</label>
+</div>
+
+<div class="agentes">
+  <article class="ag hero">
+    <div class="topo">
+      <span class="avatar">LA</span>
+      <div>
+        <h3>Lia — AgendaPlus</h3>
+        <div class="modelo" title="Modelo da versão publicada — é o que atende o cliente.">anthropic · claude-sonnet-4-6</div>
+        <div class="badges"><span class="tag">default</span><span class="tag ouro">Publicado</span></div>
+      </div>
+      <button class="btn vidro p icone menu" aria-label="Menu de ações"><i class="ph ph-dots-three"></i></button>
+    </div>
+    <p class="desc">Marca, confirma e remarca consultas da Clínica Vitalis pelo WhatsApp, e passa para a recepção quando o paciente pede uma pessoa.</p>
+    <dl class="dados">
+      <div><dt>Tipo</dt><dd>mcp_agent</dd></div>
+      <div><dt>Prioridade</dt><dd>100</dd></div>
+    </dl>
+    <div class="pe"><button class="btn ouro">Editar</button></div>
+  </article>
+
+  <article class="ag">
+    <div class="topo">
+      <span class="avatar">BP</span>
+      <div>
+        <h3>Bot Padrão E2E</h3>
+        <div class="modelo" title="Modelo do cadastro; nenhuma versão publicada ainda.">anthropic · claude-sonnet-4-6</div>
+        <div class="badges"><span class="tag">Rascunho</span></div>
+      </div>
+      <button class="btn fantasma p icone menu" aria-label="Menu de ações"><i class="ph ph-dots-three"></i></button>
+    </div>
+    <p class="desc">Agente de referência dos testes: responde de forma educada e clara, em pt-BR, sem ferramentas ligadas.</p>
+    <dl class="dados">
+      <div><dt>Tipo</dt><dd>mcp_agent</dd></div>
+      <div><dt>Prioridade</dt><dd>—</dd></div>
+    </dl>
+    <div class="pe"><button class="btn navy">Editar</button></div>
+  </article>
+
+  <article class="ag novo">
+    <span class="mais"><i class="ph ph-plus"></i></span>
+    <b>Criar novo</b>
+  </article>
+</div>
+</div>
+<script src="cliente.js"></script>
+</body>
+</html>

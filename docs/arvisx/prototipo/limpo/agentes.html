@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agentes de IA</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="10">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="skin.css">
+<style>
+  .ag-card { display: flex; flex-direction: column; min-width: 0; }
+  .ag-card .topo-card { display: flex; align-items: flex-start; gap: 12px; padding: 16px 16px 0; }
+  .ag-card .topo-card .quem { flex: 1; min-width: 0; }
+  .ag-card .topo-card h3 { font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ag-card .modelo { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ag-card .modelo { font: 500 11.5px/1.3 var(--mono); color: var(--apoio); margin-top: 3px; }
+  .ag-card .badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .ag-card .menu { flex: none; }
+  .ag-card .desc { padding: 10px 16px 0; color: var(--apoio); font-size: 12.5px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .ag-card dl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; padding: 14px 16px; }
+  .ag-card dt { font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--apoio); margin-bottom: 5px; }
+  .ag-card dd { font: 500 13px/1 var(--mono); }
+  .ag-card .pe-card { padding: 0 16px 16px; margin-top: auto; }
+  .filtros .caixa { font-size: 13px; font-weight: 500; align-items: center; }
+  .filtros .filtro.sel { min-width: 176px; justify-content: space-between; }
+</style>
+</head>
+<body data-rota="/app/ai/agents">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Agente de IA</div>
+          <h1>Agentes de IA</h1>
+          <p>Configure o comportamento dos agentes que respondem no WhatsApp.</p>
+        </div>
+        <div class="acoes"><button class="btn primario"><i class="ph ph-plus"></i>Criar novo</button></div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="filtros">
+        <div class="busca-linha" style="max-width:256px"><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Buscar por nome…" aria-label="Buscar agentes"></div>
+        <button class="filtro sel">Status<i class="ph ph-caret-down"></i></button>
+        <label class="caixa"><input type="checkbox">Incluir arquivados</label>
+      </div>
+
+      <div class="grade c3">
+        <article class="cartao ag-card">
+          <div class="topo-card">
+            <span class="avatar g ia">LA</span>
+            <div class="quem">
+              <h3>Lia — AgendaPlus</h3>
+              <div class="modelo" title="Modelo da versão publicada — é o que atende o cliente.">anthropic · claude-sonnet-4-6</div>
+              <div class="badges"><span class="tag">default</span><span class="tag navy">Publicado</span></div>
+            </div>
+            <button class="btn fantasma p icone menu" aria-label="Menu de ações"><i class="ph ph-dots-three"></i></button>
+          </div>
+          <p class="desc">Marca, confirma e remarca consultas da Clínica Vitalis pelo WhatsApp, e passa para a recepção quando o paciente pede uma pessoa.</p>
+          <dl>
+            <div><dt>Tipo</dt><dd>mcp_agent</dd></div>
+            <div><dt>Prioridade</dt><dd>100</dd></div>
+          </dl>
+          <div class="pe-card"><button class="btn secundario bloco">Editar</button></div>
+        </article>
+
+        <article class="cartao ag-card">
+          <div class="topo-card">
+            <span class="avatar g ia">BP</span>
+            <div class="quem">
+              <h3>Bot Padrão E2E</h3>
+              <div class="modelo" title="Modelo do cadastro; nenhuma versão publicada ainda.">anthropic · claude-sonnet-4-6</div>
+              <div class="badges"><span class="tag">Rascunho</span></div>
+            </div>
+            <button class="btn fantasma p icone menu" aria-label="Menu de ações"><i class="ph ph-dots-three"></i></button>
+          </div>
+          <p class="desc">Agente de referência dos testes: responde de forma educada e clara, em pt-BR, sem ferramentas ligadas.</p>
+          <dl>
+            <div><dt>Tipo</dt><dd>mcp_agent</dd></div>
+            <div><dt>Prioridade</dt><dd>—</dd></div>
+          </dl>
+          <div class="pe-card"><button class="btn secundario bloco">Editar</button></div>
+        </article>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+<script src="skin.js"></script>
+</body>
+</html>

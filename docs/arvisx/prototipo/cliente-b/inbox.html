@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inbox — ArvisX CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../cliente/cliente.css">
+<link rel="stylesheet" href="limpo.css">
+</head>
+<body data-grupo="atendimento" data-item="Inbox">
+<div class="app">
+<div id="ilha"></div>
+
+<div class="mesa">
+  <!-- fila -->
+  <section class="fila" aria-label="Conversas">
+    <div class="topo">
+      <button class="btn navy"><i class="ph ph-chat-circle"></i>Iniciar conversa</button>
+      <div class="linha">
+        <div class="campo-busca"><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Buscar por nome, telefone…" aria-label="Buscar conversas"></div>
+      </div>
+      <div class="filtros-2">
+        <button class="pilula" aria-pressed="false">Não lidos</button>
+        <button class="pilula" aria-pressed="false">Grupos</button>
+        <button class="pilula">Todos os números<i class="ph ph-caret-down"></i></button>
+        <button class="pilula">Todas as tags<i class="ph ph-caret-down"></i></button>
+      </div>
+    </div>
+    <div class="abas-conv" role="tablist">
+      <button role="tab" aria-selected="false">Automático<span class="n">4</span></button>
+      <button role="tab" aria-selected="true">Fila<span class="n">3</span></button>
+      <button role="tab" aria-selected="false">Minhas<span class="n">6</span></button>
+      <button role="tab" aria-selected="false">Todas</button>
+      <button role="tab" aria-selected="false">Fechadas</button>
+      <button role="tab" aria-selected="false">Arquivadas</button>
+    </div>
+    <div class="sel-todas"><input type="checkbox" aria-label="Selecionar todas as conversas visíveis">Selecionar todas</div>
+    <div class="lista-conv">
+      <div class="conv ativa">
+        <div class="av"><span class="avatar claro">MC</span><span class="canal"><i class="ph-fill ph-whatsapp-logo"></i></span></div>
+        <div style="min-width:0">
+          <div class="fila-pos"><b>1º</b>Aguardando há 12 minutos</div>
+          <div class="nome-l"><span class="nome">Marina Costa</span><span class="hora">14:08</span></div>
+          <div class="previa"><i class="ph ph-robot"></i><span>Perfeito! Vou passar você para alguém da equipe confirmar o horário.</span><span class="cont" aria-label="2 sem ler">2</span></div>
+          <div class="selos"><span class="tag roxo">clareamento</span><span class="tag">Entrou por Vendas</span></div>
+        </div>
+      </div>
+      <div class="conv">
+        <div class="av"><span class="avatar claro">CR</span><span class="canal"><i class="ph-fill ph-whatsapp-logo"></i></span></div>
+        <div style="min-width:0">
+          <div class="fila-pos"><b>2º</b>Aguardando há 7 minutos</div>
+          <div class="nome-l"><span class="nome">Caio Ribeiro</span><span class="hora">14:13</span></div>
+          <div class="previa"><span>Consigo encaixar hoje à tarde? Tá doendo muito</span><span class="cont" aria-label="1 sem ler">1</span></div>
+          <div class="selos"><span class="tag erro">urgencia</span></div>
+        </div>
+      </div>
+      <div class="conv">
+        <div class="av"><span class="avatar claro">GO</span><span class="canal"><i class="ph-fill ph-whatsapp-logo"></i></span></div>
+        <div style="min-width:0">
+          <div class="fila-pos"><b>3º</b>Aguardando há 2 minutos</div>
+          <div class="nome-l"><span class="nome">Grupo Odonto Sul</span><span class="hora">14:18</span></div>
+          <div class="previa"><i class="ph ph-robot"></i><span>Entendi. Vou encaminhar a proposta corporativa para o comercial.</span></div>
+          <div class="selos"><span class="tag navy">corporativo</span><span class="tag">Entrou por Vendas</span></div>
+        </div>
+      </div>
+      <div style="padding:8px;text-align:center"><button class="btn suave p">Carregar mais</button></div>
+    </div>
+  </section>
+
+  <!-- palco -->
+  <section class="palco" aria-label="Conversa com Marina Costa">
+    <div class="barra-cel"><button class="btn vidro p"><i class="ph ph-caret-left"></i>Conversas</button><button class="btn vidro p"><i class="ph ph-identification-card"></i>Ficha</button></div>
+    <div class="cab">
+      <div class="ident">
+        <span class="avatar">MC</span>
+        <div style="min-width:0">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><h2>Marina Costa</h2><span class="tag vidro">Aberta</span><span class="tag ouro">Janela 18h 42m</span><span class="tag vidro">Vendas</span></div>
+          <div class="sub"><span><i class="ph ph-user-circle-dashed"></i>Sem responsável</span><span class="mono"><i class="ph ph-phone"></i>+55 11 97702-3318</span><span style="color:#25d366"><i class="ph-fill ph-whatsapp-logo"></i></span></div>
+        </div>
+      </div>
+      <div class="bandeja">
+        <button class="btn ouro p" title="Você passa a responder esta conversa e o atendimento automático para aqui.">Assumir</button>
+        <button class="btn vidro p">Transferir</button>
+        <span class="sep"></span>
+        <button class="btn vidro p icone" title="Buscar nesta conversa" aria-label="Buscar nesta conversa"><i class="ph ph-magnifying-glass"></i></button>
+        <button class="btn vidro p"><i class="ph ph-phone"></i>Chamar</button>
+        <button class="btn vidro p"><i class="ph ph-calendar-plus"></i>Agendar</button>
+        <button class="btn vidro p"><i class="ph ph-user-plus"></i>Convidar colega</button>
+        <button class="btn vidro p"><i class="ph ph-clock"></i>Lembrar</button>
+        <span class="sep"></span>
+        <button class="btn vidro p">Fechar</button>
+        <button class="btn vidro p">Arquivar</button>
+      </div>
+    </div>
+
+    <div class="mensagens" role="region" aria-label="Mensagens da conversa">
+      <button class="btn vidro p" style="align-self:center">Carregar mais antigas</button>
+      <div class="dia">Ontem</div>
+      <div class="bal deles">Oi! Vi no Instagram o clareamento, quanto fica?<span class="h">18:51</span></div>
+      <div class="bal ia"><span class="quem">IA · Lia — AgendaPlus</span>Oi, Marina! Que bom que você veio. O clareamento a laser na Clínica Vitalis sai por R$ 1.800 em até 6x sem juros, com avaliação inclusa. Quer que eu veja um horário para você conhecer a clínica?<span class="h">18:51 <i class="ph ph-checks"></i></span></div>
+      <div class="bal deles">Quero sim! Mas só consigo depois das 18h, vocês atendem?<span class="h">19:04</span></div>
+      <div class="bal ia"><span class="quem">IA · Lia — AgendaPlus</span>Atendemos até as 20h de segunda a sexta. Posso reservar quinta às 18h30 para a avaliação?<span class="h">19:04 <i class="ph ph-checks"></i></span></div>
+      <div class="dia">Hoje</div>
+      <div class="bal deles">Quinta não dá. Tem como ser sábado de manhã? E vocês parcelam no boleto?<span class="h">14:06</span></div>
+      <div class="bal nota"><span class="quem"><i class="ph ph-note-pencil"></i>Ana Souza · Nota interna · só o time vê</span>Sábado só com a Dra. Carla — ver se ela abre agenda em novembro. @Marcos confirma?<span class="h">14:07</span></div>
+      <div class="bal ia"><span class="quem">IA · Lia — AgendaPlus</span>Perfeito! Vou passar você para alguém da equipe confirmar o horário de sábado e as condições de pagamento. Já já te respondem por aqui.<span class="h">14:08 <i class="ph ph-checks"></i></span></div>
+
+      <div class="passagem">
+        <h4><span class="ia-tag">Resumo da IA (confira)</span></h4>
+        <dl>
+          <div><dt>O cliente quer</dt><dd>Avaliação para clareamento a laser num sábado de manhã e saber se parcela no boleto.</dd></div>
+          <div><dt>A IA já tentou</dt><dd>Ofereceu quinta às 18h30 (recusado) e informou o preço de R$ 1.800 em até 6x.</dd></div>
+          <div><dt>Últimas palavras do cliente</dt><dd>“Quinta não dá. Tem como ser sábado de manhã? E vocês parcelam no boleto?”</dd></div>
+        </dl>
+        <div class="aviso"><i class="ph ph-check-circle"></i>O cliente já foi avisado de que uma pessoa vai assumir.</div>
+        <div class="pe"><button class="btn navy">Assumir e responder</button><span class="apoio pequeno">Role para cima para ver tudo o que foi dito.</span></div>
+      </div>
+    </div>
+
+    <div class="compositor">
+      <div class="trava"><i class="ph ph-info"></i>Assuma esta conversa para responder.</div>
+      <div class="modo"><button aria-pressed="true">Responder</button><button class="nota" aria-pressed="false">Nota interna</button></div>
+      <div class="caixa-msg">
+        <button class="f" aria-label="Anexar"><i class="ph ph-plus"></i></button>
+        <button class="f" aria-label="Emoji"><i class="ph ph-smiley"></i></button>
+        <button class="f ia" aria-label="Sugerir resposta"><i class="ph ph-sparkle"></i></button>
+        <textarea rows="1" placeholder="Escreva uma mensagem…" title="Enter envia · Shift+Enter quebra linha" disabled></textarea>
+        <button class="f" aria-label="Gravar áudio"><i class="ph ph-microphone"></i></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- gaveta -->
+  <aside class="gaveta" aria-label="Ficha do contato" data-abas>
+    <div class="abas-g" role="tablist">
+      <button role="tab" aria-selected="true">Contato</button>
+      <button role="tab" aria-selected="false">Funil</button>
+      <button role="tab" aria-selected="false">Atividade</button>
+      <button role="tab" aria-selected="false">Acervo</button>
+    </div>
+    <div class="corpo-g">
+      <div class="painel ativo">
+        <div class="perfil">
+          <span class="avatar claro">MC</span>
+          <strong>Marina Costa</strong>
+          <span class="apoio pequeno mono">+55 11 97702-3318</span>
+          <div class="acoes"><button class="btn suave p"><i class="ph ph-users"></i>Novo Lead</button><button class="btn fantasma p">Ver contato<i class="ph ph-arrow-right"></i></button></div>
+          <a href="#" class="pequeno" style="margin-top:10px;text-decoration:underline">Marcar compromisso</a>
+        </div>
+        <h3>Tags do contato</h3>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="tag roxo">clareamento</span><button class="btn suave p"><i class="ph ph-tag"></i>Tags do contato</button></div>
+        <h3>Carteira</h3>
+        <div class="secao"><p class="pequeno apoio">Sem vendedor dono. O atendimento segue o fluxo de sempre.</p><select style="margin-top:10px"><option>Escolha o vendedor dono</option></select></div>
+        <h3>Demandas abertas</h3>
+        <div class="demanda"><div class="l"><strong>Aguardando o cliente</strong><span>há 3h</span></div><p class="apoio" style="margin-top:4px;font-size:13px">Responder à nova mensagem do cliente</p><div style="display:flex;gap:6px;margin-top:10px"><button class="btn suave p">Marcar próximo passo</button><button class="btn fantasma p">Encerrar demanda</button></div></div>
+        <div style="text-align:center;padding:14px 0 0;font-size:12px"><button class="btn fantasma p"><i class="ph ph-sliders-horizontal"></i>Personalizar lateral</button></div>
+      </div>
+      <div class="painel">
+        <h3 style="margin-top:8px">Leads recentes</h3>
+        <div class="lead"><strong>Marina Costa — clareamento · Aberto</strong><span class="v">R$ 1.800,00</span><span class="pequeno apoio">CRM Vivo — Clínica · Primeiro contato</span></div>
+        <label>Etapa do funil</label><select><option selected>Primeiro contato</option><option>Avaliação</option><option>Proposta enviada</option><option>Negociação</option><option>Tratamento fechado</option><option>Perdido</option></select>
+        <button class="btn suave p" style="width:100%;margin-top:10px">Abrir no funil<i class="ph ph-arrow-right"></i></button>
+        <h3>Follow-up</h3>
+        <label style="margin-top:0">Fluxo de follow-up</label><select><option>Escolha o fluxo</option><option>Avaliação não marcada</option></select>
+        <button class="btn suave p" style="margin-top:10px">Iniciar follow-up</button>
+      </div>
+      <div class="painel">
+        <h3 style="margin-top:8px">Atividade</h3>
+        <ul class="timeline">
+          <li class="ia"><strong>Passou para humano</strong>Cliente pediu sábado e boleto<span>Lia — AgendaPlus · 03/11/26 14:08</span></li>
+          <li class="ia"><strong>Atendimento da IA</strong><span>Lia — AgendaPlus · 02/11/26 18:51</span></li>
+          <li><strong>Entrou no funil</strong>Primeiro contato<span>Sistema · 02/11/26 18:51</span></li>
+        </ul>
+      </div>
+      <div class="painel">
+        <h3 style="margin-top:8px">Acervo</h3>
+        <p class="fraco pequeno" style="margin-bottom:10px">Pergunte como a IA perguntaria — a resposta vem com a origem de cada trecho.</p>
+        <div style="display:flex;gap:6px"><input class="entrada" type="text" placeholder="Pergunte ao acervo…"><button class="btn suave p" style="height:38px">Buscar</button></div>
+      </div>
+    </div>
+  </aside>
+</div>
+</div>
+<script src="cliente.js"></script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+/* ArvisX CRM — "pele limpa": mesma estrutura e posições do protótipo atual (tokens.css + shell.js).
+   Muda só cor, traço dos ícones, sombra, raio e peso de fonte. Nada de layout. */
+:root {
+  --fundo: #f7f7f5; --painel: #ffffff; --painel-2: #f3f3f0; --painel-3: #e8e8e3;
+  --linha: #ececE8; --linha-forte: #dddcd6;
+  --texto: #1b1f27; --apoio: #666d7a; --fraco: #9ba1ac;
+  --navy: #1d2430; --navy-2: #262e3b; --navy-3: #313a49; --navy-linha: #394252;
+  --ouro: #d6b04a; --ouro-claro: #ecd48f; --ouro-escuro: #957a22; --ouro-suave: #fbf6e6;
+  --sinal: #3b82d9; --sinal-suave: #eaf2fc;
+  --ok: #3a9a68; --ok-suave: #e8f5ee; --aviso: #c98a2b; --aviso-suave: #fcf2e1; --erro: #cc4a4a; --erro-suave: #fbeded;
+  --r-sm: 8px; --r: 12px; --r-lg: 16px;
+  --sombra: 0 1px 2px rgba(27,31,39,.04), 0 6px 18px -12px rgba(27,31,39,.14);
+  --sombra-alta: 0 16px 36px -20px rgba(27,31,39,.28);
+}
+body { background: var(--fundo); }
+i.ph-light { font-size: 1.08em; }
+
+/* barra lateral clara */
+.lateral { background: #fff; color: var(--apoio); border-right: 1px solid var(--linha); }
+.lateral .marca { border-bottom: 1px solid var(--linha); }
+.lateral .grupo > button { color: var(--fraco); }
+.lateral li a { color: #4b5261; font-weight: 500; }
+.lateral li a i { color: #8d94a1; }
+.lateral li a:hover { background: var(--painel-2); color: var(--texto); }
+.lateral li a:hover i { color: var(--texto); }
+.lateral li a[aria-current="page"] { background: rgba(214,176,74,.13); color: var(--texto); font-weight: 600; }
+.lateral li a[aria-current="page"] i { color: var(--ouro-escuro); }
+.lateral li a .cont { background: var(--sinal-suave); color: var(--sinal); }
+.lateral li a .cont.ouro { background: var(--ouro-suave); color: var(--ouro-escuro); box-shadow: inset 0 0 0 1px #ecd9a0; }
+.lateral li a.hub { color: var(--fraco); }
+.lateral .rodape { border-top: 1px solid var(--linha); }
+.lateral .rodape a { color: #4b5261; } .lateral .rodape a i { color: #8d94a1; }
+.lateral .rodape a:hover { background: var(--painel-2); color: var(--texto); }
+.lateral .rodape a[aria-current="page"] { background: rgba(214,176,74,.13); color: var(--texto); }
+.lateral .versao, .lateral .versao button { color: #aeb3bc; } .lateral .versao button:hover { color: var(--texto); }
+.lateral nav { scrollbar-color: var(--linha-forte) transparent; }
+
+/* barra de cima */
+.topo { background: rgba(247,247,245,.9); border-bottom: 1px solid var(--linha); }
+.topo .busca { border-color: var(--linha); background: #fff; border-radius: 10px; }
+.topo .busca kbd { background: var(--painel-2); border-color: var(--linha); }
+.topo .icone { color: #4b5261; }
+.topo .icone .cont { background: var(--texto); }
+.topo .org .sigla { background: var(--navy); color: var(--ouro-claro); border-radius: 8px; }
+
+/* títulos e texto */
+.cabecalho h1, .titulo-funil { font-weight: 600 !important; font-stretch: 100% !important; color: var(--texto); letter-spacing: -.025em; }
+h2.secao, .indicador .valor { font-weight: 600; font-stretch: 100%; }
+.cabecalho .eyebrow { color: var(--fraco); } .cabecalho .eyebrow::before { background: var(--ouro); width: 5px; height: 5px; }
+.fio { background: var(--linha); } .fio::after { width: 5px; height: 5px; top: -2px; }
+.link:not(.cartao) { color: var(--texto); text-decoration-color: var(--ouro); }
+
+/* botões */
+.btn { font-weight: 600; }
+.btn.primario { background: var(--navy); color: #fff; } .btn.primario:hover { background: var(--navy-3); }
+.btn.secundario { background: #fff; border-color: var(--linha-forte); } .btn.secundario:hover { background: var(--painel-2); }
+.btn.perigo { background: var(--erro-suave); }
+.lote .btn.primario { background: var(--ouro); color: var(--navy); }
+
+/* cartões, etiquetas, abas */
+.cartao { border-color: var(--linha); }
+.cartao.ouro { border-color: #efe0b0; }
+.tag { font-weight: 600; border-radius: 6px; }
+.tag.navy { background: var(--navy); color: var(--ouro-claro); }
+.tag.ouro { background: var(--ouro-suave); color: var(--ouro-escuro); }
+.avatar { background: #2a3342; }
+.avatar.claro { background: var(--painel-3); color: var(--texto); }
+.avatar.ia { background: #fff; color: var(--ouro-escuro); box-shadow: 0 0 0 1.5px var(--ouro); }
+.segmento { background: var(--painel-2); border-color: transparent; }
+.filtro, .pilula { border-color: var(--linha-forte); }
+.pilula[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); }
+.busca-pilula { background: var(--painel-2); }
+
+/* inbox */
+.conversas, .painel-contato { background: #fff; }
+.thread { background: #f5f5f2; }
+.thread .cab { background: #fff; }
+.balao { box-shadow: none; border-radius: 14px; }
+.balao.deles { background: #fff; border: 1px solid var(--linha); border-bottom-left-radius: 5px; }
+.balao.ia { background: #fffcf1; border: 1px solid #f0e4b8; border-bottom-right-radius: 5px; box-shadow: inset 3px 0 0 var(--ouro); }
+.balao.nos { background: var(--navy); }
+.balao.nota { background: #fffaea; border-color: #f0e2a8; color: #6a5a1c; }
+.passagem { border-color: #f0e4b8; border-radius: 14px; box-shadow: inset 3px 0 0 var(--ouro); }
+.compositor { background: #fff; }
+.compositor .caixa-msg { border-color: var(--linha-forte); border-radius: 14px; }
+.painel-contato .demanda, .painel-contato .lead, .painel-contato .ativ div { border-color: var(--linha); border-radius: 10px; }
+
+/* funil */
+.coluna { background: #f1f1ee; border-color: transparent; border-radius: 18px; }
+.card-negocio { border-color: transparent; border-radius: 12px; box-shadow: 0 1px 2px rgba(27,31,39,.05), 0 6px 16px -12px rgba(27,31,39,.18); }
+.card-negocio:hover { border-color: transparent; box-shadow: 0 1px 2px rgba(27,31,39,.06), 0 12px 24px -12px rgba(27,31,39,.28); }
+.card-negocio .titulo { font-weight: 600; }
+.card-negocio .valor { font-weight: 600; }
+.card-negocio.esfriando { border-left-width: 2px; } .card-negocio.parado { border-left-width: 2px; }
+.card-negocio .titulo::before { width: 5px; height: 5px; }
+.lote { background: var(--navy); border-radius: 14px; box-shadow: var(--sombra-alta); }
+
+/* agentes */
+.cartao.ag-card { border-radius: 18px; }
+.ag-card h3 { font-weight: 600; }
+
+/* linha de conversa selecionada / não lida mais suave */
+.conv[aria-current="true"] { background: #faf7ec; box-shadow: inset 2px 0 0 var(--ouro); }
+.conv:hover { background: var(--painel-2); }
