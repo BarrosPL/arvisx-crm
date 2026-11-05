@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Arvisx CRM | O CRM completo para quem vende pelo WhatsApp</title>
+  <meta name="description" content="Conversas, funil, propostas, agenda e faturamento num só lugar. Atendentes e números de WhatsApp ilimitados, em um plano único. Agentes de IA personalizados sob medida com a equipe Arvisx." />
+  <link rel="canonical" href="https://crm.arvisx.com.br/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Arvisx CRM | O CRM completo para quem vende pelo WhatsApp" />
+  <meta property="og:description" content="Conversas, funil, propostas, agenda e faturamento num só lugar. Atendentes e números de WhatsApp ilimitados, em um plano único." />
+  <meta property="og:url" content="https://crm.arvisx.com.br/" />
+  <meta property="og:image" content="https://crm.arvisx.com.br/og-arvisx.jpg" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=Manrope:wght@400;500;600;700;800&display=swap" />
+  <!-- analytics: placeholder, nada carregado -->
+  <style>
+    :root {
+      --fundo: #0b0f15; --painel: #10151e; --painel-2: #161c27; --linha: #212938; --linha-forte: #2c3546;
+      --texto: #eef0f3; --apoio: #a2abb9; --fraco: #6c7586;
+      --ouro: #d4af37; --ouro-claro: #f1d47c; --ouro-fg: #0f131a;
+      --display: "Archivo", "Manrope", system-ui, sans-serif; --sans: "Manrope", system-ui, sans-serif;
+      --r: 12px; --r-lg: 18px; --lado: clamp(18px, 5vw, 72px); --largura: 1140px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    body { background: var(--fundo); color: var(--texto); font: 400 16px/1.6 var(--sans); overflow-x: clip; }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; height: auto; }
+    ul { list-style: none; }
+    .miolo { max-width: var(--largura); margin: 0 auto; }
+    .faixa { padding: clamp(56px, 9vw, 112px) var(--lado); }
+    .faixa.painel { background: var(--painel); border-top: 1px solid var(--linha); border-bottom: 1px solid var(--linha); }
+    h1, h2, h3 { font-family: var(--display); font-stretch: 112%; letter-spacing: -.025em; line-height: 1.08; font-weight: 650; color: var(--texto); }
+    h1 { font-size: clamp(36px, 7.4vw, 66px); letter-spacing: -.035em; }
+    h2 { font-size: clamp(28px, 4.6vw, 42px); max-width: 22ch; }
+    h3 { font-size: 17px; letter-spacing: -.01em; font-stretch: 105%; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 14px; color: var(--ouro-claro); font: 700 11px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; }
+    .eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ouro); }
+    .cabeca { margin-bottom: clamp(28px, 4vw, 44px); }
+    .cabeca p { color: var(--apoio); font-size: 17px; max-width: 56ch; margin-top: 14px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: 10px; font: 700 15px/1 var(--sans); border: 1px solid transparent; white-space: nowrap; transition: background .15s, border-color .15s, transform .15s; }
+    .btn:active { transform: translateY(1px); }
+    .btn.primario { background: var(--ouro); color: var(--ouro-fg); }
+    .btn.primario:hover { background: var(--ouro-claro); }
+    .btn.secundario { background: transparent; color: var(--texto); border-color: var(--linha-forte); }
+    .btn.secundario:hover { background: var(--painel-2); border-color: var(--fraco); }
+    .btn.p { min-height: 40px; padding: 0 16px; font-size: 14px; }
+    .btn svg { width: 18px; height: 18px; }
+    .cartao { background: var(--painel); border: 1px solid var(--linha); border-radius: var(--r-lg); }
+    .ic { width: 40px; height: 40px; flex: none; border-radius: 11px; display: grid; place-items: center; background: var(--painel-2); border: 1px solid var(--linha-forte); color: var(--ouro-claro); }
+    .ic svg { width: 20px; height: 20px; }
+    .grade { display: grid; gap: 14px; }
+    .janela { border-radius: var(--r); overflow: hidden; border: 1px solid var(--linha-forte); background: var(--painel-2); box-shadow: 0 30px 70px -30px rgba(0, 0, 0, .9); }
+    .janela .barra { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; background: var(--painel-2); border-bottom: 1px solid var(--linha); }
+    .janela .barra i { width: 9px; height: 9px; border-radius: 50%; background: var(--linha-forte); }
+    .janela .barra span { margin-left: 8px; color: var(--fraco); font: 600 11px/1 var(--sans); letter-spacing: .04em; }
+
+    /* topo */
+    .topo { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 64px; padding: 0 var(--lado); background: rgba(11, 15, 21, .86); backdrop-filter: blur(12px); border-bottom: 1px solid var(--linha); }
+    .topo .marca img { height: 26px; width: auto; }
+    .topo nav { display: none; gap: 24px; color: var(--apoio); font-weight: 600; font-size: 14px; }
+    .topo nav a:hover { color: var(--texto); }
+    .topo .acoes { display: flex; gap: 8px; }
+    .topo .acoes .demo { display: none; }
+
+    /* hero */
+    .hero { padding: clamp(48px, 9vw, 104px) var(--lado) 0; position: relative; overflow: hidden; isolation: isolate; }
+    .hero::before { content: ""; position: absolute; inset: -20% -10% 0; z-index: -2; background:
+      radial-gradient(42% 38% at 72% 12%, rgba(212, 175, 55, .22), transparent 70%),
+      radial-gradient(30% 30% at 18% 70%, rgba(212, 175, 55, .10), transparent 70%),
+      radial-gradient(36% 36% at 85% 70%, rgba(44, 53, 70, .55), transparent 70%);
+      animation: aurora 16s ease-in-out infinite alternate; pointer-events: none; }
+    .hero::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+      background-image: radial-gradient(rgba(238, 240, 243, .14) 1px, transparent 1.2px); background-size: 26px 26px;
+      -webkit-mask-image: radial-gradient(70% 60% at 60% 30%, #000 20%, transparent 100%); mask-image: radial-gradient(70% 60% at 60% 30%, #000 20%, transparent 100%);
+      animation: deriva 40s linear infinite; }
+    @keyframes aurora { from { transform: translate3d(-2%, 0, 0) scale(1); } to { transform: translate3d(3%, 4%, 0) scale(1.08); } }
+    @keyframes deriva { from { background-position: 0 0; } to { background-position: 26px 26px; } }
+    .hero .miolo { position: relative; display: grid; gap: 40px; }
+    .hero h1 em { font-style: normal; color: var(--ouro-claro); background: linear-gradient(90deg, var(--ouro-claro), var(--ouro) 45%, var(--ouro-claro) 90%); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: brilho 6s linear infinite; }
+    @keyframes brilho { to { background-position: -200% 0; } }
+    .hero .sub { color: var(--apoio); font-size: 18px; max-width: 46ch; margin: 20px 0 28px; }
+    .hero .acoes { display: flex; flex-wrap: wrap; gap: 10px; }
+    .hero .nota { margin-top: 18px; color: var(--fraco); font-size: 13px; }
+    .hero .entra { animation: subir .8s cubic-bezier(.2, .7, .2, 1) both; animation-delay: var(--d, 0s); }
+    @keyframes subir { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+    .hero .vitrine { position: relative; perspective: 1400px; animation: chegar 1.1s cubic-bezier(.2, .7, .2, 1) both .3s; }
+    @keyframes chegar { from { opacity: 0; transform: translateY(34px) scale(.97); } to { opacity: 1; transform: none; } }
+    .hero .vitrine::before { content: ""; position: absolute; inset: 12% -6% -8%; z-index: -1; border-radius: 50%; background: radial-gradient(closest-side, rgba(212, 175, 55, .28), transparent); filter: blur(30px); animation: pulsar 5s ease-in-out infinite; }
+    @keyframes pulsar { 0%, 100% { opacity: .7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.06); } }
+    .hero .janela { transform: rotateY(-6deg) rotateX(2deg); transform-origin: 60% 50%; animation: flutuar 7s ease-in-out infinite 1.4s; }
+    @keyframes flutuar { 0%, 100% { transform: rotateY(-6deg) rotateX(2deg) translateY(0); } 50% { transform: rotateY(-5deg) rotateX(1.5deg) translateY(-10px); } }
+    .hero .janela .barra span::after { content: ""; display: inline-block; width: 7px; height: 7px; margin-left: 8px; border-radius: 50%; background: #3fcf8e; animation: ping 2.2s ease-out infinite; vertical-align: middle; }
+    @keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(63, 207, 142, .55); } 100% { box-shadow: 0 0 0 9px rgba(63, 207, 142, 0); } }
+
+    /* conversa animada sobre a captura */
+    .conversa { position: absolute; left: 12px; bottom: 14px; width: min(300px, calc(100% - 24px)); display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; }
+    .conversa .msg { max-height: 0; margin-top: 0; opacity: 0; overflow: hidden; transform: translateY(10px); border-radius: 12px; font-size: 13.5px; line-height: 1.45; animation-duration: 13s; animation-timing-function: cubic-bezier(.2, .7, .2, 1); animation-iteration-count: infinite; animation-fill-mode: both; }
+    .conversa .miolo-msg { padding: 10px 13px; }
+    .conversa .lead { align-self: flex-start; background: #1b2230; border: 1px solid var(--linha-forte); color: var(--texto); animation-name: msg-lead; }
+    .conversa .digitando { align-self: flex-end; background: var(--painel); border: 1px solid rgba(212, 175, 55, .45); animation-name: msg-digitando; }
+    .conversa .digitando .miolo-msg { display: flex; gap: 4px; padding: 12px 14px; }
+    .conversa .digitando i { width: 6px; height: 6px; border-radius: 50%; background: var(--ouro); animation: pontinho 1.1s ease-in-out infinite; }
+    .conversa .digitando i:nth-child(2) { animation-delay: .18s; } .conversa .digitando i:nth-child(3) { animation-delay: .36s; }
+    @keyframes pontinho { 0%, 100% { opacity: .3; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
+    .conversa .ia { align-self: flex-end; background: var(--painel); border: 1px solid rgba(212, 175, 55, .45); box-shadow: 0 20px 40px -16px rgba(0, 0, 0, .8); color: var(--texto); animation-name: msg-ia; }
+    .conversa .ia b { display: flex; align-items: center; gap: 7px; color: var(--ouro-claro); font: 700 10.5px/1 var(--sans); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 5px; }
+    .conversa .ia b::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--ouro); box-shadow: 0 0 0 3px rgba(212, 175, 55, .25); }
+    .conversa .toast { align-self: stretch; background: #0f1a14; border: 1px solid rgba(63, 207, 142, .45); color: var(--texto); font-size: 12.5px; animation-name: msg-toast; }
+    .conversa .toast .miolo-msg { display: flex; align-items: center; gap: 9px; padding: 9px 12px; }
+    .conversa .toast i { flex: none; width: 18px; height: 18px; border-radius: 50%; background: #3fcf8e; color: #06130c; display: grid; place-items: center; font: 700 11px/1 var(--sans); font-style: normal; }
+    .conversa .toast em { font-style: normal; color: var(--apoio); }
+    @keyframes msg-lead      { 0%, 6%  { max-height: 0; margin-top: 0; opacity: 0; transform: translateY(10px); } 10%, 92% { max-height: 120px; margin-top: 8px; opacity: 1; transform: none; } 96%, 100% { max-height: 0; margin-top: 0; opacity: 0; } }
+    @keyframes msg-digitando { 0%, 14% { max-height: 0; margin-top: 0; opacity: 0; transform: translateY(10px); } 18%, 30% { max-height: 60px; margin-top: 8px; opacity: 1; transform: none; } 33%, 100% { max-height: 0; margin-top: 0; opacity: 0; } }
+    @keyframes msg-ia        { 0%, 32% { max-height: 0; margin-top: 0; opacity: 0; transform: translateY(10px); } 36%, 92% { max-height: 160px; margin-top: 8px; opacity: 1; transform: none; } 96%, 100% { max-height: 0; margin-top: 0; opacity: 0; } }
+    @keyframes msg-toast     { 0%, 50% { max-height: 0; margin-top: 0; opacity: 0; transform: translateY(10px); } 54%, 92% { max-height: 80px; margin-top: 8px; opacity: 1; transform: none; } 96%, 100% { max-height: 0; margin-top: 0; opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) {
+      .hero::before, .hero::after, .hero h1 em, .hero .entra, .hero .vitrine, .hero .vitrine::before, .hero .janela, .hero .janela .barra span::after, .conversa .msg, .conversa .digitando i { animation: none !important; }
+      .hero .janela { transform: none; }
+      .conversa .msg { max-height: 200px; margin-top: 8px; opacity: 1; transform: none; }
+      .conversa .digitando { display: none; }
+    }
+
+    /* dor */
+    .dor .grade { grid-template-columns: 1fr; }
+    .dor .cartao { padding: 22px; }
+    .dor .cartao .ic { margin-bottom: 14px; }
+    .dor .cartao p { color: var(--apoio); font-size: 15px; margin-top: 6px; }
+    .dor .virada { margin-top: 28px; padding: 22px 24px; border-radius: var(--r-lg); border: 1px solid rgba(212,175,55,.35); background: linear-gradient(180deg, rgba(212,175,55,.08), rgba(212,175,55,.02)); font-size: 17px; }
+    .dor .virada strong { color: var(--ouro-claro); font-weight: 700; }
+
+    /* o crm */
+    .crm .modulos { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 32px; }
+    .crm .modulos li { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--linha-forte); background: var(--painel); color: var(--apoio); font-size: 13px; font-weight: 600; }
+    .crm .telas { display: grid; gap: 28px; }
+    .crm .tela { display: grid; gap: 16px; align-items: center; }
+    .crm .tela h3 { font-size: 22px; }
+    .crm .tela p { color: var(--apoio); font-size: 15.5px; margin-top: 8px; }
+    .crm .tela ul { margin-top: 12px; display: grid; gap: 6px; color: var(--texto); font-size: 14.5px; }
+    .crm .tela li { display: flex; gap: 10px; }
+    .crm .tela li::before { content: ""; flex: none; width: 6px; height: 6px; margin-top: 9px; border-radius: 50%; background: var(--ouro); }
+    .crm .menor { display: grid; gap: 14px; margin-top: 28px; }
+    .crm .menor figcaption { margin-top: 10px; }
+    .crm .menor figcaption b { display: block; font-size: 15px; }
+    .crm .menor figcaption span { color: var(--apoio); font-size: 14px; }
+    .crm .equipe { height: 100%; padding: 22px; display: grid; align-content: center; gap: 10px; }
+    .crm .equipe p { color: var(--apoio); font-size: 15px; }
+
+    /* ia com a arvisx */
+    .cuidado .miolo { display: grid; gap: 24px; padding: clamp(24px, 4vw, 40px); border-radius: 22px; background: linear-gradient(135deg, #131a26, #0e131b); border: 1px solid var(--linha-forte); }
+    .cuidado h2 { font-size: clamp(26px, 4vw, 36px); }
+    .cuidado p { color: var(--apoio); font-size: 16px; margin-top: 12px; max-width: 52ch; }
+    .cuidado ul { display: grid; gap: 10px; }
+    .cuidado li { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: var(--r); background: rgba(255,255,255,.03); border: 1px solid var(--linha); font-size: 15px; }
+    .cuidado li svg { width: 20px; height: 20px; flex: none; color: var(--ouro-claro); margin-top: 2px; }
+
+    /* agentes */
+    .agentes .grade { grid-template-columns: 1fr; }
+    .agentes .cartao { padding: 22px; display: flex; flex-direction: column; gap: 12px; }
+    .agentes .cartao .topo-c { display: flex; align-items: center; justify-content: space-between; }
+    .agentes .cartao .n { color: var(--fraco); font: 700 12px/1 var(--sans); letter-spacing: .1em; }
+    .agentes .cartao p { color: var(--apoio); font-size: 15px; }
+
+    /* como funciona */
+    .como .passos { display: grid; gap: 14px; counter-reset: passo; }
+    .como .passo { padding: 24px; display: grid; gap: 10px; }
+    .como .passo::before { counter-increment: passo; content: "0" counter(passo); color: var(--ouro-claro); font: 700 13px/1 var(--sans); letter-spacing: .12em; }
+    .como .passo p { color: var(--apoio); font-size: 15px; }
+
+    /* para quem */
+    .quem .grade { grid-template-columns: 1fr 1fr; }
+    .quem .cartao { padding: 20px; }
+    .quem .cartao .ic { margin-bottom: 14px; }
+    .quem .cartao p { color: var(--apoio); font-size: 14.5px; margin-top: 6px; }
+
+    /* faq */
+    .faq .lista { display: grid; gap: 10px; max-width: 820px; }
+    .faq details { background: var(--painel); border: 1px solid var(--linha); border-radius: var(--r); }
+    .faq summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; font-weight: 700; font-size: 16px; }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::after { content: "+"; flex: none; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--linha-forte); color: var(--ouro-claro); font-weight: 600; transition: transform .2s; }
+    .faq details[open] summary::after { transform: rotate(45deg); }
+    .faq details p { padding: 0 20px 18px; color: var(--apoio); font-size: 15px; }
+
+    /* aviso de cookies */
+    .aviso-cookies { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 30; display: none; gap: 14px; align-items: center; padding: 14px 16px; border-radius: 14px; background: var(--painel); border: 1px solid var(--linha-forte); box-shadow: 0 24px 48px -16px rgba(0,0,0,.8); font-size: 14px; color: var(--apoio); }
+    .aviso-cookies.visivel { display: grid; }
+    .aviso-cookies a { color: var(--ouro-claro); text-decoration: underline; text-underline-offset: 3px; }
+    .aviso-cookies .btn { min-height: 40px; padding: 0 16px; font-size: 14px; }
+    @media (min-width: 640px) { .aviso-cookies { left: auto; max-width: 560px; grid-template-columns: 1fr auto; } }
+
+    /* rodapé */
+    .rodape { border-top: 1px solid var(--linha); background: var(--painel); padding: clamp(40px, 6vw, 64px) var(--lado) 28px; }
+    .rodape .colunas { display: grid; gap: 32px; }
+    .rodape .marca-col img { height: 26px; width: auto; }
+    .rodape .marca-col p { color: var(--apoio); font-size: 14.5px; margin-top: 16px; max-width: 34ch; }
+    .rodape b { display: block; font: 700 11px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ouro-claro); margin-bottom: 14px; }
+    .rodape nav { display: grid; gap: 10px; align-content: start; color: var(--apoio); font-size: 14.5px; font-weight: 600; }
+    .rodape nav a:hover { color: var(--texto); }
+    .rodape .base { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--linha); color: var(--fraco); font-size: 13px; }
+    .rodape .base a { color: var(--apoio); font-weight: 600; }
+    .rodape .base a:hover { color: var(--texto); }
+
+    @media (min-width: 640px) {
+      .dor .grade, .agentes .grade { grid-template-columns: 1fr 1fr; }
+      .crm .menor { grid-template-columns: 1fr 1fr; }
+      .como .passos { grid-template-columns: repeat(3, 1fr); }
+      .quem .grade { grid-template-columns: repeat(4, 1fr); }
+      .topo .acoes .demo { display: inline-flex; }
+      .rodape .colunas { grid-template-columns: 1fr 1fr; }
+    }
+    @media (min-width: 980px) {
+      .topo nav { display: flex; }
+      .hero .miolo { grid-template-columns: 1fr 1.1fr; align-items: center; gap: 56px; }
+      .dor .grade { grid-template-columns: repeat(3, 1fr); }
+      .crm .tela { grid-template-columns: 1fr 1.25fr; gap: 40px; }
+      .crm .tela.inv .texto { order: 2; }
+      .cuidado .miolo { grid-template-columns: 1.1fr 1fr; align-items: center; gap: 48px; }
+      .agentes .grade { grid-template-columns: repeat(4, 1fr); }
+      .rodape .colunas { grid-template-columns: 1.4fr .8fr 1fr; gap: 48px; }
+    }
+
+    /* ---- novo modelo: protótipo ---- */
+    .proto { position: sticky; top: 0; z-index: 40; display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: center; align-items: center; padding: 8px var(--lado); background: #2a2208; color: #f1d47c; border-bottom: 1px solid rgba(212,175,55,.4); font-size: 12.5px; text-align: center; }
+    .topo { top: 38px; }
+    .pend { display: inline-flex; align-items: center; margin-left: 8px; padding: 2px 8px; border-radius: 999px; border: 1px dashed #e0a43a; background: rgba(224,164,58,.12); color: #f3c777; font: 700 10.5px/1.4 var(--sans); letter-spacing: .06em; text-transform: uppercase; vertical-align: middle; white-space: nowrap; }
+    body.sem-marcas .pend { display: none; }
+    .proto button { background: transparent; cursor: pointer; margin-left: 4px; padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(212,175,55,.5); color: #f1d47c; font: 700 11.5px var(--sans); }
+    .hero .nota { max-width: 52ch; }
+    .inbox-bloco { display: grid; gap: 14px; margin-bottom: 28px; }
+    .inbox-bloco .cartao { padding: 24px; display: grid; gap: 8px; align-content: start; }
+    .inbox-bloco p { color: var(--apoio); font-size: 15.5px; }
+    .mais .grade { grid-template-columns: 1fr; }
+    .mais .cartao { padding: 22px; }
+    .mais .cartao .ic { margin-bottom: 14px; }
+    .mais .cartao p { color: var(--apoio); font-size: 15px; margin-top: 6px; }
+    .plano .miolo { display: grid; gap: 28px; }
+    .plano .caixa { padding: clamp(24px, 4vw, 40px); border-radius: 22px; border: 1px solid var(--linha-forte); background: var(--painel-2); display: grid; gap: 22px; }
+    .plano .preco { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 10px; }
+    .plano .preco strong { font: 700 clamp(44px, 8vw, 64px)/1 var(--display); font-stretch: 112%; letter-spacing: -.04em; color: var(--ouro-claro); }
+    .plano .preco span { color: var(--apoio); font-size: 16px; }
+    .plano ul { display: grid; gap: 10px; }
+    .plano li { display: flex; gap: 12px; align-items: flex-start; font-size: 15.5px; }
+    .plano li svg { width: 20px; height: 20px; flex: none; color: var(--ouro-claro); margin-top: 2px; }
+    .plano .nota-ia { padding: 16px 18px; border-radius: var(--r); background: rgba(255,255,255,.03); border: 1px solid var(--linha); color: var(--apoio); font-size: 15px; }
+    .plano .nota-ia b { color: var(--texto); }
+    .ag-arvisx .miolo { display: grid; gap: 28px; padding: clamp(28px, 5vw, 56px); border-radius: 26px; border: 1px solid rgba(212,175,55,.4); background: radial-gradient(60% 80% at 90% 0%, rgba(212,175,55,.18), transparent 70%), linear-gradient(135deg, #1a1608, #0e131b 70%); }
+    .ag-arvisx h2 { max-width: 24ch; }
+    .ag-arvisx .lede { color: var(--apoio); font-size: 17px; max-width: 62ch; }
+    .ag-arvisx .lede strong { color: var(--texto); }
+    .ag-arvisx .passos { display: grid; gap: 12px; counter-reset: passo; }
+    .ag-arvisx .passo { padding: 20px 22px; border-radius: var(--r); background: rgba(255,255,255,.04); border: 1px solid var(--linha-forte); display: grid; gap: 6px; align-content: start; }
+    .ag-arvisx .passo::before { counter-increment: passo; content: "0" counter(passo); color: var(--ouro-claro); font: 700 13px/1 var(--sans); letter-spacing: .12em; }
+    .ag-arvisx .passo h3 { font-size: 16px; }
+    .ag-arvisx .rodape-bloco { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; }
+    .ag-arvisx .discreta { color: var(--fraco); font-size: 13.5px; max-width: 58ch; }
+    .faq .cabeca { text-align: center; }
+    .faq .cabeca h2 { margin-inline: auto; }
+    .faq .lista { margin-inline: auto; }
+    .final .miolo { text-align: center; display: grid; justify-items: center; gap: 22px; }
+    .final h2 { max-width: 20ch; }
+    @media (min-width: 640px) { .mais .grade { grid-template-columns: 1fr 1fr; } .ag-arvisx .passos { grid-template-columns: repeat(3, 1fr); } .inbox-bloco { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 980px) { .mais .grade { grid-template-columns: repeat(3, 1fr); } .plano .miolo { grid-template-columns: .9fr 1.1fr; align-items: start; gap: 48px; } }
+  </style>
+</head>
+<body>
+  <div class="proto" role="note"><span>PROTÓTIPO do novo modelo. Marcações âmbar = pendente de confirmação.</span><button type="button" onclick="document.body.classList.toggle('sem-marcas')">mostrar/ocultar marcações</button></div>
+  <!-- TODO: LINK_CTA = "#inicio" até o Lucas passar o link da agenda da Arvisx. Todos os botões "Marcar reunião" usam data-cta. -->
+  <header class="topo">
+    <a class="marca" href="#inicio" aria-label="Arvisx CRM, início"><img src="../marca/arvisx-crm-oficial-escuro.png" alt="Arvisx CRM" width="715" height="85" /></a>
+    <nav aria-label="Principal">
+      <a href="#crm">O CRM</a>
+      <a href="#plano">Plano</a>
+      <a href="#agentes">Agentes Arvisx</a>
+      <a href="#faq">Perguntas</a>
+    </nav>
+    <div class="acoes">
+      <a class="btn secundario p" href="/login">Entrar</a>
+      <a class="btn primario p demo" href="#inicio" data-cta>Marcar reunião</a>
+    </div>
+  </header>
+
+  <main id="inicio">
+    <section class="hero">
+      <div class="miolo">
+        <div>
+          <p class="eyebrow entra">CRM para WhatsApp</p>
+          <h1 class="entra" style="--d:.08s">O CRM completo para quem vende <em>pelo WhatsApp.</em></h1>
+          <p class="sub entra" style="--d:.18s">Conversas, funil, propostas, agenda, faturamento e equipe num só lugar. Atendentes e números de WhatsApp ilimitados, em um plano único.</p>
+          <div class="acoes entra" style="--d:.28s">
+            <a class="btn primario" href="#inicio" data-cta>Marcar reunião<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+            <a class="btn secundario" href="/login">Entrar</a>
+          </div>
+          <p class="nota entra" style="--d:.38s">Atendentes ilimitados &middot; WhatsApp por QR code ou API oficial.</p>
+        </div>
+        <div class="vitrine">
+          <figure class="janela">
+            <div class="barra" aria-hidden="true"><i></i><i></i><i></i><span>crm.arvisx.com.br</span></div>
+            <img src="img/crm-funil.png" alt="Funil do Arvisx CRM com as etapas e os cartões de cada cliente" width="1440" height="900" />
+          </figure>
+          <div class="conversa" aria-hidden="true">
+            <div class="msg lead"><div class="miolo-msg">Oi! Vi o anúncio de vocês. Como funciona e quanto custa?</div></div>
+            <div class="msg digitando"><div class="miolo-msg"><i></i><i></i><i></i></div></div>
+            <div class="msg ia"><div class="miolo-msg"><b>Ana &middot; Atendimento</b>Oi, Marina! Que bom que chegou. Já te explico como funciona e te passo os valores.</div></div>
+            <div class="msg toast"><div class="miolo-msg"><i>&#10003;</i><span>Conversa na caixa de entrada <em>Vendas &middot; Ana</em></span></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="faixa dor">
+      <div class="miolo">
+        <div class="cabeca">
+          <p class="eyebrow">A dor</p>
+          <h2>Hoje a venda está espalhada em três lugares.</h2>
+        </div>
+        <div class="grade">
+          <article class="cartao">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.5-4.5A8 8 0 1 1 8.5 18.5z"/></svg></span>
+            <h3>O WhatsApp</h3>
+            <p>As conversas chegam a qualquer hora. Quem respondeu, quem ficou sem resposta e quem já fechou se misturam na mesma lista.</p>
+          </article>
+          <article class="cartao">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg></span>
+            <h3>A planilha</h3>
+            <p>O controle vive numa planilha que só uma pessoa entende. Quando ela sai de férias, ninguém sabe em que pé está cada cliente.</p>
+          </article>
+          <article class="cartao">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></span>
+            <h3>A proposta</h3>
+            <p>Cada proposta é montada do zero, num arquivo solto. Enviar, lembrar o cliente e saber se ele abriu vira trabalho manual.</p>
+          </article>
+        </div>
+        <p class="virada"><strong>Aqui, tudo fica na mesma tela.</strong> Conversa, funil, proposta e agenda no mesmo lugar, com a equipe inteira dentro.</p>
+      </div>
+    </section>
+
+    <section class="faixa painel crm" id="crm">
+      <div class="miolo">
+        <div class="cabeca">
+          <p class="eyebrow">O CRM</p>
+          <h2>A empresa inteira em uma tela, do primeiro contato ao faturamento.</h2>
+          <p>Um produto só, com todas as telas para toda a equipe. Você é o administrador da sua empresa e configura tudo do seu jeito.</p>
+        </div>
+        <ul class="modulos" aria-label="Módulos do CRM">
+          <li>Caixa de entrada</li><li>Funis</li><li>Contatos</li><li>Agenda</li><li>Propostas <span class="pend">verificar</span></li><li>Faturamento</li><li>Honorários</li><li>Comandas</li><li>Equipe</li>
+        </ul>
+        <div class="inbox-bloco">
+          <article class="cartao"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.5-4.5A8 8 0 1 1 8.5 18.5z"/></svg></span><h3>Caixa de entrada compartilhada</h3><p>Todos os números de WhatsApp da empresa na mesma tela. Cada conversa tem um dono, e a equipe vê quem respondeu e quem ainda está esperando.</p></article>
+          <article class="cartao"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></span><h3>Propostas em PDF <span class="pend">verificar</span></h3><p>Monte a proposta a partir do cartão do lead e acompanhe o negócio no funil.</p></article>
+        </div>
+        <div class="telas">
+          <article class="tela">
+            <div class="texto">
+              <h3>Funis com o vocabulário do seu negócio</h3>
+              <p>Cada serviço tem o seu caminho. Você define as etapas, os nomes e o que cada cartão mostra.</p>
+              <ul>
+                <li>Etapas e nomes do seu jeito de vender</li>
+                <li>Quadro kanban com valor e responsável em cada cartão</li>
+                <li>Um funil para cada tipo de serviço</li>
+              </ul>
+            </div>
+            <figure class="janela"><div class="barra" aria-hidden="true"><i></i><i></i><i></i><span>Funis</span></div><img src="img/crm-funil.png" alt="Quadro do funil com as etapas do serviço e os cartões de cada cliente" width="1440" height="900" loading="lazy" /></figure>
+          </article>
+          <article class="tela inv">
+            <div class="texto">
+              <h3>O cartão do lead com o que importa para o seu serviço</h3>
+              <p>Campos personalizados por funil, documentos anexados e os dados do contato no mesmo cartão.</p>
+              <ul>
+                <li>Campos que você cria, por funil</li>
+                <li>Documentos do cliente anexados ao cartão</li>
+                <li>Dados do contato e histórico no mesmo lugar</li>
+              </ul>
+            </div>
+            <figure class="janela"><div class="barra" aria-hidden="true"><i></i><i></i><i></i><span>Cartão do lead</span></div><img src="img/crm-cartao-lead.png" alt="Cartão do lead com campos personalizados, documentos e dados do contato" width="1440" height="900" loading="lazy" /></figure>
+          </article>
+        </div>
+        <div class="menor">
+          <figure><div class="janela"><div class="barra" aria-hidden="true"><i></i><i></i><i></i><span>Contatos</span></div><img src="img/crm-contatos.png" alt="Lista de contatos com etiquetas e responsável" width="1440" height="900" loading="lazy" /></div><figcaption><b>Contatos</b><span>Todo mundo que já falou com você, com histórico, etiquetas e responsável.</span></figcaption></figure>
+          <figure><div class="janela"><div class="barra" aria-hidden="true"><i></i><i></i><i></i><span>Agenda</span></div><img src="img/crm-agenda.png" alt="Agenda da equipe com as reuniões da semana" width="1440" height="900" loading="lazy" /></div><figcaption><b>Agenda</b><span>As reuniões da equipe no mesmo lugar em que a conversa aconteceu.</span></figcaption></figure>
+          <figure><div class="janela"><div class="barra" aria-hidden="true"><i></i><i></i><i></i><span>Faturamento</span></div><img src="img/crm-financeiro.png" alt="Tela de faturamento com honorários e comandas" width="1440" height="900" loading="lazy" /></div><figcaption><b>Faturamento, honorários e comandas</b><span>Acompanhe o que foi fechado e o que falta receber, sem sair do CRM.</span></figcaption></figure>
+          <div class="cartao equipe"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4.5-6.2"/></svg></span><h3>Equipe com papéis e registro de ações</h3><p>Cada pessoa entra com o seu login, com o papel que você definir, e as ações ficam registradas.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="faixa mais" id="recursos">
+      <div class="miolo">
+        <div class="cabeca">
+          <p class="eyebrow">Mais recursos</p>
+          <h2>E o que ajuda a vender mais.</h2>
+        </div>
+        <div class="grade">
+          <article class="cartao"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><h3>Clientes parados <span class="pend">verificar</span></h3><p>Veja quem está sem resposta e o próximo passo de cada cliente.</p></article>
+          <article class="cartao"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg></span><h3>Follow-ups e tarefas <span class="pend">verificar</span></h3><p>Lembretes e tarefas ligados a cada cliente, para nada ficar esquecido.</p></article>
+          <article class="cartao"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><h3>Prospecção <span class="pend">verificar</span></h3><p>Encontre novos contatos e conduza as primeiras abordagens.</p></article>
+          <article class="cartao"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15.5 8.5a5 5 0 0 1 0 7"/></svg></span><h3>Campanhas e anúncios <span class="pend">verificar</span></h3><p>Acompanhe campanhas e a origem dos contatos que chegam pelos anúncios.</p></article>
+          <article class="cartao"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4M14 5l-4 14"/></svg></span><h3>API, webhooks e MCP</h3><p>Conecte o CRM às ferramentas que a sua empresa já usa.</p></article>
+          <article class="cartao"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12l2 2 4-4"/><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"/></svg></span><h3>Proteção de dados e auditoria <span class="pend">revisão jurídica</span></h3><p>Cada empresa fica isolada das outras, com registro das ações e recursos de exportação e anonimização de dados.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="faixa painel plano" id="plano">
+      <div class="miolo">
+        <div>
+          <p class="eyebrow">Plano</p>
+          <h2>Um plano. A equipe inteira dentro.</h2>
+          <p style="color:var(--apoio);font-size:17px;max-width:46ch;margin:14px 0 24px">Sem cobrança por usuário: cinco ou cinquenta pessoas usam a mesma assinatura.</p>
+          <a class="btn primario" href="#inicio" data-cta>Marcar reunião</a>
+        </div>
+        <div class="caixa">
+          <div class="preco"><strong>&euro;189</strong><span>por mês + IVA <span class="pend">confirmar valor</span></span></div>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Todas as telas do CRM</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Atendentes ilimitados</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Números de WhatsApp ilimitados (uso justo, uma empresa por conta)</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>API, webhooks e MCP</li>
+          </ul>
+          <p class="nota-ia"><b>O consumo de IA é pago diretamente ao provedor</b>, com a chave da sua empresa, e você define o teto de gasto mensal. <span class="pend">verificar teto</span></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="faixa ag-arvisx" id="agentes">
+      <div class="miolo">
+        <div>
+          <p class="eyebrow">Agentes Arvisx</p>
+          <h2>Quer ir além do CRM? Agentes personalizados, feitos para a sua operação.</h2>
+          <p class="lede" style="margin-top:16px">A Arvisx não entrega um assistente genérico. <strong>A nossa equipe entende como o seu negócio funciona</strong> e constrói um agente sob medida, integrado ao seu CRM. Ele é contratado à parte do plano do CRM, e só depois de uma conversa com a nossa equipe.</p>
+        </div>
+        <div class="passos">
+          <article class="passo"><h3>Conversamos sobre a sua operação</h3></article>
+          <article class="passo"><h3>Desenhamos o agente com você</h3></article>
+          <article class="passo"><h3>Conectamos ao seu CRM e acompanhamos</h3></article>
+        </div>
+        <div class="rodape-bloco">
+          <a class="btn primario" href="#inicio" data-cta>Marcar reunião com a equipe Arvisx</a>
+          <p class="discreta">O nome do assistente é o que você quiser. O agente se apresenta como assistente virtual.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="faixa quem" id="para-quem">
+      <div class="miolo">
+        <div class="cabeca">
+          <p class="eyebrow">Para quem é</p>
+          <h2>Para quem vende serviço por conversa.</h2>
+          <p>Negócios em que o cliente chega pelo WhatsApp, precisa de orientação e fecha depois de uma proposta.</p>
+        </div>
+        <div class="grade">
+          <article class="cartao"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span><h3>Assessorias</h3><p>Cidadania, vistos, imigração e processos com etapas longas.</p></article>
+          <article class="cartao"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M5 7l7-4 7 4M3 13l2-6 2 6a2 2 0 0 1-4 0zM17 13l2-6 2 6a2 2 0 0 1-4 0zM8 21h8"/></svg></span><h3>Escritórios</h3><p>Advocacia e contabilidade que atendem e fecham pelo WhatsApp.</p></article>
+          <article class="cartao"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg></span><h3>Consultorias</h3><p>Negócios que vendem diagnóstico, projeto e acompanhamento.</p></article>
+          <article class="cartao"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 5 5.6.8-4 3.9.9 5.6-4.9-2.6-4.9 2.6.9-5.6-4-3.9 5.6-.8z"/></svg></span><h3>Serviços sob medida</h3><p>Agências, clínicas e intercâmbio, quando cada cliente é um projeto.</p></article>
+        </div>
+        <p style="margin-top:24px;color:var(--apoio);font-size:16px;max-width:60ch">Seu nicho não está aqui? Funis, etapas e nomes se ajustam ao seu jeito de vender.</p>
+      </div>
+    </section>
+
+    <section class="faixa painel faq" id="faq">
+      <div class="miolo">
+        <div class="cabeca">
+          <p class="eyebrow">Perguntas frequentes</p>
+          <h2>O que costumam perguntar antes de fechar.</h2>
+        </div>
+        <div class="lista">
+          <details><summary>Quanto custa?</summary><p>Plano único de &euro;189/mês + IVA, com atendentes e números ilimitados. Os Agentes Arvisx são orçados em reunião. <span class="pend">confirmar valor</span></p></details>
+          <details><summary>Preciso saber programar?</summary><p>Não. Conectar o WhatsApp e começar a usar o CRM não exige programação. <span class="pend">ajustar ao cadastro</span></p></details>
+          <details><summary>Existe limite de atendentes ou números?</summary><p>Não há cobrança por atendente nem por número, dentro do uso justo de uma empresa por conta. </p></details>
+          <details><summary>Funciona com o WhatsApp comum?</summary><p>Sim, por QR code ou pela API oficial da Meta. O QR code é um canal não oficial, com risco de bloqueio como qualquer ferramenta desse tipo. Na API oficial, os custos são cobrados pela própria Meta. <span class="pend">API oficial: verificar</span></p></details>
+          <details><summary>Quem paga a IA?</summary><p>Você, diretamente ao provedor que escolher, com teto mensal. Os Agentes Arvisx têm condições próprias, combinadas na reunião. <span class="pend">verificar teto</span></p></details>
+          <details><summary>O que são os Agentes Arvisx?</summary><p>Agentes personalizados, integrados ao seu CRM, construídos pela nossa equipe depois de entender a sua operação. A contratação é por reunião. </p></details>
+          <details><summary>Onde ficam os meus dados?</summary><p>Cada empresa fica isolada das outras, com registro de ações. <span class="pend">país do servidor e texto RGPD: Dr. Renan</span></p></details>
+          <details><summary>Posso cancelar quando quiser?</summary><p>A definir. <span class="pend">definir</span></p></details>
+        </div>
+      </div>
+    </section>
+
+    <section class="faixa final">
+      <div class="miolo">
+        <h2>Vamos entender a sua operação?</h2>
+        <a class="btn primario" href="#inicio" data-cta>Marcar reunião</a>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="rodape" id="contato">
+    <div class="miolo">
+      <div class="colunas">
+        <div class="marca-col">
+          <img src="../marca/arvisx-crm-oficial-escuro.png" alt="Arvisx CRM" width="715" height="85" />
+          <p>O CRM completo para quem vende pelo WhatsApp.</p>
+        </div>
+        <nav aria-label="Rodapé">
+          <b>Navegue</b>
+          <a href="#crm">O CRM</a>
+          <a href="#plano">Plano</a>
+          <a href="#agentes">Agentes Arvisx</a>
+          <a href="#para-quem">Para quem é</a>
+          <a href="#faq">Perguntas frequentes</a>
+        </nav>
+        <nav class="legal" aria-label="Legal">
+          <b>Legal</b>
+          <a href="termos-de-uso.html">Termos de Serviço</a>
+          <a href="privacidade-e-cookies.html">Política de Privacidade</a>
+          <a href="exclusao-de-dados.html">Exclusão de Dados</a>
+        </nav>
+      </div>
+      <div class="base">
+        <span>Arvisx CRM — CRM de vendas e atendimento pelo WhatsApp. © 2026 Arvisx AI. Todos os direitos reservados.</span>
+        <span>Arvisx CRM é um produto da <a href="https://arvisx.com.br/">Arvisx AI</a>. O elo inteligente do seu ecossistema.</span>
+      </div>
+    </div>
+  </footer>
+  <div class="aviso-cookies" id="aviso-cookies" role="region" aria-label="Aviso de cookies">
+    <p>Usamos apenas cookies necessários para o funcionamento do CRM e para lembrar as suas preferências. Nada de rastreamento. <a href="privacidade-e-cookies.html">Saiba mais</a>.</p>
+    <button class="btn primario" type="button" id="aceitar-cookies">Entendi</button>
+  </div>
+  <script>
+    (function () {
+      var chave = "arvisx-crm-aviso-cookies", aviso = document.getElementById("aviso-cookies");
+      try { if (localStorage.getItem(chave)) return; } catch (e) {}
+      aviso.classList.add("visivel");
+      document.getElementById("aceitar-cookies").addEventListener("click", function () {
+        try { localStorage.setItem(chave, new Date().toISOString()); } catch (e) {}
+        aviso.classList.remove("visivel");
+      });
+    })();
+  </script>
+</body>
+</html>
