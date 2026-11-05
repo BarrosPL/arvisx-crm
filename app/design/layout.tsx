@@ -1,20 +1,23 @@
-import type { Metadata } from "next";
-import { allFontVariables } from "./lib/fonts";
-import { VariantProvider } from "./lib/variant-context";
-import "./showcase.css";
+import { notFound } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Design Showcase — DeskcommCRM",
-  description: "Painel navegável de design system. Soft-tech / calmo.",
-  robots: { index: false, follow: false },
-};
-
+/**
+ * ArvisX: o showcase de design do upstream fica BLOQUEADO. Toda a rota `/design`
+ * (e as sub-rotas) responde 404.
+ *
+ * Por quê: a página e o layout mostram "DeskcommCRM" no título da aba e no `<h1>`,
+ * e a rota é pública (sem login). Uma tela pública com a marca do upstream não pode
+ * ir ao ar na instalação da Arvisx.
+ *
+ * Por que bloquear em vez de apagar a pasta: `app/design/lib/tokens.ts` (as
+ * paletas) é importado por `tests/unit/barra-de-rolagem-do-tema.test.ts` e é a
+ * origem documentada das paletas de `lib/extensions/tema.ts`, e apagar a pasta
+ * daria conflito a cada atualização do upstream. O `notFound()` aqui corta o
+ * render antes de qualquer filho (a `page.tsx` e as seções nem chegam a rodar).
+ *
+ * Para reabrir em desenvolvimento, remova a chamada abaixo e restaure o layout do
+ * upstream (`git show upstream/main:app/design/layout.tsx`).
+ */
 export default function DesignLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className={allFontVariables}>
-      <VariantProvider>
-        <div className="ds-root">{children}</div>
-      </VariantProvider>
-    </div>
-  );
+  void children;
+  notFound();
 }

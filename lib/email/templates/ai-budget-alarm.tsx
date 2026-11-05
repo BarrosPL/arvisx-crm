@@ -15,6 +15,8 @@ export interface BudgetAlarmEmailOptions {
   limitCents: number;
   orgName?: string | null;
   dashboardUrl: string;
+  /** Nome do produto na marca resolvida de quem recebe (`marcaDaSaida`). Sem ele o assunto não leva marca. */
+  marca?: string | null;
 }
 
 const brl = new Intl.NumberFormat("pt-BR", {
@@ -32,7 +34,7 @@ export function buildBudgetAlarmEmail(opts: BudgetAlarmEmailOptions): {
   text: string;
 } {
   const pctStr = `${opts.pct.toFixed(2)}%`;
-  const subject = `Alerta IA: orçamento atingiu ${pctStr} — DeskcommCRM`;
+  const subject = `Alerta IA: orçamento atingiu ${pctStr}${opts.marca ? ` — ${opts.marca}` : ""}`;
   const orgLine = opts.orgName
     ? `<p style="margin:0 0 16px;font-size:14px;color:#57534e">Organização: <strong>${escapeHtml(opts.orgName)}</strong></p>`
     : "";
