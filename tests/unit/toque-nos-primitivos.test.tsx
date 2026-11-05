@@ -145,7 +145,10 @@ describe("primitivos com alvo de dedo", () => {
     // `justify-center` com `overflow-x-auto` joga a primeira aba para fora da
     // rolagem; a geometria é medida em tests/e2e/fotos-skills-e-peso-da-memoria-pela-tela.spec.ts.
     const c = classes(screen.getByRole("tablist"));
-    expect(c).toEqual(expect.arrayContaining(["overflow-x-auto", "justify-center-safe"]));
+    // ArvisX: a fila é alinhada ao início (`justify-start`, com filete embaixo) em
+    // vez de centralizada; alinhada ao início a primeira aba nunca fica fora da
+    // rolagem. O que a cerca protege é não voltar o `justify-center` puro.
+    expect(c).toEqual(expect.arrayContaining(["overflow-x-auto", "justify-start"]));
     expect(c).not.toContain("justify-center");
   });
 
