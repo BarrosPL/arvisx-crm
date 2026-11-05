@@ -31,6 +31,11 @@ const TabsList = React.forwardRef<
       // fora. Não é `h-auto lg:h-9`: quem já passa `h-auto` (Conexões, Inbox)
       // perderia o `h-auto` no computador, porque o `tailwind-merge` derruba o
       // da base e deixa o `lg:h-9` de pé.
+      //
+      // ArvisX: a fila é alinhada ao início (`justify-start`) com filete embaixo, e
+      // não centralizada como no upstream (`justify-center-safe`). Alinhada ao início
+      // a primeira aba nunca fica fora do alcance da rolagem, então o defeito que o
+      // upstream consertou com `safe` não existe aqui.
       "inline-flex h-9 max-w-full items-center max-lg:h-auto justify-start gap-1 overflow-x-auto border-b border-border text-muted-foreground",
       className,
     )}
