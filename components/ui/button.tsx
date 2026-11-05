@@ -43,8 +43,8 @@ const buttonVariants = cva(
       variant: {
         // ArvisX: a ação principal é OURO (`--color-cta`), que numa instalação com
         // cor própria vira o accent calculado (ver `cssDaMarca`).
-        primary: "bg-cta text-cta-foreground hover:bg-cta-hover shadow-xs",
-        default: "bg-cta text-cta-foreground hover:bg-cta-hover shadow-xs",
+        primary: "bg-acao text-acao-foreground hover:bg-acao-hover shadow-xs",
+        default: "bg-acao text-acao-foreground hover:bg-acao-hover shadow-xs",
         secondary:
           "bg-surface text-text border border-border-strong hover:bg-surface-elevated hover:border-accent",
         outline:

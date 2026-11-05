@@ -200,14 +200,14 @@ export function SidebarContent({
           // O desenho do produto, inline (ver `components/branding/MarcaDoProduto.tsx`):
           // logotipo com a barra aberta, só o símbolo com ela recolhida.
           collapsed ? (
-            <SimboloDoProduto nome={nome} sobreEscuro className="h-8 w-8" />
+            <SimboloDoProduto nome={nome} className="h-8 w-8" />
           ) : (
-            <LogotipoDoProduto nome={nome} sobreEscuro className="h-auto w-full max-w-[170px]" />
+            <LogotipoDoProduto nome={nome} className="h-auto w-full max-w-[170px]" />
           )
         ) : (
           <span
             className={cn(
-              "min-w-0 truncate font-semibold tracking-tight text-white",
+              "min-w-0 truncate font-semibold tracking-tight text-text",
               collapsed && "sr-only",
             )}
             title={nome}
@@ -349,7 +349,7 @@ export function SidebarContent({
                             "relative flex items-center gap-3 rounded-md px-3 py-1 text-sm transition-colors",
                             isActive
                               ? "relative bg-sidebar-active text-sidebar-active-foreground before:absolute before:top-1.5 before:-left-2 before:bottom-1.5 before:w-0.5 before:rounded-r before:bg-cta"
-                              : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-white",
+                              : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-text",
                             collapsed && "justify-center px-2",
                           )}
                         >
@@ -378,7 +378,7 @@ export function SidebarContent({
                           "flex items-center gap-3 rounded-md px-3 py-1 text-sm transition-colors",
                           pathname === group.hub.href
                             ? "relative bg-sidebar-active text-sidebar-active-foreground before:absolute before:top-1.5 before:-left-2 before:bottom-1.5 before:w-0.5 before:rounded-r before:bg-cta"
-                            : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-white",
+                            : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-text",
                           collapsed && "justify-center px-2",
                         )}
                       >
@@ -405,7 +405,7 @@ export function SidebarContent({
               "mb-1 flex items-center gap-3 rounded-md px-3 py-1 text-sm transition-colors",
               pathname.startsWith(rodape.href)
                 ? "relative bg-sidebar-active text-sidebar-active-foreground before:absolute before:top-1.5 before:-left-2 before:bottom-1.5 before:w-0.5 before:rounded-r before:bg-cta"
-                : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-white",
+                : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-text",
               collapsed && "justify-center px-2",
             )}
           >

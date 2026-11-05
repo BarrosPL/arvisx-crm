@@ -355,8 +355,8 @@ describe("controle positivo — o produto sem marca não pode se mexer", () => {
     const p = pintadosDaSemente("#283a55");
     // Claro: o anel é `accent-500` `#455a7a` contra `#f7f6f2` e `#f1efe9` — os mesmos
     // dois números que `branding-contraste.test.ts` mede na régua.
-    expect(foco(p.claro, "--color-bg")).toBeCloseTo(6.481, 2);
-    expect(foco(p.claro, "--color-surface-elevated")).toBeCloseTo(6.095, 2);
+    expect(foco(p.claro, "--color-bg")).toBeCloseTo(6.533, 2);
+    expect(foco(p.claro, "--color-surface-elevated")).toBeCloseTo(6.304, 2);
     // Escuro: o anel é `accent-400` `#657999` contra `#0b0f15` e `#151b26`. A rampa
     // do `globals.css` FOI gerada por `rampaDeSemente("#283a55")`, então a rampa
     // derivada e os literais coincidem byte a byte (na Sage havia 0,01 de
@@ -387,8 +387,8 @@ describe("a navy #0f172a — o defeito que a prova em tela achou", () => {
     // da marca. Os números abaixo são os mesmos stops (`#303a52` no claro, `#828a9d`
     // no escuro) contra as bases ArvisX (`#f7f6f2`/`#f1efe9` e `#0b0f15`/`#151b26`).
     const p = pintadosDaSemente("#0f172a");
-    expect(foco(p.claro, "--color-bg")).toBeCloseTo(10.481, 2);
-    expect(foco(p.claro, "--color-surface-elevated")).toBeCloseTo(9.858, 2);
+    expect(foco(p.claro, "--color-bg")).toBeCloseTo(10.567, 2);
+    expect(foco(p.claro, "--color-surface-elevated")).toBeCloseTo(10.195, 2);
     expect(foco(p.escuro, "--color-bg")).toBeCloseTo(5.553, 2);
     expect(foco(p.escuro, "--color-surface-elevated")).toBeCloseTo(4.99, 2);
     for (const superficie of ["--color-bg", "--color-surface-elevated"] as const) {

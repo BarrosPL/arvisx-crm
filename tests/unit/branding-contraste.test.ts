@@ -133,9 +133,9 @@ describe("extrairRegua — os pares saem do globals.css, nunca de lista à mão"
       pares.find((p) => p.papel === papel && p.superficie === superficie)?.razao ?? 0;
 
     // Navy ArvisX: `#283a55` × `#f7f6f2`, `#455a7a` × `#f7f6f2`, `#455a7a` × `#f1efe9`.
-    expect(razao("--color-accent", "--color-bg")).toBeCloseTo(10.631, 2);
-    expect(razao(":focus-visible/outline", "--color-bg")).toBeCloseTo(6.481, 2);
-    expect(razao(":focus-visible/outline", "--color-surface-elevated")).toBeCloseTo(6.095, 2);
+    expect(razao("--color-accent", "--color-bg")).toBeCloseTo(10.718, 2);
+    expect(razao(":focus-visible/outline", "--color-bg")).toBeCloseTo(6.533, 2);
+    expect(razao(":focus-visible/outline", "--color-surface-elevated")).toBeCloseTo(6.304, 2);
   });
 
   it("a paleta do produto inteira, como está no CSS, cabe nos pisos", () => {
