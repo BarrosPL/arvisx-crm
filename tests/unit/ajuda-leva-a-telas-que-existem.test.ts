@@ -44,7 +44,7 @@ const todosOsTextos = BLOCOS_DE_AJUDA.flatMap((bloco) => [
 ]);
 
 describe("a ajuda dentro do produto", () => {
-  it("tem porta no catálogo, no rodapé do menu e por último", () => {
+  it("tem porta no catálogo, fora do menu do cliente (ArvisX) e por último", () => {
     // `NAV_CATALOG` é `as const`: cada membro tem um tipo literal próprio, então
     // `sidebar` NÃO existe na união inteira. Acessar `item.sidebar` direto
     // reprova no typecheck do CI (TS2339) — o narrowing por `in` é o que
@@ -53,9 +53,13 @@ describe("a ajuda dentro do produto", () => {
     if (!item) throw new Error("o item /app/ajuda não existe em NAV_CATALOG");
 
     expect(item.group, "Ajuda tem de viver no rodapé fixo").toBe(GRUPO_NO_RODAPE);
-    expect("sidebar" in item && item.sidebar, "sem `sidebar: true` o rodapé não a desenha").toBe(
-      true,
-    );
+    // ArvisX: a Ajuda fica FORA do menu do cliente até a revisão do conteúdo
+    // (catálogo, sem `sidebar: true`). O upstream exige `true`; aqui a cerca exige
+    // que ela não apareça no menu por acidente e continue no catálogo (⌘K e URL).
+    expect(
+      "sidebar" in item && item.sidebar,
+      "a Ajuda saiu do menu do cliente de propósito (ArvisX): sem `sidebar: true`",
+    ).not.toBe(true);
     expect(
       NAV_CATALOG.indexOf(item),
       "Ajuda é o ÚLTIMO item: é o que se procura quando o resto falhou",

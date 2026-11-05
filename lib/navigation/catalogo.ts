@@ -1243,7 +1243,11 @@ export const NAV_CATALOG = [
     icon: "BookOpen",
     group: "organizacao",
     section: "Ajuda",
-    sidebar: true,
+    // ArvisX: SEM `sidebar: true` — fora do menu do cliente até a Arvisx revisar o
+    // conteúdo (o índice fala de agente de IA e de "atualizar esta instalação", que
+    // não valem para todo cliente). A tela existe e segue alcançável pelo ⌘K e por
+    // URL. Para voltar ao rodapé do menu: repor `sidebar: true` aqui e o `toBe(true)`
+    // em tests/unit/ajuda-leva-a-telas-que-existem.test.ts.
   },
 ] as const satisfies readonly NavMetadata[];
 
