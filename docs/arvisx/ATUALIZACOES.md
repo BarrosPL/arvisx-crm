@@ -21,16 +21,19 @@ Arquivos de identidade que o upstream também mexeu e o Git juntou sem conflito 
 `lib/auth/public-paths.ts` (retorno do provedor parceiro e OAuth de servidor MCP), `lib/i18n/dicionario.ts` (chaves novas),
 `components/shell/{CommandPalette,PaletaDeDestinos,ContadorDeTarefas,UserMenu}.tsx`.
 
-### Testes que acompanharam a identidade (código intacto, teste ajustado)
+### Testes que acompanharam a identidade (código intacto, teste ou referência ajustados)
 
-- `tests/unit/toque-nos-primitivos.test.tsx`: a cerca das abas aceita `justify-start` (nossa fila) e continua barrando o `justify-center` puro.
-- `tests/fixtures/respostas-rapidas-lista-plana-antes-dos-grupos.html`: a referência byte a byte usava as classes do Badge do upstream (`rounded-md`, `font-semibold`); regerada com o Badge Arvisx (`rounded-full`, tokens de accent).
+Nenhum teste de identidade (`branding*`, `marca-do-produto`, `tailwind-tokens`) foi alterado. Os ajustes foram só estes:
+
+- `tests/unit/toque-nos-primitivos.test.tsx` (1 linha): a cerca das abas aceita `justify-start` (nossa fila) no lugar de `justify-center-safe`; continua barrando o `justify-center` puro.
+- `tests/fixtures/respostas-rapidas-lista-plana-antes-dos-grupos.html` (fixture, o teste `grupos-sem-grupo-e-a-lista-de-hoje.test.tsx` não mudou): a referência byte a byte trazia as classes do upstream e foi regerada com a saída dos componentes Arvisx. Diferença medida tag a tag: mesmo número de tags, texto visível idêntico, mudaram só atributos `class` em 15 tags: 7 chips (Badge: `rounded-full px-3 font-medium` do upstream contra `rounded-md px-2 font-semibold` nosso) e 8 botões fantasma (`rounded-sm text-text hover:bg-accent-soft hover:text-accent font-medium` contra `rounded-md text-text-muted hover:bg-surface-elevated hover:text-text font-semibold`).
+- `tests/unit/ajuda-leva-a-telas-que-existem.test.ts`: ver a decisão da Ajuda abaixo.
 
 ### Varredura de marca (telas novas)
 
 - Textos visíveis ao usuário, domínios, e-mails de suporte, links de ajuda e vídeos do upstream: **nenhum** achado nos arquivos novos ou alterados (busca por `deskcomm`, `deskcomm.com`, `deskcommcrm.com`, `youtube`, `instagram.com/`, `suporte@`, `rafael`).
 - As 24 ocorrências de "deskcomm" que sobraram são identificadores internos e comentários (`sb-deskcomm-auth`, `deskcomm-theme`, `SERVER_NAME = "deskcomm-crm"`, comentários de código). Não aparecem na tela.
-- A tela de Ajuda (`/app/ajuda`) não tem link externo nem marca. Ela entra no rodapé do menu por padrão (`sidebar: true`) e o teste do upstream exige isso; o conteúdo fala de agentes de IA e de "atualizar esta instalação" (só para o dono do servidor). **Decisão pendente do Lucas**: manter ou tirar do menu do cliente (repor/remover `sidebar: true` em `lib/navigation/catalogo.ts`, e ajustar `tests/unit/ajuda-leva-a-telas-que-existem.test.ts`).
+- A tela de Ajuda (`/app/ajuda`) não tem link externo nem marca, mas o índice fala de agente de IA e traz o item "Atualizar esta instalação" (bloco "Para quem instala e mantém", só para o dono do servidor, rota `/app/settings/atualizacao`). **Decisão do Lucas (05/11): fora do menu do cliente.** Removido `sidebar: true` do item em `lib/navigation/catalogo.ts` (comentário no código explica como repor); a tela continua no catálogo e alcançável por ⌘K e URL. O teste do upstream (`tests/unit/ajuda-leva-a-telas-que-existem.test.ts`) agora exige o oposto do original: Ajuda no catálogo, no grupo do rodapé, como último item, e SEM `sidebar: true`.
 - Cold Call (`modulo: "cold_call"`, desligado por padrão) e Chamadas (`capacidade: "telefonia"`) ficam fora do menu até alguém ligar o módulo. Não entram na landing.
 
 ### Migrações
@@ -50,6 +53,10 @@ No deploy, o `init.sh` aplica as pendentes com `pg_dump` antes e registra em `pu
 - `pnpm test:unit`: 3138 arquivos passam, 72 falharam. Reexecutados com timeout alto e comparados com a `main` antes do merge: dos 32 que continuaram vermelhos, 26 também falham na `main` (ambiente Windows: scripts de shell, `curso/*`, timeouts, caminhos com `\`). Os 6 que só falhavam com o merge: `ajuda-leva-a-telas-que-existem` (decisão da Ajuda, acima), `grupos-sem-grupo-e-a-lista-de-hoje` e `toque-nos-primitivos` (corrigidos, acima), e `acesso-revogado-nao-espera-o-cache`, `lgpd-export-endereco`, `lgpd-pacote-do-titular-paridade` (separador de caminho `\` e URL do `pdfjs-dist` no Windows; não tocam em identidade).
 - Testes de identidade (`branding*`, `marca-do-produto`, `tailwind-tokens`) passam; nenhum foi alterado.
 - Ainda **não** rodado: `pnpm test:db` e e2e (precisam do ambiente de CI), verificação visual na conta `teste-modelo`.
+
+### Protótipos da landing no mesmo commit de registro
+
+`docs/arvisx/prototipo/landing/`: `novo-modelo.html` (landing do novo modelo comercial, ainda protótipo), `exclusao-de-dados.html` (página nova, com os campos de contato da Arvisx em aberto) e rodapé com os três links legais em `termos-de-uso.html` e `privacidade-e-cookies.html`. Não afetam o app. Os textos legais seguem pendentes de revisão do Dr. Renan.
 
 ### Antes do deploy (Lucas aprova)
 
