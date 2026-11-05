@@ -3,7 +3,11 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { cssDaMarca, ESCOPO_DA_INSTALACAO, ESCOPO_DA_ORGANIZACAO } from "@/lib/branding/css";
+import {
+  cssDaMarca,
+  ESCOPO_DA_INSTALACAO,
+  ESCOPO_DA_ORGANIZACAO,
+} from "@/lib/branding/css";
 import { derivarMarca } from "@/lib/branding/contraste";
 import { GRAUS } from "@/lib/branding/rampa";
 import { REGUA_DO_PRODUTO } from "@/lib/branding/regua-do-produto";
@@ -14,22 +18,9 @@ const REGUA = REGUA_DO_PRODUTO;
 
 /** A mesma fixture adversarial do teste de contraste, pelo mesmo motivo. */
 const SEMENTES = [
-  "#0f172a",
-  "#f5c518",
-  "#ffffff",
-  "#000000",
-  "#808080",
-  "#dc2626",
-  "#22c55e",
-  "#f59e0b",
-  "#2563eb",
-  "#14b8a6",
-  "#4b0082",
-  "#e11d48",
-  "#7c3aed",
-  "#1a1f36",
-  "#fafafa",
-  "#506d48",
+  "#0f172a", "#f5c518", "#ffffff", "#000000", "#808080", "#dc2626", "#22c55e",
+  "#f59e0b", "#2563eb", "#14b8a6", "#4b0082", "#e11d48", "#7c3aed", "#1a1f36",
+  "#fafafa", "#506d48",
 ] as const;
 
 const corDe = (hex: string): CorResolvida => {
@@ -71,7 +62,7 @@ function arquivosDeFonte(): string[] {
 }
 
 describe("serialização — os dois blocos", () => {
-  it('emite `:root:root` e `:root:root[data-theme="dark"]`, nesta forma', () => {
+  it("emite `:root:root` e `:root:root[data-theme=\"dark\"]`, nesta forma", () => {
     // A especificidade dobrada é o mecanismo, não estilo: `:root` (0,1,0) e
     // `[data-theme="dark"]` (0,1,0) do globals.css empatariam com um `:root`
     // simples, e aí quem decide é a ORDEM do `<link>` — que difere entre dev
@@ -115,10 +106,7 @@ describe("serialização — os dois blocos", () => {
         "--color-cta-fg",
         "--color-cta-hover",
         "--color-cta-leve",
-        "--color-cta-forte",
-        "--color-acao",
-        "--color-acao-fg",
-        "--color-acao-hover",
+      "--color-cta-forte",
       ].sort(),
     );
     expect(claro["--color-brand"]).toBe("#2563eb");
@@ -286,10 +274,7 @@ describe("allowlist de FORMA de valor", () => {
     for (const hex of SEMENTES) {
       const { css, motivos } = cssDaMarca(corDe(hex));
       expect(css, hex).not.toBeNull();
-      expect(
-        motivos.map((m) => m.codigo),
-        hex,
-      ).not.toContain("valor_fora_da_allowlist");
+      expect(motivos.map((m) => m.codigo), hex).not.toContain("valor_fora_da_allowlist");
       expect(css ?? "", hex).not.toContain("<");
       expect(css ?? "", hex).not.toContain(";}");
     }
@@ -302,9 +287,13 @@ describe("o que a derivação move e o CSS ainda não emite", () => {
     // não a emite, o log precisa dizer isso também — senão o motivo descreve um
     // movimento que a tela não faz.
     const cor = corDe("#22c55e");
-    const movidas = (cor.derivada?.motivos ?? []).filter((m) => m.codigo === "semantica_deslocada");
+    const movidas = (cor.derivada?.motivos ?? []).filter(
+      (m) => m.codigo === "semantica_deslocada",
+    );
     expect(movidas.length).toBeGreaterThan(0);
-    const naoEmitidas = cssDaMarca(cor).motivos.filter((m) => m.codigo === "token_nao_serializado");
+    const naoEmitidas = cssDaMarca(cor).motivos.filter(
+      (m) => m.codigo === "token_nao_serializado",
+    );
     expect(naoEmitidas).toHaveLength(movidas.length);
   });
 });

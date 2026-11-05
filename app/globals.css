@@ -32,19 +32,19 @@
 
 :root {
   /* Surfaces (light) */
-  --color-bg: #f7f7f5;
+  --color-bg: #f7f6f2;
   --color-surface: #ffffff;
-  --color-surface-elevated: #f3f3f0;
+  --color-surface-elevated: #f1efe9;
   --color-overlay: rgba(15, 19, 26, 0.45);
 
   /* Text (light) */
-  --color-text: #1b1f27;
-  --color-text-muted: #666d7a;
+  --color-text: #0f131a;
+  --color-text-muted: #5b6372;
   --color-text-subtle: #8a91a0;
 
   /* Borders (light) */
-  --color-border: #ecece8;
-  --color-border-strong: #dddcd6;
+  --color-border: #e4e1d8;
+  --color-border-strong: #cfcbbf;
 
   /* Accent — Sage (11 stops) */
   --color-accent-50: #f2f5f9;
@@ -70,19 +70,15 @@
   --color-cta: #d4af37;
   --color-cta-fg: #0f131a;
   --color-cta-hover: #c7a32c;
-  /* Ação principal (botão): navy no claro, ouro no escuro. O ouro (`--color-cta`) fica nos sinais. */
-  --color-acao: #1d2430;
-  --color-acao-fg: #ffffff;
-  --color-acao-hover: #313a49;
   --color-cta-leve: #fbf5e2;
   --color-cta-forte: #a8871f;
-  --color-sidebar: #ffffff;
-  --color-sidebar-fg: #4b5261;
-  --color-sidebar-muted: #8a91a0;
-  --color-sidebar-border: #ecece8;
-  --color-sidebar-hover: #f3f3f0;
-  --color-sidebar-active: rgba(214, 176, 74, 0.13);
-  --color-sidebar-active-fg: #1b1f27;
+  --color-sidebar: #0f131a;
+  --color-sidebar-fg: #d8dce3;
+  --color-sidebar-muted: #6c7586;
+  --color-sidebar-border: #283a55;
+  --color-sidebar-hover: #151b26;
+  --color-sidebar-active: rgba(212, 175, 55, 0.1);
+  --color-sidebar-active-fg: #f1d47c;
 
   /* Neutrals — greige (11 stops, light) */
   --color-neutral-50: #f7f6f2;
@@ -284,15 +280,15 @@
    (lib/branding/css.ts), que só ganha consumidor com a tela de marca.
    ───────────────────────────────────────────────────────────────────────── */
 [data-theme="light"] {
-  --color-bg: #f7f7f5;
+  --color-bg: #f7f6f2;
   --color-surface: #ffffff;
-  --color-surface-elevated: #f3f3f0;
+  --color-surface-elevated: #f1efe9;
   --color-overlay: rgba(15, 19, 26, 0.45);
-  --color-text: #1b1f27;
-  --color-text-muted: #666d7a;
+  --color-text: #0f131a;
+  --color-text-muted: #5b6372;
   --color-text-subtle: #8a91a0;
-  --color-border: #ecece8;
-  --color-border-strong: #dddcd6;
+  --color-border: #e4e1d8;
+  --color-border-strong: #cfcbbf;
   --color-accent: var(--color-accent-600);
   --color-accent-fg: #ffffff;
   --color-accent-soft: var(--color-accent-100);
@@ -305,19 +301,15 @@
   --color-cta: #d4af37;
   --color-cta-fg: #0f131a;
   --color-cta-hover: #c7a32c;
-  /* Ação principal (botão): navy no claro, ouro no escuro. O ouro (`--color-cta`) fica nos sinais. */
-  --color-acao: #1d2430;
-  --color-acao-fg: #ffffff;
-  --color-acao-hover: #313a49;
   --color-cta-leve: #fbf5e2;
   --color-cta-forte: #a8871f;
-  --color-sidebar: #ffffff;
-  --color-sidebar-fg: #4b5261;
-  --color-sidebar-muted: #8a91a0;
-  --color-sidebar-border: #ecece8;
-  --color-sidebar-hover: #f3f3f0;
-  --color-sidebar-active: rgba(214, 176, 74, 0.13);
-  --color-sidebar-active-fg: #1b1f27;
+  --color-sidebar: #0f131a;
+  --color-sidebar-fg: #d8dce3;
+  --color-sidebar-muted: #6c7586;
+  --color-sidebar-border: #283a55;
+  --color-sidebar-hover: #151b26;
+  --color-sidebar-active: rgba(212, 175, 55, 0.1);
+  --color-sidebar-active-fg: #f1d47c;
   --color-neutral-50: #f7f6f2;
   --color-neutral-100: #f1efe9;
   --color-neutral-200: #e4e1d8;
@@ -418,9 +410,6 @@
   --color-cta: #d4af37;
   --color-cta-fg: #0f131a;
   --color-cta-hover: #e0bc45;
-  --color-acao: #d4af37;
-  --color-acao-fg: #0f131a;
-  --color-acao-hover: #e0bc45;
   --color-cta-leve: rgba(212, 175, 55, 0.14);
   --color-cta-forte: #e0bc45;
   --color-sidebar: #0b0f15;
@@ -544,9 +533,6 @@
   --color-cta: var(--color-cta);
   --color-cta-foreground: var(--color-cta-fg);
   --color-cta-hover: var(--color-cta-hover);
-  --color-acao: var(--color-acao);
-  --color-acao-foreground: var(--color-acao-fg);
-  --color-acao-hover: var(--color-acao-hover);
   --color-cta-leve: var(--color-cta-leve);
   --color-cta-forte: var(--color-cta-forte);
   --color-sidebar: var(--color-sidebar);
@@ -882,8 +868,8 @@
      classes de cada tela (`text-2xl font-semibold`), que vencem a base. */
   h1 {
     font-family: var(--font-archivo), var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
-    font-stretch: 100%;
-    letter-spacing: -0.025em;
+    font-stretch: 112%;
+    letter-spacing: -0.03em;
   }
 
   code,
