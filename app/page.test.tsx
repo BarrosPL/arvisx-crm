@@ -26,43 +26,26 @@ beforeEach(() => {
   cena.usuario = null;
 });
 
-describe("/ — a página inicial pública (a vitrine do Arvisx CRM)", () => {
-  it("sem sessão: mostra a promessa, o botão de entrar e os documentos legais", async () => {
+describe("/ — página provisória (em breve)", () => {
+  it("sem sessão: só o aviso de lançamento, sem botões nem links", async () => {
     await montar();
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "O WhatsApp chega. A IA atende e vende. Seu CRM organiza tudo.",
+      "Estamos nos preparando para o nosso lançamento.",
     );
-    // Quem já é cliente entra por aqui: o topo e o hero levam ao login.
-    const entrar = screen.getAllByRole("link", { name: /^(Entrar|Já sou cliente)$/ });
-    expect(entrar.length).toBeGreaterThanOrEqual(2);
-    for (const a of entrar) expect(a).toHaveAttribute("href", "/login");
-
-    expect(screen.getByRole("link", { name: "Termos de uso" })).toHaveAttribute(
-      "href",
-      "/termos-de-uso",
-    );
-    expect(screen.getByRole("link", { name: "Política de privacidade e cookies" })).toHaveAttribute(
-      "href",
-      "/privacidade-e-cookies",
-    );
+    expect(screen.queryAllByRole("link")).toHaveLength(0);
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 
-  it("a landing é a da Arvisx: não há cadastro aberto nem link para /signup", async () => {
-    await montar();
-    const hrefs = screen.getAllByRole("link").map((a) => a.getAttribute("href"));
-    expect(hrefs).not.toContain("/signup");
-  });
-
-  it("as capturas do CRM têm texto alternativo", async () => {
+  it("o logo tem texto alternativo", async () => {
     await montar();
     for (const img of screen.getAllByRole("img")) {
       expect(img.getAttribute("alt")).toBeTruthy();
     }
   });
 
-  it("com sessão: segue direto para o painel, como sempre foi", async () => {
-    cena.usuario = { id: "11111111-1111-4111-8111-111111111111" };
+  it("com sessão: segue para o painel", async () => {
+    cena.usuario = { id: "u1" };
     await expect(montar()).rejects.toThrow("NEXT_REDIRECT:/app");
   });
 });

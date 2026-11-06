@@ -1,0 +1,67 @@
+/*
+ * Página provisória de crm.arvisx.com.br enquanto a landing nova não sobe.
+ * Só layout e uma mensagem; paleta da vitrine (navy e ouro), fixa em claro e
+ * escuro como a landing.
+ */
+.em-breve {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 32px 24px;
+  background: #0b0f15;
+  color: #eef0f3;
+  font-family: var(--font-manrope), "Manrope", system-ui, sans-serif;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  background-image:
+    radial-gradient(50% 60% at 50% 55%, rgba(78, 168, 255, 0.07), transparent 70%);
+}
+/* Onda de dados do site (OndaDeDados) como fundo, atrás do texto. */
+.em-breve__onda {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* Escurece o centro para o texto ler bem por cima dos pontos. */
+.em-breve::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(45% 35% at 50% 45%, #0b0f15 30%, transparent 100%);
+  pointer-events: none;
+}
+.em-breve__miolo {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 28px;
+  max-width: 560px;
+}
+.em-breve__marca {
+  display: block;
+  width: min(320px, 70vw);
+  height: auto;
+}
+.em-breve__fio {
+  width: 56px;
+  height: 2px;
+  background: #d4af37;
+  border-radius: 2px;
+}
+.em-breve__titulo {
+  font-family: var(--font-archivo), "Archivo", "Manrope", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(26px, 5vw, 38px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.em-breve__texto {
+  margin: 0;
+  color: #a2abb9;
+  font-size: clamp(16px, 2.4vw, 18px);
+  line-height: 1.6;
+}
