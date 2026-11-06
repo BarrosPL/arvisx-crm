@@ -3,6 +3,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 
 import { OndaDeDados } from "@/components/landing/OndaDeDados";
+import { marcaDaSaida } from "@/lib/branding/saida";
 import { createClient } from "@/lib/supabase/server";
 
 import "./em-breve.css";
@@ -33,6 +34,9 @@ export default async function HomePage() {
   } = await supabase.auth.getUser();
   if (user) redirect("/app");
 
+  // Nome da marca vem do banco (catraca nome-da-marca-nas-telas-vem-do-banco).
+  const marca = await marcaDaSaida(null);
+
   return (
     <main className="em-breve">
       <OndaDeDados className="em-breve__onda" />
@@ -40,7 +44,7 @@ export default async function HomePage() {
         <Image
           className="em-breve__marca"
           src="/marca/arvisx-crm-escuro.png"
-          alt="Arvisx CRM"
+          alt={marca.nome}
           width={715}
           height={85}
           priority

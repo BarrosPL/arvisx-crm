@@ -851,11 +851,6 @@ const HOSTS_DECLARADOS: Record<string, EntradaDeHost> = {
     motivo:
       "endereço da própria página inicial pública (`app/page.tsx`): canonical e Open Graph apontam para ela mesma, como qualquer vitrine. Neste fork o produto é o Arvisx CRM e este é o domínio dele — não é domínio de cliente nem de contribuidor. O código não chama o host.",
   },
-  "arvisx.com.br": {
-    categoria: "PLATAFORMA",
-    motivo:
-      "site institucional da Arvisx, linkado no rodapé da vitrine (`app/page.tsx`) como 'produto da Arvisx AI'. Link que a pessoa clica; o código não chama o host.",
-  },
   "chatgpt.com": {
     categoria: "CONSOLE",
     motivo:
@@ -1360,9 +1355,6 @@ describe("catraca de host de terceiro no código que embarca", () => {
       // Decisão escrita: painel de chaves da Requesty, o mesmo caso dos outros
       // CONSOLE (o link "Onde pegar a chave" da tela de Credenciais).
       "app.requesty.ai",
-      // Decisão escrita (vitrine deste fork): site institucional da Arvisx,
-      // linkado no rodapé da página inicial — clicado pela pessoa, nunca chamado.
-      "arvisx.com.br",
       // Decisão escrita (spec 24, auditoria de site): assinatura de construtor
       // detectada na amostra real da VPS — nunca chamada, nunca exibida.
       "automatizo.dev.br",

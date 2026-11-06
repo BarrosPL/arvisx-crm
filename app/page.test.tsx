@@ -10,6 +10,9 @@ vi.mock("next/navigation", () => ({
     throw new Error(`NEXT_REDIRECT:${destino}`);
   }),
 }));
+vi.mock("@/lib/branding/saida", () => ({
+  marcaDaSaida: async () => ({ nome: "Arvisx CRM" }),
+}));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({
     auth: { getUser: async () => ({ data: { user: cena.usuario } }) },
