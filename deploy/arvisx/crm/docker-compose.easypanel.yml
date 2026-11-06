@@ -6,7 +6,7 @@ x-logging: &log
   options: {max-size: "10m", max-file: "3"}
 
 services:
-  # Aplica o schema (baseline.sql) uma vez e cria o primeiro admin. Idempotente; termina e sai.
+  # Aplica o schema (baseline.sql), semeia as chaves de cifra e cria o primeiro admin. Idempotente; termina e sai.
   init:
     image: postgres:17-alpine
     restart: "no"
@@ -17,6 +17,9 @@ services:
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
       OWNER_EMAIL: ${OWNER_EMAIL}
       OWNER_PASSWORD: ${OWNER_PASSWORD}
+      # Semeadas em private.app_secrets so se a linha ainda nao existir (init.sh, semear_chave).
+      NUVEMSHOP_OAUTH_ENCRYPTION_KEY: ${NUVEMSHOP_OAUTH_ENCRYPTION_KEY:-}
+      CPF_ENCRYPTION_KEY: ${CPF_ENCRYPTION_KEY:-}
     volumes:
       - ../../../supabase/baseline.sql:/baseline.sql:ro
       - ../../../supabase/migrations:/migrations:ro

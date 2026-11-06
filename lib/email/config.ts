@@ -30,6 +30,9 @@ export const MENSAGEM_DO_ENDERECO_DE_SERVIDOR =
 export const MENSAGEM_DO_REMETENTE_INVALIDO =
   "O e-mail do remetente está em formato inválido. Use algo como suporte@suaempresa.com.";
 
+export const MENSAGEM_DA_SENHA_OBRIGATORIA =
+  "Informe a senha do servidor SMTP. Sem ela, esta configuração passaria a valer no lugar da do servidor e o envio falharia.";
+
 export const MENSAGEM_DA_FALHA_AO_SALVAR_SMTP =
   "Não foi possível salvar o servidor de e-mail. Nada foi gravado; tente novamente em instantes.";
 
@@ -152,6 +155,16 @@ export async function saveSmtpConfig(input: Omit<SmtpConfig, "source"> & { updat
     encrypted =
       (data as { smtp_password_encrypted?: string | null } | null)
         ?.smtp_password_encrypted ?? null;
+
+    // Servidor com usuário e NENHUMA senha (nem nova, nem guardada): a linha
+    // gravada venceria o `.env` em `lerConfiguracao` (banco acima do ambiente)
+    // e o envio passaria a falhar na autenticação — medido no Easypanel em
+    // 06/11/2026, quando a cifra recusou a senha e o Salvar seguinte, sem
+    // senha, gravou a linha incompleta. Relé sem autenticação (sem usuário) e o
+    // "apagar" (endereço vazio) continuam aceitos.
+    if (!encrypted && input.host && input.username) {
+      return { ok: false as const, error: MENSAGEM_DA_SENHA_OBRIGATORIA };
+    }
   }
   const { error } = await admin.from("platform_smtp_settings").upsert(
     {

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Prepara o banco do CRM (idempotente): extensoes + baseline.sql + primeiro admin.
+# Prepara o banco do CRM (idempotente): extensoes + baseline.sql + chaves de cifra + primeiro admin.
 # Roda dentro do postgres:17-alpine, uma vez por deploy.
 set -eu
 log() { echo "[init] $*"; }
@@ -51,6 +51,48 @@ if [ -n "$pend" ]; then
   fi
 else
   log "sem migracoes pendentes"
+fi
+
+# Chaves de cifra em private.app_secrets: as funcoes de cifra do banco leem de la
+# (fn_encrypt_oauth -> nuvemshop_oauth_key; encrypt_cpf -> cpf_key). O kit original
+# semeia no install.sh/update.sh (ensure_encryption_key, hostgator-setup-kit/_common.sh);
+# o Easypanel nao roda o kit, entao sem isto salvar SMTP em /admin/email dava "a cifra
+# esta indisponivel nesta instalacao". Grava a partir da env SO se a linha nao existir:
+# trocar uma chave que ja existe inutiliza todo segredo cifrado com ela.
+semear_chave() { # semear_chave <nome no banco> <valor> <nome da env>
+  if [ -z "$2" ]; then
+    log "AVISO: $3 vazia no init; $1 nao semeada (as funcoes de cifra seguem sem chave)"
+    return 0
+  fi
+  if [ "${#2}" -lt 32 ]; then
+    log "AVISO: $3 tem menos de 32 caracteres; $1 nao semeada (fn_encrypt_oauth a recusaria)"
+    return 0
+  fi
+  r="$(psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -qtA -v nome="$1" -v valor="$2" <<'SQL'
+with novo as (
+  insert into private.app_secrets (name, value) values (:'nome', :'valor')
+  on conflict (name) do nothing
+  returning 1
+)
+select case
+  when exists (select 1 from novo) then 'gravada'
+  when (select value from private.app_secrets where name = :'nome') = :'valor' then 'igual'
+  else 'diferente'
+end;
+SQL
+)"
+  case "$r" in
+    gravada) log "chave $1 gravada a partir de $3" ;;
+    igual) log "chave $1 ja existe (igual a $3)" ;;
+    diferente) log "AVISO: chave $1 ja existe e DIFERE de $3; mantive a do banco (trocar inutiliza os segredos cifrados)" ;;
+    *) log "AVISO: resposta inesperada ao semear $1: $r" ;;
+  esac
+}
+if [ "$(psql "$SUPABASE_DB_URL" -tAc "select to_regclass('private.app_secrets') is not null")" = "t" ]; then
+  semear_chave nuvemshop_oauth_key "${NUVEMSHOP_OAUTH_ENCRYPTION_KEY:-}" NUVEMSHOP_OAUTH_ENCRYPTION_KEY
+  semear_chave cpf_key "${CPF_ENCRYPTION_KEY:-}" CPF_ENCRYPTION_KEY
+else
+  log "AVISO: private.app_secrets nao existe; chaves de cifra nao semeadas"
 fi
 
 apk add --no-cache curl >/dev/null 2>&1 || { log "nao consegui instalar curl"; exit 1; }

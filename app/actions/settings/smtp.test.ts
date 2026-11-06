@@ -56,6 +56,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 import {
   FONTE_DO_FORMATO_DO_ENDERECO,
   MENSAGEM_DA_FALHA_AO_SALVAR_SMTP,
+  MENSAGEM_DA_SENHA_OBRIGATORIA,
   MENSAGEM_DO_ENDERECO_DE_SERVIDOR,
   MENSAGEM_DO_REMETENTE_INVALIDO,
 } from "@/lib/email/config";
@@ -96,8 +97,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   deps.escrita.mockResolvedValue({ user: { id: "eu" } });
   deps.upsert.mockResolvedValue({ error: null });
+  // Já existe senha guardada: os casos abaixo medem o endereço, não a senha.
   deps.leituraSenha.mockResolvedValue({
-    data: { smtp_password_encrypted: null },
+    data: { smtp_password_encrypted: "senha-ja-cifrada" },
     error: null,
   });
 });
@@ -219,6 +221,52 @@ describe("o endereço do servidor SMTP não chega cru à tela (issue #2804)", ()
  * do apêndice (a que vale, porque o apêndice roda por último). Só a ÚLTIMA é
  * comparada. A 0333 fica de fora: é a régua antiga, que a 0669 substitui.
  */
+describe("sem senha nenhuma, o Salvar não grava linha que vence o .env", () => {
+  it("usuário preenchido, senha vazia e nenhuma senha guardada: recusa e não grava", async () => {
+    deps.leituraSenha.mockResolvedValue({ data: { smtp_password_encrypted: null }, error: null });
+
+    const r = await updateSmtp(entrada({ password: "" }));
+
+    expect(r).toEqual({ ok: false, error: MENSAGEM_DA_SENHA_OBRIGATORIA });
+    expect(deps.upsert).not.toHaveBeenCalled();
+    expect(deps.audit).not.toHaveBeenCalled();
+  });
+
+  it("primeira configuração sem linha no banco também recusa", async () => {
+    deps.leituraSenha.mockResolvedValue({ data: null, error: null });
+
+    const r = await updateSmtp(entrada({ password: "" }));
+
+    expect(r).toEqual({ ok: false, error: MENSAGEM_DA_SENHA_OBRIGATORIA });
+    expect(deps.upsert).not.toHaveBeenCalled();
+  });
+
+  it("senha já guardada: salvar sem redigitar mantém a senha", async () => {
+    const r = await updateSmtp(entrada({ password: "" }));
+
+    expect(r).toEqual({ ok: true });
+    expect(deps.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ smtp_password_encrypted: "senha-ja-cifrada" }),
+      expect.anything(),
+    );
+  });
+
+  it("relé sem autenticação (sem usuário) continua aceito sem senha", async () => {
+    deps.leituraSenha.mockResolvedValue({ data: { smtp_password_encrypted: null }, error: null });
+
+    const r = await updateSmtp(entrada({ username: "", password: "" }));
+
+    expect(r).toEqual({ ok: true });
+  });
+
+  it("senha nova com a cifra indisponível: recusa sem gravar nada", async () => {
+    const r = await updateSmtp(entrada({ password: "segredo" }));
+
+    expect(r).toMatchObject({ ok: false });
+    expect(deps.upsert).not.toHaveBeenCalled();
+  });
+});
+
 describe("a régua da tela e a do banco são a mesma (#2804)", () => {
   const CHECK_DO_HOST =
     /(?:add )?constraint platform_smtp_settings_host\s+check \(smtp_host is null or smtp_host ~ '([^']+)'\)/g;
