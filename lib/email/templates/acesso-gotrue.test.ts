@@ -67,6 +67,57 @@ describe("moldes de acesso do GoTrue", () => {
     expect(html).not.toContain("<img");
   });
 
+  describe("o visual aprovado (casca de `estrutura.ts`)", () => {
+    const PRODUTO: MarcaDeSaida = {
+      nome: "Arvisx CRM",
+      logoUrl: null,
+      accent: "#283a55",
+      accentFg: "#ffffff",
+      origens: { nome: "padrao", cor: "padrao" },
+    };
+
+    it("marca do produto: logo oficial para fundo escuro, em URL absoluta https", () => {
+      const html = montarTemplateDeAcesso("recovery", PRODUTO);
+      expect(html).toContain('src="https://crm.arvisx.com.br/marca/arvisx-crm-escuro.png"');
+      expect(html).toContain('height="36"');
+    });
+
+    it("marca do produto: botão dourado com texto navy, e o nome vem da marca resolvida", () => {
+      const html = montarTemplateDeAcesso("recovery", PRODUTO);
+      expect(html).toContain('bgcolor="#d4af37"');
+      expect(html).toMatch(/<a href="\{\{ \.RedirectTo \}\}&token_hash=\{\{ \.TokenHash \}\}" style="[^"]*color:#0f131a/);
+      expect(html).toContain("Arvisx CRM &middot;");
+      expect(html).toContain("suporte@arvisx.com.br");
+    });
+
+    it("marca de revendedor: botão no accent dele, sem dourado, sem site nem suporte do produto", () => {
+      const html = montarTemplateDeAcesso("confirmation", MARCA);
+      expect(html).toContain(`background:${MARCA.accent}`);
+      expect(html).toContain(`color:${MARCA.accentFg}`);
+      expect(html).not.toContain("#d4af37");
+      expect(html).not.toContain("arvisx.com.br");
+    });
+
+    it("o logo sobre o navy prefere a versão para fundo escuro", () => {
+      const html = montarTemplateDeAcesso("confirmation", {
+        ...MARCA,
+        logoDarkUrl: "https://exemplo.test/logo-escuro.png",
+      });
+      expect(html).toContain('src="https://exemplo.test/logo-escuro.png"');
+      expect(html).not.toContain('src="https://exemplo.test/logo.png"');
+    });
+
+    it("tabelas e estilo inline: nada de <style>, <link> ou webfont", () => {
+      for (const modelo of MODELOS_DE_ACESSO) {
+        const html = montarTemplateDeAcesso(modelo, PRODUTO);
+        expect(html).toContain('role="presentation"');
+        expect(html).not.toMatch(/<style|<link|@import|@font-face|fonts\.googleapis/i);
+        // Único asset externo: o logo.
+        expect(html.match(/<img /g)?.length ?? 0).toBe(1);
+      }
+    });
+  });
+
   it("a rota dos moldes é PÚBLICA — senão o GoTrue recebe a tela de login", () => {
     // Este é o caso mais caro do arquivo. Quem busca é o GoTrue, que não tem
     // sessão nossa: sem entrada em PUBLIC_PATHS o proxy responde 307 para

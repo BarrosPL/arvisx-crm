@@ -16,7 +16,7 @@
  * ter visto qualquer tela do produto.
  */
 import { rotuloDoPapel } from "@/lib/auth/types";
-import { NEUTROS_DE_SAIDA, type MarcaDeSaida } from "@/lib/branding/saida";
+import type { MarcaDeSaida } from "@/lib/branding/saida";
 import { estruturaDeEmail } from "./estrutura";
 
 export interface InviteEmailOptions {
@@ -44,25 +44,16 @@ export function buildInviteEmail(opts: InviteEmailOptions): {
   // « convidou você como agent » em toda instalação.
   const papel = rotuloDoPapel(opts.role);
 
-  const html = estruturaDeEmail(opts.marca, `    <h1 style="font-size:22px;line-height:1.3;margin:0 0 16px;color:${NEUTROS_DE_SAIDA.texto}">
-      Você foi convidado para a ${escapeHtml(opts.orgName)}
-    </h1>
-    <p style="margin:0 0 16px;font-size:15px;line-height:1.5">
-      ${escapeHtml(opts.inviterName)} convidou você como
-      <strong>${escapeHtml(papel)}</strong> no ${escapeHtml(marca)}.
-    </p>
-    <p style="margin:24px 0">
-      <a href="${escapeHtml(opts.acceptUrl)}" style="display:inline-block;padding:12px 24px;background:${opts.marca.accent};color:${opts.marca.accentFg};border-radius:6px;text-decoration:none;font-weight:600">
-        Aceitar convite
-      </a>
-    </p>
-    <p style="margin:0 0 8px;font-size:13px;color:${NEUTROS_DE_SAIDA.suave}">
-      Ou copie e cole este link no navegador:<br>
-      <span style="word-break:break-all;color:${opts.marca.accent}">${escapeHtml(opts.acceptUrl)}</span>
-    </p>
-    <p style="margin:24px 0 0;font-size:13px;color:${NEUTROS_DE_SAIDA.suave}">
-      Este link expira em <strong>${expiresStr}</strong>. Se você não esperava este convite, pode ignorá-lo.
-    </p>`);
+  const html = estruturaDeEmail(opts.marca, {
+    preheader: `${opts.inviterName} convidou você para a ${opts.orgName}.`,
+    etiqueta: "Convite",
+    titulo: `Você foi convidado para a ${opts.orgName}`,
+    corpo: `<p style="margin:0">${escapeHtml(opts.inviterName)} convidou você como <strong>${escapeHtml(papel)}</strong> no ${escapeHtml(marca)}.</p>`,
+    botao: { rotulo: "Aceitar convite", href: escapeHtml(opts.acceptUrl) },
+    link: escapeHtml(opts.acceptUrl),
+    nota: `Este link expira em ${expiresStr}.`,
+    rodape: "Se você não esperava este convite, pode ignorá-lo.",
+  });
 
   const text = [
     `Você foi convidado para a ${opts.orgName} como ${papel} no ${marca}.`,

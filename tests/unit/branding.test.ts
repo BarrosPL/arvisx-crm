@@ -846,6 +846,11 @@ type EntradaDeHost = { categoria: CategoriaDeHost; motivo: string };
 
 const HOSTS_DECLARADOS: Record<string, EntradaDeHost> = {
   // ── a vitrine deste fork: crm.arvisx.com.br é o endereço do PRODUTO ──
+  "arvisx.com.br": {
+    categoria: "PLATAFORMA",
+    motivo:
+      "site e e-mail de suporte do PRODUTO (`SITE_DO_PRODUTO`/`SUPORTE_DO_PRODUTO` em `lib/branding.ts`), no rodapé dos e-mails só quando a marca em vigor é a do produto (`marcaEhADoProduto`). Marca de revendedor nunca o recebe. O código não chama o host.",
+  },
   "crm.arvisx.com.br": {
     categoria: "PLATAFORMA",
     motivo:
@@ -1355,6 +1360,9 @@ describe("catraca de host de terceiro no código que embarca", () => {
       // Decisão escrita: painel de chaves da Requesty, o mesmo caso dos outros
       // CONSOLE (o link "Onde pegar a chave" da tela de Credenciais).
       "app.requesty.ai",
+      // Decisão escrita (e-mails deste fork, 2026-11-06): site e suporte do
+      // produto no rodapé, só com a marca do produto — nunca chamado.
+      "arvisx.com.br",
       // Decisão escrita (spec 24, auditoria de site): assinatura de construtor
       // detectada na amostra real da VPS — nunca chamada, nunca exibida.
       "automatizo.dev.br",

@@ -7,6 +7,8 @@ import { buildInviteEmail } from "@/lib/email/templates/invite";
 
 // Gravado contra a main antes do porte, com entradas sintéticas. A extração da
 // moldura não autoriza trocar cor, fonte, texto ou idioma de quem já recebia.
+// Regravado em 2026-11-06 com o visual de e-mail aprovado (estrutura.ts):
+// mudança de identidade é decisão escrita, e regravar é o diff dela.
 const opcoes = {
   inviterName: "Ana",
   orgName: "Equipe sintética",

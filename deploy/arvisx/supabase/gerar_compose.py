@@ -8,7 +8,8 @@ Mudancas (todas mecanicas, para nao divergir do upstream):
 - limite de memoria por servico (mem_limit), para um servico nao derrubar os agentes;
 - api-gw entra na rede externa `easypanel` (dominio publico via Traefik) e na rede privada `arvisx-crm-net`;
 - db entra so na rede privada `arvisx-crm-net` (alias arvisx-supabase-db), onde o CRM o alcanca;
-- realtime ganha o alias de rede que o envoy espera (antes vinha do container_name).
+- realtime ganha o alias de rede que o envoy espera (antes vinha do container_name);
+- auth ganha GOTRUE_MAILER_TEMPLATES_* e GOTRUE_MAILER_SUBJECTS_* (moldes do app, URL publica).
 Rodar: python3 gerar_compose.py   (usa PyYAML)
 """
 import copy
@@ -74,6 +75,20 @@ out["services"]["db"]["networks"] = {
     "crm": {"aliases": ["arvisx-supabase-db"]},
 }
 
+# Moldes e assuntos dos e-mails de acesso: sem eles o GoTrue manda o molde padrao
+# (link /auth/v1/verify com PKCE, que cai no login com "Este link veio do modelo de
+# e-mail padrao do Supabase"). O GoTrue so carrega molde por HTTP; a rota do app
+# (`app/email-templates/[modelo]/route.ts`) resolve a marca pelo banco. URL PUBLICA
+# https: o `crm` roda em outro projeto do Easypanel, fora da rede padrao do auth,
+# entao `http://app:3000` (o padrao do hostgator-setup-kit) nao resolve aqui.
+auth_env = out["services"]["auth"]["environment"]
+auth_env.update({
+    "GOTRUE_MAILER_TEMPLATES_RECOVERY": "${MAILER_TEMPLATES_RECOVERY:-https://crm.arvisx.com.br/email-templates/recovery}",
+    "GOTRUE_MAILER_TEMPLATES_CONFIRMATION": "${MAILER_TEMPLATES_CONFIRMATION:-https://crm.arvisx.com.br/email-templates/confirmation}",
+    "GOTRUE_MAILER_SUBJECTS_RECOVERY": "${MAILER_SUBJECTS_RECOVERY:-Redefinir sua senha · ArvisX CRM}",
+    "GOTRUE_MAILER_SUBJECTS_CONFIRMATION": "${MAILER_SUBJECTS_CONFIRMATION:-Confirme seu e-mail · ArvisX CRM}",
+})
+
 vols = out.get("volumes") or {}
 for v in ("db-data", "storage-data", "snippets-data"):
     vols[v] = None
@@ -85,6 +100,7 @@ cab = (
     "# Variaveis (${...}) vem do .env criado pelo Easypanel (Create .env file).\n"
 )
 (AQUI / "docker-compose.easypanel.yml").write_text(
-    cab + yaml.safe_dump(out, sort_keys=False, width=1000, allow_unicode=True)
+    cab + yaml.safe_dump(out, sort_keys=False, width=1000, allow_unicode=True),
+    encoding="utf-8", newline="\n",
 )
 print("ok:", len(out["services"]), "servicos")

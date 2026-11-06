@@ -1,4 +1,4 @@
-import { NEUTROS_DE_SAIDA, type MarcaDeSaida } from "@/lib/branding/saida";
+import type { MarcaDeSaida } from "@/lib/branding/saida";
 import { estruturaDeEmail } from "./estrutura";
 
 /**
@@ -40,23 +40,40 @@ export type ModeloDeAcesso = "confirmation" | "recovery";
 export const MODELOS_DE_ACESSO: readonly ModeloDeAcesso[] = ["confirmation", "recovery"];
 
 /** O texto de cada modelo. Assunto entra no `GOTRUE_MAILER_SUBJECTS_*`. */
-const COPIA: Record<ModeloDeAcesso, { assunto: (marca: string) => string; titulo: string; corpo: (marca: string) => string; botao: string; rodape: string }> = {
+const COPIA: Record<
+  ModeloDeAcesso,
+  {
+    assunto: (marca: string) => string;
+    preheader: (marca: string) => string;
+    etiqueta: string;
+    titulo: string;
+    corpo: (marca: string) => string;
+    botao: string;
+    nota: string;
+    rodape: string;
+  }
+> = {
   confirmation: {
     assunto: (marca) => `Confirme seu e-mail · ${marca}`,
+    preheader: (marca) => `Confirme seu e-mail para ativar sua conta no ${marca}.`,
+    etiqueta: "Bem-vindo",
     titulo: "Confirme seu e-mail",
     corpo: (marca) =>
-      `Sua conta no ${marca} está quase pronta. Clique no botão abaixo para confirmar seu e-mail e ativar sua conta.`,
+      `Sua conta no ${marca} está quase pronta. Clique no botão abaixo para confirmar seu e-mail e ativar o acesso.`,
     botao: "Confirmar e-mail",
-    rodape: "Se você não criou esta conta, ignore este e-mail.",
+    nota: "Depois de confirmar, é só entrar e começar a atender.",
+    rodape: "Não criou esta conta? Pode ignorar este e-mail com tranquilidade.",
   },
   recovery: {
     assunto: (marca) => `Redefinir sua senha · ${marca}`,
-    titulo: "Redefinir sua senha",
+    preheader: (marca) => `Defina uma nova senha para acessar o ${marca}.`,
+    etiqueta: "Segurança da conta",
+    titulo: "Vamos redefinir sua senha",
     corpo: (marca) =>
-      `Recebemos um pedido para redefinir a senha da sua conta no ${marca}. Clique no botão abaixo para escolher uma nova.`,
+      `Recebemos um pedido para redefinir a senha da sua conta no ${marca}. Clique no botão abaixo para escolher uma nova senha.`,
     botao: "Definir nova senha",
-    rodape:
-      "Se não foi você quem pediu, ignore este e-mail — sua senha continua a mesma.",
+    nota: "Por segurança, este link é de uso único e expira em pouco tempo.",
+    rodape: "Não foi você quem pediu? Pode ignorar este e-mail: sua senha continua a mesma.",
   },
 };
 
@@ -65,11 +82,8 @@ export function assuntoDoModelo(modelo: ModeloDeAcesso, marca: MarcaDeSaida): st
 }
 
 /**
- * O molde, com a marca da INSTALAÇÃO já aplicada.
- *
- * Estilo inline apenas e zero asset externo além do logo, pelas mesmas razões
- * de `invite.ts` — inclusive a dimensão no atributo, que o Outlook desktop
- * exige porque descarta `height` de style em imagem.
+ * O molde, com a marca da INSTALAÇÃO já aplicada, na casca de `estrutura.ts`
+ * (tabelas, estilo inline, zero asset externo além do logo).
  */
 export function montarTemplateDeAcesso(modelo: ModeloDeAcesso, marca: MarcaDeSaida): string {
   const t = COPIA[modelo];
@@ -77,24 +91,18 @@ export function montarTemplateDeAcesso(modelo: ModeloDeAcesso, marca: MarcaDeSai
   // As chaves duplas ficam CRUAS de propósito: o GoTrue as substitui.
   const destino = "{{ .RedirectTo }}&token_hash={{ .TokenHash }}";
 
-  return estruturaDeEmail(marca, `    <h1 style="font-size:22px;line-height:1.3;margin:0 0 16px;color:${NEUTROS_DE_SAIDA.texto}">
-      ${escapeHtml(t.titulo)}
-    </h1>
-    <p style="margin:0 0 16px;font-size:15px;line-height:1.5">
-      ${escapeHtml(t.corpo(marca.nome))}
-    </p>
-    <p style="margin:24px 0">
-      <a href="${destino}" style="display:inline-block;padding:12px 24px;background:${marca.accent};color:${marca.accentFg};border-radius:6px;text-decoration:none;font-weight:600">
-        ${escapeHtml(t.botao)}
-      </a>
-    </p>
-    <p style="margin:0 0 8px;font-size:13px;color:${NEUTROS_DE_SAIDA.suave}">
-      Ou copie e cole este link no navegador:<br>
-      <span style="word-break:break-all;color:${marca.accent}">${destino}</span>
-    </p>
-    <p style="margin:24px 0 0;font-size:13px;color:${NEUTROS_DE_SAIDA.suave}">
-      ${escapeHtml(t.rodape)}
-    </p>`);
+  return estruturaDeEmail(marca, {
+    preheader: t.preheader(marca.nome),
+    etiqueta: t.etiqueta,
+    titulo: t.titulo,
+    corpo: `<p style="margin:0">${escapeHtml(t.corpo(marca.nome))}</p>`,
+    botao: { rotulo: t.botao, href: destino },
+    // No texto (nunca no `href`), um ponto de quebra antes do token: o endereço
+    // fica em duas linhas inteiras, em vez de uma sobra de dois caracteres.
+    link: destino.replace("&token_hash=", "<wbr>&token_hash="),
+    nota: t.nota,
+    rodape: t.rodape,
+  });
 }
 
 function escapeHtml(s: string): string {

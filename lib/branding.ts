@@ -18,6 +18,16 @@
 
 export const DEFAULT_APP_NAME = "ArvisX CRM";
 
+/**
+ * O que só a marca do PRODUTO mostra fora do app — no e-mail, que abre na caixa
+ * de entrada e por isso precisa de endereço absoluto. Marca de revendedor nunca
+ * recebe nada daqui (`marcaEhADoProduto` decide): o logo, o site e o suporte
+ * dela são dela.
+ */
+export const LOGO_DO_PRODUTO_SOBRE_ESCURO_URL = "https://crm.arvisx.com.br/marca/arvisx-crm-escuro.png";
+export const SITE_DO_PRODUTO = "https://arvisx.com.br";
+export const SUPORTE_DO_PRODUTO = "suporte@arvisx.com.br";
+
 export type Branding = {
   /** Nome exibido na interface e nos títulos de página. */
   name: string;

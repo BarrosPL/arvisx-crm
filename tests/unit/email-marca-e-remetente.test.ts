@@ -77,7 +77,7 @@ describe("convite de time", () => {
     });
 
     expect(html).toContain('src="https://cdn.exemplo.test/revendedor.png"');
-    expect(html).toContain('height="40"');
+    expect(html).toContain('height="36"');
     // Legendado com a marca, não com "logo": num leitor de tela (e num cliente
     // que bloqueia imagem) é o `alt` que diz de quem é o e-mail.
     expect(html).toContain('alt="Vendas Turbo"');

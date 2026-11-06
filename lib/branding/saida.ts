@@ -106,8 +106,12 @@ const ACCENT_DO_PRODUTO = stop(
 export const NEUTROS_DE_SAIDA = {
   /** Corpo do texto. */
   texto: stop(REGUA_DO_PRODUTO.claro.neutros, 9),
-  /** Rodapé, legenda, aviso — o que não é a mensagem principal. */
-  suave: stop(REGUA_DO_PRODUTO.claro.neutros, 5),
+  /**
+   * Rodapé, legenda, aviso — o que não é a mensagem principal. Grau 6
+   * (`#5b6372`), o mesmo `--color-text-muted` do `app/globals.css`: o grau 5
+   * dava 3,2:1 sobre branco, abaixo do mínimo de leitura.
+   */
+  suave: stop(REGUA_DO_PRODUTO.claro.neutros, 6),
   /** Fundo da página do e-mail. */
   fundo: stop(REGUA_DO_PRODUTO.claro.neutros, 0),
   /** Régua e borda. */
