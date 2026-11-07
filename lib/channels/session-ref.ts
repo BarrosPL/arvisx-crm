@@ -15,7 +15,8 @@ export type ChannelSessionRef =
   | { provider: "waha"; waha_session_name: string }
   | { provider: "meta_cloud"; meta_phone_number_id: string }
   | { provider: "zernio" | "zernio_social"; zernio_account_id: string }
-  | { provider: "datafy"; datafy_phone_number_id: string };
+  | { provider: "datafy"; datafy_phone_number_id: string }
+  | { provider: "meta_social"; meta_social_account_id: string };
 
 /**
  * Colunas que um `select` do PostgREST precisa trazer para `resolveSessionRef`
@@ -23,7 +24,7 @@ export type ChannelSessionRef =
  * nomeia coluna de provider, e ela some da feature junto com a decisão.
  */
 export const CHANNEL_SESSION_REF_COLUMNS =
-  "provider, waha_session_name, meta_phone_number_id, zernio_account_id, datafy_phone_number_id";
+  "provider, waha_session_name, meta_phone_number_id, zernio_account_id, datafy_phone_number_id, meta_social_account_id";
 
 export function resolveSessionRef(session: ChannelSessionRef): string {
   switch (session.provider) {
@@ -41,5 +42,9 @@ export function resolveSessionRef(session: ChannelSessionRef): string {
     case "zernio_social":
     case "zernio":
       return session.zernio_account_id;
+    // Conexão direta com a Meta: o id que vem em `entry.id` do webhook — a
+    // página no Messenger, a conta profissional no Instagram (migration 9800).
+    case "meta_social":
+      return session.meta_social_account_id;
   }
 }

@@ -88,6 +88,26 @@ export const CHANNEL_CAPABILITIES: Record<ProviderDeMensagem, ChannelCapabilitie
     // agenda de celular a ler, e dizer `true` aqui seria um botão que só falha.
     phonebook: false,
   },
+  // Instagram e Messenger DIRETO na Meta (migration 9800). A física é a das
+  // redes, não a do transporte — por isso o perfil é o mesmo de `zernio_social`:
+  // só responde a quem escreveu nas últimas 24 h (fora disso a Graph recusa
+  // com o código 10 / subcódigo 2018278 no Messenger e 2534022 no Instagram),
+  // não tem modelo aprovado, não tem grupo nem agenda de aparelho. A diferença
+  // medida na documentação da Messenger Platform: não há intervalo mínimo por
+  // destinatário imposto pela plataforma — só o limite de chamadas por página,
+  // que o próprio Graph devolve como erro 613/4 e o envio mostra como falha.
+  meta_social: {
+    freeformOutsideWindow: false,
+    requiresTemplates: false,
+    canManageTemplates: false,
+    banRisk: false,
+    minIntervalMs: null,
+    voiceNote: "server-convert",
+    groups: "none",
+    costPerMessage: false,
+    alteraMensagemEnviada: false,
+    phonebook: false,
+  },
   zernio: {
     freeformOutsideWindow: false,
     requiresTemplates: true,
@@ -146,6 +166,19 @@ export const DEFAULT_CHANNEL_PROVIDER: ChannelProvider = "waha";
 export const CHANNEL_PROVIDER_WAHA: ChannelProvider = "waha";
 export const CHANNEL_PROVIDER_META: ChannelProvider = "meta_cloud";
 export const CHANNEL_PROVIDER_SOCIAL: ChannelProvider = "zernio_social";
+/** Instagram e Messenger conectados direto na Meta, sem parceiro (migration 9800). */
+export const CHANNEL_PROVIDER_SOCIAL_DIRETO: ChannelProvider = "meta_social";
+
+/**
+ * Os providers de REDE SOCIAL — por parceiro ou direto. É a pergunta que a tela
+ * de números faz para tirar da lista o que não é WhatsApp, sem nomear quem
+ * opera cada porta.
+ */
+export const PROVIDERS_SOCIAIS = ["zernio_social", "meta_social"] as const satisfies readonly ChannelProvider[];
+
+export function ehProviderSocial(provider: string | null | undefined): boolean {
+  return (PROVIDERS_SOCIAIS as readonly string[]).includes(provider ?? "");
+}
 export const CHANNEL_PROVIDER_ZERNIO: ChannelProvider = "zernio";
 /** Parceiro que espelha a Cloud API — canal opcional da instalação, desligado por padrão. */
 export const CHANNEL_PROVIDER_DATAFY: ChannelProvider = "datafy";
@@ -182,6 +215,7 @@ export const PROVIDERS_DE_MENSAGEM = [
   "zernio",
   "zernio_social",
   "datafy",
+  "meta_social",
 ] as const satisfies readonly ProviderDeMensagem[];
 
 /**
@@ -203,7 +237,10 @@ export const PROVIDERS_DE_TELEFONE = [
   "meta_cloud",
   "zernio",
   "datafy",
-] as const satisfies readonly Exclude<(typeof PROVIDERS_DE_MENSAGEM)[number], "zernio_social">[];
+] as const satisfies readonly Exclude<
+  (typeof PROVIDERS_DE_MENSAGEM)[number],
+  (typeof PROVIDERS_SOCIAIS)[number]
+>[];
 
 /**
  * `true` quando a linha de `channel_sessions` é um canal de mensagem.

@@ -645,6 +645,14 @@ const schema = z.object({
    */
   META_WEBHOOK_BASE_URL: z.string().optional().default(""),
   /**
+   * `on` = a conexão direta do Instagram/Messenger refaz UMA vez com a etiqueta
+   * `HUMAN_AGENT` o envio que a Meta recusou por janela de 24 h fechada
+   * (resposta humana em até 7 dias). Só ligue depois que a permissão "Human
+   * Agent" for aprovada no App Review do app da Meta. Vazio = desligado.
+   * Lido em `lib/channels/meta-social/adapter.ts`.
+   */
+  META_HUMAN_AGENT_TAG: z.string().optional().default(""),
+  /**
    * Base (host) da Graph API do canal oficial, e a do eixo de anúncio (#817).
    *
    * `optional().default("")` e NÃO validada como URL aqui, por dois motivos

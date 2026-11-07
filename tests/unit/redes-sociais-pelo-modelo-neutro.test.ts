@@ -26,15 +26,15 @@ import { nomeiaProvider } from "../../scripts/lint-channels.pattern";
  *
  *   1. **O Instagram é declarado PELO MODELO** — não por uma constante de
  *      fornecedor. É a condição de o #965 voltar.
- *   2. **A conexão direta não existe, e o modelo DIZ isso** — a lacuna vira
- *      expressão (`portaDisponivel`), não comentário.
+ *   2. **A conexão direta existe desde a migration 9800, e o modelo DIZ isso** —
+ *      `portaDisponivel` responde a direta para Instagram e Facebook.
  *   3. **Uma conexão sem credencial falha dizendo o que falta** — e nunca finge
  *      sucesso, nem antes (`isConfigured`) nem depois (`send`).
  *   4. **CONTROLE: os canais que já existiam continuam declarados e verdes** —
  *      o modelo entra sem tirar nada do ar.
  *
- * O que ele NÃO prova: que a conexão direta com o Instagram funcione. Ela não
- * existe — é o recorte declarado do PR, e a prova de que não existe está em (2).
+ * O que ele NÃO prova: o transporte da conexão direta. Esse é provado em
+ * `lib/channels/meta-social/*.test.ts`, com a Graph dublada.
  */
 
 /**
@@ -70,15 +70,17 @@ describe("o catálogo declara o Instagram pelo modelo neutro", () => {
     expect(portaDaRede("instagram").id).toBe("direta");
   });
 
-  it("a porta direta é declarada SEM transporte — é o que trava o #965", () => {
+  it("a porta direta tem transporte e é a disponível preferida (migration 9800)", () => {
     const direta = PORTAS_SOCIAIS.direta;
-    expect(direta.implementada).toBe(false);
-    // `null` porque o CHECK de `channel_sessions.provider` não tem valor para
-    // ela, e `ChannelAdapter.provider` é obrigatório: não há adapter a montar.
-    expect(direta.providerNoBanco).toBeNull();
-    // A resposta útil é `null`, e não uma exceção: quem pergunta "dá para montar
-    // a direta hoje?" recebe "não" sem ter que tratar erro.
-    expect(portaDisponivel("instagram")?.id).toBe("intermediada");
+    expect(direta.implementada).toBe(true);
+    // O valor que a 9800 pôs no CHECK de `channel_sessions.provider`.
+    expect(direta.providerNoBanco).toBe("meta_social");
+    // A preferida E disponível: quem pergunta "por onde conecto o Instagram?"
+    // recebe a direta; a intermediada segue declarada para quem já a usa.
+    expect(portaDisponivel("instagram")?.id).toBe("direta");
+    expect(portaDisponivel("facebook")?.id).toBe("direta");
+    // As outras redes seguem só pela intermediada.
+    expect(portaDisponivel("linkedin")?.id).toBe("intermediada");
   });
 
   it("a porta intermediada é a que já existe, e é a que grava a coluna", () => {
@@ -142,6 +144,8 @@ describe("CONTROLE: os canais que já existiam continuam declarados", () => {
       "zernio",
       "zernio_social",
       "datafy",
+      // A porta direta do Instagram e do Messenger (migration 9800).
+      "meta_social",
     ]);
     for (const provider of PROVIDERS_DE_MENSAGEM) {
       const caps = capabilitiesOf(provider);
@@ -267,17 +271,12 @@ describe("o adapter de uma porta sem credencial falha dizendo o que falta", () =
     await expect(adapter.send(ENVELOPE)).rejects.toThrow(PortaSemTransporteError);
   });
 
-  it("a porta direta não vira adapter: falta valor no CHECK de `channel_sessions.provider`", () => {
-    expect(() =>
-      adaptadorDaPorta({
-        plataforma: "instagram",
-        porta: "direta",
-        credencial: { conta: "conta-1", token: "tok" },
-      }),
-    ).toThrow(PortaSemTransporteError);
-    expect(() =>
-      adaptadorDaPorta({ plataforma: "instagram", porta: "direta", credencial: null }),
-    ).toThrow(/conexão direta ainda não tem valor em channel_sessions\.provider/);
+  it("a porta direta vira adapter com o provider da 9800, e sem token recusa nomeando o que falta", async () => {
+    const adapter = adaptadorDaPorta({ plataforma: "instagram", porta: "direta", credencial: null });
+    expect(adapter.provider).toBe("meta_social");
+    const erro = await recusaDe(adapter.send(ENVELOPE));
+    expect(erro).toBeInstanceOf(PortaSemCredencialError);
+    expect((erro as PortaSemCredencialError).falta).toEqual(["conta_autorizada", "credencial_da_conta"]);
   });
 
   it("rede sem token nenhum: `exigenciasEmFalta` devolve TUDO o que a porta exige", () => {

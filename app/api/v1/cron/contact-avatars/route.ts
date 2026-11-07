@@ -77,6 +77,8 @@ interface ContactRow {
   wa_lid: string | null;
   phone_number: string | null;
   avatar_storage_path: string | null;
+  /** `<rede>:<conta>:<id do participante>` — o contato das redes sociais. */
+  social_identity?: string | null;
 }
 
 /**
@@ -97,6 +99,10 @@ function chatIdDoContato(c: ContactRow): string | null {
     return `${c.wa_identity.slice(6).replace(/\D/g, "")}@c.us`;
   }
   if (c.phone_number) return `${c.phone_number.replace(/\D/g, "")}@c.us`;
+  // Contato de rede social: o endereço é a identidade social inteira, e quem a
+  // entende é o adapter da conexão da conversa dele (a direta da Meta busca a
+  // foto pela API de perfil; a por parceiro não sabe e carimba "sem foto").
+  if (c.social_identity) return c.social_identity;
   return null;
 }
 
@@ -129,8 +135,10 @@ async function handle(req: NextRequest): Promise<Response> {
   // declarada irreversível no produto; esta linha é o que sustenta isso.
   const { data: contatos, error: queryError } = await admin
     .from("contacts")
-    .select("id, organization_id, wa_identity, wa_lid, phone_number, avatar_storage_path")
-    .not("wa_identity", "is", null)
+    .select("id, organization_id, wa_identity, wa_lid, phone_number, avatar_storage_path, social_identity")
+    // WhatsApp (wa_identity) OU rede social (social_identity, migration 9800 —
+    // a conexão direta da Meta sabe buscar a foto de quem escreve).
+    .or("wa_identity.not.is.null,social_identity.not.is.null")
     .eq("is_anonymized", false)
     .or(`avatar_updated_at.is.null,avatar_updated_at.lt.${cutoff}`)
     .order("avatar_updated_at", { ascending: true, nullsFirst: true })
@@ -195,7 +203,11 @@ async function handle(req: NextRequest): Promise<Response> {
         .maybeSingle();
 
       let sessaoDaConversa: SessaoComEstado | null | undefined;
-      if (conversa === null) {
+      if (conversa === null && !c.wa_identity && c.social_identity) {
+        // Contato de rede social SEM conversa: a identidade dele só tem sentido
+        // na conexão social de onde veio, nunca num número de WhatsApp.
+        sessaoDaConversa = null;
+      } else if (conversa === null) {
         // Contato SEM conversa nenhuma: não há conversa para indicar a conexão.
         if (!sessaoDaEmpresa.has(c.organization_id)) {
           const { data: sessoes } = await admin

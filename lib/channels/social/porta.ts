@@ -22,9 +22,20 @@
  * justamente o lugar onde ele é um DADO (qual valor a coluna recebe) e não uma
  * pergunta.
  *
- * ─── Por que `direta` é declarada sem transporte ────────────────────────────
+ * ─── A porta `direta` ganhou transporte (migration 9800) ─────────────────────
  *
- * Porque é a VERDADE, e porque a verdade é o que faltava para o #965 andar.
+ * O provider `meta_social` entrou no CHECK `channel_sessions_provider_check`
+ * com a coluna `meta_social_account_id`, e o transporte mora em
+ * `../meta-social/` (login do Facebook, webhook da Messenger Platform, envio
+ * pela Graph). Instagram e Facebook passam a ter a direta implementada — e
+ * preferida, por ser a primeira do catálogo. A intermediada continua de pé
+ * para quem já conectou por ela.
+ *
+ * O texto abaixo é o histórico de por que ela nasceu sem transporte.
+ *
+ * ─── Por que `direta` era declarada sem transporte ──────────────────────────
+ *
+ * Porque era a VERDADE, e porque a verdade é o que faltava para o #965 andar.
  * Medido: `channel_sessions_provider_check` (`supabase/baseline.sql`) aceita
  * `waha, meta_cloud, zernio, wacalls, zernio_social, datafy` — não existe valor
  * para uma conexão direta com o Instagram. `ChannelAdapter.provider` é
@@ -36,6 +47,7 @@
  * envelhece. Quem for ligar a conexão direta sabe, pela leitura do modelo, que o
  * primeiro passo é um valor no CHECK — migration, e portanto PR próprio.
  */
+import { CHANNEL_PROVIDER_SOCIAL_DIRETO } from "../capabilities";
 import type { ProviderDeMensagem } from "../types";
 import { redeSocial, SOCIAL_PROVIDER, type PortaSocialId } from "./catalog";
 
@@ -86,9 +98,9 @@ export const PORTAS_SOCIAIS: Record<PortaSocialId, PortaSocial> = {
   direta: {
     id: "direta",
     rotulo: "conexão direta",
-    providerNoBanco: null,
+    providerNoBanco: CHANNEL_PROVIDER_SOCIAL_DIRETO as ProviderDeMensagem,
     exige: ["conta_autorizada", "credencial_da_conta"],
-    implementada: false,
+    implementada: true,
   },
   /**
    * A conexão por parceiro homologado. É a que existe hoje, para todas as redes:
