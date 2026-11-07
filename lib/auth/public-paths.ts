@@ -32,6 +32,11 @@ export const PUBLIC_PATHS: RegExp[] = [
   // `FORMATO_DO_ESTADO` (lib/channels/estado-da-volta.ts): nenhum outro sub-path
   // nasce público de carona.
   /^\/auth\/partner-return\/[A-Za-z0-9_-]{20,600}\.[0-9a-f]{64}$/,
+  // Volta do login do Facebook da conexão direta do Instagram e do Messenger:
+  // mesma natureza da linha acima — documento sem efeito que só repassa à tela
+  // autenticada (`app/auth/meta-social-return`). O estado e o código vêm na
+  // query (a Meta os acrescenta ali) e são filtrados por formato antes da ponte.
+  /^\/auth\/meta-social-return$/,
   // Volta do provedor de pagamento (checkout, portal): mesma natureza da linha
   // acima — vem de outro site, o cookie Strict não viaja, e a rota é só a ponte
   // para um destino FIXO (`app/cobranca/volta/route.ts`), sem efeito.
@@ -241,6 +246,11 @@ export const PUBLIC_PATHS: RegExp[] = [
   // dois, e quem lê ainda não é cliente — não tem sessão para exigir. Âncorado
   // nos dois nomes, pelo mesmo motivo de `/legal` acima.
   /^\/(termos-de-uso|privacidade-e-cookies)$/,
+  // Exclusão de dados (exigência do App Review da Meta para o login do
+  // Facebook da conexão direta do Instagram e do Messenger): página legal da
+  // vitrine, sem dado nenhum; `?codigo=` só mostra o status de um pedido
+  // recebido pelo callback de exclusão, conferido por assinatura.
+  /^\/exclusao-de-dados$/,
   // Página de agendamento da VITRINE (`app/agendar`): o botão "Agendar reunião
   // com o time Arvisx" da landing leva a ela, e quem agenda ainda não é
   // cliente. Só monta a agenda do Google incorporada; sem efeito no servidor.

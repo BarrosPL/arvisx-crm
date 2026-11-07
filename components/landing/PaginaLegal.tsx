@@ -4,8 +4,8 @@ import Link from "next/link";
 import "@/app/landing.css";
 
 /**
- * Moldura das páginas legais da vitrine (/termos-de-uso e
- * /privacidade-e-cookies): topo com o logo e "Voltar ao início", coluna de
+ * Moldura das páginas legais da vitrine (/termos-de-uso,
+ * /privacidade-e-cookies e /exclusao-de-dados): topo com o logo e "Voltar ao início", coluna de
  * leitura e rodapé com o copyright. Mesma paleta escura da landing (`.lp-doc`
  * em app/landing.css).
  */
@@ -29,6 +29,7 @@ export function PaginaLegal({ children }: { children: React.ReactNode }) {
           <nav aria-label="Legal">
             <Link href="/termos-de-uso">Termos de uso</Link>
             <Link href="/privacidade-e-cookies">Privacidade e cookies</Link>
+            <Link href="/exclusao-de-dados">Exclusão de dados</Link>
             <Link href="/">Início</Link>
           </nav>
         </div>

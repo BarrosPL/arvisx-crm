@@ -50,12 +50,12 @@ export const LINKS = {
   termos: "/legal/terms",
   privacidade: "/legal/privacy",
   /**
-   * O protótipo tem a página "Exclusão de Dados" (exclusao-de-dados.html),
-   * que ainda não existe no app. Até ela existir, o link do rodapé leva à
-   * política de privacidade e cookies da vitrine (`app/privacidade-e-cookies`),
-   * que explica os direitos do titular — a mesma que o aviso de cookies abre.
+   * Página "Exclusão de Dados" do protótipo (exclusao-de-dados.html), levada ao
+   * app em `app/exclusao-de-dados`. É também a URL de instruções de exclusão
+   * que o App Review da Meta pede para o login do Facebook (Instagram e
+   * Messenger direto), e a página de status do callback de exclusão.
    */
-  exclusaoDeDados: "/privacidade-e-cookies",
+  exclusaoDeDados: "/exclusao-de-dados",
   suporte: "mailto:suporte@arvisx.com.br",
   site: "https://arvisx.com.br/",
 } as const;
