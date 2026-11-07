@@ -1,0 +1,310 @@
+[
+  {
+    "lado": "app",
+    "rota": "/",
+    "viewport": "1440",
+    "conversa": [
+      [
+        "lead",
+        "1.00"
+      ],
+      [
+        "digitando",
+        "0.00"
+      ],
+      [
+        "ia",
+        "1.00"
+      ],
+      [
+        "toast",
+        "1.00"
+      ]
+    ],
+    "scrollWidth": 1440,
+    "innerWidth": 1440,
+    "estouro": false,
+    "icones": 37,
+    "iconesVazios": 0,
+    "imagens": 15,
+    "imagensQuebradas": [],
+    "h1": {
+      "w": 516,
+      "h": 214,
+      "stretch": "112%",
+      "fonte": "archivoDaVitrine, \"archivoDaVitrine Fall"
+    },
+    "carrossel": {
+      "abaSelecionada": "Funis",
+      "slideOn": "02 / 06 · Funis",
+      "scrollLeft": 1164,
+      "pontoOn": 1
+    },
+    "chamadasAuto": true,
+    "chamadasClique": {
+      "itemOn": "Videochamada por link",
+      "rotulo": "Videochamada",
+      "paneOn": "1"
+    },
+    "erros": []
+  },
+  {
+    "lado": "proto",
+    "rota": "/novo-modelo-v3-claro.html",
+    "viewport": "1440",
+    "conversa": [
+      [
+        "lead",
+        "1.00"
+      ],
+      [
+        "digitando",
+        "0.00"
+      ],
+      [
+        "ia",
+        "1.00"
+      ],
+      [
+        "toast",
+        "1.00"
+      ]
+    ],
+    "scrollWidth": 1440,
+    "innerWidth": 1440,
+    "estouro": false,
+    "icones": 37,
+    "imagens": 15,
+    "imagensQuebradas": [],
+    "h1": {
+      "w": 489,
+      "h": 268,
+      "stretch": "112%",
+      "fonte": "Archivo, Manrope, system-ui, sans-serif"
+    },
+    "carrossel": {
+      "abaSelecionada": "Funis",
+      "slideOn": "02 / 06 · Funis",
+      "scrollLeft": 1164,
+      "pontoOn": 1
+    },
+    "chamadasAuto": true,
+    "chamadasClique": {
+      "itemOn": "Videochamada por link",
+      "rotulo": "Videochamada",
+      "paneOn": "1"
+    },
+    "erros": []
+  },
+  {
+    "lado": "app",
+    "rota": "/agendar",
+    "viewport": "1440",
+    "scrollWidth": 1440,
+    "innerWidth": 1440,
+    "estouro": false,
+    "icones": 0,
+    "iconesVazios": 0,
+    "imagens": 1,
+    "imagensQuebradas": [],
+    "h1": {
+      "w": 543,
+      "h": 97,
+      "stretch": "112%",
+      "fonte": "archivoDaVitrine, \"archivoDaVitrine Fall"
+    },
+    "agenda": {
+      "iframe": true,
+      "src": "https://calendar.google.com/calendar/appointments/schedules/AcZssZ27QM",
+      "confirmado": true,
+      "corte": "214px",
+      "iframeTop": "-214px",
+      "paginaRola": false
+    },
+    "erros": [
+      "requestStorageAccess: Permission denied."
+    ]
+  },
+  {
+    "lado": "proto",
+    "rota": "/agendar.html",
+    "viewport": "1440",
+    "scrollWidth": 1440,
+    "innerWidth": 1440,
+    "estouro": false,
+    "icones": 0,
+    "imagens": 1,
+    "imagensQuebradas": [],
+    "h1": {
+      "w": 543,
+      "h": 97,
+      "stretch": "112%",
+      "fonte": "Archivo, Manrope, system-ui, sans-serif"
+    },
+    "agenda": {
+      "iframe": true,
+      "src": "https://calendar.google.com/calendar/appointments/schedules/AcZssZ27QM",
+      "confirmado": true,
+      "corte": "214px",
+      "iframeTop": "-214px",
+      "paginaRola": false
+    },
+    "erros": [
+      "requestStorageAccess: Permission denied."
+    ]
+  },
+  {
+    "lado": "app",
+    "rota": "/",
+    "viewport": "390",
+    "conversa": [
+      [
+        "lead",
+        "1.00"
+      ],
+      [
+        "digitando",
+        "0.00"
+      ],
+      [
+        "ia",
+        "1.00"
+      ],
+      [
+        "toast",
+        "1.00"
+      ]
+    ],
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "estouro": false,
+    "icones": 37,
+    "iconesVazios": 0,
+    "imagens": 15,
+    "imagensQuebradas": [],
+    "h1": {
+      "w": 351,
+      "h": 137,
+      "stretch": "112%",
+      "fonte": "archivoDaVitrine, \"archivoDaVitrine Fall"
+    },
+    "carrossel": {
+      "abaSelecionada": "Funis",
+      "slideOn": "02 / 06 · Funis",
+      "scrollLeft": 375,
+      "pontoOn": 1
+    },
+    "chamadasAuto": true,
+    "chamadasClique": {
+      "itemOn": "Videochamada por link",
+      "rotulo": "Videochamada",
+      "paneOn": "1"
+    },
+    "erros": []
+  },
+  {
+    "lado": "proto",
+    "rota": "/novo-modelo-v3-claro.html",
+    "viewport": "390",
+    "conversa": [
+      [
+        "lead",
+        "1.00"
+      ],
+      [
+        "digitando",
+        "0.00"
+      ],
+      [
+        "ia",
+        "1.00"
+      ],
+      [
+        "toast",
+        "1.00"
+      ]
+    ],
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "estouro": false,
+    "icones": 37,
+    "imagens": 15,
+    "imagensQuebradas": [],
+    "h1": {
+      "w": 351,
+      "h": 137,
+      "stretch": "112%",
+      "fonte": "Archivo, Manrope, system-ui, sans-serif"
+    },
+    "carrossel": {
+      "abaSelecionada": "Funis",
+      "slideOn": "02 / 06 · Funis",
+      "scrollLeft": 375,
+      "pontoOn": 1
+    },
+    "chamadasAuto": true,
+    "chamadasClique": {
+      "itemOn": "Videochamada por link",
+      "rotulo": "Videochamada",
+      "paneOn": "1"
+    },
+    "erros": []
+  },
+  {
+    "lado": "app",
+    "rota": "/agendar",
+    "viewport": "390",
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "estouro": false,
+    "icones": 0,
+    "iconesVazios": 0,
+    "imagens": 1,
+    "imagensQuebradas": [],
+    "h1": {
+      "w": 351,
+      "h": 69,
+      "stretch": "112%",
+      "fonte": "archivoDaVitrine, \"archivoDaVitrine Fall"
+    },
+    "agenda": {
+      "iframe": true,
+      "src": "https://calendar.google.com/calendar/appointments/schedules/AcZssZ27QM",
+      "confirmado": true,
+      "corte": "",
+      "iframeTop": "auto",
+      "paginaRola": true
+    },
+    "erros": [
+      "requestStorageAccess: Permission denied."
+    ]
+  },
+  {
+    "lado": "proto",
+    "rota": "/agendar.html",
+    "viewport": "390",
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "estouro": false,
+    "icones": 0,
+    "imagens": 1,
+    "imagensQuebradas": [],
+    "h1": {
+      "w": 351,
+      "h": 69,
+      "stretch": "112%",
+      "fonte": "Archivo, Manrope, system-ui, sans-serif"
+    },
+    "agenda": {
+      "iframe": true,
+      "src": "https://calendar.google.com/calendar/appointments/schedules/AcZssZ27QM",
+      "confirmado": true,
+      "corte": "",
+      "iframeTop": "auto",
+      "paginaRola": true
+    },
+    "erros": [
+      "requestStorageAccess: Permission denied."
+    ]
+  }
+]

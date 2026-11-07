@@ -857,6 +857,12 @@ const HOSTS_DECLARADOS: Record<string, EntradaDeHost> = {
     motivo:
       "endpoint oficial da Google Meet REST API (`POST /v2/spaces`, em `lib/agenda/google/transport.ts`): é o DESTINO do request que cria a sala de reunião com acesso aberto (#2063), com o token da própria organização. Diferente de `meet.google.com` — que é o LINK de convite, e por isso entra como PLATAFORMA em CONFERÊNCIA —, este é host que o produto BUSCA: trocar pelo domínio do revendedor faria a chamada não chegar a lugar nenhum, e a sala nunca seria criada.",
   },
+  // ── a vitrine deste fork: a agenda do time Arvisx incorporada em /agendar ──
+  "calendar.google.com": {
+    categoria: "FORNECEDOR",
+    motivo:
+      "página de agendamento do Google Agenda incorporada por <iframe> em `/agendar` (`AGENDA_EMBED` em `lib/landing/links.ts`): é o DESTINO que o navegador do visitante carrega para escolher o horário da reunião com o time Arvisx. O servidor não chama o host; trocar pelo domínio do revendedor faria a agenda não abrir.",
+  },
   // ── localização compartilhada: o link que abre o pino do cliente ──
   "maps.google.com": {
     categoria: "PLATAFORMA",

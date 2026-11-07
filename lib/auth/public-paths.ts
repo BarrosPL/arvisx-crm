@@ -241,6 +241,11 @@ export const PUBLIC_PATHS: RegExp[] = [
   // dois, e quem lê ainda não é cliente — não tem sessão para exigir. Âncorado
   // nos dois nomes, pelo mesmo motivo de `/legal` acima.
   /^\/(termos-de-uso|privacidade-e-cookies)$/,
+  // Página de agendamento da VITRINE (`app/agendar`): o botão "Agendar reunião
+  // com o time Arvisx" da landing leva a ela, e quem agenda ainda não é
+  // cliente. Só monta a agenda do Google incorporada; sem efeito no servidor.
+  // Âncora `$`: nenhum sub-path nasce público de carona.
+  /^\/agendar$/,
 ];
 
 export function isPublicPath(pathname: string): boolean {
