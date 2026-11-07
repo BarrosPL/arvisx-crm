@@ -20,6 +20,12 @@ export const LINKS = {
    * no proxy e, com a política de cadastro `aberto` (o padrão), cria a conta e
    * a empresa sem convite. Se a instalação passar a `so_convite`, a tela de
    * cadastro mostra a recusa: troque este destino junto.
+   *
+   * É o destino de "Começar o teste grátis" (topo, hero e card de preço). Em
+   * produção resolve para https://crm.arvisx.com.br/signup. Sem plano
+   * cadastrado no módulo de cobrança, o cadastro não mostra plano, preço nem
+   * teste: os 7 dias são contados à mão e não há cobrança automática — por
+   * isso a landing não promete cobrança ao fim do teste.
    */
   cadastro: "/signup",
   /** Página própria com a agenda do Google incorporada (`app/agendar/page.tsx`). */

@@ -2,8 +2,7 @@
 import { Warning } from "@/lib/ui/icons";
 import { useT } from "@/hooks/i18n/useT";
 import type { LgpdRequest } from "@/hooks/useLgpdRequests";
-
-const TERMINAL_STATUSES = new Set(["completed", "failed"]);
+import { pedidoDaLgpdEmAberto } from "@/lib/lgpd/pedido-em-aberto";
 
 interface SlaBannerProps {
   requests: LgpdRequest[];
@@ -11,7 +10,8 @@ interface SlaBannerProps {
 
 export function SlaBanner({ requests }: SlaBannerProps) {
   const t = useT();
-  const active = requests.filter((r) => !TERMINAL_STATUSES.has(r.status));
+  // A régua de "em aberto" é a mesma do hub de /account-suspended.
+  const active = requests.filter((r) => pedidoDaLgpdEmAberto(r.status));
 
   const critical = active.filter(
     (r) => r.sla_bucket === "overdue" || r.sla_bucket === "critical",

@@ -2,8 +2,11 @@ import Link from "next/link";
 
 import { EntrarComGoogle } from "@/components/auth/EntrarComGoogle";
 import { SignupForm } from "@/components/auth/SignupForm";
+import { SimboloDoProduto } from "@/components/branding/MarcaDoProduto";
 import { Button } from "@/components/ui/button";
+import { marcaEhADoProduto } from "@/lib/branding";
 import { marcaDaSaida } from "@/lib/branding/saida";
+import { estadoDoProvedorGoogle } from "@/lib/auth/provedor-google";
 import { verifyInviteToken } from "@/lib/auth/invite-token";
 import { modoDeCadastro } from "@/lib/auth/politica-de-cadastro";
 import { createClient } from "@/lib/supabase/server";
@@ -73,22 +76,31 @@ export default async function SignupPage({
   const modo = convite ? null : await modoDeCadastro();
   const soPorConvite = modo === "so_convite";
 
+  // O mesmo cabeçalho do /login: o ícone do app sobre o título, só quando a
+  // marca é a do produto (com logo de revendedor, quem assina é o painel ao lado).
+  const icone = marcaEhADoProduto({ name: marca.nome, logoUrl: marca.logoUrl }) ? (
+    <div className="flex h-16 w-16 items-center justify-center rounded-[18px] border border-border bg-surface shadow-sm">
+      <SimboloDoProduto nome={marca.nome} decorativo sobreClaro className="h-11 w-auto" />
+    </div>
+  ) : null;
+
   if (soPorConvite) {
     return (
-      <div className="space-y-6 text-center">
-        <div className="space-y-1.5">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t("Cadastro apenas por convite")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {conviteExpirado
-              ? t(
-                  "Esse convite expirou ou não é mais válido. Peça um novo a quem te convidou — esta instalação não aceita cadastro sem convite.",
-                )
-              : t(
-                  "Esta instalação não aceita cadastro aberto. Se você foi convidado, use o link de convite que você recebeu.",
-                )}
-          </p>
+      <div className="space-y-6">
+        <div className="space-y-5">
+          {icone}
+          <div className="space-y-1.5">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {t("Cadastro apenas por convite")}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {conviteExpirado
+                ? t(
+                    "Esse convite expirou ou não vale mais. Peça um novo a quem convidou você e abra o link que chegar no seu e-mail.",
+                  )
+                : `${t("No momento, as contas do")} ${marca.nome} ${t("são criadas apenas por convite. Se você foi convidado, abra o link do convite que chegou no seu e-mail.")}`}
+            </p>
+          </div>
         </div>
         <Button asChild className="w-full">
           <Link href="/login">{t("Entrar")}</Link>
@@ -97,20 +109,27 @@ export default async function SignupPage({
     );
   }
 
+  // O Google só aparece quando o provedor está ligado no Supabase desta
+  // instalação, como no /login: desligado, o botão só renderia um erro ao clicar.
+  const googleLigado = (await estadoDoProvedorGoogle()) === "ligado";
+
   return (
     <div className="space-y-6">
-      <div className="space-y-1.5 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("Criar conta")}</h1>
-        <p className="text-sm text-muted-foreground">
-          {convite
-            ? t("Crie sua senha para entrar na empresa que te convidou")
-            : `${t("Comece a usar o")} ${marca.nome} ${t("em minutos")}`}
-        </p>
-        {modo === "com_aprovacao" && (
+      <div className="space-y-5">
+        {icone}
+        <div className="space-y-1.5">
+          <h1 className="text-2xl font-semibold tracking-tight">{t("Criar conta")}</h1>
           <p className="text-sm text-muted-foreground">
-            {t("Nesta instalação, a empresa só é criada depois da aprovação de quem administra.")}
+            {convite
+              ? t("Crie sua senha para entrar na empresa que te convidou")
+              : `${t("Comece a usar o")} ${marca.nome} ${t("em minutos")}`}
           </p>
-        )}
+          {modo === "com_aprovacao" && (
+            <p className="text-sm text-muted-foreground">
+              {t("Nesta instalação, a empresa só é criada depois da aprovação de quem administra.")}
+            </p>
+          )}
+        </div>
       </div>
 
       {conviteExpirado && (
@@ -124,16 +143,28 @@ export default async function SignupPage({
         </p>
       )}
 
-      <SignupForm convite={convite} planos={planos} planoInicial={planoInicialDoSeletor(planos, cadastro?.padraoId ?? null)} />
+      <SignupForm
+        convite={convite}
+        planos={planos}
+        planoInicial={planoInicialDoSeletor(planos, cadastro?.padraoId ?? null)}
+      />
       {/* O convite atravessa o Google na URL de retorno: sem ele, quem foi
           convidado e cria a conta com Google ganharia uma empresa própria. */}
-      {googleSemPlano ? (
-        <p className="text-center text-xs text-muted-foreground">{t("Para garantir que o plano selecionado seja contratado, conclua o cadastro com e-mail e senha.")}</p>
+      {!googleLigado ? null : googleSemPlano ? (
+        <p className="text-center text-xs text-muted-foreground">
+          {t(
+            "Para garantir que o plano selecionado seja contratado, conclua o cadastro com e-mail e senha.",
+          )}
+        </p>
       ) : (
         <>
           <EntrarComGoogle convite={convite?.token} />
           {planos.length > 0 && (
-            <p className="text-center text-xs text-muted-foreground">{t("Com o Google, a empresa começa no plano padrão. Para escolher outro, use e-mail e senha.")}</p>
+            <p className="text-center text-xs text-muted-foreground">
+              {t(
+                "Com o Google, a empresa começa no plano padrão. Para escolher outro, use e-mail e senha.",
+              )}
+            </p>
           )}
         </>
       )}

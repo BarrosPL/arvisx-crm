@@ -45,7 +45,7 @@ vi.mock("@/lib/branding/saida", () => ({
     origens: { nome: "padrao", cor: "#5b5bd6" },
   }),
 }));
-vi.mock("@/lib/branding", () => ({ branding: () => ({ name: "Produto" }) }));
+vi.mock("@/lib/branding", () => ({ branding: () => ({ name: "Produto" }), marcaEhADoProduto: () => false }));
 vi.mock("@/lib/auth/rate-limit", () => ({
   authRateLimited: async () => false,
   AUTH_LIMITS: { invite_accept: {} },
@@ -68,7 +68,13 @@ vi.mock("@/lib/auth/server", () => ({
 }));
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
-    from: () => ({ select: () => ({ in: async () => ({ data: [{ id: "o", status: "suspended" }], error: null }) }) }),
+    from: () => ({
+      select: () => ({
+        in: async () => ({ data: [{ id: "o", status: "suspended" }], error: null }),
+        // A contagem de pedidos de LGPD em aberto do hub.
+        eq: () => ({ not: async () => ({ count: 0, error: null }) }),
+      }),
+    }),
   }),
 }));
 vi.mock("@/app/app/lgpd/requests/RequestsTable", () => ({ RequestsTable: () => null }));

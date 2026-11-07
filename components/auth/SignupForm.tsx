@@ -149,7 +149,7 @@ export function SignupForm({
         // de novo nunca vai funcionar — é política, não falha transitória.
         setServerError(
           t(
-            "Esta instalação aceita cadastro apenas por convite. Se você foi convidado, use o link de convite que você recebeu.",
+            "No momento, as contas são criadas apenas por convite. Se você foi convidado, abra o link do convite que chegou no seu e-mail.",
           ),
         );
       } else if (res.error === "email_indisponivel") {

@@ -1,5 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { SimboloDoProduto } from "@/components/branding/MarcaDoProduto";
+import { marcaEhADoProduto } from "@/lib/branding";
+import { marcaDaSaida } from "@/lib/branding/saida";
 import { createClient } from "@/lib/supabase/server";
 import { IdiomaProvider } from "@/lib/i18n/IdiomaProvider";
 import { normalizarIdioma } from "@/lib/i18n/idiomas";
@@ -34,12 +37,21 @@ export default async function AcessoRevogadoPage() {
   const idioma = normalizarIdioma(
     (user?.user_metadata?.locale as string | undefined) ?? null,
   );
+  // A mesma assinatura visual de `/account-suspended`: o símbolo só quando a
+  // marca é a do produto (com marca de revendedor a tela não assina por ele).
+  const marca = await marcaDaSaida(null);
 
   return (
     <IdiomaProvider locale={idioma}>
       <main className="flex min-h-screen items-center justify-center p-8">
         <Card className="w-full max-w-md space-y-4 p-8 text-center">
-          <h1 className="text-2xl font-semibold">{traduzir("Acesso revogado", idioma)}</h1>
+          {marcaEhADoProduto({ name: marca.nome, logoUrl: marca.logoUrl }) ? (
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[16px] border border-border bg-surface shadow-sm">
+              <SimboloDoProduto nome={marca.nome} decorativo className="h-9 w-auto" />
+            </div>
+          ) : null}
+          <h1 className="text-2xl font-semibold tracking-tight">{traduzir("Acesso revogado", idioma)}</h1>
+          <div aria-hidden className="relative mx-auto h-px w-24 bg-border after:absolute after:top-[-3px] after:left-[calc(50%-3.5px)] after:h-[7px] after:w-[7px] after:rounded-full after:bg-cta" />
           <p className="text-sm text-muted-foreground">
             {traduzir(
               "Seu acesso a esta organização foi retirado. Se você acredita que isso é um engano, fale com quem administra a empresa — só ela pode devolvê-lo.",

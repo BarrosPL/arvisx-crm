@@ -13,6 +13,11 @@ const cena = vi.hoisted(() => ({
   platformAdmin: false,
   modoSuporte: null as { reason: string } | null,
   semOrgAtiva: false,
+  motivo: {} as Record<string, string | null>,
+  // Pedidos de LGPD em aberto por organização (o que a consulta conta).
+  lgpdAbertos: {} as Record<string, number>,
+  falhaNaLgpd: false,
+  consultasLgpd: [] as Array<{ org: string; filtro: string }>,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -42,17 +47,43 @@ vi.mock("@/lib/auth/server", () => ({
 }));
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
-    from: () => ({
-      select: () => ({
-        in: async (_coluna: string, ids: string[]) =>
-          cena.falhaNaLeitura
-            ? { data: null, error: { message: "rede" } }
-            : { data: ids.map((id) => ({ id, status: cena.status[id] ?? "active" })), error: null },
-      }),
-    }),
+    from: (tabela: string) =>
+      tabela === "lgpd_requests"
+        ? {
+            // A contagem de `temPedidoDaLgpdEmAberto`: org e filtro de status ficam registrados.
+            select: () => ({
+              eq: (_coluna: string, org: string) => ({
+                not: async (_c: string, _op: string, filtro: string) => {
+                  cena.consultasLgpd.push({ org, filtro });
+                  return cena.falhaNaLgpd
+                    ? { count: null, error: { message: "rede" } }
+                    : { count: cena.lgpdAbertos[org] ?? 0, error: null };
+                },
+              }),
+            }),
+          }
+        : {
+            select: () => ({
+              in: async (_coluna: string, ids: string[]) =>
+                cena.falhaNaLeitura
+                  ? { data: null, error: { message: "rede" } }
+                  : {
+                      data: ids.map((id) => ({
+                        id,
+                        status: cena.status[id] ?? "active",
+                        suspended_kind: null,
+                        suspended_reason: cena.motivo[id] ?? null,
+                      })),
+                      error: null,
+                    },
+            }),
+          },
   }),
 }));
-vi.mock("@/lib/branding/saida", () => ({ emailDeSuporte: async () => cena.suporte }));
+vi.mock("@/lib/branding/saida", () => ({
+  emailDeSuporte: async () => cena.suporte,
+  marcaDaSaida: async () => ({ nome: "ArvisX CRM", logoUrl: null }),
+}));
 vi.mock("@/app/actions/auth/signOut", () => ({ signOut: vi.fn() }));
 vi.mock("@/app/app/lgpd/requests/RequestsTable", () => ({
   RequestsTable: ({ baseDoPedido }: { baseDoPedido?: string }) => <p data-testid="lgpd-lista">{baseDoPedido}</p>,
@@ -83,6 +114,10 @@ beforeEach(() => {
   cena.platformAdmin = false;
   cena.modoSuporte = null;
   cena.semOrgAtiva = false;
+  cena.motivo = {};
+  cena.lgpdAbertos = { [cena.B]: 2 };
+  cena.falhaNaLgpd = false;
+  cena.consultasLgpd = [];
 });
 
 describe("/account-suspended: o hub de quem está numa empresa suspensa", () => {
@@ -195,5 +230,115 @@ describe("/account-suspended: o hub de quem está numa empresa suspensa", () => 
   it("leitura do estado que falha LANÇA: nem hub nem redirect por palpite", async () => {
     cena.falhaNaLeitura = true;
     await expect(montar()).rejects.toThrow(/account_suspended_status_indisponivel/);
+  });
+
+  describe("o motivo da suspensão", () => {
+    it("mostra o motivo digitado por quem suspendeu, para quem administra", async () => {
+      cena.motivo[cena.B] = "Contrato encerrado em 31/10. Fale com o financeiro.";
+      await montar();
+      expect(screen.getByText("Motivo da suspensão")).toBeVisible();
+      expect(screen.getByTestId("motivo-da-suspensao")).toHaveTextContent(
+        "Contrato encerrado em 31/10. Fale com o financeiro.",
+      );
+    });
+
+    it("mostra o motivo também para quem não administra", async () => {
+      cena.papel = "agent";
+      cena.motivo[cena.B] = "Uso fora dos termos de serviço.";
+      await montar();
+      expect(screen.getByTestId("motivo-da-suspensao")).toHaveTextContent("Uso fora dos termos de serviço.");
+      expect(screen.getByText("Sua conta está suspensa. Avise o administrador da sua empresa.")).toBeVisible();
+    });
+
+    it("é o motivo da empresa ATIVA, nunca o de outra empresa da pessoa", async () => {
+      cena.motivo[cena.D] = "Motivo da empresa D";
+      await montar();
+      expect(screen.queryByTestId("motivo-da-suspensao")).toBeNull();
+      expect(screen.queryByText("Motivo da empresa D")).toBeNull();
+    });
+
+    it("sem motivo (vazio ou só espaços), fica o texto genérico", async () => {
+      cena.suporte = "";
+      cena.motivo[cena.B] = "   ";
+      await montar();
+      expect(screen.queryByTestId("motivo-da-suspensao")).toBeNull();
+      expect(
+        screen.getByText("Sua conta está suspensa. Fale com quem administra este sistema para saber o motivo e como reativá-la."),
+      ).toBeVisible();
+    });
+
+    it("com motivo e sem e-mail de suporte, o texto não manda perguntar o motivo", async () => {
+      cena.suporte = "";
+      cena.motivo[cena.B] = "Pedido do cliente.";
+      await montar();
+      expect(screen.getByText("Sua conta está suspensa. Fale com quem administra este sistema para reativá-la.")).toBeVisible();
+    });
+
+    it("HTML no motivo sai como texto, sem virar elemento", async () => {
+      const bruto = `<img src=x onerror="alert(1)"><b>negrito</b>`;
+      cena.motivo[cena.B] = bruto;
+      const { container } = await montar();
+      expect(screen.getByTestId("motivo-da-suspensao").textContent).toBe(bruto);
+      expect(container.querySelector("img")).toBeNull();
+      expect(container.querySelector("b")).toBeNull();
+    });
+
+    it("motivo longo é cortado no teto de 500 caracteres", async () => {
+      cena.motivo[cena.B] = "a".repeat(800);
+      await montar();
+      const exibido = screen.getByTestId("motivo-da-suspensao").textContent ?? "";
+      expect(exibido).toBe(`${"a".repeat(500)}…`);
+    });
+  });
+
+  describe("a seção de LGPD só com pedido em aberto", () => {
+    it("com pedido em aberto, quem administra vê a lista", async () => {
+      cena.lgpdAbertos = { [cena.B]: 1 };
+      await montar();
+      expect(screen.getByRole("heading", { name: "Solicitações LGPD" })).toBeVisible();
+      expect(screen.getByTestId("lgpd-lista")).toBeVisible();
+    });
+
+    it("sem pedido em aberto, a seção não aparece: só o cartão", async () => {
+      cena.lgpdAbertos = {};
+      await montar();
+      expect(screen.queryByRole("heading", { name: "Solicitações LGPD" })).toBeNull();
+      expect(screen.queryByTestId("lgpd-lista")).toBeNull();
+      expect(screen.getByRole("button", { name: "Sair" })).toBeVisible();
+      expect(screen.getByTestId("outras")).toBeVisible();
+    });
+
+    it("a contagem é da org da SESSÃO e exclui só os status terminais da lista", async () => {
+      await montar();
+      expect(cena.consultasLgpd).toEqual([{ org: cena.B, filtro: "(completed,failed)" }]);
+    });
+
+    it("quem não administra nunca vê a seção, mesmo com pedido em aberto, e nem consulta", async () => {
+      cena.papel = "agent";
+      cena.lgpdAbertos = { [cena.B]: 3 };
+      await montar();
+      expect(screen.queryByRole("heading", { name: "Solicitações LGPD" })).toBeNull();
+      expect(cena.consultasLgpd).toEqual([]);
+    });
+
+    it("?pedido= abre o detalhe mesmo sem pedido em aberto na contagem", async () => {
+      cena.lgpdAbertos = {};
+      const id = "22222222-2222-4222-8222-222222222222";
+      await montar(id);
+      expect(screen.getByTestId("lgpd-pedido")).toHaveTextContent(`${id} /account-suspended`);
+    });
+
+    it("?pedido= para quem não administra não abre nada", async () => {
+      cena.papel = "agent";
+      await montar("22222222-2222-4222-8222-222222222222");
+      expect(screen.queryByTestId("lgpd-pedido")).toBeNull();
+      expect(screen.queryByTestId("lgpd-lista")).toBeNull();
+    });
+
+    it("contagem que falha mostra a seção: prazo legal não some por erro de leitura", async () => {
+      cena.falhaNaLgpd = true;
+      await montar();
+      expect(screen.getByTestId("lgpd-lista")).toBeVisible();
+    });
   });
 });
