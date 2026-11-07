@@ -9604,14 +9604,21 @@ alter table public.channel_sessions
   add column if not exists datafy_waba_id text,
   add column if not exists datafy_token_encrypted bytea;
 
+-- meta_social (migration 9800, conexão direta do Instagram e do Messenger) —
+-- colunas do provider, nullable e antes das constraints que as referenciam.
+alter table public.channel_sessions
+  add column if not exists meta_social_account_id text,
+  add column if not exists meta_social_page_id text,
+  add column if not exists meta_social_token_encrypted bytea;
+
 alter table public.channel_sessions
   drop constraint if exists channel_sessions_provider_check;
 
 alter table public.channel_sessions
   add constraint channel_sessions_provider_check
-  -- 'wacalls' (0233), 'zernio_social' (0368) e 'datafy' (0387) somados AQUI —
-  -- UM bloco só por constraint (não duplicar drop+add por migration).
-  check (provider = any (array['waha'::text, 'meta_cloud'::text, 'zernio'::text, 'wacalls'::text, 'zernio_social'::text, 'datafy'::text]));
+  -- 'wacalls' (0233), 'zernio_social' (0368), 'datafy' (0387) e 'meta_social'
+  -- (9800) somados AQUI — UM bloco só por constraint (não duplicar drop+add por migration).
+  check (provider = any (array['waha'::text, 'meta_cloud'::text, 'zernio'::text, 'wacalls'::text, 'zernio_social'::text, 'datafy'::text, 'meta_social'::text]));
 
 alter table public.channel_sessions
   drop constraint if exists channel_sessions_provider_ref_check;
@@ -9624,7 +9631,8 @@ alter table public.channel_sessions
     -- é o mesmo intermediário, com outra superfície de canal.
     (provider in ('zernio', 'zernio_social') and zernio_account_id is not null) or
     (provider = 'wacalls'    and wacalls_session_id    is not null) or
-    (provider = 'datafy'     and datafy_phone_number_id is not null)
+    (provider = 'datafy'     and datafy_phone_number_id is not null) or
+    (provider = 'meta_social' and meta_social_account_id is not null)
   );
 
 comment on column public.channel_sessions.zernio_account_id is
@@ -69107,6 +69115,65 @@ grant execute on function public.fn_conversation_sector_scope() to authenticated
 comment on function public.fn_conversation_sector_scope() is
   'Setores do chamador nas organizações em visibility_mode = own_and_sector (migration 9214). Uma linha por (organização, setor); zero linhas nos outros modos e para viewer/manager/admin. Lida por conversations_select; não concede leitura de nada por si.';
 
+-- ---- a conexão direta do Instagram e do Messenger é do servidor (migration 9800) ----
+-- Espelho da parte da 9800 que CRIA FUNÇÃO: o corpo da 9104 inteiro, mais as
+-- colunas meta_social_* (o porquê está no cabeçalho da migration). Fica DEPOIS
+-- do bloco da 9104, para ser a última definição da função, e ACIMA da VARREDURA
+-- anon porque cria função. As colunas nascem no bloco da 0087/0131, lá em cima,
+-- junto das constraints de provider; o índice único e o app_id ficam no fim.
+create or replace function public.fn_channel_sessions_ligacao_ao_provedor_e_do_servidor()
+returns trigger language plpgsql set search_path = public, pg_temp as $$
+begin
+  if current_user not in ('authenticated', 'anon') then
+    -- `new` é nulo no DELETE: devolvê-lo cancelaria a exclusão do servidor.
+    return coalesce(new, old);
+  end if;
+  if tg_op = 'DELETE' then
+    if old.zernio_credencial_da_instalacao then
+      raise exception 'canal_ligacao_ao_provedor_e_do_servidor' using errcode = '42501';
+    end if;
+    return old;
+  end if;
+  if tg_op = 'INSERT' then
+    if new.zernio_credencial_da_instalacao
+       or new.zernio_account_id is not null
+       or new.zernio_profile_id is not null
+       or new.zernio_webhook_id is not null
+       -- 9104: a credencial do número oficial também é do servidor.
+       or new.meta_token_encrypted is not null
+       or new.meta_phone_number_id is not null
+       or new.meta_waba_id is not null
+       -- 9800: a conexão direta do Instagram e do Messenger também.
+       or new.meta_social_account_id is not null
+       or new.meta_social_page_id is not null
+       or new.meta_social_token_encrypted is not null then
+      raise exception 'canal_ligacao_ao_provedor_e_do_servidor' using errcode = '42501';
+    end if;
+    return new;
+  end if;
+  if (new.zernio_credencial_da_instalacao, new.zernio_account_id, new.zernio_profile_id, new.zernio_webhook_id)
+       is distinct from
+     (old.zernio_credencial_da_instalacao, old.zernio_account_id, old.zernio_profile_id, old.zernio_webhook_id)
+     -- 9104: a credencial do número oficial também é do servidor.
+     or (new.meta_token_encrypted, new.meta_phone_number_id, new.meta_waba_id)
+       is distinct from
+     (old.meta_token_encrypted, old.meta_phone_number_id, old.meta_waba_id)
+     -- 9800: a conexão direta do Instagram e do Messenger também.
+     or (new.meta_social_account_id, new.meta_social_page_id, new.meta_social_token_encrypted)
+       is distinct from
+     (old.meta_social_account_id, old.meta_social_page_id, old.meta_social_token_encrypted)
+     or (old.zernio_credencial_da_instalacao and
+         (new.archived_at, new.provider, new.organization_id, new.phone_number)
+           is distinct from
+         (old.archived_at, old.provider, old.organization_id, old.phone_number)) then
+    raise exception 'canal_ligacao_ao_provedor_e_do_servidor' using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+
+revoke execute on function public.fn_channel_sessions_ligacao_ao_provedor_e_do_servidor() from public, anon, authenticated;
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria
@@ -73742,5 +73809,46 @@ alter table public.followup_flow_pointers
 
 comment on column public.followup_flow_pointers.send_when_assigned is
   'Envia o passo do follow-up mesmo com a conversa atribuída a uma pessoa (dono). Não vence force_human, ai_opt_out, contato interno, contato bloqueado nem as janelas de horário — e não acorda a IA.';
+
+notify pgrst, 'reload schema';
+
+-- ---- conexão direta do Instagram e do Messenger: índice e App ID (migration 9800) ----
+-- Espelho idempotente da 9800 (o porquê está no cabeçalho da migration). As
+-- colunas e os CHECKs estão no bloco único das constraints de provider, lá em
+-- cima; a função da trava, antes da VARREDURA anon. Aqui fica o que não cria
+-- função: dedup + índice único entre ativas (o webhook é um só para a
+-- instalação e roteia pelo id da conta) e o App ID público do app da Meta.
+comment on column public.channel_sessions.meta_social_account_id is
+  'Conexão direta com a Meta (provider meta_social): id da página (Messenger) ou da conta profissional (Instagram). É o sessionRef e a chave do roteamento do webhook. Espelhado em lib/channels/session-ref.ts. Migration 9800.';
+comment on column public.channel_sessions.meta_social_page_id is
+  'Página do Facebook por onde a conexão direta envia e onde o app da instalação é assinado. Migration 9800.';
+comment on column public.channel_sessions.meta_social_token_encrypted is
+  'Token da página (conexão direta com a Meta), cifrado por fn_encrypt_oauth. Nunca volta à tela. Apagado ao desconectar. Migration 9800.';
+
+with ativos as (
+  select id,
+         row_number() over (
+           partition by meta_social_account_id
+           order by created_at desc nulls last, id desc
+         ) as posicao
+    from public.channel_sessions
+   where archived_at is null
+     and meta_social_account_id is not null
+)
+update public.channel_sessions s
+   set meta_social_account_id = s.meta_social_account_id || '-conflito-' || s.id::text
+  from ativos a
+ where a.id = s.id
+   and a.posicao > 1;
+
+create unique index if not exists channel_sessions_meta_social_account_ativo_unique
+  on public.channel_sessions (meta_social_account_id)
+  where archived_at is null and meta_social_account_id is not null;
+
+alter table public.platform_meta_app
+  add column if not exists app_id text;
+
+comment on column public.platform_meta_app.app_id is
+  'App ID do app da Meta da instalação. Público (vai na URL do login do Facebook); usado pela conexão direta do Instagram e do Messenger. Migration 9800.';
 
 notify pgrst, 'reload schema';

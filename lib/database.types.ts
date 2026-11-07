@@ -5203,6 +5203,9 @@ export type Database = {
           last_health_check_at: string | null;
           last_status_change_at: string;
           meta_phone_number_id: string | null;
+          meta_social_account_id: string | null;
+          meta_social_page_id: string | null;
+          meta_social_token_encrypted: string | null;
           meta_token_encrypted: string | null;
           meta_waba_id: string | null;
           meta_webhook_override_em: string | null;
@@ -5246,6 +5249,9 @@ export type Database = {
           last_health_check_at?: string | null;
           last_status_change_at?: string;
           meta_phone_number_id?: string | null;
+          meta_social_account_id?: string | null;
+          meta_social_page_id?: string | null;
+          meta_social_token_encrypted?: string | null;
           meta_token_encrypted?: string | null;
           meta_waba_id?: string | null;
           meta_webhook_override_em?: string | null;
@@ -5288,6 +5294,9 @@ export type Database = {
           last_health_check_at?: string | null;
           last_status_change_at?: string;
           meta_phone_number_id?: string | null;
+          meta_social_account_id?: string | null;
+          meta_social_page_id?: string | null;
+          meta_social_token_encrypted?: string | null;
           meta_token_encrypted?: string | null;
           meta_waba_id?: string | null;
           meta_webhook_override_em?: string | null;
@@ -12345,6 +12354,7 @@ export type Database = {
       };
       platform_meta_app: {
         Row: {
+          app_id: string | null;
           app_secret_encrypted: string | null;
           id: number;
           updated_at: string;
@@ -12354,6 +12364,7 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          app_id?: string | null;
           app_secret_encrypted?: string | null;
           id?: number;
           updated_at?: string;
@@ -12362,6 +12373,7 @@ export type Database = {
           verify_token_encrypted?: string | null;
         };
         Update: {
+          app_id?: string | null;
           app_secret_encrypted?: string | null;
           id?: number;
           updated_at?: string;
