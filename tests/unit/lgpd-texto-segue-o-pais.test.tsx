@@ -48,6 +48,12 @@
  * `lead_notes` (#1957, Art. 18 II): o que a cascata apaga a pedido dele é o que
  * se entrega a pedido dele. A diferença nos dois arquivos é só a linha
  * `"lead_attachments": []`; o resto segue byte a byte.
+ *
+ * Sétima exceção (ArvisX CRM, 07/11/2026), regravando `email.json`,
+ * `alarmes.json` e `alarmes-store-redact.json`: o visual de e-mail aprovado pelo
+ * Lucas leva `NEUTROS_DE_SAIDA.suave` ao grau 6 da régua do app. A diferença é
+ * só a cor dos parágrafos pequenos (`#8a91a0` → `#5b6372`); o resto segue byte
+ * a byte.
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
