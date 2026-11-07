@@ -221,6 +221,19 @@ export async function conectarPagina(db: SupabaseClient, pedido: PedidoDeConexao
     );
   }
 
+  // `webhook_secret_encrypted` é NOT NULL em toda sessão. A entrada desta
+  // conexão é conferida pelo App Secret da instalação (X-Hub-Signature-256),
+  // não por segredo por sessão — então o valor é aleatório e não é publicado
+  // em lugar nenhum; existe porque a coluna o exige.
+  const segredoCifrado = await encryptWebhookSecret(db, randomBytes(32).toString("hex"));
+  if (!segredoCifrado) {
+    throw new ErroDaConexaoDireta(
+      "A cifra desta instalação não está disponível, então nada foi gravado. Avise quem administra a instalação.",
+      503,
+      "encryption_unavailable",
+    );
+  }
+
   const gravadas: ConexaoGravada[] = [];
   for (const alvo of alvos) {
     const existente = await sessaoPelaConta(db, alvo.conta);
@@ -259,6 +272,7 @@ export async function conectarPagina(db: SupabaseClient, pedido: PedidoDeConexao
         // o webhook ÚNICO da instalação, e este valor não é publicado em lugar
         // nenhum — existe porque a coluna o exige.
         webhook_path_token: randomBytes(24).toString("hex"),
+        webhook_secret_encrypted: segredoCifrado,
         display_name: `${alvo.rede} · ${alvo.nome}`,
         status: "STARTING",
         metadata,
