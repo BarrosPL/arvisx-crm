@@ -75,6 +75,11 @@ interface Escolha {
 
 const ROTULO_DA_REDE: Record<Rede, string> = { facebook: "Facebook Messenger", instagram: "Instagram" };
 
+/** Nome da CONEXÃO (página/conta da Meta), não de contato: primeiro valor preenchido. */
+function nomeDaConexao(c: { display_name?: string | null; pagina?: string | null; conta?: string | null }) {
+  return [c.display_name, c.pagina, c.conta].find((v) => v && v.trim()) ?? "";
+}
+
 export function ConexaoDiretaMeta() {
   const t = useT();
   const params = useSearchParams();
@@ -330,7 +335,7 @@ export function ConexaoDiretaMeta() {
                   <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                     {t(ROTULO_DA_REDE[c.rede])}
                   </p>
-                  <p className="truncate font-semibold">{c.display_name ?? c.pagina ?? c.conta}</p>
+                  <p className="truncate font-semibold">{nomeDaConexao(c)}</p>
                   {c.pagina && <p className="truncate text-xs text-muted-foreground">{`${t("Página:")} ${c.pagina}`}</p>}
                 </div>
                 <div className="flex flex-wrap gap-1">
