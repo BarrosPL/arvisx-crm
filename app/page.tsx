@@ -39,7 +39,7 @@ import { AvisoDeCookies } from "@/components/landing/AvisoDeCookies";
 import { archivoDaVitrine } from "@/components/landing/fonte";
 import { InteracoesDaLanding } from "@/components/landing/InteracoesDaLanding";
 import { marcaDaSaida } from "@/lib/branding/saida";
-import { LINKS, OFERTA } from "@/lib/landing/links";
+import { CADASTRO_ABERTO, LINKS, OFERTA } from "@/lib/landing/links";
 import { createClient } from "@/lib/supabase/server";
 
 import "./landing.css";
@@ -81,6 +81,20 @@ export const metadata: Metadata = {
 const ico = { className: "ico", size: "1em", "aria-hidden": true } as const;
 const negrito = { ...ico, weight: "bold" } as const;
 
+// Botão de cadastro: com CADASTRO_ABERTO desligado vira "Lançamento em breve", sem link.
+function BotaoDeCadastro({ className, comSeta }: { className: string; comSeta: boolean }) {
+  return CADASTRO_ABERTO ? (
+    <a className={className} href={LINKS.cadastro}>
+      <span>{OFERTA.cta}</span>
+      {comSeta ? <ArrowRight {...negrito} /> : null}
+    </a>
+  ) : (
+    <span className={`${className} em-breve`} aria-disabled="true">
+      <span>{OFERTA.ctaEmBreve}</span>
+    </span>
+  );
+}
+
 const atraso = (d: string) => ({ "--d": d }) as CSSProperties;
 
 const IMG = "/img/landing";
@@ -94,12 +108,6 @@ export default async function HomePage() {
 
   // Nome da marca vem do banco (catraca nome-da-marca-nas-telas-vem-do-banco).
   const marca = await marcaDaSaida(null);
-  const cta = (
-    <>
-      <span>{OFERTA.cta}</span>
-      <ArrowRight {...negrito} />
-    </>
-  );
 
   return (
     <div className={`lp ${archivoDaVitrine.variable}`}>
@@ -125,9 +133,7 @@ export default async function HomePage() {
           <a className="btn secundario p" href={LINKS.entrar}>
             Entrar
           </a>
-          <a className="btn primario p demo" href={LINKS.cadastro}>
-            <span>{OFERTA.cta}</span>
-          </a>
+          <BotaoDeCadastro className="btn primario p demo" comSeta={false} />
         </div>
       </header>
 
@@ -144,9 +150,7 @@ export default async function HomePage() {
                 <span>{OFERTA.ilimitados}</span>, em um plano único.
               </p>
               <div className="cta-bloco entra" style={atraso(".28s")}>
-                <a className="btn primario grande" href={LINKS.cadastro}>
-                  {cta}
-                </a>
+                <BotaoDeCadastro className="btn primario grande" comSeta />
                 <div className="cta-info">
                   <strong>{OFERTA.trial}</strong>
                   <span>Sem cobrança por usuário · IA com as credenciais da sua empresa</span>
@@ -781,9 +785,7 @@ export default async function HomePage() {
                 </div>
                 <p className="pc-sub">Plano único para a empresa inteira.</p>
                 <div className="pc-acoes">
-                  <a className="btn primario" href={LINKS.cadastro}>
-                    {cta}
-                  </a>
+                  <BotaoDeCadastro className="btn primario" comSeta />
                 </div>
               </div>
               <div className="pc-lado">

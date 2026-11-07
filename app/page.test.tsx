@@ -23,7 +23,7 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 import HomePage from "./page";
-import { LINKS, OFERTA } from "@/lib/landing/links";
+import { CADASTRO_ABERTO, LINKS, OFERTA } from "@/lib/landing/links";
 
 async function montar() {
   return render(await HomePage());
@@ -42,12 +42,13 @@ describe("/ — landing v3", () => {
     );
   });
 
-  it("todo botão de teste grátis leva ao cadastro aberto", async () => {
-    await montar();
-    const ctas = screen.getAllByRole("link", { name: new RegExp(OFERTA.cta) });
+  it("com o cadastro fechado, os três botões dizem 'Lançamento em breve' e nenhum leva ao cadastro", async () => {
+    expect(CADASTRO_ABERTO).toBe(false);
+    const { container } = await montar();
     // topo, hero e cartão de preço
-    expect(ctas).toHaveLength(3);
-    for (const a of ctas) expect(a).toHaveAttribute("href", LINKS.cadastro);
+    expect(screen.getAllByText(OFERTA.ctaEmBreve)).toHaveLength(3);
+    expect(screen.queryByRole("link", { name: new RegExp(OFERTA.cta) })).toBeNull();
+    expect(container.querySelector(`a[href="${LINKS.cadastro}"]`)).toBeNull();
     expect(LINKS.cadastro).toBe("/signup");
   });
 

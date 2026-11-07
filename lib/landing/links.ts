@@ -11,8 +11,18 @@ export const OFERTA = {
   periodo: "por mês",
   trial: "7 dias de teste grátis",
   cta: "Começar o teste grátis",
+  /** Texto dos botões de cadastro enquanto `CADASTRO_ABERTO` for false. */
+  ctaEmBreve: "Lançamento em breve",
   ilimitados: "Usuários e números de WhatsApp ilimitados",
 } as const;
+
+/**
+ * Liga os botões "Começar o teste grátis" (topo, hero e card de preço).
+ * Enquanto for false, os três viram "Lançamento em breve", sem link: ninguém
+ * chega ao cadastro pela landing. A rota /signup continua existindo; quem
+ * fecha o cadastro de fato é a política de cadastro da instalação.
+ */
+export const CADASTRO_ABERTO = false;
 
 export const LINKS = {
   /**
