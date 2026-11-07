@@ -128,6 +128,12 @@ const schema = z.object({
    * (404); com menos de 32 caracteres também fica desligada.
    */
   TENANT_PROVISIONING_SECRET: z.string().optional().default(""),
+  /**
+   * ArvisX: "Atualizar pela UI" (`/app/settings/atualizacao`, rotas
+   * `system/update` e `system/agent`). Só `on` liga; vazio ou outro valor =
+   * desligado (404). Quem lê é `lib/system/atualizacao-pela-tela.ts`.
+   */
+  ATUALIZACAO_PELA_TELA: z.string().optional().default(""),
 
   // Laboratório local de extensões: origem HTTP exata em 127.0.0.1. O cliente
   // recusa a exceção se a URL do app não for loopback. Vazio mantém HTTPS público.

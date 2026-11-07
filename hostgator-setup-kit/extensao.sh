@@ -29,9 +29,19 @@
 
 source "$(dirname "$0")/_common.sh"
 
-ORIGEM_PADRAO="https://extensoes.deskcomm.com.br"
-ORIGEM="${EXTENSOES_ORIGEM:-$ORIGEM_PADRAO}"
+# ArvisX: SEM origem padrão. O upstream buscava o catálogo no domínio dele
+# (um subdomínio de extensões do Deskcomm); no fork, baixar só acontece de uma origem que
+# quem opera escolheu de propósito, em EXTENSOES_ORIGEM. Sem ela, recusa.
+ORIGEM="${EXTENSOES_ORIGEM:-}"
 CATALOGO_URL="${ORIGEM}/catalogo.json"
+
+exigir_origem() {
+  [ -n "$ORIGEM" ] && return 0
+  echo "Nenhuma origem de catálogo configurada: no ArvisX CRM não há catálogo oficial padrão." >&2
+  echo "Para baixar de uma origem que você confia: EXTENSOES_ORIGEM=https://... $(basename "$0") listar" >&2
+  echo "Ou envie o arquivo do catálogo direto pela tela de Extensões do CRM." >&2
+  exit 1
+}
 
 ajuda() {
   sed -n '2,28p' "$0" | sed 's/^# \{0,1\}//'
@@ -72,6 +82,7 @@ catalogo_tem_forma() {
 }
 
 comando_listar() {
+  exigir_origem
   exigir_jq
   local tmp
   tmp="$(mktemp)"
@@ -85,6 +96,7 @@ comando_listar() {
 }
 
 comando_baixar() {
+  exigir_origem
   exigir_jq
   local destino="${1:-${PROJECT_DIR:-.}/catalogo-de-extensoes.json}"
   baixar_para "$destino" || return 1

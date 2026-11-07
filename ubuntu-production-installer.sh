@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Porta de entrada para instalar o DeskcommCRM em produção numa VPS Ubuntu.
+# Porta de entrada para instalar o ArvisX CRM em produção numa VPS Ubuntu.
 # A entrevista, a geração do .env e a orquestração da stack continuam no
 # instalador self-host canônico para que haja uma única fonte de verdade.
 
@@ -30,7 +30,7 @@ usage() {
   cat <<'EOF'
 Uso: bash ubuntu-production-installer.sh [--domain DOMINIO]
 
-Prepara uma VPS Ubuntu e inicia a instalação de produção do DeskcommCRM.
+Prepara uma VPS Ubuntu e inicia a instalação de produção do ArvisX CRM.
 
 Modo interativo (recomendado):
   bash ubuntu-production-installer.sh

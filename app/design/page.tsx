@@ -12,6 +12,7 @@ import { SectionMotion } from "./sections/SectionMotion";
 import { SectionIcons } from "./sections/SectionIcons";
 import { useVariant } from "./lib/variant-context";
 import { PALETTES, TYPOS, DENSITIES } from "./lib/tokens";
+import { DEFAULT_APP_NAME } from "@/lib/branding";
 
 type SectionId =
   | "tokens" | "paletas" | "tipografia" | "densidade"
@@ -48,7 +49,7 @@ export default function DesignShowcasePage() {
   return (
     <div className="ds-shell">
       <aside className="ds-sidebar">
-        <h1>DeskcommCRM</h1>
+        <h1>{DEFAULT_APP_NAME}</h1>
         <div className="ds-sub">design system · v0.1</div>
 
         <div className="ds-nav-section">Foundation</div>
@@ -107,7 +108,7 @@ export default function DesignShowcasePage() {
 
         <div className="ds-scroll">
           <div className="ds-banner">
-            <h1>Showcase de Design System — DeskcommCRM</h1>
+            <h1>Showcase de Design System — {DEFAULT_APP_NAME}</h1>
             <p>
               Use a sidebar pra navegar pelas seções. Use o switcher (canto superior direito) pra trocar
               <strong> paleta · tipografia · densidade · tema</strong> em runtime — escolhas persistem em localStorage.

@@ -1,4 +1,4 @@
-# Runbook — DeskcommCRM em VPS com CloudPanel (Nginx)
+# Runbook — ArvisX CRM em VPS com CloudPanel (Nginx)
 
 > Cenário: VPS com **CloudPanel** já instalado, com o Nginx dele ocupando as
 > portas 80 e 443. O instalador do CRM sobe um Caddy nessas mesmas portas, então
@@ -58,7 +58,7 @@ CRM que abre a tela de login e não deixa ninguém entrar.
 
 ```bash
 cd /var/www
-git clone https://github.com/melgarafael/DeskcommCRM.git DeskcommCRM
+git clone https://github.com/BarrosPL/arvisx-crm.git DeskcommCRM
 cd /var/www/DeskcommCRM
 cp .env.hostgator.example .env
 nano .env

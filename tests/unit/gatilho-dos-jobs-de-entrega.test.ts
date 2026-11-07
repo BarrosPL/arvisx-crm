@@ -71,8 +71,11 @@ const GATILHO_ESPERADO: Record<string, { condicao: string | null; efeito: string
       "Este job é quem monta o PR de release a partir dos fragmentos de `.changes/`. " +
       "Desligá-lo faz nenhuma versão ser fechada — sem erro em lugar nenhum.",
   },
+  // ArvisX: o fork não corta release do upstream. A condição de repositório
+  // desliga o job no BarrosPL/arvisx-crm (lá ele falhava a cada push na `main`,
+  // por depender do GitHub App do upstream) e o mantém igual no upstream.
   "release.yml::cortar-tag": {
-    condicao: "github.event_name == 'push'",
+    condicao: "github.event_name == 'push' && github.repository == 'melgarafael/DeskcommCRM'",
     efeito:
       "Este job é quem CRIA E EMPURRA a tag `vX.Y.Z`, que é o gatilho da atualização " +
       "do parque instalado inteiro. Desligá-lo faz a release parar em silêncio: nenhuma " +

@@ -53,7 +53,7 @@ vi.hoisted(() => {
 });
 
 import { buildMcpTurnTools } from "@/lib/agent-engine/edge/crm/mcp-tools";
-import { CABECALHOS_DO_CONTATO } from "@/lib/mcp/servidor-externo/chamada";
+import { CABECALHOS_DO_CONTATO, CABECALHOS_DO_CONTATO_LEGADOS } from "@/lib/mcp/servidor-externo/chamada";
 import { toolIdRemoto } from "@/lib/mcp/servidor-externo/ids";
 import { cifrarChaveMcpExterno } from "@/lib/mcp/servidor-externo/segredo";
 import {
@@ -319,6 +319,7 @@ describe("o turno do engine liga e chama o servidor MCP externo (#3586)", () => 
     const daChamada = posts().at(-1)!;
     expect(daChamada.corpo).toContain('"buscar_carros"');
     expect(daChamada.cabecalhos[CABECALHOS_DO_CONTATO.id.toLowerCase()]).toBe(CONTATO);
+    expect(daChamada.cabecalhos[CABECALHOS_DO_CONTATO_LEGADOS.id.toLowerCase()]).toBe(CONTATO);
     expect(daChamada.cabecalhos.authorization).toBe(`Bearer ${CHAVE}`);
   });
 

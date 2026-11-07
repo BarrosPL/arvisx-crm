@@ -6,6 +6,16 @@ set -euo pipefail
 # porque update.sh e os demais scripts do kit sourceiam _common.sh sem passar
 # por install.sh; instalação já em andamento no mesmo processo (install.sh)
 # mantém a escolha, já exportada em DESKCOMM_IDIOMA_CLI.
+#
+# Nomes ArvisX (fork): as quatro variáveis que o operador digita também valem
+# com o prefixo ARVISX_, e o ARVISX_ vence. Os nomes DESKCOMM_* continuam
+# aceitos (são os que o resto do kit lê, e os que .env antigos já têm). Isto
+# roda ANTES do _i18n.sh porque ele lê DESKCOMM_IDIOMA_CLI. Gêmeo do bloco no
+# topo de install.sh, que sourceia o _i18n.sh antes deste arquivo.
+if [ -n "${ARVISX_BUILD_LOCAL:-}" ]; then export DESKCOMM_BUILD_LOCAL="${ARVISX_BUILD_LOCAL:-${DESKCOMM_BUILD_LOCAL:-}}"; fi
+if [ -n "${ARVISX_IDIOMA_CLI:-}" ]; then export DESKCOMM_IDIOMA_CLI="${ARVISX_IDIOMA_CLI:-${DESKCOMM_IDIOMA_CLI:-}}"; fi
+if [ -n "${ARVISX_RELEASES_LATEST_URL:-}" ]; then export DESKCOMM_RELEASES_LATEST_URL="${ARVISX_RELEASES_LATEST_URL:-${DESKCOMM_RELEASES_LATEST_URL:-}}"; fi
+if [ -n "${ARVISX_ASSUMIR_PROJETO:-}" ]; then export DESKCOMM_ASSUMIR_PROJETO="${ARVISX_ASSUMIR_PROJETO:-${DESKCOMM_ASSUMIR_PROJETO:-}}"; fi
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_i18n.sh"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_manifestos.sh"
 
@@ -2475,7 +2485,11 @@ ler_rodada_do_banco() {
 # `publish-image.yml` digam o mesmo. Se você é um fork, é lá que está a lista do
 # que trocar junto — e, desde 18/09/2026, o CI do SEU fork não cobra este valor:
 # a asserção só vale quando o dono do runner é o dono deste repositório.
-IMG_NS="ghcr.io/melgarafael"
+#
+# ArvisX CRM (fork BarrosPL/arvisx-crm): o `publish-image.yml` do fork publica
+# os MESMOS nomes de pacote sob o dono `barrospl`. Só o dono muda; os nomes
+# (deskcommcrm, deskcomm-worker, ...) seguem a matriz do workflow.
+IMG_NS="ghcr.io/barrospl"
 IMG_APP="${IMG_NS}/deskcommcrm"
 IMG_WORKER="${IMG_NS}/deskcomm-worker"
 IMG_SCHEDULER="${IMG_NS}/deskcomm-scheduler"
@@ -2495,13 +2509,16 @@ IMG_VOICE_AGENT="${IMG_NS}/deskcomm-voice-agent"
 # alguém porque não deu para resolver um número de versão seria trocar um
 # problema de previsibilidade por um de disponibilidade.
 ultima_versao_publicada() {
-  local url="${1:-https://github.com/melgarafael/DeskcommCRM.git}" ref
+  local url="${1:-https://github.com/BarrosPL/arvisx-crm.git}" ref
   command -v git >/dev/null 2>&1 || return 0
   # `grep -v -- -` descarta PRERELEASE (v1.11.0-rc1, v1.1.1-jmpo.1 — esta última
   # existe de verdade neste repo). O `--sort=-v:refname` do git põe o prerelease
   # ACIMA do release final quando `versionsort.suffix` não está configurado, e
   # uma instalação nova nasceria num release candidate sem ninguém pedir.
-  ref="$(git ls-remote --tags --refs --sort=-v:refname "$url" 'v*' 2>/dev/null \
+  # `GIT_TERMINAL_PROMPT=0`: o repo do fork ArvisX é PRIVADO. Sem credencial
+  # salva, o git pediria usuário/senha no terminal e a instalação pararia ali;
+  # assim ele falha na hora e cai no "não sei" (vazio), como sem rede.
+  ref="$(GIT_TERMINAL_PROMPT=0 git ls-remote --tags --refs --sort=-v:refname "$url" 'v*' 2>/dev/null \
         | awk '{print $2}' | grep -v -- '-' | head -1)" || return 0
   [ -n "$ref" ] || return 0
   printf '%s' "${ref#refs/tags/v}"

@@ -75,6 +75,8 @@ describe("executeCallWebhook", () => {
     expect(result.status).toBe("success");
     expect(result.detail?.response_status).toBe(200);
     expect(received).toBeDefined();
+    // O evento sai nos DOIS nomes: o neutro e o legado, com o mesmo valor.
+    expect(received!.headers["x-webhook-event"]).toBe("lead.created");
     expect(received!.headers["x-deskcomm-event"]).toBe("lead.created");
     expect(received!.headers["x-deskcomm-signature"]).toBeUndefined();
     // Sem segredo não há o que assinar — mas id, tentativa e carimbo saem (#1529).

@@ -194,16 +194,16 @@ jobs:
         include:
           - name: deskcommcrm
             dockerfile: Dockerfile
-            title: DeskcommCRM
+            title: ArvisX CRM
           - name: deskcomm-worker
             dockerfile: Dockerfile.worker
-            title: DeskcommCRM worker
+            title: ArvisX CRM worker
           - name: deskcomm-scheduler
             dockerfile: Dockerfile.scheduler
-            title: DeskcommCRM scheduler
+            title: ArvisX CRM scheduler
           - name: deskcomm-voice-agent
             dockerfile: Dockerfile.voice-agent
-            title: DeskcommCRM voice agent
+            title: ArvisX CRM voice agent
         name: [deskcommcrm, deskcomm-worker, deskcomm-scheduler, deskcomm-voice-agent]
         arch: [amd64, arm64]
 

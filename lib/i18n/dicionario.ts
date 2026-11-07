@@ -7123,6 +7123,10 @@ export const DICIONARIO: Traducoes = {
     {
       es: "Sin firma, quien descubra la dirección puede crear leads. Con ella, quien envía firma el cuerpo crudo de la solicitud con HMAC-SHA256 y manda el resultado en hexadecimal — hex puro, sin prefijo — en esta cabecera:",
     },
+  // O nome ANTIGO do cabeçalho (dupla leitura): também sai da constante, ao lado.
+  "O nome antigo continua aceito:": {
+    es: "El nombre anterior sigue aceptado:",
+  },
   "<HMAC-SHA256 do corpo, em hex, com o seu segredo>": {
     es: "<HMAC-SHA256 del cuerpo, en hex, con tu secreto>",
   },

@@ -7,9 +7,11 @@ import { describe, expect, it } from "vitest";
 import {
   corridaInternaDeFork,
   DONO_DESTE_REPO,
+  DONO_NO_GITHUB,
   donoConfiavelDoRunner,
   donoDo,
   NAMESPACE_DESTE_REPO,
+  URL_DESTE_REPO,
 } from "./_identidade-deste-repo";
 
 /**
@@ -229,6 +231,26 @@ describe("o default do compose diz o mesmo que o kit", () => {
   });
 });
 
+/**
+ * ArvisX: o compose do Easypanel (a produção real do fork) também diz onde as
+ * imagens moram, e o default dele é o que vale se `APP_IMAGE` sumir do `.env`.
+ * Ele nunca pode cair no upstream: o dono tem de ser o de IMG_NS, os nomes os do
+ * kit, e a tag `:main` (o que o `publish-image.yml` do fork publica a cada push).
+ */
+describe("o default do compose do Easypanel aponta para as imagens do fork", () => {
+  const EASYPANEL = "deploy/arvisx/crm/docker-compose.easypanel.yml";
+  const CHAVES = ["APP_IMAGE", "WORKER_IMAGE", "SCHEDULER_IMAGE"] as const;
+
+  CHAVES.forEach((chave, i) => {
+    it(`o default de ${chave} usa o namespace de IMG_NS`, () => {
+      const texto = fs.readFileSync(path.join(RAIZ, EASYPANEL), "utf8");
+      const m = texto.match(new RegExp(`^\\s*image: \\$\\{${chave}:-([^}]+)\\}`, "m"));
+      expect(m, `não achei a linha \`image: \${${chave}:-…}\` em ${EASYPANEL}`).not.toBeNull();
+      expect(m![1]).toBe(`${imgNs()}/${reposDoKit()[i]}:main`);
+    });
+  });
+});
+
 describe("o kit aponta para o que o CI realmente publica", () => {
   it("os defaults de código e os labels de origem apontam para este repositório", () => {
     // A URL DERIVA do namespace, e não é economia de digitação: é o que prende a
@@ -237,7 +259,15 @@ describe("o kit aponta para o que o CI realmente publica", () => {
     // SÓ aquele literal faria a âncora se calar contra o upstream. Derivando, o
     // mesmo commit fica vermelho AQUI, contra seis arquivos que ele não tocou.
     // Medido nos dois sentidos, com a URL fixa e com ela derivada (ver cabeçalho).
-    const repo = `https://github.com/${DONO_DESTE_REPO}/DeskcommCRM`;
+    //
+    // ArvisX: o nome do repo do fork é outro (`arvisx-crm`) e o login tem caixa
+    // própria, então a URL vem de `URL_DESTE_REPO` — mas o DONO dela continua
+    // preso à âncora pela asserção logo abaixo.
+    expect(
+      DONO_NO_GITHUB.toLowerCase(),
+      "o dono da URL do repositório (DONO_NO_GITHUB) não é o dono de NAMESPACE_DESTE_REPO",
+    ).toBe(DONO_DESTE_REPO.toLowerCase());
+    const repo = URL_DESTE_REPO;
     for (const script of ["install.sh", "comecar.sh"]) {
       const texto = fs.readFileSync(path.join(RAIZ, "hostgator-setup-kit", script), "utf8");
       expect(texto).toContain(`REPO_URL="\${REPO_URL:-${repo}.git}"`);
@@ -358,6 +388,12 @@ describe("catraca: ninguém mais repete o namespace", () => {
     // história dos 31 lugares e o caso da URL do token). Prosa que cita o valor
     // é legítima; asserção que o reescreve à mão não é.
     "tests/unit/namespace-das-imagens.test.ts",
+    // ArvisX: o compose do Easypanel é YAML (não deriva de shell), e o default
+    // das imagens dele PRECISA ser do fork — se `APP_IMAGE` sumir do `.env` do
+    // Easypanel, cair no upstream derrubaria o redesign sem erro nenhum. Ele usa
+    // a tag `:main` (a produção fixa por digest), então não entra na conferência
+    // de `:stable` do compose de produção; o literal aqui é autorizado.
+    "deploy/arvisx/crm/docker-compose.easypanel.yml",
     // `.env`/`.env.local` da RAIZ são estado de máquina, gitignorados — não
     // existem num checkout fresco nem em CI. Mas uma instalação real nasce com
     // um deles carregando o mesmo `APP_IMAGE` que o `.env.hostgator.example`

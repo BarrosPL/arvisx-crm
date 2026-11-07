@@ -23,7 +23,7 @@ import { estamparAtribuicaoDoContato } from "@/lib/leads/atribuicao-de-anuncio";
 import { classificarLeadInicial, type ResultadoClassificacaoInicial } from "@/lib/leads/classificacao-inicial";
 import type { CreateLeadInput } from "@/lib/schemas";
 import { mapInboundPayload, extrairAtribuicaoDoInbound, verifyInboundSignature, type FieldMap } from "@/lib/webhooks/inbound";
-import { HEADER_ASSINATURA_DE_ENTRADA } from "@/lib/webhooks/assinatura";
+import { assinaturaDaRequisicao } from "@/lib/webhooks/assinatura";
 import { encontrarContatoPorTelefoneComNome } from "@/lib/channels/contato-por-telefone";
 import {
   buildContactConsentGrant,
@@ -219,7 +219,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<NextRespons
     sourceName: (source.name as string) ?? "Fonte sem nome",
   };
 
-  const sigHeader = req.headers.get(HEADER_ASSINATURA_DE_ENTRADA);
+  const sigHeader = assinaturaDaRequisicao(req.headers);
   // secret cifrado at-rest (migration 0041). A fonte que TEM segredo exige
   // assinatura; se esta instalação não consegue decifrá-lo (chave mestra
   // ausente/trocada, dado corrompido), não há como conferir — e o que não se

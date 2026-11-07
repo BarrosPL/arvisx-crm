@@ -1,4 +1,4 @@
-# 🧭 Visão — DeskcommCRM
+# 🧭 Visão — ArvisX CRM
 
 > **O sistema operacional de vendas com agentes de IA, open source, nativo no WhatsApp.**
 > Este documento é a fonte da verdade do posicionamento do projeto. Tudo que for público (README, site, docs, descrições) deriva daqui.

@@ -30,7 +30,7 @@ Um `POST` com `Content-Type: application/json` e este corpo:
 
 | Campo | O que é |
 |---|---|
-| `event` | O tipo do evento que disparou a automação (o mesmo do cabeçalho `X-Deskcomm-Event`). |
+| `event` | O tipo do evento que disparou a automação (o mesmo do cabeçalho `X-Webhook-Event`). |
 | `occurred_at` | A hora em que o CRM montou esta entrega (o disparo da automação ou o clique em Reenviar), em ISO-8601 UTC com milissegundos. É o que o campo sempre foi. As retentativas automáticas de um mesmo disparo, segundos depois, repetem o corpo e portanto este valor. Para medir a idade da requisição, prefira o `t` de dentro do `X-Webhook-Signature` (seção 3): ele é a hora do envio de **cada tentativa** e também é coberto pela assinatura. |
 | `happened_at` | A hora em que o **fato** aconteceu (o lead foi criado, a etapa mudou…), em ISO-8601 UTC com milissegundos. É a mesma em todas as tentativas e no Reenviar, e pode ter horas ou dias de idade (uma automação adiada pela janela de envio do WhatsApp, um Reenviar clicado dias depois). Use-o para ordenar os fatos no seu sistema; nunca para recusar requisição velha. |
 | `delivery_id` | O id da entrega — o mesmo valor do cabeçalho `X-Webhook-Delivery`. |
@@ -40,7 +40,8 @@ Um `POST` com `Content-Type: application/json` e este corpo:
 
 | Cabeçalho | Quando sai | O que significa |
 |---|---|---|
-| `X-Deskcomm-Event` | sempre | O tipo do evento. |
+| `X-Webhook-Event` | sempre | O tipo do evento. |
+| `X-Deskcomm-Event` | sempre | **Legado.** O mesmo valor do `X-Webhook-Event`, com o nome herdado. Continua saindo exatamente igual; quem casa por ele não precisa mudar nada, mas prefira o `X-Webhook-Event` numa integração nova. |
 | `X-Webhook-Delivery` | sempre | Id da **entrega** (um uuid). É o mesmo em todas as tentativas da mesma entrega **e** no botão Reenviar da tela de atividade. É a chave para deduplicar. |
 | `X-Webhook-Attempt` | sempre | Número da tentativa: `1`, `2`, `3`… O Reenviar continua a contagem (se a entrega já teve 3 tentativas, o Reenviar chega com `4`). É informativo — a chave de deduplicação é o Delivery. |
 | `X-Webhook-Timestamp` | sempre | Hora do **envio desta tentativa**, em segundos unix. Muda a cada tentativa. **Informativo:** nenhuma assinatura o cobre. Para a janela de tempo, use o `t` do `X-Webhook-Signature`. |
@@ -49,13 +50,13 @@ Um `POST` com `Content-Type: application/json` e este corpo:
 
 **O que a assinatura cobre.** O `v1` do `X-Webhook-Signature` autentica o
 `t` que vai dentro dele, o `X-Webhook-Delivery` e o corpo — e só isso. Os
-cabeçalhos `X-Deskcomm-Event`, `X-Webhook-Attempt` e `X-Webhook-Timestamp`
+cabeçalhos `X-Webhook-Event`, `X-Deskcomm-Event`, `X-Webhook-Attempt` e `X-Webhook-Timestamp`
 **não são autenticados**: quem captura uma requisição pode trocá-los sem que a
 assinatura deixe de conferir. Em especial, a única cópia assinada da hora do
 envio é o `t` dentro do `X-Webhook-Signature`. Um receptor que mede a idade
 pelo `X-Webhook-Timestamp` e confere o HMAC com o `t` aceita uma requisição
 velha repetida com o `X-Webhook-Timestamp` trocado pela hora atual. Use o
-`X-Deskcomm-Event` e o `X-Webhook-Attempt` só para log e roteamento; o tipo do
+`X-Webhook-Event` (ou o legado `X-Deskcomm-Event`) e o `X-Webhook-Attempt` só para log e roteamento; o tipo do
 evento que vale é o `event` do corpo, que é assinado.
 
 Sem segredo configurado na ação, as duas assinaturas não saem — não há o que

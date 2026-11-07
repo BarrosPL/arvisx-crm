@@ -20,6 +20,7 @@ import {
 } from "@/lib/system/runtime-identity";
 import { extractChangelogRange } from "@/lib/system/changelog";
 import { retratoDoHostVelho } from "@/lib/system/retrato";
+import { atualizacaoPelaTelaLigada } from "@/lib/system/atualizacao-pela-tela";
 import {
   isRunStale,
   rodadaDoBancoDaLinha,
@@ -134,7 +135,10 @@ export async function GET(_req: NextRequest): Promise<Response> {
       ? run.from_version
       : current;
 
-  if (!user.is_platform_admin) {
+  // ArvisX: com a atualização pela tela desligada (padrão), o dono recebe o
+  // mesmo retrato de quem não é dono — a versão continua no rodapé, mas sem
+  // `update_available`, então o aviso "Nova versão disponível" não aparece.
+  if (!user.is_platform_admin || !atualizacaoPelaTelaLigada()) {
     return ok({ current_version: running, is_owner: false, identity });
   }
 

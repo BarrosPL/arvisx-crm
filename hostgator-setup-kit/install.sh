@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# DeskcommCRM — instalador self-host para VPS (HostGator).
+# ArvisX CRM — instalador self-host para VPS (HostGator).
 #
 # Idempotente: pode rodar de novo sem estragar nada. Dependências no host:
 # só docker, docker compose, git, openssl, curl. psql/bootstrap rodam via Docker.
@@ -15,10 +15,14 @@ set -euo pipefail
 # de qualquer 'cd' (step 2 pode entrar num repo clonado à parte).
 KIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 
-REPO_URL="${REPO_URL:-https://github.com/melgarafael/DeskcommCRM.git}"
-# Uma constante, dois usos (o fim feliz e o fim travado) — e o comecar.sh tem a
-# gêmea. Link repetido à mão vira link divergente na primeira troca.
-COMUNIDADE_URL="https://lp-comunidade.automatiklabs.com.br"
+# Fork ArvisX (privado: o clone pede credencial do GitHub com acesso ao repo).
+REPO_URL="${REPO_URL:-https://github.com/BarrosPL/arvisx-crm.git}"
+# ArvisX: o link da comunidade do upstream (de terceiro) saiu do fim da
+# instalação; quem trava fala com o suporte da ArvisX (SUPORTE_ARVISX). O
+# comecar.sh tem a gêmea.
+SUPORTE_ARVISX="suporte@arvisx.com.br"
+# O nome da pasta fica `deskcommcrm` de propósito: ele vira o nome do projeto do
+# Docker Compose e as marcas de cron/contêiner de instalações existentes.
 REPO_DIR="${REPO_DIR:-deskcommcrm}"
 COMPOSE="docker-compose.prod.yml"
 COMPOSE_TRAEFIK="docker-compose.traefik.yml"
@@ -26,6 +30,15 @@ COMPOSE_NPM="docker-compose.npm.yml"
 COMPOSE_CLOUDFLARED="docker-compose.cloudflared.yml"
 NONINTERACTIVE=0
 [ "${1:-}" = "--yes" ] && NONINTERACTIVE=1
+
+# Nomes ArvisX: as quatro variáveis que o operador digita também valem com o
+# prefixo ARVISX_ (e o ARVISX_ vence). Gêmeo do bloco no topo de _common.sh —
+# repetido aqui porque o _i18n.sh (que lê DESKCOMM_IDIOMA_CLI) é sourced logo
+# abaixo, antes de _common.sh existir no disco. Se mexer num, mexa no outro.
+if [ -n "${ARVISX_BUILD_LOCAL:-}" ]; then export DESKCOMM_BUILD_LOCAL="${ARVISX_BUILD_LOCAL:-${DESKCOMM_BUILD_LOCAL:-}}"; fi
+if [ -n "${ARVISX_IDIOMA_CLI:-}" ]; then export DESKCOMM_IDIOMA_CLI="${ARVISX_IDIOMA_CLI:-${DESKCOMM_IDIOMA_CLI:-}}"; fi
+if [ -n "${ARVISX_RELEASES_LATEST_URL:-}" ]; then export DESKCOMM_RELEASES_LATEST_URL="${ARVISX_RELEASES_LATEST_URL:-${DESKCOMM_RELEASES_LATEST_URL:-}}"; fi
+if [ -n "${ARVISX_ASSUMIR_PROJETO:-}" ]; then export DESKCOMM_ASSUMIR_PROJETO="${ARVISX_ASSUMIR_PROJETO:-${DESKCOMM_ASSUMIR_PROJETO:-}}"; fi
 
 # t()/IDIOMA_CLI — ver o cabeçalho de _i18n.sh. Sourced aqui (e não só depois
 # do clone) porque este script já fala com o operador antes de _common.sh
@@ -1651,17 +1664,17 @@ if [ -z "${SENTRY_DSN+x}" ]; then
     # Automação não consente por ninguém. Sem valor explícito, fica desligado.
     SENTRY_DSN="off"
   else
-    step "$(t "Telemetria de erros (opcional)")"
-    printf '%s\n' "$(t "Podemos receber os relatórios de ERRO desta instalação (stack trace) para")"
-    printf '%s\n' "$(t "corrigir bugs que afetam todo mundo. CPF, telefone e e-mail são substituídos,")"
-    printf '%s\n' "$(t "cabeçalhos sensíveis removidos e tokens de webhook/convite redigidos da URL.")"
-    printf '%s\n' "$(t "NÃO enviamos rastreamento de performance nem replay de sessão.")"
-    printf '%s\n' "$(t "Seus dados de clientes, conversas e banco NUNCA saem daqui.")"
+    # ArvisX CRM: não existe Sentry da comunidade (lib/sentry/dsn.ts) — vazio
+    # já é desligado. A única escolha é mandar os erros para o SEU Sentry.
+    step "Relatórios de erro (opcional)"
+    printf '%s\n' "Se você tem um projeto no Sentry, cole o DSN dele para receber os erros"
+    printf '%s\n' "desta instalação. Sem DSN, nada é enviado a ninguém."
     printf '\n%s\n' "$(t "Você pode mudar depois no .env, a qualquer momento.")"
-    read -r -p "$(t "  Enviar relatórios de erro anonimizados? (s/N) ")" _tel
-    if resposta_sim "${_tel:-}"; then
-      SENTRY_DSN=""
-      c_grn "$(t "✓ Telemetria de erros ligada — obrigado, isso ajuda o projeto.")"
+    read -r -p "  DSN do seu Sentry (Enter = desligado): " _tel
+    _tel="$(printf '%s' "${_tel:-}" | tr -d '[:space:]')"
+    if [ -n "$_tel" ] && [ "$_tel" != "off" ]; then
+      SENTRY_DSN="$_tel"
+      c_grn "✓ Os erros vão para o seu Sentry."
     else
       SENTRY_DSN="off"
       c_grn "$(t "✓ Telemetria desligada — nada será enviado.")"
@@ -1944,8 +1957,7 @@ esac
   envq TENANT_PROVISIONING_SECRET "${TENANT_PROVISIONING_SECRET:-}"
   printf '# Telemetria de erros (você escolheu isto durante a instalação).\n'
   printf '#   "off"  = não envia nada.\n'
-  printf '#   vazio  = só ERRO pro Sentry da comunidade, com CPF/telefone/e-mail\n'
-  printf '#            substituídos e token de URL redigido. Sem trace, sem replay.\n'
+  printf '#   vazio  = também desligado (no ArvisX CRM não há Sentry da comunidade).\n'
   printf '#   <dsn>  = manda pro SEU Sentry (aí com performance e replay).\n'
   envq SENTRY_DSN "${SENTRY_DSN:-}"
   envq INTERNAL_SECRET "$INTERNAL_SECRET"
@@ -2632,9 +2644,9 @@ $(c_ylw "═══════════════════════�
   $(t "Quando der 307, rode de novo o mesmo comando de instalação: ele confere")
   $(t "o que falta e termina, sem apagar nada.")
 
-  $(t "Travou? Leve o log para a comunidade — tem gente que já passou por isso:")
+  Travou? Mande o log para o suporte da ArvisX:
 
-       ${COMUNIDADE_URL}
+       ${SUPORTE_ARVISX}
 
 SEM_CADEADO
     trap apaga_temporarios EXIT
@@ -2663,9 +2675,9 @@ $(c_ylw "═══════════════════════�
 
        docker compose $(dc_files) up -d
 
-  $(t "Travou? Leve o log para a comunidade — tem gente que já passou por isso:")
+  Travou? Mande o log para o suporte da ArvisX:
 
-       ${COMUNIDADE_URL}
+       ${SUPORTE_ARVISX}
 
 INCOMPLETO
   # Sai != 0 para que automação (e o --yes) saiba que não terminou saudável,
@@ -2681,10 +2693,12 @@ fi
 telemetria_no_banner() {
   if [ "${SENTRY_DSN:-}" = "off" ]; then
     printf '%s\n' "$(t "  Telemetria: DESLIGADA — nenhum relatório de erro sai desta instalação.")"
-    printf '%s\n' "$(t "  Para ligar, apague a linha SENTRY_DSN do .env e rode: {1}" "docker compose $(dc_files) up -d")"
+    printf '%s\n' "  Para ligar, ponha SENTRY_DSN=<dsn do seu Sentry> no .env e rode: docker compose $(dc_files) up -d"
+  elif [ -z "${SENTRY_DSN:-}" ]; then
+    printf '%s\n' "  Telemetria: DESLIGADA (SENTRY_DSN vazio) — nenhum relatório de erro sai desta instalação."
   else
-    printf '%s\n' "$(t "  Telemetria: LIGADA — só relatórios de erro anonimizados vão ao Sentry do")"
-    printf '%s\n' "$(t "  projeto. Para desligar, ponha SENTRY_DSN='off' no .env e rode: {1}" "docker compose $(dc_files) up -d")"
+    printf '%s\n' "  Telemetria: LIGADA — os erros vão para o Sentry configurado em SENTRY_DSN."
+    printf '%s\n' "  Para desligar, ponha SENTRY_DSN='off' no .env e rode: docker compose $(dc_files) up -d"
   fi
 }
 
@@ -2713,12 +2727,9 @@ $(pendencia_da_ia)
        $(t "Configurações → Segurança (guarde os códigos de recuperação).")
        $(t "Perdeu o celular?") bash hostgator-setup-kit/reset-mfa.sh ${OWNER_EMAIL}
 
-$(c_grn "  ─── $(t "A comunidade") ──────────────────────────────────────")
+$(c_grn "  ─── Suporte ArvisX ──────────────────────────────────────")
 
-  $(t "É onde saem os avisos de versão nova, os agentes que outras pessoas já")
-  $(t "configuraram e a resposta de quem roda exatamente este CRM:")
-
-       ${COMUNIDADE_URL}
+       ${SUPORTE_ARVISX}
 
 $(telemetria_no_banner)
 

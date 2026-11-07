@@ -209,22 +209,16 @@ type EntradaDeMarca = {
 
 const MARCA_CONGELADA: Record<string, EntradaDeMarca> = {
   // ─── PROTOCOLO — contrato de fio. Renomear quebra integração alheia. ───
-  "lib/ai/pontos/pkce-da-assinatura.ts": {
-    categoria: "PROTOCOLO",
-    motivo:
-      "`agent_name_hint` identifica o aplicativo auto-hospedado durante a autorização SIWC da OpenAI; não é o nome apresentado nas telas do CRM. O fluxo de login depende deste identificador de produto.",
-    marcas: ["deskcommcrm"],
-  },
   "lib/webhooks/assinatura.ts": {
     categoria: "PROTOCOLO",
     motivo:
-      "header que o webhook de ENTRADA exige de quem envia. Renomear invalida a assinatura de todo integrador já configurado, e o sintoma para ele é 401 sem explicação. A rota que confere e a tela que ensina importam ESTA constante — o literal não se repete mais em nenhuma das duas",
+      "o nome LEGADO do header que o webhook de ENTRADA confere (`HEADER_ASSINATURA_DE_ENTRADA_LEGADO`). O nome ensinado agora é `x-arvisx-signature`, e a rota aceita os dois (o novo tem precedência): apagar o legado invalidaria a assinatura de todo integrador já configurado, e o sintoma para ele é 401 sem explicação. A rota e a tela importam as constantes — o literal não se repete em nenhuma das duas",
     marcas: ["x-deskcomm-signature"],
   },
   "lib/automation/actions/call-webhook.ts": {
     categoria: "PROTOCOLO",
     motivo:
-      "headers do webhook de SAÍDA. O receptor do cliente lê o nome exato para rotear e para conferir o HMAC; renomear faz o payload chegar e ser descartado calado",
+      "headers LEGADOS do webhook de SAÍDA, que continuam saindo ao lado dos neutros (`X-Webhook-Event`, `X-Webhook-Signature`). O receptor do cliente lê o nome exato para rotear e para conferir o HMAC; tirá-los faz o payload chegar e ser descartado calado",
     marcas: ["x-deskcomm-event", "x-deskcomm-signature"],
   },
   "lib/automation/actions/call-webhook.test.ts": {
@@ -233,22 +227,16 @@ const MARCA_CONGELADA: Record<string, EntradaDeMarca> = {
       "é a guarda do contrato acima: este teste é o que reprova quem renomear o header. Trocar a string aqui para 'limpar a marca' desarmaria a única proteção que o contrato tem",
     marcas: ["x-deskcomm-event", "x-deskcomm-signature", "x-deskcomm-signature", "x-deskcomm-signature"],
   },
-  "lib/mcp/server.ts": {
-    categoria: "PROTOCOLO",
-    motivo:
-      "nome do servidor MCP, que o cliente (Claude Desktop e afins) grava na própria configuração. Renomear derruba as conexões já configuradas de quem usa",
-    marcas: ["deskcomm-crm"],
-  },
   "lib/mcp/servidor-externo/chamada.ts": {
     categoria: "PROTOCOLO",
     motivo:
-      "clientInfo do handshake `initialize` do MCP que este cliente manda ao servidor REMOTO: ele registra quem conectou e é comum haver regra de acesso por identificação do cliente lá do lado. Não é texto de interface — a tela nunca mostra — e renomear muda a identidade reportada no fio do protocolo. E os cabeçalhos `X-Deskcomm-Contato-*`/`X-Deskcomm-Canal` (#2147): o servidor externo FILTRA os dados do cliente da conversa por esses nomes exatos; renomear faz o servidor deixar de achar a identidade e, conforme a implementação dele, responder sem filtro",
-    marcas: ["deskcomm-crm", "x-deskcomm-canal", "x-deskcomm-contato-id", "x-deskcomm-contato-telefone"],
+      "os nomes LEGADOS dos cabeçalhos de identidade do contato (`CABECALHOS_DO_CONTATO_LEGADOS`, #2147), que saem SEMPRE ao lado dos novos `X-Arvisx-*` com os mesmos valores: o servidor externo FILTRA os dados do cliente da conversa por esses nomes exatos; tirá-los faz o servidor que já integrou deixar de achar a identidade e, conforme a implementação dele, responder sem filtro",
+    marcas: ["x-deskcomm-canal", "x-deskcomm-contato-id", "x-deskcomm-contato-telefone"],
   },
   "lib/mcp/servidor-externo/externo.test.ts": {
     categoria: "PROTOCOLO",
     motivo:
-      "é a guarda do contrato acima (#2147): o teste de não-forjamento tenta passar os nomes `X-Deskcomm-*` por argumento de ferramenta, em caixas diferentes, e confere o que chega no fio. Trocar a string aqui desarmaria a prova de que o argumento não alcança o cabeçalho",
+      "é a guarda do contrato acima (#2147): o teste de não-forjamento tenta passar os nomes `X-Deskcomm-*` (e os novos `X-Arvisx-*`) por argumento de ferramenta, em caixas diferentes, e confere o que chega no fio. Trocar a string aqui desarmaria a prova de que o argumento não alcança o cabeçalho legado",
     marcas: [
       "x-deskcomm-canal",
       "x-deskcomm-contato-id",
@@ -259,23 +247,11 @@ const MARCA_CONGELADA: Record<string, EntradaDeMarca> = {
       "x-deskcomm-extra",
     ],
   },
-  "lib/supabase/admin.ts": {
-    categoria: "PROTOCOLO",
-    motivo:
-      "`X-Client-Info` enviado ao Supabase — identifica o cliente nos logs e na telemetria DELES. Não é texto de interface e nunca chega ao usuário",
-    marcas: ["deskcomm-crm"],
-  },
   "lib/wacalls/events-bridge.ts": {
     categoria: "PROTOCOLO",
     motivo:
       "X-Client-Id enviado ao processo WaCalls (spec 18) — identifica o worker como o operador dono da conexão SSE nos logs e na lógica de exclusividade de chamada dele. Não é texto de interface e nunca chega ao usuário",
     marcas: ["deskcomm-worker"],
-  },
-  "lib/nuvemshop/config.ts": {
-    categoria: "PROTOCOLO",
-    motivo:
-      "User-Agent exigido pela Nuvemshop, que identifica a aplicação registrada na plataforma deles. Trocar pelo nome do revendedor descreveria uma aplicação que não existe lá",
-    marcas: ["deskcommcrm"],
   },
   "lib/agenda/google/evento.ts": {
     categoria: "PROTOCOLO",
@@ -708,8 +684,8 @@ describe("catraca de marca no que o GoTrue renderiza", () => {
     "supabase/config.toml": {
       categoria: "DEV",
       motivo:
-        "config do Supabase LOCAL (o `supabase start` de dev e do CI). NÃO embarca na imagem e NÃO alcança clone nenhum: um self-hoster usa um projeto na nuvem do Supabase, cuja config de auth vem do marca-emails.sh, ou um GoTrue próprio, que lê env. `project_id` ainda nomeia os contêineres locais (supabase_auth_deskcomm-crm) e os assuntos são o que a suíte local envia",
-      marcas: ["deskcomm-crm", "deskcommcrm", "deskcommcrm"],
+        "config do Supabase LOCAL (o `supabase start` de dev e do CI). NÃO embarca na imagem e NÃO alcança clone nenhum. Sobrou só o `project_id`, que nomeia os contêineres locais (supabase_auth_deskcomm-crm) — e que fixtures como app/actions/settings/smtp.test.ts citam; os assuntos já dizem ArvisX CRM",
+      marcas: ["deskcomm-crm"],
     },
   };
 

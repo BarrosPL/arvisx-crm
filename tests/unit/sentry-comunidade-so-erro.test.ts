@@ -33,6 +33,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  DEFAULT_SENTRY_DSN,
   INTEGRACAO_DE_SESSAO,
   INTEGRACAO_DE_TRACING,
   integracoesDoCliente,
@@ -213,8 +214,10 @@ describe("o init do cliente honra a política", () => {
  *
  * Mesma família do e2e que escrevia no banco de produção: o default é a coisa
  * mais perigosa quando o default é "manda para o nosso servidor de verdade".
- * `resolveSentryDsn("")` cai no DSN da comunidade — então a AUSÊNCIA da chave no
- * ambiente da suíte é o que mandava dado de teste para lá.
+ * No upstream, `resolveSentryDsn("")` caía no DSN da comunidade — então a AUSÊNCIA
+ * da chave no ambiente da suíte é o que mandava dado de teste para lá. No ArvisX o
+ * vazio já desliga (ver `lib/sentry/dsn.ts`); o `off` explícito do gerador fica
+ * como cinto e suspensório, e o caso abaixo prende o padrão novo.
  */
 describe("o ambiente da suíte desliga a telemetria", () => {
   it("o gerador do .env.e2e escreve SENTRY_DSN=off", () => {
@@ -233,7 +236,36 @@ describe("o ambiente da suíte desliga a telemetria", () => {
 
   it("e `off` de fato desliga — a guarda acima não vale nada se o valor não desligasse", () => {
     expect(resolveSentryDsn("off")).toBeUndefined();
-    // Controle: o vazio NÃO desliga, e é por isso que a linha acima é obrigatória.
-    expect(isCommunityDsn(resolveSentryDsn(""))).toBe(true);
+  });
+});
+
+/**
+ * NO ARVISX O PADRÃO É DESLIGADO (risco LGPD).
+ *
+ * O upstream mandava, sem `SENTRY_DSN`, os erros de toda instalação para o Sentry
+ * DELE. Num CRM com dados de clientes da ArvisX isso é dado saindo para terceiro
+ * sem decisão de ninguém. Estes casos prendem o padrão: vazio e ausente desligam,
+ * e não existe DSN embutido para onde cair.
+ */
+describe("sem SENTRY_DSN, nada é enviado", () => {
+  it.each([undefined, null, "", "   ", "off", "OFF", "false", "0"])(
+    "resolveSentryDsn(%j) desliga",
+    (valor) => {
+      expect(resolveSentryDsn(valor)).toBeUndefined();
+    },
+  );
+
+  it("um DSN configurado passa como está, e vale como Sentry do próprio operador", () => {
+    const dsn = "https://abc123@o0.ingest.sentry.io/42";
+    expect(resolveSentryDsn(`  ${dsn}  `)).toBe(dsn);
+    expect(isCommunityDsn(resolveSentryDsn(dsn))).toBe(false);
+  });
+
+  it("não há DSN da comunidade embutido no código", () => {
+    expect(DEFAULT_SENTRY_DSN).toBeUndefined();
+    const fonte = readFileSync(path.join(process.cwd(), "lib/sentry/dsn.ts"), "utf8");
+    expect(fonte, "voltou um DSN do Sentry cravado em lib/sentry/dsn.ts").not.toMatch(
+      /ingest\.[a-z.]*sentry\.io/,
+    );
   });
 });

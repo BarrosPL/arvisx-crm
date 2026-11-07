@@ -70,9 +70,20 @@ describe("conteúdo da Ajuda acompanha o contexto do menu", () => {
     } };
     authRef.activeOrg!.role = "viewer";
     const filtro = vi.spyOn(navegacao, "destinosDaInterface");
-    render(<AjudaConteudo />);
+    render(<AjudaConteudo atualizacaoPelaTela />);
     expect(filtro).toHaveBeenLastCalledWith(undefined, false, "viewer", [], []);
     expect(urls()).toEqual(["/app/contacts", "/app/inbox", "/app/kanban", "/app/settings/atualizacao", "/app/team"]);
+  });
+
+  it("ArvisX: com ATUALIZACAO_PELA_TELA desligada (padrão), o dono não ganha o atalho de Atualização", () => {
+    // A tela responde 404 sem a env (`lib/system/atualizacao-pela-tela.ts`);
+    // oferecer o link seria oferecer um 404 como ajuda.
+    authRef.user = { is_platform_admin: true, idioma: "pt-BR" };
+    authRef.activeOrg!.interface_settings = { preset: "completa", destinos: ["/app/ajuda", "/app/contacts"] };
+    render(<AjudaConteudo />);
+    expect(urls()).toContain("/app/contacts");
+    expect(urls()).not.toContain("/app/settings/atualizacao");
+    expect(screen.queryByRole("heading", { level: 2, name: "Para quem instala e mantém" })).toBeNull();
   });
 
   it("o idioma do provider muda o conteúdo antes de mudar user.idioma", () => {

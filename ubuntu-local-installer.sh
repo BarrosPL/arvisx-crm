@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# DeskcommCRM - Instalador Automático (Local Ubuntu VM)
+# ArvisX CRM - Instalador Automático (Local Ubuntu VM)
 # Este script prepara a VM, sobe o Supabase local (PostgreSQL + Auth +
 # PostgREST + Storage + Realtime), inicializa os serviços da aplicação e cria
 # o usuário Admin.
@@ -36,9 +36,9 @@ fi
 
 # Se não estivermos na raiz do projeto, clona e entra nele.
 if [ ! -f "package.json" ]; then
-  step "Clonando o repositório DeskcommCRM..."
-  git clone https://github.com/melgarafael/DeskcommCRM.git
-  cd DeskcommCRM
+  step "Clonando o repositório ArvisX CRM..."
+  git clone https://github.com/BarrosPL/arvisx-crm.git
+  cd arvisx-crm
 fi
 
 if ! command -v pnpm >/dev/null 2>&1; then
@@ -157,7 +157,7 @@ APP_PORT=$APP_PORT
 SENTRY_DSN=
 EOF
 
-step "Subindo os serviços do DeskcommCRM (App, Worker, WAHA, Redis)..."
+step "Subindo os serviços do ArvisX CRM (App, Worker, WAHA, Redis)..."
 ./scripts/local-stack.sh up
 
 step "Criando usuário Administrador..."
@@ -170,7 +170,7 @@ export OWNER_EMAIL="${OWNER_EMAIL:-admin@admin.com}"
 # o CRM com uma credencial que está no GitHub. Quem quiser escolher a senha
 # exporta OWNER_PASSWORD antes de chamar o script.
 export OWNER_PASSWORD="${OWNER_PASSWORD:-$(openssl rand -base64 18)}"
-export OWNER_ORG_NAME="Deskcomm Local"
+export OWNER_ORG_NAME="ArvisX Local"
 export APP_LOCALE="pt-BR"
 
 # Instala a dependência para rodar o bootstrap e executa

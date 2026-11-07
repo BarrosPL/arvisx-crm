@@ -75,6 +75,10 @@ let smtpSelectError: { message: string } | null;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // ArvisX: o retrato do dono (e o POST de update) só existem com a atualização
+  // pela tela ligada (desligada por padrão, `lib/system/atualizacao-pela-tela.ts`).
+  // Os casos herdados medem a tela ligada; o desligado tem bloco próprio.
+  vi.stubEnv("ATUALIZACAO_PELA_TELA", "on");
   pa.row = {
     user_id: "11111111-1111-4111-8111-111111111111",
     scope: "full",
@@ -179,6 +183,34 @@ function get() {
 function post() {
   return new NextRequest("http://localhost/api/v1/system/update", { method: "POST" });
 }
+
+describe("ArvisX: atualização pela tela desligada (padrão)", () => {
+  it("o dono recebe só a versão: sem update_available, o rodapé não anuncia versão nova", async () => {
+    vi.stubEnv("ATUALIZACAO_PELA_TELA", "");
+    vi.mocked(loadAuthUser).mockResolvedValue(OWNER as never);
+    const { GET } = await import("../version/route");
+    const res = await GET(get());
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.current_version).toBe("1.0.0");
+    expect(body.data.is_owner).toBe(false);
+    expect(body.data.update_available).toBeUndefined();
+    expect(body.data.latest_version).toBeUndefined();
+    expect(body.data.notes).toBeUndefined();
+  });
+
+  it("POST /api/v1/system/update responde 404 sem tocar no banco", async () => {
+    vi.stubEnv("ATUALIZACAO_PELA_TELA", "");
+    vi.mocked(loadAuthUser).mockResolvedValue(OWNER as never);
+    const { POST } = await import("../update/route");
+    const res = await POST(post());
+    expect(res.status).toBe(404);
+    expect((await res.json()).error.code).toBe("not_found");
+    expect(createAdminClient).not.toHaveBeenCalled();
+    expect(inserted).toBeNull();
+    expect(audit).not.toHaveBeenCalled();
+  });
+});
 
 describe("GET /api/v1/system/version", () => {
   it("exige sessão", async () => {

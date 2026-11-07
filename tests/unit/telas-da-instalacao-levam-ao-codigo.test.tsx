@@ -12,7 +12,7 @@
  * Executa as páginas com o `lib/auth/server` REAL (só a identidade é fixada);
  * o que varia é o que o Supabase responde sobre fatores, sessão e confiança.
  */
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createClient } from "@/lib/supabase/server";
 
@@ -95,8 +95,10 @@ async function servidorMcp() {
   return Pagina();
 }
 
-async function atualizacao() {
+async function atualizacao(ligada = true) {
   h.caminho = "/app/settings/atualizacao";
+  // ArvisX: a tela só existe com `ATUALIZACAO_PELA_TELA=on` (desligada por padrão).
+  vi.stubEnv("ATUALIZACAO_PELA_TELA", ligada ? "on" : "");
   const { default: Pagina } = await import("@/app/app/settings/atualizacao/page");
   return Pagina();
 }
@@ -104,6 +106,10 @@ async function atualizacao() {
 beforeEach(() => {
   vi.clearAllMocks();
   h.plataforma = true;
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 describe("dono da instalação que entrou pelo dispositivo confiável", () => {
@@ -141,5 +147,12 @@ describe("controles: quem não deve ir ao código abre a tela", () => {
     await expect(extensoes()).resolves.toBeTruthy();
     // A Atualização não existe para ele: some (404), em vez de pedir um código.
     await expect(atualizacao()).rejects.toThrow("NOT_FOUND");
+  });
+});
+
+describe("ArvisX: atualização pela tela desligada (padrão)", () => {
+  it("nem o dono com o código provado abre a tela: 404", async () => {
+    sessao("aal2");
+    await expect(atualizacao(false)).rejects.toThrow("NOT_FOUND");
   });
 });

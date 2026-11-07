@@ -7,7 +7,15 @@ import { useT } from "@/hooks/i18n/useT";
 import { blocosVisiveis } from "@/lib/ajuda/hub";
 import { destinosDaInterface } from "@/lib/navigation/interface";
 
-export function AjudaConteudo() {
+export function AjudaConteudo({
+  atualizacaoPelaTela = false,
+}: {
+  /**
+   * ArvisX: `ATUALIZACAO_PELA_TELA=on` no servidor (lido em `page.tsx`).
+   * Desligado (padrão), o atalho do instalador não aparece: a tela dá 404.
+   */
+  atualizacaoPelaTela?: boolean;
+} = {}) {
   const t = useT();
   const { user, activeOrg } = useAuth();
   // O mesmo contexto enriquecido pelo layout e a mesma régua do Sidebar.
@@ -21,7 +29,7 @@ export function AjudaConteudo() {
   );
   // A leitura de Atualização aceita plataforma também em suporte; não é o
   // bypass de papel dos atalhos regulares (settings/atualizacao/page.tsx).
-  const blocos = blocosVisiveis(user.is_platform_admin, destinos);
+  const blocos = blocosVisiveis(user.is_platform_admin && atualizacaoPelaTela, destinos);
 
   return (
     <div className="flex h-full flex-col gap-6 p-6">

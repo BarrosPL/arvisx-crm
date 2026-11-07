@@ -7,7 +7,9 @@
  *
  * Cabeçalhos de toda entrega (#1529) — o guia de quem recebe é
  * docs/integracao/webhooks-de-saida.md:
- *  - X-Deskcomm-Event: o tipo do evento;
+ *  - X-Webhook-Event: o tipo do evento (nome neutro);
+ *  - X-Deskcomm-Event: o mesmo valor, LEGADO. Continua saindo byte a byte igual
+ *    para o receptor que já casa por ele;
  *  - X-Webhook-Delivery: id da ENTREGA (uuid v5 de evento + regra + posição da ação +
  *    lista de ações). É o mesmo nas retentativas e no botão Reenviar — é a
  *    chave de deduplicação;
@@ -39,10 +41,12 @@ const RETRY_DELAYS_MS = [1_000, 5_000]; // total 3 tentativas
  * renomeia depois do release, e a instalação de marca própria não pode mandar a
  * marca de origem ao sistema do cliente. Event e a assinatura legada já eram
  * contrato publicado e ficam — são as entradas PROTOCOLO de
- * tests/unit/branding.test.ts, lista que só encolhe.
+ * tests/unit/branding.test.ts, lista que só encolhe. O evento ganhou o irmão
+ * neutro `X-Webhook-Event` (mesmo valor); o legado sai junto, sem aviso de fim.
  */
 const CABECALHOS = {
-  evento: "X-Deskcomm-Event",
+  evento: "X-Webhook-Event",
+  eventoLegado: "X-Deskcomm-Event",
   entrega: "X-Webhook-Delivery",
   tentativa: "X-Webhook-Attempt",
   carimbo: "X-Webhook-Timestamp",
@@ -433,6 +437,7 @@ export async function executeCallWebhook(
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     [CABECALHOS.evento]: ctx.event.event_type,
+    [CABECALHOS.eventoLegado]: ctx.event.event_type,
     [CABECALHOS.entrega]: entrega,
   };
   // secret_enc (cifrado at-rest, migration 0041) tem precedência; config.secret

@@ -98,7 +98,11 @@ jobs:
             --title "Release ${VERSAO}" --body-file /tmp/corpo.md
 
   cortar-tag:
-    if: github.event_name == 'push'
+    # ArvisX (fork BarrosPL/arvisx-crm): desligado no fork. Ele corta release do
+    # upstream (CHANGELOG + tag) com o GitHub App de lá e falhava a cada push na
+    # `main` do fork. A atualização do ArvisX é o merge do upstream + build pelo
+    # publish-image + deploy no Easypanel.
+    if: github.event_name == 'push' && github.repository == 'melgarafael/DeskcommCRM'
     runs-on: ubuntu-latest
     permissions:
       contents: read

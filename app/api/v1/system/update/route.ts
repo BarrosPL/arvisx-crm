@@ -40,6 +40,10 @@ import {
   supportsForcedUpdate,
 } from "@/lib/system/runtime-identity";
 import { ehVersaoPublicada, isRunStale } from "@/lib/system/update-run";
+import {
+  ATUALIZACAO_PELA_TELA_DESLIGADA,
+  atualizacaoPelaTelaLigada,
+} from "@/lib/system/atualizacao-pela-tela";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +60,8 @@ const SEM_FALHA_PARA_FORCAR = "Não há nenhuma atualização com falha para for
 const corpoDoPedido = z.object({ rollback: z.boolean().optional(), force: z.boolean().optional() });
 
 export async function POST(req: NextRequest): Promise<Response> {
+  // ArvisX: desligado por padrão (`ATUALIZACAO_PELA_TELA`), a rota não existe.
+  if (!atualizacaoPelaTelaLigada()) return fail("not_found", ATUALIZACAO_PELA_TELA_DESLIGADA, 404);
   const supportDenied = await requireSupportWrite();
   if (supportDenied) return supportDenied;
 

@@ -8,9 +8,15 @@
  * activates without code changes.
  */
 
+import { DEFAULT_APP_NAME, SUPORTE_DO_PRODUTO } from "@/lib/branding";
+
 export const NUVEMSHOP_AUTH_BASE = "https://www.tiendanube.com";
 export const NUVEMSHOP_API_BASE = "https://api.tiendanube.com/v1";
-export const APP_USER_AGENT = "DeskcommCRM (rafael@maudibrasil.com.br)";
+/**
+ * Nome do PRODUTO e contato de suporte da ArvisX — nunca a marca do revendedor:
+ * o User-Agent identifica a aplicação registrada na Nuvemshop, que é a nossa.
+ */
+export const APP_USER_AGENT = `${DEFAULT_APP_NAME} (${SUPORTE_DO_PRODUTO})`;
 
 export interface NuvemshopConfig {
   appId: string;

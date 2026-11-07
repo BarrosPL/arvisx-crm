@@ -2,7 +2,7 @@
 
 ## Versões suportadas
 
-O DeskcommCRM é distribuído em rolling release a partir da branch `main`. Correções de segurança são aplicadas apenas à versão mais recente — mantenha sua instalação atualizada (`bash hostgator-setup-kit/update.sh` em self-host).
+O ArvisX CRM (fork do DeskcommCRM, operado pela Arvisx) é distribuído em rolling release a partir da branch `main`. Correções de segurança são aplicadas apenas à versão mais recente — mantenha sua instalação atualizada (`bash hostgator-setup-kit/update.sh` em self-host).
 
 | Versão | Suportada |
 | --- | --- |
@@ -13,7 +13,7 @@ O DeskcommCRM é distribuído em rolling release a partir da branch `main`. Corr
 
 **Não abra issue pública para vulnerabilidades.**
 
-Use o [relato privado de vulnerabilidades do GitHub](https://github.com/melgarafael/DeskcommCRM/security/advisories/new) — o relato chega só aos mantenedores, e o histórico fica auditável.
+Escreva para **[suporte@arvisx.com.br](mailto:suporte@arvisx.com.br)** com o assunto "Segurança" — o relato chega só à equipe da Arvisx. Se a falha também existir no projeto original (DeskcommCRM), a Arvisx repassa ao mantenedor do upstream pelo canal privado dele.
 
 O que esperar:
 

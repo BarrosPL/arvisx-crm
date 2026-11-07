@@ -55,6 +55,16 @@ grep -q "Não consegui baixar o catálogo" "$saida" \
   && ok "a mensagem diz o que houve, em português" \
   || erro "a mensagem de falha não explica nada a quem opera"
 
+# ArvisX: sem EXTENSOES_ORIGEM não existe origem padrão (o upstream buscava em
+# extensoes.deskcomm.com.br). Tem de recusar, dizendo como configurar.
+if env -u EXTENSOES_ORIGEM PROJECT_DIR="$(dirname "$saida")"    bash "$SCRIPT" listar >"$saida" 2>&1; then
+  erro "sem EXTENSOES_ORIGEM o script devolveu sucesso — não pode haver origem padrão"
+else
+  ok "sem EXTENSOES_ORIGEM o script recusa"
+fi
+grep -q "Nenhuma origem de catálogo configurada" "$saida"   && ok "a recusa diz que falta a origem"   || erro "a recusa sem origem não explica nada a quem opera"
+grep -q "deskcomm.com.br" "$SCRIPT"   && erro "o script voltou a citar o domínio do upstream"   || ok "nenhuma origem do upstream no script"
+
 # A validação de FORMA, exercida direto — sem rede.
 # A primeira versão deste caso chamava `baixar_para` com um caminho local e passava pelo
 # motivo errado: o `curl` recusa o protocolo antes de a validação rodar, então tirar a

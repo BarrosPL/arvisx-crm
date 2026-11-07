@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { exigirProvaDeMfa, loadAuthUser, mfaEmDividaEstrita } from "@/lib/auth/server";
+import { atualizacaoPelaTelaLigada } from "@/lib/system/atualizacao-pela-tela";
 import { UpdatePanel } from "./_components/UpdatePanel";
 
 export const metadata = { title: "Atualização do sistema" };
@@ -12,6 +13,8 @@ export const dynamic = "force-dynamic";
  * produto.
  */
 export default async function Page() {
+  // ArvisX: desligada por padrão (`ATUALIZACAO_PELA_TELA`), a tela não existe.
+  if (!atualizacaoPelaTelaLigada()) notFound();
   const user = await loadAuthUser();
   if (!user?.is_platform_admin) notFound();
   // Os botões batem em `POST /api/v1/system/update`, que exige o código provado

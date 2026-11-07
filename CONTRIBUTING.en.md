@@ -1,4 +1,4 @@
-# Contributing — DeskcommCRM
+# Contributing — ArvisX CRM
 
 [🇧🇷 Português](CONTRIBUTING.md) · 🇺🇸 English
 
@@ -233,12 +233,11 @@ See [`README.en.md`](README.en.md) §Development — how to run locally.
 
 ## Support
 
-**[GitHub Discussions](https://github.com/melgarafael/DeskcommCRM/discussions)** — it is the public
-channel, works for anyone and is where the answer stays recorded for whoever comes after. For bugs,
-[open an issue](https://github.com/melgarafael/DeskcommCRM/issues/new/choose).
+**[suporte@arvisx.com.br](mailto:suporte@arvisx.com.br)** — the ArvisX CRM support channel. For bugs,
+[open an issue](https://github.com/BarrosPL/arvisx-crm/issues/new/choose) in the Arvisx repository
+(private, team only) or write to the same address.
 
-If it is something that does not fit in public (security, for example): `rafael@maudibrasil.com.br` — the same
-address as in [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+Security: never in an issue; write to `suporte@arvisx.com.br` (see [`SECURITY.md`](SECURITY.md)).
 
 > This section used to point to an internal Discord whose invite lives in a private Notion — unreachable
 > precisely for whoever needed it most, who is the one coming from outside. It stays here as a reminder that

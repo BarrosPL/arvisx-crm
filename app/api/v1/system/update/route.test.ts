@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   // `null` (e não `{ code: "", message: "" }`) porque a rota checa `if (error)`:
@@ -75,9 +75,29 @@ import { logger } from "@/lib/logger";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // ArvisX: a rota só existe com a atualização pela tela ligada (desligada por
+  // padrão, `lib/system/atualizacao-pela-tela.ts`). Os casos herdados medem a
+  // rota ligada; o desligado tem caso próprio logo abaixo.
+  vi.stubEnv("ATUALIZACAO_PELA_TELA", "on");
   mocks.insertError = null;
   mocks.respostas = {};
   mocks.runInserido = { id: "run-novo", status: "dispatched" };
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+it("ArvisX: desligada por padrão, responde 404 e não grava nem audita nada", async () => {
+  vi.stubEnv("ATUALIZACAO_PELA_TELA", "");
+  const response = await POST(
+    new NextRequest("http://localhost/api/v1/system/update", { method: "POST" }),
+  );
+  expect(response.status).toBe(404);
+  expect((await response.json()).error.code).toBe("not_found");
+  expect(mocks.escrita).not.toHaveBeenCalled();
+  expect(mocks.insertRow).not.toHaveBeenCalled();
+  expect(mocks.audit).not.toHaveBeenCalled();
 });
 
 it("explica a preparação de extensão que bloqueia a atualização sem despachar um run", async () => {

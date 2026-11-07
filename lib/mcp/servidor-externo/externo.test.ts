@@ -52,6 +52,7 @@ import type { McpAuthResult } from "@/lib/mcp/auth";
 import type { McpContext } from "@/lib/mcp/types";
 import {
   CABECALHOS_DO_CONTATO,
+  CABECALHOS_DO_CONTATO_LEGADOS,
   chamarFerramentaRemota,
   fetchDeSaida,
   listarFerramentasDoServidor,
@@ -652,12 +653,26 @@ function bancoDoAtendimento(op: {
 const contatoDaOrg = { id: CONTATO, organization_id: ORG, phone_number: TELEFONE_NO_BANCO };
 
 /** Os três cabeçalhos de identidade como chegaram ao stub (nomes em minúsculas no fio). */
-function identidadeNoFio(cab: IncomingHttpHeaders) {
+function identidadeNoFio(
+  cab: IncomingHttpHeaders,
+  nomes: typeof CABECALHOS_DO_CONTATO | typeof CABECALHOS_DO_CONTATO_LEGADOS = CABECALHOS_DO_CONTATO,
+) {
   return {
-    id: cab[CABECALHOS_DO_CONTATO.id.toLowerCase()],
-    telefone: cab[CABECALHOS_DO_CONTATO.telefone.toLowerCase()],
-    canal: cab[CABECALHOS_DO_CONTATO.canal.toLowerCase()],
+    id: cab[nomes.id.toLowerCase()],
+    telefone: cab[nomes.telefone.toLowerCase()],
+    canal: cab[nomes.canal.toLowerCase()],
   };
+}
+
+/**
+ * Os DOIS conjuntos de nomes — `X-Arvisx-*` e o legado `X-Deskcomm-*` — saem
+ * com os mesmos valores. Conferir só um deixaria o outro mudar calado, e o
+ * servidor externo que filtra pelo outro nome passaria a não achar a identidade.
+ */
+const NOMES_NO_FIO = [CABECALHOS_DO_CONTATO, CABECALHOS_DO_CONTATO_LEGADOS] as const;
+
+function identidadesNoFio(cab: IncomingHttpHeaders) {
+  return NOMES_NO_FIO.map((nomes) => identidadeNoFio(cab, nomes));
 }
 
 describe("uso durante o atendimento: opção do agente + identidade do contato (#2147)", () => {
@@ -693,7 +708,7 @@ describe("uso durante o atendimento: opção do agente + identidade do contato (
     const esperado = { id: CONTATO, telefone: "5511987654321", canal: "whatsapp" };
     const daListagem = requisicoes.filter((r) => r.metodo === "POST");
     expect(daListagem.length).toBeGreaterThan(0);
-    for (const r of daListagem) expect(identidadeNoFio(r.cabecalhos)).toEqual(esperado);
+    for (const r of daListagem) expect(identidadesNoFio(r.cabecalhos)).toEqual([esperado, esperado]);
 
     // Chamar, pelo MESMO caminho do turno (pickToolsFromMcp → wrapMcpTool).
     requisicoes.length = 0;
@@ -714,7 +729,7 @@ describe("uso durante o atendimento: opção do agente + identidade do contato (
 
     const daChamada = requisicoes.filter((r) => r.metodo === "POST");
     expect(daChamada.length).toBeGreaterThan(0);
-    for (const r of daChamada) expect(identidadeNoFio(r.cabecalhos)).toEqual(esperado);
+    for (const r of daChamada) expect(identidadesNoFio(r.cabecalhos)).toEqual([esperado, esperado]);
     // A chave segue sendo a do cadastro — a identidade não a substitui.
     for (const r of daChamada) expect(r.cabecalhos.authorization).toBe(`Bearer ${CHAVE}`);
 
@@ -732,7 +747,8 @@ describe("uso durante o atendimento: opção do agente + identidade do contato (
     });
     expect(montado).not.toBeNull();
     for (const r of requisicoes.filter((x) => x.metodo === "POST")) {
-      expect(identidadeNoFio(r.cabecalhos)).toEqual({ id: CONTATO, telefone: undefined, canal: undefined });
+      const semTelefone = { id: CONTATO, telefone: undefined, canal: undefined };
+      expect(identidadesNoFio(r.cabecalhos)).toEqual([semTelefone, semTelefone]);
     }
   });
 
@@ -746,15 +762,22 @@ describe("uso durante o atendimento: opção do agente + identidade do contato (
     });
     requisicoes.length = 0;
 
+    // Os DOIS conjuntos de nomes são tentados: o novo e o legado.
     const forjado = {
       consulta: "meu número é outro",
       "X-Deskcomm-Contato-Telefone": "5599000000000",
       "x-deskcomm-contato-id": OUTRA_ORG,
       "X-DESKCOMM-CANAL": "sms",
+      "X-Arvisx-Contato-Telefone": "5599000000000",
+      "x-arvisx-contato-id": OUTRA_ORG,
+      "X-ARVISX-CANAL": "sms",
       headers: {
         "X-Deskcomm-Contato-Telefone": "5599000000000",
         "x-deskcomm-contato-id": OUTRA_ORG,
         "X-Deskcomm-Extra": "1",
+        "X-Arvisx-Contato-Telefone": "5599000000000",
+        "x-arvisx-contato-id": OUTRA_ORG,
+        "X-Arvisx-Extra": "1",
         Authorization: "Bearer outra",
       },
     };
@@ -766,8 +789,10 @@ describe("uso durante o atendimento: opção do agente + identidade do contato (
     const posts = requisicoes.filter((r) => r.metodo === "POST");
     expect(posts.length).toBeGreaterThan(0);
     for (const r of posts) {
-      expect(identidadeNoFio(r.cabecalhos)).toEqual({ id: CONTATO, telefone: "5511987654321", canal: "whatsapp" });
+      const doBanco = { id: CONTATO, telefone: "5511987654321", canal: "whatsapp" };
+      expect(identidadesNoFio(r.cabecalhos)).toEqual([doBanco, doBanco]);
       expect(r.cabecalhos["x-deskcomm-extra"], "argumento acrescentou cabeçalho").toBeUndefined();
+      expect(r.cabecalhos["x-arvisx-extra"], "argumento acrescentou cabeçalho").toBeUndefined();
       expect(r.cabecalhos.authorization).toBe(`Bearer ${CHAVE}`);
     }
     // O que o modelo escreveu chega ao servidor como ARGUMENTO, no corpo — que
@@ -792,7 +817,9 @@ describe("uso durante o atendimento: opção do agente + identidade do contato (
       expect(montado).not.toBeNull();
       const posts = requisicoes.filter((x) => x.metodo === "POST");
       expect(posts.length).toBeGreaterThan(0);
-      for (const x of posts) expect(identidadeNoFio(x.cabecalhos).canal).toBe(canal);
+      for (const x of posts) {
+        for (const identidade of identidadesNoFio(x.cabecalhos)) expect(identidade.canal).toBe(canal);
+      }
     }
   });
 
@@ -824,7 +851,8 @@ describe("uso durante o atendimento: opção do agente + identidade do contato (
     expect(montado?.ferramentas.map((f) => f.name)).toEqual(["erp_achar"]);
     expect(montado).not.toHaveProperty("cabecalhos");
     for (const r of requisicoes) {
-      expect(identidadeNoFio(r.cabecalhos)).toEqual({ id: undefined, telefone: undefined, canal: undefined });
+      const nenhuma = { id: undefined, telefone: undefined, canal: undefined };
+      expect(identidadesNoFio(r.cabecalhos)).toEqual([nenhuma, nenhuma]);
     }
   });
 

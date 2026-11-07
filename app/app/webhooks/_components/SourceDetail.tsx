@@ -41,7 +41,7 @@ import {
   type WebhookSourceRow,
 } from "@/hooks/webhooks/useWebhookSources";
 import { usePermission } from "@/hooks/auth/AuthProvider";
-import { HEADER_ASSINATURA_DE_ENTRADA } from "@/lib/webhooks/assinatura";
+import { HEADER_ASSINATURA_DE_ENTRADA, HEADER_ASSINATURA_DE_ENTRADA_LEGADO } from "@/lib/webhooks/assinatura";
 import {
   gerarHtmlDoFormulario,
   webhookFormFieldsSchema,
@@ -566,6 +566,12 @@ export function SourceDetail({ source, open, onOpenChange }: Props) {
                   constante é a que a rota de entrada confere. */}
               <code className="rounded-sm bg-muted px-1 py-0.5">
                 {HEADER_ASSINATURA_DE_ENTRADA}
+              </code>
+              {". "}
+              {/* Dupla leitura: quem já integrou com o nome antigo segue aceito. */}
+              {t("O nome antigo continua aceito:")}{" "}
+              <code className="rounded-sm bg-muted px-1 py-0.5">
+                {HEADER_ASSINATURA_DE_ENTRADA_LEGADO}
               </code>
             </p>
 

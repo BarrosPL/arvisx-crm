@@ -1,25 +1,34 @@
 /**
- * DSN do Sentry com opt-out em runtime — modelo "telemetria de comunidade".
+ * DSN do Sentry com opt-in em runtime.
  *
- * Por padrão, erros vão pro Sentry do projeto (DEFAULT_SENTRY_DSN): num open source
- * self-host, é o que dá visibilidade pra corrigir bugs que afetam todo mundo. Quem
- * hospeda controla isso pelo `.env`, SEM rebuild da imagem:
+ * No ArvisX CRM o padrão é DESLIGADO: sem `SENTRY_DSN`, nada é enviado. O upstream
+ * (DeskcommCRM) mandava, por padrão, os erros para o Sentry da comunidade DELE —
+ * stack trace, URL e contexto de um CRM com dados de clientes saindo para um
+ * terceiro sem ninguém ter decidido (risco LGPD). Quem hospeda liga pelo `.env`,
+ * SEM rebuild da imagem:
  *
- *   SENTRY_DSN=off           → desliga toda a telemetria (nada é enviado)
- *   SENTRY_DSN=<seu-dsn>     → manda os erros pro SEU Sentry
- *   SENTRY_DSN=  (vazio)     → usa o Sentry da comunidade (padrão)
+ *   SENTRY_DSN=  (vazio/ausente) → desligado (padrão: nada é enviado)
+ *   SENTRY_DSN=off               → desligado (forma explícita, continua valendo)
+ *   SENTRY_DSN=<seu-dsn>         → manda os erros pro SEU Sentry
  *
  * Vale para servidor (process.env) e navegador (window.__PUBLIC_ENV__.SENTRY_DSN,
  * injetado em runtime pelo <PublicEnvScript/>). O DSN não é segredo — DSNs do Sentry
  * são públicos por design.
  */
-export const DEFAULT_SENTRY_DSN =
-  "https://58fabf8ad54504863d404a3647ef3714@o4509908078559232.ingest.us.sentry.io/4509908083212288";
+
+/**
+ * DSN do "Sentry da comunidade". No ArvisX NÃO existe um: fica `undefined`, e
+ * por isso `isCommunityDsn` nunca é verdadeiro e `resolveSentryDsn` nunca cai
+ * nele. O nome continua exportado porque `sentry.server.config.ts` e o worker o
+ * comparam para escolher a linha de boot; com `undefined` esse ramo não é
+ * alcançado (o `!sentryDsn` vem antes).
+ */
+export const DEFAULT_SENTRY_DSN: string | undefined = undefined;
 
 export function resolveSentryDsn(value: string | undefined | null): string | undefined {
-  const v = (value ?? "").trim().toLowerCase() === "off" ? "off" : (value ?? "").trim();
-  if (v === "off" || v === "false" || v === "0") return undefined;
-  return v.length > 0 ? v : DEFAULT_SENTRY_DSN;
+  const v = (value ?? "").trim();
+  const desligado = v.length === 0 || ["off", "false", "0"].includes(v.toLowerCase());
+  return desligado ? undefined : v;
 }
 
 /**
@@ -32,7 +41,9 @@ export function resolveSentryDsn(value: string | undefined | null): string | und
  * porque aí o dado não sai da infraestrutura de quem é dono dele.
  */
 export function isCommunityDsn(dsn: string | undefined): boolean {
-  return dsn === DEFAULT_SENTRY_DSN;
+  // Sem DSN da comunidade (ArvisX), ninguém é "comunidade": quem configura
+  // `SENTRY_DSN` aponta para o próprio Sentry e recebe tudo.
+  return DEFAULT_SENTRY_DSN !== undefined && dsn === DEFAULT_SENTRY_DSN;
 }
 
 /** Integração default do SDK que emite as sessões de release health do browser. */

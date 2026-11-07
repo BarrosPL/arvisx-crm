@@ -27,8 +27,9 @@
  * o turno é exatamente o de antes da opção: `null`, sem banco e sem rede).
  *
  * Ligada, a carga resolve o contato NO BANCO (id + organização do turno) e
- * amarra ao servidor montado os cabeçalhos `X-Deskcomm-*`
- * (`CABECALHOS_DO_CONTATO`), que vão em toda requisição — listar e chamar. O
+ * amarra ao servidor montado os cabeçalhos `X-Arvisx-*` (`CABECALHOS_DO_CONTATO`)
+ * e, com os mesmos valores, os legados `X-Deskcomm-*`
+ * (`CABECALHOS_DO_CONTATO_LEGADOS`), que vão em toda requisição — listar e chamar. O
  * valor nunca vem de argumento de ferramenta. Contato que não resolve (erro,
  * outra organização) = `null`: falha fechada na ação. Cobre o Conversador e o
  * Operador, que os dois montam ferramentas passando o contato do turno.
@@ -39,6 +40,7 @@ import type { FetchLike } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { logger } from "@/lib/logger";
 import {
   CABECALHOS_DO_CONTATO,
+  CABECALHOS_DO_CONTATO_LEGADOS,
   listarFerramentasDoServidor,
   type FerramentaRemota,
 } from "./chamada";
@@ -80,7 +82,7 @@ export interface OpcoesDeCarga {
   contatoDoTurno?: string;
   /** `ai_agents.config.mcp_externo_no_atendimento` do agente do turno. */
   noAtendimento?: boolean;
-  /** A CONVERSA deste turno — de onde sai `X-Deskcomm-Canal`. */
+  /** A CONVERSA deste turno — de onde sai `X-Arvisx-Canal` (e o legado `X-Deskcomm-Canal`). */
   conversaDoTurno?: string;
   /** `fetch` de saída para a descoberta — teste stuba o ERP em `127.0.0.1`. */
   fetch?: FetchLike;
@@ -127,10 +129,16 @@ export async function cabecalhosDoContato(
     return null;
   }
 
-  const cabecalhos: Record<string, string> = { [CABECALHOS_DO_CONTATO.id]: contato.id };
+  const cabecalhos: Record<string, string> = {};
+  // Cada valor sai nos DOIS nomes: o novo e o legado (ver CABECALHOS_DO_CONTATO_LEGADOS).
+  const amarrar = (campo: keyof typeof CABECALHOS_DO_CONTATO, valor: string) => {
+    cabecalhos[CABECALHOS_DO_CONTATO[campo]] = valor;
+    cabecalhos[CABECALHOS_DO_CONTATO_LEGADOS[campo]] = valor;
+  };
+  amarrar("id", contato.id);
   const digitos =
     typeof contato.phone_number === "string" ? contato.phone_number.replace(/\D/g, "") : "";
-  if (digitos !== "") cabecalhos[CABECALHOS_DO_CONTATO.telefone] = digitos;
+  if (digitos !== "") amarrar("telefone", digitos);
 
   if (!conversaId) return cabecalhos;
   const { data: conversa } = await supabase
@@ -142,7 +150,7 @@ export async function cabecalhosDoContato(
     .maybeSingle();
   const canal = (conversa as { channel?: unknown } | null)?.channel;
   if (typeof canal === "string" && CANAL_VALIDO.test(canal)) {
-    cabecalhos[CABECALHOS_DO_CONTATO.canal] = canal;
+    amarrar("canal", canal);
   }
   return cabecalhos;
 }

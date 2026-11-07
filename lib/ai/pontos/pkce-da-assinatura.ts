@@ -7,6 +7,8 @@
  */
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 
+import { DEFAULT_APP_NAME } from "@/lib/branding";
+
 export const CLIENTE_DINAMICO_SIWC = "dynamic_agent_client";
 export const RECURSO_SIWC = "https://api.openai.com/v1";
 export const ENDPOINT_DE_AUTORIZACAO = "https://auth.openai.com/api/accounts/authorize";
@@ -14,7 +16,8 @@ export const ENDPOINT_DE_TOKEN = "https://auth.openai.com/api/accounts/oauth/tok
 export const ENDPOINT_DE_JWKS = "https://auth.openai.com/.well-known/jwks.json";
 export const REDIRECT_URI_SIWC = "http://127.0.0.1:1455/auth/callback";
 export const ESCOPO_SIWC = "openid profile email offline_access resource.invoke chatgpt.tokens.use.direct";
-export const NOME_DO_CLIENTE_SIWC = "DeskcommCRM";
+/** O nome do PRODUTO (nunca o do revendedor): a OpenAI pede o mesmo nome em todas as instalações. */
+export const NOME_DO_CLIENTE_SIWC = DEFAULT_APP_NAME;
 export const CHAVE_DO_HOST_SIWC = "OPENAI_SIWC_EXT_AGENT_HOST_ID";
 
 /** O envelope inteiro continua armazenado cifrado em ai_provider_credentials. */

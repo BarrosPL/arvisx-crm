@@ -98,7 +98,9 @@ oferece) e apaga o acesso daqui. O token nunca aparece em tela, log ou auditoria
 - **Sem autenticação** e **Chave fixa (Bearer)**: o comportamento do servidor da organização,
   agora por servidor do agente. Num turno com cliente, só funcionam com **Usar o servidor de
   ferramentas externo durante o atendimento** ligado, e então o servidor recebe os cabeçalhos
-  `X-Deskcomm-Contato-Id`, `X-Deskcomm-Contato-Telefone` e `X-Deskcomm-Canal`.
+  `X-Arvisx-Contato-Id`, `X-Arvisx-Contato-Telefone` e `X-Arvisx-Canal` — e, com os mesmos
+  valores, os nomes legados `X-Deskcomm-Contato-Id`, `X-Deskcomm-Contato-Telefone` e
+  `X-Deskcomm-Canal`, que continuam saindo para quem já filtra por eles.
 - O servidor da organização (**Configurações › Servidor MCP externo**) continua funcionando sem
   ação nenhuma, como servidor compartilhado por todos os agentes.
 

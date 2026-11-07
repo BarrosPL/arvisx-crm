@@ -21,6 +21,10 @@ import { CHANGELOG_MAX_BYTES } from "@/lib/system/changelog";
 import { canTransition, type RunStatus } from "@/lib/system/update-run";
 import { logger } from "@/lib/logger";
 import { runtimeConfirmationSchema, supportsForcedUpdate } from "@/lib/system/runtime-identity";
+import {
+  ATUALIZACAO_PELA_TELA_DESLIGADA,
+  atualizacaoPelaTelaLigada,
+} from "@/lib/system/atualizacao-pela-tela";
 
 export const dynamic = "force-dynamic";
 
@@ -153,6 +157,9 @@ function secretMatches(provided: string): boolean {
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
+  // ArvisX: desligado por padrão (`ATUALIZACAO_PELA_TELA`), a rota não existe —
+  // nem um agente com o segredo certo grava heartbeat ou recebe ordem.
+  if (!atualizacaoPelaTelaLigada()) return fail("not_found", ATUALIZACAO_PELA_TELA_DESLIGADA, 404);
   const auth = req.headers.get("authorization") ?? "";
   const bearer = auth.startsWith("Bearer ") ? auth.slice("Bearer ".length).trim() : "";
   const provided = bearer || (req.headers.get("x-cron-secret")?.trim() ?? "");

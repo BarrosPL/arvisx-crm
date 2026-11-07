@@ -231,6 +231,11 @@ OWNER_EMAIL=dono@qa.local
 OWNER_PASSWORD=QaVps!2026#Dono
 OWNER_ORG_NAME=Loja-QA-VPS
 
+# ArvisX: o painel "Atualizar pela UI" vem desligado por padrão
+# (lib/system/atualizacao-pela-tela.ts). A suíte liga para que
+# \`system-update.spec.ts\` continue provando a tela herdada do upstream.
+ATUALIZACAO_PELA_TELA=on
+
 NEXT_TELEMETRY_DISABLED=1
 # Telemetria DESLIGADA na suíte, e não é preferência: sem isto o SDK do browser
 # assume o DSN da comunidade (\`lib/sentry/dsn.ts\` → DEFAULT_SENTRY_DSN) e a suíte

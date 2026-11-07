@@ -1,4 +1,5 @@
 import { requireAuth } from "@/lib/auth/server";
+import { atualizacaoPelaTelaLigada } from "@/lib/system/atualizacao-pela-tela";
 import { AjudaConteudo } from "./_client";
 
 /**
@@ -28,5 +29,5 @@ export const dynamic = "force-dynamic";
 
 export default async function AjudaPage() {
   await requireAuth();
-  return <AjudaConteudo />;
+  return <AjudaConteudo atualizacaoPelaTela={atualizacaoPelaTelaLigada()} />;
 }

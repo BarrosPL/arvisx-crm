@@ -14,7 +14,7 @@ cada um — vive em `.agents/skills/deskcomm-instalar/SKILL.md` na raiz do repos
 Se você está vendo só esta pasta, clone o repositório (o instalador precisa dele de qualquer forma):
 
 ```bash
-git clone --depth 1 https://github.com/melgarafael/DeskcommCRM.git deskcommcrm
+git clone --depth 1 https://github.com/BarrosPL/arvisx-crm.git deskcommcrm
 cd deskcommcrm
 cat .agents/skills/deskcomm-instalar/SKILL.md
 ```
@@ -64,7 +64,8 @@ discordarem, vale o guia; quando o guia e `install.sh` discordarem, vale o insta
    ```
 
    Ele valida cada resposta na hora, aceita `voltar`, retoma se interromper e mostra uma tela de
-   conferência numerada. No modo interativo, a telemetria só liga depois de a pessoa aceitar. No
+   conferência numerada. No modo interativo, a telemetria só liga se a pessoa colar o DSN do Sentry
+   DELA (no ArvisX CRM não há Sentry da comunidade; Enter = desligado). No
    modo `--yes`, automação não consente por ninguém: sem escolha anterior o instalador grava
    `SENTRY_DSN=off`, e uma escolha já registrada é preservada nas reexecuções. E se for usar
    `--yes` com o `.env` copiado do exemplo, apague antes as linhas `*_IMAGE`/`*_PULL_POLICY`: elas

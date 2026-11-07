@@ -19,7 +19,8 @@
 # depender dele seria diagnosticar o passado com a ferramenta do passado. E
 # precisa poder ser baixado avulso, sem clonar nada:
 #
-#   curl -fsSL https://raw.githubusercontent.com/melgarafael/DeskcommCRM/main/hostgator-setup-kit/diagnostico.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/BarrosPL/arvisx-crm/main/hostgator-setup-kit/diagnostico.sh | bash
+#   (repo privado: sem token, rode `bash hostgator-setup-kit/diagnostico.sh` no clone)
 #
 # ── O que ele pode assumir que existe ────────────────────────────────────────
 # Medido numa VPS real: bash 5.1, docker, docker compose, curl, sed/awk/grep.

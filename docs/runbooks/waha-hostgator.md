@@ -29,7 +29,7 @@ owner: Rafael Melgaço
 ## 2. Pré-requisitos
 
 1. Acesso SSH ao VPS (Hostgator entrega via cPanel ou root SSH; preferir SSH-only).
-2. Domínio com DNS gerenciado em Cloudflare (ou outro provider) — ex.: `waha.deskcomm.com.br`.
+2. Domínio com DNS gerenciado em Cloudflare (ou outro provider) — ex.: `waha.arvisx.com.br`.
 3. Conta Backblaze B2 com bucket `deskcomm-waha-backup` (R$0,06/GB/mês ≈ $0.005/GB).
 4. Licença ativa **WAHA Plus** (`https://waha.devlike.pro` — ~$30/mês).
 5. Uma instalação do CRM já de pé, com `WAHA_API_BASE_URL`, `WAHA_API_KEY`, `WAHA_WEBHOOK_BASE_URL` e `WAHA_HMAC_SECRET` no `.env` dela (ainda apontando pra dev — atualizamos no fim).
@@ -106,12 +106,12 @@ sudo systemctl restart fail2ban
 
 No Cloudflare (ou seu DNS provider):
 
-- `waha.deskcomm.com.br` → A record → IP do VPS Hostgator
+- `waha.arvisx.com.br` → A record → IP do VPS Hostgator
 - Proxy = **DNS only** (cinza). Cloudflare Proxy (laranja) interfere em SSE/WebSocket que o WAHA usa.
 
 ```bash
-sudo certbot --nginx -d waha.deskcomm.com.br \
-  --non-interactive --agree-tos -m ops@deskcomm.com.br
+sudo certbot --nginx -d waha.arvisx.com.br \
+  --non-interactive --agree-tos -m suporte@arvisx.com.br
 ```
 
 Certbot já injeta SSL no `/etc/nginx/sites-available/default`.
@@ -128,7 +128,7 @@ sudo chown deskcomm:deskcomm /opt/deskcomm-waha
 cd /opt/deskcomm-waha
 ```
 
-Copiar (via `scp` ou `git clone`) o `docker-compose.yml` do repo (raiz do DeskcommCRM). Ajustes obrigatórios pra prod:
+Copiar (via `scp` ou `git clone`) o `docker-compose.yml` do repo (raiz do ArvisX CRM). Ajustes obrigatórios pra prod:
 
 ```yaml
 services:
@@ -191,10 +191,10 @@ curl -s -H "X-Api-Key: $PLAIN" http://127.0.0.1:3000/api/sessions
 ```nginx
 server {
     listen 443 ssl http2;
-    server_name waha.deskcomm.com.br;
+    server_name waha.arvisx.com.br;
 
-    ssl_certificate     /etc/letsencrypt/live/waha.deskcomm.com.br/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/waha.deskcomm.com.br/privkey.pem;
+    ssl_certificate     /etc/letsencrypt/live/waha.arvisx.com.br/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/waha.arvisx.com.br/privkey.pem;
 
     # Egress allowlist — só o servidor onde o CRM roda pode chamar.
     include /etc/nginx/conf.d/crm-egress-allowlist.conf;
@@ -216,7 +216,7 @@ server {
 
 server {
     listen 80;
-    server_name waha.deskcomm.com.br;
+    server_name waha.arvisx.com.br;
     return 301 https://$host$request_uri;
 }
 ```
@@ -233,7 +233,7 @@ sudo nginx -t && sudo systemctl reload nginx
 ```bash
 sudo ln -s /etc/nginx/sites-available/waha /etc/nginx/sites-enabled/waha
 sudo nginx -t && sudo systemctl reload nginx
-curl -I https://waha.deskcomm.com.br/api/health    # 401 esperado sem header
+curl -I https://waha.arvisx.com.br/api/health    # 401 esperado sem header
 ```
 
 ---
@@ -283,7 +283,7 @@ Nunca confie em backup que você não testou restaurando.
 
 ### 8.1 Healthcheck externo
 
-UptimeRobot (free tier, 5min) apontando pra `https://waha.deskcomm.com.br/ping` (rota pública sem auth). Alerta → email + WhatsApp via webhook do próprio app.
+UptimeRobot (free tier, 5min) apontando pra `https://waha.arvisx.com.br/ping` (rota pública sem auth). Alerta → email + WhatsApp via webhook do próprio app.
 
 ### 8.2 Watchdog local
 
@@ -318,7 +318,7 @@ Better Stack ou Datadog Agent → `docker logs deskcomm-waha`. Sem isso, logs fi
 As variáveis do CRM vivem no `.env` da instalação dele — não num painel. Edite lá:
 
 ```
-WAHA_API_BASE_URL=https://waha.deskcomm.com.br
+WAHA_API_BASE_URL=https://waha.arvisx.com.br
 WAHA_API_KEY=<mesmo plaintext do .env do VPS>
 WAHA_WEBHOOK_BASE_URL=http://app:3000
 WAHA_HMAC_SECRET=<mesmo do VPS>

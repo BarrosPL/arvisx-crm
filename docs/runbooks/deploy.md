@@ -103,7 +103,7 @@ numérica** que será instalada. Substitua `vX.Y.Z` pela release publicada e
 
 ```bash
 CHECK_DIR="$(mktemp -d)"
-git clone --depth 1 --branch vX.Y.Z https://github.com/melgarafael/DeskcommCRM.git "$CHECK_DIR"
+git clone --depth 1 --branch vX.Y.Z https://github.com/BarrosPL/arvisx-crm.git "$CHECK_DIR"
 bash "$CHECK_DIR/hostgator-setup-kit/preflight-upgrade.sh" \
   --installation /var/www/crm --to vX.Y.Z
 cd /var/www/crm

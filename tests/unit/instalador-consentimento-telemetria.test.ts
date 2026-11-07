@@ -26,14 +26,19 @@ describe("consentimento de telemetria no primeiro install", () => {
   it("o instalador distingue primeira execução de uma escolha já gravada", () => {
     expect(install).toContain('if [ -z "${SENTRY_DSN+x}" ]; then');
     expect(install).toContain('SENTRY_DSN="off"');
-    expect(install).toContain('SENTRY_DSN=""');
+    // ArvisX CRM: não há Sentry da comunidade — a pergunta só aceita o DSN do
+    // próprio operador, e Enter grava `off` explícito.
+    expect(install).toContain('SENTRY_DSN="$_tel"');
+    expect(install).not.toContain('SENTRY_DSN=""');
     expect(install).toContain('envq SENTRY_DSN "${SENTRY_DSN:-}"');
   });
 
   it("a documentação do template explica as três escolhas persistentes", () => {
     expect(template).toContain("O install.sh pergunta na primeira instalação");
     expect(template).toContain("SENTRY_DSN=off");
-    expect(template).toContain("SENTRY_DSN=             → aceita o Sentry da comunidade");
+    // ArvisX CRM: vazio também é desligado (lib/sentry/dsn.ts), e o template diz isso.
+    expect(template).toContain("SENTRY_DSN=             → também desligado");
+    expect(template).not.toContain("Sentry da comunidade (erros");
     expect(template).toContain("SENTRY_DSN=<seu-dsn>");
   });
 });

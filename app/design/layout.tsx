@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
  * ArvisX: o showcase de design do upstream fica BLOQUEADO. Toda a rota `/design`
  * (e as sub-rotas) responde 404.
  *
- * Por quê: a página e o layout mostram "DeskcommCRM" no título da aba e no `<h1>`,
+ * Por quê: é o showcase interno do design system (nome do produto, "ArvisX CRM", no `<h1>`),
  * e a rota é pública (sem login). Uma tela pública com a marca do upstream não pode
  * ir ao ar na instalação da Arvisx.
  *

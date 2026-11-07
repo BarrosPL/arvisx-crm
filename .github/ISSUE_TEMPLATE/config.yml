@@ -1,8 +1,8 @@
 blank_issues_enabled: true
 contact_links:
   - name: 💬 Perguntas e ideias
-    url: https://github.com/melgarafael/DeskcommCRM/discussions
-    about: Dúvidas de setup, ideias e showcase vão melhor em Discussions.
+    url: mailto:suporte@arvisx.com.br
+    about: Dúvidas de setup e ideias sobre o ArvisX CRM — escreva para suporte@arvisx.com.br.
   - name: 🔒 Vulnerabilidade de segurança
-    url: https://github.com/melgarafael/DeskcommCRM/security/advisories/new
-    about: Relato privado — nunca abra issue pública para falha de segurança.
+    url: mailto:suporte@arvisx.com.br
+    about: Relato privado por e-mail (suporte@arvisx.com.br) — nunca abra issue pública para falha de segurança.

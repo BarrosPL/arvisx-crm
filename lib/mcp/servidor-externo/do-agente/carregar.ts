@@ -8,10 +8,10 @@
  *
  * - `nenhuma` / `chave_estatica`: a regra de sempre. Turno sem contato monta.
  *   Turno COM contato só com `config.mcp_externo_no_atendimento` do agente, e
- *   então com os cabeçalhos `X-Deskcomm-*` resolvidos no banco.
+ *   então com os cabeçalhos `X-Arvisx-*` (e os legados `X-Deskcomm-*`) resolvidos no banco.
  * - `oauth_por_contato`: SÓ em turno com contato. O token sai do banco por
  *   (organização, servidor, CONTATO DO TURNO), renovado se está para expirar;
- *   os cabeçalhos `X-Deskcomm-*` não vão (a identidade é o token). Sem token
+ *   os cabeçalhos `X-Arvisx-*`/`X-Deskcomm-*` não vão (a identidade é o token). Sem token
  *   válido, o servidor volta como `sem_autorizacao` e o montador põe no lugar
  *   das ferramentas UMA ferramenta sintética que gera o link de autorização.
  *

@@ -1,5 +1,5 @@
 import { confirmedRuntime } from "@/tests/helpers/runtime-confirmation";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -58,6 +58,9 @@ function lastUpdate(table: string) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // ArvisX: a rota só existe com a atualização pela tela ligada (desligada por
+  // padrão, `lib/system/atualizacao-pela-tela.ts`).
+  vi.stubEnv("ATUALIZACAO_PELA_TELA", "on");
 
   versionRow = { id: 1, update_requested_at: null, update_requested_by: null };
   runRow = null;
@@ -112,6 +115,23 @@ beforeEach(() => {
       };
     },
   } as never);
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+describe("POST /api/v1/system/agent — ArvisX: desligada por padrão", () => {
+  it("responde 404 mesmo com o segredo certo, sem gravar nada", async () => {
+    vi.stubEnv("ATUALIZACAO_PELA_TELA", "");
+    const { POST } = await import("./route");
+    const res = await POST(req(HEARTBEAT));
+    expect(res.status).toBe(404);
+    expect((await res.json()).error.code).toBe("not_found");
+    expect(updates).toEqual([]);
+    expect(inserts).toEqual([]);
+    expect(createAdminClient).not.toHaveBeenCalled();
+  });
 });
 
 describe("POST /api/v1/system/agent", () => {

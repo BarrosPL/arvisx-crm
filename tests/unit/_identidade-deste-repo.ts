@@ -45,8 +45,11 @@
  * `namespace-das-imagens.test.ts`: trocar só isto deixa a URL divergente e
  * reprova lá. Não remova essa derivação pensando que é redundante — ela é o que
  * torna a âncora não-falsificável de dentro do diff.
+ *
+ * ArvisX CRM (fork BarrosPL/arvisx-crm): o `publish-image.yml` do fork publica
+ * os mesmos nomes de pacote sob `ghcr.io/barrospl` (o GHCR minusculiza o dono).
  */
-export const NAMESPACE_DESTE_REPO = "ghcr.io/melgarafael";
+export const NAMESPACE_DESTE_REPO = "ghcr.io/barrospl";
 
 /**
  * O dono de uma referência `<registry>/<dono>`.
@@ -66,6 +69,19 @@ export function donoDo(namespace: string): string {
 
 /** O dono deste repositório, derivado da âncora — ele não é escrito duas vezes. */
 export const DONO_DESTE_REPO = donoDo(NAMESPACE_DESTE_REPO);
+
+/**
+ * O repositório do fork no GitHub. No upstream a URL era
+ * `https://github.com/<dono>/DeskcommCRM`, com o dono DERIVADO da âncora; no
+ * fork o NOME do repo é outro (`arvisx-crm`) e o login tem caixa própria
+ * (`BarrosPL`, enquanto o GHCR exige `barrospl`). Por isso o dono da URL é
+ * declarado aqui, e `namespace-das-imagens.test.ts` cobra que ele seja o MESMO
+ * dono da âncora (sem distinção de caixa): trocar só `NAMESPACE_DESTE_REPO`
+ * continua reprovando lá, que é o que torna a âncora não-falsificável.
+ */
+export const DONO_NO_GITHUB = "BarrosPL";
+export const NOME_DO_REPO = "arvisx-crm";
+export const URL_DESTE_REPO = `https://github.com/${DONO_NO_GITHUB}/${NOME_DO_REPO}`;
 
 /**
  * O dono da conta que EXECUTA o workflow, ou `null` fora do GitHub Actions.
