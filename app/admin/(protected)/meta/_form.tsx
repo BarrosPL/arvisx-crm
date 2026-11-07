@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import {
   rotacionarVerifyTokenDaMeta,
+  salvarAppIdDaMeta,
   updateMetaApp,
   type UpdateMetaAppResult,
 } from "@/app/actions/settings/updateMetaApp";
@@ -41,6 +42,18 @@ interface Props {
   /** O par está no `.env` desta instalação (o piso de rollback). */
   readonly temNoAmbiente: boolean;
   readonly leituraFalhou: boolean;
+  /** App ID público do mesmo app (migration 9800) — login do Facebook da conexão direta. */
+  readonly appIdSalvo: string | null;
+  readonly appIdNoAmbiente: boolean;
+  /** Os endereços que o dono cola no painel da Meta; `null` sem endereço público. */
+  readonly enderecos: {
+    webhook: string;
+    volta: string;
+    exclusao: string;
+    privacidade: string;
+    termos: string;
+    paginaDeExclusao: string;
+  } | null;
 }
 
 /** O piso do schema da action. Abaixo disso o Zod recusa e a tela culparia o dono. */
@@ -53,6 +66,9 @@ export function FormularioDaMeta({
   atualizadoEm,
   temNoAmbiente,
   leituraFalhou,
+  appIdSalvo,
+  appIdNoAmbiente,
+  enderecos,
 }: Props) {
   const t = useT();
   const router = useRouter();
@@ -64,6 +80,7 @@ export function FormularioDaMeta({
    */
   const [tokenNovo, setTokenNovo] = useState<string | null>(null);
   const [confirmandoTroca, setConfirmandoTroca] = useState(false);
+  const [appId, setAppId] = useState(appIdSalvo ?? "");
   const [ocupado, iniciar] = useTransition();
 
   const podeSalvar = chave.trim().length >= TAMANHO_MINIMO_DA_CHAVE;
@@ -101,6 +118,17 @@ export function FormularioDaMeta({
       const r = await updateMetaApp({ app_secret: chave.trim() });
       if (r.ok) setChave("");
       aoGravar(r, t("Chave secreta salva."));
+    });
+  }
+
+  function salvarAppId() {
+    iniciar(async () => {
+      const r = await salvarAppIdDaMeta({ app_id: appId.trim() });
+      if (!r.ok && r.error === "app_id_invalido") {
+        toast.error(t("O App ID tem só números. Copie do painel da Meta, em Configurações do app › Básico."));
+        return;
+      }
+      aoGravar(r, t("App ID salvo."));
     });
   }
 
@@ -245,6 +273,72 @@ export function FormularioDaMeta({
             </Button>
           </div>
         ) : null}
+      </Card>
+
+      <Card className="flex flex-col gap-4 p-4" data-testid="meta-conexao-direta">
+        <div className="flex flex-col gap-1">
+          <h2 className="font-medium">{t("Instagram e Facebook Messenger")}</h2>
+          <p className="text-sm text-muted-foreground">
+            {t("O mesmo app conecta o Instagram e o Messenger das empresas desta instalação, sem parceiro. Falta só o App ID, que é público — a chave secreta e o token de verificação são os de cima.")}
+          </p>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="meta-app-id">{t("App ID")}</Label>
+          <div className="flex items-center gap-2">
+            <Input
+              id="meta-app-id"
+              data-testid="meta-app-id"
+              inputMode="numeric"
+              autoComplete="off"
+              value={appId}
+              onChange={(e) => setAppId(e.target.value)}
+              placeholder={t("Só números")}
+            />
+            <Button
+              data-testid="meta-salvar-app-id"
+              disabled={ocupado || appId.trim() === (appIdSalvo ?? "")}
+              onClick={salvarAppId}
+            >
+              {t("Salvar")}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {appIdNoAmbiente && !appIdSalvo
+              ? t("O arquivo de configuração do servidor já traz um App ID. O que você salvar aqui passa a valer no lugar dele.")
+              : t("Fica no painel da Meta, em Configurações do app › Básico, ao lado da chave secreta.")}
+          </p>
+        </div>
+        {enderecos ? (
+          <div className="flex flex-col gap-2" data-testid="meta-enderecos">
+            <p className="text-xs text-muted-foreground">
+              {t("Cole estes endereços no painel da Meta. O passo a passo completo está no guia da instalação.")}
+            </p>
+            {(
+              [
+                [t("Webhook (produtos Messenger e Instagram) — URL de callback"), enderecos.webhook],
+                [t("URI de redirecionamento do OAuth válido (Login do Facebook)"), enderecos.volta],
+                [t("URL de callback de exclusão de dados"), enderecos.exclusao],
+                [t("URL da Política de Privacidade"), enderecos.privacidade],
+                [t("URL dos Termos de Serviço"), enderecos.termos],
+                [t("Página de instruções de exclusão de dados"), enderecos.paginaDeExclusao],
+              ] as const
+            ).map(([rotulo, valor]) => (
+              <div key={valor} className="flex flex-col gap-1">
+                <span className="text-xs font-medium">{rotulo}</span>
+                <div className="flex items-center gap-2">
+                  <Input readOnly value={valor} className="font-mono text-xs" onFocus={(e) => e.currentTarget.select()} />
+                  <Button variant="outline" onClick={() => void copiar(valor)}>
+                    {t("Copiar")}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-md border border-warning/40 bg-warning-bg p-3 text-xs leading-4 text-text-muted">
+            {t("O endereço público desta instalação não está configurado (NEXT_PUBLIC_APP_URL). Sem ele não há endereço para cadastrar na Meta.")}
+          </p>
+        )}
       </Card>
 
       <AlertDialog open={confirmandoTroca} onOpenChange={setConfirmandoTroca}>

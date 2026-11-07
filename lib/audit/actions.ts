@@ -577,6 +577,9 @@ export const AUDIT_ACTIONS = [
   // verificação de URL que estava valendo até alguém colar o valor novo na Meta.
   "platform_meta_app.updated",
   "platform_meta_app.verify_token_rotated",
+  // O App ID público do mesmo app (migration 9800): é o que o login do Facebook
+  // da conexão direta do Instagram e do Messenger leva na URL.
+  "platform_meta_app.app_id_updated",
   // A conexão da ORGANIZAÇÃO com a conta de anúncios (migration 0213).
   // Auditável porque o token gravado aqui escreve conversões na conta de
   // mídia do cliente: "quem apontou minhas vendas para este destino?" só tem

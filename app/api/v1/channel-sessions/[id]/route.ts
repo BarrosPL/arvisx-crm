@@ -26,7 +26,13 @@ import { audit } from "@/lib/audit";
 import { ok, fail } from "@/lib/api/wrappers";
 import { loadAuthUser, mfaEmDivida } from "@/lib/auth/server";
 import { orgAtivaDaApi, requireRole } from "@/lib/auth/require-role";
-import { CHANNEL_PROVIDER_SOCIAL, CHANNEL_PROVIDER_WAHA } from "@/lib/channels/capabilities";
+import {
+  CHANNEL_PROVIDER_SOCIAL,
+  CHANNEL_PROVIDER_SOCIAL_DIRETO,
+  CHANNEL_PROVIDER_WAHA,
+} from "@/lib/channels/capabilities";
+import { appDaMeta } from "@/lib/channels/meta/app";
+import { desfazerNaMeta } from "@/lib/channels/meta-social/store";
 import { PARTNER_CHANNEL_PROVIDER, desfazerNoProvedor } from "@/lib/channels/connect";
 import { resolverSaudeDaConexaoRemovida } from "@/lib/channels/health";
 import { sincronizarAvisoDePausa } from "@/lib/channels/central-de-pausa";
@@ -338,7 +344,7 @@ export async function DELETE(
   const { data: session } = await supabase
     .from("channel_sessions")
     .select(
-      "id, provider, waha_session_name, display_name, phone_number, meta_phone_number_id, meta_token_encrypted, zernio_credencial_da_instalacao",
+      "id, provider, waha_session_name, display_name, phone_number, meta_phone_number_id, meta_token_encrypted, zernio_credencial_da_instalacao, meta_social_account_id, meta_social_page_id, meta_social_token_encrypted",
     )
     .eq("organization_id", activeOrg.orgId)
     .eq("id", id)
@@ -419,6 +425,35 @@ export async function DELETE(
     // DEPOIS de apagar a assinatura, que pode ter sido achada pela URL dele.
     // (`meta_token_encrypted` não entra aqui de propósito: a linha social não
     // usa essa coluna — a credencial que autoriza a chamada vive na integração.)
+    patch.webhook_path_token = randomUUID().replace(/-/g, "");
+  } else if (session.provider === CHANNEL_PROVIDER_SOCIAL_DIRETO) {
+    // ─── Instagram/Messenger direto na Meta (migration 9800) ─────────────────
+    //
+    // Desassina o app na página (só se nenhuma outra rede ativa da mesma página
+    // ainda a usa) e APAGA o token. Best-effort na Meta, como o ramo social
+    // acima: token já revogado lá não pode impedir a exclusão pedida aqui. O
+    // que corta a entrada é o arquivamento — o webhook só acha sessão ativa.
+    const linha = session as {
+      meta_social_account_id?: string | null;
+      meta_social_page_id?: string | null;
+      meta_social_token_encrypted?: string | null;
+    };
+    const pageId = linha.meta_social_page_id ?? linha.meta_social_account_id ?? null;
+    if (pageId) {
+      const { appSecret } = await appDaMeta();
+      socialWebhook =
+        (await desfazerNaMeta(
+          createAdminClient(),
+          activeOrg.orgId,
+          id,
+          pageId,
+          linha.meta_social_token_encrypted ?? null,
+          appSecret,
+        )) === "falhou"
+          ? "falhou"
+          : "apagada";
+    }
+    patch.meta_social_token_encrypted = null;
     patch.webhook_path_token = randomUUID().replace(/-/g, "");
   } else if (session.provider === PARTNER_CHANNEL_PROVIDER) {
     // ─── O QUE A INSTALAÇÃO FEZ NO PROVEDOR PARCEIRO NÃO FICA ÓRFÃO ──────────

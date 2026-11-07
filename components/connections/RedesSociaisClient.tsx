@@ -23,6 +23,7 @@ import { apiClient } from "@/lib/api/client";
 import { canalDesativado } from "@/lib/channels/desativado";
 import { useT } from "@/hooks/i18n/useT";
 import { ChannelAiAccess } from "./ChannelAiAccess";
+import { ConexaoDiretaMeta } from "./ConexaoDiretaMeta";
 import { RenomearConexao } from "./RenomearConexao";
 
 type Account = {
@@ -196,6 +197,13 @@ export function RedesSociaisClient() {
           {t("Atualizar")}
         </Button>
       </div>
+      {/* A porta DIRETA vem primeiro: é a preferida do catálogo
+          (lib/channels/social/catalog.ts). A por parceiro segue abaixo, para
+          quem já a usa e para as redes que só existem por ela. */}
+      <ConexaoDiretaMeta />
+      <h3 className="pt-2 text-sm font-semibold text-muted-foreground">
+        {t("Conexão por parceiro (opcional)")}
+      </h3>
       {params.get("error") && (
         <p role="alert" className="rounded-md border p-3 text-sm">
           {t(

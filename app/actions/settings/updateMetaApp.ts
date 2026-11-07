@@ -101,7 +101,10 @@ function gerarVerifyToken(): string {
 async function gravar(
   authUser: { id: string },
   valores: Record<string, unknown>,
-  acao: "platform_meta_app.updated" | "platform_meta_app.verify_token_rotated",
+  acao:
+    | "platform_meta_app.updated"
+    | "platform_meta_app.verify_token_rotated"
+    | "platform_meta_app.app_id_updated",
   metadata: Record<string, unknown>,
 ): Promise<UpdateMetaAppResult> {
   const admin = createAdminClient();
@@ -305,4 +308,34 @@ export async function rotacionarVerifyTokenDaMeta(): Promise<UpdateMetaAppResult
   if (!r.ok) return r;
 
   return { ok: true, verifyToken };
+}
+
+const appIdSchema = z.object({
+  /**
+   * Só dígitos: é o formato do App ID da Meta, e o valor vai parar na URL do
+   * login do Facebook. Vazio apaga (volta a valer o `META_APP_ID` do `.env`).
+   */
+  app_id: z.string().trim().regex(/^([0-9]{5,25})?$/),
+});
+
+/**
+ * Grava o App ID do app da Meta — o identificador PÚBLICO que o login do
+ * Facebook da conexão direta do Instagram e do Messenger leva na URL.
+ *
+ * Mesmo app, mesma linha (`platform_meta_app`): não existe segundo cadastro de
+ * app da Meta. Em claro de propósito — o App ID aparece na barra de endereço de
+ * quem clica em "Conectar"; cifrá-lo não protegeria nada.
+ */
+export async function salvarAppIdDaMeta(input: { app_id: string }): Promise<UpdateMetaAppResult> {
+  const escrita = await escritaDeAdminOuRecusa();
+  if (!escrita.ok) return escrita;
+  const parsed = appIdSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "app_id_invalido" };
+  const appId = parsed.data.app_id || null;
+  return gravar(
+    escrita.ctx.user,
+    { app_id: appId, updated_by: escrita.ctx.user.id },
+    "platform_meta_app.app_id_updated",
+    { campos: ["app_id"], removido: appId === null },
+  );
 }

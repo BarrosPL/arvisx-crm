@@ -7,6 +7,8 @@ vi.mock("@/lib/api/client", () => ({ apiClient: { get: h.get, post: h.post, dele
 vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams() }));
 vi.mock("@/hooks/i18n/useT", () => ({ useT: () => (s: string) => s }));
 vi.mock("./ChannelAiAccess", () => ({ ChannelAiAccess: () => <div>IA pausada</div> }));
+// O cartão da conexão direta tem teste próprio; aqui a régua é a porta por parceiro.
+vi.mock("./ConexaoDiretaMeta", () => ({ ConexaoDiretaMeta: () => <div>conexão direta</div> }));
 beforeEach(() => {
   cleanup();
   vi.clearAllMocks();

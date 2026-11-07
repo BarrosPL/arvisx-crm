@@ -5,6 +5,8 @@ import { appDaMetaDoAmbiente } from "@/lib/channels/meta/app";
 import { tagDeIdioma } from "@/lib/i18n/datas";
 import type { Idioma } from "@/lib/i18n/idiomas";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { CAMINHO_DA_VOLTA } from "@/lib/channels/meta-social/oauth";
+import { basePublicaConfiguradaDaInstalacao } from "@/lib/webhooks/url-publica";
 
 import { FormularioDaMeta } from "./_form";
 
@@ -52,6 +54,14 @@ export default async function Page() {
     .select("app_secret_encrypted, verify_token_encrypted, verify_token_created_at, updated_at")
     .eq("id", 1)
     .maybeSingle();
+  // O App ID em leitura SEPARADA: um banco sem a 9800 responde 42703 aqui, e
+  // isso não pode virar "leitura falhou" para a chave secreta lá de cima.
+  const { data: comAppId } = await createAdminClient()
+    .from("platform_meta_app")
+    .select("app_id")
+    .eq("id", 1)
+    .maybeSingle();
+  const base = basePublicaConfiguradaDaInstalacao({ aceitarMaquinaLocal: true });
 
   const linha = data as
     | {
@@ -77,6 +87,20 @@ export default async function Page() {
       // Leitura que falhou não pode virar "nunca configurado": essa frase
       // levaria o dono a gerar um token por cima do que já está colado na Meta.
       leituraFalhou={Boolean(error)}
+      appIdSalvo={(comAppId as { app_id?: string | null } | null)?.app_id ?? null}
+      appIdNoAmbiente={Boolean(process.env.META_APP_ID?.trim())}
+      enderecos={
+        base
+          ? {
+              webhook: `${base}/api/v1/webhooks/meta-social`,
+              volta: `${base}${CAMINHO_DA_VOLTA}`,
+              exclusao: `${base}/api/v1/webhooks/meta-social/exclusao-de-dados`,
+              privacidade: `${base}/legal/privacy`,
+              termos: `${base}/legal/terms`,
+              paginaDeExclusao: `${base}/exclusao-de-dados`,
+            }
+          : null
+      }
     />
   );
 }

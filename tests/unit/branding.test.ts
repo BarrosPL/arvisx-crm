@@ -950,6 +950,11 @@ const HOSTS_DECLARADOS: Record<string, EntradaDeHost> = {
     motivo:
       "endpoint da API Gemini (visão e tradução). Domínio do fornecedor, sem alternativa que não seja proxy nosso.",
   },
+  "www.facebook.com": {
+    categoria: "FORNECEDOR",
+    motivo:
+      "diálogo do login do Facebook (`lib/channels/meta-social/oauth.ts`) da conexão direta do Instagram e do Messenger: o navegador da empresa vai até lá autorizar as páginas. É contrato da Meta, não escolha nossa.",
+  },
   "graph.facebook.com": {
     categoria: "FORNECEDOR",
     motivo:
