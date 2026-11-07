@@ -30,14 +30,20 @@ beforeEach(() => {
 });
 
 describe("/ — página provisória (em breve)", () => {
-  it("sem sessão: só o aviso de lançamento, sem botões nem links", async () => {
+  it("sem sessão: aviso de lançamento, descrição e só os links legais, sem botões", async () => {
     await montar();
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
       "Estamos nos preparando para o nosso lançamento.",
     );
-    expect(screen.queryAllByRole("link")).toHaveLength(0);
+    expect(screen.getByText(/plataforma de atendimento e vendas/)).toBeInTheDocument();
     expect(screen.queryAllByRole("button")).toHaveLength(0);
+  });
+
+  it("traz os links da política de privacidade e dos termos (exigência do Google)", async () => {
+    await montar();
+    const hrefs = screen.getAllByRole("link").map((a) => a.getAttribute("href"));
+    expect(hrefs).toEqual(["/legal/privacy", "/legal/terms"]);
   });
 
   it("o logo tem texto alternativo", async () => {
