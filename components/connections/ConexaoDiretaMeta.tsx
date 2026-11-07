@@ -198,7 +198,7 @@ export function ConexaoDiretaMeta() {
   return (
     <Card className="flex flex-col gap-4 p-4" data-testid="conexao-direta-meta">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 basis-72">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-semibold">{t("Instagram e Facebook Messenger")}</h3>
             <Badge variant="secondary">{t("Recomendado")}</Badge>

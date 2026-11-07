@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { PaginaLegal } from "@/components/landing/PaginaLegal";
 import { lerCodigoDeConfirmacao } from "@/lib/channels/meta-social/exclusao";
 import { env } from "@/lib/env";
+import { tagDeIdioma } from "@/lib/i18n/datas";
+import type { Idioma } from "@/lib/i18n/idiomas";
 
 /**
  * Exclusão de dados do usuário (crm.arvisx.com.br/exclusao-de-dados).
@@ -27,9 +29,11 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const CONTATO = "suporte@arvisx.com.br";
+/** As páginas legais da vitrine são só em português, como o protótipo. */
+const IDIOMA_DA_VITRINE: Idioma = "pt-BR";
 
 function quando(data: Date): string {
-  return data.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "long", timeStyle: "short" });
+  return data.toLocaleString(tagDeIdioma(IDIOMA_DA_VITRINE), { timeZone: "America/Sao_Paulo", dateStyle: "long", timeStyle: "short" });
 }
 
 export default async function ExclusaoDeDadosPage({
