@@ -72,7 +72,8 @@ describe("conteúdo da Ajuda acompanha o contexto do menu", () => {
     const filtro = vi.spyOn(navegacao, "destinosDaInterface");
     render(<AjudaConteudo atualizacaoPelaTela />);
     expect(filtro).toHaveBeenLastCalledWith(undefined, false, "viewer", [], []);
-    expect(urls()).toEqual(["/app/contacts", "/app/inbox", "/app/kanban", "/app/settings/atualizacao", "/app/team"]);
+    // ArvisX: o cartão do Guia de uso (treinamento) segue a mesma régua do catálogo.
+    expect(urls()).toEqual(["/app/ajuda/treinamento", "/app/contacts", "/app/inbox", "/app/kanban", "/app/settings/atualizacao", "/app/team"]);
   });
 
   it("ArvisX: com ATUALIZACAO_PELA_TELA desligada (padrão), o dono não ganha o atalho de Atualização", () => {

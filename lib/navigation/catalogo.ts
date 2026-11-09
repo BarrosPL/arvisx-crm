@@ -1223,6 +1223,22 @@ export const NAV_CATALOG = [
     modulo: "banco_externo",
   },
   {
+    // ArvisX: o treinamento do cliente (lições com foto de cada tela, histórias
+    // por nicho e busca), dentro da Ajuda. `sidebar: true` por decisão do Lucas
+    // (09/11/2026): é o socorro de quem tem dúvida, então mora no rodapé fixo
+    // do menu, logo abaixo de Configurações (o `Sidebar` o acha pelo `href`,
+    // como faz com a Ajuda). No menu chama "Guia de uso"; a rota segue
+    // `/treinamento`. Fica ANTES da Ajuda porque ela é, por regra, o último
+    // item (tests/unit/ajuda-leva-a-telas-que-existem.test.ts).
+    href: "/app/ajuda/treinamento",
+    label: "Guia de uso",
+    description: "Lições passo a passo com a foto de cada tela, histórias por nicho e busca.",
+    icon: "BookOpen",
+    group: "organizacao",
+    section: "Ajuda",
+    sidebar: true,
+  },
+  {
     // A porta da ajuda dentro do produto (issue #3567, fatia F1). Fica por
     // ÚLTIMO, e isso é a decisão e não a sobra: é o que se procura quando o
     // resto não respondeu.

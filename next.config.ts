@@ -70,6 +70,11 @@ const nextConfig: NextConfig = {
       "./node_modules/.pnpm/@napi-rs+canvas-*/node_modules/@napi-rs/*/*.node",
       // pdfjs-dist em si (ver comentário acima).
       "./node_modules/.pnpm/pdfjs-dist@*/node_modules/pdfjs-dist/**",
+      // ArvisX: o treinamento do cliente lê o pacote de conteúdo com `fs` em
+      // runtime (lib/ajuda/treinamento/conteudo.ts), por caminho montado a
+      // partir de `process.cwd()` — o tracer não segue. Só os JSON: as fotos
+      // são estáticos de `public/` (ou de AJUDA_FOTOS_BASE).
+      "./content/ajuda-curso/**/*.json",
     ],
   },
   reactStrictMode: true,

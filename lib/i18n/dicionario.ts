@@ -19589,6 +19589,14 @@ export const DICIONARIO: Traducoes = {
   "O caminho para cada tarefa, e onde ir quando algo não sai como esperado.": {
     es: "El camino para cada tarea, y adónde ir cuando algo no sale como se espera.",
   },
+  // ArvisX: a porta do treinamento do cliente no catálogo e no hub da Ajuda.
+  // O conteúdo do treinamento é só em português; o espanhol cobre a porta.
+  "Guia de uso": {
+    es: "Guía de uso",
+  },
+  "Lições passo a passo com a foto de cada tela, histórias por nicho e busca.": {
+    es: "Lecciones paso a paso con la foto de cada pantalla, historias por nicho y búsqueda.",
+  },
   "Para quem instala e mantém": {
     es: "Para quien instala y mantiene",
   },

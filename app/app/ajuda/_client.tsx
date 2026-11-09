@@ -30,6 +30,8 @@ export function AjudaConteudo({
   // A leitura de Atualização aceita plataforma também em suporte; não é o
   // bypass de papel dos atalhos regulares (settings/atualizacao/page.tsx).
   const blocos = blocosVisiveis(user.is_platform_admin && atualizacaoPelaTela, destinos);
+  // ArvisX: o treinamento do cliente segue a mesma régua (é item do catálogo).
+  const treinamento = destinos.find((d) => d.href === "/app/ajuda/treinamento");
 
   return (
     <div className="flex h-full flex-col gap-6 p-6">
@@ -41,6 +43,17 @@ export function AjudaConteudo({
           )}
         </p>
       </header>
+
+      {treinamento && (
+        <Link
+          href="/app/ajuda/treinamento"
+          data-testid="ajuda-treinamento"
+          className="flex min-h-11 flex-col gap-1 rounded-lg border border-[var(--color-brand)] bg-[var(--color-cta-leve)] p-4 text-[var(--color-cta-fg)] hover:bg-[var(--color-cta-leve)]/70"
+        >
+          <span className="text-base font-semibold">{t(treinamento.label)}</span>
+          <span className="text-sm">{t(treinamento.description)}</span>
+        </Link>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         {blocos.map((bloco) => (

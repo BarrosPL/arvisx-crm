@@ -3,7 +3,15 @@ import Link from "next/link";
 import { useT } from "@/hooks/i18n/useT";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { ArrowRight, BookOpen, CaretDoubleLeft, CaretDoubleRight, CaretDown, Gear } from "@/lib/ui/icons";
+import {
+  ArrowRight,
+  BookOpen,
+  CaretDoubleLeft,
+  CaretDoubleRight,
+  CaretDown,
+  Gear,
+  Question,
+} from "@/lib/ui/icons";
 import { cn } from "@/lib/utils";
 import { toggleSidebar } from "@/app/actions/shell/toggleSidebar";
 import { useAuth } from "@/hooks/auth/AuthProvider";
@@ -77,6 +85,8 @@ export function SidebarContent({
    * e uma tag de exemplo aqui é indistinguível de um link de verdade para ela.
    */
   const ajuda = grupoDoRodape?.items.find((d) => d.href === "/app/ajuda");
+  /** ArvisX: o "Guia de uso" (treinamento do cliente) chega pelo mesmo caminho. */
+  const guia = grupoDoRodape?.items.find((d) => d.href === "/app/ajuda/treinamento");
 
   /**
    * Grupo fechado é preferência POR NAVEGADOR, não por conta: começa vazio (tudo
@@ -441,6 +451,26 @@ export function SidebarContent({
           >
             <Gear size={18} aria-hidden />
             {!collapsed && <span className="truncate">{t(rodape.label)}</span>}
+          </Link>
+        )}
+        {guia && (
+          // ArvisX: mesmas classes do link de Configurações acima.
+          <Link
+            href={guia.href}
+            {...intencao(guia.href)}
+            title={collapsed ? t(guia.label) : undefined}
+            aria-current={pathname.startsWith(guia.href) ? "page" : undefined}
+            onClick={onNavigate}
+            className={cn(
+              "mb-0.5 flex items-center gap-3 rounded-md px-3 py-1 text-sm transition-colors",
+              pathname.startsWith(guia.href)
+                ? "relative bg-sidebar-active text-sidebar-active-foreground before:absolute before:top-1.5 before:-left-2 before:bottom-1.5 before:w-0.5 before:rounded-r before:bg-cta"
+                : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-white",
+              collapsed && "justify-center px-2",
+            )}
+          >
+            <Question size={18} aria-hidden />
+            {!collapsed && <span className="truncate">{t(guia.label)}</span>}
           </Link>
         )}
         {ajuda && (
