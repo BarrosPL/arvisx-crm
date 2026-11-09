@@ -196,6 +196,10 @@ export const ApiErrorCodes = {
   empresa_sem_email: "empresa_sem_email",
   // O Asaas recusa trocar o plano com a cobrança do período em uso ainda pendente (spec §6.2, §7e).
   pagamento_do_periodo_pendente: "pagamento_do_periodo_pendente",
+  // Plano numa moeda que o provedor conectado não cobra (EUR com o Asaas, migration 9801).
+  moeda_fora_do_provedor: "moeda_fora_do_provedor",
+  // Troca para plano de outra moeda com assinatura viva no provedor: ela não muda de moeda.
+  troca_de_moeda: "troca_de_moeda",
   channel_without_session: "channel_without_session", // operação de sessão (reiniciar, parear) pedida a canal que não tem sessão no transporte — o oficial
   janela_fechada: "janela_fechada", // POST /messages por token/agente com texto livre fora das 24h em canal com restrição (131047) — a saída é modelo aprovado (#1614)
   // POST /api/v1/messages/{id}/retry (lib/messaging/reenvio.ts): a regra não permite reenviar (403),

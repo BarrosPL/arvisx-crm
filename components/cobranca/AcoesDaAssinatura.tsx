@@ -16,6 +16,7 @@ import { formatadorDeData } from "@/lib/cobranca/fuso";
 import { linkDePagamentoSeguro } from "@/lib/cobranca/link";
 import { calcularAjusteProporcional } from "@/lib/cobranca/prorata";
 import { abrirNoNavegador } from "@/lib/cobranca/navegar";
+import { formatCents } from "@/lib/money";
 import type { PlanoParaTroca } from "@/lib/cobranca/painel";
 import type { EstadoDaAssinatura, ProvedorDeCobranca } from "@/lib/cobranca/vocabulario";
 import { useIdioma } from "@/lib/i18n/IdiomaProvider";
@@ -61,6 +62,8 @@ const FRASE_DO_ERRO: Record<string, string> = {
   documento_obrigatorio: "Informe o CPF ou CNPJ de quem paga.",
   documento_recusado: "O provedor de pagamento não aceitou este CPF ou CNPJ. Confira o número ou informe outro documento.",
   pagamento_pendente: "Regularize o pagamento antes de trocar de plano.",
+  moeda_fora_do_provedor: "Este plano é cobrado numa moeda que o provedor de pagamento conectado não cobra. Fale com quem administra o sistema.",
+  troca_de_moeda: "O plano escolhido é cobrado em outra moeda, e a assinatura em curso não muda de moeda. Fale com quem administra o sistema.",
   pagamento_do_periodo_pendente:
     'A mensalidade de agora ainda não foi paga. Pague em "Pagar agora" e troque de plano depois que o pagamento for confirmado (Pix: minutos; boleto: até 1 dia útil).',
   troca_em_preparo: "Estamos preparando o ajuste proporcional. Aguarde alguns segundos e tente novamente.",
@@ -112,8 +115,8 @@ export function AcoesDaAssinatura(p: PropsDasAcoes) {
         periodoPagoDesde: p.periodoPagoDesde ? new Date(p.periodoPagoDesde) : null,
         proximoVencimento: p.proximoVencimento ? new Date(p.proximoVencimento) : null,
         agora: new Date(p.instanteCalculo),
+        moeda: selecionado.moeda,
       });
-  const reais = (centavos: number) => new Intl.NumberFormat(idioma, { style: "currency", currency: "BRL" }).format(centavos / 100);
   const dolares = (centavos: number) => new Intl.NumberFormat(idioma, { style: "currency", currency: "USD" }).format(centavos / 100);
 
   const emDivida = p.estado === "em_atraso" || p.estado === "cancelada";
@@ -342,7 +345,7 @@ export function AcoesDaAssinatura(p: PropsDasAcoes) {
               {[p.planoAtual, selecionado].map((plano, i) => (
                 <section key={plano.id} className="rounded-md bg-muted/40 p-3">
                   <h3 className="font-medium">{i === 0 ? t("Plano atual") : t("Novo plano")}: {plano.nome}</h3>
-                  <p>{reais(plano.preco_cents)} / {plano.intervalo === "ano" ? t("ano") : t("mês")}</p>
+                  <p>{formatCents(plano.preco_cents, plano.moeda)} / {plano.intervalo === "ano" ? t("ano") : t("mês")}</p>
                   <ul className="mt-2 space-y-1 text-muted-foreground">
                     <li>{t("Pessoas")}: {plano.max_assentos ?? t("sem limite")}</li>
                     <li>{t("Números conectados")}: {plano.max_canais ?? t("sem limite")}</li>
@@ -358,7 +361,7 @@ export function AcoesDaAssinatura(p: PropsDasAcoes) {
                 ? t("Não foi possível calcular o proporcional com os dados do período pago. Nenhuma troca será realizada.")
                 : ajusteProporcional === 0
                   ? `${t("O ajuste proporcional é zero; o novo plano entra na próxima renovação")}: ${dia(p.proximoVencimento)}.`
-                  : `${t("Ajuste proporcional estimado para hoje")}: ${reais(ajusteProporcional)}. ${t("A data da próxima renovação permanece")}: ${dia(p.proximoVencimento)}.`}
+                  : `${t("Ajuste proporcional estimado para hoje")}: ${formatCents(ajusteProporcional, selecionado.moeda)}. ${t("A data da próxima renovação permanece")}: ${dia(p.proximoVencimento)}.`}
             </p>
           )}
           {selecionado && p.planoAtual && selecionado.preco_cents <= p.planoAtual.preco_cents && (

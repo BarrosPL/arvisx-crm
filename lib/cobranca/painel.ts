@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { provedorDaInstalacao } from "@/lib/cobranca/configuracao";
 import { sugestaoDoCadastro } from "@/lib/cobranca/documento";
 import { lerUsoDaOrganizacao, type UsoDaOrganizacao } from "@/lib/cobranca/uso";
-import type { EstadoDaAssinatura, Modo, ProvedorDeCobranca } from "@/lib/cobranca/vocabulario";
+import { provedorCobraEm, type EstadoDaAssinatura, type Modo, type Moeda, type ProvedorDeCobranca } from "@/lib/cobranca/vocabulario";
 
 export interface AssinaturaDoPainel {
   estado: EstadoDaAssinatura;
@@ -27,6 +27,8 @@ export interface PlanoParaTroca {
   id: string;
   nome: string;
   preco_cents: number;
+  /** A moeda do preço (migration 9801): a tela formata nela. */
+  moeda: Moeda;
   intervalo: string;
   max_assentos: number | null;
   max_canais: number | null;
@@ -39,6 +41,7 @@ export interface DadosDoPainel {
     id: string;
     nome: string;
     preco_cents: number;
+    moeda: Moeda;
     intervalo: string;
     max_assentos: number | null;
     max_canais: number | null;
@@ -47,7 +50,7 @@ export interface DadosDoPainel {
   uso: UsoDaOrganizacao;
   /** Na moeda de `fn_gasto_de_ia_do_mes` (centavos de dólar), a régua única de gasto. */
   gastoIaUsdCents: number;
-  /** Planos ativos e oferecidos às empresas, do MESMO intervalo, fora o atual (a troca não muda o intervalo). */
+  /** Planos ativos e oferecidos às empresas, do MESMO intervalo, fora o atual (a troca não muda o intervalo), numa moeda que o provedor cobra. */
   planosParaTroca: PlanoParaTroca[];
   /** IANA da empresa (`organizations.timezone`): as datas do painel e do recado saem nele. */
   fuso: string | null;
@@ -87,7 +90,7 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
   const [planos, uso, gasto, org, daInstalacao] = await Promise.all([
     db
       .from("cobranca_planos")
-      .select("id, nome, preco_cents, intervalo, max_assentos, max_canais, teto_ia_usd_cents, arquivado_em, oferecido_ao_cliente"),
+      .select("id, nome, preco_cents, moeda, intervalo, max_assentos, max_canais, teto_ia_usd_cents, arquivado_em, oferecido_ao_cliente"),
     lerUsoDaOrganizacao(db, orgId),
     db.rpc("fn_gasto_de_ia_do_mes", { p_org: orgId }),
     db.from("organizations").select("timezone, cnpj").eq("id", orgId).maybeSingle(),
@@ -98,6 +101,7 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
   const todos = (planos.data ?? []) as PlanoLido[];
   const plano = a ? (todos.find((p) => p.id === a.plano_id) ?? null) : null;
   const agendado = a?.plano_agendado_id ? (todos.find((p) => p.id === a.plano_agendado_id) ?? null) : null;
+  const provedorDoCheckout = (a?.provedor as ProvedorDeCobranca | null | undefined) ?? daInstalacao;
   return {
     assinatura: a
       ? {
@@ -120,7 +124,7 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
       : null,
     plano: plano
       ? {
-          id: plano.id, nome: plano.nome, preco_cents: plano.preco_cents, intervalo: plano.intervalo,
+          id: plano.id, nome: plano.nome, preco_cents: plano.preco_cents, moeda: plano.moeda, intervalo: plano.intervalo,
           max_assentos: plano.max_assentos, max_canais: plano.max_canais, teto_ia_usd_cents: plano.teto_ia_usd_cents,
         }
       : null,
@@ -128,13 +132,15 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
     gastoIaUsdCents: Number(gasto.data ?? 0),
     fuso: (org.data as { timezone: string | null } | null)?.timezone ?? null,
     checkout: {
-      provedor: (a?.provedor as ProvedorDeCobranca | null | undefined) ?? daInstalacao,
+      provedor: provedorDoCheckout,
       documentoDoCadastro: sugestaoDoCadastro((org.data as { cnpj: string | null } | null)?.cnpj ?? null),
     },
     planosParaTroca: plano
       ? todos
-          .filter((p) => p.arquivado_em === null && p.oferecido_ao_cliente && p.intervalo === plano.intervalo && p.id !== plano.id)
-          .map((p) => ({ id: p.id, nome: p.nome, preco_cents: p.preco_cents, intervalo: p.intervalo,
+          // Plano numa moeda que o provedor que cobra não cobra (EUR com o Asaas) não é oferecido.
+          .filter((p) => p.arquivado_em === null && p.oferecido_ao_cliente && p.intervalo === plano.intervalo && p.id !== plano.id
+            && (provedorDoCheckout === null || provedorCobraEm(provedorDoCheckout, p.moeda)))
+          .map((p) => ({ id: p.id, nome: p.nome, preco_cents: p.preco_cents, moeda: p.moeda, intervalo: p.intervalo,
             max_assentos: p.max_assentos, max_canais: p.max_canais, teto_ia_usd_cents: p.teto_ia_usd_cents }))
       : [],
   };

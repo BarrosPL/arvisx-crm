@@ -15,7 +15,7 @@ vi.mock("@/lib/api/client", () => ({ apiClient: { post: h.post, patch: h.patch }
 import { PlanosDaInstalacao, type PlanoDaTela } from "@/app/admin/(protected)/cobranca/_planos";
 
 const PLANO: PlanoDaTela = {
-  id: "cccccccc-0000-4000-8000-000000000001", nome: "Básico", preco_cents: 4990, intervalo: "mes", trial_dias: 14,
+  id: "cccccccc-0000-4000-8000-000000000001", nome: "Básico", preco_cents: 4990, moeda: "BRL", intervalo: "mes", trial_dias: 14,
   max_assentos: 3, max_canais: null, teto_ia_usd_cents: null, padrao_no_cadastro: false, oferecido_ao_cliente: true, arquivado_em: null,
 };
 
@@ -42,10 +42,39 @@ describe("Planos da instalação", () => {
     await u.click(screen.getByRole("button", { name: "Salvar plano" }));
     await waitFor(() => expect(h.post).toHaveBeenCalledTimes(1));
     expect(h.post).toHaveBeenCalledWith("/api/v1/admin/cobranca/planos", {
-      nome: "Pro", preco_cents: 9990, intervalo: "mes", trial_dias: 7,
+      nome: "Pro", preco_cents: 9990, moeda: "BRL", intervalo: "mes", trial_dias: 7,
       max_assentos: 5, max_canais: null, teto_ia_usd_cents: null,
     });
     expect(h.refresh).toHaveBeenCalled();
+  });
+
+  it("⭐ plano em euro (migration 9801): a moeda vai no corpo e o rótulo do preço vira €", async () => {
+    const u = userEvent.setup();
+    render(<PlanosDaInstalacao planos={[]} />);
+    await u.selectOptions(screen.getByLabelText("Moeda"), "EUR");
+    expect(screen.getByLabelText("Preço (€)")).toBeTruthy();
+    await u.type(screen.getByLabelText("Nome do plano"), "Essencial");
+    await u.type(screen.getByLabelText("Preço (€)"), "59,90");
+    await u.click(screen.getByRole("button", { name: "Salvar plano" }));
+    await waitFor(() => expect(h.post).toHaveBeenCalledTimes(1));
+    expect(h.post.mock.calls[0]![1]).toMatchObject({ nome: "Essencial", preco_cents: 5990, moeda: "EUR" });
+  });
+
+  it("preço abaixo de € 5 em euro: o aviso fala em euro", async () => {
+    const u = userEvent.setup();
+    render(<PlanosDaInstalacao planos={[]} />);
+    await u.selectOptions(screen.getByLabelText("Moeda"), "EUR");
+    await u.type(screen.getByLabelText("Nome do plano"), "Essencial");
+    await u.type(screen.getByLabelText("Preço (€)"), "4,99");
+    await u.click(screen.getByRole("button", { name: "Salvar plano" }));
+    expect(h.post).not.toHaveBeenCalled();
+    expect(h.erro).toHaveBeenCalledWith(expect.stringMatching(/preço a partir de 5,00\s€/));
+  });
+
+  it("a lista escreve o preço na moeda de cada plano", () => {
+    render(<PlanosDaInstalacao planos={[PLANO, { ...PLANO, id: "cccccccc-0000-4000-8000-000000000002", nome: "Euro", preco_cents: 5990, moeda: "EUR" }]} />);
+    expect(screen.getByText(/R\$\s49,90/)).toBeTruthy();
+    expect(screen.getByText(/59,90\s€/)).toBeTruthy();
   });
 
   it("preço abaixo de R$ 5 não chega à rota", async () => {

@@ -20,9 +20,28 @@ export type Modo = (typeof MODOS)[number];
 export const INTERVALOS = ["mes", "ano"] as const;
 export type Intervalo = (typeof INTERVALOS)[number];
 
-/** O Asaas não tem moeda e o boleto da Stripe é só BRL. Alargar = alargar o CHECK. */
-export const MOEDAS = ["BRL"] as const;
+/**
+ * A moeda do plano (CHECK de `cobranca_planos.moeda`, migrations 0583 e 9801).
+ * Alargar = alargar o CHECK. QUEM cobra em qual moeda é `MOEDAS_DO_PROVEDOR`.
+ */
+export const MOEDAS = ["BRL", "EUR"] as const;
 export type Moeda = (typeof MOEDAS)[number];
+
+/**
+ * O que cada provedor sabe cobrar. O Asaas não tem moeda (cobra em real); a
+ * Stripe cobra na moeda do plano — boleto só em BRL, e em EUR ela oferece o que
+ * a conta tem ligado para euro (cartão). Plano numa moeda que o provedor não
+ * cobra é recusado ANTES de criar qualquer coisa nele (`checkout.ts`, `troca.ts`)
+ * e, por segunda linha, no próprio adaptador do Asaas.
+ */
+export const MOEDAS_DO_PROVEDOR: Readonly<Record<ProvedorDeCobranca, readonly Moeda[]>> = {
+  stripe: ["BRL", "EUR"],
+  asaas: ["BRL"],
+};
+
+export function provedorCobraEm(provedor: ProvedorDeCobranca, moeda: string): boolean {
+  return (MOEDAS_DO_PROVEDOR[provedor] as readonly string[]).includes(moeda);
+}
 
 export const AVISOS_DA_REGUA = ["trial_acabando", "venceu", "suspende_em_breve", "suspensa"] as const;
 export type AvisoDaRegua = (typeof AVISOS_DA_REGUA)[number];

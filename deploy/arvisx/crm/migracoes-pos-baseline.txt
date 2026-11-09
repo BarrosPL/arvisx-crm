@@ -56,3 +56,4 @@
 20261105191500_9214_conversas_do_setor.sql
 20261105215904_9219_nome_de_atendente_so_com_vinculo.sql
 20261107190000_9800_conexao_direta_instagram_messenger.sql
+20261109120000_9801_cobranca_planos_em_euro.sql

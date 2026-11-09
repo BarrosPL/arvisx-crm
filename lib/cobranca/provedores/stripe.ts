@@ -230,9 +230,17 @@ function pagouAssinaturaEncerrada(pagas: FaturaDaStripe[], assinaturas: Assinatu
   return dona !== undefined && TERMINAIS.has(dona.status) && pagaEm !== null && fim !== null && pagaEm > fim;
 }
 
+/**
+ * A Stripe quer a moeda em minúscula. É a do PLANO (BRL ou EUR, migration 9801),
+ * nunca um literal. `payment_method_types` segue sem ser enviado (ver
+ * STRIPE_VERSION): a Stripe escolhe os meios que a conta tem ligados PARA ESSA
+ * moeda — boleto só aparece em BRL; em EUR, o cartão.
+ */
+const moedaDaStripe = (plano: PlanoParaProvedor) => plano.moeda.toLowerCase();
+
 function precoRecorrente(plano: PlanoParaProvedor, produto: string) {
   return {
-    currency: "brl",
+    currency: moedaDaStripe(plano),
     unit_amount: plano.precoCents,
     recurring: { interval: plano.intervalo === "ano" ? "year" : "month" },
     product: produto,
@@ -480,7 +488,7 @@ export function criarAdaptadorStripe(dep: DependenciasDaStripe): AdaptadorDeCobr
         mode: "payment",
         customer: p.clienteRef,
         client_reference_id: orgId,
-        line_items: [{ price_data: { currency: "brl", unit_amount: p.valorCents, product: produto }, quantity: 1 }],
+        line_items: [{ price_data: { currency: moedaDaStripe(p.plano), unit_amount: p.valorCents, product: produto }, quantity: 1 }],
         metadata: { organization_id: orgId, plano_id: p.plano.id, tipo: "ajuste_proporcional" },
         success_url: sucesso.toString(),
         cancel_url: p.urlDeVolta,

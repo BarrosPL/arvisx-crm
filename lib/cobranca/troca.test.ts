@@ -15,7 +15,7 @@ import { trocarPlanoDaOrg } from "./troca";
 const ORG = "eeeeeeee-0000-4000-8000-000000000001";
 const AGORA = new Date("2026-10-10T12:00:00Z");
 const plano = (id: string, extra: Record<string, unknown> = {}) => ({
-  id, nome: id, preco_cents: 4990, intervalo: "mes", max_assentos: 5, max_canais: 2, arquivado_em: null, oferecido_ao_cliente: true, ...extra,
+  id, nome: id, preco_cents: 4990, moeda: "BRL", intervalo: "mes", max_assentos: 5, max_canais: 2, arquivado_em: null, oferecido_ao_cliente: true, ...extra,
 });
 const PLANOS = [
   plano("basico"), plano("pro", { preco_cents: 9990 }), plano("mini", { max_assentos: 1 }), plano("anual", { intervalo: "ano" }),
@@ -73,7 +73,7 @@ describe("trocarPlanoDaOrg", () => {
   it("⭐ teste grátis com provedor: o preço da 1ª cobrança muda no provedor e a troca vale na hora (D-13)", async () => {
     m.linha = { ...EM_TESTE, provedor: "stripe", provedor_assinatura_id: "sub_1" };
     expect(await trocar("pro")).toMatchObject({ ok: true, quando: "imediato", planoId: "pro" });
-    expect(trocarNoProvedor).toHaveBeenCalledWith({ assinaturaRef: "sub_1", plano: { id: "pro", nome: "pro", precoCents: 9990, intervalo: "mes" } });
+    expect(trocarNoProvedor).toHaveBeenCalledWith({ assinaturaRef: "sub_1", plano: { id: "pro", nome: "pro", precoCents: 9990, moeda: "BRL", intervalo: "mes" } });
   });
 
   // Se a assinatura está ativa, upgrade usa o fluxo proporcional. Sem dados
@@ -344,13 +344,49 @@ describe("trocarPlanoDaOrg", () => {
 const FRASE_DO_PERIODO_PENDENTE =
   'A mensalidade de agora ainda não foi paga. Pague em "Pagar agora" e troque de plano depois que o pagamento for confirmado (Pix: minutos; boleto: até 1 dia útil).';
 
+describe("troca e moeda do plano (migration 9801)", () => {
+  it("⭐ plano em EUR com o Asaas: recusa moeda_fora_do_provedor, sem chamar o provedor nem gravar", async () => {
+    PLANOS.push(plano("euro", { preco_cents: 9990, moeda: "EUR" }));
+    try {
+      m.linha = { ...EM_TESTE, provedor: "asaas", provedor_assinatura_id: "sub_asaas_1" };
+      expect(await trocar("euro")).toMatchObject({ ok: false, status: 422, code: "moeda_fora_do_provedor" });
+      expect(trocarNoProvedor).not.toHaveBeenCalled();
+      expect(escritas()).toHaveLength(0);
+    } finally {
+      PLANOS.pop();
+    }
+  });
+
+  it("⭐ assinatura viva na Stripe em BRL para plano em EUR: recusa troca_de_moeda (a assinatura não muda de moeda)", async () => {
+    PLANOS.push(plano("euro", { preco_cents: 9990, moeda: "EUR" }));
+    try {
+      m.linha = { ...PAGANDO };
+      expect(await trocar("euro")).toMatchObject({ ok: false, status: 422, code: "troca_de_moeda" });
+      expect(trocarNoProvedor).not.toHaveBeenCalled();
+      expect(iniciarAjusteProporcional).not.toHaveBeenCalled();
+      expect(escritas()).toHaveLength(0);
+    } finally {
+      PLANOS.pop();
+    }
+  });
+
+  it("teste grátis sem provedor: a troca para plano em EUR vale (quem recusa, se for o caso, é o checkout)", async () => {
+    PLANOS.push(plano("euro", { preco_cents: 9990, moeda: "EUR" }));
+    try {
+      expect(await trocar("euro")).toMatchObject({ ok: true, changed: true, planoId: "euro" });
+    } finally {
+      PLANOS.pop();
+    }
+  });
+});
+
 describe("troca no teste grátis com a assinatura já criada no provedor (Asaas, PR 3b)", () => {
   const FATURA = "https://sandbox.asaas.com/i/pay_1";
 
   it("⭐ o provedor leva o preço novo à fatura aberta, e o link dela FICA (o próximo Assinar devolve a mesma fatura)", async () => {
     m.linha = { ...EM_TESTE, provedor: "asaas", provedor_assinatura_id: "sub_asaas_1", checkout_url: FATURA };
     expect(await trocar("pro")).toMatchObject({ ok: true, quando: "imediato", planoId: "pro" });
-    expect(trocarNoProvedor).toHaveBeenCalledWith({ assinaturaRef: "sub_asaas_1", plano: { id: "pro", nome: "pro", precoCents: 9990, intervalo: "mes" } });
+    expect(trocarNoProvedor).toHaveBeenCalledWith({ assinaturaRef: "sub_asaas_1", plano: { id: "pro", nome: "pro", precoCents: 9990, moeda: "BRL", intervalo: "mes" } });
     expect(Object.keys(argumentos(escritas()[0]!, "update")?.[0] as object).sort()).toEqual(["plano_agendado_id", "plano_id", "updated_at"]);
   });
 

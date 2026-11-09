@@ -46,3 +46,22 @@ describe("calcularAjusteProporcional — mínimo do provedor", () => {
     expect(calcularAjusteProporcional({ ...base, precoAtualCents: 0, precoNovoCents: 1_000, agora: data("2026-10-16T12:00:00Z") })).toBe(500);
   });
 });
+
+describe("calcularAjusteProporcional — mínimo por moeda (migration 9801)", () => {
+  // Metade do período: o ajuste é metade da diferença.
+  const metade = {
+    periodoPagoDesde: data("2026-10-01T00:00:00Z"),
+    proximoVencimento: data("2026-10-31T00:00:00Z"),
+    agora: data("2026-10-16T00:00:00Z"),
+  };
+
+  it("BRL (padrão): abaixo de R$ 5,00 vira 0 — o mínimo do Asaas", () => {
+    expect(calcularAjusteProporcional({ ...metade, precoAtualCents: 1_000, precoNovoCents: 1_800 })).toBe(0);
+    expect(calcularAjusteProporcional({ ...metade, precoAtualCents: 1_000, precoNovoCents: 1_800, moeda: "BRL" })).toBe(0);
+  });
+
+  it("EUR: o mínimo é o da Stripe (€ 0,50), e € 4,00 é cobrado", () => {
+    expect(calcularAjusteProporcional({ ...metade, precoAtualCents: 1_000, precoNovoCents: 1_800, moeda: "EUR" })).toBe(400);
+    expect(calcularAjusteProporcional({ ...metade, precoAtualCents: 1_000, precoNovoCents: 1_080, moeda: "EUR" })).toBe(0);
+  });
+});

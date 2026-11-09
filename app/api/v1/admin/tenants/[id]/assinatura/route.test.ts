@@ -34,7 +34,7 @@ import { DELETE, PATCH, POST } from "./route";
 const TENANT = "bbbbbbbb-0000-4000-8000-000000000001";
 const DIA = 86_400_000;
 const plano = (id: string, extra: Record<string, unknown> = {}) => ({
-  id, intervalo: "mes", trial_dias: 14, max_assentos: 3, max_canais: 1, arquivado_em: null, ...extra,
+  id, moeda: "BRL", intervalo: "mes", trial_dias: 14, max_assentos: 3, max_canais: 1, arquivado_em: null, ...extra,
 });
 const BASICO = plano("cccccccc-0000-4000-8000-000000000001");
 const PRO = plano("cccccccc-0000-4000-8000-000000000002", { max_assentos: 10, max_canais: 5 });

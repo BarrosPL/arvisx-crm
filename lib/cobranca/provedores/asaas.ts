@@ -26,9 +26,27 @@ import { z } from "zod";
 
 import { documentoDoPagador } from "@/lib/cobranca/documento";
 import { FUSO_PADRAO } from "@/lib/cobranca/fuso";
+import { provedorCobraEm } from "@/lib/cobranca/vocabulario";
 import { logger } from "@/lib/logger";
 
-import { ErroDoProvedor, type AdaptadorDeCobranca, type Modo, type SinalDoWebhook, type Situacao, type WebhookPreparado } from "./contrato";
+import {
+  ErroDoProvedor,
+  type AdaptadorDeCobranca,
+  type Modo,
+  type PlanoParaProvedor,
+  type SinalDoWebhook,
+  type Situacao,
+  type WebhookPreparado,
+} from "./contrato";
+
+/**
+ * O Asaas não tem moeda: todo valor enviado vira real. Plano em outra moeda
+ * (EUR, migration 9801) é recusado AQUI, antes de qualquer chamada — é a segunda
+ * linha; a primeira é `checkout.ts`/`troca.ts`, que recusam com frase clara.
+ */
+function exigirPlanoEmReal(plano: PlanoParaProvedor): void {
+  if (!provedorCobraEm("asaas", plano.moeda)) throw new ErroDoProvedor(null, "moeda_nao_suportada", false);
+}
 
 /** A base de cada ambiente. Qual vale sai do prefixo da chave. */
 export const ASAAS_API_BASE = {
@@ -486,6 +504,7 @@ export function criarAdaptadorAsaas(dep: DependenciasDoAsaas): AdaptadorDeCobran
   async function iniciarAssinatura(
     p: Parameters<AdaptadorDeCobranca["iniciarAssinatura"]>[0],
   ): ReturnType<AdaptadorDeCobranca["iniciarAssinatura"]> {
+    exigirPlanoEmReal(p.plano);
     const orgId = uuidDaOrg(p.orgId);
     const caminho = `/subscriptions?customer=${encodeURIComponent(p.clienteRef)}&status=ACTIVE&limit=10`;
     const ativas = ler(listaDoAsaas(comId), await chamar("GET", caminho)).data.filter((s) => s.deleted !== true);
@@ -516,6 +535,7 @@ export function criarAdaptadorAsaas(dep: DependenciasDoAsaas): AdaptadorDeCobran
   }
 
   async function iniciarAjusteProporcional(p: Parameters<AdaptadorDeCobranca["iniciarAjusteProporcional"]>[0]) {
+    exigirPlanoEmReal(p.plano);
     const externalReference = `upgrade:${uuidDaOrg(p.orgId)}:${p.chaveIdempotencia}`;
     const consulta = new URLSearchParams({ customer: p.clienteRef, externalReference, limit: "10" });
     const existentes = ler(listaDoAsaas(cobrancaDoAsaas), await chamar("GET", `/payments?${consulta}`)).data;
@@ -643,6 +663,7 @@ export function criarAdaptadorAsaas(dep: DependenciasDoAsaas): AdaptadorDeCobran
    * todas levam o valor novo.
    */
   async function trocarPlano(p: Parameters<AdaptadorDeCobranca["trocarPlano"]>[0]): Promise<void> {
+    exigirPlanoEmReal(p.plano);
     const hoje = dataCivilEmSaoPaulo(agora());
     const cobrancas = await cobrancasDaAssinatura(p.assinaturaRef);
     if (cobrancas.some((c) => c.status === "OVERDUE" || (c.status === "PENDING" && c.dueDate <= hoje))) {

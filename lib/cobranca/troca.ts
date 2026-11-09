@@ -37,7 +37,7 @@ import { ErroDoProvedor, type AdaptadorDeCobranca } from "@/lib/cobranca/provedo
 import { excedenteDoPlano, lerUsoDaOrganizacao } from "@/lib/cobranca/uso";
 import { calcularAjusteProporcional, SEM_TROCA } from "@/lib/cobranca/prorata";
 import { urlDoPainelDaEmpresa } from "@/lib/cobranca/url";
-import type { EstadoDaAssinatura, Intervalo, ProvedorDeCobranca } from "@/lib/cobranca/vocabulario";
+import { provedorCobraEm, type EstadoDaAssinatura, type Intervalo, type Moeda, type ProvedorDeCobranca } from "@/lib/cobranca/vocabulario";
 
 export type ResultadoDaTroca =
   | {
@@ -77,6 +77,7 @@ interface Plano {
   id: string;
   nome: string;
   preco_cents: number;
+  moeda: Moeda;
   intervalo: Intervalo;
   max_assentos: number | null;
   max_canais: number | null;
@@ -111,7 +112,7 @@ async function limparSessaoExpirada(admin: SupabaseClient, orgId: string, sessao
 async function lerPlanoCompleto(admin: SupabaseClient, id: string): Promise<Plano | null | "erro"> {
   const { data, error } = await admin
     .from("cobranca_planos")
-    .select("id, nome, preco_cents, intervalo, max_assentos, max_canais, arquivado_em, oferecido_ao_cliente")
+    .select("id, nome, preco_cents, moeda, intervalo, max_assentos, max_canais, arquivado_em, oferecido_ao_cliente")
     .eq("id", id)
     .maybeSingle();
   if (error) return "erro";
@@ -194,6 +195,17 @@ export async function trocarPlanoDaOrg(
   if (!novo || !antigo || (!desfazendo && (novo.arquivado_em !== null || novo.intervalo !== antigo.intervalo))) {
     return recusa(422, "plano_invalido", "Escolha um plano ativo com o mesmo intervalo de cobrança.");
   }
+  if (!desfazendo) {
+    // Moeda (migration 9801): o Asaas só cobra em real, e uma assinatura viva no
+    // provedor não muda de moeda (a Stripe recusa o item em outra moeda). As duas
+    // recusas saem antes de qualquer chamada ao provedor.
+    if (atual.provedor && !provedorCobraEm(atual.provedor, novo.moeda)) {
+      return recusa(422, "moeda_fora_do_provedor", `Este plano é cobrado em ${novo.moeda}, e o provedor de pagamento conectado não cobra nessa moeda. Fale com quem administra o sistema.`);
+    }
+    if (atual.provedor_assinatura_id && novo.moeda !== antigo.moeda) {
+      return recusa(422, "troca_de_moeda", "O plano escolhido é cobrado em outra moeda, e a assinatura em curso não muda de moeda. Fale com quem administra o sistema.");
+    }
+  }
   // Enquanto houver link de pagamento em aberto, o plano não muda — a menos que
   // dê para expirá-lo no provedor (#2609): aí a troca vale na hora e o link
   // antigo deixa de valer. Sem a id da sessão guardada (linha anterior à 0641)
@@ -235,7 +247,7 @@ export async function trocarPlanoDaOrg(
   const aoProvedor = (p: Plano) =>
     adaptadorDe(provedorDaTroca!.provedor).trocarPlano({
       assinaturaRef: provedorDaTroca!.ref,
-      plano: { id: p.id, nome: p.nome, precoCents: p.preco_cents, intervalo: p.intervalo },
+      plano: { id: p.id, nome: p.nome, precoCents: p.preco_cents, moeda: p.moeda, intervalo: p.intervalo },
     });
   // O preço no provedor tem de ser o do que o banco registra (agendado, senão o atual).
   // Relê a linha (outra troca pode ter vencido a corrida); se a leitura falha, vale o que líamos.
@@ -304,6 +316,7 @@ export async function trocarPlanoDaOrg(
       periodoPagoDesde: atual.periodo_pago_desde ? new Date(atual.periodo_pago_desde) : null,
       proximoVencimento: atual.proximo_vencimento ? new Date(atual.proximo_vencimento) : null,
       agora,
+      moeda: novo.moeda,
     });
     if (valorCents === null) return recusa(409, "periodo_indisponivel", "Não foi possível calcular o período pago. Atualize a assinatura e tente novamente.");
     if (valorCents > 0) {
@@ -316,7 +329,7 @@ export async function trocarPlanoDaOrg(
       if (erroReserva || !reserva) return recusa(409, "troca_em_preparo", "A assinatura mudou enquanto você solicitava a troca. Atualize a página e tente novamente.");
       try {
         const pagamento = await adaptadorDe(provedorDaTroca.provedor).iniciarAjusteProporcional({
-          clienteRef: atual.provedor_cliente_id, orgId, plano: { id: novo.id, nome: novo.nome, precoCents: novo.preco_cents, intervalo: novo.intervalo },
+          clienteRef: atual.provedor_cliente_id, orgId, plano: { id: novo.id, nome: novo.nome, precoCents: novo.preco_cents, moeda: novo.moeda, intervalo: novo.intervalo },
           valorCents, chaveIdempotencia: id, urlDeVolta: urlDoPainelDaEmpresa(),
         });
         const { data: pagamentoGravado, error: erroAoGravarPagamento } = await admin

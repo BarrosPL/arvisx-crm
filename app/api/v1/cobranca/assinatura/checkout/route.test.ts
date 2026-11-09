@@ -7,6 +7,7 @@ const h = vi.hoisted(() => ({
   papel: vi.fn(),
   ligada: true,
   provedor: "stripe" as string | null,
+  moeda: "BRL" as string,
   ad: { lerSituacao: vi.fn(), garantirCliente: vi.fn(), iniciarAssinatura: vi.fn(), lerPagamentoProporcional: vi.fn(), expirarSessao: vi.fn() },
   emailDoAdmin: vi.fn(),
   taxaOk: true,
@@ -40,7 +41,7 @@ let m: Mundo;
 
 function responder(c: Cadeia): Resposta {
   if (c.tabela === "organizations") return { data: { legal_name: "Loja Legal Ltda", display_name: "Loja" } };
-  if (c.tabela === "cobranca_planos") return { data: { id: "plano-a", nome: "Essencial", preco_cents: 4990, intervalo: "mes" } };
+  if (c.tabela === "cobranca_planos") return { data: { id: "plano-a", nome: "Essencial", preco_cents: 4990, moeda: h.moeda, intervalo: "mes" } };
   if (operacao(c) === "select") return { data: m.linha };
   if (filtros(c).some((f) => f[0] === "or")) return m.reservaOk ? { data: { organization_id: ORG } } : { data: null };
   return { data: { organization_id: ORG } };
@@ -61,6 +62,7 @@ const lerAssinatura = () => h.banco.cadeias.filter((c) => c.tabela === "cobranca
 
 beforeEach(() => {
   vi.clearAllMocks();
+  h.moeda = "BRL";
   h.ligada = true;
   h.provedor = "stripe";
   h.taxaOk = true;
@@ -95,6 +97,23 @@ describe("checkout da assinatura", () => {
     m.linha = { ...EM_TESTE, checkout_expira_em: new Date(Date.now() + 60_000).toISOString() };
     expect((await codigo(await assinar())).code).toBe("checkout_em_preparo");
     expect(h.ad.garantirCliente).not.toHaveBeenCalled();
+  });
+
+  it("⭐ plano em EUR com o Asaas (migration 9801): 422 moeda_fora_do_provedor ANTES de criar o cliente, e a reserva é liberada", async () => {
+    h.provedor = "asaas";
+    h.moeda = "EUR";
+    const res = await assinar({ documento: CNPJ });
+    expect(res.status).toBe(422);
+    expect((await codigo(res)).code).toBe("moeda_fora_do_provedor");
+    expect(h.ad.garantirCliente).not.toHaveBeenCalled();
+    expect(h.ad.iniciarAssinatura).not.toHaveBeenCalled();
+    expect(updates().at(-1)).toMatchObject({ checkout_expira_em: null });
+  });
+
+  it("plano em EUR com a Stripe: o checkout leva a moeda do plano ao adaptador", async () => {
+    h.moeda = "EUR";
+    await assinar();
+    expect(h.ad.iniciarAssinatura.mock.calls[0]?.[0]).toMatchObject({ plano: { id: "plano-a", precoCents: 4990, moeda: "EUR", intervalo: "mes" } });
   });
 
   it("⭐ caminho feliz: reserva, cliente com o nome legal e o e-mail do admin da empresa, checkout com o teste grátis, e grava o link", async () => {

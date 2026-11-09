@@ -328,7 +328,7 @@ describe("sincronizar — upgrade proporcional", () => {
       // O prazo da cobrança: o fim do período em que a conta foi feita.
       troca_reserva_ate: "2026-11-01T00:00:00.000Z",
     };
-    m.plano = { id: "plano-b", nome: "Profissional", preco_cents: 9990, intervalo: "mes" };
+    m.plano = { id: "plano-b", nome: "Profissional", preco_cents: 9990, moeda: "BRL", intervalo: "mes" };
   });
 
   it("⭐ pagamento ainda pendente: o plano NÃO muda, o provedor não troca o preço, nada se audita como troca", async () => {
@@ -344,7 +344,7 @@ describe("sincronizar — upgrade proporcional", () => {
   it("pago: troca o preço no provedor, aplica o plano novo e audita (o controle do caso acima)", async () => {
     lerPagamento.mockResolvedValue("pago");
     await rodarUpgrade();
-    expect(trocarPlano).toHaveBeenCalledWith({ assinaturaRef: "sub_1", plano: { id: "plano-b", nome: "Profissional", precoCents: 9990, intervalo: "mes" } });
+    expect(trocarPlano).toHaveBeenCalledWith({ assinaturaRef: "sub_1", plano: { id: "plano-b", nome: "Profissional", precoCents: 9990, moeda: "BRL", intervalo: "mes" } });
     expect(m.linha).toMatchObject({ plano_id: "plano-b", troca_status: null, plano_troca_pendente_id: null });
     expect(h.audit).toHaveBeenCalledWith(expect.objectContaining({
       action: "cobranca.plano_trocado", metadata: { de: "plano-a", para: "plano-b", quando: "upgrade_proporcional_pago" },

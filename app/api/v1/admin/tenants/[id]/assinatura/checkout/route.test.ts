@@ -9,6 +9,7 @@ const h = vi.hoisted(() => ({
   email: vi.fn(),
   ligada: true,
   provedor: "stripe" as string | null,
+  moeda: "BRL" as string,
   ad: { lerSituacao: vi.fn(), garantirCliente: vi.fn(), iniciarAssinatura: vi.fn() },
   taxaOk: true,
   audit: vi.fn(),
@@ -48,7 +49,7 @@ const FRASE_ISENTA = "Esta empresa é isenta: atribua um plano antes de gerar o 
 let m: { linha: Record<string, unknown> | null; reservaOk: boolean };
 function responder(c: Cadeia): Resposta {
   if (c.tabela === "organizations") return { data: { legal_name: "Loja Legal Ltda", display_name: "Loja" } };
-  if (c.tabela === "cobranca_planos") return { data: { id: "plano-a", nome: "Essencial", preco_cents: 4990, intervalo: "mes" } };
+  if (c.tabela === "cobranca_planos") return { data: { id: "plano-a", nome: "Essencial", preco_cents: 4990, moeda: h.moeda, intervalo: "mes" } };
   if (operacao(c) === "select") return { data: m.linha };
   if (filtros(c).some((f) => f[0] === "or")) return m.reservaOk ? { data: { organization_id: TENANT } } : { data: null };
   return { data: { organization_id: TENANT } };
@@ -70,6 +71,7 @@ const erro = async (res: Response) => ((await res.json()) as { error: { code: st
 
 beforeEach(() => {
   vi.clearAllMocks();
+  h.moeda = "BRL";
   h.ligada = true;
   h.provedor = "stripe";
   h.taxaOk = true;

@@ -11,7 +11,7 @@ vi.mock("@/lib/instalacao/modulos", () => ({ moduloLigado: h.ligado }));
 
 import { lerCadastroNaTela, planoInicialDoSeletor, type PlanoDoCadastro } from "./cadastro";
 
-const plano = (id: string): PlanoDoCadastro => ({ id, nome: id, preco_cents: 4990, intervalo: "mes", trial_dias: 7 });
+const plano = (id: string): PlanoDoCadastro => ({ id, nome: id, preco_cents: 4990, moeda: "BRL", intervalo: "mes", trial_dias: 7 });
 
 function banco(p: { oferecidos: PlanoDoCadastro[]; padrao: string | null; erro?: boolean }) {
   return {

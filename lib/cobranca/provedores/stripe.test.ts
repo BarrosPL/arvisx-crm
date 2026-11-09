@@ -350,7 +350,7 @@ describe("verificarWebhook", () => {
 
 describe("garantirCliente e iniciarAssinatura", () => {
   const ORG = "11111111-1111-4111-8111-111111111111";
-  const PLANO = { id: "22222222-2222-4222-8222-222222222222", nome: "Pro", precoCents: 4990, intervalo: "mes" as const };
+  const PLANO = { id: "22222222-2222-4222-8222-222222222222", nome: "Pro", precoCents: 4990, moeda: "BRL" as const, intervalo: "mes" as const };
   const PRODUTO = `dc_plano_${PLANO.id}`;
   const SESSAO = { corpo: { id: "cs_test_1", url: "https://checkout.stripe.com/c/pay/cs_test_1", expires_at: 1790086400 } };
   const base = {
@@ -430,6 +430,36 @@ describe("garantirCliente e iniciarAssinatura", () => {
     });
     // Sem payment_method_types: cartão e boleto aparecem conforme o painel da conta.
     expect(checkout?.headers.get("idempotency-key")).toBe(`${base.chaveIdempotencia}:checkout`);
+  });
+
+  it("⭐ plano em EUR (migration 9801): o Checkout sai com currency eur, sem payment_method_types (em euro, a Stripe oferece o cartão)", async () => {
+    const { adaptador, chamadas } = montar({ "POST /products": { corpo: { id: PRODUTO } }, "POST /checkout/sessions": SESSAO });
+    await adaptador.iniciarAssinatura({ ...base, plano: { ...PLANO, precoCents: 5990, moeda: "EUR" } });
+    const corpo = Object.fromEntries(chamadas.find((c) => c.rota === "POST /checkout/sessions")?.corpo ?? []);
+    expect(corpo).toMatchObject({
+      "line_items[0][price_data][currency]": "eur",
+      "line_items[0][price_data][unit_amount]": "5990",
+      "line_items[0][price_data][recurring][interval]": "month",
+    });
+    expect(Object.keys(corpo).some((k) => k.startsWith("payment_method_types"))).toBe(false);
+  });
+
+  it("plano em EUR: o ajuste proporcional também sai em eur", async () => {
+    const { adaptador, chamadas } = montar({ "POST /products": { corpo: { id: PRODUTO } }, "POST /checkout/sessions": SESSAO });
+    await adaptador.iniciarAjusteProporcional({ ...base, plano: { ...PLANO, moeda: "EUR" }, valorCents: 3065 });
+    expect(Object.fromEntries(chamadas.find((c) => c.rota === "POST /checkout/sessions")?.corpo ?? [])).toMatchObject({
+      mode: "payment",
+      "line_items[0][price_data][currency]": "eur",
+      "line_items[0][price_data][unit_amount]": "3065",
+    });
+  });
+
+  it("plano em BRL: o ajuste proporcional segue em brl", async () => {
+    const { adaptador, chamadas } = montar({ "POST /products": { corpo: { id: PRODUTO } }, "POST /checkout/sessions": SESSAO });
+    await adaptador.iniciarAjusteProporcional({ ...base, valorCents: 3065 });
+    expect(Object.fromEntries(chamadas.find((c) => c.rota === "POST /checkout/sessions")?.corpo ?? [])).toMatchObject({
+      "line_items[0][price_data][currency]": "brl",
+    });
   });
 
   it("⭐ cobra o proporcional numa sessão avulsa e consulta o status direto na Stripe", async () => {
@@ -676,7 +706,7 @@ describe("lerSituacao", () => {
 });
 
 describe("trocarPlano, cancelarNoFim, prepararWebhook e portal", () => {
-  const NOVO = { id: "33333333-3333-4333-8333-333333333333", nome: "Max", precoCents: 9990, intervalo: "mes" as const };
+  const NOVO = { id: "33333333-3333-4333-8333-333333333333", nome: "Max", precoCents: 9990, moeda: "BRL" as const, intervalo: "mes" as const };
   const PRODUTO_NOVO = `dc_plano_${NOVO.id}`;
   const URL_DO_WEBHOOK = "https://crm.example.com/api/v1/webhooks/cobranca/stripe";
 
@@ -697,6 +727,17 @@ describe("trocarPlano, cancelarNoFim, prepararWebhook e portal", () => {
       proration_behavior: "none",
       "metadata[plano_id]": NOVO.id,
     });
+  });
+
+  it("trocarPlano com plano em EUR: o preço novo sai em eur", async () => {
+    const { adaptador, chamadas } = montar({
+      "GET /subscriptions/sub_1QfixtureAtiva": { corpo: objetos.assinatura },
+      "POST /products": { corpo: { id: PRODUTO_NOVO } },
+      "POST /subscriptions/sub_1QfixtureAtiva": { corpo: objetos.assinatura },
+    });
+    await adaptador.trocarPlano({ assinaturaRef: "sub_1QfixtureAtiva", plano: { ...NOVO, moeda: "EUR" } });
+    const post = chamadas.find((c) => c.rota === "POST /subscriptions/sub_1QfixtureAtiva");
+    expect(Object.fromEntries(post?.corpo ?? [])).toMatchObject({ "items[0][price_data][currency]": "eur" });
   });
 
   it("trocarPlano em assinatura encerrada: a recusa da Stripe sobe não transitória", async () => {

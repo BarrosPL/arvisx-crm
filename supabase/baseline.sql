@@ -73852,3 +73852,23 @@ comment on column public.platform_meta_app.app_id is
   'App ID do app da Meta da instalação. Público (vai na URL do login do Facebook); usado pela conexão direta do Instagram e do Messenger. Migration 9800.';
 
 notify pgrst, 'reload schema';
+
+-- ---- plano de cobrança em euro (migration 9801) ----
+-- Espelho idempotente da 9801 (o porquê está no cabeçalho da migration). O
+-- CHECK inline da 0583 (bloco "cobrança do revendedor", lá em cima) nasce só
+-- com BRL num banco novo; este bloco o troca pelo de BRL ou EUR, nos dois
+-- modos (install e update). Não cria função: fica no fim, fora da VARREDURA.
+alter table public.cobranca_planos
+  drop constraint if exists cobranca_planos_moeda_check;
+
+alter table public.cobranca_planos
+  add constraint cobranca_planos_moeda_check
+  check (moeda = any (array['BRL'::text, 'EUR'::text]));
+
+comment on column public.cobranca_planos.moeda is
+  'Moeda do plano, ISO-4217: BRL ou EUR (migration 9801). A Stripe cobra na moeda do plano; o Asaas só em BRL (lib/cobranca/vocabulario.ts, provedorCobraEm). Trava junto do preço e do intervalo quando o plano tem assinantes.';
+
+comment on table public.cobranca_planos is
+  'Planos que o dono da instalação vende às empresas dela (migration 0583). Da INSTALAÇÃO, sem organization_id: RLS ligada sem policy, só o service_role. Limite nulo = sem limite. preco_cents >= 500 (mínimo de boleto); moeda BRL ou EUR (migration 9801); teto_ia_usd_cents na moeda de fn_gasto_de_ia_do_mes.';
+
+notify pgrst, 'reload schema';

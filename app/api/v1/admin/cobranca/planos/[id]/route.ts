@@ -2,7 +2,7 @@
  * PATCH /api/v1/admin/cobranca/planos/[id] — editar, marcar como plano do
  * cadastro, arquivar e desarquivar (spec da cobrança do revendedor §2.2, §7g).
  *
- * Preço e intervalo NÃO mudam enquanto houver assinatura apontando para o
+ * Preço, moeda e intervalo NÃO mudam enquanto houver assinatura apontando para o
  * plano (em `plano_id` ou `plano_agendado_id`): 409 `plano_com_assinantes`,
  * "arquive e crie outro". Nome, limites, dias de teste e o padrão do cadastro
  * mudam sempre. Limite novo vale para quem já assina: é a alavanca de "limite
@@ -30,6 +30,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 interface PlanoAtual {
   id: string;
   preco_cents: number;
+  moeda: string;
   intervalo: string;
   arquivado_em: string | null;
 }
@@ -60,7 +61,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { data: lido, error: erroDeLeitura } = await admin
     .from("cobranca_planos")
-    .select("id, preco_cents, intervalo, arquivado_em")
+    .select("id, preco_cents, moeda, intervalo, arquivado_em")
     .eq("id", id)
     .maybeSingle();
   if (erroDeLeitura) return fail("internal_error", "Não foi possível ler o plano", 500, { requestId });
@@ -70,6 +71,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { arquivado, ...campos } = corpo.data;
   const mudaACobranca =
     (campos.preco_cents !== undefined && campos.preco_cents !== Number(atual.preco_cents)) ||
+    (campos.moeda !== undefined && campos.moeda !== atual.moeda) ||
     (campos.intervalo !== undefined && campos.intervalo !== atual.intervalo);
   if (mudaACobranca) {
     // ponytail: conferido na rota, sem gatilho. Uma atribuição que entre entre
@@ -82,7 +84,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if ((count ?? 0) > 0) {
       return fail(
         "plano_com_assinantes",
-        "Este plano tem assinantes: o preço e o intervalo não mudam mais. Arquive-o e crie outro.",
+        "Este plano tem assinantes: o preço, a moeda e o intervalo não mudam mais. Arquive-o e crie outro.",
         409,
         { requestId, details: { assinantes: count } },
       );

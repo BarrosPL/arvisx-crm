@@ -28,6 +28,7 @@ import { ApiError } from "@/lib/api/types";
 import { useT } from "@/hooks/i18n/useT";
 import { useIdioma } from "@/lib/i18n/IdiomaProvider";
 import { copyToClipboard } from "@/lib/clipboard";
+import { formatCents } from "@/lib/money";
 
 // ---------------------------------------------------------------------------
 // Schema (mirrors server Zod; client keeps it in sync)
@@ -74,6 +75,8 @@ export interface PlanoParaEscolher {
   id: string;
   nome: string;
   preco_cents: number;
+  /** Moeda do preço (BRL ou EUR, migration 9801). */
+  moeda: string;
   intervalo: string;
   trial_dias: number;
 }
@@ -81,9 +84,6 @@ export interface PlanoParaEscolher {
 /** Valor do item "Sem cobrança": o Select do Radix não aceita valor vazio. */
 const ISENTA = "isenta";
 
-function formatarPreco(cents: number, idioma: string): string {
-  return new Intl.NumberFormat(idioma, { style: "currency", currency: "BRL" }).format(cents / 100);
-}
 
 export function NewTenantForm({
   cobranca,
@@ -324,7 +324,7 @@ export function NewTenantForm({
                     <SelectItem value={ISENTA}>{t("Sem cobrança (isenta)")}</SelectItem>
                     {cobranca.planos.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
-                        {p.nome} · {formatarPreco(p.preco_cents, idioma)}{" "}
+                        {p.nome} · {formatCents(p.preco_cents, p.moeda)}{" "}
                         {p.intervalo === "mes" ? t("por mês") : t("por ano")} · {p.trial_dias} {t("dias de teste")}
                       </SelectItem>
                     ))}

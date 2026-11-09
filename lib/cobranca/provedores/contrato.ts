@@ -17,6 +17,7 @@ import {
   type ErroDeLeitura,
   type Intervalo,
   type Modo,
+  type Moeda,
   type ProvedorDeCobranca,
 } from "@/lib/cobranca/vocabulario";
 
@@ -27,7 +28,11 @@ export interface PlanoParaProvedor {
   readonly id: string;
   readonly nome: string;
   readonly precoCents: number;
-  /** Moeda sempre BRL (CHECK de `cobranca_planos.moeda`). */
+  /**
+   * A moeda do plano (`cobranca_planos.moeda`): BRL ou EUR. A Stripe cobra
+   * nela; o Asaas só cobra BRL e recusa as outras (`provedorCobraEm`).
+   */
+  readonly moeda: Moeda;
   readonly intervalo: Intervalo;
 }
 

@@ -17,6 +17,8 @@ export interface PlanoDoCadastro {
   id: string;
   nome: string;
   preco_cents: number;
+  /** Moeda do preço (BRL ou EUR, migration 9801): a tela formata nela. */
+  moeda: string;
   intervalo: string;
   trial_dias: number;
 }
@@ -31,7 +33,7 @@ export async function lerPlanosDoCadastro(admin: SupabaseClient): Promise<Planos
   const [oferecidos, padrao] = await Promise.all([
     admin
       .from("cobranca_planos")
-      .select("id, nome, preco_cents, intervalo, trial_dias")
+      .select("id, nome, preco_cents, moeda, intervalo, trial_dias")
       .is("arquivado_em", null)
       .eq("oferecido_ao_cliente", true)
       .order("preco_cents"),

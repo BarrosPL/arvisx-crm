@@ -11,15 +11,17 @@ import { Label } from "@/components/ui/label";
 import { useT } from "@/hooks/i18n/useT";
 import { apiClient } from "@/lib/api/client";
 import { cadastroExigeEscolhaDePlano } from "@/lib/cobranca/cadastro";
-import type { Intervalo } from "@/lib/cobranca/vocabulario";
+import { MOEDAS, type Intervalo, type Moeda } from "@/lib/cobranca/vocabulario";
 import { useIdioma } from "@/lib/i18n/IdiomaProvider";
-import { novoPlanoSchema } from "@/lib/schemas/cobranca-plano";
+import { formatCents, simboloDaMoeda } from "@/lib/money";
+import { novoPlanoSchema, PRECO_MINIMO_CENTS } from "@/lib/schemas/cobranca-plano";
 
 /** Um plano de `cobranca_planos` como a tela o recebe (COLUNAS_DO_PLANO). */
 export interface PlanoDaTela {
   id: string;
   nome: string;
   preco_cents: number;
+  moeda: Moeda;
   intervalo: Intervalo;
   trial_dias: number;
   max_assentos: number | null;
@@ -34,6 +36,7 @@ export interface PlanoDaTela {
 interface Campos {
   nome: string;
   preco: string;
+  moeda: Moeda;
   intervalo: Intervalo;
   trial_dias: string;
   max_assentos: string;
@@ -41,9 +44,9 @@ interface Campos {
   teto_ia: string;
 }
 
-const VAZIO: Campos = { nome: "", preco: "", intervalo: "mes", trial_dias: "14", max_assentos: "", max_canais: "", teto_ia: "" };
+const VAZIO: Campos = { nome: "", preco: "", moeda: "BRL", intervalo: "mes", trial_dias: "14", max_assentos: "", max_canais: "", teto_ia: "" };
 const AVISO_DE_CAMPOS =
-  "Confira os campos do plano: preço a partir de R$ 5,00, teste grátis de 0 a 90 dias e limites a partir de 1.";
+  "Confira os campos do plano: preço a partir de {minimo}, teste grátis de 0 a 90 dias e limites a partir de 1.";
 
 const centavos = (v: string) => Math.round(Number(v.replace(",", ".")) * 100);
 const inteiroOuNulo = (v: string) => (v.trim() === "" ? null : Number(v));
@@ -54,6 +57,7 @@ function corpoDoPlano(c: Campos) {
   return {
     nome: c.nome.trim(),
     preco_cents: centavos(c.preco),
+    moeda: c.moeda,
     intervalo: c.intervalo,
     trial_dias: Number(c.trial_dias),
     max_assentos: inteiroOuNulo(c.max_assentos),
@@ -66,6 +70,7 @@ function camposDe(p: PlanoDaTela): Campos {
   return {
     nome: p.nome,
     preco: decimal(p.preco_cents),
+    moeda: p.moeda,
     intervalo: p.intervalo,
     trial_dias: String(p.trial_dias),
     max_assentos: p.max_assentos === null ? "" : String(p.max_assentos),
@@ -86,9 +91,8 @@ export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] 
   const [campos, setCampos] = useState<Campos>(VAZIO);
   const [editando, setEditando] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
-  const brl = new Intl.NumberFormat(idioma, { style: "currency", currency: "BRL" });
   const usd = new Intl.NumberFormat(idioma, { style: "currency", currency: "USD" });
-  const campo = (k: Exclude<keyof Campos, "intervalo">) => ({
+  const campo = (k: Exclude<keyof Campos, "intervalo" | "moeda">) => ({
     value: campos[k],
     onChange: (e: ChangeEvent<HTMLInputElement>) => setCampos({ ...campos, [k]: e.target.value }),
   });
@@ -98,7 +102,7 @@ export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] 
     e.preventDefault();
     const corpo = corpoDoPlano(campos);
     if (!novoPlanoSchema.safeParse(corpo).success) {
-      toast.error(t(AVISO_DE_CAMPOS));
+      toast.error(t(AVISO_DE_CAMPOS).replace("{minimo}", formatCents(PRECO_MINIMO_CENTS, campos.moeda)));
       return;
     }
     setSalvando(true);
@@ -135,21 +139,39 @@ export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] 
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <Label htmlFor="plano-preco">{t("Preço (R$)")}</Label>
+            <Label htmlFor="plano-preco">
+              {t("Preço")} ({simboloDaMoeda(campos.moeda)})
+            </Label>
             <Input id="plano-preco" inputMode="decimal" {...campo("preco")} />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="plano-intervalo">{t("Intervalo de cobrança")}</Label>
+            <Label htmlFor="plano-moeda">{t("Moeda")}</Label>
+            {/* Código ISO + símbolo: não se traduz (ver `simboloDaMoeda`). Com assinantes, a rota trava a moeda como o preço. */}
             <select
-              id="plano-intervalo"
+              id="plano-moeda"
               className="h-9 w-full rounded-md border bg-background px-2 text-sm"
-              value={campos.intervalo}
-              onChange={(e) => setCampos({ ...campos, intervalo: e.target.value as Intervalo })}
+              value={campos.moeda}
+              onChange={(e) => setCampos({ ...campos, moeda: e.target.value as Moeda })}
             >
-              <option value="mes">{t("Mensal")}</option>
-              <option value="ano">{t("Anual")}</option>
+              {MOEDAS.map((m) => (
+                <option key={m} value={m}>
+                  {m} ({simboloDaMoeda(m)})
+                </option>
+              ))}
             </select>
           </div>
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="plano-intervalo">{t("Intervalo de cobrança")}</Label>
+          <select
+            id="plano-intervalo"
+            className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+            value={campos.intervalo}
+            onChange={(e) => setCampos({ ...campos, intervalo: e.target.value as Intervalo })}
+          >
+            <option value="mes">{t("Mensal")}</option>
+            <option value="ano">{t("Anual")}</option>
+          </select>
         </div>
         <div className="space-y-1">
           <Label htmlFor="plano-trial">{t("Dias de teste grátis")}</Label>
@@ -196,7 +218,7 @@ export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] 
           </p>
         )}
         <p className="text-xs text-muted-foreground">
-          {t("O preço e o intervalo de um plano travam quando alguém o assina: para mudar, arquive e crie outro.")}
+          {t("O preço, a moeda e o intervalo de um plano travam quando alguém o assina: para mudar, arquive e crie outro.")}
         </p>
         {planos.length === 0 ? (
           <p className="text-sm text-muted-foreground">
@@ -214,7 +236,7 @@ export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] 
                     {!p.oferecido_ao_cliente && <span className="ml-2 rounded-md bg-muted px-1.5 py-0.5 text-xs">{t("Só você atribui")}</span>}
                   </p>
                   <p className="text-muted-foreground">
-                    {brl.format(p.preco_cents / 100)} {p.intervalo === "mes" ? t("por mês") : t("por ano")} · {p.trial_dias} {t("dias de teste")}
+                    {formatCents(p.preco_cents, p.moeda)} {p.intervalo === "mes" ? t("por mês") : t("por ano")} · {p.trial_dias} {t("dias de teste")}
                   </p>
                   <p className="text-muted-foreground">
                     {t("Pessoas")}: {limite(p.max_assentos)} · {t("Números conectados")}: {limite(p.max_canais)} · {t("IA")}:{" "}
