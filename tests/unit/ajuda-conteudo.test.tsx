@@ -40,17 +40,19 @@ describe("conteúdo da Ajuda acompanha o contexto do menu", () => {
     const filtro = vi.spyOn(navegacao, "destinosDaInterface"); // delega ao original
     render(<AjudaConteudo />);
     expect(filtro).toHaveBeenLastCalledWith(settings, false, "manager", modulos, capacidades);
-    expect(urls()).toEqual(["/app/contacts"]);
+    // O Guia de uso é porta essencial (telas do plano, migration 9802): está em
+    // toda interface, então aparece mesmo fora da escolha de destinos.
+    expect(urls()).toEqual(["/app/ajuda/treinamento", "/app/contacts"]);
   });
 
   it("a troca A → B não conserva atalhos da organização anterior", () => {
     authRef.activeOrg!.interface_settings = { preset: "completa", destinos: ["/app/ajuda", "/app/contacts"] };
     const view = render(<AjudaConteudo />);
-    expect(urls()).toEqual(["/app/contacts"]);
+    expect(urls()).toEqual(["/app/ajuda/treinamento", "/app/contacts"]);
     authRef.activeOrg = { orgId: "org-b", name: "Outra organização sintética", role: "agent",
       interface_settings: { preset: "completa", destinos: ["/app/ajuda", "/app/inbox"] } };
     view.rerender(<AjudaConteudo />);
-    expect(urls()).toEqual(["/app/inbox"]);
+    expect(urls()).toEqual(["/app/ajuda/treinamento", "/app/inbox"]);
   });
 
   it("sem atalhos visíveis mantém a página e omite as seções vazias", () => {
@@ -58,7 +60,8 @@ describe("conteúdo da Ajuda acompanha o contexto do menu", () => {
     render(<AjudaConteudo />);
     expect(screen.getByRole("heading", { level: 1, name: "Ajuda" })).toBeInTheDocument();
     expect(screen.queryAllByRole("heading", { level: 2 })).toEqual([]);
-    expect(urls()).toEqual([]);
+    // Só o Guia de uso, que é porta essencial (migration 9802) e não seção.
+    expect(urls()).toEqual(["/app/ajuda/treinamento"]);
   });
 
   it("não usa o bypass de plataforma em suporte; preserva a leitura do instalador", () => {

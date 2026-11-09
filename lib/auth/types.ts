@@ -1,4 +1,4 @@
-import type { InterfaceSettings } from "@/lib/navigation/interface";
+import type { InterfaceDaSessao, InterfaceSettings } from "@/lib/navigation/interface";
 import type { Idioma } from "@/lib/i18n/idiomas";
 import type { ModuloOpcional } from "@/lib/instalacao/modulos";
 import type { CapacidadeDaOrganizacao } from "@/lib/organizacao/capacidades";
@@ -247,7 +247,12 @@ export interface AuthUser {
 }
 
 export interface ActiveOrg {
-  interface_settings?: InterfaceSettings;
+  /**
+   * EMPRESA ∩ VÍNCULO (migration 0367) e, nas telas de `/app`, também o recorte
+   * do PLANO (migration 9802), pendurado por `resolveActiveOrg` — ver
+   * `CHAVE_DAS_TELAS_DO_PLANO` em lib/navigation/interface.ts.
+   */
+  interface_settings?: InterfaceDaSessao;
   /** Moeda da organização — o rótulo do valor do negócio sai dela. */
   currency?: string | null;
   /** País da organização (ISO-3166 alpha-2); nulo = Brasil. */

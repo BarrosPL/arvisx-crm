@@ -1,5 +1,7 @@
 import { cache } from "react";
-import { combinarInterfaces } from "@/lib/navigation/interface";
+import { combinarInterfaces, comTelasDoPlano } from "@/lib/navigation/interface";
+import { destinosDoPlano } from "@/lib/cobranca/telas-do-plano";
+import { leituraDoPlanoDaOrg } from "@/lib/cobranca/leitura-do-plano";
 /**
  * Server-side auth helpers — load AuthUser, resolve active org, gate routes.
  *
@@ -543,7 +545,14 @@ export const orgAtivaSemPortao = cache(async (authUser: AuthUser): Promise<Activ
 export const resolveActiveOrg = cache(async (authUser: AuthUser): Promise<ActiveOrg | null> => {
   const org = await orgAtivaSemPortao(authUser);
   if (org && !ehOperante(org.org_status)) redirect("/account-suspended");
-  return org;
+  if (!org) return org;
+  // AS TELAS DO PLANO (migration 9802), num lugar só: o layout de `/app`, os hubs
+  // e as páginas recebem a interface já recortada pelo plano, e o menu, o hub, o
+  // ⌘K, a barra de baixo e o Guia de uso obedecem sem ler o plano cada um.
+  // `leituraDoPlanoDaOrg` nunca lança (falha = Atendimento + essenciais). Rota de
+  // API não passa por aqui (`orgAtivaSemPortao`): lá a trava é `requireRole`.
+  const telas = destinosDoPlano(await leituraDoPlanoDaOrg(org.orgId));
+  return telas === null ? org : { ...org, interface_settings: comTelasDoPlano(org.interface_settings, telas) };
 });
 
 /**

@@ -5479,6 +5479,7 @@ export type Database = {
           arquivado_em: string | null;
           created_at: string;
           id: string;
+          interface_settings: Json;
           intervalo: string;
           max_assentos: number | null;
           max_canais: number | null;
@@ -5497,6 +5498,7 @@ export type Database = {
           arquivado_em?: string | null;
           created_at?: string;
           id?: string;
+          interface_settings?: Json;
           intervalo: string;
           max_assentos?: number | null;
           max_canais?: number | null;
@@ -5514,6 +5516,7 @@ export type Database = {
           arquivado_em?: string | null;
           created_at?: string;
           id?: string;
+          interface_settings?: Json;
           intervalo?: string;
           max_assentos?: number | null;
           max_canais?: number | null;
@@ -16279,6 +16282,8 @@ export type Database = {
         Args: { p_de: string; p_para: string; p_remover: boolean; p_tags: string[] };
         Returns: string[];
       };
+      fn_telas_do_plano: { Args: { p_org: string }; Returns: Json };
+      fn_telas_do_plano_da_sessao: { Args: { p_org: string | null }; Returns: Json };
       fn_telefone_variantes: { Args: { p_telefone: string }; Returns: string[] };
       fn_titular_apagado_a_pedido: {
         Args: { p_lid: string; p_org: string; p_telefone: string };

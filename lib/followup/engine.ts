@@ -23,6 +23,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { idsDoContatoEGemeos } from "@/lib/channels/contato-por-telefone";
 import { portaDaAplicacao } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { lerTelasDoPlano, planoIncluiIaParaOMotor } from "@/lib/cobranca/telas-do-plano";
 
 import { flowGraphSchema, type FlowGraph, type FlowNode, type ReplySaveTo } from "./graph-schema";
 import { TETO_DE_PASSOS_DO_MOTOR } from "./custo-no-motor";
@@ -204,6 +205,14 @@ export interface AdminClient {
   }): Promise<{ inserted: boolean }>;
   applyEnrollmentStep?(id:string,orgId:string,patch:EnrollmentPatch,event:{job_claim?:JobClaim;job_id?:string;node_id:string;event_type:string;payload:Record<string,unknown>;idempotency_key:string}):Promise<void>;
   updateEnrollment(id: string, orgId: string, patch: EnrollmentPatch): Promise<void>;
+  /**
+   * O plano da empresa inclui o Agente de IA (grupo `ia`, migration 9802)? Sem
+   * ele, o follow-up NÃO dispara: a inscrição é adiada (`ADIAMENTO_FORA_DO_PLANO_MS`),
+   * nunca cancelada — ao reassinar, o fluxo segue de onde estava. Opcional:
+   * fakes de teste sem o método não mudam de comportamento. Falha de leitura =
+   * segue (a régua do motor).
+   */
+  planoIncluiIa?(orgId: string): Promise<boolean>;
   loadFlowPointerName(orgId: string, pointerId: string): Promise<string | null>;
   insertDeadInboxItem(item: { organization_id: string; title: string; body: string; ref_id: string }): Promise<void>;
   /**
@@ -1267,6 +1276,9 @@ async function processEnrollment(
   );
 }
 
+/** Quanto a inscrição de uma empresa sem o Agente de IA no plano espera para ser reavaliada. */
+export const ADIAMENTO_FORA_DO_PLANO_MS = 6 * 60 * 60 * 1000;
+
 export async function runFollowupTick(deps: TickDeps, opts?: { limit?: number }): Promise<TickSummary> {
   const summary: TickSummary = { claimed: 0, advanced: 0, scheduled: 0, failed: 0, dead: 0 };
 
@@ -1290,7 +1302,25 @@ export async function runFollowupTick(deps: TickDeps, opts?: { limit?: number })
   }
   summary.claimed = claimed.length;
 
+  const iaPorOrg = new Map<string, Promise<boolean>>();
   for (const enrollment of claimed) {
+    // Plano sem o Agente de IA: adia sem tocar o resto (ver `planoIncluiIa`).
+    if (deps.db.planoIncluiIa) {
+      const org = enrollment.organization_id;
+      if (!iaPorOrg.has(org)) iaPorOrg.set(org, deps.db.planoIncluiIa(org).catch(() => true));
+      if (!(await iaPorOrg.get(org))) {
+        try {
+          await deps.db.updateEnrollment(enrollment.id, org, {
+            next_eval_at: new Date(deps.clock().getTime() + ADIAMENTO_FORA_DO_PLANO_MS).toISOString(),
+            claimed_until: null,
+            last_error: "fora_do_plano:ia",
+          });
+        } catch {
+          // O lease expira e um tique futuro tenta de novo.
+        }
+        continue;
+      }
+    }
     try {
       await processEnrollment(deps, enrollment, summary);
     } catch (err) {
@@ -1343,6 +1373,9 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
       // continua dentro de `assertAgendaEffectSupabase`.
       const escolha = await escolhaDoFluxo(admin, enrollment.organization_id, enrollment.id);
       await assertAgendaEffectSupabase(admin,{organizationId:enrollment.organization_id,contactId:enrollment.contact_id,enrollmentId:enrollment.id,nodeId:enrollment.current_node_id,escolhaNoEnvio:escolha});
+    },
+    async planoIncluiIa(orgId) {
+      return planoIncluiIaParaOMotor(await lerTelasDoPlano(admin, orgId));
     },
     async claimDueEnrollments(limit, leaseSeconds) {
       const { data, error } = await admin.rpc("fn_claim_due_followup_enrollments", {

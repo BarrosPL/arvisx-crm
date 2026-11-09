@@ -16,7 +16,7 @@ import { PlanosDaInstalacao, type PlanoDaTela } from "@/app/admin/(protected)/co
 
 const PLANO: PlanoDaTela = {
   id: "cccccccc-0000-4000-8000-000000000001", nome: "Básico", preco_cents: 4990, moeda: "BRL", intervalo: "mes", trial_dias: 14,
-  max_assentos: 3, max_canais: null, teto_ia_usd_cents: null, padrao_no_cadastro: false, oferecido_ao_cliente: true, arquivado_em: null,
+  max_assentos: 3, max_canais: null, teto_ia_usd_cents: null, padrao_no_cadastro: false, oferecido_ao_cliente: true, interface_settings: { preset: "completa" }, arquivado_em: null,
 };
 
 beforeEach(() => {
@@ -44,8 +44,31 @@ describe("Planos da instalação", () => {
     expect(h.post).toHaveBeenCalledWith("/api/v1/admin/cobranca/planos", {
       nome: "Pro", preco_cents: 9990, moeda: "BRL", intervalo: "mes", trial_dias: 7,
       max_assentos: 5, max_canais: null, teto_ia_usd_cents: null,
+      // Telas do plano (migration 9802): sem mexer no editor, a completa.
+      interface_settings: { preset: "completa" },
     });
     expect(h.refresh).toHaveBeenCalled();
+  });
+
+  it("⭐ telas do plano (migration 9802): o InterfaceEditor manda preset e destinos, e a edição traz o que estava gravado", async () => {
+    const u = userEvent.setup();
+    const { unmount } = render(<PlanosDaInstalacao planos={[]} />);
+    await preencher(u, "59,90");
+    await u.selectOptions(screen.getByLabelText("Perfil de interface"), "simplificada");
+    await u.click(screen.getByRole("button", { name: "Salvar plano" }));
+    await waitFor(() => expect(h.post).toHaveBeenCalledTimes(1));
+    expect(h.post.mock.calls[0]![1]).toMatchObject({ interface_settings: { preset: "simplificada" } });
+    unmount();
+
+    const standard = { ...PLANO, interface_settings: { preset: "simplificada", destinos: ["/app/inbox", "/app/ai/agents"] } };
+    render(<PlanosDaInstalacao planos={[standard]} />);
+    expect(screen.getByText(/Personalizada \(2 áreas\)/)).toBeTruthy();
+    await u.click(screen.getByRole("button", { name: "Editar" }));
+    await u.click(screen.getByRole("button", { name: "Salvar alterações" }));
+    await waitFor(() => expect(h.patch).toHaveBeenCalledTimes(1));
+    expect(h.patch.mock.calls[0]![1]).toMatchObject({
+      interface_settings: { preset: "simplificada", destinos: ["/app/inbox", "/app/ai/agents"] },
+    });
   });
 
   it("⭐ plano em euro (migration 9801): a moeda vai no corpo e o rótulo do preço vira €", async () => {

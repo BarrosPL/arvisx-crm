@@ -43,6 +43,7 @@ import {
 import { JANELA_SEGUNDOS, TETO_DE_ESCRITA, TETO_POR_ORGANIZACAO } from "@/lib/mcp/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { recusaForaDoPlano } from "@/lib/cobranca/trava-do-plano";
 
 export type AuthDual =
   | {
@@ -126,6 +127,11 @@ export async function resolveAuthDual(
       }
       throw err;
     }
+
+    // A trava das telas do plano vale também para o token (migration 9802): o
+    // `proxy.ts` grava o `x-pathname` antes de decidir que o caminho é público.
+    const foraDoPlano = await recusaForaDoPlano(auth.organizationId, { requestId });
+    if (foraDoPlano) return { ok: false, response: foraDoPlano };
 
     // organization_id vem do TOKEN (fonte confiável), nunca do cliente.
     return {

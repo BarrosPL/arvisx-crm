@@ -38,6 +38,7 @@ import {
 } from '@/lib/messaging/media/leitura-adiada';
 import { midiaDerivavelPendente } from './midia-derivavel';
 import { haQuemAtendaASessao } from '@/lib/ai/agents/quem-atende-a-sessao';
+import { motorPodeResponderPeloPlano } from '@/lib/cobranca/plano-no-motor';
 import { decidirElegibilidadeDaConversa } from '@/lib/ai/elegibilidade/consulta-pg';
 import { deveCederTurnoAoRetorno } from '@/lib/followup/ceder-turno-ao-retorno';
 import { grupoLiberaIa } from '@/lib/grupos/ia-no-grupo';
@@ -283,6 +284,17 @@ async function processEvent(
   // o engine não responde por cima. Evento é consumido (done) sem job.
   if (modeRows[0]?.mode === 'external') {
     log.info('drain: org em modo external (spec 14) — evento pulado', { event_id: event.id });
+    return 'processado';
+  }
+
+  // PLANO SEM O AGENTE DE IA (ArvisX, migration 9802): o evento é consumido sem
+  // turno, o MESMO desfecho de "nenhum agente atende a sessão" logo abaixo — a
+  // conversa fica para a distribuição humana. Os agentes não são tocados: ao
+  // reassinar um plano com IA, voltam a responder. Falha de leitura: segue.
+  if (!(await motorPodeResponderPeloPlano(pool, event.organization_id))) {
+    log.info('drain: o plano da empresa não inclui o Agente de IA — evento consumido sem job', {
+      event_id: event.id,
+    });
     return 'processado';
   }
 

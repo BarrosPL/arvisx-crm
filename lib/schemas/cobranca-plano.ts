@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { INTERVALOS, MOEDAS, type Moeda } from "@/lib/cobranca/vocabulario";
 import { formatCents } from "@/lib/money";
+import { interfaceSettingsSchema } from "@/lib/navigation/interface";
 
 /**
  * O plano de cobrança da instalação (`cobranca_planos`, spec da cobrança §2.2).
@@ -10,6 +11,19 @@ import { formatCents } from "@/lib/money";
  * `moeda` é BRL ou EUR (migration 9801); ausente na criação, o default (BRL).
  */
 const INT4_MAX = 2_147_483_647;
+
+/**
+ * As telas do plano (migration 9802): o MESMO `preset` + `destinos` do
+ * `InterfaceEditor` e de `interfaceSettingsSchema`, e só eles —
+ * `bloquearAteAssumir` e `compras_campos` são preferência da empresa, não do
+ * plano, e o objeto estrito os recusa. As portas essenciais valem em todo plano
+ * e não precisam (nem podem ser tiradas) aqui.
+ */
+export const interfaceDoPlanoSchema = z.strictObject({
+  preset: interfaceSettingsSchema.shape.preset,
+  destinos: interfaceSettingsSchema.shape.destinos,
+});
+export type InterfaceDoPlano = z.infer<typeof interfaceDoPlanoSchema>;
 
 /** O piso do CHECK `preco_cents >= 500`: R$ 5,00 ou € 5,00, a mesma régua nas duas moedas. */
 export const PRECO_MINIMO_CENTS = 500;
@@ -39,6 +53,7 @@ const campos = {
   teto_ia_usd_cents: z.number().int().min(100).max(INT4_MAX).nullable(),
   padrao_no_cadastro: z.boolean(),
   oferecido_ao_cliente: z.boolean(),
+  interface_settings: interfaceDoPlanoSchema,
 };
 
 export const novoPlanoSchema = z.strictObject({
@@ -52,6 +67,8 @@ export const novoPlanoSchema = z.strictObject({
   teto_ia_usd_cents: campos.teto_ia_usd_cents.optional(),
   padrao_no_cadastro: campos.padrao_no_cadastro.optional(),
   oferecido_ao_cliente: campos.oferecido_ao_cliente.optional(),
+  // Ausente na criação = o default da coluna (completa).
+  interface_settings: campos.interface_settings.optional(),
   // Na criação, sem moeda vale o default da coluna (BRL): a frase já sai nela.
 }).superRefine((v, ctx) => precoNoPiso({ ...v, moeda: v.moeda ?? "BRL" }, ctx));
 
@@ -62,4 +79,4 @@ export const edicaoDoPlanoSchema = z
   .refine((v) => Object.keys(v).length > 0, "Nada para mudar.");
 
 export const COLUNAS_DO_PLANO =
-  "id, nome, preco_cents, moeda, intervalo, trial_dias, max_assentos, max_canais, teto_ia_usd_cents, padrao_no_cadastro, oferecido_ao_cliente, arquivado_em, created_at, updated_at";
+  "id, nome, preco_cents, moeda, intervalo, trial_dias, max_assentos, max_canais, teto_ia_usd_cents, padrao_no_cadastro, oferecido_ao_cliente, interface_settings, arquivado_em, created_at, updated_at";

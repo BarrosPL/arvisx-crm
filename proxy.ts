@@ -5,6 +5,8 @@ import { env } from "@/lib/env";
 import { fetchDoServidor } from "@/lib/supabase/fetch-do-servidor";
 import { urlDoSupabaseNoServidor } from "@/lib/supabase/url-do-servidor";
 import { isPublicPath } from "@/lib/auth/public-paths";
+import { classeDaPagina, paginaLiberada } from "@/lib/cobranca/rotas-do-plano";
+import { destinosDoPlano, leituraDaResposta } from "@/lib/cobranca/telas-do-plano";
 import { CABECALHO_SEM_CSS, PARAMETRO_SEM_CSS } from "@/lib/branding/sem-css-personalizado";
 import {
   verifyImpersonateCookieEdge,
@@ -12,6 +14,7 @@ import {
 } from "@/lib/impersonate/cookie-edge";
 
 const COOKIE_NAME = "sb-deskcomm-auth";
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function proxy(request: NextRequest) {
   // Saída de emergência do CSS personalizado. ANTES do `NextResponse.next`: ele
@@ -138,6 +141,39 @@ export async function proxy(request: NextRequest) {
           `[middleware] impersonate cookie invalid (${result.reason ?? "unknown"}) — clearing`,
         );
         response.cookies.delete(IMPERSONATE_COOKIE_NAME_EDGE);
+      }
+    }
+  }
+
+  // A TRAVA DAS TELAS DO PLANO, nas páginas (ArvisX, migration 9802). Aqui, e
+  // não no `app/app/layout.tsx`: o layout NÃO roda de novo na navegação pelo
+  // cliente (o App Router só renderiza o segmento que mudou), e uma trava que só
+  // vale no F5 não é trava. O proxy roda em TODA requisição de página, inclusive
+  // a de RSC da navegação. Só consulta o banco para página ligada a uma tela do
+  // catálogo; a classificação é pura (lib/cobranca/rotas-do-plano.ts) e a régua
+  // é a mesma do menu e da API (lib/cobranca/telas-do-plano.ts). Fora do plano,
+  // reescreve para `/app/fora-do-plano` (a URL fica), que mostra o que falta e o
+  // caminho da assinatura — nunca um 404 mudo.
+  if (pathname === "/app" || pathname.startsWith("/app/")) {
+    const classe = classeDaPagina(pathname);
+    if (classe.tipo === "destino" || classe.tipo === "grupo") {
+      const cookieOrg = request.cookies.get("active_org")?.value ?? null;
+      let leitura;
+      try {
+        const { data, error } = await supabase.rpc("fn_telas_do_plano_da_sessao", {
+          p_org: cookieOrg && UUID.test(cookieOrg) ? cookieOrg : null,
+        });
+        leitura = leituraDaResposta(data, error);
+      } catch {
+        leitura = leituraDaResposta(null, new Error("rpc"));
+      }
+      if (!paginaLiberada(pathname, destinosDoPlano(leitura))) {
+        const foraDoPlano = NextResponse.rewrite(new URL("/app/fora-do-plano", request.url), {
+          request: { headers: request.headers },
+        });
+        foraDoPlano.headers.set("x-request-id", requestId);
+        for (const c of response.cookies.getAll()) foraDoPlano.cookies.set(c);
+        return foraDoPlano;
       }
     }
   }

@@ -73872,3 +73872,92 @@ comment on table public.cobranca_planos is
   'Planos que o dono da instalação vende às empresas dela (migration 0583). Da INSTALAÇÃO, sem organization_id: RLS ligada sem policy, só o service_role. Limite nulo = sem limite. preco_cents >= 500 (mínimo de boleto); moeda BRL ou EUR (migration 9801); teto_ia_usd_cents na moeda de fn_gasto_de_ia_do_mes.';
 
 notify pgrst, 'reload schema';
+
+-- ---- telas do plano (migration 9802) ----
+-- Espelho idempotente da 9802 (o porquê está no cabeçalho da migration): a
+-- coluna `cobranca_planos.interface_settings` (default completa) e as leituras
+-- `fn_telas_do_plano` (service_role) e `fn_telas_do_plano_da_sessao`
+-- (authenticated). Fica no fim, DEPOIS da VARREDURA anon: por isso cada função
+-- revoga `public` e `anon` ela mesma.
+alter table public.cobranca_planos
+  add column if not exists interface_settings jsonb not null default '{"preset":"completa"}'::jsonb;
+
+alter table public.cobranca_planos
+  drop constraint if exists cobranca_planos_interface_settings_objeto;
+
+alter table public.cobranca_planos
+  add constraint cobranca_planos_interface_settings_objeto
+  check (jsonb_typeof(interface_settings) = 'object');
+
+comment on column public.cobranca_planos.interface_settings is
+  'Telas que o plano libera (migration 9802): preset completa|simplificada e, opcional, destinos (hrefs do catálogo lib/navigation/catalogo.ts). Mesmo formato do InterfaceEditor. As portas essenciais (perfil, segurança, equipe, plano e cobrança, ajuda) valem em todo plano. Validado em lib/schemas/cobranca-plano.ts; lido por fn_telas_do_plano.';
+
+create or replace function public.fn_telas_do_plano(p_org uuid)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select case
+    when p_org is null or not public.fn_cobranca_ligada() then jsonb_build_object('restrito', false)
+    else coalesce(
+      (select jsonb_build_object('restrito', true, 'interface', p.interface_settings)
+         from public.cobranca_assinaturas a
+         join public.cobranca_planos p on p.id = a.plano_id
+        where a.organization_id = p_org),
+      jsonb_build_object('restrito', false)
+    )
+  end;
+$$;
+
+revoke execute on function public.fn_telas_do_plano(uuid) from public, anon, authenticated;
+grant execute on function public.fn_telas_do_plano(uuid) to service_role;
+
+create or replace function public.fn_telas_do_plano_da_sessao(p_org uuid)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_suporte jsonb;
+  v_org uuid;
+begin
+  if v_uid is null then
+    return null;
+  end if;
+  v_suporte := public.fn_support_context();
+  if v_suporte is not null then
+    -- Acompanhamento encerrado: o app manda para /support-ended; aqui não se decide.
+    if v_suporte->>'status' is distinct from 'active' then
+      return null;
+    end if;
+    return public.fn_telas_do_plano((v_suporte->>'organization_id')::uuid);
+  end if;
+  if p_org is not null then
+    select uo.organization_id into v_org
+      from public.user_organizations uo
+     where uo.user_id = v_uid and uo.revoked_at is null and uo.organization_id = p_org;
+  end if;
+  if v_org is null then
+    select uo.organization_id into v_org
+      from public.user_organizations uo
+      join public.organizations o on o.id = uo.organization_id
+     where uo.user_id = v_uid and uo.revoked_at is null
+     order by (o.status = 'active') desc, uo.accepted_at asc nulls first, uo.organization_id asc
+     limit 1;
+  end if;
+  if v_org is null then
+    return null;
+  end if;
+  return public.fn_telas_do_plano(v_org);
+end;
+$$;
+
+revoke execute on function public.fn_telas_do_plano_da_sessao(uuid) from public, anon;
+grant execute on function public.fn_telas_do_plano_da_sessao(uuid) to authenticated, service_role;
+
+notify pgrst, 'reload schema';

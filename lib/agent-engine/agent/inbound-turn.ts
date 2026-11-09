@@ -1,4 +1,5 @@
 import { contemAssuntoComercialRestrito, comercialExigeHumano } from '@/lib/escalacao/assunto-comercial';
+import { motorPodeResponderPeloPlano } from '@/lib/cobranca/plano-no-motor';
 import { prospectingConversationContext } from "@/lib/prospecting/context";
 import { setExecutionAgentOperation } from '@/lib/atendimento/fronteira-server';
 import { TIPOS_DE_CASO, TIPOS_DE_CASO_PARA_A_IA } from "@/lib/ai/case-copy";
@@ -2524,6 +2525,16 @@ async function executarTurnoDoAgente(
   // do force_human do CRM) e só o humano/CRM libera — o agente nunca reassume (regra dura 2).
   if (!preview && (await isLeadInHandoff(pool, tenantId, leadId))) {
     runLog.info('turno pulado — lead em handoff humano (bot silenciado)', { kind: liveJob().kind });
+    return;
+  }
+
+  // PLANO SEM O AGENTE DE IA (ArvisX, migration 9802): nenhum turno — inbound,
+  // follow-up, resposta de caso — roda para a empresa cujo plano não inclui o
+  // grupo `ia`. Defesa em profundidade do drain (job enfileirado antes da troca
+  // de plano, follow-up agendado pelo próprio agente). NO-OP antes de qualquer
+  // modelo, como o veto de handoff acima; a conversa fica para as pessoas.
+  if (!preview && !(await motorPodeResponderPeloPlano(pool, tenantId))) {
+    runLog.info('turno pulado — o plano da empresa não inclui o Agente de IA', { kind: liveJob().kind });
     return;
   }
 

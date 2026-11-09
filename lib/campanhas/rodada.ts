@@ -49,6 +49,7 @@ import {
   fraseDaFalha,
 } from "@/lib/channels/erro-da-plataforma";
 import { logger } from "@/lib/logger";
+import { lerTelasDoPlano, planoLiberaParaCron } from "@/lib/cobranca/telas-do-plano";
 import { OrgNaoOperanteError, STATUS_OPERANTE, ehOperante, statusDaOrgEmbutida } from "@/lib/organizacao/operante";
 
 import { baloesDaCampanha, enviarEmBaloes, pausaEntreBaloes } from "./baloes";
@@ -158,9 +159,24 @@ export async function rodarUmaRodadaDeCampanha(
   // `lib/asaas/*` já usa para tabela que ainda não está em `database.types.ts`.
   // ponytail: o `ehOperante` aqui é cinto — o banco já cortou; ele só segura o
   // dia em que alguém tirar o filtro da consulta.
-  const emExecucao = ((campanhas ?? []) as unknown as Array<
+  let emExecucao = ((campanhas ?? []) as unknown as Array<
     CampanhaRow & { organizations?: { status?: string | null } | Array<{ status?: string | null }> | null }
   >).filter((campanha) => ehOperante(statusDaOrgEmbutida(campanha.organizations)));
+  // PLANO SEM CAMPANHAS (ArvisX, migration 9802): a campanha da empresa cujo
+  // plano não libera `/app/campaigns` fica como está (`running`, nada apagado) e
+  // simplesmente não envia; ao voltar para um plano com campanhas, ela segue.
+  // Uma leitura por organização na rodada; falha de leitura = segue.
+  const planoPorOrg = new Map<string, Promise<boolean>>();
+  const doPlano = await Promise.all(
+    emExecucao.map((campanha) => {
+      const org = campanha.organization_id;
+      if (!planoPorOrg.has(org)) {
+        planoPorOrg.set(org, lerTelasDoPlano(admin, org).then((l) => planoLiberaParaCron(l, "/app/campaigns")));
+      }
+      return planoPorOrg.get(org)!;
+    }),
+  );
+  emExecucao = emExecucao.filter((_, i) => doPlano[i]);
   if (emExecucao.length === 0) {
     return promovidas > 0 ? { ...VAZIA, promovidas, detalhe: "promovidas" } : VAZIA;
   }

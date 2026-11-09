@@ -34,6 +34,7 @@ import { ROLE_RANK, type ActiveOrg, type AuthUser, type Role } from "@/lib/auth/
 import { traduzir } from "@/lib/i18n/dicionario";
 import { STATUS_OPERANTE, ehOperante } from "@/lib/organizacao/operante";
 import { createClient } from "@/lib/supabase/server";
+import { recusaForaDoPlano } from "@/lib/cobranca/trava-do-plano";
 
 export type RoleCheck =
   | { ok: true; user: AuthUser; org: ActiveOrg }
@@ -92,6 +93,12 @@ export async function orgAtivaDaApi(user: AuthUser | null, requestId?: string): 
   const org = user ? await orgAtivaSemPortao(user) : null;
   if (user && org && !ehOperante(org.org_status)) {
     return { ok: false, response: orgSuspensa(user, requestId) };
+  }
+  // A trava das telas do plano (migration 9802): rota ligada a tela fora do
+  // plano → 403 `fora_do_plano:<destino>`. Rota livre nem consulta o plano.
+  if (user && org) {
+    const foraDoPlano = await recusaForaDoPlano(org.orgId, { requestId, idioma: user.idioma });
+    if (foraDoPlano) return { ok: false, response: foraDoPlano };
   }
   return { ok: true, org };
 }
@@ -214,6 +221,15 @@ export async function requireRole(min: Role, opts: RequireRoleOpts = {}): Promis
   if (!permiteOrgSuspensa && !ehOperante(org.org_status)) {
     return { ok: false, response: orgSuspensa(user, requestId) };
   }
+
+  // A TRAVA DAS TELAS DO PLANO (ArvisX, migration 9802), aqui porque este é o
+  // gate que toda rota /api/v1 já atravessa: rota ligada a uma tela que o plano
+  // da empresa não libera → 403 `fora_do_plano:<destino>`. Antes do atalho de
+  // platform admin: o plano é da EMPRESA, e quem acompanha vê o que ela vê.
+  // Rota livre (Inbox, mensagens, conversas, conta) não consulta o plano.
+  // Classificação: lib/cobranca/rotas-do-plano.ts.
+  const foraDoPlano = await recusaForaDoPlano(org.orgId, { requestId, idioma: user.idioma });
+  if (foraDoPlano) return { ok: false, response: foraDoPlano };
 
   if (user.is_platform_admin && !user.support && allowPlatformAdmin !== false) {
     if (allowPlatformAdmin === "leitura") return { ok: true, user, org };

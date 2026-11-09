@@ -8,12 +8,14 @@ import { showApiError } from "@/components/feedback/ApiErrorToast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { InterfaceEditor } from "@/components/team/InterfaceEditor";
 import { useT } from "@/hooks/i18n/useT";
 import { apiClient } from "@/lib/api/client";
 import { cadastroExigeEscolhaDePlano } from "@/lib/cobranca/cadastro";
 import { MOEDAS, type Intervalo, type Moeda } from "@/lib/cobranca/vocabulario";
 import { useIdioma } from "@/lib/i18n/IdiomaProvider";
 import { formatCents, simboloDaMoeda } from "@/lib/money";
+import { INTERFACE_COMPLETA, interfaceTemDestino, lerInterface, type InterfaceSettings } from "@/lib/navigation/interface";
 import { novoPlanoSchema, PRECO_MINIMO_CENTS } from "@/lib/schemas/cobranca-plano";
 
 /** Um plano de `cobranca_planos` como a tela o recebe (COLUNAS_DO_PLANO). */
@@ -30,6 +32,8 @@ export interface PlanoDaTela {
   padrao_no_cadastro: boolean;
   /** false = só o dono atribui (plano negociado): a empresa não o vê nem o escolhe. */
   oferecido_ao_cliente: boolean;
+  /** As telas que o plano libera (migration 9802): `preset` + `destinos`. */
+  interface_settings: unknown;
   arquivado_em: string | null;
 }
 
@@ -42,9 +46,17 @@ interface Campos {
   max_assentos: string;
   max_canais: string;
   teto_ia: string;
+  /** As telas do plano, no formato do `InterfaceEditor` (só `preset` e `destinos`). */
+  telas: InterfaceSettings;
 }
 
-const VAZIO: Campos = { nome: "", preco: "", moeda: "BRL", intervalo: "mes", trial_dias: "14", max_assentos: "", max_canais: "", teto_ia: "" };
+const VAZIO: Campos = { nome: "", preco: "", moeda: "BRL", intervalo: "mes", trial_dias: "14", max_assentos: "", max_canais: "", teto_ia: "", telas: INTERFACE_COMPLETA };
+
+/** Só o que é do plano: `preset` e `destinos` (o resto da interface é da empresa). */
+function telasDoPlano(raw: unknown): InterfaceSettings {
+  const { preset, destinos } = lerInterface(raw).settings;
+  return destinos ? { preset, destinos } : { preset };
+}
 const AVISO_DE_CAMPOS =
   "Confira os campos do plano: preço a partir de {minimo}, teste grátis de 0 a 90 dias e limites a partir de 1.";
 
@@ -63,6 +75,7 @@ function corpoDoPlano(c: Campos) {
     max_assentos: inteiroOuNulo(c.max_assentos),
     max_canais: inteiroOuNulo(c.max_canais),
     teto_ia_usd_cents: c.teto_ia.trim() === "" ? null : centavos(c.teto_ia),
+    interface_settings: telasDoPlano(c.telas),
   };
 }
 
@@ -76,7 +89,15 @@ function camposDe(p: PlanoDaTela): Campos {
     max_assentos: p.max_assentos === null ? "" : String(p.max_assentos),
     max_canais: p.max_canais === null ? "" : String(p.max_canais),
     teto_ia: p.teto_ia_usd_cents === null ? "" : decimal(p.teto_ia_usd_cents),
+    telas: telasDoPlano(p.interface_settings),
   };
+}
+
+/** "Completa", "Simplificada" ou "Personalizada (N áreas)" — o que o plano libera, numa linha. */
+function resumoDasTelas(raw: unknown, t: (texto: string) => string): string {
+  const { preset, destinos } = telasDoPlano(raw);
+  if (destinos) return t("Personalizada ({n} áreas)").replace("{n}", String(destinos.length));
+  return preset === "simplificada" ? t("Simplificada") : t("Completa");
 }
 
 /**
@@ -92,7 +113,7 @@ export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] 
   const [editando, setEditando] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const usd = new Intl.NumberFormat(idioma, { style: "currency", currency: "USD" });
-  const campo = (k: Exclude<keyof Campos, "intervalo" | "moeda">) => ({
+  const campo = (k: Exclude<keyof Campos, "intervalo" | "moeda" | "telas">) => ({
     value: campos[k],
     onChange: (e: ChangeEvent<HTMLInputElement>) => setCampos({ ...campos, [k]: e.target.value }),
   });
@@ -101,6 +122,10 @@ export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] 
   async function salvar(e: FormEvent) {
     e.preventDefault();
     const corpo = corpoDoPlano(campos);
+    if (!interfaceTemDestino(corpo.interface_settings, "admin")) {
+      toast.error(t("Selecione ao menos uma área de trabalho permitida ao papel."));
+      return;
+    }
     if (!novoPlanoSchema.safeParse(corpo).success) {
       toast.error(t(AVISO_DE_CAMPOS).replace("{minimo}", formatCents(PRECO_MINIMO_CENTS, campos.moeda)));
       return;
@@ -195,6 +220,13 @@ export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] 
           <Input id="plano-ia" inputMode="decimal" {...campo("teto_ia")} />
         </div>
         <p className="text-xs text-muted-foreground">{t("Deixe um limite vazio para não limitar.")}</p>
+        <div className="space-y-1">
+          <p className="text-sm font-medium">{t("Telas liberadas no plano")}</p>
+          <p className="text-xs text-muted-foreground">
+            {t("O que a empresa deste plano pode usar. Perfil, segurança, equipe, plano e cobrança, Guia de uso e Ajuda valem em todo plano. Tela fora do plano some do menu e é recusada no servidor; nada é apagado.")}
+          </p>
+          <InterfaceEditor value={campos.telas} onChange={(telas) => setCampos({ ...campos, telas })} role="admin" />
+        </div>
         <div className="flex flex-wrap gap-2">
           <Button type="submit" disabled={salvando}>
             {editando ? t("Salvar alterações") : t("Salvar plano")}
@@ -241,6 +273,9 @@ export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] 
                   <p className="text-muted-foreground">
                     {t("Pessoas")}: {limite(p.max_assentos)} · {t("Números conectados")}: {limite(p.max_canais)} · {t("IA")}:{" "}
                     {p.teto_ia_usd_cents === null ? t("sem limite") : usd.format(p.teto_ia_usd_cents / 100)}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {t("Telas")}: {resumoDasTelas(p.interface_settings, t)}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">

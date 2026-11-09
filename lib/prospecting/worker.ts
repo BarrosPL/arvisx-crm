@@ -37,6 +37,7 @@ import { campaignConfigSchema, type OfertaDaCampanha } from "./schema";
 import { prepararCandidatos } from "./preparo";
 import { provedoresQueConferemNumero } from "@/lib/channels";
 import { moduloLigado } from "@/lib/instalacao/modulos";
+import { cronPodeRodarPeloPlano } from "@/lib/cobranca/plano-no-motor";
 import { CanalReconectandoError, ProspectingError } from "./provider";
 // O carimbo do pedido da prospecção: `prospecting:` — nunca `rule:` (#3072).
 import { pedidoDaProspeccao } from "./pedido-da-prospeccao";
@@ -684,7 +685,7 @@ export async function tickProspecting(pool: pg.Pool, admin: SupabaseClient, requ
   // (`prepararCandidatos`) — FORA do bloqueio da organização, com teto por rodada
   // e bloqueio próprio. Dentro do bloqueio elas seguravam a organização por
   // minutos (409 na tela) com 100+ leads; fora, o envio e a tela não esperam.
-  const { rows: organizations } = await pool.query<{ organization_id: string }>(
+  let { rows: organizations } = await pool.query<{ organization_id: string }>(
     "select pc.organization_id from prospecting_campaigns pc where (pc.status='running' or pc.search_status in ('starting','running')) and public.fn_org_operante(pc.organization_id) group by pc.organization_id order by min(pc.updated_at) limit 20",
   );
   // Segunda consulta, à parte (a primeira não muda): quem só tem rascunho/pausada.
@@ -703,6 +704,17 @@ export async function tickProspecting(pool: pg.Pool, admin: SupabaseClient, requ
       error: error instanceof Error ? error.message : String(error),
     });
   }
+  // PLANO SEM PROSPECÇÃO (ArvisX, migration 9802): a empresa cujo plano não
+  // libera `/app/prospecting` não busca, não prepara e não aborda; as campanhas
+  // dela ficam como estão (nada apagado) e voltam com um plano que a libere.
+  // Falha de leitura = segue. Custo declarado: a org pulada continua na ordem
+  // por `min(updated_at)` e ocupa uma das 20 vagas da consulta.
+  const liberadas = new Set<string>();
+  for (const org of new Set([...organizations.map((o) => o.organization_id), ...apenasPreparo])) {
+    if (await cronPodeRodarPeloPlano(pool, org, "/app/prospecting")) liberadas.add(org);
+  }
+  organizations = organizations.filter((o) => liberadas.has(o.organization_id));
+  apenasPreparo = apenasPreparo.filter((org) => liberadas.has(org));
   const deadline = Date.now() + 180000;
   let processed = 0;
   for (const { organization_id: org } of organizations) {

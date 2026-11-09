@@ -41,6 +41,12 @@ export const ApiErrorCodes = {
   // Conta da empresa suspensa (spec da cobrança §4): sessão, token `dsk_` e MCP.
   // Só LGPD e cobrança passam, por `requireRole({ permiteOrgSuspensa: true })`.
   org_suspended: "org_suspended",
+  // A tela (destino do catálogo) não está no plano da empresa (ArvisX, migration
+  // 9802). O código que sai no fio é `fora_do_plano:<destino>` — o href do
+  // catálogo, ex. `fora_do_plano:/app/ai/agents` —, montado por
+  // `codigoForaDoPlano`; `details` traz `destino` e `grupo`. Dado nenhum é
+  // apagado: ao assinar um plano que libera a tela, a rota volta a responder.
+  fora_do_plano: "fora_do_plano",
   // Platform admin `support_readonly` tentando ESCREVER (`requirePlatformAdminEscrita`).
   forbidden_scope: "forbidden_scope",
   lgpd_anonymization_irreversible: "lgpd_anonymization_irreversible",
@@ -399,3 +405,8 @@ export const ApiErrorCodes = {
 } as const;
 
 export type ApiErrorCode = (typeof ApiErrorCodes)[keyof typeof ApiErrorCodes];
+
+/** O código do 403 de tela fora do plano: `fora_do_plano:<destino>`. */
+export function codigoForaDoPlano(destino: string): string {
+  return `${ApiErrorCodes.fora_do_plano}:${destino}`;
+}

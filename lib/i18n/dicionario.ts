@@ -19938,6 +19938,18 @@ export const DICIONARIO: Traducoes = {
   "Não foi possível ler a conexão.": { es: "No fue posible leer la conexión." },
   "Não foi possível desconectar. Tente de novo.": { es: "No fue posible desconectar. Inténtalo de nuevo." },
   "Não foi possível ler as conexões.": { es: "No fue posible leer las conexiones." },
+  // ArvisX — telas do plano (migration 9802)
+  "Esta função não está no plano da sua empresa.": { es: "Esta función no está en el plan de tu empresa." },
+  "Isso não está no seu plano": { es: "Esto no está en tu plan" },
+  "A tela {tela} não faz parte do plano da sua empresa.": { es: "La pantalla {tela} no forma parte del plan de tu empresa." },
+  "Esta tela não faz parte do plano da sua empresa.": { es: "Esta pantalla no forma parte del plan de tu empresa." },
+  "Nada foi apagado: o que já existe continua guardado e volta quando o plano incluir esta tela.": { es: "No se borró nada: lo que ya existe sigue guardado y vuelve cuando el plan incluya esta pantalla." },
+  "Ver planos e assinatura": { es: "Ver planes y suscripción" },
+  "Voltar ao início": { es: "Volver al inicio" },
+  "Peça a quem administra a empresa para mudar o plano.": { es: "Pide a quien administra la empresa que cambie el plan." },
+  "Telas liberadas no plano": { es: "Pantallas incluidas en el plan" },
+  "O que a empresa deste plano pode usar. Perfil, segurança, equipe, plano e cobrança, Guia de uso e Ajuda valem em todo plano. Tela fora do plano some do menu e é recusada no servidor; nada é apagado.": { es: "Lo que puede usar la empresa de este plan. Perfil, seguridad, equipo, plan y facturación, Guía de uso y Ayuda valen en todos los planes. La pantalla fuera del plan desaparece del menú y el servidor la rechaza; no se borra nada." },
+  "Personalizada ({n} áreas)": { es: "Personalizada ({n} áreas)" },
 };
 
 /**

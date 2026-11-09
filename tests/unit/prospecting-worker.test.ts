@@ -986,10 +986,13 @@ describe("tick × preparo automático (B2)", () => {
   it("a segunda consulta é barata, filtra operante e limita 20, e a primeira ficou como era", async () => {
     const { pool, sqls } = montar({ segundaConsulta: [ORG_B] });
     await tickProspecting(pool as never, {} as never);
-    expect(sqls).toHaveLength(2);
-    expect(sqls[0]).toMatch(/pc\.status='running' or pc\.search_status in \('starting','running'\)/);
-    expect(sqls[0]).not.toContain("'draft'");
-    const segunda = sqls[1]!;
+    // As leituras do plano (uma por organização, migration 9802) não são a
+    // seleção de organizações que este caso mede.
+    const daSelecao = sqls.filter((sql) => !sql.includes("fn_telas_do_plano"));
+    expect(daSelecao).toHaveLength(2);
+    expect(daSelecao[0]).toMatch(/pc\.status='running' or pc\.search_status in \('starting','running'\)/);
+    expect(daSelecao[0]).not.toContain("'draft'");
+    const segunda = daSelecao[1]!;
     expect(segunda).toContain("'draft','paused'");
     expect(segunda).toContain("fn_org_operante");
     expect(segunda).toMatch(/limit 20/);

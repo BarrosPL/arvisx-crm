@@ -51,7 +51,11 @@ export type InterfaceSettings = z.infer<typeof interfaceSettingsSchema>;
 /** O teto de campos que o painel do contato mostra por compra (issue #3179). */
 export const MAX_CAMPOS_DE_COMPRA = 3;
 export const INTERFACE_COMPLETA: InterfaceSettings = { preset: "completa" };
-const SIMPLIFICADA: readonly NavDestinationId[] = [
+/**
+ * O preset `simplificada` por extenso. Exportado porque o plano de cobrança usa o
+ * MESMO preset (lib/cobranca/telas-do-plano.ts): o "Essencial" é esta lista.
+ */
+export const DESTINOS_DA_SIMPLIFICADA: readonly NavDestinationId[] = [
   "/app/inbox",
   "/app/agenda",
   "/app/kanban",
@@ -86,6 +90,16 @@ export const PORTAS_ESSENCIAIS = [
   "/app/settings/aplicativo",
   "/app/team",
   "/app/settings/tenant",
+  // A tela de assinatura (ArvisX, telas do plano — migration 9802): é a porta
+  // pela qual a empresa volta a ter o que o plano tirou. Escondê-la deixaria a
+  // tela "isso não está no seu plano" com um botão para lugar nenhum. Só para
+  // quem administra, como Equipe: `minRole: "admin"` no catálogo.
+  "/app/settings/billing",
+  // Ajuda e Guia de uso valem em TODO plano e TODA interface (decisão do dono,
+  // 09/11/2026): são o socorro de quem tem dúvida. Sem restrição de papel.
+  // Efeito colateral declarado: a interface `simplificada` passa a mostrá-los.
+  "/app/ajuda/treinamento",
+  "/app/ajuda",
 ] as const;
 
 /**
@@ -94,7 +108,11 @@ export const PORTAS_ESSENCIAIS = [
  * estar aqui impede a organização de ESCONDER, nunca concede acesso a quem o
  * papel não dá.
  */
-const ESSENCIAIS_DE_ADMIN: readonly string[] = ["/app/team", "/app/settings/tenant"];
+const ESSENCIAIS_DE_ADMIN: readonly string[] = [
+  "/app/team",
+  "/app/settings/tenant",
+  "/app/settings/billing",
+];
 
 export function essencial(d: NavMetadata, role: Role | null, platform = false): boolean {
   // Por PERTENCIMENTO à lista, nunca por índice: a versão anterior enumerava
@@ -163,6 +181,46 @@ export function lerInterface(raw: unknown): {
 export function camposDeCompraDaInterface(raw: unknown): string[] {
   return lerInterface(raw).settings.compras_campos ?? [];
 }
+/**
+ * AS TELAS DO PLANO, viajando junto da interface da sessão (migration 9802).
+ *
+ * O servidor resolve o plano da organização ativa UMA vez (`resolveActiveOrg`,
+ * lib/auth/server.ts) e pendura a lista aqui, numa chave que o schema NÃO
+ * conhece: `lerInterface` a descarta (nada a grava de volta no banco, e as
+ * rotas que recebem interface usam o schema estrito, que a recusa). Assim o
+ * menu, o hub, o ⌘K, a barra de baixo e o Guia de uso — tudo que já passa por
+ * `destinosDaInterface` — obedecem ao plano sem cada um aprender a ler o plano.
+ *
+ * Ausente = sem recorte de plano (empresa isenta, cobrança desligada).
+ * Isto é APRESENTAÇÃO; quem recusa de verdade é a trava de página (`proxy.ts`) e
+ * a de API (`requireRole`), com a mesma régua (lib/cobranca/telas-do-plano.ts).
+ */
+export const CHAVE_DAS_TELAS_DO_PLANO = "telas_do_plano" as const;
+export type InterfaceDaSessao = InterfaceSettings & {
+  [CHAVE_DAS_TELAS_DO_PLANO]?: readonly NavDestinationId[];
+};
+
+/** A interface da sessão com o recorte do plano pendurado; `null` = sem recorte. */
+export function comTelasDoPlano(
+  settings: InterfaceSettings | undefined,
+  telasDoPlano: readonly NavDestinationId[] | null,
+): InterfaceDaSessao | undefined {
+  if (telasDoPlano === null) return settings;
+  return { ...(settings ?? INTERFACE_COMPLETA), [CHAVE_DAS_TELAS_DO_PLANO]: telasDoPlano };
+}
+
+/** O recorte do plano pendurado na interface, ou `null` quando não há. */
+export function telasDoPlanoNaInterface(raw: unknown): readonly string[] | null {
+  if (raw == null || typeof raw !== "object") return null;
+  const valor = (raw as Record<string, unknown>)[CHAVE_DAS_TELAS_DO_PLANO];
+  return Array.isArray(valor) ? valor.filter((v): v is string => typeof v === "string") : null;
+}
+
+/** As portas que uma escolha significa (`destinos` ou o preset), ou `undefined` = todas. */
+export function portasDaEscolha(raw: unknown): readonly NavDestinationId[] | undefined {
+  return conjuntoEscolhido(lerInterface(raw).settings);
+}
+
 export function destinosDaInterface(
   raw: unknown,
   platform: boolean,
@@ -171,9 +229,10 @@ export function destinosDaInterface(
   capacidades?: readonly CapacidadeDaOrganizacao[],
 ): NavMetadata[] {
   const { settings } = lerInterface(raw);
+  const doPlano = telasDoPlanoNaInterface(raw);
   const allowed = permitidos(platform, role, modulos, capacidades);
   const chosen =
-    settings.destinos ?? (settings.preset === "simplificada" ? SIMPLIFICADA : undefined);
+    settings.destinos ?? (settings.preset === "simplificada" ? DESTINOS_DA_SIMPLIFICADA : undefined);
   /**
    * As DUAS origens de `chosen` não têm a mesma autoridade, e tratá-las igual
    * escondia a porta de todo módulo que a instalação ligasse depois.
@@ -202,10 +261,13 @@ export function destinosDaInterface(
     settings.destinos === undefined && !!d.modulo && !!modulos && modulos.includes(d.modulo);
   return allowed.filter(
     (d) =>
-      essencial(d, role, platform) ||
-      deModuloLigado(d) ||
-      !chosen ||
-      chosen.includes(d.href as NavDestinationId),
+      (essencial(d, role, platform) ||
+        deModuloLigado(d) ||
+        !chosen ||
+        chosen.includes(d.href as NavDestinationId)) &&
+      // O plano vence até a exceção do módulo ligado: o que ele não libera não
+      // aparece. As essenciais estão sempre na lista do plano.
+      (doPlano === null || doPlano.includes(d.href)),
   );
 }
 export function interfaceTemDestino(
@@ -232,7 +294,7 @@ export function homeDaInterface(raw: unknown, platform: boolean, role: Role | nu
  * permite combinar escolhas sem uma tabela de casos.
  */
 function conjuntoEscolhido(s: InterfaceSettings): readonly NavDestinationId[] | undefined {
-  return s.destinos ?? (s.preset === "simplificada" ? SIMPLIFICADA : undefined);
+  return s.destinos ?? (s.preset === "simplificada" ? DESTINOS_DA_SIMPLIFICADA : undefined);
 }
 
 /** Portas essenciais que o catálogo conhece — o que sobra quando não há interseção. */
