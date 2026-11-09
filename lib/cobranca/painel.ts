@@ -2,7 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { provedorDaInstalacao } from "@/lib/cobranca/configuracao";
 import { sugestaoDoCadastro } from "@/lib/cobranca/documento";
-import { lerUsoDaOrganizacao, type UsoDaOrganizacao } from "@/lib/cobranca/uso";
+import { oQueOPlanoTira, type GrupoQueOPlanoTira } from "@/lib/cobranca/o-que-o-plano-tira";
+import { excedenteDoPlano, lerUsoDaOrganizacao, type Excedente, type UsoDaOrganizacao } from "@/lib/cobranca/uso";
+import { modulosLigados } from "@/lib/instalacao/modulos";
 import { provedorCobraEm, type EstadoDaAssinatura, type Modo, type Moeda, type ProvedorDeCobranca } from "@/lib/cobranca/vocabulario";
 
 export interface AssinaturaDoPainel {
@@ -35,6 +37,19 @@ export interface PlanoParaTroca {
   teto_ia_usd_cents: number | null;
 }
 
+/**
+ * Um plano na escolha do "Assinar" (ArvisX, etapa 3): preço na moeda dele,
+ * limites, o que o cliente PERDE nele (gerado do catálogo) e o que o uso de
+ * hoje passa do teto — a mesma conta da recusa do servidor.
+ */
+export interface PlanoParaAssinar extends PlanoParaTroca {
+  /** É o plano em que a empresa está agora. */
+  atual: boolean;
+  perde: GrupoQueOPlanoTira[];
+  /** Vazio = o uso de hoje cabe. */
+  excedente: Excedente;
+}
+
 export interface DadosDoPainel {
   assinatura: AssinaturaDoPainel | null;
   plano: {
@@ -52,6 +67,15 @@ export interface DadosDoPainel {
   gastoIaUsdCents: number;
   /** Planos ativos e oferecidos às empresas, do MESMO intervalo, fora o atual (a troca não muda o intervalo), numa moeda que o provedor cobra. */
   planosParaTroca: PlanoParaTroca[];
+  /**
+   * A escolha do plano no "Assinar" (etapa 3): só existe enquanto NADA está
+   * assinado no provedor (sem `provedor_assinatura_id`, sem assinatura viva) e
+   * a empresa não está em dia — o caso do teste grátis, vencido ou não. Aí
+   * assinar troca o `plano_id` para o escolhido e abre o Checkout.
+   */
+  escolheAoAssinar: boolean;
+  /** Planos ativos e oferecidos, numa moeda que o provedor cobra, em ordem de preço. Vazio sem `escolheAoAssinar`. */
+  planosParaAssinar: PlanoParaAssinar[];
   /** IANA da empresa (`organizations.timezone`): as datas do painel e do recado saem nele. */
   fuso: string | null;
   /**
@@ -63,6 +87,7 @@ export interface DadosDoPainel {
 }
 
 interface PlanoLido extends PlanoParaTroca {
+  interface_settings: unknown;
   max_assentos: number | null;
   max_canais: number | null;
   teto_ia_usd_cents: number | null;
@@ -81,20 +106,22 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
   const { data: a, error } = await db
     .from("cobranca_assinaturas")
     .select(
-      "plano_id, plano_agendado_id, estado, trial_ate, prazo_extra_ate, proximo_vencimento, vencida_desde, cancela_no_fim, modo, provedor, link_de_pagamento, assinaturas_vivas, periodo_pago_desde, troca_pagamento_url, troca_status, pagamento_inicial_pendente",
+      "plano_id, plano_agendado_id, estado, trial_ate, prazo_extra_ate, proximo_vencimento, vencida_desde, cancela_no_fim, modo, provedor, provedor_assinatura_id, link_de_pagamento, assinaturas_vivas, periodo_pago_desde, troca_pagamento_url, troca_status, pagamento_inicial_pendente",
     )
     .eq("organization_id", orgId)
     .maybeSingle();
   if (error) throw new Error(`painel da assinatura: leitura falhou (${error.code})`);
 
-  const [planos, uso, gasto, org, daInstalacao] = await Promise.all([
+  const [planos, uso, gasto, org, daInstalacao, modulos] = await Promise.all([
     db
       .from("cobranca_planos")
-      .select("id, nome, preco_cents, moeda, intervalo, max_assentos, max_canais, teto_ia_usd_cents, arquivado_em, oferecido_ao_cliente"),
+      .select("id, nome, preco_cents, moeda, intervalo, max_assentos, max_canais, teto_ia_usd_cents, arquivado_em, oferecido_ao_cliente, interface_settings"),
     lerUsoDaOrganizacao(db, orgId),
     db.rpc("fn_gasto_de_ia_do_mes", { p_org: orgId }),
     db.from("organizations").select("timezone, cnpj").eq("id", orgId).maybeSingle(),
     provedorDaInstalacao(),
+    // Nunca lança: falha = nenhum módulo, e a lista do que se perde só fica menor.
+    modulosLigados(db),
   ]);
   if (planos.error || !uso || gasto.error || org.error) throw new Error("painel da assinatura: leitura falhou");
 
@@ -102,6 +129,14 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
   const plano = a ? (todos.find((p) => p.id === a.plano_id) ?? null) : null;
   const agendado = a?.plano_agendado_id ? (todos.find((p) => p.id === a.plano_agendado_id) ?? null) : null;
   const provedorDoCheckout = (a?.provedor as ProvedorDeCobranca | null | undefined) ?? daInstalacao;
+  const cobravel = (p: PlanoLido) => provedorDoCheckout === null || provedorCobraEm(provedorDoCheckout, p.moeda);
+  const escolheAoAssinar =
+    a !== null && a !== undefined && plano !== null &&
+    !a.provedor_assinatura_id && a.assinaturas_vivas === 0 && a.estado !== "ativa";
+  const paraTela = (p: PlanoLido): PlanoParaTroca => ({
+    id: p.id, nome: p.nome, preco_cents: p.preco_cents, moeda: p.moeda, intervalo: p.intervalo,
+    max_assentos: p.max_assentos, max_canais: p.max_canais, teto_ia_usd_cents: p.teto_ia_usd_cents,
+  });
   return {
     assinatura: a
       ? {
@@ -138,10 +173,21 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
     planosParaTroca: plano
       ? todos
           // Plano numa moeda que o provedor que cobra não cobra (EUR com o Asaas) não é oferecido.
-          .filter((p) => p.arquivado_em === null && p.oferecido_ao_cliente && p.intervalo === plano.intervalo && p.id !== plano.id
-            && (provedorDoCheckout === null || provedorCobraEm(provedorDoCheckout, p.moeda)))
-          .map((p) => ({ id: p.id, nome: p.nome, preco_cents: p.preco_cents, moeda: p.moeda, intervalo: p.intervalo,
-            max_assentos: p.max_assentos, max_canais: p.max_canais, teto_ia_usd_cents: p.teto_ia_usd_cents }))
+          .filter((p) => p.arquivado_em === null && p.oferecido_ao_cliente && p.intervalo === plano.intervalo && p.id !== plano.id && cobravel(p))
+          .map(paraTela)
+      : [],
+    escolheAoAssinar,
+    // Nada assinado no provedor: o intervalo pode mudar junto (não há assinatura a ajustar).
+    planosParaAssinar: escolheAoAssinar
+      ? todos
+          .filter((p) => p.arquivado_em === null && p.oferecido_ao_cliente && cobravel(p))
+          .sort((x, y) => x.preco_cents - y.preco_cents)
+          .map((p) => ({
+            ...paraTela(p),
+            atual: p.id === plano?.id,
+            perde: oQueOPlanoTira(p.interface_settings, modulos),
+            excedente: excedenteDoPlano(uso, p),
+          }))
       : [],
   };
 }

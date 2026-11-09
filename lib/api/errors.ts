@@ -206,6 +206,11 @@ export const ApiErrorCodes = {
   moeda_fora_do_provedor: "moeda_fora_do_provedor",
   // Troca para plano de outra moeda com assinatura viva no provedor: ela não muda de moeda.
   troca_de_moeda: "troca_de_moeda",
+  // Assinar no plano de entrada (o "Teste": padrão do cadastro e não oferecido):
+  // ele é só o teste grátis; quem assina escolhe um plano oferecido (etapa 3).
+  escolha_um_plano: "escolha_um_plano",
+  // Escolher plano no Assinar com assinatura já criada no provedor: o caminho é Trocar de plano.
+  assinatura_no_provedor: "assinatura_no_provedor",
   channel_without_session: "channel_without_session", // operação de sessão (reiniciar, parear) pedida a canal que não tem sessão no transporte — o oficial
   janela_fechada: "janela_fechada", // POST /messages por token/agente com texto livre fora das 24h em canal com restrição (131047) — a saída é modelo aprovado (#1614)
   // POST /api/v1/messages/{id}/retry (lib/messaging/reenvio.ts): a regra não permite reenviar (403),

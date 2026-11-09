@@ -19950,6 +19950,19 @@ export const DICIONARIO: Traducoes = {
   "Telas liberadas no plano": { es: "Pantallas incluidas en el plan" },
   "O que a empresa deste plano pode usar. Perfil, segurança, equipe, plano e cobrança, Guia de uso e Ajuda valem em todo plano. Tela fora do plano some do menu e é recusada no servidor; nada é apagado.": { es: "Lo que puede usar la empresa de este plan. Perfil, seguridad, equipo, plan y facturación, Guía de uso y Ayuda valen en todos los planes. La pantalla fuera del plan desaparece del menú y el servidor la rechaza; no se borra nada." },
   "Personalizada ({n} áreas)": { es: "Personalizada ({n} áreas)" },
+  // ArvisX — teste de 7 dias e escolha do plano no Assinar (etapa 3)
+  "Você começa com {n} dias de teste grátis. O plano você escolhe depois, em Plano e cobrança.": { es: "Empiezas con {n} días de prueba gratis. El plan lo eliges después, en Plan y facturación." },
+  "Este plano não está disponível. Recarregue a página e escolha outro.": { es: "Este plan no está disponible. Recarga la página y elige otro." },
+  "O plano atual é só o teste grátis. Escolha um dos planos para assinar.": { es: "El plan actual es solo la prueba gratis. Elige uno de los planes para suscribirte." },
+  "Sua assinatura já existe no provedor de pagamento. Para mudar de plano, use Trocar de plano.": { es: "Tu suscripción ya existe en el proveedor de pago. Para cambiar de plan, usa Cambiar de plan." },
+  "O uso atual não cabe no plano escolhido. Nada foi desconectado.": { es: "El uso actual no cabe en el plan elegido. No se desconectó nada." },
+  "Você tem {uso} números conectados, o plano permite {limite}: desconecte {n} em Conexões.": { es: "Tienes {uso} números conectados, el plan permite {limite}: desconecta {n} en Conexiones." },
+  "Você tem {uso} pessoas na equipe, o plano permite {limite}: revogue o acesso de {n} em Equipe.": { es: "Tienes {uso} personas en el equipo, el plan permite {limite}: revoca el acceso de {n} en Equipo." },
+  "Escolha seu plano": { es: "Elige tu plan" },
+  "Todas as telas liberadas.": { es: "Todas las pantallas incluidas." },
+  "Fica de fora:": { es: "Queda fuera:" },
+  "todas as telas": { es: "todas las pantallas" },
+  "Assinar {plano}": { es: "Suscribirse a {plano}" },
 };
 
 /**

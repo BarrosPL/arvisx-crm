@@ -14,10 +14,12 @@ import { ApiError } from "@/lib/api/types";
 import { documentoDoPagador, exigeDocumento } from "@/lib/cobranca/documento";
 import { formatadorDeData } from "@/lib/cobranca/fuso";
 import { linkDePagamentoSeguro } from "@/lib/cobranca/link";
+import { excessoDosDetalhes, itensDoExcesso, preencherFrase, type ItemDoExcesso } from "@/lib/cobranca/excesso";
 import { calcularAjusteProporcional } from "@/lib/cobranca/prorata";
 import { abrirNoNavegador } from "@/lib/cobranca/navegar";
 import { formatCents } from "@/lib/money";
-import type { PlanoParaTroca } from "@/lib/cobranca/painel";
+import type { PlanoParaAssinar, PlanoParaTroca } from "@/lib/cobranca/painel";
+import type { UsoDaOrganizacao } from "@/lib/cobranca/uso";
 import type { EstadoDaAssinatura, ProvedorDeCobranca } from "@/lib/cobranca/vocabulario";
 import { useIdioma } from "@/lib/i18n/IdiomaProvider";
 
@@ -44,6 +46,15 @@ export interface PropsDasAcoes {
   provedor: ProvedorDeCobranca | null;
   /** CNPJ do cadastro, já conferido e sem máscara: pré-preenche o documento que o Asaas exige. */
   documentoDoCadastro: string | null;
+  /**
+   * Etapa 3 dos planos: nada assinado no provedor (o teste grátis, vencido ou
+   * não). O "Assinar" vira a escolha entre `planosParaAssinar`, e assinar troca
+   * o plano para o escolhido antes do Checkout (`lib/cobranca/checkout.ts`).
+   */
+  escolheAoAssinar?: boolean;
+  planosParaAssinar?: readonly PlanoParaAssinar[];
+  /** O uso de hoje: a frase do excesso diz "você tem N". */
+  uso?: UsoDaOrganizacao;
 }
 
 const BASE = "/api/v1/cobranca/assinatura";
@@ -70,6 +81,9 @@ const FRASE_DO_ERRO: Record<string, string> = {
   troca_pendente: "Conclua ou aguarde a cobrança proporcional antes de solicitar outra troca de plano.",
   pagamento_nao_registrado: "A cobrança foi iniciada, mas não conseguimos registrar o pagamento. Tente novamente; se houver uma cobrança aberta, fale com o suporte.",
   periodo_indisponivel: "Não foi possível calcular o período pago. Atualize a assinatura e tente novamente.",
+  plano_invalido: "Este plano não está disponível. Recarregue a página e escolha outro.",
+  escolha_um_plano: "O plano atual é só o teste grátis. Escolha um dos planos para assinar.",
+  assinatura_no_provedor: "Sua assinatura já existe no provedor de pagamento. Para mudar de plano, use Trocar de plano.",
 };
 const FRASE_GENERICA = "Não foi possível concluir agora. Tente de novo.";
 type Leitura = { estado: EstadoDaAssinatura | null; assinaturas_vivas: number; org_operante: boolean };
@@ -135,7 +149,12 @@ export function AcoesDaAssinatura(p: PropsDasAcoes) {
   const aguardandoAsaas = p.provedor === "asaas" && (fatura !== null || (p.temProvedor && (p.estado === "trial" || link !== null)));
   // "Já paguei" só onde há o que reler: quem nunca assinou (teste que acabou) não pagou nada.
   const podeDizerQuePagou = (emDivida && p.temProvedor) || p.noHub || aguardandoAsaas || p.trocaPagamentoUrl !== null;
-  const podeTrocar = p.planosParaTroca.length > 0 && (p.estado === "trial" || p.estado === "ativa") && !p.cancelaNoFim && p.trocaStatus !== "criando";
+  // Etapa 3: com nada assinado no provedor, o "Assinar" é a escolha do plano (cards), e
+  // ela substitui o botão único e a troca — um caminho só para sair do teste grátis.
+  const planosParaAssinar = p.planosParaAssinar ?? [];
+  const escolhendo = podeAssinar && p.escolheAoAssinar === true && planosParaAssinar.length > 0;
+  const podeTrocar = !escolhendo && p.planosParaTroca.length > 0 && (p.estado === "trial" || p.estado === "ativa") && !p.cancelaNoFim && p.trocaStatus !== "criando";
+  const frasesDoExcesso = (itens: readonly ItemDoExcesso[]) => itens.map((item) => preencherFrase(t(item.frase), item));
   const podeCancelar = p.temProvedor && p.assinaturasVivas > 0 && !p.cancelaNoFim && (p.estado === "ativa" || p.estado === "trial");
 
   async function agir(acao: () => Promise<void>) {
@@ -144,7 +163,10 @@ export function AcoesDaAssinatura(p: PropsDasAcoes) {
     try {
       await acao();
     } catch (e) {
-      if (e instanceof ApiError && e.code === "plan_limit_reached") {
+      const excesso = e instanceof ApiError && e.code === "plan_limit_reached" ? excessoDosDetalhes(e.details) : null;
+      if (excesso) {
+        setRecado([t("O uso atual não cabe no plano escolhido. Nada foi desconectado."), ...frasesDoExcesso(excesso)].join(" "));
+      } else if (e instanceof ApiError && e.code === "plan_limit_reached") {
         const excedente = (e.details?.excedente ?? {}) as Record<string, number>;
         const passos = (Object.keys(FRASE_DO_EXCEDENTE) as Array<keyof typeof FRASE_DO_EXCEDENTE>)
           .filter((r) => (excedente[r] ?? 0) > 0)
@@ -204,6 +226,21 @@ export function AcoesDaAssinatura(p: PropsDasAcoes) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.voltouDoCheckout]);
 
+  /** O "Assinar": o plano atual, ou (etapa 3) o escolhido no card. */
+  const assinar = (planoId?: string) =>
+    void agir(async () => {
+      const corpo = {
+        ...(p.noHub ? { volta: "hub" } : {}),
+        ...(pedeDocumento && documentoNormalizado !== null ? { documento: documentoNormalizado } : {}),
+        ...(planoId ? { plano_id: planoId } : {}),
+      };
+      const { data: r } = await apiClient.post<{ data: { url: string } }>(`${BASE}/checkout`, corpo);
+      if (p.provedor !== "asaas") return abrirNoNavegador(r.url);
+      // O Asaas não devolve o cliente: a fatura vai para uma aba nova e esta fica, com o "Já paguei".
+      setFatura(linkDePagamentoSeguro(r.url));
+      router.refresh();
+    });
+
   const gerenciar = () =>
     void agir(async () => {
       const { data: r } = await apiClient.post<{ data: { url: string } }>(`${BASE}/gerenciar`, {});
@@ -211,7 +248,7 @@ export function AcoesDaAssinatura(p: PropsDasAcoes) {
     });
 
   return (
-    <div className="max-w-xl space-y-3">
+    <div className={escolhendo ? "max-w-4xl space-y-3" : "max-w-xl space-y-3"}>
       {soPeloPortal && (
         <p className="text-sm">
           {t("Não há cobrança aberta para pagar agora. Atualize o cartão em Gerenciar pagamento: a próxima tentativa sai sozinha.")}
@@ -270,23 +307,11 @@ export function AcoesDaAssinatura(p: PropsDasAcoes) {
             <a href={linkDoAjuste} target="_blank" rel="noopener noreferrer">{t("Pagar ajuste do upgrade")}</a>
           </Button>
         )}
-        {podeAssinar && (
+        {podeAssinar && !escolhendo && (
           <Button
             disabled={ocupado || (pedeDocumento && documentoNormalizado === null)}
             variant={link ? "outline" : "default"}
-            onClick={() =>
-              void agir(async () => {
-                const corpo = {
-                  ...(p.noHub ? { volta: "hub" } : {}),
-                  ...(pedeDocumento && documentoNormalizado !== null ? { documento: documentoNormalizado } : {}),
-                };
-                const { data: r } = await apiClient.post<{ data: { url: string } }>(`${BASE}/checkout`, corpo);
-                if (p.provedor !== "asaas") return abrirNoNavegador(r.url);
-                // O Asaas não devolve o cliente: a fatura vai para uma aba nova e esta fica, com o "Já paguei".
-                setFatura(linkDePagamentoSeguro(r.url));
-                router.refresh();
-              })
-            }
+            onClick={() => assinar()}
           >
             {t(p.estado === "cancelada" ? "Assinar de novo" : "Assinar")}
           </Button>
@@ -326,6 +351,68 @@ export function AcoesDaAssinatura(p: PropsDasAcoes) {
         )}
       </div>
 
+      {escolhendo && (
+        <section aria-labelledby="escolha-do-plano" className="space-y-3">
+          <h2 id="escolha-do-plano" className="text-sm font-semibold">{t("Escolha seu plano")}</h2>
+          <ul className="grid gap-3 md:grid-cols-3">
+            {planosParaAssinar.map((plano) => {
+              const excesso = p.uso
+                ? itensDoExcesso(plano.excedente, p.uso, { assentos: plano.max_assentos, canais: plano.max_canais })
+                : [];
+              const naoCabe = excesso.length !== 0;
+              return (
+                <li key={plano.id} data-plano={plano.nome} className="flex flex-col gap-3 rounded-lg border p-4 text-sm">
+                  <div className="space-y-0.5">
+                    <h3 className="font-semibold">
+                      {plano.nome}
+                      {plano.atual && <span className="ml-2 rounded-md bg-muted px-1.5 py-0.5 text-xs font-normal">{t("Plano atual")}</span>}
+                    </h3>
+                    <p className="text-base font-medium">
+                      {formatCents(plano.preco_cents, plano.moeda)}{" "}
+                      <span className="text-sm font-normal text-muted-foreground">/ {plano.intervalo === "ano" ? t("ano") : t("mês")}</span>
+                    </p>
+                  </div>
+                  <ul className="space-y-1 text-muted-foreground">
+                    <li>{t("Pessoas")}: {plano.max_assentos ?? t("sem limite")}</li>
+                    <li>{t("Números conectados")}: {plano.max_canais ?? t("sem limite")}</li>
+                  </ul>
+                  <div className="space-y-1" data-perde>
+                    {plano.perde.length === 0 ? (
+                      <p>{t("Todas as telas liberadas.")}</p>
+                    ) : (
+                      <>
+                        <p className="font-medium">{t("Fica de fora:")}</p>
+                        <ul className="list-disc space-y-0.5 pl-4 text-muted-foreground">
+                          {plano.perde.map((g) => (
+                            <li key={g.grupo}>
+                              {g.inteiro
+                                ? `${t(g.rotulo)} (${t("todas as telas")})`
+                                : `${t(g.rotulo)}: ${g.telas.map((tela) => t(tela)).join(", ")}`}
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
+                  </div>
+                  {naoCabe && (
+                    <p className="text-xs text-warning-fg" data-excesso>
+                      {frasesDoExcesso(excesso).join(" ")}
+                    </p>
+                  )}
+                  <Button
+                    className="mt-auto"
+                    disabled={ocupado || naoCabe || (pedeDocumento && documentoNormalizado === null)}
+                    onClick={() => assinar(plano.id)}
+                  >
+                    {t("Assinar {plano}").replace("{plano}", plano.nome)}
+                  </Button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       {trocando && (
         <div className="space-y-3 rounded-md border p-3">
           <div className="flex flex-wrap items-end gap-2">
@@ -349,7 +436,8 @@ export function AcoesDaAssinatura(p: PropsDasAcoes) {
                   <ul className="mt-2 space-y-1 text-muted-foreground">
                     <li>{t("Pessoas")}: {plano.max_assentos ?? t("sem limite")}</li>
                     <li>{t("Números conectados")}: {plano.max_canais ?? t("sem limite")}</li>
-                    <li>{t("IA por mês")}: {plano.teto_ia_usd_cents === null ? t("sem limite") : dolares(plano.teto_ia_usd_cents)}</li>
+                    {/* Planos novos não têm teto de IA (o cliente usa a própria credencial): a linha só aparece com teto. */}
+                    {plano.teto_ia_usd_cents !== null && <li>{t("IA por mês")}: {dolares(plano.teto_ia_usd_cents)}</li>}
                   </ul>
                 </section>
               ))}

@@ -45,12 +45,11 @@ interface Campos {
   trial_dias: string;
   max_assentos: string;
   max_canais: string;
-  teto_ia: string;
   /** As telas do plano, no formato do `InterfaceEditor` (só `preset` e `destinos`). */
   telas: InterfaceSettings;
 }
 
-const VAZIO: Campos = { nome: "", preco: "", moeda: "BRL", intervalo: "mes", trial_dias: "14", max_assentos: "", max_canais: "", teto_ia: "", telas: INTERFACE_COMPLETA };
+const VAZIO: Campos = { nome: "", preco: "", moeda: "BRL", intervalo: "mes", trial_dias: "14", max_assentos: "", max_canais: "", telas: INTERFACE_COMPLETA };
 
 /** Só o que é do plano: `preset` e `destinos` (o resto da interface é da empresa). */
 function telasDoPlano(raw: unknown): InterfaceSettings {
@@ -64,7 +63,12 @@ const centavos = (v: string) => Math.round(Number(v.replace(",", ".")) * 100);
 const inteiroOuNulo = (v: string) => (v.trim() === "" ? null : Number(v));
 const decimal = (cents: number) => (cents / 100).toFixed(2).replace(".", ",");
 
-/** O corpo que as rotas de plano recebem. Campo de limite vazio = sem limite (null). */
+/**
+ * O corpo que as rotas de plano recebem. Campo de limite vazio = sem limite (null).
+ * Sem `teto_ia_usd_cents` (ArvisX, etapa 3): o cliente usa a própria credencial de
+ * IA e os planos novos não têm teto. A coluna fica no banco; criar deixa o default
+ * (sem teto) e editar não a toca.
+ */
 function corpoDoPlano(c: Campos) {
   return {
     nome: c.nome.trim(),
@@ -74,7 +78,6 @@ function corpoDoPlano(c: Campos) {
     trial_dias: Number(c.trial_dias),
     max_assentos: inteiroOuNulo(c.max_assentos),
     max_canais: inteiroOuNulo(c.max_canais),
-    teto_ia_usd_cents: c.teto_ia.trim() === "" ? null : centavos(c.teto_ia),
     interface_settings: telasDoPlano(c.telas),
   };
 }
@@ -88,7 +91,6 @@ function camposDe(p: PlanoDaTela): Campos {
     trial_dias: String(p.trial_dias),
     max_assentos: p.max_assentos === null ? "" : String(p.max_assentos),
     max_canais: p.max_canais === null ? "" : String(p.max_canais),
-    teto_ia: p.teto_ia_usd_cents === null ? "" : decimal(p.teto_ia_usd_cents),
     telas: telasDoPlano(p.interface_settings),
   };
 }
@@ -215,10 +217,6 @@ export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] 
             <Input id="plano-canais" inputMode="numeric" {...campo("max_canais")} />
           </div>
         </div>
-        <div className="space-y-1">
-          <Label htmlFor="plano-ia">{t("Teto de uso de IA por mês (US$)")}</Label>
-          <Input id="plano-ia" inputMode="decimal" {...campo("teto_ia")} />
-        </div>
         <p className="text-xs text-muted-foreground">{t("Deixe um limite vazio para não limitar.")}</p>
         <div className="space-y-1">
           <p className="text-sm font-medium">{t("Telas liberadas no plano")}</p>
@@ -271,8 +269,9 @@ export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] 
                     {formatCents(p.preco_cents, p.moeda)} {p.intervalo === "mes" ? t("por mês") : t("por ano")} · {p.trial_dias} {t("dias de teste")}
                   </p>
                   <p className="text-muted-foreground">
-                    {t("Pessoas")}: {limite(p.max_assentos)} · {t("Números conectados")}: {limite(p.max_canais)} · {t("IA")}:{" "}
-                    {p.teto_ia_usd_cents === null ? t("sem limite") : usd.format(p.teto_ia_usd_cents / 100)}
+                    {t("Pessoas")}: {limite(p.max_assentos)} · {t("Números conectados")}: {limite(p.max_canais)}
+                    {/* Teto de IA só de plano antigo: os novos não têm (sem campo no formulário). */}
+                    {p.teto_ia_usd_cents !== null && <> · {t("IA")}: {usd.format(p.teto_ia_usd_cents / 100)}</>}
                   </p>
                   <p className="text-muted-foreground">
                     {t("Telas")}: {resumoDasTelas(p.interface_settings, t)}

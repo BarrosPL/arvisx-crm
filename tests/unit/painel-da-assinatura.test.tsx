@@ -23,6 +23,8 @@ const EM_TESTE: DadosDoPainel = {
   uso: { assentos: 1, canais: 2 },
   gastoIaUsdCents: 120,
   planosParaTroca: [],
+  escolheAoAssinar: false,
+  planosParaAssinar: [],
   fuso: null,
   checkout: { provedor: null, documentoDoCadastro: null },
 };

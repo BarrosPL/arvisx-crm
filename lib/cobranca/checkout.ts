@@ -12,6 +12,17 @@
  * O retry do mesmo clique cai na fase 1 e recebe o MESMO link: a idempotência
  * é do estado, e a `Idempotency-Key` segue ao provedor como chave dele.
  * A org vem de quem chama, sempre de fonte confiável (sessão ou path).
+ *
+ * ESCOLHA DO PLANO NO ASSINAR (ArvisX, etapa 3 dos planos): a empresa no plano
+ * de entrada (o "Teste") assina escolhendo um dos planos oferecidos. Com
+ * `planoId` diferente do atual, e NADA assinado no provedor, o `plano_id` troca
+ * para o escolhido ANTES da reserva (compare-and-set no plano lido) e o
+ * Checkout sai com ele — também com o teste vencido e a empresa suspensa, que é
+ * quando a troca comum (`troca.ts`) recusa. Recusas, todas antes do provedor:
+ * plano não oferecido/arquivado, moeda que o provedor não cobra e uso acima do
+ * teto (409 `plan_limit_reached` com o excesso, o uso e o teto; nada é
+ * desconectado). Plano de entrada (padrão e não oferecido) nunca vai ao
+ * Checkout: 409 `escolha_um_plano`.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -22,6 +33,7 @@ import { limiteDoProvedorPorOrg, recusaDoProvedor } from "@/lib/cobranca/falhas"
 import { adaptador, modoDoProvedor } from "@/lib/cobranca/provedores";
 import { ErroDoProvedor } from "@/lib/cobranca/provedores/contrato";
 import { desistirDoAjuste } from "@/lib/cobranca/troca";
+import { excedenteDoPlano, lerUsoDaOrganizacao } from "@/lib/cobranca/uso";
 import { provedorCobraEm, type EstadoDaAssinatura, type Intervalo, type Moeda, type ProvedorDeCobranca } from "@/lib/cobranca/vocabulario";
 import { logger } from "@/lib/logger";
 
@@ -30,6 +42,9 @@ const VALIDADE_PADRAO_MS = 24 * 3_600_000;
 
 interface Lida {
   plano_id: string;
+  plano_agendado_id?: string | null;
+  provedor_assinatura_id?: string | null;
+  checkout_sessao_id?: string | null;
   estado: EstadoDaAssinatura;
   trial_ate: string | null;
   provedor: ProvedorDeCobranca | null;
@@ -60,6 +75,8 @@ export async function gerarLinkDePagamento(
     requestId: string;
     /** O dono da instalação agindo sobre a empresa: o audit registra o bypass de RLS. */
     comoDono: boolean;
+    /** O plano escolhido no Assinar (etapa 3). Ausente ou igual ao atual = assina o plano atual. */
+    planoId?: string;
   },
 ): Promise<ResultadoDoCheckout> {
   const { orgId } = p;
@@ -77,7 +94,7 @@ export async function gerarLinkDePagamento(
 
   const { data, error } = await admin
     .from("cobranca_assinaturas")
-    .select("plano_id, estado, trial_ate, provedor, provedor_cliente_id, checkout_url, checkout_expira_em, troca_id, troca_status, troca_pagamento_ref, troca_reserva_ate")
+    .select("plano_id, plano_agendado_id, estado, trial_ate, provedor, provedor_cliente_id, provedor_assinatura_id, checkout_url, checkout_expira_em, checkout_sessao_id, troca_id, troca_status, troca_pagamento_ref, troca_reserva_ate")
     .eq("organization_id", orgId)
     .maybeSingle();
   if (error) return recusar(500, "internal_error", "Não foi possível ler a assinatura.");
@@ -85,8 +102,10 @@ export async function gerarLinkDePagamento(
   if (!lida) return recusar(404, "not_found", "Sua empresa não tem plano de cobrança.");
 
   const agora = new Date();
+  const escolheOutro = p.planoId !== undefined && p.planoId !== lida.plano_id;
   const expira = lida.checkout_expira_em === null ? null : Date.parse(lida.checkout_expira_em);
-  if (lida.checkout_url && expira !== null && expira > agora.getTime()) return { ok: true, url: lida.checkout_url };
+  // Link do plano ATUAL ainda válido: só é devolvido de novo quando o pedido é o mesmo plano.
+  if (!escolheOutro && lida.checkout_url && expira !== null && expira > agora.getTime()) return { ok: true, url: lida.checkout_url };
   if (!lida.checkout_url && expira !== null && expira > agora.getTime()) {
     return recusar(409, "checkout_em_preparo", "Já estamos gerando o seu link de pagamento. Aguarde alguns segundos.");
   }
@@ -107,6 +126,22 @@ export async function gerarLinkDePagamento(
       message: "Muitas tentativas seguidas. Aguarde um minuto e tente de novo.",
       headers: { "Retry-After": "60" },
     };
+  }
+
+  if (escolheOutro && p.planoId !== undefined) {
+    const escolha = await escolherPlanoAoAssinar(admin, orgId, lida, p.planoId, provedor, agora);
+    if (escolha) return escolha;
+    void audit({
+      action: "cobranca.plano_trocado",
+      actorUserId: p.actorUserId,
+      ...(p.comoDono ? { actingAsPlatformAdmin: true, bypassedRls: true } : {}),
+      organizationId: orgId,
+      resourceType: "cobranca_assinatura",
+      resourceId: orgId,
+      requestId: p.requestId,
+      metadata: { de: lida.plano_id, para: p.planoId, quando: "ao_assinar" },
+    });
+    Object.assign(lida, { plano_id: p.planoId, plano_agendado_id: null, checkout_url: null, checkout_expira_em: null, checkout_sessao_id: null });
   }
 
   // Fase 1: a reserva. Quem chegar junto perde o compare-and-set. O ISO dela é a
@@ -175,6 +210,82 @@ export async function gerarLinkDePagamento(
   }
 }
 
+/**
+ * Troca o plano da empresa para o escolhido no Assinar (etapa 3). Devolve a
+ * RECUSA, ou `null` depois de gravar. Só vale com NADA assinado no provedor:
+ * com assinatura lá, mudar de plano é `troca.ts` (Trocar de plano). Link de
+ * pagamento do plano antigo ainda aberto morre no provedor antes (#2609).
+ */
+async function escolherPlanoAoAssinar(
+  admin: SupabaseClient,
+  orgId: string,
+  lida: Lida,
+  planoId: string,
+  provedor: ProvedorDeCobranca,
+  agora: Date,
+): Promise<ResultadoDoCheckout | null> {
+  const recusa = (status: number, code: string, message: string, details?: unknown): ResultadoDoCheckout => ({
+    ok: false, status, code, message, ...(details === undefined ? {} : { details }),
+  });
+  if (lida.provedor_assinatura_id) {
+    return recusa(409, "assinatura_no_provedor", "Sua assinatura já existe no provedor de pagamento. Para mudar de plano, use Trocar de plano.");
+  }
+  const { data: lido, error } = await admin
+    .from("cobranca_planos")
+    .select("id, nome, moeda, max_assentos, max_canais, arquivado_em, oferecido_ao_cliente")
+    .eq("id", planoId)
+    .maybeSingle();
+  if (error) return recusa(500, "internal_error", "Não foi possível ler o plano.");
+  const novo = lido as {
+    id: string; nome: string; moeda: Moeda; max_assentos: number | null; max_canais: number | null;
+    arquivado_em: string | null; oferecido_ao_cliente: boolean;
+  } | null;
+  if (!novo || novo.arquivado_em !== null || !novo.oferecido_ao_cliente) {
+    return recusa(422, "plano_invalido", "Este plano não está disponível. Recarregue a página e escolha outro.");
+  }
+  if (!provedorCobraEm(provedor, novo.moeda)) {
+    return recusa(422, "moeda_fora_do_provedor", `Este plano é cobrado em ${novo.moeda}, e o provedor de pagamento conectado não cobra nessa moeda. Fale com quem administra o sistema.`);
+  }
+  // A régua dos gatilhos do banco (`fn_limite_do_plano`, 0583/0809), espelhada em
+  // `lerUsoDaOrganizacao`: o que passa do teto é recusado com o número; nada é desconectado.
+  const uso = await lerUsoDaOrganizacao(admin, orgId);
+  if (!uso) return recusa(500, "internal_error", "Não foi possível medir o uso da empresa.");
+  const excedente = excedenteDoPlano(uso, novo);
+  if (Object.keys(excedente).length > 0) {
+    return recusa(409, "plan_limit_reached", "O uso atual não cabe no plano escolhido.", {
+      excedente,
+      uso,
+      limites: { assentos: novo.max_assentos, canais: novo.max_canais },
+    });
+  }
+  // O link aberto foi gerado para o plano antigo: morre no provedor antes da troca.
+  const linkAberto = lida.checkout_url !== null && lida.checkout_expira_em !== null && Date.parse(lida.checkout_expira_em) > agora.getTime();
+  if (linkAberto) {
+    if (!lida.checkout_sessao_id) {
+      return recusa(409, "checkout_em_aberto", "Há um link de pagamento em aberto com o plano atual. Conclua o pagamento ou aguarde o link expirar para trocar de plano.");
+    }
+    try {
+      await adaptador(provedor).expirarSessao(lida.checkout_sessao_id);
+    } catch (e) {
+      if (!(e instanceof ErroDoProvedor)) throw e;
+      return e.transitorio
+        ? recusa(503, "provedor_indisponivel", "O provedor de pagamento não respondeu. Nada mudou; tente de novo.")
+        : recusa(409, "checkout_em_aberto", "Há um link de pagamento em aberto com o plano atual. Conclua o pagamento ou aguarde o link expirar para trocar de plano.");
+    }
+  }
+  let pedido = admin
+    .from("cobranca_assinaturas")
+    .update({ plano_id: novo.id, plano_agendado_id: null, checkout_url: null, checkout_expira_em: null, checkout_sessao_id: null, updated_at: agora.toISOString() })
+    .eq("organization_id", orgId)
+    .eq("plano_id", lida.plano_id)
+    .is("provedor_assinatura_id", null);
+  pedido = lida.checkout_expira_em ? pedido.eq("checkout_expira_em", lida.checkout_expira_em) : pedido.is("checkout_expira_em", null);
+  const { data: gravada, error: erroDaGravacao } = await pedido.select("organization_id").maybeSingle();
+  if (erroDaGravacao) return recusa(500, "internal_error", "Não foi possível trocar o plano.");
+  if (!gravada) return recusa(409, "state_conflict", "A assinatura mudou enquanto você escolhia o plano. Recarregue e tente de novo.");
+  return null;
+}
+
 /** Não lança: a reserva que não sai expira sozinha em RESERVA_MS, mas fica no log (o próximo clique vê `checkout_em_preparo`). */
 async function liberarReserva(admin: SupabaseClient, orgId: string, reserva: string): Promise<void> {
   try {
@@ -221,11 +332,30 @@ async function gerarCheckout(
   }
   const [org, plano] = await Promise.all([
     admin.from("organizations").select("legal_name, display_name").eq("id", orgId).maybeSingle(),
-    admin.from("cobranca_planos").select("id, nome, preco_cents, moeda, intervalo").eq("id", lida.plano_id).maybeSingle(),
+    admin
+      .from("cobranca_planos")
+      .select("id, nome, preco_cents, moeda, intervalo, padrao_no_cadastro, oferecido_ao_cliente")
+      .eq("id", lida.plano_id)
+      .maybeSingle(),
   ]);
   if (org.error || plano.error || !plano.data) throw new Error("cobranca: empresa ou plano ilegível no checkout");
   const nomes = org.data as { legal_name: string | null; display_name: string } | null;
-  const p = plano.data as { id: string; nome: string; preco_cents: number; moeda: Moeda; intervalo: Intervalo };
+  const p = plano.data as {
+    id: string; nome: string; preco_cents: number; moeda: Moeda; intervalo: Intervalo;
+    padrao_no_cadastro?: boolean; oferecido_ao_cliente?: boolean;
+  };
+  if (p.padrao_no_cadastro === true && p.oferecido_ao_cliente === false) {
+    // O plano de entrada (o "Teste": padrão do cadastro e não oferecido) é só o
+    // teste grátis; nunca se paga por ele. Quem assina escolhe um plano oferecido.
+    return {
+      recusa: {
+        ok: false,
+        status: 409,
+        code: "escolha_um_plano",
+        message: "O plano atual é só o teste grátis. Escolha um dos planos para assinar.",
+      },
+    };
+  }
   if (!provedorCobraEm(provedor, p.moeda)) {
     // Plano em euro com o Asaas (que só cobra em real): recusa ANTES de criar o
     // cliente no provedor. Quem resolve é o dono: outro plano ou outro provedor.

@@ -43,11 +43,21 @@ describe("Planos da instalação", () => {
     await waitFor(() => expect(h.post).toHaveBeenCalledTimes(1));
     expect(h.post).toHaveBeenCalledWith("/api/v1/admin/cobranca/planos", {
       nome: "Pro", preco_cents: 9990, moeda: "BRL", intervalo: "mes", trial_dias: 7,
-      max_assentos: 5, max_canais: null, teto_ia_usd_cents: null,
+      max_assentos: 5, max_canais: null,
       // Telas do plano (migration 9802): sem mexer no editor, a completa.
       interface_settings: { preset: "completa" },
     });
     expect(h.refresh).toHaveBeenCalled();
+  });
+
+  it("⭐ sem teto de IA no formulário (etapa 3): o cliente usa a própria credencial; criar e editar não mandam o campo", async () => {
+    const u = userEvent.setup();
+    render(<PlanosDaInstalacao planos={[{ ...PLANO, teto_ia_usd_cents: 1000 }]} />);
+    expect(screen.queryByLabelText(/Teto de uso de IA/)).toBeNull();
+    await u.click(screen.getByRole("button", { name: "Editar" }));
+    await u.click(screen.getByRole("button", { name: "Salvar alterações" }));
+    await waitFor(() => expect(h.patch).toHaveBeenCalledTimes(1));
+    expect(h.patch.mock.calls[0]![1]).not.toHaveProperty("teto_ia_usd_cents");
   });
 
   it("⭐ telas do plano (migration 9802): o InterfaceEditor manda preset e destinos, e a edição traz o que estava gravado", async () => {

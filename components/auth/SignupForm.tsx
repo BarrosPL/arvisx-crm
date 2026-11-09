@@ -40,11 +40,18 @@ export function SignupForm({
   convite,
   planos = [],
   planoInicial,
+  diasDeTesteGratis = null,
 }: {
   convite?: ConviteDoSignup;
   planos?: readonly PlanoDoCadastro[];
   /** O plano padrão quando ele é oferecido — "sem mexer, vale o padrão" —, senão o primeiro. */
   planoInicial?: string;
+  /**
+   * Plano de entrada (o "Teste", padrão e não oferecido): sem seletor, a empresa
+   * nasce nele. A tela diz quantos dias de teste grátis vêm e onde se escolhe o
+   * plano depois. `null` = nada a dizer (há seletor, ou não há teste).
+   */
+  diasDeTesteGratis?: number | null;
 }) {
   const t = useT();
   const idioma = useIdioma();
@@ -235,6 +242,11 @@ export function SignupForm({
             <p className="text-xs text-destructive">{t(errors.org_name.message ?? "")}</p>
           )}
         </div>
+      )}
+      {!convite && planos.length === 0 && diasDeTesteGratis !== null && diasDeTesteGratis > 0 && (
+        <p className="rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground" data-testid="teste-gratis-do-cadastro">
+          {t("Você começa com {n} dias de teste grátis. O plano você escolhe depois, em Plano e cobrança.").replace("{n}", String(diasDeTesteGratis))}
+        </p>
       )}
       {!convite && planos.length > 0 && (
         <div className="space-y-1.5">

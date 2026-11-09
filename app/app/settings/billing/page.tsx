@@ -66,6 +66,9 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
               voltouDoCheckout={(await searchParams).voltou === "1"}
               noHub={false}
               fuso={painel.fuso}
+              escolheAoAssinar={painel.escolheAoAssinar}
+              planosParaAssinar={painel.planosParaAssinar}
+              uso={painel.uso}
             />
           )}
         </>

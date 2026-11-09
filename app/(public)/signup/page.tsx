@@ -13,7 +13,7 @@ import { createClient } from "@/lib/supabase/server";
 import { idiomaDoVisitante } from "@/lib/i18n/idiomaAnonimo";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { lerCadastroNaTela, planoInicialDoSeletor } from "@/lib/cobranca/cadastro";
+import { lerCadastroNaTela, planoInicialDoSeletor, planosDoSeletor } from "@/lib/cobranca/cadastro";
 import { tituloDaTelaPublica } from "@/lib/i18n/titulo-da-tela-publica";
 
 // A aba no idioma do visitante, como o corpo (`lib/i18n/titulo-da-tela-publica.ts`).
@@ -68,8 +68,10 @@ export default async function SignupPage({
   // padrão a empresa dele nasce no padrão. Sem plano nenhum, nasce isenta e o
   // Google fica (doc 146, opção B). O critério é o de `lib/cobranca/cadastro.ts`,
   // o mesmo do gatilho. Leitura que falha não esconde nada: quem recusa é a action.
+  // Plano de entrada (o "Teste", padrão e não oferecido): sem seletor, a
+  // empresa nasce nele; os planos pagos se escolhem depois, em Plano e cobrança.
   const cadastro = convite ? null : await lerCadastroNaTela(createAdminClient());
-  const planos = cadastro?.oferecidos ?? [];
+  const planos = planosDoSeletor(cadastro);
   const googleSemPlano = cadastro?.exigeEscolha ?? false;
 
   // Convite VÁLIDO passa em qualquer modo — é o ponto inteiro do convite.
@@ -147,6 +149,7 @@ export default async function SignupPage({
         convite={convite}
         planos={planos}
         planoInicial={planoInicialDoSeletor(planos, cadastro?.padraoId ?? null)}
+        diasDeTesteGratis={cadastro?.diasDeTesteSemEscolha ?? null}
       />
       {/* O convite atravessa o Google na URL de retorno: sem ele, quem foi
           convidado e cria a conta com Google ganharia uma empresa própria. */}

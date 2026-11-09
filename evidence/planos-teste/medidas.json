@@ -1,0 +1,76 @@
+{
+  "cadastro": {
+    "seletorDePlano": 0,
+    "fraseDoTeste": "Você começa com 7 dias de teste grátis. O plano você escolhe depois, em Plano e cobrança.",
+    "botaoGoogle": 0
+  },
+  "assinaturaNoTeste": [
+    {
+      "plano": "Essencial",
+      "texto": "Essencial\n\n59,90 € / mês\n\nPessoas: 5\nNúmeros conectados: 3\n\nFica de fora:\n\nAtendimento: Radar, Respostas rápidas\nCRM: Prospecção, Campanhas, Planos de tarefa, Chamadas, Produtos, Propostas, Etapas do funil\nAgente de IA (todas as telas)\nCanais: Nuvemshop, Webhooks\nAnálise (todas as telas)\nOrganização: Tipos de agendamento, Aviso de agendamento, Modelos de proposta, Financeiro, Meta de vendas, Distribuição de atendimento, Automações, Tags, Recursos opcionais, Conversões, Meta Ads, Marca, LGPD, API Tokens, Trunk SIP, Servidor MCP externo, Extensões\nAssinar Essencial",
+      "botaoTravado": false,
+      "largura": 291
+    },
+    {
+      "plano": "Standard",
+      "texto": "Standard\n\n129,90 € / mês\n\nPessoas: 10\nNúmeros conectados: 6\n\nFica de fora:\n\nAtendimento: Radar, Respostas rápidas\nCRM: Prospecção, Campanhas, Planos de tarefa, Chamadas, Produtos, Propostas, Etapas do funil\nCanais: Nuvemshop, Webhooks\nAnálise (todas as telas)\nOrganização: Tipos de agendamento, Aviso de agendamento, Modelos de proposta, Financeiro, Meta de vendas, Distribuição de atendimento, Automações, Tags, Recursos opcionais, Conversões, Meta Ads, Marca, LGPD, API Tokens, Trunk SIP, Servidor MCP externo, Extensões\nAssinar Standard",
+      "botaoTravado": false,
+      "largura": 291
+    },
+    {
+      "plano": "Premium",
+      "texto": "Premium\n\n199,90 € / mês\n\nPessoas: sem limite\nNúmeros conectados: sem limite\n\nTodas as telas liberadas.\n\nAssinar Premium",
+      "botaoTravado": false,
+      "largura": 291
+    }
+  ],
+  "comCincoNumeros": [
+    {
+      "plano": "Essencial",
+      "texto": "Essencial\n\n59,90 € / mês\n\nPessoas: 5\nNúmeros conectados: 3\n\nFica de fora:\n\nAtendimento: Radar, Respostas rápidas\nCRM: Prospecção, Campanhas, Planos de tarefa, Chamadas, Produtos, Propostas, Etapas do funil\nAgente de IA (todas as telas)\nCanais: Nuvemshop, Webhooks\nAnálise (todas as telas)\nOrganização: Tipos de agendamento, Aviso de agendamento, Modelos de proposta, Financeiro, Meta de vendas, Distribuição de atendimento, Automações, Tags, Recursos opcionais, Conversões, Meta Ads, Marca, LGPD, API Tokens, Trunk SIP, Servidor MCP externo, Extensões\n\nVocê tem 5 números conectados, o plano permite 3: desconecte 2 em Conexões.\n\nAssinar Essencial",
+      "botaoTravado": true,
+      "largura": 291
+    },
+    {
+      "plano": "Standard",
+      "texto": "Standard\n\n129,90 € / mês\n\nPessoas: 10\nNúmeros conectados: 6\n\nFica de fora:\n\nAtendimento: Radar, Respostas rápidas\nCRM: Prospecção, Campanhas, Planos de tarefa, Chamadas, Produtos, Propostas, Etapas do funil\nCanais: Nuvemshop, Webhooks\nAnálise (todas as telas)\nOrganização: Tipos de agendamento, Aviso de agendamento, Modelos de proposta, Financeiro, Meta de vendas, Distribuição de atendimento, Automações, Tags, Recursos opcionais, Conversões, Meta Ads, Marca, LGPD, API Tokens, Trunk SIP, Servidor MCP externo, Extensões\nAssinar Standard",
+      "botaoTravado": false,
+      "largura": 291
+    },
+    {
+      "plano": "Premium",
+      "texto": "Premium\n\n199,90 € / mês\n\nPessoas: sem limite\nNúmeros conectados: sem limite\n\nTodas as telas liberadas.\n\nAssinar Premium",
+      "botaoTravado": false,
+      "largura": 291
+    }
+  ],
+  "assinarStandard": {
+    "planoDepois": "Standard",
+    "recado": "O provedor de pagamento recusou o pedido. Fale com quem administra o sistema.",
+    "auditoria": "cobranca.plano_trocado ao_assinar"
+  },
+  "contaSuspensa": [
+    {
+      "plano": "Essencial",
+      "texto": "Essencial\n\n59,90 € / mês\n\nPessoas: 5\nNúmeros conectados: 3\n\nFica de fora:\n\nAtendimento: Radar, Respostas rápidas\nCRM: Prospecção, Campanhas, Planos de tarefa, Chamadas, Produtos, Propostas, Etapas do funil\nAgente de IA (todas as telas)\nCanais: Nuvemshop, Webhooks\nAnálise (todas as telas)\nOrganização: Tipos de agendamento, Aviso de agendamento, Modelos de proposta, Financeiro, Meta de vendas, Distribuição de atendimento, Automações, Tags, Recursos opcionais, Conversões, Meta Ads, Marca, LGPD, API Tokens, Trunk SIP, Servidor MCP externo, Extensões\nAssinar Essencial",
+      "botaoTravado": false,
+      "largura": 291
+    },
+    {
+      "plano": "Standard",
+      "texto": "Standard\n\n129,90 € / mês\n\nPessoas: 10\nNúmeros conectados: 6\n\nFica de fora:\n\nAtendimento: Radar, Respostas rápidas\nCRM: Prospecção, Campanhas, Planos de tarefa, Chamadas, Produtos, Propostas, Etapas do funil\nCanais: Nuvemshop, Webhooks\nAnálise (todas as telas)\nOrganização: Tipos de agendamento, Aviso de agendamento, Modelos de proposta, Financeiro, Meta de vendas, Distribuição de atendimento, Automações, Tags, Recursos opcionais, Conversões, Meta Ads, Marca, LGPD, API Tokens, Trunk SIP, Servidor MCP externo, Extensões\nAssinar Standard",
+      "botaoTravado": false,
+      "largura": 291
+    },
+    {
+      "plano": "Premium",
+      "texto": "Premium\n\n199,90 € / mês\n\nPessoas: sem limite\nNúmeros conectados: sem limite\n\nTodas as telas liberadas.\n\nAssinar Premium",
+      "botaoTravado": false,
+      "largura": 291
+    }
+  ],
+  "celular": {
+    "larguraDaPagina": 390,
+    "janela": 390
+  }
+}

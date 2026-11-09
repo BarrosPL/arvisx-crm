@@ -6,6 +6,8 @@
  * empresa (`emailDoAdminDaEmpresa`), como na porta do dono: quem clica pode ser o
  * dono, admin provisório da empresa que criou, e o e-mail fica no provedor.
  * Empresa suspensa também assina (o hub leva aqui). A org vem da sessão.
+ * Com `plano_id`, assina o plano escolhido (a empresa no teste grátis escolhe
+ * entre os oferecidos; ver `lib/cobranca/checkout.ts`).
  */
 import { randomUUID } from "node:crypto";
 
@@ -30,6 +32,12 @@ const corpoSchema = z.strictObject({
   volta: z.enum(["hub"]).optional(),
   /** CPF ou CNPJ de quem paga, com ou sem máscara. Vai direto ao provedor e NÃO é guardado (spec §2.3, LGPD). */
   documento: z.string().max(32).optional(),
+  /**
+   * O plano escolhido no Assinar (ArvisX, etapa 3): com nada assinado no
+   * provedor, troca o plano da empresa para ele antes do Checkout. Só plano
+   * oferecido; quem confere é `lib/cobranca/checkout.ts`.
+   */
+  plano_id: z.uuid().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -69,6 +77,7 @@ export async function POST(req: NextRequest) {
     actorUserId: authz.user.id,
     requestId,
     comoDono: false,
+    ...(corpo.data.plano_id === undefined ? {} : { planoId: corpo.data.plano_id }),
   });
   if (r.ok) return ok({ url: r.url }, { requestId });
   return fail(r.code, r.message, r.status, {

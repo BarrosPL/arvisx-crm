@@ -200,7 +200,7 @@ export default async function AccountSuspendedPage({
           </div>
         </Card>
         {mostra === "pagamento" && painel?.assinatura && (
-          <section aria-label={t("Pagamento")} className="w-full max-w-xl space-y-4">
+          <section aria-label={t("Pagamento")} className={`w-full space-y-4 ${painel.escolheAoAssinar && painel.planosParaAssinar.length > 0 ? "max-w-4xl" : "max-w-xl"}`}>
             <PainelDaAssinatura dados={painel} idioma={idioma} />
             <AcoesDaAssinatura
               estado={painel.assinatura.estado}
@@ -220,6 +220,9 @@ export default async function AccountSuspendedPage({
               fuso={painel.fuso}
               voltouDoCheckout={voltou === "1"}
               noHub
+              escolheAoAssinar={painel.escolheAoAssinar}
+              planosParaAssinar={painel.planosParaAssinar}
+              uso={painel.uso}
             />
           </section>
         )}

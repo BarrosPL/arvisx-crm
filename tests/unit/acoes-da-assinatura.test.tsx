@@ -26,7 +26,7 @@ const BASE: NonNullable<DadosDoPainel["assinatura"]> = {
   periodo_pago_desde: "2026-10-01T12:00:00Z", troca_pagamento_url: null, troca_status: null, pagamento_inicial_pendente: false,
 };
 const painel = (a: Partial<typeof BASE>): DadosDoPainel => ({
-  assinatura: { ...BASE, ...a }, plano: PLANO, uso: { assentos: 1, canais: 1 }, gastoIaUsdCents: 0, planosParaTroca: [PRO], fuso: null,
+  assinatura: { ...BASE, ...a }, plano: PLANO, uso: { assentos: 1, canais: 1 }, gastoIaUsdCents: 0, planosParaTroca: [PRO], escolheAoAssinar: false, planosParaAssinar: [], fuso: null,
   checkout: { provedor: "stripe", documentoDoCadastro: null },
 });
 const acoes = (p: Partial<PropsDasAcoes> = {}): PropsDasAcoes => ({

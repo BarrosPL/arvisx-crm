@@ -229,7 +229,10 @@ export async function trocarPlanoDaOrg(
     if (!uso) return recusa(500, "internal_error", "Não foi possível medir o uso da empresa.");
     const excedente = excedenteDoPlano(uso, novo);
     if (Object.keys(excedente).length > 0) {
-      return recusa(409, "plan_limit_reached", "O uso atual não cabe no plano escolhido.", { excedente });
+      // `uso` e `limites` deixam a tela dizer "você tem 5, o plano permite 3: tire 2" (etapa 3).
+      return recusa(409, "plan_limit_reached", "O uso atual não cabe no plano escolhido.", {
+        excedente, uso, limites: { assentos: novo.max_assentos, canais: novo.max_canais },
+      });
     }
   }
 

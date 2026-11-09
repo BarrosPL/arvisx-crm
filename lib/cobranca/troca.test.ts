@@ -206,6 +206,16 @@ describe("trocarPlanoDaOrg", () => {
     expect(trocarNoProvedor).not.toHaveBeenCalled();
   });
 
+  it("⭐ etapa 3: a recusa leva também o uso e o teto, para a tela dizer \"você tem 5, o plano permite 2: desconecte 3\"; nada é gravado", async () => {
+    m.canais = 5;
+    m.assentos = 7;
+    expect(await trocar("mini")).toMatchObject({
+      ok: false, code: "plan_limit_reached",
+      details: { excedente: { assentos: 6, canais: 3 }, uso: { assentos: 7, canais: 5 }, limites: { assentos: 1, canais: 2 } },
+    });
+    expect(escritas()).toEqual([]);
+  });
+
   it("⭐ provedor fora do ar: 503 provedor_indisponivel e nada gravado", async () => {
     m.linha = { ...PAGANDO };
     trocarNoProvedor.mockRejectedValue(new ErroDoProvedor(503, "api_error", true));
