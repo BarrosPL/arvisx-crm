@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { bancoFalso, type BancoFalso } from "@/tests/helpers/banco-falso-da-cobranca";
+import { bancoFalso, valorDoFiltro, type BancoFalso } from "@/tests/helpers/banco-falso-da-cobranca";
 
 const h = vi.hoisted(() => ({
   papel: vi.fn(),
@@ -52,5 +52,21 @@ describe("gerenciar o pagamento", () => {
     h.taxaOk = false;
     expect((await POST()).status).toBe(429);
     expect(h.gerenciar).not.toHaveBeenCalled();
+  });
+
+  it("⭐ só o admin da empresa: quem não passa no requireRole('admin') recebe a recusa dele e o portal nem é pedido", async () => {
+    h.papel.mockResolvedValue({ ok: false, response: Response.json({ error: { code: "forbidden" } }, { status: 403 }) });
+    expect((await POST()).status).toBe(403);
+    expect(h.papel).toHaveBeenCalledWith("admin", expect.objectContaining({ resource: "cobranca_assinaturas" }));
+    expect(h.gerenciar).not.toHaveBeenCalled();
+    expect(h.banco.cadeias).toEqual([]);
+  });
+
+  it("⭐ o customer da sessão é o da empresa DA SESSÃO, lido pelo organization_id da autorização (nunca do corpo)", async () => {
+    h.linha = { provedor: "stripe", provedor_cliente_id: "cus_DaEmpresaCerta" };
+    await POST();
+    const leitura = h.banco.cadeias.find((c) => c.tabela === "cobranca_assinaturas");
+    expect(leitura && valorDoFiltro(leitura, "eq", "organization_id")).toBe("15151515-0000-4000-8000-000000000001");
+    expect(h.gerenciar).toHaveBeenCalledWith(expect.objectContaining({ clienteRef: "cus_DaEmpresaCerta" }));
   });
 });
