@@ -1,0 +1,27 @@
+{
+ "conexoes": {
+  "aviso_cliente": "Este passo não tem foto porque o resultado depende de um número de WhatsApp realmente conectado ao seu CRM. A tela do seu CRM vai mostrar a situação real do seu número (Conectado, Caiu ou Pausado).",
+  "passos": [
+   "conexoes--conhecendo-a-tela--p4",
+   "conexoes--conhecendo-a-tela--p5",
+   "conexoes--acesso-da-ia--p3",
+   "conexoes--renomear-pausar-excluir--p3",
+   "conexoes--outros-canais--p6"
+  ]
+ },
+ "conversoes": {
+  "aviso_cliente": "Este passo não tem foto porque o resultado depende de a conta de anúncios da Meta da sua empresa estar ligada. Siga o texto; o link novo aparece na sua lista ao salvar.",
+  "passos": [
+   "conversoes--links-rastreaveis--p4"
+  ]
+ },
+ "meta-ads-conexao": {
+  "aviso_cliente": "Este passo não tem foto porque depende da conta de anúncios da Meta da sua empresa. Quem administra a organização faz a ligação com a própria conta; o que aparece depois é o da sua conta.",
+  "passos": [
+   "meta-ads-conexao--ligar-a-conta--p3",
+   "meta-ads-conexao--ligar-a-conta--p4",
+   "meta-ads-conexao--trocar-ou-desconectar--p4",
+   "meta-ads-conexao--trocar-ou-desconectar--p5"
+  ]
+ }
+}

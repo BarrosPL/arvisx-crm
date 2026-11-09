@@ -1,0 +1,1886 @@
+{
+  "largura": 1440,
+  "altura": 900,
+  "capturas": {
+    "demo-advocacia-consulta--historia--chegada": {
+      "foto": "capturas/demo-advocacia-consulta--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Uma dúvida contratual",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:32:24.378Z"
+    },
+    "demo-advocacia-consulta--historia--qualificacao": {
+      "foto": "capturas/demo-advocacia-consulta--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 606.40625,
+          "y": 674.234375,
+          "w": 433.328125,
+          "h": 76.75,
+          "rotulo": "Contexto suficiente",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:32:35.763Z"
+    },
+    "demo-advocacia-consulta--historia--acao": {
+      "foto": "capturas/demo-advocacia-consulta--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 1056,
+          "y": 0,
+          "w": 384,
+          "h": 900,
+          "rotulo": "Um encontro reservado",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:32:48.389Z"
+    },
+    "demo-advocacia-consulta--historia--continuidade": {
+      "foto": "capturas/demo-advocacia-consulta--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 289,
+          "y": 398.5,
+          "w": 1102,
+          "h": 57.5,
+          "rotulo": "Conferir a situação",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:32:58.970Z"
+    },
+    "demo-advocacia-documentos--historia--chegada": {
+      "foto": "capturas/demo-advocacia-documentos--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Continuidade de um atendimento",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:33:44.404Z"
+    },
+    "demo-advocacia-documentos--historia--qualificacao": {
+      "foto": "capturas/demo-advocacia-documentos--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Pergunta para quem acompanha",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:33:53.498Z"
+    },
+    "demo-advocacia-documentos--historia--acao": {
+      "foto": "capturas/demo-advocacia-documentos--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 496,
+          "y": 159.75,
+          "w": 448,
+          "h": 580.5,
+          "rotulo": "Conferir a relação de documentos",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:34:05.702Z"
+    },
+    "demo-advocacia-documentos--historia--continuidade": {
+      "foto": "capturas/demo-advocacia-documentos--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 353,
+          "y": 295.5,
+          "w": 974,
+          "h": 84.5,
+          "rotulo": "Registrar a conferência",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:34:14.345Z"
+    },
+    "demo-advocacia-andamento--historia--chegada": {
+      "foto": "capturas/demo-advocacia-andamento--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Uma atualização esperada",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:30:39.353Z"
+    },
+    "demo-advocacia-andamento--historia--qualificacao": {
+      "foto": "capturas/demo-advocacia-andamento--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 632,
+          "y": 180,
+          "w": 760,
+          "h": 672,
+          "rotulo": "Pergunta para o responsável",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:30:45.184Z"
+    },
+    "demo-advocacia-andamento--historia--acao": {
+      "foto": "capturas/demo-advocacia-andamento--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 649,
+          "y": 411,
+          "w": 726,
+          "h": 272,
+          "rotulo": "Interpretação exige revisão",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:30:51.800Z"
+    },
+    "demo-advocacia-andamento--historia--continuidade": {
+      "foto": "capturas/demo-advocacia-andamento--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Resposta situada",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:31:00.057Z"
+    },
+    "demo-clinicas-primeira-consulta--historia--chegada": {
+      "foto": "capturas/demo-clinicas-primeira-consulta--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Uma primeira consulta",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:37:52.293Z"
+    },
+    "demo-clinicas-primeira-consulta--historia--qualificacao": {
+      "foto": "capturas/demo-clinicas-primeira-consulta--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 289,
+          "y": 341,
+          "w": 1102,
+          "h": 56.5,
+          "rotulo": "Disponibilidade compatível",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:37:56.619Z"
+    },
+    "demo-clinicas-primeira-consulta--historia--acao": {
+      "foto": "capturas/demo-clinicas-primeira-consulta--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 1056,
+          "y": 0,
+          "w": 384,
+          "h": 900,
+          "rotulo": "Escolha explícita",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:38:05.953Z"
+    },
+    "demo-clinicas-primeira-consulta--historia--continuidade": {
+      "foto": "capturas/demo-clinicas-primeira-consulta--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 289,
+          "y": 571,
+          "w": 1102,
+          "h": 57.5,
+          "rotulo": "A recepção acompanha",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:38:12.333Z"
+    },
+    "demo-clinicas-remarcar-sessao--historia--chegada": {
+      "foto": "capturas/demo-clinicas-remarcar-sessao--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "O horário deixou de servir",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T14:08:42.247Z"
+    },
+    "demo-clinicas-remarcar-sessao--historia--qualificacao": {
+      "foto": "capturas/demo-clinicas-remarcar-sessao--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 289,
+          "y": 341,
+          "w": 1102,
+          "h": 57.5,
+          "rotulo": "Mesmo profissional",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T14:08:49.858Z"
+    },
+    "demo-clinicas-remarcar-sessao--historia--acao": {
+      "foto": "capturas/demo-clinicas-remarcar-sessao--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 1056,
+          "y": 0,
+          "w": 384,
+          "h": 900,
+          "rotulo": "Trocar, sem duplicar",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T14:08:59.119Z"
+    },
+    "demo-clinicas-remarcar-sessao--historia--continuidade": {
+      "foto": "capturas/demo-clinicas-remarcar-sessao--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 606.40625,
+          "y": 674.265625,
+          "w": 418.875,
+          "h": 76.75,
+          "rotulo": "Contexto para quem recebe",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T14:09:12.140Z"
+    },
+    "demo-clinicas-duvida-preparo--historia--chegada": {
+      "foto": "capturas/demo-clinicas-duvida-preparo--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Uma pergunta sensível",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:39:15.596Z"
+    },
+    "demo-clinicas-duvida-preparo--historia--qualificacao": {
+      "foto": "capturas/demo-clinicas-duvida-preparo--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 632,
+          "y": 180,
+          "w": 760,
+          "h": 672,
+          "rotulo": "A dúvida ganha contexto",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:39:19.429Z"
+    },
+    "demo-clinicas-duvida-preparo--historia--acao": {
+      "foto": "capturas/demo-clinicas-duvida-preparo--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 649,
+          "y": 431,
+          "w": 726,
+          "h": 272,
+          "rotulo": "Responsabilidade definida",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:39:23.260Z"
+    },
+    "demo-clinicas-duvida-preparo--historia--continuidade": {
+      "foto": "capturas/demo-clinicas-duvida-preparo--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Continuidade pela equipe",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:39:29.603Z"
+    },
+    "demo-consorcio-planejamento--historia--chegada": {
+      "foto": "capturas/demo-consorcio-planejamento--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Começar pelo objetivo",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:39:53.404Z"
+    },
+    "demo-consorcio-planejamento--historia--qualificacao": {
+      "foto": "capturas/demo-consorcio-planejamento--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 289,
+          "y": 482,
+          "w": 302,
+          "h": 188.5,
+          "rotulo": "Interesse sem adesão",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:39:58.608Z"
+    },
+    "demo-consorcio-planejamento--historia--acao": {
+      "foto": "capturas/demo-consorcio-planejamento--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 1056,
+          "y": 0,
+          "w": 384,
+          "h": 900,
+          "rotulo": "Conversa com responsável",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:40:10.365Z"
+    },
+    "demo-consorcio-planejamento--historia--continuidade": {
+      "foto": "capturas/demo-consorcio-planejamento--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 992,
+          "y": 0,
+          "w": 448,
+          "h": 900,
+          "rotulo": "Preparação da reunião",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:40:18.184Z"
+    },
+    "demo-consorcio-lance--historia--chegada": {
+      "foto": "capturas/demo-consorcio-lance--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Uma expectativa de garantia",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:37:11.232Z"
+    },
+    "demo-consorcio-lance--historia--qualificacao": {
+      "foto": "capturas/demo-consorcio-lance--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 632,
+          "y": 180,
+          "w": 760,
+          "h": 672,
+          "rotulo": "Contexto para análise",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:37:20.036Z"
+    },
+    "demo-consorcio-lance--historia--acao": {
+      "foto": "capturas/demo-consorcio-lance--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 649,
+          "y": 411,
+          "w": 726,
+          "h": 272,
+          "rotulo": "Decisão de quem conhece o contrato",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:37:25.732Z"
+    },
+    "demo-consorcio-lance--historia--continuidade": {
+      "foto": "capturas/demo-consorcio-lance--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Continuidade sem submissão automática",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:37:34.935Z"
+    },
+    "demo-consorcio-cadastro--historia--chegada": {
+      "foto": "capturas/demo-consorcio-cadastro--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Uma solicitação em andamento",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:35:55.665Z"
+    },
+    "demo-consorcio-cadastro--historia--qualificacao": {
+      "foto": "capturas/demo-consorcio-cadastro--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 606.40625,
+          "y": 674.234375,
+          "w": 427.71875,
+          "h": 76.75,
+          "rotulo": "Conferência mínima",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:36:11.716Z"
+    },
+    "demo-consorcio-cadastro--historia--acao": {
+      "foto": "capturas/demo-consorcio-cadastro--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 496,
+          "y": 159.75,
+          "w": 448,
+          "h": 580.5,
+          "rotulo": "Item que falta conferir",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:36:18.486Z"
+    },
+    "demo-consorcio-cadastro--historia--continuidade": {
+      "foto": "capturas/demo-consorcio-cadastro--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 353,
+          "y": 295.5,
+          "w": 974,
+          "h": 84.5,
+          "rotulo": "Conferência encerrada",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:36:24.983Z"
+    },
+    "demo-contabilidade-documentos-mensais--historia--chegada": {
+      "foto": "capturas/demo-contabilidade-documentos-mensais--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Material enviado",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:38:10.577Z"
+    },
+    "demo-contabilidade-documentos-mensais--historia--qualificacao": {
+      "foto": "capturas/demo-contabilidade-documentos-mensais--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 606.40625,
+          "y": 674.234375,
+          "w": 417.125,
+          "h": 76.75,
+          "rotulo": "O que precisa conferir",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:38:21.031Z"
+    },
+    "demo-contabilidade-documentos-mensais--historia--acao": {
+      "foto": "capturas/demo-contabilidade-documentos-mensais--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 496,
+          "y": 159.75,
+          "w": 448,
+          "h": 580.5,
+          "rotulo": "Conferência com dono",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:38:27.178Z"
+    },
+    "demo-contabilidade-documentos-mensais--historia--continuidade": {
+      "foto": "capturas/demo-contabilidade-documentos-mensais--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 353,
+          "y": 295.5,
+          "w": 974,
+          "h": 84.5,
+          "rotulo": "A checagem terminou",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:38:32.979Z"
+    },
+    "demo-contabilidade-nova-empresa--historia--chegada": {
+      "foto": "capturas/demo-contabilidade-nova-empresa--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Uma empresa em planejamento",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:39:07.176Z"
+    },
+    "demo-contabilidade-nova-empresa--historia--qualificacao": {
+      "foto": "capturas/demo-contabilidade-nova-empresa--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 289,
+          "y": 482,
+          "w": 302,
+          "h": 188.5,
+          "rotulo": "Uma oportunidade de serviço",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:39:15.199Z"
+    },
+    "demo-contabilidade-nova-empresa--historia--acao": {
+      "foto": "capturas/demo-contabilidade-nova-empresa--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 1056,
+          "y": 0,
+          "w": 384,
+          "h": 900,
+          "rotulo": "Avaliação com o contador",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:39:23.398Z"
+    },
+    "demo-contabilidade-nova-empresa--historia--continuidade": {
+      "foto": "capturas/demo-contabilidade-nova-empresa--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 992,
+          "y": 0,
+          "w": 448,
+          "h": 900,
+          "rotulo": "Contexto para a reunião",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:39:32.894Z"
+    },
+    "demo-e-commerce-troca-tamanho--historia--chegada": {
+      "foto": "capturas/demo-e-commerce-troca-tamanho--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "O produto chegou",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:45:32.899Z"
+    },
+    "demo-e-commerce-troca-tamanho--historia--qualificacao": {
+      "foto": "capturas/demo-e-commerce-troca-tamanho--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 632,
+          "y": 180,
+          "w": 760,
+          "h": 672,
+          "rotulo": "Detalhar a solicitação",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:45:39.300Z"
+    },
+    "demo-e-commerce-troca-tamanho--historia--acao": {
+      "foto": "capturas/demo-e-commerce-troca-tamanho--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 649,
+          "y": 411,
+          "w": 726,
+          "h": 272,
+          "rotulo": "Falta uma informação",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:45:43.042Z"
+    },
+    "demo-e-commerce-troca-tamanho--historia--continuidade": {
+      "foto": "capturas/demo-e-commerce-troca-tamanho--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "A loja decide",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:45:51.573Z"
+    },
+    "demo-e-commerce-venda-consultiva--historia--chegada": {
+      "foto": "capturas/demo-e-commerce-venda-consultiva--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Um presente com intenção",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:46:16.471Z"
+    },
+    "demo-e-commerce-venda-consultiva--historia--qualificacao": {
+      "foto": "capturas/demo-e-commerce-venda-consultiva--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 289,
+          "y": 285.5,
+          "w": 302,
+          "h": 188.5,
+          "rotulo": "Preferência registrada",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:46:22.166Z"
+    },
+    "demo-e-commerce-venda-consultiva--historia--acao": {
+      "foto": "capturas/demo-e-commerce-venda-consultiva--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 496,
+          "y": 159.75,
+          "w": 448,
+          "h": 580.5,
+          "rotulo": "Conferir a composição",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:46:27.152Z"
+    },
+    "demo-e-commerce-venda-consultiva--historia--continuidade": {
+      "foto": "capturas/demo-e-commerce-venda-consultiva--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 992,
+          "y": 0,
+          "w": 448,
+          "h": 900,
+          "rotulo": "Avançar com evidência",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:46:33.581Z"
+    },
+    "demo-educacao-visita-escola--historia--chegada": {
+      "foto": "capturas/demo-educacao-visita-escola--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Antes da matrícula",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:44:00.674Z"
+    },
+    "demo-educacao-visita-escola--historia--qualificacao": {
+      "foto": "capturas/demo-educacao-visita-escola--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 289,
+          "y": 482,
+          "w": 302,
+          "h": 188.5,
+          "rotulo": "Interesse da família",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:44:10.679Z"
+    },
+    "demo-educacao-visita-escola--historia--acao": {
+      "foto": "capturas/demo-educacao-visita-escola--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 1056,
+          "y": 0,
+          "w": 384,
+          "h": 900,
+          "rotulo": "Visita combinada",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:44:17.801Z"
+    },
+    "demo-educacao-visita-escola--historia--continuidade": {
+      "foto": "capturas/demo-educacao-visita-escola--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 353,
+          "y": 657,
+          "w": 974,
+          "h": 84.5,
+          "rotulo": "Depois de conhecer",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:44:24.301Z"
+    },
+    "demo-educacao-matricula--historia--chegada": {
+      "foto": "capturas/demo-educacao-matricula--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Uma turma desejada",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:42:19.647Z"
+    },
+    "demo-educacao-matricula--historia--qualificacao": {
+      "foto": "capturas/demo-educacao-matricula--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 289,
+          "y": 482,
+          "w": 302,
+          "h": 188.5,
+          "rotulo": "O contexto da matrícula",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:42:25.690Z"
+    },
+    "demo-educacao-matricula--historia--acao": {
+      "foto": "capturas/demo-educacao-matricula--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 496,
+          "y": 159.75,
+          "w": 448,
+          "h": 580.5,
+          "rotulo": "Conferência da secretaria",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:42:33.406Z"
+    },
+    "demo-educacao-matricula--historia--continuidade": {
+      "foto": "capturas/demo-educacao-matricula--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 992,
+          "y": 0,
+          "w": 448,
+          "h": 900,
+          "rotulo": "Avanço real no quadro",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:42:42.005Z"
+    },
+    "demo-educacao-trocar-turma--historia--chegada": {
+      "foto": "capturas/demo-educacao-trocar-turma--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "A rotina mudou",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:43:13.413Z"
+    },
+    "demo-educacao-trocar-turma--historia--qualificacao": {
+      "foto": "capturas/demo-educacao-trocar-turma--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 632,
+          "y": 180,
+          "w": 760,
+          "h": 672,
+          "rotulo": "Uma exceção com contexto",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:43:18.837Z"
+    },
+    "demo-educacao-trocar-turma--historia--acao": {
+      "foto": "capturas/demo-educacao-trocar-turma--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 649,
+          "y": 411,
+          "w": 726,
+          "h": 272,
+          "rotulo": "A escola precisa decidir",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:43:24.048Z"
+    },
+    "demo-educacao-trocar-turma--historia--continuidade": {
+      "foto": "capturas/demo-educacao-trocar-turma--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Comunicar o que foi decidido",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:43:32.574Z"
+    },
+    "demo-imobiliarias-visita--historia--chegada": {
+      "foto": "capturas/demo-imobiliarias-visita--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Necessidade específica",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:49:00.293Z"
+    },
+    "demo-imobiliarias-visita--historia--qualificacao": {
+      "foto": "capturas/demo-imobiliarias-visita--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 289,
+          "y": 482,
+          "w": 302,
+          "h": 188.5,
+          "rotulo": "Uma oportunidade ligada à pessoa",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:49:07.565Z"
+    },
+    "demo-imobiliarias-visita--historia--acao": {
+      "foto": "capturas/demo-imobiliarias-visita--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 1056,
+          "y": 0,
+          "w": 384,
+          "h": 900,
+          "rotulo": "Combinar a visita",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:49:13.476Z"
+    },
+    "demo-imobiliarias-visita--historia--continuidade": {
+      "foto": "capturas/demo-imobiliarias-visita--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 353,
+          "y": 590.5,
+          "w": 974,
+          "h": 84.5,
+          "rotulo": "Depois da visita",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:49:19.010Z"
+    },
+    "demo-imobiliarias-locacao-documentos--historia--chegada": {
+      "foto": "capturas/demo-imobiliarias-locacao-documentos--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Intenção de alugar",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:49:39.881Z"
+    },
+    "demo-imobiliarias-locacao-documentos--historia--qualificacao": {
+      "foto": "capturas/demo-imobiliarias-locacao-documentos--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 289,
+          "y": 482,
+          "w": 302,
+          "h": 188.5,
+          "rotulo": "O que já foi combinado",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:49:45.418Z"
+    },
+    "demo-imobiliarias-locacao-documentos--historia--acao": {
+      "foto": "capturas/demo-imobiliarias-locacao-documentos--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 496,
+          "y": 159.75,
+          "w": 448,
+          "h": 580.5,
+          "rotulo": "Pendência com dono",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:49:50.720Z"
+    },
+    "demo-imobiliarias-locacao-documentos--historia--continuidade": {
+      "foto": "capturas/demo-imobiliarias-locacao-documentos--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 992,
+          "y": 0,
+          "w": 448,
+          "h": 900,
+          "rotulo": "Análise ainda aberta",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:49:58.523Z"
+    },
+    "demo-imobiliarias-proprietario--historia--chegada": {
+      "foto": "capturas/demo-imobiliarias-proprietario--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Um novo proprietário",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T14:09:55.362Z"
+    },
+    "demo-imobiliarias-proprietario--historia--qualificacao": {
+      "foto": "capturas/demo-imobiliarias-proprietario--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 606.40625,
+          "y": 674.484375,
+          "w": 397.234375,
+          "h": 76.75,
+          "rotulo": "Características para a visita",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T14:10:14.648Z"
+    },
+    "demo-imobiliarias-proprietario--historia--acao": {
+      "foto": "capturas/demo-imobiliarias-proprietario--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Pessoa responsável",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T14:10:30.713Z"
+    },
+    "demo-imobiliarias-proprietario--historia--continuidade": {
+      "foto": "capturas/demo-imobiliarias-proprietario--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 289,
+          "y": 341,
+          "w": 1102,
+          "h": 57.5,
+          "rotulo": "Avaliar antes de precificar",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T14:10:41.731Z"
+    },
+    "demo-infoprodutos-acesso--historia--chegada": {
+      "foto": "capturas/demo-infoprodutos-acesso--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Aula com erro 403",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:46:13.960Z"
+    },
+    "demo-infoprodutos-acesso--historia--qualificacao": {
+      "foto": "capturas/demo-infoprodutos-acesso--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 632,
+          "y": 180,
+          "w": 760,
+          "h": 672,
+          "rotulo": "Caso com contexto",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:46:21.538Z"
+    },
+    "demo-infoprodutos-acesso--historia--acao": {
+      "foto": "capturas/demo-infoprodutos-acesso--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 649,
+          "y": 431,
+          "w": 726,
+          "h": 272,
+          "rotulo": "A equipe pede uma informação",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:46:27.506Z"
+    },
+    "demo-infoprodutos-acesso--historia--continuidade": {
+      "foto": "capturas/demo-infoprodutos-acesso--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Pergunta na retomada",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:46:35.173Z"
+    },
+    "demo-infoprodutos-escolher-formacao--historia--chegada": {
+      "foto": "capturas/demo-infoprodutos-escolher-formacao--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Um objetivo de estudo",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:51:40.350Z"
+    },
+    "demo-infoprodutos-escolher-formacao--historia--qualificacao": {
+      "foto": "capturas/demo-infoprodutos-escolher-formacao--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 289,
+          "y": 482,
+          "w": 302,
+          "h": 188.5,
+          "rotulo": "Pré-requisito importa",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:51:45.521Z"
+    },
+    "demo-infoprodutos-escolher-formacao--historia--acao": {
+      "foto": "capturas/demo-infoprodutos-escolher-formacao--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 496,
+          "y": 159.75,
+          "w": 448,
+          "h": 580.5,
+          "rotulo": "Comparar programas",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:51:51.129Z"
+    },
+    "demo-infoprodutos-escolher-formacao--historia--continuidade": {
+      "foto": "capturas/demo-infoprodutos-escolher-formacao--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 992,
+          "y": 0,
+          "w": 448,
+          "h": 900,
+          "rotulo": "Dar tempo para decidir",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:51:57.952Z"
+    },
+    "demo-infoprodutos-contestacao--historia--chegada": {
+      "foto": "capturas/demo-infoprodutos-contestacao--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Pedido de cancelamento",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:47:10.406Z"
+    },
+    "demo-infoprodutos-contestacao--historia--qualificacao": {
+      "foto": "capturas/demo-infoprodutos-contestacao--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 632,
+          "y": 180,
+          "w": 760,
+          "h": 672,
+          "rotulo": "Uma análise identificável",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:47:17.544Z"
+    },
+    "demo-infoprodutos-contestacao--historia--acao": {
+      "foto": "capturas/demo-infoprodutos-contestacao--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 649,
+          "y": 431,
+          "w": 726,
+          "h": 272,
+          "rotulo": "Resposta depende da conferência",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:47:24.615Z"
+    },
+    "demo-infoprodutos-contestacao--historia--continuidade": {
+      "foto": "capturas/demo-infoprodutos-contestacao--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Comunicar a situação real",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:47:35.102Z"
+    },
+    "demo-seguros-cotacao--historia--chegada": {
+      "foto": "capturas/demo-seguros-cotacao--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Antes de falar em preço",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:53:04.390Z"
+    },
+    "demo-seguros-cotacao--historia--qualificacao": {
+      "foto": "capturas/demo-seguros-cotacao--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 289,
+          "y": 482,
+          "w": 302,
+          "h": 188.5,
+          "rotulo": "Contexto da cotação",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:53:11.570Z"
+    },
+    "demo-seguros-cotacao--historia--acao": {
+      "foto": "capturas/demo-seguros-cotacao--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 496,
+          "y": 159.75,
+          "w": 448,
+          "h": 580.5,
+          "rotulo": "Cotação é trabalho do responsável",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:53:16.132Z"
+    },
+    "demo-seguros-cotacao--historia--continuidade": {
+      "foto": "capturas/demo-seguros-cotacao--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Explicar as diferenças",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:53:23.209Z"
+    },
+    "demo-seguros-sinistro--historia--chegada": {
+      "foto": "capturas/demo-seguros-sinistro--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Relato de um dano",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:54:41.520Z"
+    },
+    "demo-seguros-sinistro--historia--qualificacao": {
+      "foto": "capturas/demo-seguros-sinistro--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 632,
+          "y": 180,
+          "w": 760,
+          "h": 672,
+          "rotulo": "Registrar a dúvida certa",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:54:45.229Z"
+    },
+    "demo-seguros-sinistro--historia--acao": {
+      "foto": "capturas/demo-seguros-sinistro--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 649,
+          "y": 431,
+          "w": 726,
+          "h": 272,
+          "rotulo": "Passar para atendimento humano",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:54:49.380Z"
+    },
+    "demo-seguros-sinistro--historia--continuidade": {
+      "foto": "capturas/demo-seguros-sinistro--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Procedimento conferido",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-07T15:54:55.102Z"
+    },
+    "demo-servicos-receber-equipamento--historia--chegada": {
+      "foto": "capturas/demo-servicos-receber-equipamento--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Um equipamento parou",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:49:06.999Z"
+    },
+    "demo-servicos-receber-equipamento--historia--qualificacao": {
+      "foto": "capturas/demo-servicos-receber-equipamento--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 606.40625,
+          "y": 674.484375,
+          "w": 425.1875,
+          "h": 76.75,
+          "rotulo": "Relato para o técnico",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:49:17.528Z"
+    },
+    "demo-servicos-receber-equipamento--historia--acao": {
+      "foto": "capturas/demo-servicos-receber-equipamento--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 1056,
+          "y": 0,
+          "w": 384,
+          "h": 900,
+          "rotulo": "Combinar o recebimento",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:49:28.500Z"
+    },
+    "demo-servicos-receber-equipamento--historia--continuidade": {
+      "foto": "capturas/demo-servicos-receber-equipamento--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 353,
+          "y": 657,
+          "w": 974,
+          "h": 84.5,
+          "rotulo": "Avaliação com responsável",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:49:38.089Z"
+    },
+    "demo-servicos-orcamento--historia--chegada": {
+      "foto": "capturas/demo-servicos-orcamento--historia--chegada.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Antes de autorizar",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:48:09.783Z"
+    },
+    "demo-servicos-orcamento--historia--qualificacao": {
+      "foto": "capturas/demo-servicos-orcamento--historia--qualificacao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 632,
+          "y": 180,
+          "w": 760,
+          "h": 672,
+          "rotulo": "Dúvida para o técnico",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:48:16.519Z"
+    },
+    "demo-servicos-orcamento--historia--acao": {
+      "foto": "capturas/demo-servicos-orcamento--historia--acao.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 649,
+          "y": 411,
+          "w": 726,
+          "h": 272,
+          "rotulo": "Responder com responsabilidade",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:48:23.659Z"
+    },
+    "demo-servicos-orcamento--historia--continuidade": {
+      "foto": "capturas/demo-servicos-orcamento--historia--continuidade.webp",
+      "clicar": null,
+      "destaques": [
+        {
+          "x": 536,
+          "y": 80,
+          "w": 584,
+          "h": 796,
+          "rotulo": "Aceite é uma etapa própria",
+          "tipo": "caixa"
+        }
+      ],
+      "versao": "1.0.0",
+      "idioma": "pt-BR",
+      "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+      "capturado_em": "2026-11-09T11:48:34.216Z"
+    }
+  },
+  "falhas": [
+    "demo-e-commerce-consultar-pedido--historia--acao",
+    "demo-e-commerce-consultar-pedido--historia--continuidade"
+  ],
+  "idioma": "pt-BR",
+  "commit_fonte": "1f5541ff4fcd3d5fc0f8d5271265e1a5a0205711",
+  "versao": "1.0.0",
+  "gerado_em": "2026-11-09T14:10:41.731Z"
+}
