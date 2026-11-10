@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { provedorDaInstalacao } from "@/lib/cobranca/configuracao";
 import { sugestaoDoCadastro } from "@/lib/cobranca/documento";
 import { telasDoPlanoNoSeletor } from "@/lib/cobranca/comparativo";
+import { aguardaContatoDaEquipe } from "@/lib/cobranca/equipe-completa";
 import { excedenteDoPlano, lerUsoDaOrganizacao, type Excedente, type UsoDaOrganizacao } from "@/lib/cobranca/uso";
 import { modulosLigados } from "@/lib/instalacao/modulos";
 import { provedorCobraEm, type EstadoDaAssinatura, type Modo, type Moeda, type ProvedorDeCobranca } from "@/lib/cobranca/vocabulario";
@@ -79,7 +80,14 @@ export interface DadosDoPainel {
     max_assentos: number | null;
     max_canais: number | null;
     teto_ia_usd_cents: number | null;
+    /** Equipe Completa (migration 9803): o plano inclui os 4 agentes feitos pela equipe. */
+    inclui_agentes_arvisx: boolean;
   } | null;
+  /**
+   * Equipe Completa depois do pagamento (migration 9804): a equipe ainda não
+   * marcou o contato com a empresa. A tela diz que o contato vem aí.
+   */
+  aguardaContatoDaEquipe: boolean;
   uso: UsoDaOrganizacao;
   /** Na moeda de `fn_gasto_de_ia_do_mes` (centavos de dólar), a régua única de gasto. */
   gastoIaUsdCents: number;
@@ -143,7 +151,7 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
     .maybeSingle();
   if (error) throw new Error(`painel da assinatura: leitura falhou (${error.code})`);
 
-  const [planos, uso, gasto, org, daInstalacao, modulos] = await Promise.all([
+  const [planos, uso, gasto, org, daInstalacao, modulos, aguardaContato] = await Promise.all([
     db
       .from("cobranca_planos")
       .select("id, nome, preco_cents, moeda, intervalo, max_assentos, max_canais, teto_ia_usd_cents, arquivado_em, oferecido_ao_cliente, interface_settings, descricao_curta, para_quem, destaques, limites, como_funciona, inclui_agentes_arvisx"),
@@ -153,6 +161,8 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
     provedorDaInstalacao(),
     // Nunca lança: falha = nenhum módulo, e a lista do que se perde só fica menor.
     modulosLigados(db),
+    // Nunca lança: falha = não promete contato.
+    aguardaContatoDaEquipe(db, orgId),
   ]);
   if (planos.error || !uso || gasto.error || org.error) throw new Error("painel da assinatura: leitura falhou");
 
@@ -212,8 +222,10 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
       ? {
           id: plano.id, nome: plano.nome, preco_cents: plano.preco_cents, moeda: plano.moeda, intervalo: plano.intervalo,
           max_assentos: plano.max_assentos, max_canais: plano.max_canais, teto_ia_usd_cents: plano.teto_ia_usd_cents,
+          inclui_agentes_arvisx: plano.inclui_agentes_arvisx === true,
         }
       : null,
+    aguardaContatoDaEquipe: aguardaContato,
     uso,
     comparativo: {
       planos: escolhiveis.map(paraComparar),

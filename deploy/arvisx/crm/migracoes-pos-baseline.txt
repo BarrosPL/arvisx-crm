@@ -59,3 +59,4 @@
 20261109120000_9801_cobranca_planos_em_euro.sql
 20261109180000_9802_telas_do_plano.sql
 20261110120000_9803_textos_do_plano.sql
+20261110150000_9804_equipe_completa_aguardando_contato.sql

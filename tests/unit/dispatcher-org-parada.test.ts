@@ -27,6 +27,7 @@ import { ensureHandlersRegistered } from "@/lib/event-log/register-handlers";
 import { pinoReintentoHandler } from "@/lib/channels/zernio/pino-reintento.handler";
 import { automationRulesHandler } from "@/lib/automation/engine.handler";
 import { campanhaRespostaHandler } from "@/lib/campanhas/resposta.handler";
+import { equipeCompletaHandler } from "@/lib/cobranca/equipe-completa";
 import { cobrancaSinalHandler } from "@/lib/cobranca/sinal.handler";
 import { conversaoDeVendaHandler } from "@/lib/conversoes/envio.handler";
 import { conversaoDeQualificacaoHandler } from "@/lib/conversoes/qualificacao.handler";
@@ -93,6 +94,8 @@ const PULA: EventHandler[] = [
   avisoDeCasoAoSuporteHandler,
   avisoDeHandoffHandler,
   avisoDePropostaNoWhatsAppHandler,
+  // Equipe Completa (9804): e-mail à equipe da instalação. O aviso fica na lista de /admin/cobranca.
+  equipeCompletaHandler,
   avisoDeAgendamentoNoWhatsAppHandler,
   conversaoDeVendaHandler,
   conversaoDeQualificacaoHandler,

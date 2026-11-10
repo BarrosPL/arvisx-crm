@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CopiarLinkDePagamento } from "@/components/admin/cobranca/CopiarLinkDePagamento";
 import { requirePlatformAdmin } from "@/lib/auth/requirePlatformAdmin";
 import { toleranciaDias } from "@/lib/cobranca/configuracao";
+import { listarAguardandoContato } from "@/lib/cobranca/equipe-completa";
 import { ROTULO_DO_ERRO, ROTULO_DO_ESTADO } from "@/lib/cobranca/rotulos";
 import { leituraAtrasada, lerVisaoGeral, montarChecklist } from "@/lib/cobranca/visao-geral";
 import type { ErroDeLeitura, EstadoDaAssinatura } from "@/lib/cobranca/vocabulario";
@@ -16,6 +17,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { AbasDaCobranca } from "./_abas";
 import { ABAS_DA_COBRANCA, type AbaDaCobranca } from "./_abas-lista";
 import { ConexaoDaCobranca } from "./_conexao";
+import { EquipeCompletaAguardandoContato } from "./_equipe-completa";
 import { PlanosDaInstalacao, type PlanoDaTela } from "./_planos";
 import { ReguaDaCobranca } from "./_regua";
 import { FaixaDoModoDeTeste, VisaoGeral } from "./_visao-geral";
@@ -57,7 +59,7 @@ export default async function CobrancaPage({ searchParams }: { searchParams: Pro
   const { aba } = await searchParams;
   const inicial: AbaDaCobranca = ABAS_DA_COBRANCA.find((a) => a === aba) ?? "visao-geral";
 
-  const [planos, clientes, visao, tolerancia] = await Promise.all([
+  const [planos, clientes, visao, tolerancia, aguardando] = await Promise.all([
     admin.from("cobranca_planos").select(COLUNAS_DO_PLANO).order("nome"),
     admin
       .from("organizations")
@@ -67,6 +69,7 @@ export default async function CobrancaPage({ searchParams }: { searchParams: Pro
       .order("display_name"),
     lerVisaoGeral(admin),
     toleranciaDias(),
+    listarAguardandoContato(admin),
   ]);
   if (planos.error || clientes.error) {
     throw new Error(`cobrança: leitura falhou (${planos.error?.code ?? clientes.error?.code})`);
@@ -135,6 +138,7 @@ export default async function CobrancaPage({ searchParams }: { searchParams: Pro
         </p>
       </header>
       <FaixaDoModoDeTeste modo={visao.modo} idioma={idioma} />
+      <EquipeCompletaAguardandoContato avisos={aguardando} />
       <AbasDaCobranca
         inicial={inicial}
         paineis={{

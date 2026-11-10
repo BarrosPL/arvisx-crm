@@ -69174,6 +69174,278 @@ $$;
 
 revoke execute on function public.fn_channel_sessions_ligacao_ao_provedor_e_do_servidor() from public, anon, authenticated;
 
+-- ---- telas do plano (migration 9802) ----
+-- Espelho idempotente da 9802 (o porquê está no cabeçalho da migration): a
+-- coluna `cobranca_planos.interface_settings` (default completa) e as leituras
+-- `fn_telas_do_plano` (service_role) e `fn_telas_do_plano_da_sessao`
+-- (authenticated). Fica no fim, DEPOIS da VARREDURA anon: por isso cada função
+-- revoga `public` e `anon` ela mesma.
+alter table public.cobranca_planos
+  add column if not exists interface_settings jsonb not null default '{"preset":"completa"}'::jsonb;
+
+alter table public.cobranca_planos
+  drop constraint if exists cobranca_planos_interface_settings_objeto;
+
+alter table public.cobranca_planos
+  add constraint cobranca_planos_interface_settings_objeto
+  check (jsonb_typeof(interface_settings) = 'object');
+
+comment on column public.cobranca_planos.interface_settings is
+  'Telas que o plano libera (migration 9802): preset completa|simplificada e, opcional, destinos (hrefs do catálogo lib/navigation/catalogo.ts). Mesmo formato do InterfaceEditor. As portas essenciais (perfil, segurança, equipe, plano e cobrança, ajuda) valem em todo plano. Validado em lib/schemas/cobranca-plano.ts; lido por fn_telas_do_plano.';
+
+create or replace function public.fn_telas_do_plano(p_org uuid)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select case
+    when p_org is null or not public.fn_cobranca_ligada() then jsonb_build_object('restrito', false)
+    else coalesce(
+      (select jsonb_build_object('restrito', true, 'interface', p.interface_settings)
+         from public.cobranca_assinaturas a
+         join public.cobranca_planos p on p.id = a.plano_id
+        where a.organization_id = p_org),
+      jsonb_build_object('restrito', false)
+    )
+  end;
+$$;
+
+revoke execute on function public.fn_telas_do_plano(uuid) from public, anon, authenticated;
+grant execute on function public.fn_telas_do_plano(uuid) to service_role;
+
+create or replace function public.fn_telas_do_plano_da_sessao(p_org uuid)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_suporte jsonb;
+  v_org uuid;
+begin
+  if v_uid is null then
+    return null;
+  end if;
+  v_suporte := public.fn_support_context();
+  if v_suporte is not null then
+    -- Acompanhamento encerrado: o app manda para /support-ended; aqui não se decide.
+    if v_suporte->>'status' is distinct from 'active' then
+      return null;
+    end if;
+    return public.fn_telas_do_plano((v_suporte->>'organization_id')::uuid);
+  end if;
+  if p_org is not null then
+    select uo.organization_id into v_org
+      from public.user_organizations uo
+     where uo.user_id = v_uid and uo.revoked_at is null and uo.organization_id = p_org;
+  end if;
+  if v_org is null then
+    select uo.organization_id into v_org
+      from public.user_organizations uo
+      join public.organizations o on o.id = uo.organization_id
+     where uo.user_id = v_uid and uo.revoked_at is null
+     order by (o.status = 'active') desc, uo.accepted_at asc nulls first, uo.organization_id asc
+     limit 1;
+  end if;
+  if v_org is null then
+    return null;
+  end if;
+  return public.fn_telas_do_plano(v_org);
+end;
+$$;
+
+revoke execute on function public.fn_telas_do_plano_da_sessao(uuid) from public, anon;
+grant execute on function public.fn_telas_do_plano_da_sessao(uuid) to authenticated, service_role;
+
+notify pgrst, 'reload schema';
+
+-- ---- textos do plano (migration 9803) ----
+-- Espelho idempotente da 9803 (o porquê está no cabeçalho da migration): os
+-- textos do plano (`descricao_curta`, `para_quem`, `destaques`, `limites`,
+-- `como_funciona`, nulos e sem default), o marcador `inclui_agentes_arvisx`
+-- (default false) e a régua `fn_frases_do_plano_ok`. Fica no fim, DEPOIS da
+-- VARREDURA anon: por isso a função revoga `public` e `anon` ela mesma.
+create or replace function`, constraints com `drop ... if exists`.
+
+create or replace function public.fn_frases_do_plano_ok(p_frases text[], p_max_itens int, p_max_caracteres int)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select p_frases is null or (
+    coalesce(cardinality(p_frases), 0) between 1 and p_max_itens
+    and not exists (
+      select 1 from unnest(p_frases) as f(frase)
+       where f.frase is null or btrim(f.frase) = '' or char_length(f.frase) > p_max_caracteres
+    )
+  );
+$$;
+
+-- Só quem grava o plano (o service_role) precisa dela; o CHECK roda como quem grava.
+revoke execute on function public.fn_frases_do_plano_ok(text[], int, int) from public, anon, authenticated;
+grant execute on function public.fn_frases_do_plano_ok(text[], int, int) to service_role;
+
+alter table public.cobranca_planos
+  add column if not exists descricao_curta text,
+  add column if not exists para_quem text,
+  add column if not exists destaques text[],
+  add column if not exists limites text[],
+  add column if not exists como_funciona text,
+  add column if not exists inclui_agentes_arvisx boolean not null default false;
+
+alter table public.cobranca_planos drop constraint if exists cobranca_planos_descricao_curta_tamanho;
+alter table public.cobranca_planos
+  add constraint cobranca_planos_descricao_curta_tamanho
+  check (descricao_curta is null or (btrim(descricao_curta) <> '' and char_length(descricao_curta) <= 140));
+
+alter table public.cobranca_planos drop constraint if exists cobranca_planos_para_quem_tamanho;
+alter table public.cobranca_planos
+  add constraint cobranca_planos_para_quem_tamanho
+  check (para_quem is null or (btrim(para_quem) <> '' and char_length(para_quem) <= 200));
+
+alter table public.cobranca_planos drop constraint if exists cobranca_planos_como_funciona_tamanho;
+alter table public.cobranca_planos
+  add constraint cobranca_planos_como_funciona_tamanho
+  check (como_funciona is null or (btrim(como_funciona) <> '' and char_length(como_funciona) <= 600));
+
+alter table public.cobranca_planos drop constraint if exists cobranca_planos_destaques_frases;
+alter table public.cobranca_planos
+  add constraint cobranca_planos_destaques_frases
+  check (public.fn_frases_do_plano_ok(destaques, 8, 120));
+
+alter table public.cobranca_planos drop constraint if exists cobranca_planos_limites_frases;
+alter table public.cobranca_planos
+  add constraint cobranca_planos_limites_frases
+  check (public.fn_frases_do_plano_ok(limites, 5, 200));
+
+comment on column public.cobranca_planos.descricao_curta is
+  'A promessa do plano numa frase (até 140), escrita pelo dono em /admin/cobranca. Migration 9803.';
+comment on column public.cobranca_planos.para_quem is
+  'Para quem o plano é (até 200), escrito pelo dono. Migration 9803.';
+comment on column public.cobranca_planos.destaques is
+  'O que o plano tem: até 8 frases de até 120, escritas pelo dono. Migration 9803.';
+comment on column public.cobranca_planos.limites is
+  'O que o plano NÃO tem: até 5 frases de até 200, escritas pelo dono. Migration 9803.';
+comment on column public.cobranca_planos.como_funciona is
+  'Parágrafo em destaque no card do plano (até 600), escrito pelo dono; no Equipe Completa diz como os agentes são criados. Migration 9803.';
+comment on column public.cobranca_planos.inclui_agentes_arvisx is
+  'O plano inclui os 4 agentes de IA feitos pela equipe da Arvisx (Equipe Completa). Informativo: mostra o selo e dispara o aviso à equipe (9804); não liga nem desliga agente. Migration 9803.';
+
+notify pgrst, 'reload schema';
+
+-- ---- Equipe Completa aguardando contato (migration 9804) ----
+-- Espelho idempotente da 9804 (o porquê está no cabeçalho da migration): a
+-- tabela `cobranca_equipe_completa` (RLS: admin da empresa lê; só o
+-- service_role escreve) e o gatilho `trg_cobranca_equipe_completa` em
+-- `cobranca_assinaturas`, que grava a entrada ou a saída e emite
+-- `cobranca.equipe_completa` no event_log (sem HTTP). Fica no fim, DEPOIS da
+-- VARREDURA anon: por isso a função revoga `public` e `anon` ela mesma.
+create table if not exists public.cobranca_equipe_completa (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
+  tipo text not null check (tipo in ('entrada', 'saida')),
+  plano_id uuid references public.cobranca_planos(id) on delete set null,
+  -- O nome do plano na hora: a lista segue legível se o plano for renomeado ou apagado.
+  plano_nome text not null,
+  criado_em timestamptz not null default clock_timestamp(),
+  equipe_avisada_em timestamptz,
+  contatado_em timestamptz,
+  contatado_por uuid references auth.users(id) on delete set null
+);
+
+create index if not exists cobranca_equipe_completa_org
+  on public.cobranca_equipe_completa (organization_id, criado_em desc);
+create index if not exists cobranca_equipe_completa_aguardando
+  on public.cobranca_equipe_completa (criado_em) where contatado_em is null;
+
+comment on table public.cobranca_equipe_completa is
+  'Entradas e saídas do Equipe Completa (plano com inclui_agentes_arvisx), gravadas por gatilho em cobranca_assinaturas (migration 9804). Lista "aguardando contato" em /admin/cobranca; contatado_em marcado pela equipe. Informativo: não liga nem desliga agente.';
+
+alter table public.cobranca_equipe_completa enable row level security;
+drop policy if exists tenant_isolation_cobranca_equipe_completa_select on public.cobranca_equipe_completa;
+create policy tenant_isolation_cobranca_equipe_completa_select on public.cobranca_equipe_completa
+  for select to authenticated using (public.fn_role_at_least(organization_id, 'admin'));
+revoke all on public.cobranca_equipe_completa from anon, authenticated;
+grant select on public.cobranca_equipe_completa to authenticated;
+grant select, insert, update, delete on public.cobranca_equipe_completa to service_role;
+
+create or replace function public.fn_cobranca_equipe_completa_marcar()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_tem_agora boolean;
+  v_tinha boolean := false;
+  v_plano_novo_inclui boolean;
+  v_plano_velho_inclui boolean := false;
+  v_ultimo text;
+  v_tipo text;
+  v_plano_id uuid;
+  v_nome text;
+  v_id uuid;
+begin
+  select coalesce(p.inclui_agentes_arvisx, false) into v_plano_novo_inclui
+    from public.cobranca_planos p where p.id = new.plano_id;
+  v_plano_novo_inclui := coalesce(v_plano_novo_inclui, false);
+  v_tem_agora := new.estado = 'ativa' and not coalesce(new.pagamento_inicial_pendente, false) and v_plano_novo_inclui;
+
+  if tg_op = 'UPDATE' then
+    select coalesce(p.inclui_agentes_arvisx, false) into v_plano_velho_inclui
+      from public.cobranca_planos p where p.id = old.plano_id;
+    v_plano_velho_inclui := coalesce(v_plano_velho_inclui, false);
+    v_tinha := old.estado = 'ativa' and not coalesce(old.pagamento_inicial_pendente, false) and v_plano_velho_inclui;
+  end if;
+
+  select e.tipo into v_ultimo
+    from public.cobranca_equipe_completa e
+   where e.organization_id = new.organization_id
+   order by e.criado_em desc, e.id desc
+   limit 1;
+
+  if v_tem_agora and not v_tinha and v_ultimo is distinct from 'entrada' then
+    v_tipo := 'entrada';
+    v_plano_id := new.plano_id;
+  elsif tg_op = 'UPDATE' and old.plano_id is distinct from new.plano_id
+        and v_plano_velho_inclui and not v_plano_novo_inclui and v_ultimo = 'entrada' then
+    v_tipo := 'saida';
+    v_plano_id := old.plano_id;
+  else
+    return null;
+  end if;
+
+  select p.nome into v_nome from public.cobranca_planos p where p.id = v_plano_id;
+
+  insert into public.cobranca_equipe_completa (organization_id, tipo, plano_id, plano_nome)
+  values (new.organization_id, v_tipo, v_plano_id, coalesce(v_nome, ''))
+  returning id into v_id;
+
+  -- O e-mail é do worker (handler `cobranca.equipe_completa`): gatilho não faz HTTP.
+  insert into public.event_log (organization_id, event_type, entity_kind, entity_id, payload, metadata)
+  values (
+    new.organization_id, 'cobranca.equipe_completa', 'organization', new.organization_id,
+    jsonb_build_object('aviso_id', v_id, 'tipo', v_tipo),
+    jsonb_build_object('origem', 'gatilho_cobranca_assinaturas', 'emitted_at', extract(epoch from now()))
+  );
+  return null;
+end;
+$$;
+
+revoke execute on function public.fn_cobranca_equipe_completa_marcar() from public, anon, authenticated;
+
+drop trigger if exists trg_cobranca_equipe_completa on public.cobranca_assinaturas;
+create trigger trg_cobranca_equipe_completa
+  after insert or update of plano_id, estado, pagamento_inicial_pendente on public.cobranca_assinaturas
+  for each row execute function public.fn_cobranca_equipe_completa_marcar();
+
+notify pgrst, 'reload schema';
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria
@@ -73870,169 +74142,5 @@ comment on column public.cobranca_planos.moeda is
 
 comment on table public.cobranca_planos is
   'Planos que o dono da instalação vende às empresas dela (migration 0583). Da INSTALAÇÃO, sem organization_id: RLS ligada sem policy, só o service_role. Limite nulo = sem limite. preco_cents >= 500 (mínimo de boleto); moeda BRL ou EUR (migration 9801); teto_ia_usd_cents na moeda de fn_gasto_de_ia_do_mes.';
-
-notify pgrst, 'reload schema';
-
--- ---- telas do plano (migration 9802) ----
--- Espelho idempotente da 9802 (o porquê está no cabeçalho da migration): a
--- coluna `cobranca_planos.interface_settings` (default completa) e as leituras
--- `fn_telas_do_plano` (service_role) e `fn_telas_do_plano_da_sessao`
--- (authenticated). Fica no fim, DEPOIS da VARREDURA anon: por isso cada função
--- revoga `public` e `anon` ela mesma.
-alter table public.cobranca_planos
-  add column if not exists interface_settings jsonb not null default '{"preset":"completa"}'::jsonb;
-
-alter table public.cobranca_planos
-  drop constraint if exists cobranca_planos_interface_settings_objeto;
-
-alter table public.cobranca_planos
-  add constraint cobranca_planos_interface_settings_objeto
-  check (jsonb_typeof(interface_settings) = 'object');
-
-comment on column public.cobranca_planos.interface_settings is
-  'Telas que o plano libera (migration 9802): preset completa|simplificada e, opcional, destinos (hrefs do catálogo lib/navigation/catalogo.ts). Mesmo formato do InterfaceEditor. As portas essenciais (perfil, segurança, equipe, plano e cobrança, ajuda) valem em todo plano. Validado em lib/schemas/cobranca-plano.ts; lido por fn_telas_do_plano.';
-
-create or replace function public.fn_telas_do_plano(p_org uuid)
-returns jsonb
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select case
-    when p_org is null or not public.fn_cobranca_ligada() then jsonb_build_object('restrito', false)
-    else coalesce(
-      (select jsonb_build_object('restrito', true, 'interface', p.interface_settings)
-         from public.cobranca_assinaturas a
-         join public.cobranca_planos p on p.id = a.plano_id
-        where a.organization_id = p_org),
-      jsonb_build_object('restrito', false)
-    )
-  end;
-$$;
-
-revoke execute on function public.fn_telas_do_plano(uuid) from public, anon, authenticated;
-grant execute on function public.fn_telas_do_plano(uuid) to service_role;
-
-create or replace function public.fn_telas_do_plano_da_sessao(p_org uuid)
-returns jsonb
-language plpgsql
-stable
-security definer
-set search_path = ''
-as $$
-declare
-  v_uid uuid := auth.uid();
-  v_suporte jsonb;
-  v_org uuid;
-begin
-  if v_uid is null then
-    return null;
-  end if;
-  v_suporte := public.fn_support_context();
-  if v_suporte is not null then
-    -- Acompanhamento encerrado: o app manda para /support-ended; aqui não se decide.
-    if v_suporte->>'status' is distinct from 'active' then
-      return null;
-    end if;
-    return public.fn_telas_do_plano((v_suporte->>'organization_id')::uuid);
-  end if;
-  if p_org is not null then
-    select uo.organization_id into v_org
-      from public.user_organizations uo
-     where uo.user_id = v_uid and uo.revoked_at is null and uo.organization_id = p_org;
-  end if;
-  if v_org is null then
-    select uo.organization_id into v_org
-      from public.user_organizations uo
-      join public.organizations o on o.id = uo.organization_id
-     where uo.user_id = v_uid and uo.revoked_at is null
-     order by (o.status = 'active') desc, uo.accepted_at asc nulls first, uo.organization_id asc
-     limit 1;
-  end if;
-  if v_org is null then
-    return null;
-  end if;
-  return public.fn_telas_do_plano(v_org);
-end;
-$$;
-
-revoke execute on function public.fn_telas_do_plano_da_sessao(uuid) from public, anon;
-grant execute on function public.fn_telas_do_plano_da_sessao(uuid) to authenticated, service_role;
-
-notify pgrst, 'reload schema';
-
--- ---- textos do plano (migration 9803) ----
--- Espelho idempotente da 9803 (o porquê está no cabeçalho da migration): os
--- textos do plano (`descricao_curta`, `para_quem`, `destaques`, `limites`,
--- `como_funciona`, nulos e sem default), o marcador `inclui_agentes_arvisx`
--- (default false) e a régua `fn_frases_do_plano_ok`. Fica no fim, DEPOIS da
--- VARREDURA anon: por isso a função revoga `public` e `anon` ela mesma.
-create or replace function`, constraints com `drop ... if exists`.
-
-create or replace function public.fn_frases_do_plano_ok(p_frases text[], p_max_itens int, p_max_caracteres int)
-returns boolean
-language sql
-immutable
-set search_path = ''
-as $$
-  select p_frases is null or (
-    coalesce(cardinality(p_frases), 0) between 1 and p_max_itens
-    and not exists (
-      select 1 from unnest(p_frases) as f(frase)
-       where f.frase is null or btrim(f.frase) = '' or char_length(f.frase) > p_max_caracteres
-    )
-  );
-$$;
-
--- Só quem grava o plano (o service_role) precisa dela; o CHECK roda como quem grava.
-revoke execute on function public.fn_frases_do_plano_ok(text[], int, int) from public, anon, authenticated;
-grant execute on function public.fn_frases_do_plano_ok(text[], int, int) to service_role;
-
-alter table public.cobranca_planos
-  add column if not exists descricao_curta text,
-  add column if not exists para_quem text,
-  add column if not exists destaques text[],
-  add column if not exists limites text[],
-  add column if not exists como_funciona text,
-  add column if not exists inclui_agentes_arvisx boolean not null default false;
-
-alter table public.cobranca_planos drop constraint if exists cobranca_planos_descricao_curta_tamanho;
-alter table public.cobranca_planos
-  add constraint cobranca_planos_descricao_curta_tamanho
-  check (descricao_curta is null or (btrim(descricao_curta) <> '' and char_length(descricao_curta) <= 140));
-
-alter table public.cobranca_planos drop constraint if exists cobranca_planos_para_quem_tamanho;
-alter table public.cobranca_planos
-  add constraint cobranca_planos_para_quem_tamanho
-  check (para_quem is null or (btrim(para_quem) <> '' and char_length(para_quem) <= 200));
-
-alter table public.cobranca_planos drop constraint if exists cobranca_planos_como_funciona_tamanho;
-alter table public.cobranca_planos
-  add constraint cobranca_planos_como_funciona_tamanho
-  check (como_funciona is null or (btrim(como_funciona) <> '' and char_length(como_funciona) <= 600));
-
-alter table public.cobranca_planos drop constraint if exists cobranca_planos_destaques_frases;
-alter table public.cobranca_planos
-  add constraint cobranca_planos_destaques_frases
-  check (public.fn_frases_do_plano_ok(destaques, 8, 120));
-
-alter table public.cobranca_planos drop constraint if exists cobranca_planos_limites_frases;
-alter table public.cobranca_planos
-  add constraint cobranca_planos_limites_frases
-  check (public.fn_frases_do_plano_ok(limites, 5, 200));
-
-comment on column public.cobranca_planos.descricao_curta is
-  'A promessa do plano numa frase (até 140), escrita pelo dono em /admin/cobranca. Migration 9803.';
-comment on column public.cobranca_planos.para_quem is
-  'Para quem o plano é (até 200), escrito pelo dono. Migration 9803.';
-comment on column public.cobranca_planos.destaques is
-  'O que o plano tem: até 8 frases de até 120, escritas pelo dono. Migration 9803.';
-comment on column public.cobranca_planos.limites is
-  'O que o plano NÃO tem: até 5 frases de até 200, escritas pelo dono. Migration 9803.';
-comment on column public.cobranca_planos.como_funciona is
-  'Parágrafo em destaque no card do plano (até 600), escrito pelo dono; no Equipe Completa diz como os agentes são criados. Migration 9803.';
-comment on column public.cobranca_planos.inclui_agentes_arvisx is
-  'O plano inclui os 4 agentes de IA feitos pela equipe da Arvisx (Equipe Completa). Informativo: mostra o selo e dispara o aviso à equipe (9804); não liga nem desliga agente. Migration 9803.';
 
 notify pgrst, 'reload schema';

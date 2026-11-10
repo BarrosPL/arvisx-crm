@@ -35,6 +35,8 @@ export function PainelDaAssinatura({ dados, idioma }: { dados: DadosDoPainel; id
   const { assinatura: a, plano: p, uso } = dados;
   const dia = (v: string | null) => (v ? data.format(new Date(v)) : "");
   const situacao = situacaoDaAssinatura(a, t, dia);
+  // Equipe Completa (9804): só depois do pagamento confirmado, e só enquanto o plano inclui os agentes.
+  const comAgentes = p.inclui_agentes_arvisx && a.estado === "ativa" && !a.pagamento_inicial_pendente;
 
   return (
     <Card className="max-w-xl space-y-4 p-6">
@@ -47,6 +49,13 @@ export function PainelDaAssinatura({ dados, idioma }: { dados: DadosDoPainel; id
         </p>
       </div>
       <p className="text-sm font-medium">{situacao}</p>
+      {comAgentes && (
+        <p data-equipe-completa className="rounded-md border border-cta/40 bg-cta-leve p-3 text-sm">
+          {dados.aguardaContatoDaEquipe
+            ? t("Recebemos sua assinatura. Nossa equipe entrará em contato para entender a sua operação e criar seus 4 agentes.")
+            : t("Seu plano inclui os 4 agentes de IA feitos sob medida pela nossa equipe.")}
+        </p>
+      )}
       {a.plano_agendado && (
         <p className="text-sm">
           {t("Novo plano a partir de")} {dia(a.proximo_vencimento)}: {a.plano_agendado.nome}

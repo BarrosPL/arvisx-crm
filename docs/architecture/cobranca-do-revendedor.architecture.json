@@ -64,7 +64,9 @@
     { "id": "cronCobranca", "lane": "app", "col": 7, "type": "api", "label": "cron api/v1/cron/cobranca (43 * * * *, scheduler)", "sublabel": "reconciliação de 6 h; régua; 80% da IA; audit cobranca.rodada só com efeito" },
     { "id": "rotasCliente", "lane": "app", "col": 4, "type": "api", "label": "api/v1/cobranca/assinatura/{checkout,sincronizar,plano,cancelar,gerenciar}", "sublabel": "admin da org; permiteOrgSuspensa; checkout em 3 fases" },
     { "id": "hub", "lane": "cliente", "col": 5, "type": "ui", "label": "/account-suspended › Pagar agora · Já paguei", "sublabel": "PainelDaAssinatura no hub do suspenso por cobrança" },
-    { "id": "email", "lane": "app", "col": 7, "type": "service", "label": "lib/email/roteador.ts · marcaDaSaida", "sublabel": "avisos da régua ao cliente; troca de chave aos admins full; melhor esforço" }
+    { "id": "email", "lane": "app", "col": 7, "type": "service", "label": "lib/email/roteador.ts · marcaDaSaida", "sublabel": "avisos da régua ao cliente; troca de chave aos admins full; melhor esforço" },
+    { "id": "equipeCompleta", "lane": "db", "col": 4, "type": "table", "label": "cobranca_equipe_completa + trg_cobranca_equipe_completa", "sublabel": "migration 9804: entrada (pago num plano com inclui_agentes_arvisx) e saída (troca para plano sem os agentes); o gatilho grava e emite cobranca.equipe_completa, sem HTTP" },
+    { "id": "equipeCompletaHandler", "lane": "app", "col": 6, "type": "service", "label": "equipeCompletaHandler", "sublabel": "naOrgParada:'pula'; e-mail aos platform admins full e marca equipe_avisada_em; e-mail que não sai fica só na lista" }
   ],
   "edges": [
     { "id": "e1", "from": "acaoModulo", "to": "platformConfig", "label": "gravarModulo" },
@@ -160,7 +162,13 @@
     { "id": "e91", "from": "billing", "to": "asaas", "label": "Assinar com CPF/CNPJ (vai ao Asaas, não ao banco); Pagar agora abre a fatura (invoiceUrl)" },
     { "id": "e92", "from": "hub", "to": "asaas", "label": "Pagar agora abre a fatura do Asaas" },
     { "id": "e93", "from": "telaConexao", "to": "asaas", "label": "webhook manual: passo a passo copiável, token mostrado uma vez" },
-    { "id": "e94", "from": "rotasDono", "to": "adaptador", "label": "garantirCliente, iniciarAssinatura, lerSituacao via lib/cobranca/checkout.ts (e-mail do admin da empresa, D-15)" }
+    { "id": "e94", "from": "rotasDono", "to": "adaptador", "label": "garantirCliente, iniciarAssinatura, lerSituacao via lib/cobranca/checkout.ts (e-mail do admin da empresa, D-15)" },
+    { "id": "e95", "from": "assinaturas", "to": "equipeCompleta", "label": "gatilho AFTER INSERT/UPDATE de plano_id, estado, pagamento_inicial_pendente" },
+    { "id": "e96", "from": "equipeCompleta", "to": "eventLog", "label": "cobranca.equipe_completa {aviso_id, tipo}" },
+    { "id": "e97", "from": "eventLog", "to": "equipeCompletaHandler", "label": "loop do worker / event-log-drain" },
+    { "id": "e98", "from": "equipeCompletaHandler", "to": "email", "label": "avisarEquipeCompleta aos platform admins full" },
+    { "id": "e99", "from": "telaCobranca", "to": "equipeCompleta", "label": "lista 'Equipe Completa aguardando contato'; PATCH marca contatado_em" },
+    { "id": "e100", "from": "billing", "to": "equipeCompleta", "label": "'nossa equipe entrará em contato' enquanto a entrada não tem contato" }
   ],
   "cards": [
     {

@@ -37,6 +37,7 @@ import { avisoDeCasoAoSuporteHandler } from "@/lib/escalacao/aviso-ao-suporte.ha
 import { avisoDeHandoffHandler } from "@/lib/escalacao/aviso-de-handoff.handler";
 import { avisoDePropostaNoWhatsAppHandler } from "@/lib/propostas/aviso-no-whatsapp.handler";
 import { avisoDeAgendamentoNoWhatsAppHandler } from "@/lib/agenda/aviso-de-agendamento.handler";
+import { equipeCompletaHandler } from "@/lib/cobranca/equipe-completa";
 import { cobrancaSinalHandler } from "@/lib/cobranca/sinal.handler";
 import { registerHandler } from "@/lib/event-log/dispatcher";
 
@@ -97,6 +98,9 @@ export function ensureHandlersRegistered(): void {
   // A cobrança do revendedor: relê o provedor (rede de terceiro) e só então
   // escreve. Consome um evento só dela, então a posição não atrasa ninguém.
   registerHandler(cobrancaSinalHandler);
+  // Equipe Completa (migration 9804): o e-mail à equipe da instalação. Consome
+  // um evento só dele, emitido pelo gatilho de cobranca_assinaturas.
+  registerHandler(equipeCompletaHandler);
   // Penúltimo, pelo MESMO critério do último: o aviso ao suporte sai por rede de
   // terceiro (o transporte de WhatsApp) e nunca pode atrasar quem escreve no
   // banco — inclusive o `followupGatilhoCasoHandler`, que consome o MESMO evento

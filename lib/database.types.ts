@@ -5474,6 +5474,58 @@ export type Database = {
           },
         ];
       };
+      cobranca_equipe_completa: {
+        Row: {
+          contatado_em: string | null;
+          contatado_por: string | null;
+          criado_em: string;
+          equipe_avisada_em: string | null;
+          id: string;
+          organization_id: string;
+          plano_id: string | null;
+          plano_nome: string;
+          tipo: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          contatado_em?: string | null;
+          contatado_por?: string | null;
+          criado_em?: string;
+          equipe_avisada_em?: string | null;
+          id?: string;
+          organization_id: string;
+          plano_id?: string | null;
+          plano_nome: string;
+          tipo: string;
+        };
+        Update: {
+          contatado_em?: string | null;
+          contatado_por?: string | null;
+          criado_em?: string;
+          equipe_avisada_em?: string | null;
+          id?: string;
+          organization_id?: string;
+          plano_id?: string | null;
+          plano_nome?: string;
+          tipo?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cobranca_equipe_completa_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cobranca_equipe_completa_plano_id_fkey";
+            columns: ["plano_id"];
+            isOneToOne: false;
+            referencedRelation: "cobranca_planos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       cobranca_planos: {
         Row: {
           arquivado_em: string | null;

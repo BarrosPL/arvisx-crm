@@ -1205,6 +1205,9 @@ export const AUDIT_ACTIONS = [
   // desligada em /admin/sistema, com quantas suspensas foram liberadas.
   "cobranca.plano_salvo",
   "cobranca.plano_arquivado",
+  // Equipe Completa (ArvisX, migration 9804): a equipe marcou que já falou com a
+  // empresa que assinou (ou deixou) o plano com os agentes feitos sob medida.
+  "cobranca.equipe_completa_contatada",
   "cobranca.plano_trocado",
   "cobranca.prazo_concedido",
   "cobranca.isencao_definida",

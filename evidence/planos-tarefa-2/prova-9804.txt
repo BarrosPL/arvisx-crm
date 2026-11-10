@@ -1,0 +1,11 @@
+# Prova da migration 9804 no Supabase local (arvisx-treinamento), 2026-11-10T17:07Z
+# Roteiro: evidence/planos-tarefa-2/prova-9804.sql (transação desfeita no fim)
+
+1 trial|0
+2 ativa|entrada|Equipe Completa (prova)
+2 evento|cobranca.equipe_completa|entrada
+3 atraso+volta|1
+4 downgrade|entrada,saida
+5 volta|entrada,saida,entrada
+5 eventos|3
+6 anon le?|f

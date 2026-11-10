@@ -85,11 +85,14 @@ async function enviarParaCada(
   email: { subject: string; html: string; text: string },
   fromName: string,
   contexto: Record<string, unknown>,
-): Promise<void> {
+): Promise<number> {
+  let sairam = 0;
   for (const to of para) {
     const r = await sendEmail({ to, subject: email.subject, html: email.html, text: email.text, fromName, tags: [{ name: "tipo", value: "cobranca" }] });
-    if (!r.ok) logger.warn("cobranca.email_nao_saiu", { ...contexto, erro: r.error ?? "desconhecido", via: r.via ?? null });
+    if (r.ok) sairam += 1;
+    else logger.warn("cobranca.email_nao_saiu", { ...contexto, erro: r.error ?? "desconhecido", via: r.via ?? null });
   }
+  return sairam;
 }
 
 export async function enviarAvisoAosAdmins(
@@ -141,5 +144,48 @@ export async function avisarTrocaDeChave(admin: SupabaseClient, o: { antigo: str
     await enviarParaCada(para, email, marca.nome, { destino: "donos_da_instalacao" });
   } catch (e) {
     logger.warn("cobranca.email_nao_saiu", { destino: "donos_da_instalacao", erro: e instanceof Error ? e.message : "desconhecido" });
+  }
+}
+
+/**
+ * O Equipe Completa (migration 9804): uma empresa assinou (ou deixou) o plano
+ * com os 4 agentes feitos pela equipe. Todo platform admin com acesso total
+ * recebe, como na troca de chave. Devolve quantos e-mails saíram: zero = o
+ * aviso fica só na lista "aguardando contato" de /admin/cobranca, que é a
+ * fonte (o e-mail é melhor esforço).
+ */
+export async function avisarEquipeCompleta(
+  admin: SupabaseClient,
+  o: { empresa: string; plano: string; tipo: "entrada" | "saida" },
+): Promise<number> {
+  try {
+    const { data, error } = await admin.from("platform_admins").select("user_id").eq("scope", "full").is("revoked_at", null);
+    if (error) throw new Error(`donos ilegíveis (${error.code ?? "sem_codigo"})`);
+    const para = await emailsDe(admin, ((data ?? []) as Array<{ user_id: string }>).map((l) => l.user_id));
+    if (para.length === 0) return 0;
+    const marca = await marcaDaSaida(null, { semMemo: true });
+    const email = buildEmailDaCobranca(
+      o.tipo === "entrada"
+        ? {
+            titulo: `${o.empresa} assinou o ${o.plano}: entrar em contato`,
+            corpo: "O pagamento foi confirmado. Fale com a empresa para entender a operação dela e criar os 4 agentes. Depois, marque o contato em Admin › Cobrança.",
+            marca,
+            idioma: "pt-BR",
+            botao: { rotulo: "Abrir Cobrança", href: `${base()}/admin/cobranca` },
+            rodape: "Você recebe este aviso porque administra esta instalação.",
+          }
+        : {
+            titulo: `${o.empresa} deixou o ${o.plano}`,
+            corpo: "A empresa trocou para um plano sem os agentes feitos pela equipe. Nada foi apagado nem desligado: combine com ela o que fazer com os agentes.",
+            marca,
+            idioma: "pt-BR",
+            botao: { rotulo: "Abrir Cobrança", href: `${base()}/admin/cobranca` },
+            rodape: "Você recebe este aviso porque administra esta instalação.",
+          },
+    );
+    return await enviarParaCada(para, email, marca.nome, { destino: "donos_da_instalacao", aviso: "equipe_completa" });
+  } catch (e) {
+    logger.warn("cobranca.email_nao_saiu", { destino: "donos_da_instalacao", aviso: "equipe_completa", erro: e instanceof Error ? e.message : "desconhecido" });
+    return 0;
   }
 }

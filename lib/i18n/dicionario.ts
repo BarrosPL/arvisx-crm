@@ -19996,6 +19996,16 @@ export const DICIONARIO: Traducoes = {
   "Medir e gerir": { es: "Medir y gestionar" },
   "Integrar": { es: "Integrar" },
   "IA avançada": { es: "IA avanzada" },
+  // Equipe Completa depois do pagamento (migration 9804).
+  "Equipe Completa aguardando contato": { es: "Equipo Completo esperando contacto" },
+  "Empresas que assinaram ou deixaram um plano com os agentes feitos sob medida. Fale com cada uma e marque o contato.": { es: "Empresas que se suscribieron a un plan con los agentes hechos a medida o lo dejaron. Habla con cada una y marca el contacto." },
+  "assinou o {plano}": { es: "se suscribió a {plano}" },
+  "deixou o {plano}": { es: "dejó {plano}" },
+  "e-mail enviado à equipe": { es: "correo enviado al equipo" },
+  "e-mail não enviado: o aviso está só aqui": { es: "correo no enviado: el aviso está solo aquí" },
+  "Marcar como contatado": { es: "Marcar como contactado" },
+  "Recebemos sua assinatura. Nossa equipe entrará em contato para entender a sua operação e criar seus 4 agentes.": { es: "Recibimos tu suscripción. Nuestro equipo se pondrá en contacto para entender tu operación y crear tus 4 agentes." },
+  "Seu plano inclui os 4 agentes de IA feitos sob medida pela nossa equipe.": { es: "Tu plan incluye los 4 agentes de IA hechos a medida por nuestro equipo." },
 };
 
 /**
