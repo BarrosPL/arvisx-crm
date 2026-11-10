@@ -3223,3 +3223,51 @@ html:has(.lp) {
 .lp .plano .plano-card.agentes .pl-promessa {
   color: #fff;
 }
+
+/* Quem cuida dos agentes de IA (tarefa 3 dos planos): o aviso fixo abaixo da grade de planos. */
+.lp .quem-cuida {
+  margin: 30px auto 0;
+  padding: 22px 24px;
+  border-radius: 18px;
+  border: 1px solid rgba(133, 106, 18, 0.35);
+  background: rgba(212, 175, 55, 0.08);
+  text-align: left;
+}
+.lp .plano .quem-cuida h3 {
+  font: 700 19px/1.2 var(--display);
+  color: #0f131a;
+  margin: 0 0 14px;
+}
+.lp .quem-cuida dl {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+}
+.lp .quem-cuida dt {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #856a12;
+  margin-bottom: 4px;
+}
+.lp .quem-cuida dd {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: #4a5363;
+}
+.lp .quem-cuida .qc-consumo {
+  margin: 16px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid rgba(15, 19, 26, 0.1);
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a2230;
+}
+@media (min-width: 900px) {
+  .lp .quem-cuida dl {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+  }
+}

@@ -63,8 +63,8 @@ describe("/ — landing v3", () => {
     expect(CADASTRO_ABERTO).toBe(true);
     const { container } = await montar();
     expect(screen.queryByText(OFERTA.ctaEmBreve)).toBeNull();
-    // topo + hero + um por plano
-    expect(container.querySelectorAll(`a[href="${LINKS.cadastro}"]`)).toHaveLength(2 + QUATRO.length);
+    // topo + hero + um por plano + a seção do Equipe Completa
+    expect(container.querySelectorAll(`a[href="${LINKS.cadastro}"]`)).toHaveLength(3 + QUATRO.length);
     for (const card of container.querySelectorAll("[data-plano]")) {
       expect(within(card as HTMLElement).getByRole("link", { name: new RegExp(OFERTA.cta) })).toHaveAttribute("href", "/signup");
     }
@@ -97,12 +97,15 @@ describe("/ — landing v3", () => {
     expect(vazio.container.querySelector("#plano a[href='/signup']")).toBeTruthy();
   });
 
-  it("o botão de reunião com o time Arvisx leva a /agendar", async () => {
-    await montar();
-    expect(screen.getByRole("link", { name: "Agendar reunião com o time Arvisx" })).toHaveAttribute(
-      "href",
-      "/agendar",
-    );
+  it("⭐ a seção do Equipe Completa leva ao cadastro como os demais botões, e nada na landing aponta para a reunião", async () => {
+    const { container } = await montar();
+    const secao = container.querySelector("#agentes") as HTMLElement;
+    expect(within(secao).getByRole("heading", { level: 2 })).toHaveTextContent("Quer agentes de IA feitos para a sua operação?");
+    expect(within(secao).getByRole("link", { name: new RegExp(OFERTA.cta) })).toHaveAttribute("href", LINKS.cadastro);
+    // A rota /agendar continua existindo; a landing só deixou de apontar para ela.
+    expect(LINKS.agendar).toBe("/agendar");
+    expect(container.querySelectorAll(`a[href="${LINKS.agendar}"]`)).toHaveLength(0);
+    expect(screen.queryByText(/Agendar reunião/)).toBeNull();
   });
 
   it("Entrar leva ao login", async () => {
