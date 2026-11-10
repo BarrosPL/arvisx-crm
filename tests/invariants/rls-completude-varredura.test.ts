@@ -380,6 +380,14 @@ const PROVA_PROPRIA: readonly Excecao[] = [
       "pela sessão e qualquer leitura por anon dão permission denied. Migration 0510.",
   },
   {
+    tabela: "cobranca_equipe_completa",
+    razao:
+      "tests/invariants/cobranca-equipe-completa.test.ts — dois tenants reais por JWT: " +
+      "admin de A lê as linhas de A e 0 de B, admin de B só a dele, agent de A lê 0 " +
+      "(leitura de admin, como cobranca_assinaturas: não cabe em TABLES), e " +
+      "UPDATE/INSERT/DELETE pela sessão e leitura por anon dão permission denied. Migration 9804.",
+  },
+  {
     tabela: "conversation_participants",
     razao:
       "tests/invariants/atendimento-conjunto-participantes.test.ts — dois tenants " +
