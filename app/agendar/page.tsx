@@ -10,19 +10,23 @@ import { LINKS } from "@/lib/landing/links";
 import "./agendar.css";
 
 /**
- * /agendar: reunião de 30 minutos com o time Arvisx para quem precisa de uma
- * solução sob medida (Agentes Arvisx). Página pública de marketing, aberta pelo
- * botão "Agendar reunião com o time Arvisx" da landing (`app/page.tsx`).
- * Conteúdo e visual do protótipo aprovado
+ * /agendar: reunião de 30 minutos com o time Arvisx para quem quer o plano
+ * Equipe Completa, o único em que a Arvisx desenvolve agentes sob medida
+ * (tarefa 4 dos planos). Na reunião a equipe entende a operação e orienta a
+ * assinatura, que é feita no CRM. Página pública de marketing, aberta pela
+ * landing (`app/page.tsx`): o botão "Agendar reunião" do card do Equipe Completa
+ * e o "Agendar reunião com o time Arvisx" da seção `#agentes`. Os planos
+ * Essencial, Standard e Premium não passam por aqui.
+ * Visual do protótipo aprovado
  * (docs/arvisx/prototipo/landing/agendar.html); o portão e a agenda do Google
  * ficam em `CartaoDaAgenda`, o endereço da agenda em `lib/landing/links.ts`.
  *
  * Quem tem sessão também pode abrir: é página de venda, não do produto.
  */
 export const metadata: Metadata = {
-  title: "Arvisx CRM | Atendimento especializado",
+  title: "Arvisx CRM | Equipe Completa: reunião com o time Arvisx",
   description:
-    "Reunião com um especialista da Arvisx para empresas que precisam de uma solução sob medida além do que o Arvisx CRM já oferece: agentes de IA, automações e integrações.",
+    "Reunião de 30 minutos com o time Arvisx para quem quer o plano Equipe Completa: entendemos a sua operação e orientamos a assinatura do plano com agentes de IA sob medida.",
   alternates: { canonical: "https://crm.arvisx.com.br/agendar" },
 };
 
@@ -50,12 +54,12 @@ export default async function AgendarPage() {
       <main className="pagina">
         <div className="miolo">
           <section className="intro" aria-labelledby="titulo">
-            <span className="eyebrow">Agentes Arvisx · Atendimento especializado</span>
-            <h1 id="titulo">Precisa de algo que o CRM ainda não faz?</h1>
+            <span className="eyebrow">Equipe Completa · Reunião com o time Arvisx</span>
+            <h1 id="titulo">Quer agentes de IA feitos para a sua operação?</h1>
             <p className="lead">
-              Nesta conversa de 30 minutos, um especialista da Arvisx entende o seu processo, onde a
-              operação trava e o que falta para a sua empresa. A partir disso, desenhamos com você
-              uma solução sob medida.
+              O Equipe Completa é o único plano em que a Arvisx desenvolve agentes de IA sob medida,
+              e ele começa por esta conversa de 30 minutos: entendemos a sua operação e orientamos
+              como assinar o plano. A assinatura é feita no CRM.
             </p>
             <div className="fio" aria-hidden="true" />
 
@@ -79,16 +83,16 @@ export default async function AgendarPage() {
                 </h2>
                 <ul>
                   <li>
-                    <b>Agentes de IA próprios</b> para uma área da sua empresa
+                    <b>Quem quer o Equipe Completa:</b> o plano com 4 agentes de IA sob medida
                   </li>
                   <li>
-                    <b>Automações</b> de um processo que hoje é manual
+                    <b>Entender a sua operação</b> antes de qualquer desenvolvimento
                   </li>
                   <li>
-                    <b>Integrações</b> com os sistemas que você já usa
+                    <b>Orientar a assinatura</b> do Equipe Completa, feita no CRM
                   </li>
                   <li>
-                    <b>Fluxos específicos</b> do seu negócio que o CRM não cobre
+                    <b>Combinar o escopo</b> dos agentes e das integrações do plano
                   </li>
                 </ul>
               </div>
@@ -115,6 +119,10 @@ export default async function AgendarPage() {
                     <Link href="/">comece o teste grátis de 7 dias</Link>, sem precisar de reunião.
                   </li>
                   <li>
+                    <b>Essencial, Standard e Premium:</b> não precisam de reunião nem têm
+                    desenvolvimento personalizado. Nesses planos, você configura os seus agentes.
+                  </li>
+                  <li>
                     <b>Suporte e dúvidas de uso:</b> escreva para{" "}
                     <a href={LINKS.suporte}>suporte@arvisx.com.br</a>.
                   </li>
@@ -124,7 +132,7 @@ export default async function AgendarPage() {
 
             <div className="traga" aria-label="O que trazer para a reunião">
               <div>
-                <b>O que resolver</b>O processo que você quer automatizar ou melhorar.
+                <b>O que resolver</b>O atendimento ou o processo em que os agentes vão atuar.
               </div>
               <div>
                 <b>Seus sistemas</b>As ferramentas que a sua empresa já usa.
