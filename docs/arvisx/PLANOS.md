@@ -61,7 +61,7 @@ personalizar: todas as telas.
 ### Por que essa divisão
 
 - O Essencial é o que se precisa para atender e acompanhar clientes. LGPD fica aqui por obrigação legal.
-- O Standard entrega um agente de IA funcionando (agente, conhecimento, follow-up, fluxo, casos, controle de custo), mais o cadastro B2B e a importação de dados.
+- O Standard entrega a ferramenta de agentes de IA (agentes, conhecimento, follow-up, fluxo, casos, controle de custo), que o próprio cliente configura, mais o cadastro B2B e a importação de dados. O código não limita a quantidade de agentes.
 - O Premium reúne o que faz a empresa crescer e se controlar: vender em escala, prospectar, medir, integrar e a IA avançada (vários agentes com roteamento, memória e ações próprias). Os 4 agentes do Equipe Completa usam Roteadores, Skills, Memória, Webhooks e API: por isso o Premium é o mínimo para eles.
 - Se uma tela do Standard fizer falta de verdade para o cliente, o dono ajusta a lista pelo /admin/cobranca.
 
@@ -94,7 +94,7 @@ Equipe Completa, marque também "Inclui os 4 agentes de IA feitos sob medida".
 - Para quem é: Equipe que já atende bem e perde tempo respondendo o que se repete.
 - O que tem:
   - Tudo do Essencial
-  - Um agente de IA que responde e faz follow-up
+  - Agentes de IA que respondem e fazem follow-up
   - Base de conhecimento e fluxos de atendimento
   - Casos, alertas e controle de uso da IA
   - Cadastro de empresas e pessoas, e importação de planilhas
@@ -104,7 +104,8 @@ Equipe Completa, marque também "Inclui os 4 agentes de IA feitos sob medida".
 - O que não tem:
   - Não tem propostas, produtos, campanhas em massa nem prospecção.
   - Não tem relatórios de desempenho e financeiros nem integrações por API.
-  - Não tem a IA avançada (vários agentes, memória, ações próprias).
+  - Não tem as telas de configuração avançada de IA (roteamento entre agentes, memória, ações próprias).
+  - Você configura e gerencia os seus agentes; a Arvisx não cria agentes nesse plano.
   - Mude para o Premium quando precisar vender em escala, prospectar, medir resultado, integrar outros sistemas, usar IA avançada ou passar de 6 canais ou 10 pessoas.
 
 ### Premium
@@ -117,11 +118,12 @@ Equipe Completa, marque também "Inclui os 4 agentes de IA feitos sob medida".
   - Campanhas, prospecção e Cold Call
   - Desempenho, faturamento e honorários
   - Meta Ads e conversões
-  - IA avançada: vários agentes, memória e ações
+  - Configuração avançada de IA: roteamento entre agentes, memória e ações próprias
   - Integrações (API, webhooks, Nuvemshop) e marca própria
   - Canais e pessoas ilimitados
 - O que não tem:
   - Não tem agentes feitos sob medida pela Arvisx (veja o Equipe Completa).
+  - Você configura e gerencia os seus agentes; a Arvisx não cria agentes nesse plano.
 
 ### Equipe Completa
 
@@ -137,3 +139,30 @@ Equipe Completa, marque também "Inclui os 4 agentes de IA feitos sob medida".
 - Como funciona: Assim que a assinatura é confirmada, nossa equipe entra em contato para entender a sua operação e criar os 4 agentes personalizados de acordo com o que você precisa, integrados ao CRM e às demais ferramentas que você usa. Os agentes não são cópias prontas: são montados para o seu negócio.
 
 O preço (€499,90) não vai no texto: o card mostra o preço do cadastro do plano.
+
+## Quem cuida dos agentes de IA
+
+Regra comercial (Lucas e Dr. Renan): no Essencial, no Standard e no Premium, a
+gestão e a configuração dos agentes de IA dentro da plataforma são do cliente. A
+Arvisx só entra em desenvolvimento de soluções personalizadas no Equipe Completa.
+
+Esse aviso NÃO é texto de plano e não se cola em /admin/cobranca: é fixo, mora em
+`lib/cobranca/quem-cuida-dos-agentes.ts` e aparece igual na página inicial (abaixo
+dos planos) e no comparativo dos planos (fim do teste, Assinar, Plano e cobrança).
+É só texto: nenhum plano limita a quantidade de agentes que o cliente cria.
+
+## Teste de 7 dias
+
+O teste de 7 dias é do plano que o cliente escolher: cadastre cada um dos quatro
+planos com `trial_dias = 7`. Não há plano de entrada separado.
+
+## Ordem para colocar no ar
+
+1. Fechar o cadastro em /admin/cadastro, antes do deploy.
+2. Aplicar as migrations 9801 a 9804 no banco (o `init.sh` aplica pela lista
+   `deploy/arvisx/crm/migracoes-pos-baseline.txt`). Sem a 9802 no banco antes da
+   imagem nova, toda empresa fica só com o Atendimento.
+3. Subir a imagem nova.
+4. Criar os 4 planos em /admin/cobranca, com os preços, as telas e os textos acima.
+5. Testar a assinatura em modo de teste da Stripe (`docs/arvisx/STRIPE-MODO-TESTE.md`).
+6. Só então reabrir o cadastro em /admin/cadastro.
