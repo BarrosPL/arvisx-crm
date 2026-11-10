@@ -77,7 +77,7 @@ export function ComparativoDosPlanos(p: PropsDoComparativo) {
                   </span>
                 )}
                 {plano.inclui_agentes_arvisx && (
-                  <span data-selo="agentes" className="inline-flex items-center gap-1 rounded-md bg-cta px-1.5 py-0.5 text-xs font-medium text-cta-fg">
+                  <span data-selo="agentes" className="inline-flex items-center gap-1 rounded-md bg-cta px-1.5 py-0.5 text-xs font-medium text-cta-foreground">
                     <Sparkle aria-hidden weight="fill" className="h-3 w-3" />
                     {t("Agentes de IA sob medida")}
                   </span>

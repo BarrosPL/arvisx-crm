@@ -74,7 +74,9 @@ export async function listarAguardandoContato(
 async function nomesDasEmpresas(admin: SupabaseClient, ids: readonly string[]): Promise<Map<string, string>> {
   if (ids.length === 0) return new Map();
   const { data } = await admin.from("organizations").select("id, display_name").in("id", ids);
-  return new Map(((data ?? []) as Array<{ id: string; display_name: string | null }>).map((o) => [o.id, o.display_name ?? o.id]));
+  // Nome da EMPRESA (organizations), não de contato: sem nome, o id.
+  const empresas = (data ?? []) as Array<{ id: string; display_name: string | null }>;
+  return new Map(empresas.map(({ id, display_name: nome }) => [id, nome ?? id]));
 }
 
 const CONSUMER_KEY = "cobranca.equipe_completa";

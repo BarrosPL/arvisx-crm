@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const h = vi.hoisted(() => ({ base: null as string | null, chave: ["sk", "test", "51HregistroDeTeste00"].join("_") as string | null }));
-vi.mock("@/lib/cobranca/configuracao", () => ({ chaveDoProvedor: async () => h.chave }));
+vi.mock("@/lib/cobranca/configuracao", () => ({ chaveDoProvedor: async () => h.chave, cobraIva: async () => false }));
 vi.mock("@/lib/cobranca/provedores/base-de-teste", () => ({ baseDeTesteDaCobranca: () => h.base }));
 vi.mock("@/lib/env", () => ({ env: { NEXT_PUBLIC_APP_URL: "https://crm.example.com" } }));
 

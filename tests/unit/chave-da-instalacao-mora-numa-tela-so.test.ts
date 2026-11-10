@@ -46,7 +46,7 @@ describe("uma chave da instalação mora numa tela só", () => {
       .map((d) => d.chave)
       .sort();
     expect(daCobranca).toEqual([
-      "ASAAS_API_KEY", "ASAAS_WEBHOOK_TOKEN", "COBRANCA_PROVEDOR", "COBRANCA_TOLERANCIA_DIAS", "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET",
+      "ASAAS_API_KEY", "ASAAS_WEBHOOK_TOKEN", "COBRANCA_IVA", "COBRANCA_PROVEDOR", "COBRANCA_TOLERANCIA_DIAS", "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET",
     ]);
     // As quatro credenciais são segredo: cifradas no banco, a tela vê só os 4 últimos.
     for (const chave of ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "ASAAS_API_KEY", "ASAAS_WEBHOOK_TOKEN"]) {

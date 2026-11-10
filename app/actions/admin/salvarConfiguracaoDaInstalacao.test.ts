@@ -37,7 +37,7 @@ beforeEach(() => {
 
 describe("as chaves da cobrança só se escrevem pela tela de Cobrança", () => {
   it("controle: a sonda enxerga as seis chaves da cobrança (Stripe e Asaas)", () => {
-    expect(DA_COBRANCA).toHaveLength(6);
+    expect(DA_COBRANCA).toHaveLength(7);
   });
 
   it.each(DA_COBRANCA)("salvar %s pela ação genérica é recusado sem gravar nem auditar", async (chave) => {
