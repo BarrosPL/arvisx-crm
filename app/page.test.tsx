@@ -60,16 +60,27 @@ describe("/ — landing v3", () => {
     );
   });
 
-  it("⭐ com o cadastro aberto, o topo, a hero e TODO plano levam a criar a conta e começar o teste", async () => {
+  it("⭐ com o cadastro aberto, o topo, a hero e os planos sem o serviço sob medida levam ao cadastro; o Equipe Completa, à reunião", async () => {
     expect(CADASTRO_ABERTO).toBe(true);
     const { container } = await montar();
     expect(screen.queryByText(OFERTA.ctaEmBreve)).toBeNull();
-    // topo + hero + um por plano + a seção do Equipe Completa
-    expect(container.querySelectorAll(`a[href="${LINKS.cadastro}"]`)).toHaveLength(3 + QUATRO.length);
+    // topo + hero + Essencial, Standard e Premium (o Equipe Completa começa pela reunião)
+    expect(container.querySelectorAll(`a[href="${LINKS.cadastro}"]`)).toHaveLength(2 + QUATRO.length - 1);
     for (const card of container.querySelectorAll("[data-plano]")) {
-      expect(within(card as HTMLElement).getByRole("link", { name: new RegExp(OFERTA.cta) })).toHaveAttribute("href", "/signup");
+      const links = within(card as HTMLElement).getAllByRole("link");
+      expect(links).toHaveLength(1);
+      if (card.getAttribute("data-plano") === "Equipe Completa") {
+        expect(links[0]).toHaveTextContent("Agendar reunião");
+        expect(links[0]).toHaveAttribute("href", "/agendar");
+      } else {
+        expect(links[0]).toHaveTextContent(OFERTA.cta);
+        expect(links[0]).toHaveAttribute("href", "/signup");
+      }
     }
     expect(LINKS.cadastro).toBe("/signup");
+    expect(LINKS.agendar).toBe("/agendar");
+    // card do Equipe Completa + seção #agentes
+    expect(container.querySelectorAll(`a[href="${LINKS.agendar}"]`)).toHaveLength(2);
   });
 
   it("⭐ os planos vêm do cadastro: quatro cards com preço + IVA, limites e o texto do plano; selos certos", async () => {
@@ -98,15 +109,26 @@ describe("/ — landing v3", () => {
     expect(vazio.container.querySelector("#plano a[href='/signup']")).toBeTruthy();
   });
 
-  it("⭐ a seção do Equipe Completa leva ao cadastro como os demais botões, e nada na landing aponta para a reunião", async () => {
+  it("⭐ a seção do Equipe Completa começa pela reunião: três passos e o botão que leva a /agendar, sem botão de cadastro", async () => {
     const { container } = await montar();
     const secao = container.querySelector("#agentes") as HTMLElement;
     expect(within(secao).getByRole("heading", { level: 2 })).toHaveTextContent("Quer agentes de IA feitos para a sua operação?");
-    expect(within(secao).getByRole("link", { name: new RegExp(OFERTA.cta) })).toHaveAttribute("href", LINKS.cadastro);
-    // A rota /agendar continua existindo; a landing só deixou de apontar para ela.
-    expect(LINKS.agendar).toBe("/agendar");
-    expect(container.querySelectorAll(`a[href="${LINKS.agendar}"]`)).toHaveLength(0);
-    expect(screen.queryByText(/Agendar reunião/)).toBeNull();
+    expect(within(secao).getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual([
+      "Você agenda uma reunião de 30 minutos com o time Arvisx",
+      "Entendemos a sua operação e orientamos como assinar o Equipe Completa",
+      "Desenvolvemos os 4 agentes e integramos ao seu CRM",
+    ]);
+    expect(within(secao).getByRole("link", { name: "Agendar reunião com o time Arvisx" })).toHaveAttribute("href", LINKS.agendar);
+    expect(secao.querySelector(`a[href="${LINKS.cadastro}"]`)).toBeNull();
+    expect(secao.textContent).toMatch(/A assinatura do Equipe Completa é feita no CRM, com a orientação da nossa equipe na reunião\./);
+    expect(secao.textContent).toMatch(/É o único plano em que a Arvisx desenvolve soluções personalizadas\./);
+  });
+
+  it("o hero não promete IA em todos os planos: a IA começa no Standard", async () => {
+    const { container } = await montar();
+    const hero = container.querySelector(".hero") as HTMLElement;
+    expect(hero.textContent).not.toMatch(/Em todos os planos · IA/);
+    expect(within(hero).getByText("IA a partir do Standard, com as credenciais da sua empresa")).toBeTruthy();
   });
 
   it("⭐ o aviso 'Quem cuida dos agentes de IA' aparece abaixo da grade de planos, com as frases da constante", async () => {
@@ -133,7 +155,12 @@ describe("/ — landing v3", () => {
     // Onde a landing diz que a Arvisx desenvolve, diz em que plano.
     expect(String(metadata.description)).toMatch(/No plano Equipe Completa, a equipe Arvisx desenvolve agentes de IA sob medida\./);
     expect(container.querySelector("#ia")!.textContent).toMatch(/A gestão e a configuração dos agentes são suas\./);
-    expect(container.querySelector("#suas-chaves")!.textContent).toMatch(/Esse serviço faz parte do plano Equipe Completa\./);
+    expect(container.querySelector("#suas-chaves")!.textContent).toMatch(/Esse serviço faz parte do plano Equipe Completa\. Comece por uma reunião\./);
+    // A reunião é do Equipe Completa: a descrição não diz que se assina sem ela, e o FAQ diz por onde começa.
+    expect(String(metadata.description)).not.toMatch(/sem reunião|assine|assinar/i);
+    const faq = container.querySelector("#faq")!.textContent!;
+    expect(faq).toMatch(/nos demais planos, a Arvisx não desenvolve soluções personalizadas\. O Equipe Completa começa por uma reunião\./);
+    expect(faq).toMatch(/Você começa por uma reunião com a nossa equipe, que entende a sua operação e orienta a assinatura; depois criamos 4 agentes de IA sob medida/);
   });
 
   it("os links para a seção do Equipe Completa existem e a âncora #agentes continua no lugar", async () => {
