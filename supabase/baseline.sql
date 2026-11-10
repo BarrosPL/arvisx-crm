@@ -69178,8 +69178,9 @@ revoke execute on function public.fn_channel_sessions_ligacao_ao_provedor_e_do_s
 -- Espelho idempotente da 9802 (o porquê está no cabeçalho da migration): a
 -- coluna `cobranca_planos.interface_settings` (default completa) e as leituras
 -- `fn_telas_do_plano` (service_role) e `fn_telas_do_plano_da_sessao`
--- (authenticated). Fica no fim, DEPOIS da VARREDURA anon: por isso cada função
--- revoga `public` e `anon` ela mesma.
+-- (authenticated). Fica ANTES da VARREDURA anon, como todo apêndice que cria
+-- função (tests/unit/varredura-anon-e-o-ultimo-bloco.test.ts); cada função
+-- revoga `public` e `anon` também ela mesma.
 alter table public.cobranca_planos
   add column if not exists interface_settings jsonb not null default '{"preset":"completa"}'::jsonb;
 
@@ -69267,10 +69268,8 @@ notify pgrst, 'reload schema';
 -- Espelho idempotente da 9803 (o porquê está no cabeçalho da migration): os
 -- textos do plano (`descricao_curta`, `para_quem`, `destaques`, `limites`,
 -- `como_funciona`, nulos e sem default), o marcador `inclui_agentes_arvisx`
--- (default false) e a régua `fn_frases_do_plano_ok`. Fica no fim, DEPOIS da
--- VARREDURA anon: por isso a função revoga `public` e `anon` ela mesma.
-create or replace function`, constraints com `drop ... if exists`.
-
+-- (default false) e a régua `fn_frases_do_plano_ok`. Fica ANTES da VARREDURA
+-- anon; a função revoga `public` e `anon` também ela mesma.
 create or replace function public.fn_frases_do_plano_ok(p_frases text[], p_max_itens int, p_max_caracteres int)
 returns boolean
 language sql
@@ -69343,8 +69342,8 @@ notify pgrst, 'reload schema';
 -- tabela `cobranca_equipe_completa` (RLS: admin da empresa lê; só o
 -- service_role escreve) e o gatilho `trg_cobranca_equipe_completa` em
 -- `cobranca_assinaturas`, que grava a entrada ou a saída e emite
--- `cobranca.equipe_completa` no event_log (sem HTTP). Fica no fim, DEPOIS da
--- VARREDURA anon: por isso a função revoga `public` e `anon` ela mesma.
+-- `cobranca.equipe_completa` no event_log (sem HTTP). Fica ANTES da VARREDURA
+-- anon; a função revoga `public` e `anon` também ela mesma.
 create table if not exists public.cobranca_equipe_completa (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations(id) on delete cascade,

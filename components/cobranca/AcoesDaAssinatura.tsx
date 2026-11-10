@@ -258,7 +258,7 @@ export function AcoesDaAssinatura(p: PropsDasAcoes) {
     });
 
   return (
-    <div className={escolhendo ? "max-w-4xl space-y-3" : "max-w-xl space-y-3"}>
+    <div className={escolhendo || trocando ? "max-w-6xl space-y-3" : "max-w-xl space-y-3"}>
       {soPeloPortal && (
         <p className="text-sm">
           {t("Não há cobrança aberta para pagar agora. Atualize o cartão em Gerenciar pagamento: a próxima tentativa sai sozinha.")}

@@ -1,0 +1,146 @@
+{
+  "01-teste-comparativo-dos-quatro-planos": {
+    "largura": 1440,
+    "rolagemHorizontal": 0,
+    "cards": [
+      {
+        "plano": "Essencial",
+        "largura": 267
+      },
+      {
+        "plano": "Standard",
+        "largura": 267
+      },
+      {
+        "plano": "Premium",
+        "largura": 267
+      },
+      {
+        "plano": "Equipe Completa",
+        "largura": 267
+      }
+    ]
+  },
+  "02-teste-escolhe-standard-o-que-sai-antes-do-assinar": {
+    "largura": 1440,
+    "rolagemHorizontal": 0,
+    "cards": [
+      {
+        "plano": "Essencial",
+        "largura": 267
+      },
+      {
+        "plano": "Standard",
+        "largura": 267
+      },
+      {
+        "plano": "Premium",
+        "largura": 267
+      },
+      {
+        "plano": "Equipe Completa",
+        "largura": 267
+      }
+    ]
+  },
+  "03-celular-390-comparativo": {
+    "largura": 390,
+    "rolagemHorizontal": 0,
+    "cards": [
+      {
+        "plano": "Essencial",
+        "largura": 310
+      },
+      {
+        "plano": "Standard",
+        "largura": 310
+      },
+      {
+        "plano": "Premium",
+        "largura": 310
+      },
+      {
+        "plano": "Equipe Completa",
+        "largura": 310
+      }
+    ]
+  },
+  "04-essencial-para-premium-o-que-entra": {
+    "largura": 1440,
+    "rolagemHorizontal": 0,
+    "cards": [
+      {
+        "plano": "Essencial",
+        "largura": 267
+      },
+      {
+        "plano": "Standard",
+        "largura": 267
+      },
+      {
+        "plano": "Premium",
+        "largura": 267
+      },
+      {
+        "plano": "Equipe Completa",
+        "largura": 267
+      }
+    ]
+  },
+  "05-premium-para-standard-o-que-sai-antes-de-confirmar": {
+    "largura": 1440,
+    "rolagemHorizontal": 0,
+    "cards": [
+      {
+        "plano": "Essencial",
+        "largura": 267
+      },
+      {
+        "plano": "Standard",
+        "largura": 267
+      },
+      {
+        "plano": "Premium",
+        "largura": 267
+      },
+      {
+        "plano": "Equipe Completa",
+        "largura": 267
+      }
+    ]
+  },
+  "perdaAntesDoBotao": {
+    "telasQueSaem": 27,
+    "perdaAcimaDoBotao": true
+  },
+  "linhasDoGatilho": "entrada:Equipe Completa",
+  "eventos": "3",
+  "06-equipe-completa-pago-mensagem-ao-cliente": {
+    "largura": 1440,
+    "rolagemHorizontal": 0,
+    "cards": []
+  },
+  "07-admin-equipe-completa-aguardando-contato": {
+    "largura": 1440,
+    "rolagemHorizontal": 0,
+    "cards": []
+  },
+  "08-admin-planos-textos-do-equipe-completa": {
+    "largura": 1440,
+    "rolagemHorizontal": 0,
+    "cards": []
+  },
+  "contatadoNoBanco": "true",
+  "09-depois-do-contato-cliente-ve-que-o-plano-inclui-os-agentes": {
+    "largura": 1440,
+    "rolagemHorizontal": 0,
+    "cards": []
+  },
+  "depoisDoDowngrade": "entrada,saida",
+  "seloDepoisDoDowngrade": 0,
+  "10-downgrade-equipe-avisada-da-saida": {
+    "largura": 1440,
+    "rolagemHorizontal": 0,
+    "cards": []
+  }
+}
