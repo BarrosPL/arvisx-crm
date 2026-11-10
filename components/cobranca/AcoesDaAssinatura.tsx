@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { FRASE_DO_EXCEDENTE } from "@/components/admin/tenants/CardDeCobranca";
+import { ComparativoDosPlanos } from "@/components/cobranca/ComparativoDosPlanos";
 import { showApiError } from "@/components/feedback/ApiErrorToast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,11 +15,11 @@ import { ApiError } from "@/lib/api/types";
 import { documentoDoPagador, exigeDocumento } from "@/lib/cobranca/documento";
 import { formatadorDeData } from "@/lib/cobranca/fuso";
 import { linkDePagamentoSeguro } from "@/lib/cobranca/link";
-import { excessoDosDetalhes, itensDoExcesso, preencherFrase, type ItemDoExcesso } from "@/lib/cobranca/excesso";
+import { excessoDosDetalhes, preencherFrase, type ItemDoExcesso } from "@/lib/cobranca/excesso";
 import { calcularAjusteProporcional } from "@/lib/cobranca/prorata";
 import { abrirNoNavegador } from "@/lib/cobranca/navegar";
 import { formatCents } from "@/lib/money";
-import type { PlanoParaAssinar, PlanoParaTroca } from "@/lib/cobranca/painel";
+import type { DadosDoPainel, PlanoParaAssinar, PlanoParaTroca } from "@/lib/cobranca/painel";
 import type { UsoDaOrganizacao } from "@/lib/cobranca/uso";
 import type { EstadoDaAssinatura, ProvedorDeCobranca } from "@/lib/cobranca/vocabulario";
 import { useIdioma } from "@/lib/i18n/IdiomaProvider";
@@ -55,6 +56,11 @@ export interface PropsDasAcoes {
   planosParaAssinar?: readonly PlanoParaAssinar[];
   /** O uso de hoje: a frase do excesso diz "você tem N". */
   uso?: UsoDaOrganizacao;
+  /**
+   * Tarefa 2 dos planos: o comparativo em linguagem de benefício, o mesmo na
+   * escolha do Assinar e na troca. Ausente = nenhum card (só o que já havia).
+   */
+  comparativo?: DadosDoPainel["comparativo"];
 }
 
 const BASE = "/api/v1/cobranca/assinatura";
@@ -102,7 +108,10 @@ export function AcoesDaAssinatura(p: PropsDasAcoes) {
   const [ocupado, setOcupado] = useState(false);
   const [recado, setRecado] = useState<string | null>(null);
   const [trocando, setTrocando] = useState(false);
-  const [novo, setNovo] = useState(p.planosParaTroca[0]?.id ?? "");
+  // Nenhum plano pré-escolhido: o botão de confirmar só aparece depois da escolha e do que ela muda.
+  const [novo, setNovo] = useState("");
+  const [escolha, setEscolha] = useState<string | null>(null);
+  const comparativo = p.comparativo ?? { planos: [], atual: null };
   const [cancelando, setCancelando] = useState(false);
   const [documento, setDocumento] = useState(p.documentoDoCadastro ?? "");
   // A fatura do Asaas que o Assinar acabou de gerar: abre numa NOVA aba, por um link
@@ -131,7 +140,6 @@ export function AcoesDaAssinatura(p: PropsDasAcoes) {
         agora: new Date(p.instanteCalculo),
         moeda: selecionado.moeda,
       });
-  const dolares = (centavos: number) => new Intl.NumberFormat(idioma, { style: "currency", currency: "USD" }).format(centavos / 100);
 
   const emDivida = p.estado === "em_atraso" || p.estado === "cancelada";
   const podeAssinar = p.assinaturasVivas === 0 && p.estado !== "ativa";
@@ -155,6 +163,8 @@ export function AcoesDaAssinatura(p: PropsDasAcoes) {
   const escolhendo = podeAssinar && p.escolheAoAssinar === true && planosParaAssinar.length > 0;
   const podeTrocar = !escolhendo && p.planosParaTroca.length > 0 && (p.estado === "trial" || p.estado === "ativa") && !p.cancelaNoFim && p.trocaStatus !== "criando";
   const frasesDoExcesso = (itens: readonly ItemDoExcesso[]) => itens.map((item) => preencherFrase(t(item.frase), item));
+  // A troca mostra os planos da troca e o atual (marcado, sem botão); a escolha do Assinar, os oferecidos.
+  const planosDaTroca = comparativo.planos.filter((plano) => plano.atual || p.planosParaTroca.some((x) => x.id === plano.id));
   const podeCancelar = p.temProvedor && p.assinaturasVivas > 0 && !p.cancelaNoFim && (p.estado === "ativa" || p.estado === "trial");
 
   async function agir(acao: () => Promise<void>) {
@@ -354,131 +364,82 @@ export function AcoesDaAssinatura(p: PropsDasAcoes) {
       {escolhendo && (
         <section aria-labelledby="escolha-do-plano" className="space-y-3">
           <h2 id="escolha-do-plano" className="text-sm font-semibold">{t("Escolha seu plano")}</h2>
-          <ul className="grid gap-3 md:grid-cols-3">
-            {planosParaAssinar.map((plano) => {
-              const excesso = p.uso
-                ? itensDoExcesso(plano.excedente, p.uso, { assentos: plano.max_assentos, canais: plano.max_canais })
-                : [];
-              const naoCabe = excesso.length !== 0;
-              return (
-                <li key={plano.id} data-plano={plano.nome} className="flex flex-col gap-3 rounded-lg border p-4 text-sm">
-                  <div className="space-y-0.5">
-                    <h3 className="font-semibold">
-                      {plano.nome}
-                      {plano.atual && <span className="ml-2 rounded-md bg-muted px-1.5 py-0.5 text-xs font-normal">{t("Plano atual")}</span>}
-                    </h3>
-                    <p className="text-base font-medium">
-                      {formatCents(plano.preco_cents, plano.moeda)}{" "}
-                      <span className="text-sm font-normal text-muted-foreground">/ {plano.intervalo === "ano" ? t("ano") : t("mês")}</span>
-                    </p>
-                  </div>
-                  <ul className="space-y-1 text-muted-foreground">
-                    <li>{t("Pessoas")}: {plano.max_assentos ?? t("sem limite")}</li>
-                    <li>{t("Números conectados")}: {plano.max_canais ?? t("sem limite")}</li>
-                  </ul>
-                  <div className="space-y-1" data-perde>
-                    {plano.perde.length === 0 ? (
-                      <p>{t("Todas as telas liberadas.")}</p>
-                    ) : (
-                      <>
-                        <p className="font-medium">{t("Fica de fora:")}</p>
-                        <ul className="list-disc space-y-0.5 pl-4 text-muted-foreground">
-                          {plano.perde.map((g) => (
-                            <li key={g.grupo}>
-                              {g.inteiro
-                                ? `${t(g.rotulo)} (${t("todas as telas")})`
-                                : `${t(g.rotulo)}: ${g.telas.map((tela) => t(tela)).join(", ")}`}
-                            </li>
-                          ))}
-                        </ul>
-                      </>
-                    )}
-                  </div>
-                  {naoCabe && (
-                    <p className="text-xs text-warning-fg" data-excesso>
-                      {frasesDoExcesso(excesso).join(" ")}
-                    </p>
-                  )}
-                  <Button
-                    className="mt-auto"
-                    disabled={ocupado || naoCabe || (pedeDocumento && documentoNormalizado === null)}
-                    onClick={() => assinar(plano.id)}
-                  >
-                    {t("Assinar {plano}").replace("{plano}", plano.nome)}
-                  </Button>
-                </li>
-              );
-            })}
-          </ul>
+          <ComparativoDosPlanos
+            planos={comparativo.planos}
+            atual={comparativo.atual}
+            atualEscolhivel
+            selecionadoId={escolha}
+            onEscolher={setEscolha}
+            uso={p.uso}
+            desabilitado={ocupado}
+            confirmar={(plano, naoCabe) => (
+              <Button
+                disabled={ocupado || naoCabe || (pedeDocumento && documentoNormalizado === null)}
+                onClick={() => assinar(plano.id)}
+              >
+                {t("Assinar {plano}").replace("{plano}", plano.nome)}
+              </Button>
+            )}
+          />
         </section>
       )}
 
       {trocando && (
-        <div className="space-y-3 rounded-md border p-3">
-          <div className="flex flex-wrap items-end gap-2">
-          <div className="space-y-1">
-            <Label htmlFor="novo-plano">{t("Novo plano")}</Label>
-            <select id="novo-plano" className="h-9 rounded-md border bg-background px-2 text-sm" value={novo} onChange={(e) => setNovo(e.target.value)}>
-              {p.planosParaTroca.map((plano) => (
-                <option key={plano.id} value={plano.id}>
-                  {plano.nome}
-                </option>
-              ))}
-            </select>
-          </div>
-          </div>
-          {p.planoAtual && selecionado && (
-            <div className="grid gap-2 text-sm sm:grid-cols-2" aria-live="polite">
-              {[p.planoAtual, selecionado].map((plano, i) => (
-                <section key={plano.id} className="rounded-md bg-muted/40 p-3">
-                  <h3 className="font-medium">{i === 0 ? t("Plano atual") : t("Novo plano")}: {plano.nome}</h3>
-                  <p>{formatCents(plano.preco_cents, plano.moeda)} / {plano.intervalo === "ano" ? t("ano") : t("mês")}</p>
-                  <ul className="mt-2 space-y-1 text-muted-foreground">
-                    <li>{t("Pessoas")}: {plano.max_assentos ?? t("sem limite")}</li>
-                    <li>{t("Números conectados")}: {plano.max_canais ?? t("sem limite")}</li>
-                    {/* Planos novos não têm teto de IA (o cliente usa a própria credencial): a linha só aparece com teto. */}
-                    {plano.teto_ia_usd_cents !== null && <li>{t("IA por mês")}: {dolares(plano.teto_ia_usd_cents)}</li>}
-                  </ul>
-                </section>
-              ))}
-            </div>
-          )}
-          {selecionado && selecionado.preco_cents > (p.planoAtual?.preco_cents ?? 0) && (
-            <p className="text-sm">
-              {ajusteProporcional === null
-                ? t("Não foi possível calcular o proporcional com os dados do período pago. Nenhuma troca será realizada.")
-                : ajusteProporcional === 0
-                  ? `${t("O ajuste proporcional é zero; o novo plano entra na próxima renovação")}: ${dia(p.proximoVencimento)}.`
-                  : `${t("Ajuste proporcional estimado para hoje")}: ${formatCents(ajusteProporcional, selecionado.moeda)}. ${t("A data da próxima renovação permanece")}: ${dia(p.proximoVencimento)}.`}
-            </p>
-          )}
-          {selecionado && p.planoAtual && selecionado.preco_cents <= p.planoAtual.preco_cents && (
-            <p className="text-sm text-muted-foreground">{t("O plano escolhido e seus limites passam a valer na próxima renovação. A fatura atual mantém o valor e o vencimento.")}</p>
-          )}
-          <Button
-            disabled={ocupado || !novo}
-            onClick={() =>
-              void agir(async () => {
-                const { data: r } = await apiClient.post<{ data: { quando: string; vale_a_partir_de: string | null; url_pagamento?: string | null } }>(`${BASE}/plano`, { plano_id: novo });
-                setTrocando(false);
-                if (r.url_pagamento) {
-                  if (p.provedor === "asaas") setFatura(linkDePagamentoSeguro(r.url_pagamento));
-                  else abrirNoNavegador(r.url_pagamento);
-                  setRecado(t("Pague o ajuste proporcional para aplicar o novo plano. Seus limites atuais permanecem até a confirmação."));
-                  return;
-                }
-                setRecado(
-                  r.quando === "agendado" && r.vale_a_partir_de
-                    ? t("O novo plano vale a partir de {data}.").replace("{data}", dia(r.vale_a_partir_de))
-                    : t("Plano trocado."),
-                );
-                router.refresh();
-              })
-            }
-          >
-            {t("Confirmar troca")}
-          </Button>
-        </div>
+        <section aria-labelledby="troca-de-plano" className="space-y-3">
+          <h2 id="troca-de-plano" className="text-sm font-semibold">{t("Trocar de plano")}</h2>
+          <ComparativoDosPlanos
+            planos={planosDaTroca}
+            atual={comparativo.atual}
+            selecionadoId={novo || null}
+            onEscolher={setNovo}
+            uso={p.uso}
+            desabilitado={ocupado}
+            confirmar={() => (
+              <div className="space-y-3">
+                {selecionado && selecionado.preco_cents > (p.planoAtual?.preco_cents ?? 0) && (
+                  <p className="text-sm">
+                    {ajusteProporcional === null
+                      ? t("Não foi possível calcular o proporcional com os dados do período pago. Nenhuma troca será realizada.")
+                      : ajusteProporcional === 0
+                        ? `${t("O ajuste proporcional é zero; o novo plano entra na próxima renovação")}: ${dia(p.proximoVencimento)}.`
+                        : `${t("Ajuste proporcional estimado para hoje")}: ${formatCents(ajusteProporcional, selecionado.moeda)}. ${t("A data da próxima renovação permanece")}: ${dia(p.proximoVencimento)}.`}
+                  </p>
+                )}
+                {selecionado && p.planoAtual && selecionado.preco_cents <= p.planoAtual.preco_cents && (
+                  <p className="text-sm text-muted-foreground">{t("O plano escolhido e seus limites passam a valer na próxima renovação. A fatura atual mantém o valor e o vencimento.")}</p>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    disabled={ocupado || !novo}
+                    onClick={() =>
+                      void agir(async () => {
+                        const { data: r } = await apiClient.post<{ data: { quando: string; vale_a_partir_de: string | null; url_pagamento?: string | null } }>(`${BASE}/plano`, { plano_id: novo });
+                        setTrocando(false);
+                        if (r.url_pagamento) {
+                          if (p.provedor === "asaas") setFatura(linkDePagamentoSeguro(r.url_pagamento));
+                          else abrirNoNavegador(r.url_pagamento);
+                          setRecado(t("Pague o ajuste proporcional para aplicar o novo plano. Seus limites atuais permanecem até a confirmação."));
+                          return;
+                        }
+                        setRecado(
+                          r.quando === "agendado" && r.vale_a_partir_de
+                            ? t("O novo plano vale a partir de {data}.").replace("{data}", dia(r.vale_a_partir_de))
+                            : t("Plano trocado."),
+                        );
+                        router.refresh();
+                      })
+                    }
+                  >
+                    {t("Confirmar troca")}
+                  </Button>
+                  <Button variant="ghost" disabled={ocupado} onClick={() => { setTrocando(false); setNovo(""); }}>
+                    {t("Fechar")}
+                  </Button>
+                </div>
+              </div>
+            )}
+          />
+        </section>
       )}
 
       {cancelando && (

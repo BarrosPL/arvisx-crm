@@ -23,7 +23,7 @@ visíveis" e marque as telas abaixo (os planos de cima levam as de baixo).
 Perfil, Segurança, Notificações, App no celular, Equipe, Plano e cobrança, Ajuda
 e Guia de uso valem em todo plano e não aparecem no seletor.
 
-A conferência automática está em `tests/unit/planos-distribuicao-das-telas.test.ts`
+As listas estão escritas à mão em `tests/helpers/distribuicao-dos-planos.ts`; a conferência automática é `tests/unit/planos-distribuicao-das-telas.test.ts`
 (12 + 19 + 32 = 63; tela nova no catálogo sem degrau reprova o teste).
 
 ### Essencial — 12 telas (atender e organizar)

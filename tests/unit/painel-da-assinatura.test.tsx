@@ -25,6 +25,7 @@ const EM_TESTE: DadosDoPainel = {
   planosParaTroca: [],
   escolheAoAssinar: false,
   planosParaAssinar: [],
+  comparativo: { planos: [], atual: null },
   fuso: null,
   checkout: { provedor: null, documentoDoCadastro: null },
 };

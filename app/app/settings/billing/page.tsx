@@ -69,6 +69,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
               escolheAoAssinar={painel.escolheAoAssinar}
               planosParaAssinar={painel.planosParaAssinar}
               uso={painel.uso}
+              comparativo={painel.comparativo}
             />
           )}
         </>

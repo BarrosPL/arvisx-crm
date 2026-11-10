@@ -223,6 +223,7 @@ export default async function AccountSuspendedPage({
               escolheAoAssinar={painel.escolheAoAssinar}
               planosParaAssinar={painel.planosParaAssinar}
               uso={painel.uso}
+              comparativo={painel.comparativo}
             />
           </section>
         )}

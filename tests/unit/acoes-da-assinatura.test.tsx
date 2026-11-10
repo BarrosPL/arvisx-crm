@@ -16,10 +16,15 @@ vi.mock("@/components/feedback/ApiErrorToast", () => ({ showApiError: h.showApiE
 import { ApiError } from "@/lib/api/types";
 import { AcoesDaAssinatura, type PropsDasAcoes } from "@/components/cobranca/AcoesDaAssinatura";
 import { PainelDaAssinatura } from "@/components/cobranca/PainelDaAssinatura";
-import type { DadosDoPainel } from "@/lib/cobranca/painel";
+import type { DadosDoPainel, PlanoDoComparativo, PlanoParaTroca } from "@/lib/cobranca/painel";
 
 const PLANO = { id: "plano-a", nome: "Essencial", preco_cents: 4990, moeda: "BRL" as const, intervalo: "mes", max_assentos: null, max_canais: null, teto_ia_usd_cents: null };
 const PRO = { id: "plano-b", nome: "Profissional", preco_cents: 9990, moeda: "BRL" as const, intervalo: "mes", max_assentos: 3, max_canais: 5, teto_ia_usd_cents: 1000 };
+/** O plano no comparativo (tarefa 2 dos planos), sem textos: o card só mostra preço e limites. */
+const noComparativo = (plano: PlanoParaTroca, atual = false): PlanoDoComparativo => ({
+  ...plano, atual, descricao_curta: null, para_quem: null, destaques: [], limites: [], como_funciona: null,
+  inclui_agentes_arvisx: false, telas: [], excedente: {},
+});
 const BASE: NonNullable<DadosDoPainel["assinatura"]> = {
   estado: "ativa", trial_ate: null, prazo_extra_ate: null, proximo_vencimento: "2026-11-01T12:00:00Z", vencida_desde: null,
   cancela_no_fim: false, modo: "teste", provedor: "stripe", link_de_pagamento: null, assinaturas_vivas: 1, plano_agendado: null,
@@ -27,12 +32,14 @@ const BASE: NonNullable<DadosDoPainel["assinatura"]> = {
 };
 const painel = (a: Partial<typeof BASE>): DadosDoPainel => ({
   assinatura: { ...BASE, ...a }, plano: PLANO, uso: { assentos: 1, canais: 1 }, gastoIaUsdCents: 0, planosParaTroca: [PRO], escolheAoAssinar: false, planosParaAssinar: [], fuso: null,
+  comparativo: { planos: [noComparativo(PLANO, true), noComparativo(PRO)], atual: noComparativo(PLANO, true) },
   checkout: { provedor: "stripe", documentoDoCadastro: null },
 });
 const acoes = (p: Partial<PropsDasAcoes> = {}): PropsDasAcoes => ({
   estado: "ativa", temProvedor: true, assinaturasVivas: 1, linkDePagamento: null, cancelaNoFim: false,
   planosParaTroca: [PRO], planoAtual: PLANO, periodoPagoDesde: "2026-10-01T12:00:00Z", proximoVencimento: "2026-11-01T12:00:00Z",
-  trocaPagamentoUrl: null, trocaStatus: null, instanteCalculo: "2026-10-13T12:00:00Z", voltouDoCheckout: false, noHub: false, provedor: "stripe", documentoDoCadastro: null, ...p,
+  trocaPagamentoUrl: null, trocaStatus: null, instanteCalculo: "2026-10-13T12:00:00Z", voltouDoCheckout: false, noHub: false, provedor: "stripe", documentoDoCadastro: null,
+  comparativo: { planos: [noComparativo(PLANO, true), noComparativo(PRO)], atual: noComparativo(PLANO, true) }, ...p,
 });
 
 beforeEach(() => {
@@ -72,7 +79,9 @@ describe("AcoesDaAssinatura", () => {
   it("ajuste abaixo do mínimo do provedor: a tela diz 'na próxima renovação', como o servidor faz", async () => {
     // A 6 h do fim do período, R$ 50,00 de diferença dá ~R$ 0,40 — abaixo de R$ 5,00.
     render(<AcoesDaAssinatura {...acoes({ instanteCalculo: "2026-11-01T06:00:00Z" })} />);
-    await userEvent.setup().click(screen.getByRole("button", { name: "Trocar de plano" }));
+    const u = userEvent.setup();
+    await u.click(screen.getByRole("button", { name: "Trocar de plano" }));
+    await u.click(screen.getByRole("button", { name: "Escolher Profissional" }));
     expect(screen.getByText(/o novo plano entra na próxima renovação/)).toBeTruthy();
   });
 
@@ -137,7 +146,7 @@ describe("AcoesDaAssinatura", () => {
     h.post.mockResolvedValue({ data: { changed: true, quando: "agendado", plano_id: "plano-a", plano_agendado_id: "plano-b", vale_a_partir_de: "2026-11-01T12:00:00Z" } });
     render(<AcoesDaAssinatura {...acoes()} />);
     await u.click(screen.getByRole("button", { name: "Trocar de plano" }));
-    await u.selectOptions(screen.getByLabelText("Novo plano"), "plano-b");
+    await u.click(screen.getByRole("button", { name: "Escolher Profissional" }));
     await u.click(screen.getByRole("button", { name: "Confirmar troca" }));
     expect((await screen.findByRole("status")).textContent).toMatch(/O novo plano vale a partir de \d{2}\/\d{2}/);
     expect(h.post).toHaveBeenCalledWith("/api/v1/cobranca/assinatura/plano", { plano_id: "plano-b" });
@@ -277,7 +286,7 @@ describe("Asaas no Plano e cobrança (PR 3b)", () => {
     h.post.mockRejectedValue(new ApiError(409, "pagamento_do_periodo_pendente", undefined, "r", "x"));
     render(<AcoesDaAssinatura {...acoes({ provedor: "asaas" })} />);
     await u.click(screen.getByRole("button", { name: "Trocar de plano" }));
-    await u.selectOptions(screen.getByLabelText("Novo plano"), "plano-b");
+    await u.click(screen.getByRole("button", { name: "Escolher Profissional" }));
     await u.click(screen.getByRole("button", { name: "Confirmar troca" }));
     expect((await screen.findByRole("status")).textContent).toBe(
       'A mensalidade de agora ainda não foi paga. Pague em "Pagar agora" e troque de plano depois que o pagamento for confirmado (Pix: minutos; boleto: até 1 dia útil).',

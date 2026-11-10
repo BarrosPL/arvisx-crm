@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { provedorDaInstalacao } from "@/lib/cobranca/configuracao";
 import { sugestaoDoCadastro } from "@/lib/cobranca/documento";
-import { oQueOPlanoTira, type GrupoQueOPlanoTira } from "@/lib/cobranca/o-que-o-plano-tira";
+import { telasDoPlanoNoSeletor } from "@/lib/cobranca/comparativo";
 import { excedenteDoPlano, lerUsoDaOrganizacao, type Excedente, type UsoDaOrganizacao } from "@/lib/cobranca/uso";
 import { modulosLigados } from "@/lib/instalacao/modulos";
 import { provedorCobraEm, type EstadoDaAssinatura, type Modo, type Moeda, type ProvedorDeCobranca } from "@/lib/cobranca/vocabulario";
@@ -39,13 +39,31 @@ export interface PlanoParaTroca {
 
 /**
  * Um plano na escolha do "Assinar" (ArvisX, etapa 3): preço na moeda dele,
- * limites, o que o cliente PERDE nele (gerado do catálogo) e o que o uso de
- * hoje passa do teto — a mesma conta da recusa do servidor.
+ * limites e o que o uso de hoje passa do teto — a mesma conta da recusa do
+ * servidor. O que ele tem e não tem vai no comparativo (`PlanoDoComparativo`).
  */
 export interface PlanoParaAssinar extends PlanoParaTroca {
   /** É o plano em que a empresa está agora. */
   atual: boolean;
-  perde: GrupoQueOPlanoTira[];
+  /** Vazio = o uso de hoje cabe. */
+  excedente: Excedente;
+}
+
+/**
+ * Um plano no COMPARATIVO (ArvisX, tarefa 2 dos planos): preço, limites, os
+ * textos que o dono escreveu (migration 9803), as telas do seletor que ele
+ * libera (a mesma régua da trava) e o excesso do uso de hoje.
+ */
+export interface PlanoDoComparativo extends PlanoParaTroca {
+  atual: boolean;
+  descricao_curta: string | null;
+  para_quem: string | null;
+  destaques: string[];
+  limites: string[];
+  como_funciona: string | null;
+  inclui_agentes_arvisx: boolean;
+  /** hrefs das telas do seletor que o plano libera. */
+  telas: string[];
   /** Vazio = o uso de hoje cabe. */
   excedente: Excedente;
 }
@@ -76,6 +94,13 @@ export interface DadosDoPainel {
   escolheAoAssinar: boolean;
   /** Planos ativos e oferecidos, numa moeda que o provedor cobra, em ordem de preço. Vazio sem `escolheAoAssinar`. */
   planosParaAssinar: PlanoParaAssinar[];
+  /**
+   * O comparativo da escolha (no Assinar) ou da troca: os planos que a empresa
+   * pode escolher, em ordem de preço (o atual entra se for oferecido), e o
+   * plano ATUAL como base do "o que entra / o que sai" — ele mesmo quando é um
+   * plano escondido, como o teste grátis.
+   */
+  comparativo: { planos: PlanoDoComparativo[]; atual: PlanoDoComparativo | null };
   /** IANA da empresa (`organizations.timezone`): as datas do painel e do recado saem nele. */
   fuso: string | null;
   /**
@@ -88,6 +113,12 @@ export interface DadosDoPainel {
 
 interface PlanoLido extends PlanoParaTroca {
   interface_settings: unknown;
+  descricao_curta: string | null;
+  para_quem: string | null;
+  destaques: string[] | null;
+  limites: string[] | null;
+  como_funciona: string | null;
+  inclui_agentes_arvisx: boolean;
   max_assentos: number | null;
   max_canais: number | null;
   teto_ia_usd_cents: number | null;
@@ -115,7 +146,7 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
   const [planos, uso, gasto, org, daInstalacao, modulos] = await Promise.all([
     db
       .from("cobranca_planos")
-      .select("id, nome, preco_cents, moeda, intervalo, max_assentos, max_canais, teto_ia_usd_cents, arquivado_em, oferecido_ao_cliente, interface_settings"),
+      .select("id, nome, preco_cents, moeda, intervalo, max_assentos, max_canais, teto_ia_usd_cents, arquivado_em, oferecido_ao_cliente, interface_settings, descricao_curta, para_quem, destaques, limites, como_funciona, inclui_agentes_arvisx"),
     lerUsoDaOrganizacao(db, orgId),
     db.rpc("fn_gasto_de_ia_do_mes", { p_org: orgId }),
     db.from("organizations").select("timezone, cnpj").eq("id", orgId).maybeSingle(),
@@ -137,6 +168,26 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
     id: p.id, nome: p.nome, preco_cents: p.preco_cents, moeda: p.moeda, intervalo: p.intervalo,
     max_assentos: p.max_assentos, max_canais: p.max_canais, teto_ia_usd_cents: p.teto_ia_usd_cents,
   });
+  const paraComparar = (p: PlanoLido): PlanoDoComparativo => ({
+    ...paraTela(p),
+    atual: p.id === plano?.id,
+    descricao_curta: p.descricao_curta ?? null,
+    para_quem: p.para_quem ?? null,
+    destaques: p.destaques ?? [],
+    limites: p.limites ?? [],
+    como_funciona: p.como_funciona ?? null,
+    inclui_agentes_arvisx: p.inclui_agentes_arvisx === true,
+    telas: telasDoPlanoNoSeletor(p.interface_settings, modulos),
+    excedente: excedenteDoPlano(uso, p),
+  });
+  // Os mesmos filtros da escolha e da troca: oferecido, vivo, numa moeda que o
+  // provedor cobra; na troca, do mesmo intervalo (a troca não muda o intervalo).
+  const escolhiveis = plano
+    ? todos
+        .filter((p) => p.arquivado_em === null && p.oferecido_ao_cliente && cobravel(p))
+        .filter((p) => escolheAoAssinar || p.intervalo === plano.intervalo)
+        .sort((x, y) => x.preco_cents - y.preco_cents)
+    : [];
   return {
     assinatura: a
       ? {
@@ -164,6 +215,10 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
         }
       : null,
     uso,
+    comparativo: {
+      planos: escolhiveis.map(paraComparar),
+      atual: plano ? paraComparar(plano) : null,
+    },
     gastoIaUsdCents: Number(gasto.data ?? 0),
     fuso: (org.data as { timezone: string | null } | null)?.timezone ?? null,
     checkout: {
@@ -185,7 +240,6 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
           .map((p) => ({
             ...paraTela(p),
             atual: p.id === plano?.id,
-            perde: oQueOPlanoTira(p.interface_settings, modulos),
             excedente: excedenteDoPlano(uso, p),
           }))
       : [],

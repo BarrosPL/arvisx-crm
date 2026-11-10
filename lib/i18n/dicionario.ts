@@ -19975,6 +19975,27 @@ export const DICIONARIO: Traducoes = {
   "Inclui os 4 agentes de IA feitos sob medida pela sua equipe": { es: "Incluye los 4 agentes de IA hechos a medida por tu equipo" },
   "Mostra o selo no plano e avisa a equipe quando uma empresa assina ou sai dele. Não liga nem desliga agente nenhum.": { es: "Muestra el sello en el plan y avisa al equipo cuando una empresa se suscribe o lo deja. No activa ni desactiva ningún agente." },
   "Agentes sob medida": { es: "Agentes a medida" },
+  // O comparativo dos planos (tarefa 2 dos planos).
+  "Mais completo": { es: "Más completo" },
+  "Agentes de IA sob medida": { es: "Agentes de IA a medida" },
+  "ilimitados": { es: "ilimitados" },
+  "Escolhido": { es: "Elegido" },
+  "Escolher {plano}": { es: "Elegir {plano}" },
+  "De {origem} para {destino}": { es: "De {origem} a {destino}" },
+  "mesmo preço": { es: "mismo precio" },
+  "As mesmas telas do plano atual.": { es: "Las mismas pantallas del plan actual." },
+  "O que entra": { es: "Qué entra" },
+  "O que sai": { es: "Qué sale" },
+  "{n} telas": { es: "{n} pantallas" },
+  "Nada é apagado: as telas que saem somem do menu e voltam quando você assinar um plano que as inclua.": { es: "No se borra nada: las pantallas que salen desaparecen del menú y vuelven cuando te suscribas a un plan que las incluya." },
+  "A IA usa a credencial que a sua empresa conecta: o consumo é cobrado pelo provedor de IA, não por este plano.": { es: "La IA usa la credencial que conecta tu empresa: el consumo lo cobra el proveedor de IA, no este plan." },
+  "Atender": { es: "Atender" },
+  "Automatizar com IA": { es: "Automatizar con IA" },
+  "Vender": { es: "Vender" },
+  "Prospectar": { es: "Prospectar" },
+  "Medir e gerir": { es: "Medir y gestionar" },
+  "Integrar": { es: "Integrar" },
+  "IA avançada": { es: "IA avanzada" },
 };
 
 /**
