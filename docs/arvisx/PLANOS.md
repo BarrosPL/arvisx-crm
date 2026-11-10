@@ -128,7 +128,7 @@ Equipe Completa, marque também "Inclui os 4 agentes de IA feitos sob medida".
 ### Equipe Completa
 
 - Descrição curta: O CRM completo e uma equipe de IA feita para a sua operação.
-- Para quem é: Quem quer o CRM funcionando e também agentes prontos para o seu negócio, sem montar nada sozinho.
+- Para quem é: Para quem quer que a Arvisx entenda a operação e desenvolva os agentes junto com você.
 - O que tem:
   - Tudo do Premium
   - 4 agentes de IA criados pela Arvisx para o seu negócio
@@ -136,7 +136,7 @@ Equipe Completa, marque também "Inclui os 4 agentes de IA feitos sob medida".
 - O que não tem:
   - O prazo e o escopo de cada agente são combinados no primeiro contato.
   - A IA usa a credencial do próprio cliente.
-- Como funciona: Assim que a assinatura é confirmada, nossa equipe entra em contato para entender a sua operação e criar os 4 agentes personalizados de acordo com o que você precisa, integrados ao CRM e às demais ferramentas que você usa. Os agentes não são cópias prontas: são montados para o seu negócio.
+- Como funciona: Começa por uma reunião com a nossa equipe, que orienta a assinatura. Depois da assinatura, a equipe entra em contato para desenvolver os 4 agentes.
 
 O preço (€499,90) não vai no texto: o card mostra o preço do cadastro do plano.
 
@@ -145,6 +145,14 @@ O preço (€499,90) não vai no texto: o card mostra o preço do cadastro do pl
 Regra comercial (Lucas e Dr. Renan): no Essencial, no Standard e no Premium, a
 gestão e a configuração dos agentes de IA dentro da plataforma são do cliente. A
 Arvisx só entra em desenvolvimento de soluções personalizadas no Equipe Completa.
+
+O Equipe Completa começa por uma reunião (/agendar). Na reunião a equipe entende a
+operação e orienta a assinatura, que continua sendo feita no CRM. Não há trava: quem
+assinar o Equipe Completa sem reunião entra do mesmo jeito na lista "Equipe Completa
+aguardando contato" de /admin/cobranca (migration 9804). A reunião não depende de
+plano cadastrado: /agendar e o botão da seção do Equipe Completa na página inicial
+funcionam mesmo sem nenhum plano em /admin/cobranca (o botão "Agendar reunião" do
+card só aparece quando o plano está cadastrado e oferecido).
 
 Esse aviso NÃO é texto de plano e não se cola em /admin/cobranca: é fixo, mora em
 `lib/cobranca/quem-cuida-dos-agentes.ts` e aparece igual na página inicial (abaixo
