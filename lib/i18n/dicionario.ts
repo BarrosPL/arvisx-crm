@@ -20006,6 +20006,14 @@ export const DICIONARIO: Traducoes = {
   "Marcar como contatado": { es: "Marcar como contactado" },
   "Recebemos sua assinatura. Nossa equipe entrará em contato para entender a sua operação e criar seus 4 agentes.": { es: "Recibimos tu suscripción. Nuestro equipo se pondrá en contacto para entender tu operación y crear tus 4 agentes." },
   "Seu plano inclui os 4 agentes de IA feitos sob medida pela nossa equipe.": { es: "Tu plan incluye los 4 agentes de IA hechos a medida por nuestro equipo." },
+  // Quem cuida dos agentes de IA (tarefa 3 dos planos): as frases de lib/cobranca/quem-cuida-dos-agentes.ts.
+  "Quem cuida dos agentes de IA": { es: "Quién se ocupa de los agentes de IA" },
+  "Standard e Premium": { es: "Standard y Premium" },
+  "O Essencial não tem agentes de IA: a IA começa no Standard. A Arvisx não desenvolve soluções personalizadas nesse plano.": { es: "El Essencial no tiene agentes de IA: la IA empieza en el Standard. Arvisx no desarrolla soluciones personalizadas en ese plan." },
+  "Nesses planos, você é responsável pela gestão e pela configuração dos seus agentes de IA dentro da plataforma: conecta a sua credencial de IA, cadastra o conhecimento do seu negócio, define os fluxos e acompanha os resultados. A Arvisx não desenvolve soluções personalizadas nesses planos.": { es: "En esos planes, tú eres responsable de la gestión y de la configuración de tus agentes de IA dentro de la plataforma: conectas tu credencial de IA, registras el conocimiento de tu negocio, defines los flujos y sigues los resultados. Arvisx no desarrolla soluciones personalizadas en esos planes." },
+  "No Equipe Completa, a Arvisx entra em um processo de desenvolvimento de soluções personalizadas: entende a sua operação e cria 4 agentes de IA sob medida, integrados ao CRM e às suas ferramentas. É o único plano em que a Arvisx desenvolve soluções para você.": { es: "En el Equipe Completa, Arvisx entra en un proceso de desarrollo de soluciones personalizadas: entiende tu operación y crea 4 agentes de IA a medida, integrados al CRM y a tus herramientas. Es el único plan en el que Arvisx desarrolla soluciones para ti." },
+  "O consumo da IA é cobrado pelo seu provedor de IA, nunca pela Arvisx.": { es: "El consumo de la IA lo cobra tu proveedor de IA, nunca Arvisx." },
+  "Ao sair do Equipe Completa, o desenvolvimento de soluções personalizadas pela Arvisx deixa de valer para novos pedidos.": { es: "Al salir del Equipe Completa, el desarrollo de soluciones personalizadas por Arvisx deja de valer para nuevos pedidos." },
   // IVA pela Stripe Tax (tarefa 2 dos planos).
   "+ IVA": { es: "+ IVA" },
   "Cobrar IVA pela Stripe Tax": { es: "Cobrar el IVA con Stripe Tax" },

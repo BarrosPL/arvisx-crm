@@ -2,10 +2,12 @@
 
 import type { ReactNode } from "react";
 
+import { QuemCuidaDosAgentes } from "@/components/cobranca/QuemCuidaDosAgentes";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/hooks/i18n/useT";
 import { blocosDoPlano, diferencaDePreco, entraESai, maisCompleto, nomeDaTela } from "@/lib/cobranca/comparativo";
 import { itensDoExcesso, preencherFrase } from "@/lib/cobranca/excesso";
+import { SAIDA_DO_SOB_MEDIDA } from "@/lib/cobranca/quem-cuida-dos-agentes";
 import type { PlanoDoComparativo } from "@/lib/cobranca/painel";
 import type { UsoDaOrganizacao } from "@/lib/cobranca/uso";
 import { formatCents } from "@/lib/money";
@@ -56,6 +58,8 @@ export function ComparativoDosPlanos(p: PropsDoComparativo) {
 
   return (
     <div className="space-y-4" data-comparativo>
+      {/* O aviso fixo de quem configura os agentes: o mesmo texto da landing. */}
+      <QuemCuidaDosAgentes variante="app" t={t} />
       <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {p.planos.map((plano) => {
           const escolhido = plano.id === p.selecionadoId;
@@ -178,6 +182,8 @@ function MudancaDePlano({
   const perde = blocos.some((b) => b.saem.length > 0);
   // A frase da credencial só onde há IA: nada de texto de IA num plano que não a tem.
   const temIa = blocosDoPlano(para.telas).includes("automatizar");
+  // Saindo de um plano com o serviço sob medida para um sem ele: é perda, e não é tela — não aparece na tabela.
+  const saiDoSobMedida = de?.inclui_agentes_arvisx === true && !para.inclui_agentes_arvisx;
 
   return (
     <section aria-labelledby="mudanca-de-plano" className="space-y-3 rounded-lg border p-4 text-sm" data-mudanca>
@@ -247,6 +253,11 @@ function MudancaDePlano({
             ))}
           </tbody>
         </table>
+      )}
+      {saiDoSobMedida && (
+        <p className="text-warning-fg" data-sai-do-sob-medida>
+          {t(SAIDA_DO_SOB_MEDIDA)}
+        </p>
       )}
       {perde && (
         <p className="text-xs text-muted-foreground">
