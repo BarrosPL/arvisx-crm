@@ -1,0 +1,51 @@
+{
+  "01-landing-planos-desktop": {
+    "texto": "Quem cuida dos agentes de IAEssencialO Essencial não tem agentes de IA: a IA começa no Standard. A Arvisx não desenvolve soluções personalizadas nesse plano.Standard e PremiumNesses planos, você é responsável pela gestão e pela configuração dos seus agentes de IA dentro da plataforma: conecta a sua credencial de IA, cadastra o conhecimento do seu negócio, define os fluxos e acompanha os resultados. A Arvisx não desenvolve soluções personalizadas nesses planos.Equipe CompletaNo Equipe Completa, a Arvisx entra em um processo de desenvolvimento de soluções personalizadas: entende a sua operação e cria 4 agentes de IA sob medida, integrados ao CRM e às suas ferramentas. É o único plano em que a Arvisx desenvolve soluções para você.O consumo da IA é cobrado pelo seu provedor de IA, nunca pela Arvisx.",
+    "largura": 1140,
+    "altura": 292,
+    "colunas": 3,
+    "avisoAntesDaGrade": false,
+    "rolagemHorizontal": 0,
+    "planos": [
+      "Essencial",
+      "Standard",
+      "Premium",
+      "Equipe Completa"
+    ],
+    "linksParaAgendar": 0,
+    "frasesProibidas": 0,
+    "botaoDoEquipeCompleta": "/signup"
+  },
+  "02-landing-planos-celular-390": {
+    "texto": "Quem cuida dos agentes de IAEssencialO Essencial não tem agentes de IA: a IA começa no Standard. A Arvisx não desenvolve soluções personalizadas nesse plano.Standard e PremiumNesses planos, você é responsável pela gestão e pela configuração dos seus agentes de IA dentro da plataforma: conecta a sua credencial de IA, cadastra o conhecimento do seu negócio, define os fluxos e acompanha os resultados. A Arvisx não desenvolve soluções personalizadas nesses planos.Equipe CompletaNo Equipe Completa, a Arvisx entra em um processo de desenvolvimento de soluções personalizadas: entende a sua operação e cria 4 agentes de IA sob medida, integrados ao CRM e às suas ferramentas. É o único plano em que a Arvisx desenvolve soluções para você.O consumo da IA é cobrado pelo seu provedor de IA, nunca pela Arvisx.",
+    "largura": 351,
+    "altura": 681,
+    "colunas": 1,
+    "avisoAntesDaGrade": false,
+    "rolagemHorizontal": 0,
+    "planos": [
+      "Essencial",
+      "Standard",
+      "Premium",
+      "Equipe Completa"
+    ],
+    "linksParaAgendar": 0,
+    "frasesProibidas": 0,
+    "botaoDoEquipeCompleta": "/signup"
+  },
+  "03-comparativo-plano-e-cobranca": {
+    "texto": "Quem cuida dos agentes de IAEssencialO Essencial não tem agentes de IA: a IA começa no Standard. A Arvisx não desenvolve soluções personalizadas nesse plano.Standard e PremiumNesses planos, você é responsável pela gestão e pela configuração dos seus agentes de IA dentro da plataforma: conecta a sua credencial de IA, cadastra o conhecimento do seu negócio, define os fluxos e acompanha os resultados. A Arvisx não desenvolve soluções personalizadas nesses planos.Equipe CompletaNo Equipe Completa, a Arvisx entra em um processo de desenvolvimento de soluções personalizadas: entende a sua operação e cria 4 agentes de IA sob medida, integrados ao CRM e às suas ferramentas. É o único plano em que a Arvisx desenvolve soluções para você.O consumo da IA é cobrado pelo seu provedor de IA, nunca pela Arvisx.",
+    "largura": 1104,
+    "altura": 238,
+    "colunas": 3,
+    "avisoAntesDaGrade": true,
+    "rolagemHorizontal": 0,
+    "planos": [
+      "Essencial",
+      "Standard",
+      "Premium",
+      "Equipe Completa"
+    ]
+  },
+  "mesmoTextoNosTres": true
+}

@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const cena = vi.hoisted(() => ({
@@ -25,7 +25,8 @@ vi.mock("@/lib/supabase/server", () => ({
 
 vi.mock("@/lib/landing/planos", () => ({ planosDaVitrine: async () => cena.vitrine }));
 
-import HomePage from "./page";
+import HomePage, { metadata } from "./page";
+import { FRASES_DE_QUEM_CUIDA, QUEM_CUIDA_DOS_AGENTES } from "@/lib/cobranca/quem-cuida-dos-agentes";
 import { CADASTRO_ABERTO, LINKS, OFERTA } from "@/lib/landing/links";
 
 async function montar() {
@@ -106,6 +107,41 @@ describe("/ — landing v3", () => {
     expect(LINKS.agendar).toBe("/agendar");
     expect(container.querySelectorAll(`a[href="${LINKS.agendar}"]`)).toHaveLength(0);
     expect(screen.queryByText(/Agendar reunião/)).toBeNull();
+  });
+
+  it("⭐ o aviso 'Quem cuida dos agentes de IA' aparece abaixo da grade de planos, com as frases da constante", async () => {
+    const { container } = await montar();
+    const secao = container.querySelector("#plano") as HTMLElement;
+    const aviso = within(secao).getByRole("region", { name: QUEM_CUIDA_DOS_AGENTES.titulo });
+    expect(aviso.textContent).toBe(FRASES_DE_QUEM_CUIDA.join(""));
+    const grade = secao.querySelector(".planos-grade")!;
+    expect(grade.compareDocumentPosition(aviso) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(container.querySelectorAll("[data-quem-cuida-dos-agentes]")).toHaveLength(1);
+    // Também sem plano cadastrado: a regra não depende do cadastro.
+    cleanup();
+    cena.vitrine = { planos: [], iva: false };
+    const vazio = await montar();
+    expect(vazio.container.querySelector("#plano [data-quem-cuida-dos-agentes]")).toBeTruthy();
+  });
+
+  it("⭐ nada na landing diz que o serviço da Arvisx é à parte ou por reunião (nem a descrição da página)", async () => {
+    const { container } = await montar();
+    const tudo = `${container.textContent} ${String(metadata.description)} ${String(metadata.openGraph?.description)}`;
+    for (const proibida of [/contratad[oa]s? à parte/i, /orçad[oa]s? em reunião/i, /combinad[oa]s? na reunião/i, /Agentes Arvisx/, /desenhe e acompanhe o agente/]) {
+      expect(tudo).not.toMatch(proibida);
+    }
+    // Onde a landing diz que a Arvisx desenvolve, diz em que plano.
+    expect(String(metadata.description)).toMatch(/No plano Equipe Completa, a equipe Arvisx desenvolve agentes de IA sob medida\./);
+    expect(container.querySelector("#ia")!.textContent).toMatch(/A gestão e a configuração dos agentes são suas\./);
+    expect(container.querySelector("#suas-chaves")!.textContent).toMatch(/Esse serviço faz parte do plano Equipe Completa\./);
+  });
+
+  it("os links para a seção do Equipe Completa existem e a âncora #agentes continua no lugar", async () => {
+    const { container } = await montar();
+    expect(container.querySelector("section#agentes")).toBeTruthy();
+    const para = [...container.querySelectorAll('a[href="#agentes"]')].map((a) => a.textContent);
+    expect(para).toEqual(["Conheça o Equipe Completa", "Como funciona o Equipe Completa", "Equipe Completa"]);
+    expect(within(screen.getByRole("navigation", { name: "Rodapé" })).getByRole("link", { name: "Equipe Completa" })).toHaveAttribute("href", "#agentes");
   });
 
   it("Entrar leva ao login", async () => {

@@ -8,9 +8,17 @@
  */
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
+// Só para os três usos do comparativo dentro de AcoesDaAssinatura (tarefa 3): nenhuma chamada sai.
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn(), replace: vi.fn() }) }));
+vi.mock("@/lib/api/client", () => ({ apiClient: { post: vi.fn() } }));
+vi.mock("@/lib/cobranca/navegar", () => ({ abrirNoNavegador: vi.fn() }));
+vi.mock("@/components/feedback/ApiErrorToast", () => ({ showApiError: vi.fn() }));
+
+import { AcoesDaAssinatura, type PropsDasAcoes } from "@/components/cobranca/AcoesDaAssinatura";
 import { ComparativoDosPlanos } from "@/components/cobranca/ComparativoDosPlanos";
+import { FRASES_DE_QUEM_CUIDA, QUEM_CUIDA_DOS_AGENTES, SAIDA_DO_SOB_MEDIDA } from "@/lib/cobranca/quem-cuida-dos-agentes";
 import { BLOCOS, BLOCO_DA_TELA, entraESai, maisCompleto, telasDoPlanoNoSeletor, telasDoSeletor } from "@/lib/cobranca/comparativo";
 import type { PlanoDoComparativo } from "@/lib/cobranca/painel";
 import { PLANOS, type NomeDoPlano } from "../helpers/distribuicao-dos-planos";
@@ -186,5 +194,104 @@ describe("o comparativo na tela", () => {
     unmount();
     render(<ComparativoDosPlanos planos={planos} atual={null} selecionadoId={null} onEscolher={() => {}} />);
     expect(screen.queryByText(/IVA/)).toBeNull();
+  });
+});
+
+/**
+ * QUEM CUIDA DOS AGENTES DE IA (ArvisX, tarefa 3 dos planos): o aviso fixo de
+ * `lib/cobranca/quem-cuida-dos-agentes.ts` aparece no comparativo, acima dos
+ * cards, nos três lugares em que o comparativo é usado, com o texto da constante.
+ */
+describe("quem cuida dos agentes de IA, no comparativo", () => {
+  const acoes = (p: Partial<PropsDasAcoes> = {}): PropsDasAcoes => {
+    const planos = QUATRO();
+    const doTeste = { ...plano("Premium"), id: "do-teste", nome: "Teste", atual: true };
+    return {
+      estado: "trial", temProvedor: false, assinaturasVivas: 0, linkDePagamento: null, cancelaNoFim: false,
+      planosParaTroca: [], planoAtual: { ...doTeste }, periodoPagoDesde: null, proximoVencimento: null,
+      trocaPagamentoUrl: null, trocaStatus: null, instanteCalculo: "2026-11-12T12:00:00Z", voltouDoCheckout: false, noHub: false,
+      provedor: "stripe", documentoDoCadastro: null, escolheAoAssinar: true, planosParaAssinar: planos.map((c) => ({ ...c })),
+      uso: { assentos: 2, canais: 1 }, comparativo: { planos, atual: doTeste }, ...p,
+    };
+  };
+
+  /** O aviso está na tela, inteiro, com as frases da constante, e ANTES dos cards. */
+  function conferirOAviso() {
+    const aviso = screen.getByRole("region", { name: QUEM_CUIDA_DOS_AGENTES.titulo });
+    for (const frase of FRASES_DE_QUEM_CUIDA) expect(within(aviso).getAllByText(frase).length).toBeGreaterThan(0);
+    expect(aviso.querySelectorAll("[data-planos]")).toHaveLength(QUEM_CUIDA_DOS_AGENTES.itens.length);
+    expect(within(aviso).getByText(QUEM_CUIDA_DOS_AGENTES.consumo)).toBeTruthy();
+    const primeiroCard = screen.getAllByRole("listitem").find((li) => li.hasAttribute("data-plano"))!;
+    expect(aviso.compareDocumentPosition(primeiroCard) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(document.querySelectorAll("[data-quem-cuida-dos-agentes]")).toHaveLength(1);
+    return aviso.textContent;
+  }
+
+  it("⭐ o mesmo texto nos três usos: fim do teste, Assinar e Plano e cobrança", async () => {
+    // 1. Fim do teste (hub da conta suspensa).
+    const fim = render(<AcoesDaAssinatura {...acoes({ estado: "em_atraso", noHub: true })} />);
+    const noFimDoTeste = conferirOAviso();
+    fim.unmount();
+
+    // 2. Assinar, ainda no teste grátis.
+    const assinar = render(<AcoesDaAssinatura {...acoes()} />);
+    const noAssinar = conferirOAviso();
+    assinar.unmount();
+
+    // 3. Plano e cobrança: a troca de plano de quem já assina.
+    const planos = QUATRO();
+    planos[1] = { ...planos[1]!, atual: true };
+    render(
+      <AcoesDaAssinatura
+        {...acoes({
+          estado: "ativa", temProvedor: true, assinaturasVivas: 1, escolheAoAssinar: false, planosParaAssinar: [],
+          planoAtual: { ...planos[1]! }, planosParaTroca: [planos[0]!, planos[2]!, planos[3]!].map((c) => ({ ...c })),
+          periodoPagoDesde: "2026-11-01T12:00:00Z", proximoVencimento: "2026-12-01T12:00:00Z",
+          comparativo: { planos, atual: planos[1]! },
+        })}
+      />,
+    );
+    expect(document.querySelector("[data-quem-cuida-dos-agentes]")).toBeNull();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Trocar de plano" }));
+    const naTroca = conferirOAviso();
+
+    expect(noAssinar).toBe(noFimDoTeste);
+    expect(naTroca).toBe(noFimDoTeste);
+    expect(noFimDoTeste).toBe(FRASES_DE_QUEM_CUIDA.join(""));
+  });
+
+  it("o aviso comum não substitui o 'Como funciona' do Equipe Completa, que segue em destaque no card", () => {
+    render(<ComparativoDosPlanos planos={QUATRO()} atual={null} selecionadoId={null} onEscolher={() => {}} />);
+    const equipe = screen.getAllByRole("listitem").find((li) => li.getAttribute("data-plano") === "Equipe Completa")!;
+    expect(within(equipe.querySelector("[data-como-funciona]") as HTMLElement).getByText(COMO_FUNCIONA)).toBeTruthy();
+    expect(screen.getByRole("region", { name: QUEM_CUIDA_DOS_AGENTES.titulo }).querySelector("[data-como-funciona]")).toBeNull();
+  });
+
+  it("a frase é de capacidade e não promete trava: não limita agentes nem dá nome de agente", () => {
+    const tudo = [...FRASES_DE_QUEM_CUIDA, SAIDA_DO_SOB_MEDIDA].join(" ");
+    expect(tudo).toMatch(/você é responsável pela gestão e pela configuração dos seus agentes de IA/);
+    expect(tudo).toMatch(/É o único plano em que a Arvisx desenvolve soluções para você\./);
+    expect(tudo).not.toMatch(/contratad[oa]s? à parte|em reunião|na reunião/);
+    expect(tudo).not.toMatch(/\b(Sophia|Matheus|Pedro)\b|agente Financeiro/i);
+    expect(tudo).not.toMatch(/\d+\s?%|sozinho|funcionário/i);
+  });
+
+  it("⭐ Equipe Completa → Premium: a perda do serviço sob medida aparece ANTES do botão de confirmar; no caminho inverso, não", () => {
+    const planos = QUATRO();
+    planos[3] = { ...planos[3]!, atual: true };
+    const { unmount } = render(
+      <ComparativoDosPlanos planos={planos} atual={planos[3]!} selecionadoId="premium" onEscolher={() => {}} confirmar={() => <button type="button">Confirmar troca</button>} />,
+    );
+    const mudanca = screen.getByRole("region", { name: "De Equipe Completa para Premium" });
+    const perda = within(mudanca).getByText(SAIDA_DO_SOB_MEDIDA);
+    const botao = within(mudanca).getByRole("button", { name: "Confirmar troca" });
+    expect(perda.compareDocumentPosition(botao) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(mudanca.querySelectorAll("[data-sai-do-sob-medida]")).toHaveLength(1);
+    unmount();
+
+    const outros = QUATRO();
+    outros[2] = { ...outros[2]!, atual: true };
+    render(<ComparativoDosPlanos planos={outros} atual={outros[2]!} selecionadoId="equipe-completa" onEscolher={() => {}} />);
+    expect(screen.queryByText(SAIDA_DO_SOB_MEDIDA)).toBeNull();
   });
 });
