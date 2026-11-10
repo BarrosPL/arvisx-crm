@@ -5,24 +5,26 @@
  * aprovado lia `OFERTA` e `LINKS` (docs/arvisx/prototipo/landing/).
  */
 
+/**
+ * O preço NÃO mora aqui: os cards de planos da landing leem o cadastro dos
+ * planos (`lib/landing/planos.ts`, /admin/cobranca), com "+ IVA" quando a
+ * instalação cobra IVA (tarefa 2 dos planos, 10/11/2026).
+ */
 export const OFERTA = {
-  moeda: "€",
-  preco: "189,90",
-  periodo: "por mês",
   trial: "7 dias de teste grátis",
   cta: "Começar o teste grátis",
   /** Texto dos botões de cadastro enquanto `CADASTRO_ABERTO` for false. */
   ctaEmBreve: "Lançamento em breve",
-  ilimitados: "Usuários e números de WhatsApp ilimitados",
 } as const;
 
 /**
- * Liga os botões "Começar o teste grátis" (topo, hero e card de preço).
- * Enquanto for false, os três viram "Lançamento em breve", sem link: ninguém
- * chega ao cadastro pela landing. A rota /signup continua existindo; quem
- * fecha o cadastro de fato é a política de cadastro da instalação.
+ * Liga os botões "Começar o teste grátis" (topo, hero e o de cada plano).
+ * Com false, todos viram "Lançamento em breve", sem link: ninguém chega ao
+ * cadastro pela landing. A rota /signup continua existindo; quem fecha o
+ * cadastro de fato é a política de cadastro da instalação. Ligado em
+ * 10/11/2026: todo plano leva o cliente a criar a conta e começar o teste.
  */
-export const CADASTRO_ABERTO = false;
+export const CADASTRO_ABERTO = true;
 
 export const LINKS = {
   /**

@@ -39,7 +39,10 @@ import { AvisoDeCookies } from "@/components/landing/AvisoDeCookies";
 import { archivoDaVitrine } from "@/components/landing/fonte";
 import { InteracoesDaLanding } from "@/components/landing/InteracoesDaLanding";
 import { marcaDaSaida } from "@/lib/branding/saida";
+import { maisCompleto } from "@/lib/cobranca/comparativo";
 import { CADASTRO_ABERTO, LINKS, OFERTA } from "@/lib/landing/links";
+import { planosDaVitrine, type VitrineDePlanos } from "@/lib/landing/planos";
+import { formatCents } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
 
 import "./landing.css";
@@ -63,13 +66,13 @@ const TITULO = "Arvisx CRM | Toda a sua operação de vendas e atendimento em um
 export const metadata: Metadata = {
   title: TITULO,
   description:
-    "Conversas, funil, agenda, propostas e chamadas de voz e vídeo num só lugar. Usuários e números de WhatsApp ilimitados, em um plano único, com 7 dias de teste grátis. Agentes de IA personalizados com a equipe Arvisx.",
+    "Conversas, funil, agenda, propostas e chamadas de voz e vídeo num só lugar. Quatro planos, do atendimento à operação inteira com IA, todos com 7 dias de teste grátis. Agentes de IA personalizados com a equipe Arvisx.",
   alternates: { canonical: "https://crm.arvisx.com.br/" },
   openGraph: {
     type: "website",
     title: TITULO,
     description:
-      "Conversas, funil, agenda, propostas e chamadas de voz e vídeo num só lugar. Usuários e números de WhatsApp ilimitados, em um plano único.",
+      "Conversas, funil, agenda, propostas e chamadas de voz e vídeo num só lugar. Quatro planos, do atendimento à operação inteira com IA.",
     url: "https://crm.arvisx.com.br/",
     images: ["https://crm.arvisx.com.br/og-arvisx.jpg"],
     locale: "pt_BR",
@@ -97,6 +100,17 @@ function BotaoDeCadastro({ className, comSeta }: { className: string; comSeta: b
 
 const atraso = (d: string) => ({ "--d": d }) as CSSProperties;
 
+/** A resposta de "Quanto custa?", com os preços do cadastro (o mais barato e o mais caro). */
+function textoDoQuantoCusta(v: VitrineDePlanos): string {
+  if (v.planos.length === 0) return `Todos os planos começam com ${OFERTA.trial}.`;
+  const precos = v.planos.map((p) => p.preco_cents);
+  const moeda = v.planos[0]!.moeda;
+  const iva = v.iva ? " + IVA" : "";
+  return v.planos.length === 1
+    ? `${formatCents(precos[0]!, moeda)}${iva} por mês, com ${OFERTA.trial}.`
+    : `São ${v.planos.length} planos mensais, de ${formatCents(Math.min(...precos), moeda)} a ${formatCents(Math.max(...precos), moeda)}${iva}, todos com ${OFERTA.trial}.`;
+}
+
 const IMG = "/img/landing";
 
 export default async function HomePage() {
@@ -108,6 +122,10 @@ export default async function HomePage() {
 
   // Nome da marca vem do banco (catraca nome-da-marca-nas-telas-vem-do-banco).
   const marca = await marcaDaSaida(null);
+  // Os planos e o preço vêm do cadastro dos planos (/admin/cobranca), nunca do código.
+  const vitrine = await planosDaVitrine();
+  const maisCompletoDaVitrine = maisCompleto(vitrine.planos);
+  const quantoCusta = textoDoQuantoCusta(vitrine);
 
   return (
     <div className={`lp ${archivoDaVitrine.variable}`}>
@@ -146,14 +164,14 @@ export default async function HomePage() {
                 Toda a sua operação de vendas e atendimento <em>em um só CRM.</em>
               </h1>
               <p className="sub entra" style={atraso(".18s")}>
-                Atendimento, funil, agenda e chamadas de voz e vídeo num só CRM.{" "}
-                <span>{OFERTA.ilimitados}</span>, em um plano único.
+                Atendimento, funil, agenda e chamadas de voz e vídeo num só CRM. Quatro planos, do
+                atendimento à operação inteira com IA.
               </p>
               <div className="cta-bloco entra" style={atraso(".28s")}>
                 <BotaoDeCadastro className="btn primario grande" comSeta />
                 <div className="cta-info">
                   <strong>{OFERTA.trial}</strong>
-                  <span>Sem cobrança por usuário · IA com as credenciais da sua empresa</span>
+                  <span>Em todos os planos · IA com as credenciais da sua empresa</span>
                 </div>
               </div>
             </div>
@@ -666,9 +684,8 @@ export default async function HomePage() {
                 </div>
                 <h3>O consumo é seu</h3>
                 <p>
-                  O uso da IA fica na sua conta, com o provedor que você escolheu. O plano do CRM é
-                  só os {OFERTA.moeda}
-                  {OFERTA.preco} {OFERTA.periodo}.
+                  O uso da IA fica na sua conta, com o provedor que você escolheu. Do CRM, você paga
+                  só o plano.
                 </p>
               </article>
             </div>
@@ -771,50 +788,75 @@ export default async function HomePage() {
         <section className="faixa plano claro alt" id="plano">
           <div className="miolo">
             <div className="cabeca centro">
-              <p className="eyebrow">Preço</p>
-              <h2>Um plano. A equipe inteira dentro.</h2>
-              <p>Sem cobrança por usuário: cinco ou cinquenta pessoas usam a mesma assinatura.</p>
+              <p className="eyebrow">Planos</p>
+              <h2>Do atendimento à operação inteira com IA.</h2>
+              <p>
+                Todos os planos começam com {OFERTA.trial}.
+                {vitrine.iva ? " Preços mensais + IVA." : " Preços mensais."}
+              </p>
             </div>
-            <div className="preco-card">
-              <div className="pc-main">
-                <span className="trial">{OFERTA.trial}</span>
-                <div className="pc-valor">
-                  <span className="m">{OFERTA.moeda}</span>
-                  <strong>{OFERTA.preco}</strong>
-                  <span className="per">{OFERTA.periodo}</span>
-                </div>
-                <p className="pc-sub">Plano único para a empresa inteira.</p>
-                <div className="pc-acoes">
-                  <BotaoDeCadastro className="btn primario" comSeta />
-                </div>
-              </div>
-              <div className="pc-lado">
-                <div className="pc-stats">
-                  <div>
-                    <strong>∞</strong>
-                    <span>Usuários ilimitados</span>
-                  </div>
-                  <div>
-                    <strong>∞</strong>
-                    <span>Números de WhatsApp ilimitados</span>
-                  </div>
-                </div>
-                <ul className="pc-lista">
-                  {INCLUSO.map(([titulo, detalhe]) => (
-                    <li key={titulo}>
-                      <Check {...negrito} />
-                      <span>
-                        <b>{titulo}</b>
-                        <small>{detalhe}</small>
-                      </span>
+            {vitrine.planos.length > 0 ? (
+              <ul className="planos-grade">
+                {vitrine.planos.map((plano) => {
+                  const destaque = plano.id === maisCompletoDaVitrine;
+                  return (
+                    <li
+                      key={plano.id}
+                      data-plano={plano.nome}
+                      className={`plano-card${destaque ? " destaque" : ""}${plano.inclui_agentes_arvisx ? " agentes" : ""}`}
+                    >
+                      <div className="pl-selos">
+                        {destaque ? <span className="pl-selo">Mais completo</span> : null}
+                        {plano.inclui_agentes_arvisx ? (
+                          <span className="pl-selo forte">
+                            <Sparkle {...ico} weight="fill" /> 4 agentes de IA sob medida
+                          </span>
+                        ) : null}
+                      </div>
+                      <h3>{plano.nome}</h3>
+                      <div className="pl-valor">
+                        <strong>{formatCents(plano.preco_cents, plano.moeda)}</strong>
+                        <span>
+                          {vitrine.iva ? "+ IVA " : ""}
+                          {plano.intervalo === "ano" ? "por ano" : "por mês"}
+                        </span>
+                      </div>
+                      {plano.descricao_curta ? <p className="pl-promessa">{plano.descricao_curta}</p> : null}
+                      {plano.para_quem ? <p className="pl-quem">{plano.para_quem}</p> : null}
+                      <p className="pl-limites">
+                        {plano.max_canais === null ? "Canais ilimitados" : `Até ${plano.max_canais} canais`} ·{" "}
+                        {plano.max_assentos === null ? "pessoas ilimitadas" : `até ${plano.max_assentos} pessoas`}
+                      </p>
+                      {plano.como_funciona ? (
+                        <div className="pl-como">
+                          <b>Como funciona</b>
+                          <p>{plano.como_funciona}</p>
+                        </div>
+                      ) : null}
+                      {plano.destaques.length > 0 ? (
+                        <ul className="pl-lista">
+                          {plano.destaques.map((frase) => (
+                            <li key={frase}>
+                              <Check {...negrito} />
+                              <span>{frase}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      <BotaoDeCadastro className={`btn ${destaque || plano.inclui_agentes_arvisx ? "primario" : "secundario"}`} comSeta={false} />
                     </li>
-                  ))}
-                </ul>
+                  );
+                })}
+              </ul>
+            ) : (
+              <div className="planos-vazio">
+                <BotaoDeCadastro className="btn primario grande" comSeta />
               </div>
-            </div>
+            )}
             <p className="pc-nota">
-              Quer um agente de IA feito sob medida para a sua operação? Os Agentes Arvisx são
-              contratados à parte, depois de uma conversa com a nossa equipe.
+              A IA usa as chaves da sua empresa em todos os planos: o consumo é cobrado pelo seu
+              provedor de IA, não pela Arvisx. Precisa de algo além dos agentes do Equipe Completa?
+              O time Arvisx desenvolve sob medida.
             </p>
             <p className="pc-link">
               <a href="#agentes">Saiba mais</a>
@@ -913,12 +955,8 @@ export default async function HomePage() {
               <details>
                 <summary>Quanto custa?</summary>
                 <p>
-                  <span>
-                    {OFERTA.moeda}
-                    {OFERTA.preco} {OFERTA.periodo}, em plano único.
-                  </span>{" "}
-                  Usuários e números de WhatsApp ilimitados. Os Agentes Arvisx são orçados em
-                  reunião.
+                  <span>{quantoCusta}</span> O Equipe Completa já inclui 4 agentes de IA feitos pela
+                  nossa equipe; projetos além disso são orçados em reunião.
                 </p>
               </details>
               <details>
@@ -1102,13 +1140,4 @@ const SLIDES = [
     img: "crm-financeiro.webp",
     alt: "Tela de financeiro e faturamento",
   },
-] as const;
-
-/** O que o plano inclui, ao lado do preço. */
-const INCLUSO = [
-  ["Chamadas de voz pelo WhatsApp", "Ligue e atenda sem sair do CRM."],
-  ["Videochamada por link", "O cliente entra pelo navegador, sem app e sem cadastro."],
-  ["IA integrada ao CRM", "Conecte as suas chaves ou planos de IA e use como quiser."],
-  ["API, webhooks e MCP", "Conecte o CRM às ferramentas que a sua empresa já usa."],
-  ["Você é o administrador", "Acesso completo ao que o plano oferece, com equipe e permissões."],
 ] as const;

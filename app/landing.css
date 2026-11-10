@@ -3061,3 +3061,165 @@ html:has(.lp) {
 /* Cadastro fechado (CADASTRO_ABERTO = false): o botão vira selo "Lançamento em breve". */
 .lp .btn.em-breve { cursor: default; pointer-events: none; }
 .lp .btn.em-breve:hover { transform: none; }
+
+/* ---- planos (tarefa 2 dos planos): quatro cards lidos do cadastro ---- */
+.lp .planos-grade {
+  display: grid;
+  gap: 16px;
+  max-width: 1180px;
+  margin: 0 auto;
+  grid-template-columns: minmax(0, 1fr);
+  list-style: none;
+  padding: 0;
+}
+@media (min-width: 720px) {
+  .lp .planos-grade {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1100px) {
+  .lp .planos-grade {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.lp .plano-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 22px;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid #e4e1d6;
+  color: #0f131a;
+  box-shadow: 0 30px 60px -45px rgba(15, 19, 26, 0.45);
+}
+.lp .plano-card.destaque {
+  border-color: rgba(184, 147, 42, 0.7);
+  box-shadow:
+    0 30px 60px -40px rgba(15, 19, 26, 0.55),
+    0 0 0 1px rgba(184, 147, 42, 0.35);
+}
+.lp .plano-card.agentes {
+  color: #eef0f3;
+  border-color: rgba(212, 175, 55, 0.5);
+  background:
+    radial-gradient(80% 60% at 100% 0%, rgba(212, 175, 55, 0.25), transparent 65%),
+    linear-gradient(145deg, #151c29, #0b0f15);
+}
+.lp .pl-selos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 26px;
+}
+.lp .pl-selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  background: rgba(184, 147, 42, 0.14);
+  color: #6d560e;
+}
+.lp .pl-selo.forte {
+  background: var(--ouro);
+  color: var(--ouro-fg);
+}
+.lp .plano-card h3 {
+  font: 700 22px/1.15 var(--display);
+  margin: 0;
+}
+.lp .pl-valor {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+.lp .pl-valor strong {
+  font: 700 clamp(30px, 3vw, 36px)/1 var(--display);
+  letter-spacing: -0.03em;
+  color: #856a12;
+}
+.lp .plano-card.agentes .pl-valor strong {
+  color: var(--ouro-claro);
+}
+.lp .pl-valor span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a5363;
+}
+.lp .plano-card.agentes .pl-valor span,
+.lp .plano-card.agentes .pl-quem,
+.lp .plano-card.agentes .pl-limites {
+  color: #a2abb9;
+}
+.lp .pl-promessa {
+  font-weight: 700;
+  font-size: 15.5px;
+  margin: 0;
+}
+.lp .pl-quem,
+.lp .pl-limites {
+  font-size: 13.5px;
+  color: #4a5363;
+  margin: 0;
+}
+.lp .pl-como {
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  background: rgba(212, 175, 55, 0.1);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.lp .pl-como b {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ouro-claro);
+}
+.lp .pl-como p {
+  margin: 0;
+}
+.lp .pl-lista {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.lp .pl-lista li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.lp .pl-lista .ico {
+  color: #856a12;
+  margin-top: 2px;
+}
+.lp .plano-card.agentes .pl-lista .ico {
+  color: var(--ouro-claro);
+}
+.lp .plano-card .btn {
+  margin-top: auto;
+  justify-content: center;
+}
+.lp .plano-card:not(.agentes) .btn.secundario {
+  color: #0f131a;
+  border-color: rgba(15, 19, 26, 0.25);
+  background: transparent;
+}
+.lp .planos-vazio {
+  display: flex;
+  justify-content: center;
+}
+.lp .plano .plano-card.agentes h3,
+.lp .plano .plano-card.agentes .pl-promessa {
+  color: #fff;
+}

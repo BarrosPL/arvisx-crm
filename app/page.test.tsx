@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const cena = vi.hoisted(() => ({
   usuario: null as { id: string } | null,
+  vitrine: { planos: [] as unknown[], iva: false },
 }));
 
 vi.mock("next/navigation", () => ({
@@ -22,6 +23,8 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 
+vi.mock("@/lib/landing/planos", () => ({ planosDaVitrine: async () => cena.vitrine }));
+
 import HomePage from "./page";
 import { CADASTRO_ABERTO, LINKS, OFERTA } from "@/lib/landing/links";
 
@@ -29,8 +32,22 @@ async function montar() {
   return render(await HomePage());
 }
 
+/** Os quatro planos como o dono os cadastra (docs/arvisx/PLANOS.md). */
+const plano = (nome: string, preco: number, canais: number | null, pessoas: number | null, telas: number, extra = {}) => ({
+  id: nome, nome, preco_cents: preco, moeda: "EUR", intervalo: "mes", max_canais: canais, max_assentos: pessoas,
+  descricao_curta: null, para_quem: null, destaques: [], como_funciona: null, inclui_agentes_arvisx: false,
+  telas: Array.from({ length: telas }, (_, i) => `/t${i}`), ...extra,
+});
+const QUATRO = [
+  plano("Essencial", 5990, 3, 5, 12, { descricao_curta: "Atender e organizar.", destaques: ["Agenda"] }),
+  plano("Standard", 12990, 6, 10, 31),
+  plano("Premium", 19990, null, null, 63),
+  plano("Equipe Completa", 49990, null, null, 63, { inclui_agentes_arvisx: true, como_funciona: "Nossa equipe entra em contato." }),
+];
+
 beforeEach(() => {
   cena.usuario = null;
+  cena.vitrine = { planos: QUATRO, iva: true };
   localStorage.clear();
 });
 
@@ -42,14 +59,42 @@ describe("/ — landing v3", () => {
     );
   });
 
-  it("com o cadastro fechado, os três botões dizem 'Lançamento em breve' e nenhum leva ao cadastro", async () => {
-    expect(CADASTRO_ABERTO).toBe(false);
+  it("⭐ com o cadastro aberto, o topo, a hero e TODO plano levam a criar a conta e começar o teste", async () => {
+    expect(CADASTRO_ABERTO).toBe(true);
     const { container } = await montar();
-    // topo, hero e cartão de preço
-    expect(screen.getAllByText(OFERTA.ctaEmBreve)).toHaveLength(3);
-    expect(screen.queryByRole("link", { name: new RegExp(OFERTA.cta) })).toBeNull();
-    expect(container.querySelector(`a[href="${LINKS.cadastro}"]`)).toBeNull();
+    expect(screen.queryByText(OFERTA.ctaEmBreve)).toBeNull();
+    // topo + hero + um por plano
+    expect(container.querySelectorAll(`a[href="${LINKS.cadastro}"]`)).toHaveLength(2 + QUATRO.length);
+    for (const card of container.querySelectorAll("[data-plano]")) {
+      expect(within(card as HTMLElement).getByRole("link", { name: new RegExp(OFERTA.cta) })).toHaveAttribute("href", "/signup");
+    }
     expect(LINKS.cadastro).toBe("/signup");
+  });
+
+  it("⭐ os planos vêm do cadastro: quatro cards com preço + IVA, limites e o texto do plano; selos certos", async () => {
+    const { container } = await montar();
+    const cards = [...container.querySelectorAll("[data-plano]")] as HTMLElement[];
+    expect(cards.map((c) => c.getAttribute("data-plano"))).toEqual(["Essencial", "Standard", "Premium", "Equipe Completa"]);
+    const essencial = within(cards[0]!);
+    expect(essencial.getByText(/59,90/)).toBeTruthy();
+    expect(essencial.getByText("+ IVA por mês")).toBeTruthy();
+    expect(essencial.getByText("Até 3 canais · até 5 pessoas")).toBeTruthy();
+    expect(essencial.getByText("Atender e organizar.")).toBeTruthy();
+    expect(within(cards[2]!).getByText("Mais completo")).toBeTruthy();
+    expect(within(cards[3]!).getByText(/4 agentes de IA sob medida/)).toBeTruthy();
+    expect(within(cards[3]!).getByText("Nossa equipe entra em contato.")).toBeTruthy();
+    expect(container.textContent).not.toMatch(/plano único/);
+  });
+
+  it("sem IVA ligado, o preço não diz '+ IVA'; sem plano cadastrado, a seção fica só com o teste grátis", async () => {
+    cena.vitrine = { planos: QUATRO, iva: false };
+    const { container, unmount } = await montar();
+    expect(container.textContent).not.toMatch(/IVA/);
+    unmount();
+    cena.vitrine = { planos: [], iva: false };
+    const vazio = await montar();
+    expect(vazio.container.querySelectorAll("[data-plano]")).toHaveLength(0);
+    expect(vazio.container.querySelector("#plano a[href='/signup']")).toBeTruthy();
   });
 
   it("o botão de reunião com o time Arvisx leva a /agendar", async () => {
@@ -86,10 +131,10 @@ describe("/ — landing v3", () => {
     expect(hrefs).toContain("/legal/terms");
   });
 
-  it("preço e teste grátis saem da oferta centralizada", async () => {
+  it("o teste grátis sai da oferta centralizada, e 'Quanto custa?' usa os preços do cadastro", async () => {
     await montar();
-    expect(screen.getAllByText(OFERTA.preco).length).toBeGreaterThan(0);
     expect(screen.getAllByText(OFERTA.trial).length).toBeGreaterThan(0);
+    expect(screen.getByText(/São 4 planos mensais, de 59,90\s€ a 499,90\s€ \+ IVA/)).toBeTruthy();
   });
 
   it("o carrossel tem as seis telas e a primeira começa selecionada", async () => {

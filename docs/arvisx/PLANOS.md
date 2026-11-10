@@ -4,7 +4,13 @@ Referência para o dono e o Hermes criarem os planos à mão em **/admin/cobranc
 Nenhum plano é criado por seed nem por migration. O preço e os textos vêm sempre
 do cadastro do plano; o código não tem valor nem texto de plano escrito.
 
-Todos mensais, em euro, cobrados pela Stripe. A IA usa a credencial que o
+Todos mensais, em euro, cobrados pela Stripe, com o preço **+ IVA**: o preço
+cadastrado no plano é SEM IVA. Para a Stripe somar o IVA no pagamento, ative o
+Stripe Tax na conta Stripe (endereço de origem e registro do IVA) e depois ligue
+"Cobrar IVA pela Stripe Tax" em Admin › Cobrança › Régua; ligado, as telas e a
+página inicial mostram "+ IVA" e o pagamento pede o endereço e o NIF/VAT do
+cliente. Os planos oferecidos aparecem sozinhos na página inicial (seção Planos),
+lidos deste cadastro. A IA usa a credencial que o
 próprio cliente conecta, em todos os planos (o consumo é cobrado pelo provedor
 dele, nunca pela Arvisx). Empresas que já existem ficam em Premium sem cobrança.
 

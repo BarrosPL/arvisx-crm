@@ -142,5 +142,65 @@
     "largura": 1440,
     "rolagemHorizontal": 0,
     "cards": []
+  },
+  "11-landing-planos-desktop": {
+    "rolagemHorizontal": 0,
+    "cards": [
+      {
+        "plano": "Essencial",
+        "largura": 278,
+        "link": "/signup",
+        "preco": "59,90 €+ IVA por mês"
+      },
+      {
+        "plano": "Standard",
+        "largura": 278,
+        "link": "/signup",
+        "preco": "129,90 €+ IVA por mês"
+      },
+      {
+        "plano": "Premium",
+        "largura": 278,
+        "link": "/signup",
+        "preco": "199,90 €+ IVA por mês"
+      },
+      {
+        "plano": "Equipe Completa",
+        "largura": 278,
+        "link": "/signup",
+        "preco": "499,90 €+ IVA por mês"
+      }
+    ],
+    "quantoCusta": "Quanto custa?São 4 planos mensais, de 59,90 € a 499,90 € + IVA, todos com 7 dias de teste grátis. O Equipe Completa já inclui 4 agentes de IA feitos pela nossa equipe; projetos além disso são orçados em reunião."
+  },
+  "12-landing-planos-celular-390": {
+    "rolagemHorizontal": 0,
+    "cards": [
+      {
+        "plano": "Essencial",
+        "largura": 351,
+        "link": "/signup",
+        "preco": "59,90 €+ IVA por mês"
+      },
+      {
+        "plano": "Standard",
+        "largura": 351,
+        "link": "/signup",
+        "preco": "129,90 €+ IVA por mês"
+      },
+      {
+        "plano": "Premium",
+        "largura": 351,
+        "link": "/signup",
+        "preco": "199,90 €+ IVA por mês"
+      },
+      {
+        "plano": "Equipe Completa",
+        "largura": 351,
+        "link": "/signup",
+        "preco": "499,90 €+ IVA por mês"
+      }
+    ],
+    "quantoCusta": "Quanto custa?São 4 planos mensais, de 59,90 € a 499,90 € + IVA, todos com 7 dias de teste grátis. O Equipe Completa já inclui 4 agentes de IA feitos pela nossa equipe; projetos além disso são orçados em reunião."
   }
 }

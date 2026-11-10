@@ -20,6 +20,8 @@ assinatura gravada como a releitura da Stripe em modo teste grava (`estado = ati
 | `08-admin-planos-textos-do-equipe-completa.png` | O formulário do plano com a seção "Textos do plano" e o marcador dos agentes. |
 | `09-depois-do-contato-cliente-ve-que-o-plano-inclui-os-agentes.png` | Contato marcado: sai da lista; o cliente vê que o plano inclui os agentes. |
 | `10-downgrade-equipe-avisada-da-saida.png` | Downgrade para o Premium: selo some do cliente e a saída aparece para a equipe. |
+| `11-landing-planos-desktop.png` | Landing (sem login), com o IVA ligado: os quatro planos lidos do cadastro, "+ IVA por mês", "Mais completo" no Premium, o Equipe Completa com o selo e o "Como funciona"; todo botão leva a /signup. |
+| `12-landing-planos-celular-390.png` | A mesma seção em 390 px: cards empilhados (351 px), rolagem horizontal 0. |
 
 Também aqui: `prova-9804.sql` / `prova-9804.txt` (o gatilho da 9804 numa transação
 desfeita) e `cenario-local.sql`.
