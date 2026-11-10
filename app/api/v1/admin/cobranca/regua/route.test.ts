@@ -11,6 +11,7 @@ vi.mock("@/lib/instalacao/config", () => ({ gravarPelaTela: h.gravar }));
 vi.mock("@/lib/cobranca/configuracao", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/cobranca/configuracao")>()),
   toleranciaDias: async () => 7,
+  cobraIva: async () => false,
 }));
 vi.mock("@/lib/audit", () => ({ audit: h.audit }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
@@ -33,13 +34,27 @@ beforeEach(() => {
 describe("régua da cobrança", () => {
   it("⭐ grava a tolerância e audita de quanto para quanto", async () => {
     const res = await salvar({ tolerancia_dias: 10 });
-    expect((await res.json()).data).toEqual({ tolerancia_dias: 10 });
+    expect((await res.json()).data).toEqual({ tolerancia_dias: 10, iva: false });
     expect(h.gravar).toHaveBeenCalledWith("COBRANCA_TOLERANCIA_DIAS", "10", { ehSegredo: false, ator: "dono" });
     expect(h.audit).toHaveBeenCalledWith(expect.objectContaining({ action: "cobranca.regua_salva", metadata: { de: 7, para: 10 } }));
   });
 
   it.each([4, 31, 7.5, "7"])("%j fora de 5 a 30 dias inteiros: 422, nada gravado", async (valor) => {
     expect((await salvar({ tolerancia_dias: valor })).status).toBe(422);
+    expect(h.gravar).not.toHaveBeenCalled();
+  });
+
+  it("⭐ liga o IVA pela Stripe Tax: grava COBRANCA_IVA = ligado e audita, sem tocar a tolerância", async () => {
+    const res = await salvar({ iva: true });
+    expect((await res.json()).data).toEqual({ tolerancia_dias: 7, iva: true });
+    expect(h.gravar).toHaveBeenCalledTimes(1);
+    expect(h.gravar).toHaveBeenCalledWith("COBRANCA_IVA", "ligado", { ehSegredo: false, ator: "dono" });
+    expect(h.audit).toHaveBeenCalledWith(expect.objectContaining({ metadata: { iva_de: false, iva_para: true } }));
+  });
+
+  it("corpo vazio ou IVA que não é booleano: 422", async () => {
+    expect((await salvar({})).status).toBe(422);
+    expect((await salvar({ iva: "sim" })).status).toBe(422);
     expect(h.gravar).not.toHaveBeenCalled();
   });
 

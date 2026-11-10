@@ -444,6 +444,43 @@ describe("garantirCliente e iniciarAssinatura", () => {
     expect(Object.keys(corpo).some((k) => k.startsWith("payment_method_types"))).toBe(false);
   });
 
+  it("⭐ IVA pela Stripe Tax ligado: preço sem IVA (exclusive), imposto automático, endereço e número fiscal pedidos", async () => {
+    const { adaptador, chamadas } = montar(
+      { "POST /products": { corpo: { id: PRODUTO } }, "POST /checkout/sessions": SESSAO },
+      { cobrarIva: async () => true },
+    );
+    await adaptador.iniciarAssinatura({ ...base, plano: { ...PLANO, precoCents: 19990, moeda: "EUR" } });
+    expect(Object.fromEntries(chamadas.find((c) => c.rota === "POST /checkout/sessions")?.corpo ?? [])).toMatchObject({
+      "line_items[0][price_data][unit_amount]": "19990",
+      "line_items[0][price_data][tax_behavior]": "exclusive",
+      "automatic_tax[enabled]": "true",
+      billing_address_collection: "required",
+      "customer_update[address]": "auto",
+      "customer_update[name]": "auto",
+      "tax_id_collection[enabled]": "true",
+    });
+  });
+
+  it("IVA ligado: o ajuste proporcional também sai sem IVA e com o imposto automático", async () => {
+    const { adaptador, chamadas } = montar(
+      { "POST /products": { corpo: { id: PRODUTO } }, "POST /checkout/sessions": SESSAO },
+      { cobrarIva: async () => true },
+    );
+    await adaptador.iniciarAjusteProporcional({ ...base, plano: { ...PLANO, moeda: "EUR" }, valorCents: 3065 });
+    expect(Object.fromEntries(chamadas.find((c) => c.rota === "POST /checkout/sessions")?.corpo ?? [])).toMatchObject({
+      mode: "payment",
+      "line_items[0][price_data][tax_behavior]": "exclusive",
+      "automatic_tax[enabled]": "true",
+    });
+  });
+
+  it("IVA desligado (o padrão): nada de imposto no Checkout", async () => {
+    const { adaptador, chamadas } = montar({ "POST /products": { corpo: { id: PRODUTO } }, "POST /checkout/sessions": SESSAO });
+    await adaptador.iniciarAssinatura(base);
+    const chaves = [...(chamadas.find((c) => c.rota === "POST /checkout/sessions")?.corpo.keys() ?? [])];
+    expect(chaves.some((k) => /tax|billing_address|customer_update/.test(k))).toBe(false);
+  });
+
   it("plano em EUR: o ajuste proporcional também sai em eur", async () => {
     const { adaptador, chamadas } = montar({ "POST /products": { corpo: { id: PRODUTO } }, "POST /checkout/sessions": SESSAO });
     await adaptador.iniciarAjusteProporcional({ ...base, plano: { ...PLANO, moeda: "EUR" }, valorCents: 3065 });
@@ -727,6 +764,20 @@ describe("trocarPlano, cancelarNoFim, prepararWebhook e portal", () => {
       proration_behavior: "none",
       "metadata[plano_id]": NOVO.id,
     });
+  });
+
+  it("trocarPlano com IVA ligado: o preço novo também é sem IVA (exclusive)", async () => {
+    const { adaptador, chamadas } = montar(
+      {
+        "GET /subscriptions/sub_1QfixtureAtiva": { corpo: objetos.assinatura },
+        "POST /products": { corpo: { id: PRODUTO_NOVO } },
+        "POST /subscriptions/sub_1QfixtureAtiva": { corpo: objetos.assinatura },
+      },
+      { cobrarIva: async () => true },
+    );
+    await adaptador.trocarPlano({ assinaturaRef: "sub_1QfixtureAtiva", plano: NOVO });
+    const post = chamadas.find((c) => c.rota === "POST /subscriptions/sub_1QfixtureAtiva");
+    expect(Object.fromEntries(post?.corpo ?? [])).toMatchObject({ "items[0][price_data][tax_behavior]": "exclusive" });
   });
 
   it("trocarPlano com plano em EUR: o preço novo sai em eur", async () => {

@@ -118,7 +118,7 @@ const ASSINATURA: NonNullable<DadosDoPainel["assinatura"]> = {
   periodo_pago_desde: "2026-11-10T12:00:00Z", troca_pagamento_url: null, troca_status: null, pagamento_inicial_pendente: false,
 };
 const dados = (o: Partial<DadosDoPainel> = {}, a: Partial<typeof ASSINATURA> = {}): DadosDoPainel => ({
-  assinatura: { ...ASSINATURA, ...a }, plano: PLANO, aguardaContatoDaEquipe: true, uso: { assentos: 1, canais: 1 }, gastoIaUsdCents: 0,
+  assinatura: { ...ASSINATURA, ...a }, plano: PLANO, aguardaContatoDaEquipe: true, iva: false, uso: { assentos: 1, canais: 1 }, gastoIaUsdCents: 0,
   planosParaTroca: [], escolheAoAssinar: false, planosParaAssinar: [], comparativo: { planos: [], atual: null }, fuso: null,
   checkout: { provedor: "stripe", documentoDoCadastro: null }, ...o,
 });

@@ -45,7 +45,8 @@ export function PainelDaAssinatura({ dados, idioma }: { dados: DadosDoPainel; id
           {t("Seu plano")}: {p.nome}
         </h2>
         <p className="text-sm text-muted-foreground">
-          {formatCents(p.preco_cents, p.moeda)} {p.intervalo === "mes" ? t("por mês") : t("por ano")}
+          {formatCents(p.preco_cents, p.moeda)}
+          {dados.iva ? ` ${t("+ IVA")}` : ""} {p.intervalo === "mes" ? t("por mês") : t("por ano")}
         </p>
       </div>
       <p className="text-sm font-medium">{situacao}</p>

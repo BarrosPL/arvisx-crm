@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { provedorDaInstalacao } from "@/lib/cobranca/configuracao";
+import { cobraIva, provedorDaInstalacao } from "@/lib/cobranca/configuracao";
 import { sugestaoDoCadastro } from "@/lib/cobranca/documento";
 import { telasDoPlanoNoSeletor } from "@/lib/cobranca/comparativo";
 import { aguardaContatoDaEquipe } from "@/lib/cobranca/equipe-completa";
@@ -88,6 +88,8 @@ export interface DadosDoPainel {
    * marcou o contato com a empresa. A tela diz que o contato vem aí.
    */
   aguardaContatoDaEquipe: boolean;
+  /** A instalação cobra IVA pela Stripe Tax: todo preço da tela é "+ IVA". */
+  iva: boolean;
   uso: UsoDaOrganizacao;
   /** Na moeda de `fn_gasto_de_ia_do_mes` (centavos de dólar), a régua única de gasto. */
   gastoIaUsdCents: number;
@@ -151,7 +153,7 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
     .maybeSingle();
   if (error) throw new Error(`painel da assinatura: leitura falhou (${error.code})`);
 
-  const [planos, uso, gasto, org, daInstalacao, modulos, aguardaContato] = await Promise.all([
+  const [planos, uso, gasto, org, daInstalacao, modulos, aguardaContato, iva] = await Promise.all([
     db
       .from("cobranca_planos")
       .select("id, nome, preco_cents, moeda, intervalo, max_assentos, max_canais, teto_ia_usd_cents, arquivado_em, oferecido_ao_cliente, interface_settings, descricao_curta, para_quem, destaques, limites, como_funciona, inclui_agentes_arvisx"),
@@ -163,6 +165,7 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
     modulosLigados(db),
     // Nunca lança: falha = não promete contato.
     aguardaContatoDaEquipe(db, orgId),
+    cobraIva(),
   ]);
   if (planos.error || !uso || gasto.error || org.error) throw new Error("painel da assinatura: leitura falhou");
 
@@ -226,6 +229,7 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
         }
       : null,
     aguardaContatoDaEquipe: aguardaContato,
+    iva,
     uso,
     comparativo: {
       planos: escolhiveis.map(paraComparar),

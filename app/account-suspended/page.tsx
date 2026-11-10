@@ -224,6 +224,7 @@ export default async function AccountSuspendedPage({
               planosParaAssinar={painel.planosParaAssinar}
               uso={painel.uso}
               comparativo={painel.comparativo}
+              iva={painel.iva}
             />
           </section>
         )}

@@ -20006,6 +20006,10 @@ export const DICIONARIO: Traducoes = {
   "Marcar como contatado": { es: "Marcar como contactado" },
   "Recebemos sua assinatura. Nossa equipe entrará em contato para entender a sua operação e criar seus 4 agentes.": { es: "Recibimos tu suscripción. Nuestro equipo se pondrá en contacto para entender tu operación y crear tus 4 agentes." },
   "Seu plano inclui os 4 agentes de IA feitos sob medida pela nossa equipe.": { es: "Tu plan incluye los 4 agentes de IA hechos a medida por nuestro equipo." },
+  // IVA pela Stripe Tax (tarefa 2 dos planos).
+  "+ IVA": { es: "+ IVA" },
+  "Cobrar IVA pela Stripe Tax": { es: "Cobrar el IVA con Stripe Tax" },
+  "Ligado: o preço de cada plano passa a ser sem IVA, o pagamento pede o endereço e o número fiscal (NIF/VAT) do cliente e a Stripe soma o IVA na fatura. As telas e a página inicial mostram \"+ IVA\". Antes de ligar, ative o Stripe Tax na sua conta Stripe (endereço de origem e registro do IVA): sem isso o pagamento é recusado. Só vale para a Stripe.": { es: "Activado: el precio de cada plan pasa a ser sin IVA, el pago pide la dirección y el número fiscal (NIF/VAT) del cliente y Stripe suma el IVA en la factura. Las pantallas y la página de inicio muestran \"+ IVA\". Antes de activarlo, activa Stripe Tax en tu cuenta de Stripe (dirección de origen y registro del IVA): sin eso el pago se rechaza. Solo vale para Stripe." },
 };
 
 /**

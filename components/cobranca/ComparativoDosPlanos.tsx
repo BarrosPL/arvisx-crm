@@ -22,6 +22,8 @@ export interface PropsDoComparativo {
   /** O botão de confirmar, desenhado DEPOIS do que se perde e da diferença de preço. */
   confirmar?: (plano: PlanoDoComparativo, naoCabe: boolean) => ReactNode;
   desabilitado?: boolean;
+  /** A instalação cobra IVA (Stripe Tax): os preços são "+ IVA". */
+  iva?: boolean;
   /** Na escolha do Assinar, o plano atual também se escolhe (assinar o mesmo plano do teste). Na troca, não. */
   atualEscolhivel?: boolean;
 }
@@ -85,7 +87,10 @@ export function ComparativoDosPlanos(p: PropsDoComparativo) {
                 <h3 className="text-base font-semibold">{plano.nome}</h3>
                 <p className="text-lg font-semibold">
                   {formatCents(plano.preco_cents, plano.moeda)}{" "}
-                  <span className="text-sm font-normal text-muted-foreground">{intervalo(plano)}</span>
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {p.iva ? `${t("+ IVA")} ` : ""}
+                    {intervalo(plano)}
+                  </span>
                 </p>
                 {plano.descricao_curta && <p className="font-medium">{plano.descricao_curta}</p>}
                 {plano.para_quem && <p className="text-muted-foreground">{plano.para_quem}</p>}
@@ -142,6 +147,7 @@ export function ComparativoDosPlanos(p: PropsDoComparativo) {
         <MudancaDePlano
           de={p.atual}
           para={selecionado}
+          iva={p.iva === true}
           nome={nome}
           confirmar={p.confirmar?.(selecionado, excesso(selecionado).length > 0)}
         />
@@ -153,11 +159,13 @@ export function ComparativoDosPlanos(p: PropsDoComparativo) {
 function MudancaDePlano({
   de,
   para,
+  iva,
   nome,
   confirmar,
 }: {
   de: PlanoDoComparativo | null;
   para: PlanoDoComparativo;
+  iva: boolean;
   nome: (href: string) => string;
   confirmar: ReactNode;
 }) {
@@ -185,7 +193,7 @@ function MudancaDePlano({
           <strong>
             {diferenca === 0
               ? t("mesmo preço")
-              : `${diferenca > 0 ? "+" : "−"}${formatCents(Math.abs(diferenca), para.moeda)} ${intervalo}`}
+              : `${diferenca > 0 ? "+" : "−"}${formatCents(Math.abs(diferenca), para.moeda)}${iva ? ` ${t("+ IVA")}` : ""} ${intervalo}`}
           </strong>
         </p>
       )}

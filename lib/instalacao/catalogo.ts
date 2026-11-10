@@ -197,6 +197,16 @@ export const CATALOGO_DA_INSTALACAO: readonly ChaveDaInstalacao[] = [
     telaDona: "cobranca",
   },
   {
+    chave: "COBRANCA_IVA",
+    rotulo: "Cobrar IVA pela Stripe Tax",
+    explicacao:
+      "Ligado: o preço dos planos é sem IVA, o pagamento pede o endereço e o número fiscal do cliente e a Stripe soma o IVA na fatura. Exige o Stripe Tax ativo na conta. Muda em Cobrança › Régua.",
+    grupo: "integracao",
+    natureza: "texto",
+    controle: "edita",
+    telaDona: "cobranca",
+  },
+  {
     chave: "STRIPE_SECRET_KEY",
     rotulo: "Chave secreta da Stripe",
     explicacao:

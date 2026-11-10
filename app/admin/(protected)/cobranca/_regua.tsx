@@ -16,11 +16,12 @@ const MINIMO = 5;
 const MAXIMO = 30;
 
 /** A Régua (spec §7g, D-5): a tolerância, e a linha do tempo que a empresa vai viver com ela. */
-export function ReguaDaCobranca({ tolerancia }: { tolerancia: number }) {
+export function ReguaDaCobranca({ tolerancia, iva }: { tolerancia: number; iva: boolean }) {
   const t = useT();
   const router = useRouter();
   const [dias, setDias] = useState(String(tolerancia));
   const [ocupado, setOcupado] = useState(false);
+  const [comIva, setComIva] = useState(iva);
   const n = Number(dias);
   const valido = Number.isInteger(n) && n >= MINIMO && n <= MAXIMO;
   const efetivo = valido ? n : tolerancia;
@@ -28,7 +29,7 @@ export function ReguaDaCobranca({ tolerancia }: { tolerancia: number }) {
   async function salvar() {
     setOcupado(true);
     try {
-      await apiClient.patch("/api/v1/admin/cobranca/regua", { tolerancia_dias: n });
+      await apiClient.patch("/api/v1/admin/cobranca/regua", { tolerancia_dias: n, iva: comIva });
       toast.success(t("Régua salva."));
       router.refresh();
     } catch (e) {
@@ -54,6 +55,15 @@ export function ReguaDaCobranca({ tolerancia }: { tolerancia: number }) {
       <p className="text-xs text-muted-foreground">
         {t("Essa tolerância é para pagamento em atraso. O teste grátis que acaba sem pagamento não espera por ela: o aviso final sai no fim do teste e a suspensão acontece 48 horas depois.")}
       </p>
+      <div className="space-y-1 border-t pt-4">
+        <label className="flex items-start gap-2 text-sm font-medium">
+          <input type="checkbox" className="mt-1" checked={comIva} onChange={(e) => setComIva(e.target.checked)} />
+          <span>{t("Cobrar IVA pela Stripe Tax")}</span>
+        </label>
+        <p className="text-xs text-muted-foreground">
+          {t("Ligado: o preço de cada plano passa a ser sem IVA, o pagamento pede o endereço e o número fiscal (NIF/VAT) do cliente e a Stripe soma o IVA na fatura. As telas e a página inicial mostram \"+ IVA\". Antes de ligar, ative o Stripe Tax na sua conta Stripe (endereço de origem e registro do IVA): sem isso o pagamento é recusado. Só vale para a Stripe.")}
+        </p>
+      </div>
       <Button disabled={ocupado || !valido} onClick={() => void salvar()}>
         {t("Salvar régua")}
       </Button>

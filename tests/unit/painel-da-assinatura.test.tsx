@@ -27,6 +27,7 @@ const EM_TESTE: DadosDoPainel = {
   planosParaAssinar: [],
   comparativo: { planos: [], atual: null },
   aguardaContatoDaEquipe: false,
+  iva: false,
   fuso: null,
   checkout: { provedor: null, documentoDoCadastro: null },
 };
@@ -78,6 +79,11 @@ describe("PainelDaAssinatura — preço na moeda do plano (migration 9801)", () 
   it("plano em BRL: R$", () => {
     render(<PainelDaAssinatura dados={EM_TESTE} idioma="pt-BR" />);
     expect(screen.getByText(/R\$\s49,90/)).toBeTruthy();
+  });
+
+  it("IVA pela Stripe Tax ligado: o preço do plano diz '+ IVA'", () => {
+    render(<PainelDaAssinatura dados={{ ...EM_TESTE, iva: true, plano: { ...PLANO, preco_cents: 19990, moeda: "EUR" } }} idioma="pt-BR" />);
+    expect(screen.getByText(/199,90\s€ \+ IVA por mês/)).toBeTruthy();
   });
 
   it("plano em EUR: €, nunca R$", () => {

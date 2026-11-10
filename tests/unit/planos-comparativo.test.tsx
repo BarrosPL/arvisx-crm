@@ -174,4 +174,17 @@ describe("o comparativo na tela", () => {
     await userEvent.setup().click(screen.getByRole("button", { name: "Escolher Equipe Completa" }));
     expect(escolhas).toEqual(["equipe-completa"]);
   });
+
+  it("com IVA pela Stripe Tax: o preço dos cards e a diferença dizem '+ IVA'; sem IVA, não", () => {
+    const planos = QUATRO();
+    const { unmount } = render(
+      <ComparativoDosPlanos planos={planos} atual={{ ...planos[1]!, atual: true }} selecionadoId="premium" onEscolher={() => {}} iva />,
+    );
+    const premium = screen.getAllByRole("listitem").find((li) => li.getAttribute("data-plano") === "Premium")!;
+    expect(within(premium).getByText(/\+ IVA por mês/)).toBeTruthy();
+    expect(screen.getByText(/\+70,00\s€ \+ IVA por mês/)).toBeTruthy();
+    unmount();
+    render(<ComparativoDosPlanos planos={planos} atual={null} selecionadoId={null} onEscolher={() => {}} />);
+    expect(screen.queryByText(/IVA/)).toBeNull();
+  });
 });

@@ -87,6 +87,11 @@ export interface DependenciasDaStripe {
   novaChaveDeIdempotencia?: () => string;
   /** `marcaDaInstalacao(NEXT_PUBLIC_APP_URL)`: o registro (Task 19) injeta. */
   marca: string;
+  /**
+   * IVA pela Stripe Tax (`cobraIva`, Cobrança › Régua). Lido a cada Checkout e
+   * troca. Ausente = não cobra (o comportamento de antes).
+   */
+  cobrarIva?: () => Promise<boolean>;
 }
 
 /** Nunca `invoice.created`: resposta não-2xx a ele atrasa em até 72 h a finalização da fatura. */
@@ -238,14 +243,29 @@ function pagouAssinaturaEncerrada(pagas: FaturaDaStripe[], assinaturas: Assinatu
  */
 const moedaDaStripe = (plano: PlanoParaProvedor) => plano.moeda.toLowerCase();
 
-function precoRecorrente(plano: PlanoParaProvedor, produto: string) {
+function precoRecorrente(plano: PlanoParaProvedor, produto: string, iva = false) {
   return {
     currency: moedaDaStripe(plano),
     unit_amount: plano.precoCents,
     recurring: { interval: plano.intervalo === "ano" ? "year" : "month" },
     product: produto,
+    // Com IVA, o preço do plano é SEM imposto: a Stripe Tax soma o IVA na fatura.
+    ...(iva ? { tax_behavior: "exclusive" } : {}),
   };
 }
+
+/**
+ * O que o Checkout leva quando a instalação cobra IVA (Stripe Tax): o imposto
+ * calculado pela Stripe, o endereço de cobrança (o país decide a alíquota) e o
+ * número fiscal (NIF/VAT; empresa com VAT válido de outro país da UE entra em
+ * autoliquidação). O endereço e o nome digitados ficam gravados no cliente.
+ */
+const CHECKOUT_COM_IVA = {
+  automatic_tax: { enabled: true },
+  billing_address_collection: "required",
+  customer_update: { address: "auto", name: "auto" },
+  tax_id_collection: { enabled: true },
+} as const;
 
 /** Janela da assinatura, nos DOIS sentidos: o relógio da VPS pode estar atrás da Stripe. */
 export const TOLERANCIA_DO_WEBHOOK_S = 300;
@@ -317,6 +337,7 @@ export function criarAdaptadorStripe(dep: DependenciasDaStripe): AdaptadorDeCobr
   const esperar = dep.esperar ?? ((ms: number) => new Promise<void>((pronto) => setTimeout(pronto, ms)));
   const novaChave = dep.novaChaveDeIdempotencia ?? randomUUID;
   const agora = dep.agora ?? (() => new Date());
+  const cobrarIva = dep.cobrarIva ?? (async () => false);
 
   async function chaveUsavel(): Promise<string> {
     const chave = await dep.lerChave();
@@ -451,6 +472,7 @@ export function criarAdaptadorStripe(dep: DependenciasDaStripe): AdaptadorDeCobr
     const sucesso = new URL(p.urlDeVolta);
     sucesso.searchParams.set("voltou", "1");
     const metadados = { organization_id: orgId, plano_id: p.plano.id };
+    const iva = await cobrarIva();
     const sessao = ler(
       sessaoDeCheckout,
       await chamar(
@@ -460,8 +482,9 @@ export function criarAdaptadorStripe(dep: DependenciasDaStripe): AdaptadorDeCobr
           mode: "subscription",
           customer: p.clienteRef,
           client_reference_id: orgId,
-          line_items: [{ price_data: precoRecorrente(p.plano, produto), quantity: 1 }],
+          line_items: [{ price_data: precoRecorrente(p.plano, produto, iva), quantity: 1 }],
           subscription_data: { metadata: metadados, trial_end: trialEnd },
+          ...(iva ? CHECKOUT_COM_IVA : {}),
           metadata: metadados,
           success_url: sucesso.toString(),
           cancel_url: p.urlDeVolta,
@@ -482,14 +505,19 @@ export function criarAdaptadorStripe(dep: DependenciasDaStripe): AdaptadorDeCobr
     const produto = await garantirProduto(p.plano);
     const sucesso = new URL(p.urlDeVolta);
     sucesso.searchParams.set("voltou", "1");
+    const iva = await cobrarIva();
     const sessao = ler(
       sessaoDeCheckout,
       await chamar("POST", "/checkout/sessions", {
         mode: "payment",
         customer: p.clienteRef,
         client_reference_id: orgId,
-        line_items: [{ price_data: { currency: moedaDaStripe(p.plano), unit_amount: p.valorCents, product: produto }, quantity: 1 }],
+        line_items: [{
+          price_data: { currency: moedaDaStripe(p.plano), unit_amount: p.valorCents, product: produto, ...(iva ? { tax_behavior: "exclusive" } : {}) },
+          quantity: 1,
+        }],
         metadata: { organization_id: orgId, plano_id: p.plano.id, tipo: "ajuste_proporcional" },
+        ...(iva ? CHECKOUT_COM_IVA : {}),
         success_url: sucesso.toString(),
         cancel_url: p.urlDeVolta,
         locale: "pt-BR",
@@ -605,7 +633,7 @@ export function criarAdaptadorStripe(dep: DependenciasDaStripe): AdaptadorDeCobr
     const produto = await garantirProduto(p.plano);
     // Sem proração automática: o período pago foi ajustado pela cobrança avulsa; a próxima fatura sai com o novo preço, sem mover a âncora.
     await chamar("POST", caminho, {
-      items: [{ id: item.id, price_data: precoRecorrente(p.plano, produto) }],
+      items: [{ id: item.id, price_data: precoRecorrente(p.plano, produto, await cobrarIva()) }],
       proration_behavior: "none",
       metadata: { plano_id: p.plano.id },
     });

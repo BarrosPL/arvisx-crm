@@ -28,6 +28,18 @@ export async function toleranciaDias(): Promise<number> {
   return Math.min(TOLERANCIA_MAXIMA_DIAS, Math.max(TOLERANCIA_MINIMA_DIAS, dias));
 }
 
+/**
+ * IVA cobrado pela Stripe Tax (ArvisX, tarefa 2 dos planos). Ligado em
+ * Cobrança › Régua: o preço do plano passa a ser SEM IVA (`tax_behavior:
+ * exclusive`), o Checkout pede endereço e número fiscal do cliente e a Stripe
+ * soma o imposto na fatura (`automatic_tax`). A conta Stripe precisa ter o
+ * Stripe Tax ativo (endereço de origem e registro do IVA): sem isso o Checkout
+ * recusa, e por isso nasce DESLIGADO. As telas dizem "+ IVA" quando ligado.
+ */
+export async function cobraIva(): Promise<boolean> {
+  return doBanco(await valorDaInstalacao("COBRANCA_IVA")) === "ligado";
+}
+
 /** O provedor das assinaturas NOVAS (D-8). As antigas seguem no provedor da linha. */
 export async function provedorDaInstalacao(): Promise<ProvedorDeCobranca | null> {
   const bruto = doBanco(await valorDaInstalacao("COBRANCA_PROVEDOR"));

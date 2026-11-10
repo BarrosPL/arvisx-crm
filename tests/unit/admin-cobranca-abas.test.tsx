@@ -75,7 +75,7 @@ describe("Conexão", () => {
 describe("Régua", () => {
   it("salva a tolerância e mostra a linha do tempo com os dias", async () => {
     const u = userEvent.setup();
-    render(<ReguaDaCobranca tolerancia={7} />);
+    render(<ReguaDaCobranca tolerancia={7} iva={false} />);
     expect(screen.getByText(/Dia 5:/)).toBeTruthy();
     // #2753: a tolerância é de pagamento atrasado; o trial não a espera.
     expect(screen.getByText(/O teste grátis que acaba sem pagamento não espera por ela/)).toBeTruthy();
@@ -84,7 +84,7 @@ describe("Régua", () => {
     await u.type(campo, "10");
     expect(screen.getByText(/Dia 8:/)).toBeTruthy();
     await u.click(screen.getByRole("button", { name: "Salvar régua" }));
-    await waitFor(() => expect(h.patch).toHaveBeenCalledWith("/api/v1/admin/cobranca/regua", { tolerancia_dias: 10 }));
+    await waitFor(() => expect(h.patch).toHaveBeenCalledWith("/api/v1/admin/cobranca/regua", { tolerancia_dias: 10, iva: false }));
   });
 });
 

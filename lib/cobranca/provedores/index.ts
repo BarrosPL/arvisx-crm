@@ -7,7 +7,7 @@
  * Asaas no mesmo contrato; o dublê de bancada atende os dois nos caminhos das
  * APIs reais: /v1 (Stripe) e /v3 (Asaas).
  */
-import { chaveDoProvedor } from "@/lib/cobranca/configuracao";
+import { chaveDoProvedor, cobraIva } from "@/lib/cobranca/configuracao";
 import { env } from "@/lib/env";
 
 import { criarAdaptadorAsaas, modoDaChaveAsaas } from "./asaas";
@@ -30,7 +30,7 @@ export function adaptador(id: ProvedorDeCobranca, opcoes: OpcoesDoAdaptador = {}
   };
   switch (id) {
     case "stripe":
-      return criarAdaptadorStripe({ ...comum, baseUrl: teste === null ? undefined : `${teste}/v1` });
+      return criarAdaptadorStripe({ ...comum, cobrarIva: cobraIva, baseUrl: teste === null ? undefined : `${teste}/v1` });
     case "asaas":
       return criarAdaptadorAsaas({ ...comum, baseUrl: teste === null ? undefined : `${teste}/v3` });
   }

@@ -61,6 +61,8 @@ export interface PropsDasAcoes {
    * escolha do Assinar e na troca. Ausente = nenhum card (só o que já havia).
    */
   comparativo?: DadosDoPainel["comparativo"];
+  /** A instalação cobra IVA: preço e ajuste proporcional dizem "+ IVA". */
+  iva?: boolean;
 }
 
 const BASE = "/api/v1/cobranca/assinatura";
@@ -368,6 +370,7 @@ export function AcoesDaAssinatura(p: PropsDasAcoes) {
             planos={comparativo.planos}
             atual={comparativo.atual}
             atualEscolhivel
+            iva={p.iva}
             selecionadoId={escolha}
             onEscolher={setEscolha}
             uso={p.uso}
@@ -390,6 +393,7 @@ export function AcoesDaAssinatura(p: PropsDasAcoes) {
           <ComparativoDosPlanos
             planos={planosDaTroca}
             atual={comparativo.atual}
+            iva={p.iva}
             selecionadoId={novo || null}
             onEscolher={setNovo}
             uso={p.uso}
@@ -402,7 +406,7 @@ export function AcoesDaAssinatura(p: PropsDasAcoes) {
                       ? t("Não foi possível calcular o proporcional com os dados do período pago. Nenhuma troca será realizada.")
                       : ajusteProporcional === 0
                         ? `${t("O ajuste proporcional é zero; o novo plano entra na próxima renovação")}: ${dia(p.proximoVencimento)}.`
-                        : `${t("Ajuste proporcional estimado para hoje")}: ${formatCents(ajusteProporcional, selecionado.moeda)}. ${t("A data da próxima renovação permanece")}: ${dia(p.proximoVencimento)}.`}
+                        : `${t("Ajuste proporcional estimado para hoje")}: ${formatCents(ajusteProporcional, selecionado.moeda)}${p.iva ? ` ${t("+ IVA")}` : ""}. ${t("A data da próxima renovação permanece")}: ${dia(p.proximoVencimento)}.`}
                   </p>
                 )}
                 {selecionado && p.planoAtual && selecionado.preco_cents <= p.planoAtual.preco_cents && (
