@@ -73961,3 +73961,78 @@ revoke execute on function public.fn_telas_do_plano_da_sessao(uuid) from public,
 grant execute on function public.fn_telas_do_plano_da_sessao(uuid) to authenticated, service_role;
 
 notify pgrst, 'reload schema';
+
+-- ---- textos do plano (migration 9803) ----
+-- Espelho idempotente da 9803 (o porquê está no cabeçalho da migration): os
+-- textos do plano (`descricao_curta`, `para_quem`, `destaques`, `limites`,
+-- `como_funciona`, nulos e sem default), o marcador `inclui_agentes_arvisx`
+-- (default false) e a régua `fn_frases_do_plano_ok`. Fica no fim, DEPOIS da
+-- VARREDURA anon: por isso a função revoga `public` e `anon` ela mesma.
+create or replace function`, constraints com `drop ... if exists`.
+
+create or replace function public.fn_frases_do_plano_ok(p_frases text[], p_max_itens int, p_max_caracteres int)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select p_frases is null or (
+    coalesce(cardinality(p_frases), 0) between 1 and p_max_itens
+    and not exists (
+      select 1 from unnest(p_frases) as f(frase)
+       where f.frase is null or btrim(f.frase) = '' or char_length(f.frase) > p_max_caracteres
+    )
+  );
+$$;
+
+-- Só quem grava o plano (o service_role) precisa dela; o CHECK roda como quem grava.
+revoke execute on function public.fn_frases_do_plano_ok(text[], int, int) from public, anon, authenticated;
+grant execute on function public.fn_frases_do_plano_ok(text[], int, int) to service_role;
+
+alter table public.cobranca_planos
+  add column if not exists descricao_curta text,
+  add column if not exists para_quem text,
+  add column if not exists destaques text[],
+  add column if not exists limites text[],
+  add column if not exists como_funciona text,
+  add column if not exists inclui_agentes_arvisx boolean not null default false;
+
+alter table public.cobranca_planos drop constraint if exists cobranca_planos_descricao_curta_tamanho;
+alter table public.cobranca_planos
+  add constraint cobranca_planos_descricao_curta_tamanho
+  check (descricao_curta is null or (btrim(descricao_curta) <> '' and char_length(descricao_curta) <= 140));
+
+alter table public.cobranca_planos drop constraint if exists cobranca_planos_para_quem_tamanho;
+alter table public.cobranca_planos
+  add constraint cobranca_planos_para_quem_tamanho
+  check (para_quem is null or (btrim(para_quem) <> '' and char_length(para_quem) <= 200));
+
+alter table public.cobranca_planos drop constraint if exists cobranca_planos_como_funciona_tamanho;
+alter table public.cobranca_planos
+  add constraint cobranca_planos_como_funciona_tamanho
+  check (como_funciona is null or (btrim(como_funciona) <> '' and char_length(como_funciona) <= 600));
+
+alter table public.cobranca_planos drop constraint if exists cobranca_planos_destaques_frases;
+alter table public.cobranca_planos
+  add constraint cobranca_planos_destaques_frases
+  check (public.fn_frases_do_plano_ok(destaques, 8, 120));
+
+alter table public.cobranca_planos drop constraint if exists cobranca_planos_limites_frases;
+alter table public.cobranca_planos
+  add constraint cobranca_planos_limites_frases
+  check (public.fn_frases_do_plano_ok(limites, 5, 200));
+
+comment on column public.cobranca_planos.descricao_curta is
+  'A promessa do plano numa frase (até 140), escrita pelo dono em /admin/cobranca. Migration 9803.';
+comment on column public.cobranca_planos.para_quem is
+  'Para quem o plano é (até 200), escrito pelo dono. Migration 9803.';
+comment on column public.cobranca_planos.destaques is
+  'O que o plano tem: até 8 frases de até 120, escritas pelo dono. Migration 9803.';
+comment on column public.cobranca_planos.limites is
+  'O que o plano NÃO tem: até 5 frases de até 200, escritas pelo dono. Migration 9803.';
+comment on column public.cobranca_planos.como_funciona is
+  'Parágrafo em destaque no card do plano (até 600), escrito pelo dono; no Equipe Completa diz como os agentes são criados. Migration 9803.';
+comment on column public.cobranca_planos.inclui_agentes_arvisx is
+  'O plano inclui os 4 agentes de IA feitos pela equipe da Arvisx (Equipe Completa). Informativo: mostra o selo e dispara o aviso à equipe (9804); não liga nem desliga agente. Migration 9803.';
+
+notify pgrst, 'reload schema';

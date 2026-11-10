@@ -16,7 +16,8 @@ import { PlanosDaInstalacao, type PlanoDaTela } from "@/app/admin/(protected)/co
 
 const PLANO: PlanoDaTela = {
   id: "cccccccc-0000-4000-8000-000000000001", nome: "Básico", preco_cents: 4990, moeda: "BRL", intervalo: "mes", trial_dias: 14,
-  max_assentos: 3, max_canais: null, teto_ia_usd_cents: null, padrao_no_cadastro: false, oferecido_ao_cliente: true, interface_settings: { preset: "completa" }, arquivado_em: null,
+  max_assentos: 3, max_canais: null, teto_ia_usd_cents: null, padrao_no_cadastro: false, oferecido_ao_cliente: true, interface_settings: { preset: "completa" },
+  descricao_curta: null, para_quem: null, destaques: null, limites: null, como_funciona: null, inclui_agentes_arvisx: false, arquivado_em: null,
 };
 
 beforeEach(() => {
@@ -46,6 +47,8 @@ describe("Planos da instalação", () => {
       max_assentos: 5, max_canais: null,
       // Telas do plano (migration 9802): sem mexer no editor, a completa.
       interface_settings: { preset: "completa" },
+      // Textos do plano (migration 9803): vazios vão nulos, nenhum texto inventado.
+      descricao_curta: null, para_quem: null, destaques: null, limites: null, como_funciona: null, inclui_agentes_arvisx: false,
     });
     expect(h.refresh).toHaveBeenCalled();
   });
@@ -149,5 +152,35 @@ describe("Planos da instalação", () => {
     rerender(<PlanosDaInstalacao planos={[{ ...PLANO, oferecido_ao_cliente: false }]} />);
     expect(screen.getByText("Só você atribui")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Mostrar às empresas" })).toBeTruthy();
+  });
+
+  it("⭐ textos do plano (migration 9803): uma frase por linha, linha vazia não conta, e a edição traz o que estava gravado", async () => {
+    const u = userEvent.setup();
+    const { unmount } = render(<PlanosDaInstalacao planos={[]} />);
+    await preencher(u, "499,90");
+    await u.type(screen.getByLabelText("Descrição curta"), "O CRM completo e uma equipe de IA.");
+    await u.type(screen.getByLabelText("Para quem é"), "Quem quer agentes prontos.");
+    await u.type(screen.getByLabelText("O que tem"), "Tudo do Premium{Enter}{Enter}4 agentes sob medida");
+    await u.type(screen.getByLabelText("Como funciona (em destaque no card)"), "Nossa equipe entra em contato.");
+    await u.click(screen.getByLabelText(/Inclui os 4 agentes de IA/));
+    await u.click(screen.getByRole("button", { name: "Salvar plano" }));
+    await waitFor(() => expect(h.post).toHaveBeenCalledTimes(1));
+    expect(h.post.mock.calls[0]![1]).toMatchObject({
+      descricao_curta: "O CRM completo e uma equipe de IA.",
+      para_quem: "Quem quer agentes prontos.",
+      destaques: ["Tudo do Premium", "4 agentes sob medida"],
+      limites: null,
+      como_funciona: "Nossa equipe entra em contato.",
+      inclui_agentes_arvisx: true,
+    });
+    unmount();
+
+    const equipe = { ...PLANO, nome: "Equipe Completa", descricao_curta: "Frase curta.", limites: ["Sem X", "Sem Y"], inclui_agentes_arvisx: true };
+    render(<PlanosDaInstalacao planos={[equipe]} />);
+    expect(screen.getByText("Agentes sob medida")).toBeTruthy();
+    expect(screen.getByText("Frase curta.")).toBeTruthy();
+    await u.click(screen.getByRole("button", { name: "Editar" }));
+    expect((screen.getByLabelText("O que não tem") as HTMLTextAreaElement).value).toBe("Sem X\nSem Y");
+    expect((screen.getByLabelText(/Inclui os 4 agentes de IA/) as HTMLInputElement).checked).toBe(true);
   });
 });

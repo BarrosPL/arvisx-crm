@@ -58,3 +58,76 @@ personalizar: todas as telas.
 - O Standard entrega um agente de IA funcionando (agente, conhecimento, follow-up, fluxo, casos, controle de custo), mais o cadastro B2B e a importação de dados.
 - O Premium reúne o que faz a empresa crescer e se controlar: vender em escala, prospectar, medir, integrar e a IA avançada (vários agentes com roteamento, memória e ações próprias). Os 4 agentes do Equipe Completa usam Roteadores, Skills, Memória, Webhooks e API: por isso o Premium é o mínimo para eles.
 - Se uma tela do Standard fizer falta de verdade para o cliente, o dono ajusta a lista pelo /admin/cobranca.
+
+## Textos de cada plano (para colar em /admin/cobranca)
+
+Campos do formulário, em "Textos do plano" (migration 9803): **Descrição curta**
+(até 140), **Para quem é** (até 200), **O que tem** (uma frase por linha, até 8
+de 120), **O que não tem** (uma frase por linha, até 5 de 200) e **Como
+funciona** (até 600, aparece em destaque no card). Campo vazio não aparece. No
+Equipe Completa, marque também "Inclui os 4 agentes de IA feitos sob medida".
+
+### Essencial
+
+- Descrição curta: Atender e organizar.
+- Para quem é: Quem está começando ou atende com equipe pequena e quer sair do WhatsApp solto.
+- O que tem:
+  - Conversas de todos os canais num lugar só
+  - Agenda
+  - Funis de vendas
+  - Contatos e tarefas
+  - Respostas rápidas
+  - Até 3 canais e 5 pessoas
+- O que não tem:
+  - Não tem agentes de IA, cadastro de empresas, propostas, campanhas nem relatórios.
+  - Mude para o Standard quando quiser que a IA responda e faça follow-up por você, ou precisar de mais de 3 canais ou 5 pessoas.
+
+### Standard
+
+- Descrição curta: Atender e automatizar com IA.
+- Para quem é: Equipe que já atende bem e perde tempo respondendo o que se repete.
+- O que tem:
+  - Tudo do Essencial
+  - Um agente de IA que responde e faz follow-up
+  - Base de conhecimento e fluxos de atendimento
+  - Casos, alertas e controle de uso da IA
+  - Cadastro de empresas e pessoas, e importação de planilhas
+  - Distribuição de atendimento
+  - Até 6 canais e 10 pessoas
+  - A IA usa a credencial que você conecta
+- O que não tem:
+  - Não tem propostas, produtos, campanhas em massa nem prospecção.
+  - Não tem relatórios de desempenho e financeiros nem integrações por API.
+  - Não tem a IA avançada (vários agentes, memória, ações próprias).
+  - Mude para o Premium quando precisar vender em escala, prospectar, medir resultado, integrar outros sistemas, usar IA avançada ou passar de 6 canais ou 10 pessoas.
+
+### Premium
+
+- Descrição curta: Operar a empresa inteira.
+- Para quem é: Empresa que vende, acompanha números e tem equipe e canais crescendo.
+- O que tem:
+  - Tudo do Standard
+  - Propostas, produtos e comandas
+  - Campanhas, prospecção e Cold Call
+  - Desempenho, faturamento e honorários
+  - Meta Ads e conversões
+  - IA avançada: vários agentes, memória e ações
+  - Integrações (API, webhooks, Nuvemshop) e marca própria
+  - Canais e pessoas ilimitados
+- O que não tem:
+  - Não tem agentes feitos sob medida pela Arvisx (veja o Equipe Completa).
+
+### Equipe Completa
+
+- Descrição curta: O CRM completo e uma equipe de IA feita para a sua operação.
+- Para quem é: Quem quer o CRM funcionando e também agentes prontos para o seu negócio, sem montar nada sozinho.
+- O que tem:
+  - Tudo do Premium
+  - 4 agentes de IA criados pela Arvisx para o seu negócio
+  - Tudo em uma assinatura só
+- O que não tem:
+  - O prazo e o escopo de cada agente são combinados no primeiro contato.
+  - A IA usa a credencial do próprio cliente.
+- Como funciona: Assim que a assinatura é confirmada, nossa equipe entra em contato para entender a sua operação e criar os 4 agentes personalizados de acordo com o que você precisa, integrados ao CRM e às demais ferramentas que você usa. Os agentes não são cópias prontas: são montados para o seu negócio.
+
+O preço (€499,90) não vai no texto: o card mostra o preço do cadastro do plano.

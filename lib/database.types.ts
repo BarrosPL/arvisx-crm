@@ -5477,16 +5477,22 @@ export type Database = {
       cobranca_planos: {
         Row: {
           arquivado_em: string | null;
+          como_funciona: string | null;
           created_at: string;
+          descricao_curta: string | null;
+          destaques: string[] | null;
           id: string;
+          inclui_agentes_arvisx: boolean;
           interface_settings: Json;
           intervalo: string;
+          limites: string[] | null;
           max_assentos: number | null;
           max_canais: number | null;
           moeda: string;
           nome: string;
           oferecido_ao_cliente: boolean;
           padrao_no_cadastro: boolean;
+          para_quem: string | null;
           preco_cents: number;
           teto_ia_usd_cents: number | null;
           trial_dias: number;
@@ -5496,16 +5502,22 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           arquivado_em?: string | null;
+          como_funciona?: string | null;
           created_at?: string;
+          descricao_curta?: string | null;
+          destaques?: string[] | null;
           id?: string;
+          inclui_agentes_arvisx?: boolean;
           interface_settings?: Json;
           intervalo: string;
+          limites?: string[] | null;
           max_assentos?: number | null;
           max_canais?: number | null;
           moeda?: string;
           nome: string;
           oferecido_ao_cliente?: boolean;
           padrao_no_cadastro?: boolean;
+          para_quem?: string | null;
           preco_cents: number;
           teto_ia_usd_cents?: number | null;
           trial_dias?: number;
@@ -5514,16 +5526,22 @@ export type Database = {
         };
         Update: {
           arquivado_em?: string | null;
+          como_funciona?: string | null;
           created_at?: string;
+          descricao_curta?: string | null;
+          destaques?: string[] | null;
           id?: string;
+          inclui_agentes_arvisx?: boolean;
           interface_settings?: Json;
           intervalo?: string;
+          limites?: string[] | null;
           max_assentos?: number | null;
           max_canais?: number | null;
           moeda?: string;
           nome?: string;
           oferecido_ao_cliente?: boolean;
           padrao_no_cadastro?: boolean;
+          para_quem?: string | null;
           preco_cents?: number;
           teto_ia_usd_cents?: number | null;
           trial_dias?: number;

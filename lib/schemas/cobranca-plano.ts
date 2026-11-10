@@ -41,6 +41,28 @@ function precoNoPiso(v: { preco_cents?: number; moeda?: Moeda }, ctx: z.Refineme
   }
 }
 
+/**
+ * Os textos do plano (migration 9803), escritos pelo dono em /admin/cobranca: o
+ * código não tem texto de plano fixo. Os tetos são os mesmos dos CHECKs. Texto
+ * vazio vira `null` (o banco recusa string vazia); lista vazia também.
+ */
+export const TETOS_DOS_TEXTOS = {
+  descricao_curta: 140,
+  para_quem: 200,
+  como_funciona: 600,
+  destaques: { itens: 8, caracteres: 120 },
+  limites: { itens: 5, caracteres: 200 },
+} as const;
+
+const textoOpcional = (max: number) =>
+  z.string().trim().max(max).nullable().transform((v) => (v ? v : null));
+const frasesOpcionais = (teto: { itens: number; caracteres: number }) =>
+  z
+    .array(z.string().trim().min(1).max(teto.caracteres))
+    .max(teto.itens)
+    .nullable()
+    .transform((v) => (v && v.length > 0 ? v : null));
+
 const campos = {
   nome: z.string().trim().min(1).max(60),
   // O piso (500) é conferido em `precoNoPiso`, que conhece a moeda do corpo.
@@ -54,6 +76,12 @@ const campos = {
   padrao_no_cadastro: z.boolean(),
   oferecido_ao_cliente: z.boolean(),
   interface_settings: interfaceDoPlanoSchema,
+  descricao_curta: textoOpcional(TETOS_DOS_TEXTOS.descricao_curta),
+  para_quem: textoOpcional(TETOS_DOS_TEXTOS.para_quem),
+  destaques: frasesOpcionais(TETOS_DOS_TEXTOS.destaques),
+  limites: frasesOpcionais(TETOS_DOS_TEXTOS.limites),
+  como_funciona: textoOpcional(TETOS_DOS_TEXTOS.como_funciona),
+  inclui_agentes_arvisx: z.boolean(),
 };
 
 export const novoPlanoSchema = z.strictObject({
@@ -69,6 +97,13 @@ export const novoPlanoSchema = z.strictObject({
   oferecido_ao_cliente: campos.oferecido_ao_cliente.optional(),
   // Ausente na criação = o default da coluna (completa).
   interface_settings: campos.interface_settings.optional(),
+  // Ausentes na criação = nulos (e o marcador, false): nenhum texto inventado.
+  descricao_curta: campos.descricao_curta.optional(),
+  para_quem: campos.para_quem.optional(),
+  destaques: campos.destaques.optional(),
+  limites: campos.limites.optional(),
+  como_funciona: campos.como_funciona.optional(),
+  inclui_agentes_arvisx: campos.inclui_agentes_arvisx.optional(),
   // Na criação, sem moeda vale o default da coluna (BRL): a frase já sai nela.
 }).superRefine((v, ctx) => precoNoPiso({ ...v, moeda: v.moeda ?? "BRL" }, ctx));
 
@@ -79,4 +114,4 @@ export const edicaoDoPlanoSchema = z
   .refine((v) => Object.keys(v).length > 0, "Nada para mudar.");
 
 export const COLUNAS_DO_PLANO =
-  "id, nome, preco_cents, moeda, intervalo, trial_dias, max_assentos, max_canais, teto_ia_usd_cents, padrao_no_cadastro, oferecido_ao_cliente, interface_settings, arquivado_em, created_at, updated_at";
+  "id, nome, preco_cents, moeda, intervalo, trial_dias, max_assentos, max_canais, teto_ia_usd_cents, padrao_no_cadastro, oferecido_ao_cliente, interface_settings, descricao_curta, para_quem, destaques, limites, como_funciona, inclui_agentes_arvisx, arquivado_em, created_at, updated_at";

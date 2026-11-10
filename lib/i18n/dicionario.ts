@@ -19963,6 +19963,18 @@ export const DICIONARIO: Traducoes = {
   "Fica de fora:": { es: "Queda fuera:" },
   "todas as telas": { es: "todas las pantallas" },
   "Assinar {plano}": { es: "Suscribirse a {plano}" },
+  // Textos do plano (migration 9803), /admin/cobranca.
+  "Textos do plano": { es: "Textos del plan" },
+  "É o que a empresa lê ao comparar os planos na assinatura. Escreva o benefício, não o nome da tela. Campo vazio não aparece.": { es: "Es lo que la empresa lee al comparar los planes en la suscripción. Escribe el beneficio, no el nombre de la pantalla. Un campo vacío no aparece." },
+  "Descrição curta": { es: "Descripción corta" },
+  "Para quem é": { es: "Para quién es" },
+  "O que tem": { es: "Qué incluye" },
+  "O que não tem": { es: "Qué no incluye" },
+  "Uma frase por linha: até {itens} frases de até {caracteres} caracteres.": { es: "Una frase por línea: hasta {itens} frases de hasta {caracteres} caracteres." },
+  "Como funciona (em destaque no card)": { es: "Cómo funciona (destacado en la tarjeta)" },
+  "Inclui os 4 agentes de IA feitos sob medida pela sua equipe": { es: "Incluye los 4 agentes de IA hechos a medida por tu equipo" },
+  "Mostra o selo no plano e avisa a equipe quando uma empresa assina ou sai dele. Não liga nem desliga agente nenhum.": { es: "Muestra el sello en el plan y avisa al equipo cuando una empresa se suscribe o lo deja. No activa ni desactiva ningún agente." },
+  "Agentes sob medida": { es: "Agentes a medida" },
 };
 
 /**

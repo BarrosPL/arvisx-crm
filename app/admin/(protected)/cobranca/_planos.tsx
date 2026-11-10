@@ -8,6 +8,7 @@ import { showApiError } from "@/components/feedback/ApiErrorToast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { InterfaceEditor } from "@/components/team/InterfaceEditor";
 import { useT } from "@/hooks/i18n/useT";
 import { apiClient } from "@/lib/api/client";
@@ -16,7 +17,7 @@ import { MOEDAS, type Intervalo, type Moeda } from "@/lib/cobranca/vocabulario";
 import { useIdioma } from "@/lib/i18n/IdiomaProvider";
 import { formatCents, simboloDaMoeda } from "@/lib/money";
 import { INTERFACE_COMPLETA, interfaceTemDestino, lerInterface, type InterfaceSettings } from "@/lib/navigation/interface";
-import { novoPlanoSchema, PRECO_MINIMO_CENTS } from "@/lib/schemas/cobranca-plano";
+import { novoPlanoSchema, PRECO_MINIMO_CENTS, TETOS_DOS_TEXTOS } from "@/lib/schemas/cobranca-plano";
 
 /** Um plano de `cobranca_planos` como a tela o recebe (COLUNAS_DO_PLANO). */
 export interface PlanoDaTela {
@@ -34,6 +35,14 @@ export interface PlanoDaTela {
   oferecido_ao_cliente: boolean;
   /** As telas que o plano libera (migration 9802): `preset` + `destinos`. */
   interface_settings: unknown;
+  /** Os textos que vendem o plano (migration 9803), escritos aqui pelo dono. */
+  descricao_curta: string | null;
+  para_quem: string | null;
+  destaques: string[] | null;
+  limites: string[] | null;
+  como_funciona: string | null;
+  /** Equipe Completa: os 4 agentes feitos pela equipe da Arvisx. Informativo. */
+  inclui_agentes_arvisx: boolean;
   arquivado_em: string | null;
 }
 
@@ -47,9 +56,18 @@ interface Campos {
   max_canais: string;
   /** As telas do plano, no formato do `InterfaceEditor` (só `preset` e `destinos`). */
   telas: InterfaceSettings;
+  descricao_curta: string;
+  para_quem: string;
+  /** Uma frase por linha. */
+  destaques: string;
+  /** Uma frase por linha. */
+  limites: string;
+  como_funciona: string;
+  inclui_agentes_arvisx: boolean;
 }
 
-const VAZIO: Campos = { nome: "", preco: "", moeda: "BRL", intervalo: "mes", trial_dias: "14", max_assentos: "", max_canais: "", telas: INTERFACE_COMPLETA };
+const VAZIO: Campos = { nome: "", preco: "", moeda: "BRL", intervalo: "mes", trial_dias: "14", max_assentos: "", max_canais: "", telas: INTERFACE_COMPLETA,
+  descricao_curta: "", para_quem: "", destaques: "", limites: "", como_funciona: "", inclui_agentes_arvisx: false };
 
 /** Só o que é do plano: `preset` e `destinos` (o resto da interface é da empresa). */
 function telasDoPlano(raw: unknown): InterfaceSettings {
@@ -62,6 +80,13 @@ const AVISO_DE_CAMPOS =
 const centavos = (v: string) => Math.round(Number(v.replace(",", ".")) * 100);
 const inteiroOuNulo = (v: string) => (v.trim() === "" ? null : Number(v));
 const decimal = (cents: number) => (cents / 100).toFixed(2).replace(".", ",");
+/** Vazio = sem texto (null), nunca string vazia: o banco recusa. */
+const textoOuNulo = (v: string) => (v.trim() === "" ? null : v.trim());
+/** Uma frase por linha; linhas vazias não contam. Nenhuma = null. */
+const frases = (v: string) => {
+  const linhas = v.split(/\r?\n/).map((l) => l.trim()).filter((l) => l !== "");
+  return linhas.length === 0 ? null : linhas;
+};
 
 /**
  * O corpo que as rotas de plano recebem. Campo de limite vazio = sem limite (null).
@@ -79,6 +104,12 @@ function corpoDoPlano(c: Campos) {
     max_assentos: inteiroOuNulo(c.max_assentos),
     max_canais: inteiroOuNulo(c.max_canais),
     interface_settings: telasDoPlano(c.telas),
+    descricao_curta: textoOuNulo(c.descricao_curta),
+    para_quem: textoOuNulo(c.para_quem),
+    destaques: frases(c.destaques),
+    limites: frases(c.limites),
+    como_funciona: textoOuNulo(c.como_funciona),
+    inclui_agentes_arvisx: c.inclui_agentes_arvisx,
   };
 }
 
@@ -92,6 +123,12 @@ function camposDe(p: PlanoDaTela): Campos {
     max_assentos: p.max_assentos === null ? "" : String(p.max_assentos),
     max_canais: p.max_canais === null ? "" : String(p.max_canais),
     telas: telasDoPlano(p.interface_settings),
+    descricao_curta: p.descricao_curta ?? "",
+    para_quem: p.para_quem ?? "",
+    destaques: (p.destaques ?? []).join("\n"),
+    limites: (p.limites ?? []).join("\n"),
+    como_funciona: p.como_funciona ?? "",
+    inclui_agentes_arvisx: p.inclui_agentes_arvisx,
   };
 }
 
@@ -115,9 +152,9 @@ export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] 
   const [editando, setEditando] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const usd = new Intl.NumberFormat(idioma, { style: "currency", currency: "USD" });
-  const campo = (k: Exclude<keyof Campos, "intervalo" | "moeda" | "telas">) => ({
+  const campo = (k: Exclude<keyof Campos, "intervalo" | "moeda" | "telas" | "inclui_agentes_arvisx">) => ({
     value: campos[k],
-    onChange: (e: ChangeEvent<HTMLInputElement>) => setCampos({ ...campos, [k]: e.target.value }),
+    onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setCampos({ ...campos, [k]: e.target.value }),
   });
   const limite = (n: number | null) => (n === null ? t("sem limite") : String(n));
 
@@ -225,6 +262,56 @@ export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] 
           </p>
           <InterfaceEditor value={campos.telas} onChange={(telas) => setCampos({ ...campos, telas })} role="admin" />
         </div>
+        <fieldset className="space-y-3 rounded-md border p-4">
+          <legend className="px-1 text-sm font-medium">{t("Textos do plano")}</legend>
+          <p className="text-xs text-muted-foreground">
+            {t("É o que a empresa lê ao comparar os planos na assinatura. Escreva o benefício, não o nome da tela. Campo vazio não aparece.")}
+          </p>
+          <div className="space-y-1">
+            <Label htmlFor="plano-descricao">{t("Descrição curta")}</Label>
+            <Input id="plano-descricao" maxLength={TETOS_DOS_TEXTOS.descricao_curta} {...campo("descricao_curta")} />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="plano-para-quem">{t("Para quem é")}</Label>
+            <Textarea id="plano-para-quem" rows={2} maxLength={TETOS_DOS_TEXTOS.para_quem} {...campo("para_quem")} />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="plano-destaques">{t("O que tem")}</Label>
+            <Textarea id="plano-destaques" rows={5} aria-describedby="plano-destaques-dica" {...campo("destaques")} />
+            <p id="plano-destaques-dica" className="text-xs text-muted-foreground">
+              {t("Uma frase por linha: até {itens} frases de até {caracteres} caracteres.")
+                .replace("{itens}", String(TETOS_DOS_TEXTOS.destaques.itens))
+                .replace("{caracteres}", String(TETOS_DOS_TEXTOS.destaques.caracteres))}
+            </p>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="plano-limites">{t("O que não tem")}</Label>
+            <Textarea id="plano-limites" rows={4} aria-describedby="plano-limites-dica" {...campo("limites")} />
+            <p id="plano-limites-dica" className="text-xs text-muted-foreground">
+              {t("Uma frase por linha: até {itens} frases de até {caracteres} caracteres.")
+                .replace("{itens}", String(TETOS_DOS_TEXTOS.limites.itens))
+                .replace("{caracteres}", String(TETOS_DOS_TEXTOS.limites.caracteres))}
+            </p>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="plano-como-funciona">{t("Como funciona (em destaque no card)")}</Label>
+            <Textarea id="plano-como-funciona" rows={4} maxLength={TETOS_DOS_TEXTOS.como_funciona} {...campo("como_funciona")} />
+          </div>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={campos.inclui_agentes_arvisx}
+              onChange={(e) => setCampos({ ...campos, inclui_agentes_arvisx: e.target.checked })}
+            />
+            <span>
+              {t("Inclui os 4 agentes de IA feitos sob medida pela sua equipe")}
+              <span className="block text-xs text-muted-foreground">
+                {t("Mostra o selo no plano e avisa a equipe quando uma empresa assina ou sai dele. Não liga nem desliga agente nenhum.")}
+              </span>
+            </span>
+          </label>
+        </fieldset>
         <div className="flex flex-wrap gap-2">
           <Button type="submit" disabled={salvando}>
             {editando ? t("Salvar alterações") : t("Salvar plano")}
@@ -264,7 +351,9 @@ export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] 
                     {p.padrao_no_cadastro && <span className="ml-2 rounded-md bg-muted px-1.5 py-0.5 text-xs">{t("Plano do cadastro")}</span>}
                     {p.arquivado_em && <span className="ml-2 rounded-md bg-muted px-1.5 py-0.5 text-xs">{t("Arquivado")}</span>}
                     {!p.oferecido_ao_cliente && <span className="ml-2 rounded-md bg-muted px-1.5 py-0.5 text-xs">{t("Só você atribui")}</span>}
+                    {p.inclui_agentes_arvisx && <span className="ml-2 rounded-md bg-cta-leve px-1.5 py-0.5 text-xs">{t("Agentes sob medida")}</span>}
                   </p>
+                  {p.descricao_curta && <p>{p.descricao_curta}</p>}
                   <p className="text-muted-foreground">
                     {formatCents(p.preco_cents, p.moeda)} {p.intervalo === "mes" ? t("por mês") : t("por ano")} · {p.trial_dias} {t("dias de teste")}
                   </p>

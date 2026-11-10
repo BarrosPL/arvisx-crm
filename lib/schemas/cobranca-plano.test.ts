@@ -32,3 +32,31 @@ describe("plano de cobrança — moeda (migration 9801)", () => {
     expect(edicaoDoPlanoSchema.safeParse({ moeda: "EUR" }).success).toBe(true);
   });
 });
+
+describe("plano de cobrança — textos (migration 9803)", () => {
+  it("textos e listas vazios viram null; sem eles, nada é inventado", () => {
+    const r = novoPlanoSchema.parse({ ...PLANO, descricao_curta: "  ", para_quem: "", destaques: [], limites: null });
+    expect(r).toMatchObject({ descricao_curta: null, para_quem: null, destaques: null, limites: null });
+    expect(novoPlanoSchema.parse(PLANO)).not.toHaveProperty("descricao_curta");
+    expect(edicaoDoPlanoSchema.parse({ como_funciona: "" })).toEqual({ como_funciona: null });
+  });
+
+  it("os tetos são os dos CHECKs: 140, 200, 600, 8×120 e 5×200", () => {
+    const ok = (corpo: Record<string, unknown>) => edicaoDoPlanoSchema.safeParse(corpo).success;
+    expect(ok({ descricao_curta: "a".repeat(140) })).toBe(true);
+    expect(ok({ descricao_curta: "a".repeat(141) })).toBe(false);
+    expect(ok({ para_quem: "a".repeat(201) })).toBe(false);
+    expect(ok({ como_funciona: "a".repeat(601) })).toBe(false);
+    expect(ok({ destaques: Array(8).fill("a".repeat(120)) })).toBe(true);
+    expect(ok({ destaques: Array(9).fill("a") })).toBe(false);
+    expect(ok({ destaques: ["a".repeat(121)] })).toBe(false);
+    expect(ok({ limites: Array(5).fill("a".repeat(200)) })).toBe(true);
+    expect(ok({ limites: Array(6).fill("a") })).toBe(false);
+    expect(ok({ limites: [""] })).toBe(false);
+  });
+
+  it("o marcador do Equipe Completa é booleano", () => {
+    expect(edicaoDoPlanoSchema.safeParse({ inclui_agentes_arvisx: true }).success).toBe(true);
+    expect(edicaoDoPlanoSchema.safeParse({ inclui_agentes_arvisx: "sim" }).success).toBe(false);
+  });
+});
