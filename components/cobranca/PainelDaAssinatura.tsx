@@ -53,7 +53,7 @@ export function PainelDaAssinatura({ dados, idioma }: { dados: DadosDoPainel; id
       {comAgentes && (
         <p data-equipe-completa className="rounded-md border border-cta/40 bg-cta-leve p-3 text-sm">
           {dados.aguardaContatoDaEquipe
-            ? t("Recebemos sua assinatura. Nossa equipe entrará em contato para entender a sua operação e criar seus 4 agentes.")
+            ? t("Recebemos sua assinatura. Nossa equipe entrará em contato para começar o desenvolvimento dos seus 4 agentes.")
             : t("Seu plano inclui os 4 agentes de IA feitos sob medida pela nossa equipe.")}
         </p>
       )}

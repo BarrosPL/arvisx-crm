@@ -10,6 +10,10 @@
  * agentes de IA dentro da plataforma são do cliente; a Arvisx só desenvolve
  * soluções personalizadas no Equipe Completa.
  *
+ * O Equipe Completa começa por uma reunião (/agendar), em que a equipe orienta a
+ * assinatura; a assinatura segue sendo feita no CRM e nada a trava sem reunião
+ * (tarefa 4 dos planos).
+ *
  * Verdadeiro com o que o sistema faz: o Essencial não tem as telas de IA
  * (docs/arvisx/PLANOS.md), por isso a frase dele não fala em configurar agente.
  * Isto é texto: nenhuma trava nova, nenhum limite de quantidade de agentes.
@@ -33,7 +37,7 @@ export const QUEM_CUIDA_DOS_AGENTES = {
       id: "equipe_completa",
       planos: "Equipe Completa",
       texto:
-        "No Equipe Completa, a Arvisx entra em um processo de desenvolvimento de soluções personalizadas: entende a sua operação e cria 4 agentes de IA sob medida, integrados ao CRM e às suas ferramentas. É o único plano em que a Arvisx desenvolve soluções para você.",
+        "No Equipe Completa, a Arvisx entra em um processo de desenvolvimento de soluções personalizadas: começa por uma reunião, entende a sua operação e cria 4 agentes de IA sob medida, integrados ao CRM e às suas ferramentas. É o único plano em que a Arvisx desenvolve soluções para você.",
     },
   ],
   consumo: "O consumo da IA é cobrado pelo seu provedor de IA, nunca pela Arvisx.",

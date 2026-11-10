@@ -271,6 +271,11 @@ describe("quem cuida dos agentes de IA, no comparativo", () => {
     const tudo = [...FRASES_DE_QUEM_CUIDA, SAIDA_DO_SOB_MEDIDA].join(" ");
     expect(tudo).toMatch(/você é responsável pela gestão e pela configuração dos seus agentes de IA/);
     expect(tudo).toMatch(/É o único plano em que a Arvisx desenvolve soluções para você\./);
+    // Tarefa 4: o Equipe Completa começa por uma reunião — e só ele fala em reunião.
+    const porPlano = Object.fromEntries(QUEM_CUIDA_DOS_AGENTES.itens.map((i) => [i.id, i.texto as string]));
+    expect(porPlano.equipe_completa).toMatch(/soluções personalizadas: começa por uma reunião, entende a sua operação e cria 4 agentes de IA sob medida/);
+    expect(porPlano.essencial).not.toMatch(/reunião/);
+    expect(porPlano.standard_e_premium).not.toMatch(/reunião/);
     expect(tudo).not.toMatch(/contratad[oa]s? à parte|em reunião|na reunião/);
     expect(tudo).not.toMatch(/\b(Sophia|Matheus|Pedro)\b|agente Financeiro/i);
     expect(tudo).not.toMatch(/\d+\s?%|sozinho|funcionário/i);

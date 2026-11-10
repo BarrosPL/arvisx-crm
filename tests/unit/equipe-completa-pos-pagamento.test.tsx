@@ -122,7 +122,7 @@ const dados = (o: Partial<DadosDoPainel> = {}, a: Partial<typeof ASSINATURA> = {
   planosParaTroca: [], escolheAoAssinar: false, planosParaAssinar: [], comparativo: { planos: [], atual: null }, fuso: null,
   checkout: { provedor: "stripe", documentoDoCadastro: null }, ...o,
 });
-const RECEBEMOS = "Recebemos sua assinatura. Nossa equipe entrará em contato para entender a sua operação e criar seus 4 agentes.";
+const RECEBEMOS = "Recebemos sua assinatura. Nossa equipe entrará em contato para começar o desenvolvimento dos seus 4 agentes.";
 
 describe("a tela do cliente depois do pagamento", () => {
   it("Equipe Completa pago e sem contato: a mensagem de contato", () => {
