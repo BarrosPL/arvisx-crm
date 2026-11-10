@@ -1,0 +1,76 @@
+{
+  "landing-desktop": {
+    "botoesDosCards": {
+      "Essencial": [
+        "Começar o teste grátis -> /signup"
+      ],
+      "Standard": [
+        "Começar o teste grátis -> /signup"
+      ],
+      "Premium": [
+        "Começar o teste grátis -> /signup"
+      ],
+      "Equipe Completa": [
+        "Agendar reunião -> /agendar"
+      ]
+    },
+    "botaoDaSecaoEquipeCompleta": [
+      "Agendar reunião com o time Arvisx -> /agendar"
+    ],
+    "passos": [
+      "Você agenda uma reunião de 30 minutos com o time Arvisx",
+      "Entendemos a sua operação e orientamos como assinar o Equipe Completa",
+      "Desenvolvemos os 4 agentes e integramos ao seu CRM"
+    ],
+    "linksParaAgendar": 2,
+    "hero": "IA a partir do Standard, com as credenciais da sua empresa",
+    "avisoEquipeCompleta": "No Equipe Completa, a Arvisx entra em um processo de desenvolvimento de soluções personalizadas: começa por uma reunião, entende a sua operação e cria 4 agentes de IA sob medida, integrados ao CRM e às suas ferramentas. É o único plano em que a Arvisx desenvolve soluções para você.",
+    "frasesProibidas": 0,
+    "rolagemHorizontal": 0
+  },
+  "agendar-desktop": {
+    "titulo": "Quer agentes de IA feitos para a sua operação?",
+    "etiqueta": "Equipe Completa · Reunião com o time Arvisx",
+    "confirmacao": "Confirmo que a reunião é sobre o plano Equipe Completa (agentes de IA sob medida) e não para suporte ou para conhecer o CRM.",
+    "iframesAntesDeConfirmar": 0,
+    "frasesAntigas": 0,
+    "rolagemHorizontal": 0
+  },
+  "landing-celular-390": {
+    "botoesDosCards": {
+      "Essencial": [
+        "Começar o teste grátis -> /signup"
+      ],
+      "Standard": [
+        "Começar o teste grátis -> /signup"
+      ],
+      "Premium": [
+        "Começar o teste grátis -> /signup"
+      ],
+      "Equipe Completa": [
+        "Agendar reunião -> /agendar"
+      ]
+    },
+    "botaoDaSecaoEquipeCompleta": [
+      "Agendar reunião com o time Arvisx -> /agendar"
+    ],
+    "passos": [
+      "Você agenda uma reunião de 30 minutos com o time Arvisx",
+      "Entendemos a sua operação e orientamos como assinar o Equipe Completa",
+      "Desenvolvemos os 4 agentes e integramos ao seu CRM"
+    ],
+    "linksParaAgendar": 2,
+    "hero": "IA a partir do Standard, com as credenciais da sua empresa",
+    "avisoEquipeCompleta": "No Equipe Completa, a Arvisx entra em um processo de desenvolvimento de soluções personalizadas: começa por uma reunião, entende a sua operação e cria 4 agentes de IA sob medida, integrados ao CRM e às suas ferramentas. É o único plano em que a Arvisx desenvolve soluções para você.",
+    "frasesProibidas": 0,
+    "rolagemHorizontal": 0
+  },
+  "agendar-celular-390": {
+    "titulo": "Quer agentes de IA feitos para a sua operação?",
+    "etiqueta": "Equipe Completa · Reunião com o time Arvisx",
+    "confirmacao": "Confirmo que a reunião é sobre o plano Equipe Completa (agentes de IA sob medida) e não para suporte ou para conhecer o CRM.",
+    "iframesAntesDeConfirmar": 0,
+    "frasesAntigas": 0,
+    "rolagemHorizontal": 0
+  }
+}
