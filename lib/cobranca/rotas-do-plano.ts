@@ -17,7 +17,21 @@
 import { NAV_CATALOG, NAV_GROUPS, type NavDestinationId, type NavGroupId } from "@/lib/navigation/catalogo";
 
 export const LIVRE = "livre" as const;
-type Classe = NavDestinationId | typeof LIVRE;
+
+/**
+ * Rota que não cabe em "uma tela só" (auditoria de 11/11/2026). A tela DONA vai
+ * no código do 403; o resto diz quem mais pode usar, e só o que foi medido:
+ *  - `tambem`: outra tela que usa a rota inteira (qualquer método);
+ *  - `leituras`: um GET de caminho EXATO que outra tela precisa ler. `LIVRE` =
+ *    o plano não decide essa leitura; lista = basta o plano ter UMA das telas.
+ * Criar, editar e apagar nunca entram em `leituras`.
+ */
+export type RegraDeRota = {
+  destino: NavDestinationId;
+  tambem?: readonly NavDestinationId[];
+  leituras?: Readonly<Record<string, typeof LIVRE | readonly NavDestinationId[]>>;
+};
+type Classe = NavDestinationId | typeof LIVRE | RegraDeRota;
 
 // ─────────────────────────────── PÁGINAS ───────────────────────────────────
 
@@ -104,26 +118,7 @@ export function destinoDaPagina(caminho: string): NavDestinationId | null {
  * Prefixos cujo SEGUNDO nível é classificado um a um (a cerca cobra cada
  * subdiretório): misturam rota do Inbox com rota de tela de configuração.
  */
-export const PREFIXOS_POR_SUB_ROTA = ["ai", "settings", "reports"] as const;
-
-/**
- * Prefixos que ficaram LIVRES por dúvida — o dono decide. Cada um tem o porquê
- * na linha dele em `ROTAS_DE_API` (comentário `DÚVIDA`).
- */
-export const PREFIXOS_EM_DUVIDA = [
-  "/api/v1/ai/agents",
-  "/api/v1/ai/credentials",
-  "/api/v1/ai/voz",
-  "/api/v1/calls",
-  "/api/v1/financeiro",
-  "/api/v1/mcp",
-  "/api/v1/proposals",
-  "/api/v1/settings/proposal-templates",
-  "/api/v1/settings/proposals",
-  "/api/v1/settings/routing",
-  "/api/v1/webhook-sources",
-  "/api/v1/webhooks",
-] as const;
+export const PREFIXOS_POR_SUB_ROTA = ["ai", "settings", "reports", "financeiro"] as const;
 
 /**
  * Cada prefixo de `app/api/v1`. Regra de corte: LIVRE tudo que o Inbox, a casca
@@ -136,11 +131,23 @@ export const ROTAS_DE_API: Readonly<Record<string, Classe>> = {
   "/api/v1/ads": "/app/ads/meta",
   "/api/v1/agenda": LIVRE, // Atendimento (Agenda) e componentes dentro do Inbox
   "/api/v1/ai": LIVRE, // classificado por sub-rota abaixo
-  "/api/v1/ai/agents": LIVRE, // DÚVIDA: o quadro (Funis) lista agentes atribuíveis por aqui; sem IA o motor já não responde
+  "/api/v1/ai/agents": {
+    destino: "/app/ai/agents",
+    leituras: {
+      // Funis (atribuir a conversa a um agente) e Conexões › Telefonia: só nome e canal.
+      "/api/v1/ai/agents/assignable": LIVRE,
+      // A lista de agentes, lida por Campanhas (destino da campanha) e Webhooks (ação da automação).
+      "/api/v1/ai/agents": ["/app/campaigns", "/app/webhooks"],
+    },
+  },
   "/api/v1/ai/automatico-ativo": LIVRE, // Inbox
   "/api/v1/ai/budget": "/app/ai/usage",
   "/api/v1/ai/cases": LIVRE, // contador da casca (todas as telas)
-  "/api/v1/ai/credentials": LIVRE, // DÚVIDA: a chave de conhecimento (components/ai) aparece fora da tela de IA
+  "/api/v1/ai/credentials": {
+    destino: "/app/ai/credentials",
+    // O editor do agente escolhe a credencial; Conhecimento e Provedores mostram qual está em uso.
+    leituras: { "/api/v1/ai/credentials": ["/app/ai/agents", "/app/ai/knowledge/sources", "/app/ai/providers"] },
+  },
   "/api/v1/ai/evolution": "/app/ai/evolution",
   "/api/v1/ai/followup-flows": LIVRE, // Inbox (inscrever contato num fluxo)
   "/api/v1/ai/followups": LIVRE, // Inbox (fila de follow-up do contato)
@@ -161,14 +168,14 @@ export const ROTAS_DE_API: Readonly<Record<string, Classe>> = {
   "/api/v1/ai/style-adjustments": "/app/ai/agents",
   "/api/v1/ai/turn-traces": "/app/ai/runs",
   "/api/v1/ai/usage": "/app/ai/usage",
-  "/api/v1/ai/voz": LIVRE, // DÚVIDA: o envio de voz do motor também a consulta
+  "/api/v1/ai/voz": { destino: "/app/ai/agents", tambem: ["/app/ai/providers"] }, // a voz do agente é escolhida em Provedores; o motor lê do banco, não desta rota
   "/api/v1/anuncios": LIVRE, // landing de clique (entrada externa, D-11)
   "/api/v1/attendants": LIVRE, // presença: casca
   "/api/v1/audit": "/app/audit",
   "/api/v1/auth": LIVRE,
   "/api/v1/automation-rules": "/app/webhooks",
   "/api/v1/avisos": LIVRE, // sem consumidor na tela; recado da equipe
-  "/api/v1/calls": LIVRE, // DÚVIDA: alerta de chamada recebida mora na casca; a tela Ligações é capacidade (telefonia)
+  "/api/v1/calls": "/app/calls", // o alerta de chamada recebida da casca é Realtime (voice_calls), não passa por aqui
   "/api/v1/campaign-suppressions": "/app/campaigns",
   "/api/v1/campaign-templates": "/app/campaigns",
   "/api/v1/campaigns": "/app/campaigns",
@@ -188,7 +195,18 @@ export const ROTAS_DE_API: Readonly<Record<string, Classe>> = {
   "/api/v1/demandas": LIVRE, // Inbox
   "/api/v1/extensions": "/app/extensions",
   "/api/v1/external-db": "/app/integracao-dados",
-  "/api/v1/financeiro": LIVRE, // DÚVIDA: serve Comandas, Faturamento, Honorários e Configurações › Financeiro
+  "/api/v1/financeiro": "/app/settings/tenant/financeiro", // classificado por sub-rota abaixo; o que nascer sem linha cai aqui, fechado
+  "/api/v1/financeiro/catalogo": {
+    destino: "/app/settings/tenant/financeiro",
+    // Formas de pagamento e contas: Comandas, Faturamento e Honorários leem para preencher; só a configuração grava.
+    leituras: {
+      "/api/v1/financeiro/catalogo/formas": ["/app/comandas", "/app/faturamento", "/app/honorarios"],
+      "/api/v1/financeiro/catalogo/contas": ["/app/comandas", "/app/faturamento", "/app/honorarios"],
+    },
+  },
+  "/api/v1/financeiro/comandas": "/app/comandas",
+  "/api/v1/financeiro/fidelidade": "/app/comandas",
+  "/api/v1/financeiro/lancamentos": "/app/faturamento",
   "/api/v1/health": LIVRE,
   "/api/v1/honorarios": "/app/honorarios",
   "/api/v1/imports": "/app/imports",
@@ -197,7 +215,9 @@ export const ROTAS_DE_API: Readonly<Record<string, Classe>> = {
   "/api/v1/leads": LIVRE, // Funis, Inbox e Radar
   "/api/v1/lgpd": LIVRE, // direito do titular: nunca bloqueado
   "/api/v1/marca": LIVRE,
-  "/api/v1/mcp": LIVRE, // DÚVIDA: ferramentas para integração externa (token); cada ferramenta toca telas diferentes
+  // Só existe `mcp/tools` (GET): o catálogo de ferramentas. A integração de fora é
+  // API Tokens (Premium); o editor do agente (Standard) precisa ler a lista para marcar.
+  "/api/v1/mcp": { destino: "/app/settings/api-tokens", leituras: { "/api/v1/mcp/tools": ["/app/ai/agents"] } },
   "/api/v1/mcp-oauth": LIVRE, // callback
   "/api/v1/message-template-groups": LIVRE, // Inbox e Respostas rápidas
   "/api/v1/message-templates": LIVRE, // Inbox e Respostas rápidas
@@ -211,7 +231,12 @@ export const ROTAS_DE_API: Readonly<Record<string, Classe>> = {
   "/api/v1/pipelines": LIVRE, // Funis e Inbox
   "/api/v1/plataformas-de-anuncio": "/app/settings/conversoes",
   "/api/v1/products": "/app/products",
-  "/api/v1/proposals": LIVRE, // DÚVIDA: o dossiê do lead (Funis) mostra as propostas
+  "/api/v1/proposals": {
+    destino: "/app/proposals",
+    // O dossiê do lead (Funis) lê a lista. A PRÓPRIA rota devolve vazio, sem
+    // erro, para a empresa sem Propostas (`telaForaDoPlano` em app/api/v1/proposals/route.ts).
+    leituras: { "/api/v1/proposals": LIVRE },
+  },
   "/api/v1/prospecting": "/app/prospecting",
   "/api/v1/rastreio": LIVRE, // link rastreável: o clique vem de fora (D-11)
   "/api/v1/reports": LIVRE, // classificado por sub-rota abaixo
@@ -224,10 +249,14 @@ export const ROTAS_DE_API: Readonly<Record<string, Classe>> = {
   "/api/v1/settings/art15": LIVRE, // dados da empresa
   "/api/v1/settings/assinatura": LIVRE, // assinatura das mensagens do Inbox
   "/api/v1/settings/campanhas": "/app/campaigns",
-  "/api/v1/settings/proposal-templates": LIVRE, // DÚVIDA: Propostas é capacidade da empresa, não só tela
-  "/api/v1/settings/proposals": LIVRE, // DÚVIDA: idem
+  "/api/v1/settings/proposal-templates": { destino: "/app/proposals", tambem: ["/app/settings/tenant/proposals/modelos"] },
+  "/api/v1/settings/proposals": { destino: "/app/proposals", tambem: ["/app/settings/tenant/proposals"] },
   "/api/v1/settings/prospeccao": "/app/prospecting",
-  "/api/v1/settings/routing": LIVRE, // DÚVIDA: distribuição de atendimento, lida por Conexões e Equipe
+  "/api/v1/settings/routing": {
+    destino: "/app/settings/atendimento",
+    // Equipe e Conexões MOSTRAM a distribuição em vigor; mudar é da tela Distribuição de atendimento.
+    leituras: { "/api/v1/settings/routing": LIVRE, "/api/v1/settings/routing/channels": LIVRE },
+  },
   "/api/v1/settings/sons": LIVRE, // casca
   "/api/v1/settings/task-plans": "/app/tasks/planos",
   "/api/v1/system": LIVRE, // versão/relógio: casca
@@ -237,19 +266,36 @@ export const ROTAS_DE_API: Readonly<Record<string, Classe>> = {
   "/api/v1/tenants": LIVRE, // provisionamento
   "/api/v1/voice": LIVRE, // chamada de voz: casca e Inbox
   "/api/v1/voip": "/app/settings/voip-trunk",
-  "/api/v1/webhook-sources": LIVRE, // DÚVIDA: a área de IA também lê as fontes de webhook
-  "/api/v1/webhooks": LIVRE, // DÚVIDA: a maioria é ENTRADA (WhatsApp, Meta, cobrança) e nunca pode parar; a gestão de webhooks de saída mora aqui também
+  "/api/v1/webhook-sources": "/app/webhooks", // a gestão das fontes; só a tela Webhooks consome
+  "/api/v1/webhooks": LIVRE, // só ENTRADA (WhatsApp, Meta, cobrança, Nuvemshop): nunca para por plano nem por suspensão. Nenhuma rota de gestão mora aqui (cerca em telas-do-plano-cercas)
 };
 
 const PREFIXOS_DE_API = Object.keys(ROTAS_DE_API);
 
-/** A tela que esta rota de API serve, ou `null` quando o plano não decide. */
-export function destinoDaRotaDeApi(caminhoBruto: string | null | undefined): NavDestinationId | null {
+/** A tela dona e as que também abrem esta chamada. */
+export type DecisaoDaRota = { destino: NavDestinationId; aceitos: readonly NavDestinationId[] };
+
+/**
+ * Quem pode chamar esta rota, ou `null` quando o plano não decide.
+ * Sem método conhecido a chamada vale como ESCRITA: as leituras abertas só
+ * abrem para GET/HEAD declarado.
+ */
+export function regraDaRotaDeApi(caminhoBruto: string | null | undefined, metodo?: string | null): DecisaoDaRota | null {
   if (!caminhoBruto) return null;
   const caminho = semBarraNoFim(caminhoBruto.split("?")[0] ?? caminhoBruto);
   if (!caminho.startsWith("/api/v1/")) return null;
   const prefixo = prefixoMaisLongo(caminho, PREFIXOS_DE_API);
   if (!prefixo) return null;
   const classe = ROTAS_DE_API[prefixo]!;
-  return classe === LIVRE ? null : classe;
+  if (classe === LIVRE) return null;
+  if (typeof classe === "string") return { destino: classe, aceitos: [classe] };
+  const aceitos = [classe.destino, ...(classe.tambem ?? [])];
+  const leitura = ["GET", "HEAD"].includes((metodo ?? "").toUpperCase()) ? classe.leituras?.[caminho] : undefined;
+  if (leitura === LIVRE) return null;
+  return { destino: classe.destino, aceitos: leitura ? [...aceitos, ...leitura] : aceitos };
+}
+
+/** A tela que esta rota de API serve, ou `null` quando o plano não decide. */
+export function destinoDaRotaDeApi(caminhoBruto: string | null | undefined, metodo?: string | null): NavDestinationId | null {
+  return regraDaRotaDeApi(caminhoBruto, metodo)?.destino ?? null;
 }

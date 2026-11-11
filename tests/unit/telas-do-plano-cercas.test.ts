@@ -6,11 +6,11 @@ import { describe, expect, it } from "vitest";
 import {
   PAGINAS_COM_DESTINO,
   PAGINAS_LIVRES,
-  PREFIXOS_EM_DUVIDA,
   PREFIXOS_POR_SUB_ROTA,
   ROTAS_DE_API,
   LIVRE,
   classeDaPagina,
+  regraDaRotaDeApi,
 } from "@/lib/cobranca/rotas-do-plano";
 import { NAV_CATALOG } from "@/lib/navigation/catalogo";
 
@@ -83,16 +83,88 @@ describe("cerca: todo prefixo de app/api/v1 está classificado", () => {
 
   it("toda classificação é LIVRE ou uma tela que existe no catálogo, e todo prefixo existe no disco", () => {
     for (const [prefixo, classe] of Object.entries(ROTAS_DE_API)) {
-      expect(classe === LIVRE || hrefs.has(classe), `${prefixo} → ${classe}`).toBe(true);
+      const telas =
+        classe === LIVRE
+          ? []
+          : typeof classe === "string"
+            ? [classe]
+            : [
+                classe.destino,
+                ...(classe.tambem ?? []),
+                ...Object.values(classe.leituras ?? {}).flatMap((l) => (l === LIVRE ? [] : [...l])),
+              ];
+      for (const tela of telas) expect(hrefs.has(tela), `${prefixo} → ${tela}`).toBe(true);
       expect(fs.existsSync(path.join(RAIZ, "app", prefixo)), `${prefixo} não existe`).toBe(true);
     }
   });
 
-  it("os prefixos em dúvida estão LIVRES e marcados com DÚVIDA na linha", () => {
+  it("toda leitura aberta é um GET que existe no disco, debaixo do prefixo que a declara", () => {
+    for (const [prefixo, classe] of Object.entries(ROTAS_DE_API)) {
+      if (classe === LIVRE || typeof classe === "string") continue;
+      for (const caminho of Object.keys(classe.leituras ?? {})) {
+        expect(caminho === prefixo || caminho.startsWith(`${prefixo}/`), `${caminho} fora de ${prefixo}`).toBe(true);
+        // `catalogo/formas` e `catalogo/contas` são valores do segmento `[tipo]`.
+        const direto = path.join(RAIZ, "app", caminho, "route.ts");
+        const dinamico = path.join(RAIZ, "app", path.dirname(caminho), "[tipo]", "route.ts");
+        const arquivo = fs.existsSync(direto) ? direto : dinamico;
+        expect(fs.existsSync(arquivo), `${caminho} sem route.ts`).toBe(true);
+        expect(fs.readFileSync(arquivo, "utf8"), `${caminho} sem GET`).toMatch(/export async function GET\b/);
+      }
+    }
+  });
+
+  // Auditoria de 11/11/2026: os 12 prefixos que ficaram livres "por dúvida"
+  // deixavam o Essencial criar Comanda e ler agentes, roteamento e fontes de webhook.
+  it("não sobrou prefixo livre por dúvida", () => {
     const fonte = fs.readFileSync(path.join(RAIZ, "lib", "cobranca", "rotas-do-plano.ts"), "utf8");
-    for (const p of PREFIXOS_EM_DUVIDA) {
-      expect(ROTAS_DE_API[p], p).toBe(LIVRE);
-      expect(fonte).toMatch(new RegExp(`"${p.replace(/[/-]/g, "\\$&")}": LIVRE, // DÚVIDA`));
+    expect(fonte).not.toMatch(/DÚVIDA|PREFIXOS_EM_DUVIDA/);
+  });
+
+  const FECHADOS_NA_AUDITORIA = [
+    "ai/agents",
+    "ai/voz",
+    "ai/credentials",
+    "settings/routing",
+    "calls",
+    "financeiro",
+    "proposals",
+    "settings/proposals",
+    "settings/proposal-templates",
+    "mcp",
+    "webhook-sources",
+  ];
+
+  function rotasDe(dir: string): string[] {
+    return fs
+      .readdirSync(dir, { withFileTypes: true })
+      .flatMap((e) =>
+        e.isDirectory() ? rotasDe(path.join(dir, e.name)) : e.name === "route.ts" ? [path.join(dir, e.name)] : [],
+      );
+  }
+
+  it.each(FECHADOS_NA_AUDITORIA)("/api/v1/%s: fechado por plano, e toda rota dele atravessa um portão que aplica a trava", (p) => {
+    expect(regraDaRotaDeApi(`/api/v1/${p}/qualquer-coisa`, "POST"), p).not.toBeNull();
+    const rotas = rotasDe(path.join(base, p));
+    expect(rotas.length).toBeGreaterThan(0);
+    for (const rota of rotas) {
+      // A trava mora em `requireRole`, `orgAtivaDaApi` e `resolveAuthDual`: rota
+      // que autentica por outro caminho fica fora do plano sem ninguém perceber.
+      expect(fs.readFileSync(rota, "utf8"), path.relative(RAIZ, rota)).toMatch(
+        /\b(requireRole|orgAtivaDaApi|resolveAuthDual)\(/,
+      );
+    }
+  });
+
+  it("/api/v1/webhooks é livre porque só tem ENTRADA: nenhuma rota de lá autentica pessoa", () => {
+    expect(ROTAS_DE_API["/api/v1/webhooks"]).toBe(LIVRE);
+    const rotas = rotasDe(path.join(base, "webhooks"));
+    expect(rotas.length).toBeGreaterThan(5);
+    for (const rota of rotas) {
+      // Gestão (tela, cookie, papel) nasceria com um destes; aí o prefixo
+      // precisa de sub-rota fechada por plano, e esta cerca avisa.
+      expect(fs.readFileSync(rota, "utf8"), path.relative(RAIZ, rota)).not.toMatch(
+        /\b(requireRole|orgAtivaDaApi|resolveAuthDual|loadAuthUser|requireAuth)\(/,
+      );
     }
   });
 

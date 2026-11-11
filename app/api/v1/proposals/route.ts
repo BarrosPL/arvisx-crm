@@ -21,6 +21,7 @@ import { createClient } from "@/lib/supabase/server";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { fusoDaOrganizacao, somarDiasNoFuso } from "@/lib/propostas/data-no-fuso";
 import { sePropostasDesligadas } from "@/lib/propostas/porta";
+import { telaForaDoPlano } from "@/lib/cobranca/trava-do-plano";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,10 @@ export async function GET(req: NextRequest): Promise<Response> {
   if (!authz.ok) return authz.response;
   const desligada = await sePropostasDesligadas(authz.org.orgId, requestId);
   if (desligada) return desligada;
+  // Esta leitura é aberta no portão porque o dossiê do lead (Funis) a faz em
+  // todo plano. Sem Propostas no plano a resposta é vazia, sem erro: o dossiê
+  // não quebra e nada do que foi criado num plano maior aparece.
+  if (await telaForaDoPlano(authz.org.orgId, "/app/proposals")) return ok([], { requestId });
 
   const supabase = await createClient();
   const status = req.nextUrl.searchParams.get("status");

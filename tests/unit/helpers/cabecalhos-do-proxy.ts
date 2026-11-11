@@ -10,10 +10,11 @@
 export async function cabecalhosQueOProxyEntrega(
   url: string,
   doNavegador?: Record<string, string>,
+  metodo = "GET",
 ): Promise<Headers> {
   const { proxy } = await import("@/proxy");
   const { NextRequest } = await import("next/server");
-  const resposta = await proxy(new NextRequest(url, { headers: doNavegador }));
+  const resposta = await proxy(new NextRequest(url, { headers: doNavegador, method: metodo }));
   const nomes = (resposta.headers.get("x-middleware-override-headers") ?? "").split(",").filter(Boolean);
   const entregues = new Headers();
   for (const nome of nomes) {

@@ -28,6 +28,9 @@ export async function proxy(request: NextRequest) {
   // O caminho atual, para os Server Components (o `next` do desafio de MFA em
   // `exigirProvaDeMfa`). Mesma regra: antes do `next`, e sempre gravado.
   request.headers.set("x-pathname", request.nextUrl.pathname);
+  // O método, para a trava das telas do plano separar leitura de escrita
+  // (lib/cobranca/trava-do-plano.ts). Mesma regra: sempre gravado.
+  request.headers.set("x-metodo", request.method);
   const response = NextResponse.next({ request: { headers: request.headers } });
 
   // Inject X-Request-Id for downstream correlation (audit log, error wrappers).

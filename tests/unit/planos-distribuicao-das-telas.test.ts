@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ROTAS_DE_API, destinoDaRotaDeApi } from "@/lib/cobranca/rotas-do-plano";
+import { ROTAS_DE_API, regraDaRotaDeApi } from "@/lib/cobranca/rotas-do-plano";
 import {
   planoIncluiIaParaOMotor,
   planoLibera,
@@ -140,12 +140,14 @@ describe("a trava de API de cada plano", () => {
   });
 
   it("toda rota ligada a uma tela responde 403 exatamente quando a tela está fora do plano", async () => {
-    const ligadas = Object.keys(ROTAS_DE_API).filter((p) => destinoDaRotaDeApi(p) !== null);
+    // Sem método a chamada vale como escrita: as leituras abertas não entram
+    // aqui (são medidas em telas-do-plano-prefixos-fechados.test.ts).
+    const ligadas = Object.keys(ROTAS_DE_API).filter((p) => regraDaRotaDeApi(p) !== null);
     expect(ligadas.length).toBeGreaterThan(0);
     for (const plano of Object.keys(PLANOS) as NomeDoPlano[]) {
       for (const rota of ligadas) {
-        const tela = destinoDaRotaDeApi(rota)!;
-        const esperado = (PLANOS[plano] as readonly string[]).includes(tela) ? 200 : 403;
+        const telas = regraDaRotaDeApi(rota)!.aceitos;
+        const esperado = telas.some((tela) => (PLANOS[plano] as readonly string[]).includes(tela)) ? 200 : 403;
         expect({ plano, rota, status: await status(plano, rota) }).toEqual({ plano, rota, status: esperado });
       }
     }

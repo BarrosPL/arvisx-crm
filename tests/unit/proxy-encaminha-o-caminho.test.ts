@@ -36,3 +36,27 @@ describe("proxy: x-pathname chega aos Server Components", () => {
     expect(h.get("x-pathname")).toBe("/app/inbox");
   });
 });
+
+/**
+ * A trava das telas do plano separa leitura de escrita pelo `x-metodo`
+ * (lib/cobranca/trava-do-plano.ts, auditoria de 11/11/2026): a leitura mínima
+ * que Funis, Conexões e Equipe usam é livre, criar/editar/apagar não. O método
+ * tem de vir do proxy — se valesse o que o navegador manda, um POST se
+ * declararia GET e passaria pela leitura aberta.
+ */
+describe("proxy: x-metodo chega às rotas de API", () => {
+  it.each(["GET", "POST", "PATCH", "DELETE"])("%s: o método da requisição é encaminhado", async (metodo) => {
+    const h = await cabecalhosQueOProxyEntrega("https://crm.exemplo/api/v1/ai/agents/assignable", undefined, metodo);
+    expect(h.get("x-metodo")).toBe(metodo);
+    expect(h.get("x-pathname")).toBe("/api/v1/ai/agents/assignable");
+  });
+
+  it("⭐ o valor mandado pelo navegador não vale: um POST não se declara GET", async () => {
+    const h = await cabecalhosQueOProxyEntrega(
+      "https://crm.exemplo/api/v1/ai/agents/assignable",
+      { "x-metodo": "GET" },
+      "POST",
+    );
+    expect(h.get("x-metodo")).toBe("POST");
+  });
+});
