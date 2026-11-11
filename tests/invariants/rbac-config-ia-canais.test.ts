@@ -104,11 +104,24 @@ describe("0150 — escrita de config de IA/canais exige admin", () => {
     ).toBe(0);
   });
 
+  // Arvisx (9805): status e número de conexão WAHA contam a vaga do plano e passaram a
+  // ser gravados só pelo servidor, então o controle positivo do admin deixou de poder
+  // usar `status`. A policy que este arquivo mede (0150) segue a mesma: o controle e a
+  // recusa do viewer usam `display_name`, coluna que a sessão do admin continua gravando.
+  it("viewer NÃO renomeia o canal de WhatsApp", () => {
+    expect(
+      writeCountAs(
+        GOV_VIEWER,
+        `update public.channel_sessions set display_name = 'TROCADO PELO VIEWER' where id = '${GOV_SESSION}'`,
+      ),
+    ).toBe(0);
+  });
+
   it("CONTROLE POSITIVO: admin altera o canal", () => {
     expect(
       writeCountAs(
         GOV_ADMIN,
-        `update public.channel_sessions set status = 'STOPPED' where id = '${GOV_SESSION}'`,
+        `update public.channel_sessions set display_name = 'TROCADO PELO ADMIN' where id = '${GOV_SESSION}'`,
       ),
     ).toBe(1);
   });
