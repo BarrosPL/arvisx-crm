@@ -192,6 +192,15 @@ describe("ligada: o provisionamento", () => {
     expect(h.rotate).not.toHaveBeenCalled();
   });
 
+  it("⭐ dono sem e-mail confirmado → 409 owner_email_nao_confirmado, sem chave (auditoria de 11/11/2026)", async () => {
+    const { EmailNaoConfirmadoError } = await import("@/lib/auth/email-confirmado");
+    h.provision.mockRejectedValue(new EmailNaoConfirmadoError());
+    const res = await POST(pedido(SEGREDO));
+    expect(res.status).toBe(409);
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe("owner_email_nao_confirmado");
+    expect(h.rotate).not.toHaveBeenCalled();
+  });
+
   it("#2846 a instalação oferece planos sem padrão: 409 plano_obrigatorio que o integrador entende, não 500", async () => {
     h.provision.mockRejectedValue(new Error("provisioning: org insert failed: plano_obrigatorio"));
     const res = await POST(pedido(SEGREDO));

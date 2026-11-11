@@ -3,6 +3,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { audit } from "@/lib/audit";
 import { invalidarUsuario } from "@/lib/auth/cache-curto";
+import { EmailNaoConfirmadoError, emailConfirmado } from "@/lib/auth/email-confirmado";
 import {
   CHAVE_FUSO_DO_CADASTRO,
   CHAVE_IDIOMA_DO_CADASTRO,
@@ -25,6 +26,12 @@ export function slugify(name: string): string {
 type ProvisionUser = {
   id: string;
   email?: string;
+  /**
+   * Quando o PROVEDOR DE AUTH confirmou o e-mail (`auth.users.email_confirmed_at`).
+   * Vem do usuário que o próprio provedor devolveu (`getUser`, `verifyOtp`,
+   * `admin.getUserById`), nunca de formulário. Ausente ou nulo: a empresa não nasce.
+   */
+  email_confirmed_at?: string | null;
   user_metadata?: Record<string, unknown>;
 };
 
@@ -106,6 +113,12 @@ export async function ensureTenantForUser(
 
   const organizationId = await vinculoAtivo(user.id);
   if (organizationId) return { provisioned: false, organizationId };
+
+  // A ÚLTIMA PORTA de toda empresa que nasce de um cadastro (`/auth/confirm`,
+  // `/auth/callback`, `/get-started`, aprovação de pedido): sem e-mail
+  // confirmado pelo provedor, não há empresa. Falha FECHADA — quem chama e
+  // esquece de repassar o campo é recusado, não liberado.
+  if (!emailConfirmado(user)) throw new EmailNaoConfirmadoError();
 
   const orgName =
     (user.user_metadata?.org_name as string | undefined)?.trim() ||
@@ -614,7 +627,7 @@ async function donoOrfaoDesteProvisionamento(
   email: string,
   marcador: MarcadorDeProvisionamento,
 ): Promise<string | null> {
-  let conta: { id: string; app_metadata: unknown } | null = null;
+  let conta: { id: string; app_metadata: unknown; email_confirmed_at?: string | null } | null = null;
 
   for (let pagina = 1; pagina <= PAGINAS_DO_DIRETORIO && !conta; pagina++) {
     const { data, error } = await admin.auth.admin.listUsers({
@@ -626,7 +639,9 @@ async function donoOrfaoDesteProvisionamento(
     }
     if (data.users.length === 0) break;
     const achada = data.users.find((u) => u.email?.toLowerCase() === email);
-    if (achada) conta = { id: achada.id, app_metadata: achada.app_metadata };
+    if (achada) {
+      conta = { id: achada.id, app_metadata: achada.app_metadata, email_confirmed_at: achada.email_confirmed_at ?? null };
+    }
   }
 
   if (!conta) return null;
@@ -639,5 +654,11 @@ async function donoOrfaoDesteProvisionamento(
   // MESMA régua que o replay usa para decidir se está completo (`vinculoVivo`):
   // a pergunta "este vínculo está vivo?" tem um dono só no arquivo.
   const vinculo = await vinculoVivo(admin, { userId: conta.id });
-  return vinculo ? null : conta.id;
+  if (vinculo) return null;
+
+  // A conta deste provisionamento nasce com o e-mail confirmado pelo servidor
+  // (`email_confirm: true`). Uma conta com o marcador e SEM confirmação não é a
+  // que este código criou: não vira dona de empresa (auditoria de 11/11/2026).
+  if (!emailConfirmado(conta)) throw new EmailNaoConfirmadoError();
+  return conta.id;
 }

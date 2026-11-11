@@ -69,6 +69,7 @@ export async function decideRegistrationRequest(
         {
           id: conta.user.id,
           email: conta.user.email,
+          email_confirmed_at: conta.user.email_confirmed_at,
           // O plano escolhido no cadastro (#2846) viaja junto: sem ele, a empresa
           // nasceria no padrão — ou, sem padrão, o gatilho recusaria toda aprovação.
           user_metadata: {

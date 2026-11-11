@@ -205,6 +205,7 @@ describe("ensureTenantForUser — a empresa nasce com o perfil", () => {
     await ensureTenantForUser({
       id: "u-1",
       email: "dueno@ferreteria.test",
+      email_confirmed_at: "2026-11-01T12:00:00.000Z",
       user_metadata: {
         org_name: "Ferretería",
         idioma_do_cadastro: "es",
@@ -226,6 +227,7 @@ describe("ensureTenantForUser — a empresa nasce com o perfil", () => {
     await ensureTenantForUser({
       id: "u-2",
       email: "dono@loja.com.br",
+      email_confirmed_at: "2026-11-01T12:00:00.000Z",
       user_metadata: {
         org_name: "Loja",
         idioma_do_cadastro: "pt-BR",
@@ -243,7 +245,7 @@ describe("ensureTenantForUser — a empresa nasce com o perfil", () => {
   it("conta antiga, sem pistas no metadado: o Accept-Language da confirmação decide", async () => {
     const { ensureTenantForUser } = await import("@/lib/auth/provision");
     await ensureTenantForUser(
-      { id: "u-3", email: "x@y.test", user_metadata: { org_name: "X" } },
+      { id: "u-3", email: "x@y.test", email_confirmed_at: "2026-11-01T12:00:00.000Z", user_metadata: { org_name: "X" } },
       { pistas: { acceptLanguage: "es-MX,es;q=0.9" } },
     );
     const org = escritas.find((e) => e.tabela === "organizations" && e.op === "insert");
@@ -257,7 +259,7 @@ describe("ensureTenantForUser — a empresa nasce com o perfil", () => {
   it("a URL de volta do Google vale como pista, e o metadado do cadastro vence ela", async () => {
     const { ensureTenantForUser } = await import("@/lib/auth/provision");
     await ensureTenantForUser(
-      { id: "u-4", email: "g@y.test", user_metadata: { org_name: "G", idioma_do_cadastro: "es" } },
+      { id: "u-4", email: "g@y.test", email_confirmed_at: "2026-11-01T12:00:00.000Z", user_metadata: { org_name: "G", idioma_do_cadastro: "es" } },
       { source: "signup", pistas: { idioma: "pt-BR", fuso: "Europe/Madrid" } },
     );
     const org = escritas.find((e) => e.tabela === "organizations" && e.op === "insert");

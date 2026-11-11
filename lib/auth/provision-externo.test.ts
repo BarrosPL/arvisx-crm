@@ -91,6 +91,7 @@ const { provisionExternalTenant, slugDoProvisionamento, ProvisionConflictError, 
   await import(
   "./provision"
 );
+const { EmailNaoConfirmadoError } = await import("./email-confirmado");
 
 const ENTRADA = {
   integration: "clinicfx",
@@ -283,6 +284,8 @@ describe("a repetição depois de uma falha transitória PROVISIONA", () => {
           {
             id: "user-orfao",
             email: "dona@clinica.test",
+            // A 1ª chamada a criou com `email_confirm: true`: o provedor a devolve confirmada.
+            email_confirmed_at: "2026-11-01T12:00:00.000Z",
             app_metadata: { provisioning: MARCADOR },
           },
         ],
@@ -338,6 +341,26 @@ describe("a repetição depois de uma falha transitória PROVISIONA", () => {
     const erro = await provisionExternalTenant(ENTRADA).catch((e: unknown) => e);
     expect(erro).not.toBeInstanceOf(EmailJaTemContaError);
     expect(erro).toMatchObject({ message: expect.stringMatching(/busca da conta do dono falhou/) });
+  });
+
+  it("⭐ conta com o marcador mas SEM e-mail confirmado não vira dona de empresa (auditoria de 11/11/2026)", async () => {
+    h.createUser.mockResolvedValue(EMAIL_JA_EXISTE);
+    for (const email_confirmed_at of [null, undefined, ""]) {
+      h.inseridas = [];
+      h.listUsers.mockResolvedValue({
+        data: {
+          users: [
+            { id: "user-orfao", email: "dona@clinica.test", email_confirmed_at, app_metadata: { provisioning: MARCADOR } },
+          ],
+        },
+        error: null,
+      });
+      h.vinculoDaConta = null;
+
+      const erro = await provisionExternalTenant(ENTRADA).catch((e: unknown) => e);
+      expect(erro).toBeInstanceOf(EmailNaoConfirmadoError);
+      expect(h.inseridas.find((l) => l.tabela === "organizations")).toBeUndefined();
+    }
   });
 
   it("erro na busca do vínculo NÃO vira recusa terminal de 409", async () => {

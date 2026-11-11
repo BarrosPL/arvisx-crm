@@ -8,6 +8,7 @@ import { invalidarUsuario } from "@/lib/auth/cache-curto";
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { createClient } from "@/lib/supabase/server";
 import { ensureTenantForUser } from "@/lib/auth/provision";
+import { emailConfirmado } from "@/lib/auth/email-confirmado";
 import { decidirConviteDoSignup } from "@/lib/auth/convite-no-signup";
 import { modoDeCadastro } from "@/lib/auth/politica-de-cadastro";
 import { createRegistrationRequest, estadoDoPedido } from "@/lib/auth/registration-requests";
@@ -28,7 +29,8 @@ export type RecoverOrganizationResult =
         | "provision_failed"
         | "access_revoked"
         | "pedido_recusado"
-        | "plano_obrigatorio";
+        | "plano_obrigatorio"
+        | "email_nao_confirmado";
     };
 
 /**
@@ -88,6 +90,20 @@ export async function recoverOrganization(name: string, planoId?: string): Promi
     data: { user: authUser },
   } = await supabase.auth.getUser();
   if (!authUser) return { ok: false, error: "provision_failed" };
+
+  // SEM E-MAIL CONFIRMADO NÃO HÁ EMPRESA, nem pedido de empresa (auditoria de
+  // 11/11/2026). Esta action cria organização a partir de uma sessão, e a sessão
+  // pode ter nascido de uma chamada direta ao provedor de auth, sem a tela de
+  // cadastro e sem e-mail nenhum. Antes do contador de tentativas e de qualquer
+  // escrita; `ensureTenantForUser` recusa de novo, por baixo.
+  if (!emailConfirmado(authUser)) {
+    void audit({
+      action: "auth.signup_provision_recusado",
+      actorUserId: authUser.id,
+      metadata: { motivo: "email_nao_confirmado" },
+    });
+    return { ok: false, error: "email_nao_confirmado" };
+  }
 
   // QUEM PERDEU O ACESSO NÃO É UM VISITANTE NOVO. Esta ação existe para a
   // pessoa cujo provisionamento FALHOU no primeiro acesso — não para quem teve
@@ -180,6 +196,7 @@ export async function recoverOrganization(name: string, planoId?: string): Promi
       {
         id: authUser.id,
         email: authUser.email,
+        email_confirmed_at: authUser.email_confirmed_at,
         user_metadata: { ...authUser.user_metadata, org_name: parsed.data, ...comPlano },
       },
       { source: "recovery" },

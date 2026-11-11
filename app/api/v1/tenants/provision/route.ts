@@ -25,6 +25,7 @@ import type { NextRequest } from "next/server";
 import { checkRateLimit, peekRateLimit } from "@/lib/ai/dispatcher/rate-limit";
 import { ApiError } from "@/lib/api/types";
 import { fail, ok } from "@/lib/api/wrappers";
+import { EmailNaoConfirmadoError } from "@/lib/auth/email-confirmado";
 import {
   EmailJaTemContaError,
   ProvisionConflictError,
@@ -154,6 +155,14 @@ export async function POST(req: NextRequest): Promise<Response> {
       return fail(
         "owner_email_ja_tem_conta",
         "Esse e-mail já tem conta nesta instalação — convide a pessoa pela tela da empresa.",
+        409,
+        { requestId },
+      );
+    }
+    if (err instanceof EmailNaoConfirmadoError) {
+      return fail(
+        "owner_email_nao_confirmado",
+        "A conta deste e-mail ainda não confirmou o endereço, então não pode ser dona de uma empresa.",
         409,
         { requestId },
       );

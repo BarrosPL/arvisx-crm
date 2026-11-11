@@ -34,6 +34,7 @@ const MENSAGENS: Record<string, string> = {
   pedido_recusado:
     "Quem administra esta instalação não aprovou o pedido. Se você recebeu um convite, use o link que chegou no seu e-mail.",
   plano_obrigatorio: "Escolha um plano para criar a empresa.",
+  email_nao_confirmado: "Confirme seu e-mail antes de criar a empresa. Abra o link que enviamos para o seu endereço.",
 };
 
 /**

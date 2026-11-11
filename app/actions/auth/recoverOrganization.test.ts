@@ -55,7 +55,12 @@ vi.mock("@/lib/audit", async (orig) => ({
   audit: vi.fn(async () => undefined),
 }));
 
-const USUARIO = { id: "11111111-1111-4111-8111-111111111111", email: "dono@exemplo.com.br" };
+const USUARIO = {
+  id: "11111111-1111-4111-8111-111111111111",
+  email: "dono@exemplo.com.br",
+  // O provedor confirmou o e-mail: sem isto a action recusa antes de tudo (auditoria de 11/11/2026).
+  email_confirmed_at: "2026-11-01T12:00:00.000Z",
+};
 
 const atualizarConta = vi.fn(async (_: unknown) => ({ error: null }));
 function comUsuario(user_metadata: Record<string, unknown> = {}) {
@@ -121,6 +126,53 @@ describe("recoverOrganization", () => {
       error: "invite_pending",
     });
     expect(ensureTenantForUser).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["nulo", null],
+    ["ausente", undefined],
+    ["vazio", ""],
+  ])("⭐ conta SEM e-mail confirmado (%s) não ganha empresa: recusa antes de qualquer escrita (auditoria de 11/11/2026)", async (_, email_confirmed_at) => {
+    // A sessão pode ter nascido de uma chamada direta ao provedor de auth, com a
+    // confirmação automática ligada: sem a tela de cadastro e sem e-mail nenhum.
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn(async () => ({ data: { user: { ...USUARIO, email_confirmed_at, user_metadata: {} } } })),
+        updateUser: atualizarConta,
+      },
+    } as never);
+    const { recoverOrganization } = await import("./recoverOrganization");
+
+    await expect(recoverOrganization("Empresa de Fachada", PLANO)).resolves.toEqual({
+      ok: false,
+      error: "email_nao_confirmado",
+    });
+    expect(ensureTenantForUser).not.toHaveBeenCalled();
+    expect(atualizarConta).not.toHaveBeenCalled();
+  });
+
+  it("⭐ sem e-mail confirmado, nem o PEDIDO de empresa (cadastro com aprovação) é registrado", async () => {
+    vi.mocked(modoDeCadastro).mockResolvedValue("com_aprovacao");
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn(async () => ({ data: { user: { ...USUARIO, email_confirmed_at: null, user_metadata: {} } } })),
+        updateUser: atualizarConta,
+      },
+    } as never);
+    const { recoverOrganization } = await import("./recoverOrganization");
+
+    await expect(recoverOrganization("Empresa de Fachada")).resolves.toEqual({
+      ok: false,
+      error: "email_nao_confirmado",
+    });
+    expect(createRegistrationRequest).not.toHaveBeenCalled();
+  });
+
+  it("⭐ a confirmação do e-mail viaja até o provisionamento, que confere de novo", async () => {
+    const { recoverOrganization } = await import("./recoverOrganization");
+    await expect(recoverOrganization("Clínica Boa Vista")).rejects.toThrow("NEXT_REDIRECT:/onboarding/welcome");
+    const [usuario] = vi.mocked(ensureTenantForUser).mock.calls[0]!;
+    expect(usuario.email_confirmed_at).toBe(USUARIO.email_confirmed_at);
   });
 
   it("o nome passa por Zod antes de qualquer coisa", async () => {

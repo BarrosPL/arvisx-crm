@@ -10,6 +10,7 @@ import { traduzir } from "@/lib/i18n/dicionario";
 import { IdiomaProvider } from "@/lib/i18n/IdiomaProvider";
 import { lerCadastroNaTela, planoInicialDoSeletor, planosDoSeletor } from "@/lib/cobranca/cadastro";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { emailConfirmado } from "@/lib/auth/email-confirmado";
 
 /**
  * A saída do beco: quem confirmou o e-mail e ficou sem organização termina o
@@ -41,6 +42,9 @@ export default async function GetStartedPage() {
     data: { user: authUser },
   } = await supabase.auth.getUser();
   const nomeSugerido = (authUser?.user_metadata?.org_name as string | undefined) ?? undefined;
+  // Sem e-mail confirmado pelo provedor a empresa não nasce (a action recusa):
+  // a tela diz isso em vez de oferecer um formulário que não vai funcionar.
+  const semConfirmacao = !emailConfirmado(authUser);
 
   // Fora da árvore de `app/app/layout.tsx`, como as telas públicas: o idioma
   // vem do próprio usuário, e o formulário precisa do provider para o `useT()`.
@@ -92,7 +96,9 @@ export default async function GetStartedPage() {
                   ? t(
                       "Quem administra esta instalação não aprovou o pedido. Se você recebeu um convite, use o link que chegou no seu e-mail.",
                     )
-                  : comAprovacao
+                  : semConfirmacao
+                    ? t("Confirme seu e-mail antes de criar a empresa. Abra o link que enviamos para o seu endereço.")
+                    : comAprovacao
                     ? t(
                         "Sua conta foi confirmada. Nesta instalação, a empresa só é criada depois da aprovação de quem administra. Confira o nome da empresa e envie o pedido.",
                       )
@@ -101,7 +107,7 @@ export default async function GetStartedPage() {
                       )}
             </p>
           </div>
-          {!aguardando && (
+          {!aguardando && !semConfirmacao && (
             <RecoverOrganizationForm nomeSugerido={nomeSugerido} comAprovacao={comAprovacao} planos={planos} planoInicial={planoInicial} />
           )}
           <p className="text-xs leading-relaxed text-muted-foreground">
