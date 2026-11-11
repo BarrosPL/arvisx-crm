@@ -228,12 +228,18 @@ export async function GET(
   }
   if (phoneNumber && phoneNumber !== session.phone_number) patch.phone_number = phoneNumber;
 
-  const gravar = (corpo: Record<string, unknown>) =>
-    supabase
-      .from("channel_sessions")
-      .update(corpo)
-      .eq("organization_id", activeOrg.orgId)
-      .eq("id", id);
+  // Status e número de conexão WAHA são gravados pelo servidor (migration
+  // 9805): são eles que contam a vaga do plano. Quem ESPELHA continua sendo quem
+  // a policy de escrita (0752) deixava: admin da empresa ou dono da instalação.
+  // Para os demais a leitura segue devolvendo o estado ao vivo, sem gravar,
+  // como já era (a RLS recusava em silêncio); o cron de saúde espelha por eles.
+  const podeEspelhar =
+    activeOrg.role === "admin" || (user.is_platform_admin && user.platform_admin_scope === "full");
+  const servidor = createAdminClient();
+  const gravar = async (corpo: Record<string, unknown>): Promise<{ error: { code?: string; message: string } | null }> =>
+    podeEspelhar
+      ? servidor.from("channel_sessions").update(corpo).eq("organization_id", activeOrg.orgId).eq("id", id)
+      : { error: null };
 
   let phoneConflict = false;
   const { error: syncErr } = await gravar(patch);
@@ -393,7 +399,7 @@ export async function DELETE(
       await waha.deleteSession(session.waha_session_name as string);
     } catch (err) {
       if (err instanceof ChannelConnectionError) return fail(err.code, "Uma conexão está em andamento. Aguarde e tente novamente.", err.status, { requestId });
-      await supabase.from("channel_sessions").update({ status: "FAILED", status_reason: "connection_repair_required", last_status_change_at: now })
+      await createAdminClient().from("channel_sessions").update({ status: "FAILED", status_reason: "connection_repair_required", last_status_change_at: now })
         .eq("organization_id", activeOrg.orgId).eq("id", id);
       return fail("waha_error", wahaFriendlyError(err), 502, { requestId });
     }
@@ -578,12 +584,12 @@ export async function DELETE(
   // role (gatilho da migration 9093): por fora desta rota, o número ficaria na
   // conta da instalação sem passar por `desfazerNoProvedor`. A credencial do
   // número oficial (`meta_token_encrypted`, zerada acima) também só é gravada
-  // pelo service role (migration 9104). O filtro de organização abaixo é o
-  // mesmo nos dois clientes, resolvido da sessão.
-  const escritor =
-    session.zernio_credencial_da_instalacao === true || "meta_token_encrypted" in patch
-      ? createAdminClient()
-      : supabase;
+  // pelo service role (migration 9104). E o `status` de uma conexão WAHA, que
+  // o arquivamento leva a STOPPED, também (migration 9805: conta a vaga do
+  // plano). Por isso a escrita é sempre do service role; o filtro de
+  // organização abaixo é o resolvido da sessão, e quem chega aqui já passou
+  // por `requireRole("admin")`.
+  const escritor = createAdminClient();
   if (arquivar) {
     const { error: archErr } = await escritor
       .from("channel_sessions")

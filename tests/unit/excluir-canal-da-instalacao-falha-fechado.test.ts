@@ -131,7 +131,10 @@ describe("exclusão de canal do provedor parceiro com o provedor fora do ar", ()
     h.desfazer.mockRejectedValue(new Error("provedor 503"));
     const r = await excluir();
     expect(r.status).toBe(200);
-    expect(h.escritas).toEqual(["delete"]);
+    // Desde a migration 9805 a escrita desta rota é sempre do service role: o
+    // arquivamento leva o `status` da conexão a STOPPED, e status de conexão
+    // WAHA conta a vaga do plano — a sessão não o grava pelo banco.
+    expect(h.escritas).toEqual(["admin:delete"]);
   });
 });
 

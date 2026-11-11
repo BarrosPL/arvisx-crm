@@ -193,7 +193,9 @@ export async function POST(
       : waha.startSession(nomeParaOTransporte))) as { status?: string };
     const nextStatus = remote.status ?? "STARTING";
     const patch = { status: nextStatus, status_reason: null, last_status_change_at: new Date().toISOString(), consecutive_health_fails: 0 };
-    const { error: syncError } = await supabase.from("channel_sessions").update(patch).eq("organization_id", activeOrg.orgId).eq("id", id);
+    // Status de conexão WAHA é gravado pelo servidor (migration 9805): é ele que
+    // conta a vaga do plano, e a sessão de quem chamou não o altera pelo banco.
+    const { error: syncError } = await createAdminClient().from("channel_sessions").update(patch).eq("organization_id", activeOrg.orgId).eq("id", id);
 
     if (syncError) throw new Error("connection_sync_failed");
 
@@ -219,7 +221,7 @@ export async function POST(
     return ok({ id, status: nextStatus, force }, { requestId });
   } catch (err) {
     if (err instanceof ChannelConnectionError) return fail(err.code, "Uma conexão está em andamento. Aguarde e tente novamente.", err.status, { requestId });
-    await supabase.from("channel_sessions").update({ status: "FAILED", status_reason: "connection_repair_required", last_status_change_at: new Date().toISOString() })
+    await createAdminClient().from("channel_sessions").update({ status: "FAILED", status_reason: "connection_repair_required", last_status_change_at: new Date().toISOString() })
       .eq("organization_id", activeOrg.orgId).eq("id", id);
     return fail("waha_error", wahaFriendlyError(err), 502, { requestId });
   }

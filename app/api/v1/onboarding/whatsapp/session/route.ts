@@ -23,7 +23,9 @@ export async function GET(): Promise<Response> {
     if (!channel || channel.archived_at) return ok({ status: "NOT_STARTED", session: null }, { requestId });
     const remote = await waha.getVerifiedSession(channel.waha_session_name);
     const status = remote?.status ?? "STOPPED";
-    const { error, data } = await db.from("channel_sessions").update({ status, last_health_check_at: new Date().toISOString() })
+    // Status de conexão WAHA é gravado pelo servidor (migration 9805); o canal e a
+    // organização vêm da sessão, lidos logo acima sob RLS.
+    const { error, data } = await createAdminClient().from("channel_sessions").update({ status, last_health_check_at: new Date().toISOString() })
       .eq("organization_id", org.orgId).eq("id", channel.id).is("archived_at", null).select("id").maybeSingle();
     if (error || !data) throw new Error("connection_sync_failed");
     return ok({ status, session: channel.waha_session_name, channel_session_id: channel.id }, { requestId });

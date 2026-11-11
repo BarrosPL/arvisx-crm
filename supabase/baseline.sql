@@ -69445,6 +69445,67 @@ create trigger trg_cobranca_equipe_completa
 
 notify pgrst, 'reload schema';
 
+-- ---- vaga de canal só pelo servidor (migration 9805) ----
+-- Espelho idempotente da 9805 (o porquê está no cabeçalho da migration): o
+-- gatilho `trg_channel_sessions_vaga_e_do_servidor` reserva ao servidor as
+-- colunas que contam a vaga de canal do plano (provider, organization_id e, em
+-- conexão WAHA, status e phone_number) e recusa a conexão WAHA que nasce pela
+-- sessão morta e sem número. Fica ANTES da VARREDURA anon, como os outros
+-- apêndices do fork que criam função.
+
+create or replace function public.fn_channel_sessions_vaga_e_do_servidor()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  if current_user not in ('authenticated', 'anon') then
+    return new;
+  end if;
+
+  if tg_op = 'INSERT' then
+    -- A conexão WAHA que nasce morta e sem número não ocupa vaga (0809): pela
+    -- sessão, ela seria a linha de reserva para furar o teto depois.
+    if new.provider = 'waha' and new.phone_number is null and new.status in ('FAILED', 'STOPPED') then
+      raise exception 'canal_vaga_e_do_servidor'
+        using errcode = '42501',
+              detail = 'Conexão de WhatsApp nasce pela reserva do servidor, que confere a vaga do plano.';
+    end if;
+    return new;
+  end if;
+
+  if new.provider is distinct from old.provider
+     or new.organization_id is distinct from old.organization_id then
+    raise exception 'canal_vaga_e_do_servidor'
+      using errcode = '42501',
+            detail = 'Provedor e empresa de uma conexão não mudam pela sessão.';
+  end if;
+
+  if old.provider = 'waha'
+     and (new.status is distinct from old.status
+          or new.phone_number is distinct from old.phone_number) then
+    raise exception 'canal_vaga_e_do_servidor'
+      using errcode = '42501',
+            detail = 'Status e número de uma conexão de WhatsApp são gravados pelo servidor: são eles que contam a vaga do plano.';
+  end if;
+
+  return new;
+end;
+$$;
+
+revoke execute on function public.fn_channel_sessions_vaga_e_do_servidor() from public, anon, authenticated;
+
+drop trigger if exists trg_channel_sessions_vaga_e_do_servidor on public.channel_sessions;
+create trigger trg_channel_sessions_vaga_e_do_servidor
+  before insert or update on public.channel_sessions
+  for each row execute function public.fn_channel_sessions_vaga_e_do_servidor();
+
+comment on function public.fn_channel_sessions_vaga_e_do_servidor() is
+  'A sessão (authenticated/anon) não grava as colunas que contam a vaga de canal do plano: provider, organization_id e, em conexão WAHA, status e phone_number; nem cria conexão WAHA morta e sem número. Migration 9805.';
+
+notify pgrst, 'reload schema';
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria
