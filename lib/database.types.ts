@@ -5533,6 +5533,7 @@ export type Database = {
           created_at: string;
           descricao_curta: string | null;
           destaques: string[] | null;
+          fora_do_managed_payments: boolean;
           id: string;
           inclui_agentes_arvisx: boolean;
           interface_settings: Json;
@@ -5558,6 +5559,7 @@ export type Database = {
           created_at?: string;
           descricao_curta?: string | null;
           destaques?: string[] | null;
+          fora_do_managed_payments?: boolean;
           id?: string;
           inclui_agentes_arvisx?: boolean;
           interface_settings?: Json;
@@ -5582,6 +5584,7 @@ export type Database = {
           created_at?: string;
           descricao_curta?: string | null;
           destaques?: string[] | null;
+          fora_do_managed_payments?: boolean;
           id?: string;
           inclui_agentes_arvisx?: boolean;
           interface_settings?: Json;

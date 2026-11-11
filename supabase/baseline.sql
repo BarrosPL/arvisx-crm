@@ -74318,6 +74318,46 @@ comment on table public.cobranca_planos is
 
 notify pgrst, 'reload schema';
 
+-- ---- modo fiscal e planos fora do Managed Payments (migration 9807) ----
+-- Espelho idempotente da 9807 (o porquê está no cabeçalho da migration): a
+-- coluna `cobranca_planos.fora_do_managed_payments` (true só na criação, nos
+-- planos com `inclui_agentes_arvisx`) e a linha `COBRANCA_MODO_FISCAL` nascida
+-- do booleano `COBRANCA_IVA`. Depois dos blocos de `platform_config` (0341) e
+-- dos planos (9803) de propósito: usa os dois. Não cria função.
+do $$
+begin
+  if not exists (
+    select 1
+      from pg_attribute
+     where attrelid = 'public.cobranca_planos'::regclass
+       and attname = 'fora_do_managed_payments'
+       and not attisdropped
+  ) then
+    alter table public.cobranca_planos
+      add column fora_do_managed_payments boolean not null default false;
+    update public.cobranca_planos
+       set fora_do_managed_payments = true
+     where inclui_agentes_arvisx;
+  end if;
+end
+$$;
+
+comment on column public.cobranca_planos.fora_do_managed_payments is
+  'O plano NÃO é vendido por Stripe Managed Payments (inclui serviço sob medida, inelegível): com o modo fiscal managed_payments, ele é cobrado por stripe_tax. Nasce true nos planos com inclui_agentes_arvisx; editável em /admin/cobranca. Migration 9807.';
+
+insert into public.platform_config (chave, valor, eh_segredo, semeado_do_env, updated_by)
+select 'COBRANCA_MODO_FISCAL',
+       case when c.valor = 'ligado' then 'stripe_tax' else 'desligado' end,
+       false,
+       false,
+       c.updated_by
+  from public.platform_config c
+ where c.chave = 'COBRANCA_IVA'
+   and not c.eh_segredo
+on conflict (chave) do nothing;
+
+notify pgrst, 'reload schema';
+
 -- ---- empresa suspensa não grava pelo banco (migration 9806): a chamada ----
 -- As funções nasceram antes da VARREDURA anon; aqui, no fim, toda tabela já
 -- existe. A função só cria a policy que falta: na passada de atualização não
