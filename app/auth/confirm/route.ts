@@ -3,6 +3,8 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/server";
 import { ensureTenantForUser } from "@/lib/auth/provision";
+import { EmailNaoConfirmadoError } from "@/lib/auth/email-confirmado";
+import { descartarContaSemEmpresa, recusaPorPlano } from "@/lib/auth/cadastro-recusado";
 import { decidirConviteDoSignup } from "@/lib/auth/convite-no-signup";
 import { modoDeCadastro } from "@/lib/auth/politica-de-cadastro";
 import { aplicarConvite } from "@/lib/auth/aplicar-convite";
@@ -287,10 +289,53 @@ async function confirmar({
       pistas: { acceptLanguage: request.headers.get("accept-language") },
     });
   } catch (e) {
+    const motivo = e instanceof Error ? e.message : String(e);
+
+    // SEM E-MAIL CONFIRMADO NÃO HÁ EMPRESA. Só chega aqui a sessão que já
+    // existia quando o link falhou (`sessaoPreservada`): quem passou pelo
+    // `verifyOtp` acabou de ser confirmado pelo provedor. É recusa, não falha —
+    // e `/get-started` diz à pessoa o que falta.
+    if (e instanceof EmailNaoConfirmadoError) {
+      await audit({
+        action: "auth.signup_provision_recusado",
+        actorUserId: usuario.id,
+        metadata: { motivo: "email_nao_confirmado" },
+        requestId,
+      });
+      return redirectTo("/get-started");
+    }
+
+    // O PLANO QUE A CONTA TROUXE FOI RECUSADO pelo gatilho da cobrança. A tela
+    // de cadastro confere o plano antes de criar a conta, então isto é conta que
+    // nasceu por fora dela (chamada direta ao provedor, com o plano que quis
+    // escrever) ou plano que deixou de ser oferecido entre o cadastro e o
+    // clique. A conta sem empresa NÃO fica pendurada: é apagada, a sessão é
+    // encerrada, e o caminho de volta é refazer o cadastro com um plano
+    // oferecido. Só quem escolheu plano: conta sem plano na metadata (anterior à
+    // cobrança) segue para `/get-started`, que oferece a escolha.
+    if (recusaPorPlano(motivo) && typeof usuario.user_metadata?.cobranca_plan_id === "string") {
+      const descarte = await descartarContaSemEmpresa(usuario.id);
+      await audit({
+        action: "auth.signup_provision_recusado",
+        actorUserId: usuario.id,
+        metadata: { motivo: "plano_indisponivel", conta: descarte },
+        requestId,
+      });
+      if (descarte === "apagada") {
+        invalidarUsuario(usuario.id);
+        // Só os cookies deste navegador: a conta já não existe no provedor.
+        await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+        return redirectTo("/login?error=plano_indisponivel");
+      }
+      // Não deu para apagar (já teve empresa, ou a leitura falhou): o caminho de
+      // antes continua valendo, e lá a pessoa escolhe um plano.
+      return redirectTo("/get-started");
+    }
+
     await audit({
       action: "auth.signup_provision_failed",
       actorUserId: usuario.id,
-      metadata: { reason: e instanceof Error ? e.message : String(e) },
+      metadata: { reason: motivo },
       requestId,
     });
     // A sessão JÁ está firmada (o `verifyOtp`/`exchangeCodeForSession` acima

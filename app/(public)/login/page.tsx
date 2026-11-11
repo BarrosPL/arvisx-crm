@@ -112,6 +112,16 @@ export default async function LoginPage({
           )}
         </div>
       )}
+      {error === "plano_indisponivel" && (
+        <div
+          className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          role="alert"
+        >
+          {t(
+            "O plano escolhido no cadastro não está disponível, então a conta não foi criada. Faça o cadastro de novo e escolha um dos planos oferecidos.",
+          )}
+        </div>
+      )}
       {error === "provisionamento" && (
         <div
           className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
