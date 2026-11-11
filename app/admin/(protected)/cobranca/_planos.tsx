@@ -43,6 +43,8 @@ export interface PlanoDaTela {
   como_funciona: string | null;
   /** Equipe Completa: os 4 agentes feitos pela equipe da Arvisx. Informativo. */
   inclui_agentes_arvisx: boolean;
+  /** Migration 9807: o plano não é vendido por Managed Payments (usa Stripe Tax). */
+  fora_do_managed_payments: boolean;
   arquivado_em: string | null;
 }
 
@@ -64,10 +66,20 @@ interface Campos {
   limites: string;
   como_funciona: string;
   inclui_agentes_arvisx: boolean;
+  fora_do_managed_payments: boolean;
 }
 
 const VAZIO: Campos = { nome: "", preco: "", moeda: "BRL", intervalo: "mes", trial_dias: "14", max_assentos: "", max_canais: "", telas: INTERFACE_COMPLETA,
-  descricao_curta: "", para_quem: "", destaques: "", limites: "", como_funciona: "", inclui_agentes_arvisx: false };
+  descricao_curta: "", para_quem: "", destaques: "", limites: "", como_funciona: "", inclui_agentes_arvisx: false, fora_do_managed_payments: false };
+
+/** A resposta de POST /api/v1/admin/cobranca/planos/sincronizar: o resultado por plano. */
+interface Sincronia {
+  modo: "teste" | "producao";
+  criados: number;
+  atualizados: number;
+  erros: number;
+  resultados: { plano_id: string; nome: string; resultado: "criado" | "atualizado" | "erro"; erro?: string }[];
+}
 
 /** Só o que é do plano: `preset` e `destinos` (o resto da interface é da empresa). */
 function telasDoPlano(raw: unknown): InterfaceSettings {
@@ -110,6 +122,7 @@ function corpoDoPlano(c: Campos) {
     limites: frases(c.limites),
     como_funciona: textoOuNulo(c.como_funciona),
     inclui_agentes_arvisx: c.inclui_agentes_arvisx,
+    fora_do_managed_payments: c.fora_do_managed_payments,
   };
 }
 
@@ -129,6 +142,7 @@ function camposDe(p: PlanoDaTela): Campos {
     limites: (p.limites ?? []).join("\n"),
     como_funciona: p.como_funciona ?? "",
     inclui_agentes_arvisx: p.inclui_agentes_arvisx,
+    fora_do_managed_payments: p.fora_do_managed_payments === true,
   };
 }
 
@@ -144,15 +158,17 @@ function resumoDasTelas(raw: unknown, t: (texto: string) => string): string {
  * arquivar e marcar o plano do cadastro. Quem recusa de verdade é a rota (e o
  * CHECK); o formulário só evita a ida e volta no erro óbvio.
  */
-export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] }) {
+export function PlanosDaInstalacao({ planos, stripeConectada = false }: { planos: readonly PlanoDaTela[]; stripeConectada?: boolean }) {
   const t = useT();
   const idioma = useIdioma();
   const router = useRouter();
   const [campos, setCampos] = useState<Campos>(VAZIO);
   const [editando, setEditando] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
+  const [sincronizando, setSincronizando] = useState(false);
+  const [sincronia, setSincronia] = useState<Sincronia | null>(null);
   const usd = new Intl.NumberFormat(idioma, { style: "currency", currency: "USD" });
-  const campo = (k: Exclude<keyof Campos, "intervalo" | "moeda" | "telas" | "inclui_agentes_arvisx">) => ({
+  const campo = (k: Exclude<keyof Campos, "intervalo" | "moeda" | "telas" | "inclui_agentes_arvisx" | "fora_do_managed_payments">) => ({
     value: campos[k],
     onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setCampos({ ...campos, [k]: e.target.value }),
   });
@@ -181,6 +197,21 @@ export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] 
       showApiError(err);
     } finally {
       setSalvando(false);
+    }
+  }
+
+  /** Cria ou atualiza na Stripe o produto de cada plano ativo. Repetir é seguro: só atualiza. */
+  async function sincronizarProdutos() {
+    setSincronizando(true);
+    try {
+      const res = await apiClient.post<{ data: Sincronia }>("/api/v1/admin/cobranca/planos/sincronizar", {});
+      setSincronia(res.data);
+      if (res.data.erros > 0) toast.error(t("Alguns produtos não foram sincronizados. Veja o resultado por plano."));
+      else toast.success(t("Produtos sincronizados na Stripe."));
+    } catch (err) {
+      showApiError(err);
+    } finally {
+      setSincronizando(false);
     }
   }
 
@@ -312,6 +343,20 @@ export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] 
             </span>
           </label>
         </fieldset>
+        <label className="flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={campos.fora_do_managed_payments}
+            onChange={(e) => setCampos({ ...campos, fora_do_managed_payments: e.target.checked })}
+          />
+          <span>
+            {t("Fora do Managed Payments")}
+            <span className="block text-xs text-muted-foreground">
+              {t("Marque quando o plano inclui serviço feito por pessoas (desenvolvimento sob medida), que a Stripe não vende como vendedora oficial. Com o imposto em Managed Payments, este plano é cobrado por Stripe Tax.")}
+            </span>
+          </span>
+        </label>
         <div className="flex flex-wrap gap-2">
           <Button type="submit" disabled={salvando}>
             {editando ? t("Salvar alterações") : t("Salvar plano")}
@@ -337,6 +382,33 @@ export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] 
         <p className="text-xs text-muted-foreground">
           {t("O preço, a moeda e o intervalo de um plano travam quando alguém o assina: para mudar, arquive e crie outro.")}
         </p>
+        {stripeConectada && (
+          <div className="space-y-2 rounded-lg border p-3 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="min-w-0 text-xs text-muted-foreground">
+                {t("Cria ou atualiza na Stripe o produto de cada plano ativo, com o código fiscal de software. É o que a Stripe pede para ativar o Managed Payments antes da primeira venda. Pode repetir: nada é duplicado.")}
+              </p>
+              <Button type="button" size="sm" variant="outline" disabled={sincronizando} onClick={() => void sincronizarProdutos()}>
+                {t("Sincronizar produtos na Stripe")}
+              </Button>
+            </div>
+            {sincronia && (
+              <div role="status" className="space-y-1">
+                <p className="text-xs text-muted-foreground">
+                  {sincronia.modo === "teste" ? t("Conta Stripe de teste.") : t("Conta Stripe real.")}
+                  {sincronia.resultados.length === 0 && ` ${t("Nenhum plano ativo para sincronizar.")}`}
+                </p>
+                <ul className="space-y-0.5">
+                  {sincronia.resultados.map((r) => (
+                    <li key={r.plano_id} className={r.resultado === "erro" ? "text-error-fg" : undefined}>
+                      {r.nome}: {r.resultado === "criado" ? t("criado") : r.resultado === "atualizado" ? t("atualizado") : `${t("erro")} (${r.erro ?? "?"})`}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
         {planos.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             {t("Nenhum plano ainda. Crie o primeiro no formulário acima: nome, preço, dias de teste grátis e, se quiser, os limites. Depois atribua-o a cada empresa no painel dela, em Tenants.")}
@@ -352,6 +424,7 @@ export function PlanosDaInstalacao({ planos }: { planos: readonly PlanoDaTela[] 
                     {p.arquivado_em && <span className="ml-2 rounded-md bg-muted px-1.5 py-0.5 text-xs">{t("Arquivado")}</span>}
                     {!p.oferecido_ao_cliente && <span className="ml-2 rounded-md bg-muted px-1.5 py-0.5 text-xs">{t("Só você atribui")}</span>}
                     {p.inclui_agentes_arvisx && <span className="ml-2 rounded-md bg-cta-leve px-1.5 py-0.5 text-xs">{t("Agentes sob medida")}</span>}
+                    {p.fora_do_managed_payments && <span className="ml-2 rounded-md bg-muted px-1.5 py-0.5 text-xs">{t("Fora do Managed Payments")}</span>}
                   </p>
                   {p.descricao_curta && <p>{p.descricao_curta}</p>}
                   <p className="text-muted-foreground">

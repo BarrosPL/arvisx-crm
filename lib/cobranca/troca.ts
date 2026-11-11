@@ -83,6 +83,8 @@ interface Plano {
   max_canais: number | null;
   arquivado_em: string | null;
   oferecido_ao_cliente: boolean;
+  /** Migration 9807: o plano não é vendido por Managed Payments (Stripe). */
+  fora_do_managed_payments?: boolean;
 }
 
 const EM_DIVIDA: readonly EstadoDaAssinatura[] = ["em_atraso", "cancelada"];
@@ -112,7 +114,7 @@ async function limparSessaoExpirada(admin: SupabaseClient, orgId: string, sessao
 async function lerPlanoCompleto(admin: SupabaseClient, id: string): Promise<Plano | null | "erro"> {
   const { data, error } = await admin
     .from("cobranca_planos")
-    .select("id, nome, preco_cents, moeda, intervalo, max_assentos, max_canais, arquivado_em, oferecido_ao_cliente")
+    .select("id, nome, preco_cents, moeda, intervalo, max_assentos, max_canais, arquivado_em, oferecido_ao_cliente, fora_do_managed_payments")
     .eq("id", id)
     .maybeSingle();
   if (error) return "erro";
@@ -236,6 +238,36 @@ export async function trocarPlanoDaOrg(
     }
   }
 
+  const provedorDaTroca = atual.provedor && atual.provedor_assinatura_id ? { provedor: atual.provedor, ref: atual.provedor_assinatura_id } : null;
+  const paraOProvedor = (p: Plano) => ({
+    id: p.id, nome: p.nome, precoCents: p.preco_cents, moeda: p.moeda, intervalo: p.intervalo,
+    foraDoManagedPayments: p.fora_do_managed_payments === true,
+  });
+  const aoProvedor = (p: Plano) =>
+    adaptadorDe(provedorDaTroca!.provedor).trocarPlano({ assinaturaRef: provedorDaTroca!.ref, plano: paraOProvedor(p) });
+  const exigeNovoCheckout = recusa(
+    409,
+    "troca_exige_novo_checkout",
+    "Este plano é cobrado de outra forma, e a assinatura atual não pode ser convertida. Para mudar para ele, cancele a assinatura atual e assine o plano novo quando ela terminar. Fale com quem administra o sistema se precisar de ajuda.",
+  );
+  // Managed Payments (Stripe): a assinatura vendida pela Stripe como vendedora
+  // oficial não passa para um plano fora dele, e o modo de venda NUNCA muda em
+  // silêncio. A pergunta vem ANTES de expirar link, cobrar ajuste ou agendar:
+  // a recusa não pode custar nada a ninguém.
+  if (provedorDaTroca && !desfazendo) {
+    const ad = adaptadorDe(provedorDaTroca.provedor);
+    if (ad.trocaExigeNovoCheckout) {
+      try {
+        if (await ad.trocaExigeNovoCheckout({ assinaturaRef: provedorDaTroca.ref, plano: paraOProvedor(novo) })) return exigeNovoCheckout;
+      } catch (e) {
+        if (!(e instanceof ErroDoProvedor)) throw e;
+        return e.transitorio
+          ? recusa(503, "provedor_indisponivel", "O provedor de pagamento não respondeu. A troca não foi feita; tente de novo.")
+          : recusa(502, "provedor_recusou", "O provedor de pagamento recusou a troca.");
+      }
+    }
+  }
+
   // Depois de validado o pedido (uma recusa não pode custar o ajuste de ninguém):
   // um upgrade proporcional em aberto e um pedido de OUTRO plano (ou do dono, que
   // nunca paga diferença): o pedido novo vence, mas só depois de a cobrança em
@@ -246,12 +278,6 @@ export async function trocarPlanoDaOrg(
     if (desistencia) return desistencia;
   }
 
-  const provedorDaTroca = atual.provedor && atual.provedor_assinatura_id ? { provedor: atual.provedor, ref: atual.provedor_assinatura_id } : null;
-  const aoProvedor = (p: Plano) =>
-    adaptadorDe(provedorDaTroca!.provedor).trocarPlano({
-      assinaturaRef: provedorDaTroca!.ref,
-      plano: { id: p.id, nome: p.nome, precoCents: p.preco_cents, moeda: p.moeda, intervalo: p.intervalo },
-    });
   // O preço no provedor tem de ser o do que o banco registra (agendado, senão o atual).
   // Relê a linha (outra troca pode ter vencido a corrida); se a leitura falha, vale o que líamos.
   // Devolve false quando não conseguiu desfazer: aí a divergência fica dita na resposta.
@@ -332,8 +358,8 @@ export async function trocarPlanoDaOrg(
       if (erroReserva || !reserva) return recusa(409, "troca_em_preparo", "A assinatura mudou enquanto você solicitava a troca. Atualize a página e tente novamente.");
       try {
         const pagamento = await adaptadorDe(provedorDaTroca.provedor).iniciarAjusteProporcional({
-          clienteRef: atual.provedor_cliente_id, orgId, plano: { id: novo.id, nome: novo.nome, precoCents: novo.preco_cents, moeda: novo.moeda, intervalo: novo.intervalo },
-          valorCents, chaveIdempotencia: id, urlDeVolta: urlDoPainelDaEmpresa(),
+          clienteRef: atual.provedor_cliente_id, orgId, plano: paraOProvedor(novo),
+          valorCents, chaveIdempotencia: id, urlDeVolta: urlDoPainelDaEmpresa(), assinaturaRef: provedorDaTroca.ref,
         });
         const { data: pagamentoGravado, error: erroAoGravarPagamento } = await admin
           .from("cobranca_assinaturas")
@@ -354,6 +380,7 @@ export async function trocarPlanoDaOrg(
         return { ok: true, changed: false, quando: "pagamento_pendente", planoId: atual.plano_id, planoAgendadoId: null, valeAPartirDe: null, de: atual.plano_id, urlPagamento: pagamento.url };
       } catch (e) {
         await admin.from("cobranca_assinaturas").update(SEM_TROCA).eq("organization_id", orgId).eq("troca_id", id);
+        if (e instanceof ErroDoProvedor && e.codigo === "troca_exige_novo_checkout") return exigeNovoCheckout;
         if (e instanceof ErroDoProvedor) return recusa(e.transitorio ? 503 : 502, e.transitorio ? "provedor_indisponivel" : "provedor_recusou", "Não foi possível gerar a cobrança proporcional. Tente novamente.");
         throw e;
       }
@@ -365,6 +392,7 @@ export async function trocarPlanoDaOrg(
       await aoProvedor(novo);
     } catch (e) {
       if (!(e instanceof ErroDoProvedor)) throw e;
+      if (e.codigo === "troca_exige_novo_checkout") return exigeNovoCheckout;
       if (e.codigo === "pagamento_do_periodo_pendente") {
         return recusa(
           409,

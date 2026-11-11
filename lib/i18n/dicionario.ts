@@ -20020,6 +20020,24 @@ export const DICIONARIO: Traducoes = {
   "+ IVA": { es: "+ IVA" },
   "Cobrar IVA pela Stripe Tax": { es: "Cobrar el IVA con Stripe Tax" },
   "Ligado: o preço de cada plano passa a ser sem IVA, o pagamento pede o endereço e o número fiscal (NIF/VAT) do cliente e a Stripe soma o IVA na fatura. As telas e a página inicial mostram \"+ IVA\". Antes de ligar, ative o Stripe Tax na sua conta Stripe (endereço de origem e registro do IVA): sem isso o pagamento é recusado. Só vale para a Stripe.": { es: "Activado: el precio de cada plan pasa a ser sin IVA, el pago pide la dirección y el número fiscal (NIF/VAT) del cliente y Stripe suma el IVA en la factura. Las pantallas y la página de inicio muestran \"+ IVA\". Antes de activarlo, activa Stripe Tax en tu cuenta de Stripe (dirección de origen y registro del IVA): sin eso el pago se rechaza. Solo vale para Stripe." },
+  // Modo fiscal em três estados e Managed Payments (migration 9807).
+  "Imposto (IVA) na cobrança": { es: "Impuesto (IVA) en el cobro" },
+  "Nenhum imposto no pagamento: o cliente paga o preço do plano.": { es: "Ningún impuesto en el pago: el cliente paga el precio del plan." },
+  "Stripe Tax": { es: "Stripe Tax" },
+  "Você vende. O preço do plano é sem IVA e a Stripe soma o IVA na fatura. Exige o Stripe Tax ativo na sua conta.": { es: "Tú vendes. El precio del plan es sin IVA y Stripe suma el IVA en la factura. Exige Stripe Tax activo en tu cuenta." },
+  "Managed Payments": { es: "Managed Payments" },
+  "A Stripe é a vendedora oficial e recolhe o IVA; taxa adicional da Stripe. Exige o Managed Payments ativo na conta e os produtos sincronizados (aba Planos).": { es: "Stripe es la vendedora oficial y recauda el IVA; comisión adicional de Stripe. Exige Managed Payments activo en la cuenta y los productos sincronizados (pestaña Planes)." },
+  "Com imposto, as telas e a página inicial mostram \"+ IVA\". Plano marcado como fora do Managed Payments usa Stripe Tax. Só vale para a Stripe.": { es: "Con impuesto, las pantallas y la página de inicio muestran \"+ IVA\". El plan marcado como fuera de Managed Payments usa Stripe Tax. Solo vale para Stripe." },
+  "Fora do Managed Payments": { es: "Fuera de Managed Payments" },
+  "Marque quando o plano inclui serviço feito por pessoas (desenvolvimento sob medida), que a Stripe não vende como vendedora oficial. Com o imposto em Managed Payments, este plano é cobrado por Stripe Tax.": { es: "Márcalo cuando el plan incluye servicio hecho por personas (desarrollo a medida), que Stripe no vende como vendedora oficial. Con el impuesto en Managed Payments, este plan se cobra con Stripe Tax." },
+  "Sincronizar produtos na Stripe": { es: "Sincronizar productos en Stripe" },
+  "Cria ou atualiza na Stripe o produto de cada plano ativo, com o código fiscal de software. É o que a Stripe pede para ativar o Managed Payments antes da primeira venda. Pode repetir: nada é duplicado.": { es: "Crea o actualiza en Stripe el producto de cada plan activo, con el código fiscal de software. Es lo que Stripe pide para activar Managed Payments antes de la primera venta. Puedes repetirlo: nada se duplica." },
+  "Produtos sincronizados na Stripe.": { es: "Productos sincronizados en Stripe." },
+  "Alguns produtos não foram sincronizados. Veja o resultado por plano.": { es: "Algunos productos no se sincronizaron. Mira el resultado por plan." },
+  "Conta Stripe de teste.": { es: "Cuenta Stripe de prueba." },
+  "Conta Stripe real.": { es: "Cuenta Stripe real." },
+  "Nenhum plano ativo para sincronizar.": { es: "Ningún plan activo para sincronizar." },
+  "criado": { es: "creado" },
 };
 
 /**

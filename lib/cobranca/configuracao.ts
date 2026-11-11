@@ -9,7 +9,7 @@
  * sem passar por nada disso. Lido a cada uso, sem memo: trocar pela tela vale
  * no worker na hora (mesmo contrato de `lib/instalacao/config.ts`).
  */
-import { PROVEDORES_DE_COBRANCA, type ProvedorDeCobranca } from "@/lib/cobranca/vocabulario";
+import { MODOS_FISCAIS, PROVEDORES_DE_COBRANCA, type ModoFiscal, type ProvedorDeCobranca } from "@/lib/cobranca/vocabulario";
 import { valorDaInstalacao, type ValorDaInstalacao } from "@/lib/instalacao/config";
 
 /** D-5: 7 dias por padrão, ajustável de 5 a 30. O piso mora aqui também (boleto + fim de semana). */
@@ -29,15 +29,31 @@ export async function toleranciaDias(): Promise<number> {
 }
 
 /**
- * IVA cobrado pela Stripe Tax (ArvisX, tarefa 2 dos planos). Ligado em
- * Cobrança › Régua: o preço do plano passa a ser SEM IVA (`tax_behavior:
- * exclusive`), o Checkout pede endereço e número fiscal do cliente e a Stripe
- * soma o imposto na fatura (`automatic_tax`). A conta Stripe precisa ter o
- * Stripe Tax ativo (endereço de origem e registro do IVA): sem isso o Checkout
- * recusa, e por isso nasce DESLIGADO. As telas dizem "+ IVA" quando ligado.
+ * O modo fiscal da cobrança (ArvisX; Cobrança › Régua), em três estados:
+ *   - `desligado` (o padrão): nenhum imposto no pagamento;
+ *   - `stripe_tax`: o preço do plano é SEM IVA (`tax_behavior: exclusive`), o
+ *     Checkout pede endereço e número fiscal e a Stripe Tax soma o imposto
+ *     (`automatic_tax`). Exige o Stripe Tax ativo na conta;
+ *   - `managed_payments`: a Stripe é a vendedora oficial e recolhe o IVA (taxa
+ *     adicional dela). Exige o Managed Payments ativo na conta e os produtos com
+ *     código fiscal ("Sincronizar produtos na Stripe"). O plano marcado
+ *     `fora_do_managed_payments` segue em `stripe_tax`.
+ *
+ * Mora em `COBRANCA_MODO_FISCAL` (migration 9807, que converte o booleano
+ * antigo). Sem essa linha vale o booleano `COBRANCA_IVA` de antes (`ligado` →
+ * `stripe_tax`): a imagem nova num banco ainda sem a 9807 não desliga o IVA de
+ * ninguém.
  */
+export async function modoFiscal(): Promise<ModoFiscal> {
+  const gravado = doBanco(await valorDaInstalacao("COBRANCA_MODO_FISCAL"));
+  const modo = MODOS_FISCAIS.find((m) => m === gravado);
+  if (modo) return modo;
+  return doBanco(await valorDaInstalacao("COBRANCA_IVA")) === "ligado" ? "stripe_tax" : "desligado";
+}
+
+/** O preço das telas é "+ IVA": nos dois modos com imposto o plano é cobrado sem IVA e a Stripe o soma. */
 export async function cobraIva(): Promise<boolean> {
-  return doBanco(await valorDaInstalacao("COBRANCA_IVA")) === "ligado";
+  return (await modoFiscal()) !== "desligado";
 }
 
 /** O provedor das assinaturas NOVAS (D-8). As antigas seguem no provedor da linha. */

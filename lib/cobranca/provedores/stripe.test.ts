@@ -422,6 +422,10 @@ describe("garantirCliente e iniciarAssinatura", () => {
       "line_items[0][quantity]": "1",
       "subscription_data[metadata][organization_id]": ORG,
       "subscription_data[metadata][plano_id]": PLANO.id,
+      // O modo fiscal em que a assinatura é vendida (migration 9807): `trocarPlano` o lê depois.
+      "subscription_data[metadata][modo_fiscal]": "desligado",
+      // Explícito: a conta pode ter o Managed Payments ligado por padrão.
+      "managed_payments[enabled]": "false",
       "metadata[organization_id]": ORG,
       "metadata[plano_id]": PLANO.id,
       success_url: "https://crm.example.com/app/settings/billing?voltou=1",
@@ -447,7 +451,7 @@ describe("garantirCliente e iniciarAssinatura", () => {
   it("⭐ IVA pela Stripe Tax ligado: preço sem IVA (exclusive), imposto automático, endereço e número fiscal pedidos", async () => {
     const { adaptador, chamadas } = montar(
       { "POST /products": { corpo: { id: PRODUTO } }, "POST /checkout/sessions": SESSAO },
-      { cobrarIva: async () => true },
+      { modoFiscal: async () => "stripe_tax" as const },
     );
     await adaptador.iniciarAssinatura({ ...base, plano: { ...PLANO, precoCents: 19990, moeda: "EUR" } });
     expect(Object.fromEntries(chamadas.find((c) => c.rota === "POST /checkout/sessions")?.corpo ?? [])).toMatchObject({
@@ -458,13 +462,14 @@ describe("garantirCliente e iniciarAssinatura", () => {
       "customer_update[address]": "auto",
       "customer_update[name]": "auto",
       "tax_id_collection[enabled]": "true",
+      "managed_payments[enabled]": "false",
     });
   });
 
   it("IVA ligado: o ajuste proporcional também sai sem IVA e com o imposto automático", async () => {
     const { adaptador, chamadas } = montar(
       { "POST /products": { corpo: { id: PRODUTO } }, "POST /checkout/sessions": SESSAO },
-      { cobrarIva: async () => true },
+      { modoFiscal: async () => "stripe_tax" as const },
     );
     await adaptador.iniciarAjusteProporcional({ ...base, plano: { ...PLANO, moeda: "EUR" }, valorCents: 3065 });
     expect(Object.fromEntries(chamadas.find((c) => c.rota === "POST /checkout/sessions")?.corpo ?? [])).toMatchObject({
@@ -578,6 +583,9 @@ describe("garantirCliente e iniciarAssinatura", () => {
     await adaptador.iniciarAssinatura(base);
     expect(chamadas.map((c) => c.rota)).toEqual(["POST /products", `POST /products/${PRODUTO}`, "POST /checkout/sessions"]);
     expect(chamadas[1]?.corpo.get("name")).toBe("Pro");
+    // O produto criado antes do código fiscal o recebe no update (Managed Payments o exige).
+    expect(chamadas[1]?.corpo.get("tax_code")).toBe("txcd_10103001");
+    expect(chamadas[0]?.corpo.get("tax_code")).toBe("txcd_10103001");
   });
 
   it("⭐ Checkout fora do ar: 3 tentativas com a MESMA Idempotency-Key, e lança transitório", async () => {
@@ -773,7 +781,7 @@ describe("trocarPlano, cancelarNoFim, prepararWebhook e portal", () => {
         "POST /products": { corpo: { id: PRODUTO_NOVO } },
         "POST /subscriptions/sub_1QfixtureAtiva": { corpo: objetos.assinatura },
       },
-      { cobrarIva: async () => true },
+      { modoFiscal: async () => "stripe_tax" as const },
     );
     await adaptador.trocarPlano({ assinaturaRef: "sub_1QfixtureAtiva", plano: NOVO });
     const post = chamadas.find((c) => c.rota === "POST /subscriptions/sub_1QfixtureAtiva");

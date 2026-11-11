@@ -344,7 +344,7 @@ describe("sincronizar — upgrade proporcional", () => {
   it("pago: troca o preço no provedor, aplica o plano novo e audita (o controle do caso acima)", async () => {
     lerPagamento.mockResolvedValue("pago");
     await rodarUpgrade();
-    expect(trocarPlano).toHaveBeenCalledWith({ assinaturaRef: "sub_1", plano: { id: "plano-b", nome: "Profissional", precoCents: 9990, moeda: "BRL", intervalo: "mes" } });
+    expect(trocarPlano).toHaveBeenCalledWith({ assinaturaRef: "sub_1", plano: { id: "plano-b", nome: "Profissional", precoCents: 9990, moeda: "BRL", intervalo: "mes", foraDoManagedPayments: false } });
     expect(m.linha).toMatchObject({ plano_id: "plano-b", troca_status: null, plano_troca_pendente_id: null });
     expect(h.audit).toHaveBeenCalledWith(expect.objectContaining({
       action: "cobranca.plano_trocado", metadata: { de: "plano-a", para: "plano-b", quando: "upgrade_proporcional_pago" },

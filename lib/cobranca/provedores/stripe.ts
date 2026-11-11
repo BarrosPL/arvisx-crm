@@ -23,6 +23,7 @@ import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto
 
 import { z } from "zod";
 
+import { MODOS_FISCAIS, type ModoFiscal } from "@/lib/cobranca/vocabulario";
 import { logger } from "@/lib/logger";
 
 import {
@@ -88,10 +89,36 @@ export interface DependenciasDaStripe {
   /** `marcaDaInstalacao(NEXT_PUBLIC_APP_URL)`: o registro (Task 19) injeta. */
   marca: string;
   /**
-   * IVA pela Stripe Tax (`cobraIva`, Cobrança › Régua). Lido a cada Checkout e
-   * troca. Ausente = não cobra (o comportamento de antes).
+   * O modo fiscal da instalação (`modoFiscal`, Cobrança › Régua): `desligado`,
+   * `stripe_tax` ou `managed_payments`. Lido a cada Checkout e troca. Ausente =
+   * `desligado` (não cobra imposto).
    */
-  cobrarIva?: () => Promise<boolean>;
+  modoFiscal?: () => Promise<ModoFiscal>;
+}
+
+/**
+ * O código fiscal de todo produto de plano: "Software as a service (SaaS) -
+ * business use". A Stripe exige um código elegível no produto para vender por
+ * Managed Payments (docs.stripe.com/payments/managed-payments/eligibility), e a
+ * Stripe Tax usa o mesmo código para escolher a alíquota.
+ */
+export const CODIGO_FISCAL_DO_PLANO = "txcd_10103001";
+
+/** O id do produto é fixo por plano: um produto por plano por conta, nunca duplicado. */
+export const idDoProdutoDoPlano = (planoId: string) => `dc_plano_${z.string().uuid().parse(planoId)}`;
+
+/**
+ * O modo em que ESTE plano é vendido. O plano marcado `fora_do_managed_payments`
+ * (o que inclui serviço sob medida, inelegível para a Stripe vender em nome
+ * próprio) cai em `stripe_tax` mesmo com a instalação em `managed_payments`.
+ */
+export function modoFiscalDoPlano(modo: ModoFiscal, plano: Pick<PlanoParaProvedor, "foraDoManagedPayments">): ModoFiscal {
+  return modo === "managed_payments" && plano.foraDoManagedPayments === true ? "stripe_tax" : modo;
+}
+
+/** O modo gravado no metadata da assinatura no Checkout dela. `null` = anterior à gravação. */
+function modoGravado(metadata: Record<string, string> | null | undefined): ModoFiscal | null {
+  return MODOS_FISCAIS.find((m) => m === metadata?.modo_fiscal) ?? null;
 }
 
 /** Nunca `invoice.created`: resposta não-2xx a ele atrasa em até 72 h a finalização da fatura. */
@@ -193,6 +220,7 @@ const assinaturaDaStripe = z.object({
   cancel_at: z.number().nullish(),
   ended_at: z.number().nullish(),
   trial_end: z.number().nullish(),
+  metadata: z.record(z.string(), z.string()).nullish(),
   items: z.object({
     data: z.array(
       z.object({ id: z.string(), current_period_start: z.number().nullish(), current_period_end: z.number(), price: z.object({ unit_amount: z.number().nullish() }).nullish() }),
@@ -249,7 +277,7 @@ function precoRecorrente(plano: PlanoParaProvedor, produto: string, iva = false)
     unit_amount: plano.precoCents,
     recurring: { interval: plano.intervalo === "ano" ? "year" : "month" },
     product: produto,
-    // Com IVA, o preço do plano é SEM imposto: a Stripe Tax soma o IVA na fatura.
+    // Com imposto (Stripe Tax ou Managed Payments), o preço do plano é SEM imposto: a Stripe soma o IVA.
     ...(iva ? { tax_behavior: "exclusive" } : {}),
   };
 }
@@ -266,6 +294,25 @@ const CHECKOUT_COM_IVA = {
   customer_update: { address: "auto", name: "auto" },
   tax_id_collection: { enabled: true },
 } as const;
+
+/**
+ * A parte fiscal da sessão de Checkout, por modo.
+ *
+ * `managed_payments`: a Stripe é a vendedora oficial e recolhe o imposto. Vai SÓ
+ * `managed_payments[enabled]=true`: nesse modo a Stripe recusa `automatic_tax`,
+ * `tax_id_collection`, `customer_update[name|address]`, `adaptive_pricing`, os
+ * parâmetros de forma de pagamento, de fatura e recibo, de envio e de Connect
+ * (docs.stripe.com/payments/managed-payments/update-checkout). O nome e o
+ * endereço ela mesma pede e grava no cliente.
+ *
+ * Nos outros dois, `managed_payments[enabled]=false` vai EXPLÍCITO: a conta pode
+ * ter o Managed Payments ligado por padrão, e sem isto a sessão de sempre é
+ * recusada ("the product tax code is missing").
+ */
+function fiscalDoCheckout(modo: ModoFiscal) {
+  if (modo === "managed_payments") return { managed_payments: { enabled: true } };
+  return { managed_payments: { enabled: false }, ...(modo === "stripe_tax" ? CHECKOUT_COM_IVA : {}) };
+}
 
 /** Janela da assinatura, nos DOIS sentidos: o relógio da VPS pode estar atrás da Stripe. */
 export const TOLERANCIA_DO_WEBHOOK_S = 300;
@@ -337,7 +384,7 @@ export function criarAdaptadorStripe(dep: DependenciasDaStripe): AdaptadorDeCobr
   const esperar = dep.esperar ?? ((ms: number) => new Promise<void>((pronto) => setTimeout(pronto, ms)));
   const novaChave = dep.novaChaveDeIdempotencia ?? randomUUID;
   const agora = dep.agora ?? (() => new Date());
-  const cobrarIva = dep.cobrarIva ?? (async () => false);
+  const modoFiscal = dep.modoFiscal ?? (async (): Promise<ModoFiscal> => "desligado");
 
   async function chaveUsavel(): Promise<string> {
     const chave = await dep.lerChave();
@@ -432,16 +479,41 @@ export function criarAdaptadorStripe(dep: DependenciasDaStripe): AdaptadorDeCobr
     return null;
   }
 
-  /** Um produto por PLANO, id previsível: criar de novo é `resource_already_exists`, e o nome é atualizado. */
-  async function garantirProduto(plano: PlanoParaProvedor): Promise<string> {
-    const id = `dc_plano_${UUID.parse(plano.id)}`;
+  /**
+   * Um produto por PLANO, id previsível: criar de novo é `resource_already_exists`,
+   * e aí o nome e o código fiscal são atualizados (o produto criado antes do
+   * código o recebe aqui). Idempotente: nunca cria um segundo produto.
+   */
+  async function sincronizarProduto(plano: PlanoParaProvedor): Promise<"criado" | "atualizado"> {
+    const id = idDoProdutoDoPlano(plano.id);
     try {
-      await chamar("POST", "/products", { id, name: plano.nome, metadata: { plano_id: plano.id } });
+      await chamar("POST", "/products", { id, name: plano.nome, tax_code: CODIGO_FISCAL_DO_PLANO, metadata: { plano_id: plano.id } });
+      return "criado";
     } catch (e) {
       if (!(e instanceof ErroDoProvedor) || e.codigo !== "resource_already_exists") throw e;
-      await chamar("POST", `/products/${id}`, { name: plano.nome, active: true });
+      await chamar("POST", `/products/${id}`, { name: plano.nome, active: true, tax_code: CODIGO_FISCAL_DO_PLANO });
+      return "atualizado";
     }
-    return id;
+  }
+
+  async function garantirProduto(plano: PlanoParaProvedor): Promise<string> {
+    await sincronizarProduto(plano);
+    return idDoProdutoDoPlano(plano.id);
+  }
+
+  /** O modo em que a assinatura foi vendida (metadata gravado no Checkout dela). `null` = anterior à gravação. */
+  async function modoDaAssinatura(assinaturaRef: string): Promise<ModoFiscal | null> {
+    return modoGravado(ler(assinaturaDaStripe, await chamar("GET", `/subscriptions/${encodeURIComponent(assinaturaRef)}`)).metadata);
+  }
+
+  /**
+   * Assinatura vendida por Managed Payments não passa para um plano fora dele: a
+   * Stripe seguiria como vendedora de um plano inelegível. Não há troca
+   * silenciosa de modo — a saída é cancelar e assinar de novo (outro Checkout).
+   */
+  async function trocaExigeNovoCheckout(p: { assinaturaRef: string; plano: PlanoParaProvedor }): Promise<boolean> {
+    if (p.plano.foraDoManagedPayments !== true) return false;
+    return (await modoDaAssinatura(p.assinaturaRef)) === "managed_payments";
   }
 
   async function garantirCliente(org: Parameters<AdaptadorDeCobranca["garantirCliente"]>[0]): Promise<string> {
@@ -472,7 +544,8 @@ export function criarAdaptadorStripe(dep: DependenciasDaStripe): AdaptadorDeCobr
     const sucesso = new URL(p.urlDeVolta);
     sucesso.searchParams.set("voltou", "1");
     const metadados = { organization_id: orgId, plano_id: p.plano.id };
-    const iva = await cobrarIva();
+    const modo = modoFiscalDoPlano(await modoFiscal(), p.plano);
+    const iva = modo !== "desligado";
     const sessao = ler(
       sessaoDeCheckout,
       await chamar(
@@ -483,8 +556,9 @@ export function criarAdaptadorStripe(dep: DependenciasDaStripe): AdaptadorDeCobr
           customer: p.clienteRef,
           client_reference_id: orgId,
           line_items: [{ price_data: precoRecorrente(p.plano, produto, iva), quantity: 1 }],
-          subscription_data: { metadata: metadados, trial_end: trialEnd },
-          ...(iva ? CHECKOUT_COM_IVA : {}),
+          // `modo_fiscal` na ASSINATURA: é por ele que `trocarPlano` sabe em que modo ela foi vendida.
+          subscription_data: { metadata: { ...metadados, modo_fiscal: modo }, trial_end: trialEnd },
+          ...fiscalDoCheckout(modo),
           metadata: metadados,
           success_url: sucesso.toString(),
           cancel_url: p.urlDeVolta,
@@ -505,7 +579,14 @@ export function criarAdaptadorStripe(dep: DependenciasDaStripe): AdaptadorDeCobr
     const produto = await garantirProduto(p.plano);
     const sucesso = new URL(p.urlDeVolta);
     sucesso.searchParams.set("voltou", "1");
-    const iva = await cobrarIva();
+    // O ajuste segue o modo da ASSINATURA que ele complementa (gravado no Checkout
+    // dela); assinatura anterior à gravação segue o modo de hoje para o plano.
+    const daAssinatura = p.assinaturaRef ? await modoDaAssinatura(p.assinaturaRef) : null;
+    if (daAssinatura === "managed_payments" && p.plano.foraDoManagedPayments === true) {
+      throw new ErroDoProvedor(409, "troca_exige_novo_checkout", false);
+    }
+    const modo = daAssinatura ?? modoFiscalDoPlano(await modoFiscal(), p.plano);
+    const iva = modo !== "desligado";
     const sessao = ler(
       sessaoDeCheckout,
       await chamar("POST", "/checkout/sessions", {
@@ -517,7 +598,7 @@ export function criarAdaptadorStripe(dep: DependenciasDaStripe): AdaptadorDeCobr
           quantity: 1,
         }],
         metadata: { organization_id: orgId, plano_id: p.plano.id, tipo: "ajuste_proporcional" },
-        ...(iva ? CHECKOUT_COM_IVA : {}),
+        ...fiscalDoCheckout(modo),
         success_url: sucesso.toString(),
         cancel_url: p.urlDeVolta,
         locale: "pt-BR",
@@ -628,12 +709,24 @@ export function criarAdaptadorStripe(dep: DependenciasDaStripe): AdaptadorDeCobr
 
   async function trocarPlano(p: { assinaturaRef: string; plano: PlanoParaProvedor }): Promise<void> {
     const caminho = `/subscriptions/${encodeURIComponent(p.assinaturaRef)}`;
-    const item = ler(assinaturaDaStripe, await chamar("GET", caminho)).items.data[0];
+    const assinatura = ler(assinaturaDaStripe, await chamar("GET", caminho));
+    const item = assinatura.items.data[0];
     if (!item) throw new ErroDoProvedor(null, "assinatura_sem_item", false);
+    // O modo é o da ASSINATURA (gravado no Checkout dela) e nunca muda aqui.
+    // Managed Payments → plano fora dele: recusa clara, antes de tocar em produto ou preço.
+    const daAssinatura = modoGravado(assinatura.metadata);
+    if (daAssinatura === "managed_payments" && p.plano.foraDoManagedPayments === true) {
+      throw new ErroDoProvedor(409, "troca_exige_novo_checkout", false);
+    }
     const produto = await garantirProduto(p.plano);
+    // O mesmo `tax_behavior` de sempre (exclusive: imposto somado ao preço), em
+    // `stripe_tax` e em `managed_payments`. Nada de `automatic_tax` nem de
+    // `default_payment_method`: em assinatura de Managed Payments a Stripe proíbe
+    // (o cartão troca pelo Portal ou pela Link).
+    const comImposto = (daAssinatura ?? modoFiscalDoPlano(await modoFiscal(), p.plano)) !== "desligado";
     // Sem proração automática: o período pago foi ajustado pela cobrança avulsa; a próxima fatura sai com o novo preço, sem mover a âncora.
     await chamar("POST", caminho, {
-      items: [{ id: item.id, price_data: precoRecorrente(p.plano, produto, await cobrarIva()) }],
+      items: [{ id: item.id, price_data: precoRecorrente(p.plano, produto, comImposto) }],
       proration_behavior: "none",
       metadata: { plano_id: p.plano.id },
     });
@@ -740,6 +833,8 @@ export function criarAdaptadorStripe(dep: DependenciasDaStripe): AdaptadorDeCobr
     expirarSessao,
     lerSituacao,
     trocarPlano,
+    trocaExigeNovoCheckout,
+    sincronizarProduto,
     cancelarNoFim,
     prepararWebhook,
     removerWebhooks,

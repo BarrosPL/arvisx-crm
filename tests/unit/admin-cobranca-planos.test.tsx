@@ -17,7 +17,7 @@ import { PlanosDaInstalacao, type PlanoDaTela } from "@/app/admin/(protected)/co
 const PLANO: PlanoDaTela = {
   id: "cccccccc-0000-4000-8000-000000000001", nome: "Básico", preco_cents: 4990, moeda: "BRL", intervalo: "mes", trial_dias: 14,
   max_assentos: 3, max_canais: null, teto_ia_usd_cents: null, padrao_no_cadastro: false, oferecido_ao_cliente: true, interface_settings: { preset: "completa" },
-  descricao_curta: null, para_quem: null, destaques: null, limites: null, como_funciona: null, inclui_agentes_arvisx: false, arquivado_em: null,
+  descricao_curta: null, para_quem: null, destaques: null, limites: null, como_funciona: null, inclui_agentes_arvisx: false, fora_do_managed_payments: false, arquivado_em: null,
 };
 
 beforeEach(() => {
@@ -49,6 +49,8 @@ describe("Planos da instalação", () => {
       interface_settings: { preset: "completa" },
       // Textos do plano (migration 9803): vazios vão nulos, nenhum texto inventado.
       descricao_curta: null, para_quem: null, destaques: null, limites: null, como_funciona: null, inclui_agentes_arvisx: false,
+      // Migration 9807: o plano nasce dentro do Managed Payments.
+      fora_do_managed_payments: false,
     });
     expect(h.refresh).toHaveBeenCalled();
   });
@@ -182,5 +184,55 @@ describe("Planos da instalação", () => {
     await u.click(screen.getByRole("button", { name: "Editar" }));
     expect((screen.getByLabelText("O que não tem") as HTMLTextAreaElement).value).toBe("Sem X\nSem Y");
     expect((screen.getByLabelText(/Inclui os 4 agentes de IA/) as HTMLInputElement).checked).toBe(true);
+  });
+});
+
+describe("Managed Payments na aba de Planos (migration 9807)", () => {
+  it("⭐ a marca 'Fora do Managed Payments' é editável: marcada vai no corpo, e o plano marcado mostra o selo e volta marcado na edição", async () => {
+    const u = userEvent.setup();
+    const { unmount } = render(<PlanosDaInstalacao planos={[]} />);
+    await preencher(u, "499,90");
+    await u.click(screen.getByLabelText(/^Fora do Managed Payments/));
+    await u.click(screen.getByRole("button", { name: "Salvar plano" }));
+    await waitFor(() => expect(h.post).toHaveBeenCalledTimes(1));
+    expect(h.post.mock.calls[0]![1]).toMatchObject({ fora_do_managed_payments: true });
+    unmount();
+
+    render(<PlanosDaInstalacao planos={[{ ...PLANO, nome: "Equipe Completa", fora_do_managed_payments: true }]} />);
+    expect(screen.getAllByText("Fora do Managed Payments").length).toBe(2);
+    await u.click(screen.getByRole("button", { name: "Editar" }));
+    const marca = screen.getByLabelText(/^Fora do Managed Payments/) as HTMLInputElement;
+    expect(marca.checked).toBe(true);
+    await u.click(marca);
+    await u.click(screen.getByRole("button", { name: "Salvar alterações" }));
+    await waitFor(() => expect(h.patch).toHaveBeenCalledTimes(1));
+    expect(h.patch.mock.calls[0]![1]).toMatchObject({ fora_do_managed_payments: false });
+  });
+
+  it("⭐ 'Sincronizar produtos na Stripe' só aparece com a Stripe conectada, chama a rota e mostra o resultado por plano", async () => {
+    const u = userEvent.setup();
+    const { unmount } = render(<PlanosDaInstalacao planos={[PLANO]} />);
+    expect(screen.queryByRole("button", { name: "Sincronizar produtos na Stripe" })).toBeNull();
+    unmount();
+
+    h.post.mockResolvedValueOnce({
+      data: {
+        modo: "teste", criados: 1, atualizados: 1, erros: 1,
+        resultados: [
+          { plano_id: "p1", nome: "Essencial", resultado: "criado" },
+          { plano_id: "p2", nome: "Premium", resultado: "atualizado" },
+          { plano_id: "p3", nome: "Equipe Completa", resultado: "erro", erro: "permission_error" },
+        ],
+      },
+    });
+    render(<PlanosDaInstalacao planos={[PLANO]} stripeConectada />);
+    await u.click(screen.getByRole("button", { name: "Sincronizar produtos na Stripe" }));
+    await waitFor(() => expect(h.post).toHaveBeenCalledWith("/api/v1/admin/cobranca/planos/sincronizar", {}));
+    expect(await screen.findByText("Essencial: criado")).toBeTruthy();
+    expect(screen.getByText("Premium: atualizado")).toBeTruthy();
+    expect(screen.getByText("Equipe Completa: erro (permission_error)")).toBeTruthy();
+    expect(screen.getByText(/Conta Stripe de teste\./)).toBeTruthy();
+    // Algum plano falhou: o aviso é de erro, não de sucesso.
+    expect(h.erro).toHaveBeenCalled();
   });
 });

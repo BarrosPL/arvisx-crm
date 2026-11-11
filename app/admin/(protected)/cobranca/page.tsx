@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { CopiarLinkDePagamento } from "@/components/admin/cobranca/CopiarLinkDePagamento";
 import { requirePlatformAdmin } from "@/lib/auth/requirePlatformAdmin";
-import { cobraIva, toleranciaDias } from "@/lib/cobranca/configuracao";
+import { modoFiscal, toleranciaDias } from "@/lib/cobranca/configuracao";
 import { listarAguardandoContato } from "@/lib/cobranca/equipe-completa";
 import { ROTULO_DO_ERRO, ROTULO_DO_ESTADO } from "@/lib/cobranca/rotulos";
 import { leituraAtrasada, lerVisaoGeral, montarChecklist } from "@/lib/cobranca/visao-geral";
@@ -59,7 +59,7 @@ export default async function CobrancaPage({ searchParams }: { searchParams: Pro
   const { aba } = await searchParams;
   const inicial: AbaDaCobranca = ABAS_DA_COBRANCA.find((a) => a === aba) ?? "visao-geral";
 
-  const [planos, clientes, visao, tolerancia, aguardando, iva] = await Promise.all([
+  const [planos, clientes, visao, tolerancia, aguardando, modoDoImposto] = await Promise.all([
     admin.from("cobranca_planos").select(COLUNAS_DO_PLANO).order("nome"),
     admin
       .from("organizations")
@@ -70,7 +70,7 @@ export default async function CobrancaPage({ searchParams }: { searchParams: Pro
     lerVisaoGeral(admin),
     toleranciaDias(),
     listarAguardandoContato(admin),
-    cobraIva(),
+    modoFiscal(),
   ]);
   if (planos.error || clientes.error) {
     throw new Error(`cobrança: leitura falhou (${planos.error?.code ?? clientes.error?.code})`);
@@ -145,8 +145,8 @@ export default async function CobrancaPage({ searchParams }: { searchParams: Pro
         paineis={{
           "visao-geral": <VisaoGeral dados={visao} checklist={montarChecklist(visao)} idioma={idioma} agora={agora} />,
           conexao: <ConexaoDaCobranca provedor={visao.provedor} modo={visao.modo} last4={visao.chaveLast4} urlDoWebhook={visao.urlDoWebhook} />,
-          regua: <ReguaDaCobranca tolerancia={tolerancia} iva={iva} />,
-          planos: <PlanosDaInstalacao planos={lista} />,
+          regua: <ReguaDaCobranca tolerancia={tolerancia} modoFiscal={modoDoImposto} />,
+          planos: <PlanosDaInstalacao planos={lista} stripeConectada={visao.provedor === "stripe" && visao.modo !== null} />,
           clientes: clientesDaTela,
         }}
       />

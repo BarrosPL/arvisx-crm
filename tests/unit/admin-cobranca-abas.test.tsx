@@ -75,7 +75,7 @@ describe("Conexão", () => {
 describe("Régua", () => {
   it("salva a tolerância e mostra a linha do tempo com os dias", async () => {
     const u = userEvent.setup();
-    render(<ReguaDaCobranca tolerancia={7} iva={false} />);
+    render(<ReguaDaCobranca tolerancia={7} modoFiscal="desligado" />);
     expect(screen.getByText(/Dia 5:/)).toBeTruthy();
     // #2753: a tolerância é de pagamento atrasado; o trial não a espera.
     expect(screen.getByText(/O teste grátis que acaba sem pagamento não espera por ela/)).toBeTruthy();
@@ -84,7 +84,23 @@ describe("Régua", () => {
     await u.type(campo, "10");
     expect(screen.getByText(/Dia 8:/)).toBeTruthy();
     await u.click(screen.getByRole("button", { name: "Salvar régua" }));
-    await waitFor(() => expect(h.patch).toHaveBeenCalledWith("/api/v1/admin/cobranca/regua", { tolerancia_dias: 10, iva: false }));
+    await waitFor(() => expect(h.patch).toHaveBeenCalledWith("/api/v1/admin/cobranca/regua", { tolerancia_dias: 10, modo_fiscal: "desligado" }));
+  });
+
+  it("⭐ o imposto tem três opções, cada uma com o seu texto, e a escolhida vai no PATCH (migration 9807)", async () => {
+    const u = userEvent.setup();
+    render(<ReguaDaCobranca tolerancia={7} modoFiscal="stripe_tax" />);
+    const opcao = (nome: RegExp) => screen.getByRole("radio", { name: nome }) as HTMLInputElement;
+    expect(screen.getAllByRole("radio")).toHaveLength(3);
+    expect(opcao(/^Stripe Tax/).checked).toBe(true);
+    expect(opcao(/^Desligado/).checked).toBe(false);
+    expect(screen.getByText(/Nenhum imposto no pagamento/)).toBeTruthy();
+    expect(screen.getByText(/Você vende\. O preço do plano é sem IVA/)).toBeTruthy();
+    expect(screen.getByText(/A Stripe é a vendedora oficial e recolhe o IVA; taxa adicional da Stripe/)).toBeTruthy();
+    await u.click(opcao(/^Managed Payments/));
+    expect(opcao(/^Stripe Tax/).checked).toBe(false);
+    await u.click(screen.getByRole("button", { name: "Salvar régua" }));
+    await waitFor(() => expect(h.patch).toHaveBeenCalledWith("/api/v1/admin/cobranca/regua", { tolerancia_dias: 7, modo_fiscal: "managed_payments" }));
   });
 });
 

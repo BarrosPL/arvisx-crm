@@ -34,6 +34,12 @@ export interface PlanoParaProvedor {
    */
   readonly moeda: Moeda;
   readonly intervalo: Intervalo;
+  /**
+   * `cobranca_planos.fora_do_managed_payments` (migration 9807): o plano não é
+   * vendido por Managed Payments (inclui serviço sob medida). Com a instalação
+   * em `managed_payments`, ele usa `stripe_tax`. Só a Stripe lê.
+   */
+  readonly foraDoManagedPayments?: boolean;
 }
 
 /** O que o webhook AUTORIZA: acordar a leitura. Nunca é fonte de estado. */
@@ -155,11 +161,31 @@ export interface AdaptadorDeCobranca {
     urlDeVolta: string;
     chaveIdempotencia: string;
   }): Promise<{ url: string; expiraEm: Date | null; assinaturaRef: string | null; sessaoId: string | null }>;
-  iniciarAjusteProporcional(p: { clienteRef: string; orgId: string; plano: PlanoParaProvedor; valorCents: number; chaveIdempotencia: string; urlDeVolta: string }): Promise<{ pagamentoRef: string; url: string }>;
+  /**
+   * `assinaturaRef` (opcional) é a assinatura que o ajuste complementa: na Stripe,
+   * a cobrança avulsa segue o modo fiscal em que ELA foi vendida, e recusa com
+   * `troca_exige_novo_checkout` quando ela é Managed Payments e o plano não.
+   */
+  iniciarAjusteProporcional(p: { clienteRef: string; orgId: string; plano: PlanoParaProvedor; valorCents: number; chaveIdempotencia: string; urlDeVolta: string; assinaturaRef?: string }): Promise<{ pagamentoRef: string; url: string }>;
   lerPagamentoProporcional(pagamentoRef: string): Promise<"pendente" | "pago" | "encerrado">;
   lerSituacao(p: { clienteRef: string }): Promise<Situacao>;
-  /** Atualiza o preço recorrente sem mudar a data de renovação. Pode recusar com ErroDoProvedor não transitório. */
+  /**
+   * Atualiza o preço recorrente sem mudar a data de renovação. Pode recusar com
+   * ErroDoProvedor não transitório — entre eles `troca_exige_novo_checkout`
+   * (Stripe: assinatura de Managed Payments indo para plano fora dele).
+   */
   trocarPlano(p: { assinaturaRef: string; plano: PlanoParaProvedor }): Promise<void>;
+  /**
+   * A troca para este plano exigiria OUTRO modo de venda (Stripe: assinatura de
+   * Managed Payments → plano `fora_do_managed_payments`)? Perguntado ANTES de
+   * cobrar qualquer ajuste. Ausente no provedor = nunca exige.
+   */
+  trocaExigeNovoCheckout?(p: { assinaturaRef: string; plano: PlanoParaProvedor }): Promise<boolean>;
+  /**
+   * Cria ou atualiza no provedor o produto deste plano (Stripe: com o código
+   * fiscal). Idempotente. Ausente = o provedor não tem catálogo de produtos.
+   */
+  sincronizarProduto?(plano: PlanoParaProvedor): Promise<"criado" | "atualizado">;
   /**
    * Mata NO PROVEDOR a sessão de pagamento aberta (issue #2609), para a troca de
    * plano acontecer na hora sem deixar um link vivo com o preço antigo. `sessaoId`

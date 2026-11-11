@@ -43,6 +43,17 @@ export function provedorCobraEm(provedor: ProvedorDeCobranca, moeda: string): bo
   return (MOEDAS_DO_PROVEDOR[provedor] as readonly string[]).includes(moeda);
 }
 
+/**
+ * O modo fiscal da instalação (`COBRANCA_MODO_FISCAL` em `platform_config`,
+ * migration 9807; Cobrança › Régua). Não é coluna com CHECK: é valor de
+ * configuração, validado na rota e na leitura. Só vale para a Stripe.
+ *   - `desligado`: nenhum imposto no pagamento (o padrão);
+ *   - `stripe_tax`: nós vendemos; a Stripe Tax calcula e soma o IVA;
+ *   - `managed_payments`: a Stripe é a vendedora oficial e recolhe o IVA.
+ */
+export const MODOS_FISCAIS = ["desligado", "stripe_tax", "managed_payments"] as const;
+export type ModoFiscal = (typeof MODOS_FISCAIS)[number];
+
 export const AVISOS_DA_REGUA = ["trial_acabando", "venceu", "suspende_em_breve", "suspensa"] as const;
 export type AvisoDaRegua = (typeof AVISOS_DA_REGUA)[number];
 

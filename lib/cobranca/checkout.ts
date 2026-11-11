@@ -334,7 +334,7 @@ async function gerarCheckout(
     admin.from("organizations").select("legal_name, display_name").eq("id", orgId).maybeSingle(),
     admin
       .from("cobranca_planos")
-      .select("id, nome, preco_cents, moeda, intervalo, padrao_no_cadastro, oferecido_ao_cliente")
+      .select("id, nome, preco_cents, moeda, intervalo, padrao_no_cadastro, oferecido_ao_cliente, fora_do_managed_payments")
       .eq("id", lida.plano_id)
       .maybeSingle(),
   ]);
@@ -342,7 +342,7 @@ async function gerarCheckout(
   const nomes = org.data as { legal_name: string | null; display_name: string } | null;
   const p = plano.data as {
     id: string; nome: string; preco_cents: number; moeda: Moeda; intervalo: Intervalo;
-    padrao_no_cadastro?: boolean; oferecido_ao_cliente?: boolean;
+    padrao_no_cadastro?: boolean; oferecido_ao_cliente?: boolean; fora_do_managed_payments?: boolean;
   };
   if (p.padrao_no_cadastro === true && p.oferecido_ao_cliente === false) {
     // O plano de entrada (o "Teste": padrão do cadastro e não oferecido) é só o
@@ -389,7 +389,7 @@ async function gerarCheckout(
   const inicio = await ad.iniciarAssinatura({
     clienteRef,
     orgId,
-    plano: { id: p.id, nome: p.nome, precoCents: p.preco_cents, moeda: p.moeda, intervalo: p.intervalo },
+    plano: { id: p.id, nome: p.nome, precoCents: p.preco_cents, moeda: p.moeda, intervalo: p.intervalo, foraDoManagedPayments: p.fora_do_managed_payments === true },
     trialAte: lida.estado === "trial" && lida.trial_ate ? new Date(lida.trial_ate) : null,
     urlDeVolta: quem.urlDeVolta,
     chaveIdempotencia: quem.chaveIdempotencia,

@@ -20,6 +20,8 @@ const plano = (id: string, extra: Record<string, unknown> = {}) => ({
 const PLANOS = [
   plano("basico"), plano("pro", { preco_cents: 9990 }), plano("mini", { max_assentos: 1 }), plano("anual", { intervalo: "ano" }),
   plano("negociado", { preco_cents: 2990, oferecido_ao_cliente: false }),
+  // Migration 9807: inclui serviço sob medida, fora do Managed Payments.
+  plano("equipe", { preco_cents: 49990, fora_do_managed_payments: true }),
 ];
 
 interface Mundo { linha: Record<string, unknown> | null; assentos: number; canais: number; casPerdido: boolean; falharAoRegistrarPagamento: boolean }
@@ -29,6 +31,7 @@ const trocarNoProvedor = vi.fn<AdaptadorDeCobranca["trocarPlano"]>();
 const expirarSessao = vi.fn<AdaptadorDeCobranca["expirarSessao"]>();
 const iniciarAjusteProporcional = vi.fn<AdaptadorDeCobranca["iniciarAjusteProporcional"]>();
 const lerPagamentoProporcional = vi.fn<AdaptadorDeCobranca["lerPagamentoProporcional"]>();
+const trocaExigeNovoCheckout = vi.fn<NonNullable<AdaptadorDeCobranca["trocaExigeNovoCheckout"]>>();
 
 function responder(c: Cadeia): Resposta {
   if (c.tabela === "cobranca_planos") return { data: PLANOS.find((p) => p.id === valorDoFiltro(c, "eq", "id")) ?? null };
@@ -44,7 +47,7 @@ function responder(c: Cadeia): Resposta {
 
 const trocar = (planoId: string, origem?: "empresa" | "dono") =>
   trocarPlanoDaOrg(banco.cliente as never, ORG, planoId, {
-    adaptador: () => ({ trocarPlano: trocarNoProvedor, expirarSessao, iniciarAjusteProporcional, lerPagamentoProporcional } as unknown as AdaptadorDeCobranca),
+    adaptador: () => ({ trocarPlano: trocarNoProvedor, expirarSessao, iniciarAjusteProporcional, lerPagamentoProporcional, trocaExigeNovoCheckout } as unknown as AdaptadorDeCobranca),
     agora: () => AGORA,
     origem,
   });
@@ -60,6 +63,7 @@ beforeEach(() => {
   expirarSessao.mockResolvedValue(undefined);
   iniciarAjusteProporcional.mockResolvedValue({ pagamentoRef: "pay_adjustment_1", url: "https://pay.example/adjustment" });
   lerPagamentoProporcional.mockResolvedValue("pendente");
+  trocaExigeNovoCheckout.mockResolvedValue(false);
 });
 
 describe("trocarPlanoDaOrg", () => {
@@ -73,7 +77,7 @@ describe("trocarPlanoDaOrg", () => {
   it("⭐ teste grátis com provedor: o preço da 1ª cobrança muda no provedor e a troca vale na hora (D-13)", async () => {
     m.linha = { ...EM_TESTE, provedor: "stripe", provedor_assinatura_id: "sub_1" };
     expect(await trocar("pro")).toMatchObject({ ok: true, quando: "imediato", planoId: "pro" });
-    expect(trocarNoProvedor).toHaveBeenCalledWith({ assinaturaRef: "sub_1", plano: { id: "pro", nome: "pro", precoCents: 9990, moeda: "BRL", intervalo: "mes" } });
+    expect(trocarNoProvedor).toHaveBeenCalledWith({ assinaturaRef: "sub_1", plano: { id: "pro", nome: "pro", precoCents: 9990, moeda: "BRL", intervalo: "mes", foraDoManagedPayments: false } });
   });
 
   // Se a assinatura está ativa, upgrade usa o fluxo proporcional. Sem dados
@@ -396,7 +400,7 @@ describe("troca no teste grátis com a assinatura já criada no provedor (Asaas,
   it("⭐ o provedor leva o preço novo à fatura aberta, e o link dela FICA (o próximo Assinar devolve a mesma fatura)", async () => {
     m.linha = { ...EM_TESTE, provedor: "asaas", provedor_assinatura_id: "sub_asaas_1", checkout_url: FATURA };
     expect(await trocar("pro")).toMatchObject({ ok: true, quando: "imediato", planoId: "pro" });
-    expect(trocarNoProvedor).toHaveBeenCalledWith({ assinaturaRef: "sub_asaas_1", plano: { id: "pro", nome: "pro", precoCents: 9990, moeda: "BRL", intervalo: "mes" } });
+    expect(trocarNoProvedor).toHaveBeenCalledWith({ assinaturaRef: "sub_asaas_1", plano: { id: "pro", nome: "pro", precoCents: 9990, moeda: "BRL", intervalo: "mes", foraDoManagedPayments: false } });
     expect(Object.keys(argumentos(escritas()[0]!, "update")?.[0] as object).sort()).toEqual(["plano_agendado_id", "plano_id", "updated_at"]);
   });
 
@@ -404,5 +408,79 @@ describe("troca no teste grátis com a assinatura já criada no provedor (Asaas,
     m.linha = { ...EM_TESTE, checkout_url: "https://checkout.stripe.com/c/pay/cs_1" };
     await trocar("pro");
     expect(argumentos(escritas()[0]!, "update")?.[0]).toMatchObject({ checkout_url: null, checkout_expira_em: null });
+  });
+});
+
+describe("troca e Managed Payments (migration 9807)", () => {
+  const PLANO_EQUIPE = { id: "equipe", nome: "equipe", precoCents: 49990, moeda: "BRL", intervalo: "mes", foraDoManagedPayments: true };
+
+  it("⭐ assinatura de Managed Payments → plano fora dele: 409 troca_exige_novo_checkout, sem cobrar ajuste, sem trocar preço e sem gravar", async () => {
+    m.linha = { ...PAGANDO };
+    trocaExigeNovoCheckout.mockResolvedValue(true);
+    const r = await trocar("equipe");
+    expect(r).toMatchObject({ ok: false, status: 409, code: "troca_exige_novo_checkout" });
+    expect((r as { message: string }).message).toMatch(/cancele a assinatura atual e assine o plano novo/);
+    expect(trocaExigeNovoCheckout).toHaveBeenCalledWith({ assinaturaRef: "sub_1", plano: PLANO_EQUIPE });
+    expect(iniciarAjusteProporcional).not.toHaveBeenCalled();
+    expect(trocarNoProvedor).not.toHaveBeenCalled();
+    expect(expirarSessao).not.toHaveBeenCalled();
+    expect(escritas()).toHaveLength(0);
+  });
+
+  it("⭐ a recusa não custa o ajuste em aberto de outro plano: nada é expirado nem esquecido", async () => {
+    m.linha = { ...PAGANDO, troca_id: "troca-1", plano_troca_pendente_id: "pro", troca_status: "aguardando_pagamento", troca_pagamento_ref: "cs_ajuste", troca_reserva_ate: "2026-11-01T00:00:00Z" };
+    trocaExigeNovoCheckout.mockResolvedValue(true);
+    expect(await trocar("equipe")).toMatchObject({ ok: false, code: "troca_exige_novo_checkout" });
+    expect(lerPagamentoProporcional).not.toHaveBeenCalled();
+    expect(expirarSessao).not.toHaveBeenCalled();
+    expect(escritas()).toHaveLength(0);
+  });
+
+  it("o DONO também não troca em silêncio: a mesma recusa", async () => {
+    m.linha = { ...PAGANDO };
+    trocaExigeNovoCheckout.mockResolvedValue(true);
+    expect(await trocar("equipe", "dono")).toMatchObject({ ok: false, status: 409, code: "troca_exige_novo_checkout" });
+    expect(trocarNoProvedor).not.toHaveBeenCalled();
+  });
+
+  it("controle: a assinatura não é de Managed Payments — o upgrade para o plano com a marca segue, e o ajuste leva a assinatura e a marca ao provedor", async () => {
+    m.linha = { ...PAGANDO };
+    expect(await trocar("equipe")).toMatchObject({ ok: true, quando: "pagamento_pendente" });
+    expect(iniciarAjusteProporcional).toHaveBeenCalledWith(expect.objectContaining({ assinaturaRef: "sub_1", plano: PLANO_EQUIPE }));
+  });
+
+  it("o provedor recusa na hora do ajuste (a marca mudou no meio): a mesma recusa clara, e a reserva é desfeita", async () => {
+    m.linha = { ...PAGANDO };
+    iniciarAjusteProporcional.mockRejectedValue(new ErroDoProvedor(409, "troca_exige_novo_checkout", false));
+    expect(await trocar("equipe")).toMatchObject({ ok: false, status: 409, code: "troca_exige_novo_checkout" });
+  });
+
+  it("o provedor recusa na troca de preço (pedido do dono): a mesma recusa, e nada é agendado", async () => {
+    m.linha = { ...PAGANDO };
+    trocarNoProvedor.mockRejectedValue(new ErroDoProvedor(409, "troca_exige_novo_checkout", false));
+    expect(await trocar("equipe", "dono")).toMatchObject({ ok: false, status: 409, code: "troca_exige_novo_checkout" });
+    expect(escritas()).toHaveLength(0);
+  });
+
+  it("a pergunta ao provedor falha por instabilidade: 503, nada cobrado nem gravado", async () => {
+    m.linha = { ...PAGANDO };
+    trocaExigeNovoCheckout.mockRejectedValue(new ErroDoProvedor(503, "provedor_fora", true));
+    expect(await trocar("equipe")).toMatchObject({ ok: false, status: 503, code: "provedor_indisponivel" });
+    expect(iniciarAjusteProporcional).not.toHaveBeenCalled();
+    expect(escritas()).toHaveLength(0);
+  });
+
+  it("teste grátis sem assinatura no provedor: não há o que perguntar — a troca vale na hora (o Checkout decide o modo)", async () => {
+    expect(await trocar("equipe")).toMatchObject({ ok: true, quando: "imediato", planoId: "equipe" });
+    expect(trocaExigeNovoCheckout).not.toHaveBeenCalled();
+  });
+
+  it("provedor sem a pergunta (Asaas): a troca segue como sempre", async () => {
+    m.linha = { ...PAGANDO };
+    const r = await trocarPlanoDaOrg(banco.cliente as never, ORG, "equipe", {
+      adaptador: () => ({ trocarPlano: trocarNoProvedor, expirarSessao, iniciarAjusteProporcional, lerPagamentoProporcional } as unknown as AdaptadorDeCobranca),
+      agora: () => AGORA,
+    });
+    expect(r).toMatchObject({ ok: true, quando: "pagamento_pendente" });
   });
 });

@@ -11,17 +11,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useT } from "@/hooks/i18n/useT";
 import { apiClient } from "@/lib/api/client";
+import type { ModoFiscal } from "@/lib/cobranca/vocabulario";
 
 const MINIMO = 5;
 const MAXIMO = 30;
 
+/** As três opções do imposto (migration 9807), na ordem em que a tela as mostra. */
+const OPCOES_DO_IMPOSTO: readonly { modo: ModoFiscal; titulo: string; texto: string }[] = [
+  { modo: "desligado", titulo: "Desligado", texto: "Nenhum imposto no pagamento: o cliente paga o preço do plano." },
+  {
+    modo: "stripe_tax",
+    titulo: "Stripe Tax",
+    texto: "Você vende. O preço do plano é sem IVA e a Stripe soma o IVA na fatura. Exige o Stripe Tax ativo na sua conta.",
+  },
+  {
+    modo: "managed_payments",
+    titulo: "Managed Payments",
+    texto: "A Stripe é a vendedora oficial e recolhe o IVA; taxa adicional da Stripe. Exige o Managed Payments ativo na conta e os produtos sincronizados (aba Planos).",
+  },
+];
+
 /** A Régua (spec §7g, D-5): a tolerância, e a linha do tempo que a empresa vai viver com ela. */
-export function ReguaDaCobranca({ tolerancia, iva }: { tolerancia: number; iva: boolean }) {
+export function ReguaDaCobranca({ tolerancia, modoFiscal }: { tolerancia: number; modoFiscal: ModoFiscal }) {
   const t = useT();
   const router = useRouter();
   const [dias, setDias] = useState(String(tolerancia));
   const [ocupado, setOcupado] = useState(false);
-  const [comIva, setComIva] = useState(iva);
+  const [modo, setModo] = useState<ModoFiscal>(modoFiscal);
   const n = Number(dias);
   const valido = Number.isInteger(n) && n >= MINIMO && n <= MAXIMO;
   const efetivo = valido ? n : tolerancia;
@@ -29,7 +45,7 @@ export function ReguaDaCobranca({ tolerancia, iva }: { tolerancia: number; iva: 
   async function salvar() {
     setOcupado(true);
     try {
-      await apiClient.patch("/api/v1/admin/cobranca/regua", { tolerancia_dias: n, iva: comIva });
+      await apiClient.patch("/api/v1/admin/cobranca/regua", { tolerancia_dias: n, modo_fiscal: modo });
       toast.success(t("Régua salva."));
       router.refresh();
     } catch (e) {
@@ -55,15 +71,21 @@ export function ReguaDaCobranca({ tolerancia, iva }: { tolerancia: number; iva: 
       <p className="text-xs text-muted-foreground">
         {t("Essa tolerância é para pagamento em atraso. O teste grátis que acaba sem pagamento não espera por ela: o aviso final sai no fim do teste e a suspensão acontece 48 horas depois.")}
       </p>
-      <div className="space-y-1 border-t pt-4">
-        <label className="flex items-start gap-2 text-sm font-medium">
-          <input type="checkbox" className="mt-1" checked={comIva} onChange={(e) => setComIva(e.target.checked)} />
-          <span>{t("Cobrar IVA pela Stripe Tax")}</span>
-        </label>
+      <fieldset className="space-y-2 border-t pt-4">
+        <legend className="pt-4 text-sm font-medium">{t("Imposto (IVA) na cobrança")}</legend>
+        {OPCOES_DO_IMPOSTO.map((o) => (
+          <label key={o.modo} className="flex items-start gap-2 text-sm">
+            <input type="radio" name="modo-fiscal" className="mt-1" value={o.modo} checked={modo === o.modo} onChange={() => setModo(o.modo)} />
+            <span>
+              <span className="font-medium">{t(o.titulo)}</span>
+              <span className="block text-xs text-muted-foreground">{t(o.texto)}</span>
+            </span>
+          </label>
+        ))}
         <p className="text-xs text-muted-foreground">
-          {t("Ligado: o preço de cada plano passa a ser sem IVA, o pagamento pede o endereço e o número fiscal (NIF/VAT) do cliente e a Stripe soma o IVA na fatura. As telas e a página inicial mostram \"+ IVA\". Antes de ligar, ative o Stripe Tax na sua conta Stripe (endereço de origem e registro do IVA): sem isso o pagamento é recusado. Só vale para a Stripe.")}
+          {t("Com imposto, as telas e a página inicial mostram \"+ IVA\". Plano marcado como fora do Managed Payments usa Stripe Tax. Só vale para a Stripe.")}
         </p>
-      </div>
+      </fieldset>
       <Button disabled={ocupado || !valido} onClick={() => void salvar()}>
         {t("Salvar régua")}
       </Button>

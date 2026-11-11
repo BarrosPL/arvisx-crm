@@ -1205,6 +1205,11 @@ export const AUDIT_ACTIONS = [
   // desligada em /admin/sistema, com quantas suspensas foram liberadas.
   "cobranca.plano_salvo",
   "cobranca.plano_arquivado",
+  // "Sincronizar produtos na Stripe" (ArvisX, Managed Payments): o dono criou ou
+  // atualizou na conta conectada o produto de cada plano ativo, com o código
+  // fiscal. `metadata`: o modo da chave (teste | producao) e quantos foram
+  // criados, atualizados e recusados.
+  "cobranca.produtos_sincronizados",
   // Equipe Completa (ArvisX, migration 9804): a equipe marcou que já falou com a
   // empresa que assinou (ou deixou) o plano com os agentes feitos sob medida.
   "cobranca.equipe_completa_contatada",

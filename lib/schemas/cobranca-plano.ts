@@ -82,6 +82,8 @@ const campos = {
   limites: frasesOpcionais(TETOS_DOS_TEXTOS.limites),
   como_funciona: textoOpcional(TETOS_DOS_TEXTOS.como_funciona),
   inclui_agentes_arvisx: z.boolean(),
+  // Migration 9807: o plano não é vendido por Managed Payments (usa Stripe Tax).
+  fora_do_managed_payments: z.boolean(),
 };
 
 export const novoPlanoSchema = z.strictObject({
@@ -104,6 +106,7 @@ export const novoPlanoSchema = z.strictObject({
   limites: campos.limites.optional(),
   como_funciona: campos.como_funciona.optional(),
   inclui_agentes_arvisx: campos.inclui_agentes_arvisx.optional(),
+  fora_do_managed_payments: campos.fora_do_managed_payments.optional(),
   // Na criação, sem moeda vale o default da coluna (BRL): a frase já sai nela.
 }).superRefine((v, ctx) => precoNoPiso({ ...v, moeda: v.moeda ?? "BRL" }, ctx));
 
@@ -114,4 +117,4 @@ export const edicaoDoPlanoSchema = z
   .refine((v) => Object.keys(v).length > 0, "Nada para mudar.");
 
 export const COLUNAS_DO_PLANO =
-  "id, nome, preco_cents, moeda, intervalo, trial_dias, max_assentos, max_canais, teto_ia_usd_cents, padrao_no_cadastro, oferecido_ao_cliente, interface_settings, descricao_curta, para_quem, destaques, limites, como_funciona, inclui_agentes_arvisx, arquivado_em, created_at, updated_at";
+  "id, nome, preco_cents, moeda, intervalo, trial_dias, max_assentos, max_canais, teto_ia_usd_cents, padrao_no_cadastro, oferecido_ao_cliente, interface_settings, descricao_curta, para_quem, destaques, limites, como_funciona, inclui_agentes_arvisx, fora_do_managed_payments, arquivado_em, created_at, updated_at";

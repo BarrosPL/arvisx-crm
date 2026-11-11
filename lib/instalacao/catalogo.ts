@@ -197,10 +197,22 @@ export const CATALOGO_DA_INSTALACAO: readonly ChaveDaInstalacao[] = [
     telaDona: "cobranca",
   },
   {
-    chave: "COBRANCA_IVA",
-    rotulo: "Cobrar IVA pela Stripe Tax",
+    chave: "COBRANCA_MODO_FISCAL",
+    rotulo: "Imposto (IVA) na cobrança",
     explicacao:
-      "Ligado: o preço dos planos é sem IVA, o pagamento pede o endereço e o número fiscal do cliente e a Stripe soma o IVA na fatura. Exige o Stripe Tax ativo na conta. Muda em Cobrança › Régua.",
+      "Desligado: nenhum imposto no pagamento. Stripe Tax: você vende e a Stripe soma o IVA na fatura. Managed Payments: a Stripe é a vendedora oficial e recolhe o IVA, com taxa adicional. Muda em Cobrança › Régua.",
+    grupo: "integracao",
+    natureza: "texto",
+    controle: "edita",
+    telaDona: "cobranca",
+  },
+  {
+    // Só leitura de compatibilidade: a migration 9807 converte este booleano em
+    // COBRANCA_MODO_FISCAL, e `modoFiscal()` só o lê enquanto a linha nova não existe.
+    chave: "COBRANCA_IVA",
+    rotulo: "Cobrar IVA pela Stripe Tax (antigo)",
+    explicacao:
+      "Substituído por \"Imposto (IVA) na cobrança\", em Cobrança › Régua. Só é lido enquanto a opção nova ainda não foi gravada.",
     grupo: "integracao",
     natureza: "texto",
     controle: "edita",
