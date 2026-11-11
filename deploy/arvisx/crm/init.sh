@@ -53,6 +53,17 @@ else
   log "sem migracoes pendentes"
 fi
 
+# Empresa suspensa nao grava pelo banco (migration 9806): tabela que nasce depois
+# (migracao nova, modulo instalado) vem sem as policies. A funcao so cria a que
+# falta; num banco em dia nao toca tabela nenhuma.
+if [ "$(psql "$SUPABASE_DB_URL" -tAc "select to_regprocedure('public.fn_aplicar_trava_de_org_suspensa()') is not null")" = "t" ]; then
+  if criadas="$(psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -qtAc "select public.fn_aplicar_trava_de_org_suspensa()")"; then
+    log "trava de empresa suspensa: $criadas policies novas"
+  else
+    log "AVISO: nao consegui conferir a trava de empresa suspensa (sigo; as tabelas ja cobertas continuam cobertas)"
+  fi
+fi
+
 # Chaves de cifra em private.app_secrets: as funcoes de cifra do banco leem de la
 # (fn_encrypt_oauth -> nuvemshop_oauth_key; encrypt_cpf -> cpf_key). O kit original
 # semeia no install.sh/update.sh (ensure_encryption_key, hostgator-setup-kit/_common.sh);

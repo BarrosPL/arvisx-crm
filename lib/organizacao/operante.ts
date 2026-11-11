@@ -23,7 +23,11 @@
  * - landings anuncios/{google,meta}/[org] e rastreio/[id] (D-11);
  * - recover-stuck-messages; sync/push do Google Agenda; contact-avatars;
  * - leitura via RLS, Realtime e Storage;
- * - escrita de dados de negócio via PostgREST por membro de org suspensa (D-12);
+ * - (até a migration 9806) escrita de dados de negócio via PostgREST por membro
+ *   de org suspensa (D-12). No ArvisX CRM isso FECHOU: as policies RESTRICTIVE
+ *   `org_suspensa_nao_grava_*` recusam INSERT/UPDATE/DELETE da sessão em toda
+ *   tabela com `organization_id` (menos `lgpd_requests`). O service role segue
+ *   gravando — os webhooks de entrada desta lista não mudam;
  * - LGPD: nunca bloqueada (requireRole({ permiteOrgSuspensa: true }), e no MCP a
  *   ferramenta de privacidade — `lib/mcp/tools/privacidade.ts`).
  *

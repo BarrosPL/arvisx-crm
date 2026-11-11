@@ -69506,6 +69506,119 @@ comment on function public.fn_channel_sessions_vaga_e_do_servidor() is
 
 notify pgrst, 'reload schema';
 
+-- ---- empresa suspensa não grava pelo banco (migration 9806) ----
+-- Espelho idempotente da 9806 (o porquê está no cabeçalho da migration): as
+-- duas funções ficam aqui, ANTES da VARREDURA anon; a CHAMADA que cria as
+-- policies RESTRICTIVE `org_suspensa_nao_grava_*` mora no FIM do arquivo,
+-- depois da última tabela, para alcançar todas.
+
+create or replace function public.fn_orgs_que_a_sessao_nao_grava()
+returns setof uuid
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select o.id
+    from public.organizations o
+   where o.status = 'suspended'
+     -- Só as de quem pergunta: a função é RPC de quem está logado, e não pode
+     -- virar lista das empresas suspensas da instalação. Quem não é membro já
+     -- é recusado pelas policies de isolamento de cada tabela.
+     and o.id in (select public.fn_user_org_ids())
+     -- Subconsulta sem correlação: avaliada no máximo uma vez, e só quando a
+     -- pessoa tem alguma empresa suspensa.
+     and not (select public.fn_is_platform_admin_full());
+$$;
+
+revoke all on function public.fn_orgs_que_a_sessao_nao_grava() from public, anon;
+grant execute on function public.fn_orgs_que_a_sessao_nao_grava() to authenticated, service_role;
+
+comment on function public.fn_orgs_que_a_sessao_nao_grava() is
+  'As empresas SUSPENSAS de quem pergunta (nenhuma para o dono da instalação com acesso total). Lida pelas policies RESTRICTIVE org_suspensa_nao_grava_* de toda tabela com organization_id. Migration 9806.';
+
+create or replace function public.fn_aplicar_trava_de_org_suspensa()
+returns integer
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+declare
+  t record;
+  v_criadas integer := 0;
+  v_regra constant text :=
+    '(organization_id in (select public.fn_orgs_que_a_sessao_nao_grava())) is not true';
+  v_tem_ins boolean;
+  v_tem_upd boolean;
+  v_tem_del boolean;
+  v_abre_ins boolean;
+  v_abre_upd boolean;
+  v_abre_del boolean;
+begin
+  for t in
+    select c.oid as id, c.oid::regclass as tabela
+      from pg_catalog.pg_class c
+      join pg_catalog.pg_namespace n on n.oid = c.relnamespace
+      join pg_catalog.pg_attribute a on a.attrelid = c.oid
+     where n.nspname = 'public'
+       and c.relkind in ('r', 'p')
+       and a.attname = 'organization_id'
+       and a.attnum > 0
+       and not a.attisdropped
+       -- O direito do titular nunca é bloqueado: o pedido de LGPD é gravado
+       -- pela sessão mesmo com a empresa suspensa.
+       and c.relname <> 'lgpd_requests'
+     order by c.relname
+  loop
+    -- Só a que falta: criar policy pede trava exclusiva na tabela, e num banco
+    -- em dia esta função não deve tocar tabela nenhuma.
+    --
+    -- E só no verbo que a tabela ABRE à sessão: uma RESTRICTIVE só restringe o
+    -- que alguma policy permissiva liberou. Tabela sem policy de escrita já não
+    -- é gravável pela sessão (é do servidor), e várias delas têm por contrato
+    -- "nenhuma policy" ou "nenhuma policy de escrita" — pôr uma ali não fecharia
+    -- nada e quebraria esse contrato.
+    select coalesce(bool_or(p.polname = 'org_suspensa_nao_grava_ins'), false),
+           coalesce(bool_or(p.polname = 'org_suspensa_nao_grava_upd'), false),
+           coalesce(bool_or(p.polname = 'org_suspensa_nao_grava_del'), false),
+           coalesce(bool_or(p.polpermissive and p.polcmd in ('a', '*')), false),
+           coalesce(bool_or(p.polpermissive and p.polcmd in ('w', '*')), false),
+           coalesce(bool_or(p.polpermissive and p.polcmd in ('d', '*')), false)
+      into v_tem_ins, v_tem_upd, v_tem_del, v_abre_ins, v_abre_upd, v_abre_del
+      from pg_catalog.pg_policy p
+     where p.polrelid = t.id;
+    if v_abre_ins and not v_tem_ins then
+      execute format(
+        'create policy org_suspensa_nao_grava_ins on %s as restrictive for insert to authenticated with check (%s)',
+        t.tabela, v_regra);
+      v_criadas := v_criadas + 1;
+    end if;
+    if v_abre_upd and not v_tem_upd then
+      execute format(
+        'create policy org_suspensa_nao_grava_upd on %s as restrictive for update to authenticated using (%s) with check (%s)',
+        t.tabela, v_regra, v_regra);
+      v_criadas := v_criadas + 1;
+    end if;
+    if v_abre_del and not v_tem_del then
+      execute format(
+        'create policy org_suspensa_nao_grava_del on %s as restrictive for delete to authenticated using (%s)',
+        t.tabela, v_regra);
+      v_criadas := v_criadas + 1;
+    end if;
+  end loop;
+  return v_criadas;
+end;
+$$;
+
+-- Criar policy é do dono das tabelas: quem chama é a migração e o `init.sh` do
+-- deploy, nunca um papel da API.
+revoke all on function public.fn_aplicar_trava_de_org_suspensa() from public, anon, authenticated, service_role;
+
+comment on function public.fn_aplicar_trava_de_org_suspensa() is
+  'Cria, onde faltar, as policies RESTRICTIVE org_suspensa_nao_grava_ins/_upd/_del nas tabelas de public com organization_id (menos lgpd_requests), em cada verbo que a tabela abre à sessão por policy permissiva. Idempotente; devolve quantas policies criou (0 num banco em dia). Chamar de novo depois de criar tabela ou policy de escrita nova. Migration 9806.';
+
+notify pgrst, 'reload schema';
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria
@@ -74202,5 +74315,13 @@ comment on column public.cobranca_planos.moeda is
 
 comment on table public.cobranca_planos is
   'Planos que o dono da instalação vende às empresas dela (migration 0583). Da INSTALAÇÃO, sem organization_id: RLS ligada sem policy, só o service_role. Limite nulo = sem limite. preco_cents >= 500 (mínimo de boleto); moeda BRL ou EUR (migration 9801); teto_ia_usd_cents na moeda de fn_gasto_de_ia_do_mes.';
+
+notify pgrst, 'reload schema';
+
+-- ---- empresa suspensa não grava pelo banco (migration 9806): a chamada ----
+-- As funções nasceram antes da VARREDURA anon; aqui, no fim, toda tabela já
+-- existe. A função só cria a policy que falta: na passada de atualização não
+-- toca tabela nenhuma. Bloco novo com tabela DEPOIS deste precisa chamá-la de novo.
+select public.fn_aplicar_trava_de_org_suspensa();
 
 notify pgrst, 'reload schema';
