@@ -5,11 +5,13 @@ Nenhum plano é criado por seed nem por migration. O preço e os textos vêm sem
 do cadastro do plano; o código não tem valor nem texto de plano escrito.
 
 Todos mensais, em euro, cobrados pela Stripe, com o preço **+ IVA**: o preço
-cadastrado no plano é SEM IVA. Para a Stripe somar o IVA no pagamento, ative o
-Stripe Tax na conta Stripe (endereço de origem e registro do IVA) e depois ligue
-"Cobrar IVA pela Stripe Tax" em Admin › Cobrança › Régua; ligado, as telas e a
-página inicial mostram "+ IVA" e o pagamento pede o endereço e o NIF/VAT do
-cliente. Os planos oferecidos aparecem sozinhos na página inicial (seção Planos),
+cadastrado no plano é SEM IVA. O imposto é escolhido em Admin › Cobrança › Régua,
+"Imposto (IVA) na cobrança": Desligado, Stripe Tax (você vende; exige o Stripe
+Tax ativo na conta, com endereço de origem e registro do IVA) ou Managed Payments
+(a Stripe é a vendedora oficial e recolhe o IVA; taxa adicional da Stripe). Com
+imposto, as telas e a página inicial mostram "+ IVA". O Equipe Completa é marcado
+"Fora do Managed Payments" e segue em Stripe Tax. O passo a passo está em
+`docs/arvisx/STRIPE-MANAGED-PAYMENTS.md`. Os planos oferecidos aparecem sozinhos na página inicial (seção Planos),
 lidos deste cadastro. A IA usa a credencial que o
 próprio cliente conecta, em todos os planos (o consumo é cobrado pelo provedor
 dele, nunca pela Arvisx). Empresas que já existem ficam em Premium sem cobrança.
