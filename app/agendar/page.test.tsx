@@ -34,7 +34,7 @@ describe("/agendar — reunião com o time Arvisx sobre os Agentes Arvisx", () =
     expect(String(metadata.title)).toBe("Arvisx CRM | Agentes Arvisx: reunião com o time Arvisx");
     expect(String(metadata.description)).toMatch(/sobre os Agentes Arvisx: agentes de IA sob medida, contratados à parte do plano\./);
     expect(container.querySelector(".lead")!.textContent).toMatch(
-      /serviço sob medida, contratado à parte do plano, e ele começa\s+por esta conversa de 30 minutos: entendemos a sua operação e preparamos a proposta\.\s+Vale para quem assina qualquer plano\./,
+      /serviço sob medida, contratado à parte do plano, e ele começa\s+por esta conversa de 30 minutos: entendemos a sua operação e preparamos a proposta\.\s+Vale para quem já usa o Arvisx CRM, em qualquer plano, e para quem usa outras\s+ferramentas\./,
     );
     const para = within(screen.getByRole("heading", { level: 2, name: "Esta reunião é para" }).parentElement as HTMLElement);
     expect(para.getAllByRole("listitem")).toHaveLength(4);

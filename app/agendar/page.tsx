@@ -13,8 +13,9 @@ import "./agendar.css";
  * /agendar: reunião de 30 minutos com o time Arvisx para quem quer os Agentes
  * Arvisx, o serviço à parte em que a Arvisx desenvolve agentes de IA sob medida
  * (decisão de 12/11/2026: o plano Equipe Completa saiu da oferta). Na reunião a
- * equipe entende a operação e prepara a proposta; o serviço vale para qualquer
- * plano e não tem preço público. Página pública de marketing, aberta pela
+ * equipe entende a operação e prepara a proposta; o serviço não depende do
+ * Arvisx CRM nem de plano (os agentes se conectam à operação do cliente, no CRM
+ * ou em outros sistemas) e não tem preço público. Página pública de marketing, aberta pela
  * landing (`app/page.tsx`): o "Agendar reunião com o time Arvisx" da seção
  * `#agentes`. Assinar um plano (Essencial, Standard ou Premium) não passa por aqui.
  * Visual do protótipo aprovado
@@ -59,7 +60,8 @@ export default async function AgendarPage() {
             <p className="lead">
               Os Agentes Arvisx são um serviço sob medida, contratado à parte do plano, e ele começa
               por esta conversa de 30 minutos: entendemos a sua operação e preparamos a proposta.
-              Vale para quem assina qualquer plano.
+              Vale para quem já usa o Arvisx CRM, em qualquer plano, e para quem usa outras
+              ferramentas.
             </p>
             <div className="fio" aria-hidden="true" />
 

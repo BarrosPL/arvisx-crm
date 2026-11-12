@@ -880,9 +880,9 @@ export default async function HomePage() {
               <h2>Quer ir além do CRM? Agentes de IA feitos para a sua operação.</h2>
               <p className="lede" style={{ marginTop: 16 }}>
                 A nossa equipe entende como o seu negócio funciona e{" "}
-                <strong>desenvolve agentes de IA sob medida</strong>, integrados ao seu CRM. É um
-                serviço contratado à parte do plano, depois de uma conversa. Funciona com qualquer
-                plano.
+                <strong>desenvolve agentes de IA sob medida</strong>, conectados à sua operação: ao
+                Arvisx CRM ou aos sistemas que você já usa. É um serviço contratado à parte, depois
+                de uma conversa, e não depende de plano.
               </p>
             </div>
             <div className="passos">
@@ -893,7 +893,7 @@ export default async function HomePage() {
                 <h3>Entendemos a sua operação e desenhamos os agentes com você</h3>
               </article>
               <article className="passo">
-                <h3>Enviamos a proposta, desenvolvemos e integramos ao seu CRM</h3>
+                <h3>Enviamos a proposta, desenvolvemos e conectamos à sua operação</h3>
               </article>
             </div>
             <div className="rodape-bloco" data-agentes-arvisx>
@@ -1016,8 +1016,8 @@ export default async function HomePage() {
                 <summary>O que são os Agentes Arvisx?</summary>
                 <p>
                   São agentes de IA desenvolvidos pela nossa equipe depois de entender a sua
-                  operação, integrados ao seu CRM. É um serviço contratado à parte, por reunião e
-                  proposta, e vale para qualquer plano.
+                  operação, conectados à sua operação, no Arvisx CRM ou em outros sistemas. É um
+                  serviço contratado à parte, por reunião e proposta, e não depende de plano.
                 </p>
               </details>
               <details>

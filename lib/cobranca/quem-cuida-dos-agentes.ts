@@ -8,9 +8,11 @@
  *
  * A regra: nos planos (Essencial, Standard e Premium), a gestão e a configuração
  * dos agentes de IA dentro da plataforma são do cliente; a Arvisx só desenvolve
- * soluções personalizadas pelos Agentes Arvisx, um serviço À PARTE de qualquer
- * plano, contratado depois de uma reunião (/agendar) e de uma proposta, sem
- * preço público e fora da cobrança do CRM.
+ * soluções personalizadas pelos Agentes Arvisx, um serviço À PARTE, contratado
+ * depois de uma reunião (/agendar) e de uma proposta, sem preço público e fora
+ * da cobrança do CRM. Os agentes NÃO dependem do Arvisx CRM nem de plano: são
+ * sob medida e se conectam à operação do cliente (ao Arvisx CRM, inclusive no
+ * Essencial, ou aos sistemas que ele já usa). Não escrever "integrados ao CRM".
  *
  * Histórico: até 12/11/2026 esse serviço era o plano Equipe Completa, que saiu
  * da oferta (arquivado em `cobranca_planos`, sem assinantes). O terceiro item,
@@ -28,7 +30,7 @@ export const QUEM_CUIDA_DOS_AGENTES = {
       id: "essencial",
       planos: "Essencial",
       texto:
-        "O Essencial não tem agentes de IA: a IA começa no Standard. A Arvisx só desenvolve soluções personalizadas pelo serviço à parte Agentes Arvisx.",
+        "O Essencial não tem agentes de IA na plataforma: a IA dentro do CRM começa no Standard. Agentes desenvolvidos pela Arvisx podem ser contratados à parte, pelo serviço Agentes Arvisx.",
     },
     {
       id: "standard_e_premium",
@@ -40,7 +42,7 @@ export const QUEM_CUIDA_DOS_AGENTES = {
       id: "agentes_arvisx",
       planos: "Agentes Arvisx (à parte)",
       texto:
-        "Em qualquer plano, quem quiser agentes de IA desenvolvidos pela Arvisx contrata o serviço à parte, depois de uma reunião: a equipe entende a sua operação, envia a proposta e desenvolve os agentes sob medida, integrados ao CRM.",
+        "Em qualquer plano, quem quiser agentes de IA desenvolvidos pela Arvisx contrata o serviço à parte, depois de uma reunião: a equipe entende a sua operação, envia a proposta e desenvolve os agentes sob medida, conectados à sua operação.",
     },
   ],
   consumo: "O consumo da IA é cobrado pelo seu provedor de IA, nunca pela Arvisx.",

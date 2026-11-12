@@ -133,13 +133,15 @@ describe("/ — landing v3", () => {
     expect(within(secao).getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual([
       "Você agenda uma reunião de 30 minutos com o time Arvisx",
       "Entendemos a sua operação e desenhamos os agentes com você",
-      "Enviamos a proposta, desenvolvemos e integramos ao seu CRM",
+      "Enviamos a proposta, desenvolvemos e conectamos à sua operação",
     ]);
     expect(within(secao).getByRole("link", { name: "Agendar reunião com o time Arvisx" })).toHaveAttribute("href", LINKS.agendar);
     expect(secao.querySelector(`a[href="${LINKS.cadastro}"]`)).toBeNull();
     expect(secao.querySelector("[data-agentes-arvisx]")).toBeTruthy();
-    // Serviço à parte, por conversa, para qualquer plano.
-    expect(secao.textContent).toMatch(/É um\s+serviço contratado à parte do plano, depois de uma conversa\. Funciona com qualquer\s+plano\./);
+    // Serviço à parte, por conversa: os agentes não dependem do Arvisx CRM nem de plano.
+    expect(secao.textContent).toMatch(/desenvolve agentes de IA sob medida, conectados à sua operação: ao\s+Arvisx CRM ou aos sistemas que você já usa\./);
+    expect(secao.textContent).toMatch(/É um serviço contratado à parte, depois\s+de uma conversa, e não depende de plano\./);
+    expect(secao.textContent).not.toMatch(/integrad[oa]s? ao|integramos ao|qualquer\s+plano/);
     expect(secao.textContent).toMatch(/O escopo, o prazo e o valor são combinados na proposta\./);
     expect(secao.textContent).toMatch(/O nome do assistente é o que\s+você quiser, e o agente se apresenta como assistente virtual\./);
     // Sem preço público e sem prometer quantidade.
@@ -186,7 +188,9 @@ describe("/ — landing v3", () => {
     const faq = container.querySelector("#faq")!.textContent!;
     expect(faq).toMatch(/Os Agentes Arvisx são um serviço à parte, orçado na\s+reunião; nos planos, você configura e gerencia os seus agentes\./);
     expect(faq).toMatch(/O que são os Agentes Arvisx\?/);
-    expect(faq).toMatch(/É um serviço contratado à parte, por reunião e\s+proposta, e vale para qualquer plano\./);
+    expect(faq).toMatch(/conectados à sua operação, no Arvisx CRM ou em outros sistemas\. É um\s+serviço contratado à parte, por reunião e proposta, e não depende de plano\./);
+    // Nada na página amarra os Agentes Arvisx ao CRM ou a um plano ("IA integrada" é a IA do CRM e fica).
+    expect(tudo).not.toMatch(/integrad[oa]s ao (seu )?CRM|integramos ao seu CRM|vale para qualquer plano|Funciona com qualquer/);
   });
 
   it("os links para a seção dos Agentes Arvisx existem e a âncora #agentes continua no lugar", async () => {

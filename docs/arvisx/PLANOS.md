@@ -152,10 +152,11 @@ do Equipe Completa…" na troca de plano. Ficam para uma limpeza futura.
 ## Agentes Arvisx (serviço à parte)
 
 Agentes de IA desenvolvidos pela equipe Arvisx depois de entender a operação do
-cliente, integrados ao CRM dele.
+cliente, conectados a essa operação: ao Arvisx CRM ou aos sistemas que ele já usa.
 
-- **Fora de qualquer plano.** Vale para quem assina o Essencial, o Standard ou o
-  Premium.
+- **Não depende do Arvisx CRM nem de plano.** Vale para quem usa o Arvisx CRM em
+  qualquer plano (inclusive o Essencial) e para quem usa outras ferramentas. Não
+  escrever que os agentes são "integrados ao CRM".
 - **Começa por uma reunião** de 30 minutos (/agendar; o botão fica na seção
   "Agentes Arvisx" da página inicial). Depois da reunião a equipe envia a
   proposta, com escopo, prazo e valor.

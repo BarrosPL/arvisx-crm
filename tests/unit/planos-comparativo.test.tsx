@@ -278,11 +278,14 @@ describe("quem cuida dos agentes de IA, no comparativo", () => {
     const porPlano = Object.fromEntries(itens.map((i) => [i.id, i.texto]));
     expect(itens[2]!.planos).toBe("Agentes Arvisx (à parte)");
     expect(porPlano.agentes_arvisx).toMatch(/^Em qualquer plano, quem quiser agentes de IA desenvolvidos pela Arvisx contrata o serviço à parte, depois de uma reunião: /);
-    expect(porPlano.agentes_arvisx).toMatch(/envia a proposta e desenvolve os agentes sob medida, integrados ao CRM\.$/);
-    for (const id of ["essencial", "standard_e_premium"]) {
-      expect(porPlano[id]).not.toMatch(/reunião/);
-      expect(porPlano[id]).toMatch(/A Arvisx só desenvolve soluções personalizadas pelo serviço à parte Agentes Arvisx\.$/);
-    }
+    expect(porPlano.agentes_arvisx).toMatch(/envia a proposta e desenvolve os agentes sob medida, conectados à sua operação\.$/);
+    for (const id of ["essencial", "standard_e_premium"]) expect(porPlano[id]).not.toMatch(/reunião/);
+    expect(porPlano.standard_e_premium).toMatch(/A Arvisx só desenvolve soluções personalizadas pelo serviço à parte Agentes Arvisx\.$/);
+    // Os agentes da Arvisx não dependem do CRM nem do plano: o Essencial só não tem a IA DA PLATAFORMA.
+    expect(porPlano.essencial).toBe(
+      "O Essencial não tem agentes de IA na plataforma: a IA dentro do CRM começa no Standard. Agentes desenvolvidos pela Arvisx podem ser contratados à parte, pelo serviço Agentes Arvisx.",
+    );
+    expect(FRASES_DE_QUEM_CUIDA.join(" ")).not.toMatch(/integrad[oa]s ao/);
     // O aviso fixo não cita o plano que saiu, não promete quantidade nem dá preço.
     expect(FRASES_DE_QUEM_CUIDA.join(" ")).not.toMatch(/Equipe Completa|único plano|\d+ agentes|€/);
     expect(tudo).not.toMatch(/\b(Sophia|Matheus|Pedro)\b|agente Financeiro/i);
