@@ -8,7 +8,7 @@ import { AGENDA_EMBED } from "@/lib/landing/links";
  * O cartão de /agendar: o portão de confirmação e, depois dele, a agenda do
  * Google incorporada. Igual ao protótipo aprovado
  * (docs/arvisx/prototipo/landing/agendar.html): sem a confirmação de que a
- * reunião é sobre o plano Equipe Completa, os horários não aparecem; com ela,
+ * reunião é sobre os Agentes Arvisx, os horários não aparecem; com ela,
  * o portão encolhe para uma linha e o <iframe> do Google ganha o espaço. O
  * <iframe> só nasce na primeira confirmação e fica montado se a pessoa
  * desmarcar e marcar de novo, como no protótipo.
@@ -38,11 +38,11 @@ export function CartaoDaAgenda() {
             }}
           />
           <span className="longo">
-            Confirmo que a reunião é sobre o plano <b>Equipe Completa</b> (agentes de IA sob medida)
-            e não para suporte ou para conhecer o CRM.
+            Confirmo que a reunião é sobre os <b>Agentes Arvisx</b> (agentes de IA sob medida) e
+            não para suporte ou para conhecer o CRM.
           </span>
           <span className="curto">
-            Reunião sobre o plano <b>Equipe Completa</b>, confirmado.
+            Reunião sobre os <b>Agentes Arvisx</b>, confirmado.
           </span>
         </label>
         <p>Agendamentos fora desse objetivo podem ser cancelados.</p>

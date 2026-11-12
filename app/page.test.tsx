@@ -33,22 +33,27 @@ async function montar() {
   return render(await HomePage());
 }
 
-/** Os quatro planos como o dono os cadastra (docs/arvisx/PLANOS.md). */
+/**
+ * Os três planos ofertados, como o dono os cadastra (docs/arvisx/PLANOS.md). O
+ * Equipe Completa saiu da oferta em 12/11/2026 (arquivado; a vitrine não o lê):
+ * os agentes sob medida são o serviço à parte Agentes Arvisx.
+ */
 const plano = (nome: string, preco: number, canais: number | null, pessoas: number | null, telas: number, extra = {}) => ({
   id: nome, nome, preco_cents: preco, moeda: "EUR", intervalo: "mes", max_canais: canais, max_assentos: pessoas,
   descricao_curta: null, para_quem: null, destaques: [], como_funciona: null, inclui_agentes_arvisx: false,
   telas: Array.from({ length: telas }, (_, i) => `/t${i}`), ...extra,
 });
-const QUATRO = [
+const TRES = [
   plano("Essencial", 5990, 3, 5, 12, { descricao_curta: "Atender e organizar.", destaques: ["Agenda"] }),
   plano("Standard", 12990, 6, 10, 31),
   plano("Premium", 19990, null, null, 63),
-  plano("Equipe Completa", 49990, null, null, 63, { inclui_agentes_arvisx: true, como_funciona: "Nossa equipe entra em contato." }),
 ];
+/** Um plano com a flag do serviço sob medida: nenhum é ofertado hoje, mas o ramo da landing continua. */
+const COM_A_FLAG = plano("Sob medida", 49990, null, null, 63, { inclui_agentes_arvisx: true, como_funciona: "Nossa equipe entra em contato." });
 
 beforeEach(() => {
   cena.usuario = null;
-  cena.vitrine = { planos: QUATRO, iva: true };
+  cena.vitrine = { planos: TRES, iva: true };
   localStorage.clear();
 });
 
@@ -60,46 +65,55 @@ describe("/ — landing v3", () => {
     );
   });
 
-  it("⭐ com o cadastro aberto, o topo, a hero e os planos sem o serviço sob medida levam ao cadastro; o Equipe Completa, à reunião", async () => {
+  it("⭐ com o cadastro aberto, o topo, a hero e os três planos levam ao cadastro; a reunião fica só na seção dos Agentes Arvisx", async () => {
     expect(CADASTRO_ABERTO).toBe(true);
     const { container } = await montar();
     expect(screen.queryByText(OFERTA.ctaEmBreve)).toBeNull();
-    // topo + hero + Essencial, Standard e Premium (o Equipe Completa começa pela reunião)
-    expect(container.querySelectorAll(`a[href="${LINKS.cadastro}"]`)).toHaveLength(2 + QUATRO.length - 1);
+    // topo + hero + Essencial, Standard e Premium
+    expect(container.querySelectorAll(`a[href="${LINKS.cadastro}"]`)).toHaveLength(2 + TRES.length);
     for (const card of container.querySelectorAll("[data-plano]")) {
       const links = within(card as HTMLElement).getAllByRole("link");
       expect(links).toHaveLength(1);
-      if (card.getAttribute("data-plano") === "Equipe Completa") {
-        expect(links[0]).toHaveTextContent("Agendar reunião");
-        expect(links[0]).toHaveAttribute("href", "/agendar");
-      } else {
-        expect(links[0]).toHaveTextContent(OFERTA.cta);
-        expect(links[0]).toHaveAttribute("href", "/signup");
-      }
+      expect(links[0]).toHaveTextContent(OFERTA.cta);
+      expect(links[0]).toHaveAttribute("href", "/signup");
     }
     expect(LINKS.cadastro).toBe("/signup");
     expect(LINKS.agendar).toBe("/agendar");
-    // card do Equipe Completa + seção #agentes
-    expect(container.querySelectorAll(`a[href="${LINKS.agendar}"]`)).toHaveLength(2);
+    // Só a seção #agentes: nenhum card de plano leva à reunião.
+    const paraAReuniao = [...container.querySelectorAll(`a[href="${LINKS.agendar}"]`)];
+    expect(paraAReuniao).toHaveLength(1);
+    expect(paraAReuniao[0]!.closest("#agentes")).toBeTruthy();
   });
 
-  it("⭐ os planos vêm do cadastro: quatro cards com preço + IVA, limites e o texto do plano; selos certos", async () => {
+  it("⭐ os planos vêm do cadastro: três cards com preço + IVA, limites e o texto do plano; selos certos", async () => {
     const { container } = await montar();
     const cards = [...container.querySelectorAll("[data-plano]")] as HTMLElement[];
-    expect(cards.map((c) => c.getAttribute("data-plano"))).toEqual(["Essencial", "Standard", "Premium", "Equipe Completa"]);
+    expect(cards.map((c) => c.getAttribute("data-plano"))).toEqual(["Essencial", "Standard", "Premium"]);
     const essencial = within(cards[0]!);
     expect(essencial.getByText(/59,90/)).toBeTruthy();
     expect(essencial.getByText("+ IVA por mês")).toBeTruthy();
     expect(essencial.getByText("Até 3 canais · até 5 pessoas")).toBeTruthy();
     expect(essencial.getByText("Atender e organizar.")).toBeTruthy();
     expect(within(cards[2]!).getByText("Mais completo")).toBeTruthy();
-    expect(within(cards[3]!).getByText(/4 agentes de IA sob medida/)).toBeTruthy();
-    expect(within(cards[3]!).getByText("Nossa equipe entra em contato.")).toBeTruthy();
+    expect(container.querySelector("#plano")!.textContent).not.toMatch(/agentes de IA sob medida/);
     expect(container.textContent).not.toMatch(/plano único/);
   });
 
+  it("um plano com a flag do serviço sob medida (nenhum é ofertado hoje) ainda começa pela reunião, sem prometer quantidade", async () => {
+    cena.vitrine = { planos: [...TRES, COM_A_FLAG], iva: true };
+    const { container } = await montar();
+    const card = container.querySelector('[data-plano="Sob medida"]') as HTMLElement;
+    const links = within(card).getAllByRole("link");
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveTextContent("Agendar reunião");
+    expect(links[0]).toHaveAttribute("href", "/agendar");
+    expect(within(card).getByText("Agentes de IA sob medida")).toBeTruthy();
+    expect(within(card).getByText("Nossa equipe entra em contato.")).toBeTruthy();
+    expect(container.textContent).not.toMatch(/\d+ agentes/);
+  });
+
   it("sem IVA ligado, o preço não diz '+ IVA'; sem plano cadastrado, a seção fica só com o teste grátis", async () => {
-    cena.vitrine = { planos: QUATRO, iva: false };
+    cena.vitrine = { planos: TRES, iva: false };
     const { container, unmount } = await montar();
     expect(container.textContent).not.toMatch(/IVA/);
     unmount();
@@ -109,19 +123,27 @@ describe("/ — landing v3", () => {
     expect(vazio.container.querySelector("#plano a[href='/signup']")).toBeTruthy();
   });
 
-  it("⭐ a seção do Equipe Completa começa pela reunião: três passos e o botão que leva a /agendar, sem botão de cadastro", async () => {
+  it("⭐ a seção dos Agentes Arvisx começa pela reunião: três passos e o botão que leva a /agendar, sem botão de cadastro", async () => {
     const { container } = await montar();
     const secao = container.querySelector("#agentes") as HTMLElement;
-    expect(within(secao).getByRole("heading", { level: 2 })).toHaveTextContent("Quer agentes de IA feitos para a sua operação?");
+    expect(within(secao).getByText("Agentes Arvisx · Soluções sob medida")).toBeTruthy();
+    expect(within(secao).getByRole("heading", { level: 2 })).toHaveTextContent(
+      "Quer ir além do CRM? Agentes de IA feitos para a sua operação.",
+    );
     expect(within(secao).getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual([
       "Você agenda uma reunião de 30 minutos com o time Arvisx",
-      "Entendemos a sua operação e orientamos como assinar o Equipe Completa",
-      "Desenvolvemos os 4 agentes e integramos ao seu CRM",
+      "Entendemos a sua operação e desenhamos os agentes com você",
+      "Enviamos a proposta, desenvolvemos e integramos ao seu CRM",
     ]);
     expect(within(secao).getByRole("link", { name: "Agendar reunião com o time Arvisx" })).toHaveAttribute("href", LINKS.agendar);
     expect(secao.querySelector(`a[href="${LINKS.cadastro}"]`)).toBeNull();
-    expect(secao.textContent).toMatch(/A assinatura do Equipe Completa é feita no CRM, com a orientação da nossa equipe na reunião\./);
-    expect(secao.textContent).toMatch(/É o único plano em que a Arvisx desenvolve soluções personalizadas\./);
+    expect(secao.querySelector("[data-agentes-arvisx]")).toBeTruthy();
+    // Serviço à parte, por conversa, para qualquer plano.
+    expect(secao.textContent).toMatch(/É um\s+serviço contratado à parte do plano, depois de uma conversa\. Funciona com qualquer\s+plano\./);
+    expect(secao.textContent).toMatch(/O escopo, o prazo e o valor são combinados na proposta\./);
+    expect(secao.textContent).toMatch(/O nome do assistente é o que\s+você quiser, e o agente se apresenta como assistente virtual\./);
+    // Sem preço público e sem prometer quantidade.
+    expect(secao.textContent).not.toMatch(/€|\d+ agentes|assinatura/);
   });
 
   it("o hero não promete IA em todos os planos: a IA começa no Standard", async () => {
@@ -146,29 +168,33 @@ describe("/ — landing v3", () => {
     expect(vazio.container.querySelector("#plano [data-quem-cuida-dos-agentes]")).toBeTruthy();
   });
 
-  it("⭐ nada na landing diz que o serviço da Arvisx é à parte ou por reunião (nem a descrição da página)", async () => {
+  it("⭐ a landing não oferece mais o Equipe Completa: três planos, e os agentes sob medida são o serviço à parte Agentes Arvisx (também na descrição da página)", async () => {
     const { container } = await montar();
     const tudo = `${container.textContent} ${String(metadata.description)} ${String(metadata.openGraph?.description)}`;
-    for (const proibida of [/contratad[oa]s? à parte/i, /orçad[oa]s? em reunião/i, /combinad[oa]s? na reunião/i, /Agentes Arvisx/, /desenhe e acompanhe o agente/]) {
+    for (const proibida of [/Equipe Completa/, /Quatro planos/i, /\d+ agentes/, /único plano/, /desenhe e acompanhe o agente/]) {
       expect(tudo).not.toMatch(proibida);
     }
-    // Onde a landing diz que a Arvisx desenvolve, diz em que plano.
-    expect(String(metadata.description)).toMatch(/No plano Equipe Completa, a equipe Arvisx desenvolve agentes de IA sob medida\./);
+    expect(String(metadata.description)).toMatch(/Três planos, do atendimento à operação inteira com IA/);
+    expect(String(metadata.description)).toMatch(/Agentes de IA sob medida são um serviço à parte, os Agentes Arvisx\./);
+    expect(String(metadata.openGraph?.description)).toMatch(/Três planos/);
+    expect(container.querySelector(".hero")!.textContent).toMatch(/Três planos, do\s+atendimento à operação inteira com IA\./);
     expect(container.querySelector("#ia")!.textContent).toMatch(/A gestão e a configuração dos agentes são suas\./);
-    expect(container.querySelector("#suas-chaves")!.textContent).toMatch(/Esse serviço faz parte do plano Equipe Completa\. Comece por uma reunião\./);
-    // A reunião é do Equipe Completa: a descrição não diz que se assina sem ela, e o FAQ diz por onde começa.
-    expect(String(metadata.description)).not.toMatch(/sem reunião|assine|assinar/i);
+    expect(container.querySelector("#suas-chaves")!.textContent).toMatch(
+      /Esse é um serviço à\s+parte, os Agentes Arvisx, contratado depois de uma reunião\./,
+    );
+    // Sem preço público do serviço: "Quanto custa?" diz que ele é orçado na reunião.
     const faq = container.querySelector("#faq")!.textContent!;
-    expect(faq).toMatch(/nos demais planos, a Arvisx não desenvolve soluções personalizadas\. O Equipe Completa começa por uma reunião\./);
-    expect(faq).toMatch(/Você começa por uma reunião com a nossa equipe, que entende a sua operação e orienta a assinatura; depois criamos 4 agentes de IA sob medida/);
+    expect(faq).toMatch(/Os Agentes Arvisx são um serviço à parte, orçado na\s+reunião; nos planos, você configura e gerencia os seus agentes\./);
+    expect(faq).toMatch(/O que são os Agentes Arvisx\?/);
+    expect(faq).toMatch(/É um serviço contratado à parte, por reunião e\s+proposta, e vale para qualquer plano\./);
   });
 
-  it("os links para a seção do Equipe Completa existem e a âncora #agentes continua no lugar", async () => {
+  it("os links para a seção dos Agentes Arvisx existem e a âncora #agentes continua no lugar", async () => {
     const { container } = await montar();
     expect(container.querySelector("section#agentes")).toBeTruthy();
     const para = [...container.querySelectorAll('a[href="#agentes"]')].map((a) => a.textContent);
-    expect(para).toEqual(["Conheça o Equipe Completa", "Como funciona o Equipe Completa", "Equipe Completa"]);
-    expect(within(screen.getByRole("navigation", { name: "Rodapé" })).getByRole("link", { name: "Equipe Completa" })).toHaveAttribute("href", "#agentes");
+    expect(para).toEqual(["Conheça os Agentes Arvisx", "Agentes de IA sob medida", "Agentes Arvisx"]);
+    expect(within(screen.getByRole("navigation", { name: "Rodapé" })).getByRole("link", { name: "Agentes Arvisx" })).toHaveAttribute("href", "#agentes");
   });
 
   it("Entrar leva ao login", async () => {
@@ -200,7 +226,7 @@ describe("/ — landing v3", () => {
   it("o teste grátis sai da oferta centralizada, e 'Quanto custa?' usa os preços do cadastro", async () => {
     await montar();
     expect(screen.getAllByText(OFERTA.trial).length).toBeGreaterThan(0);
-    expect(screen.getByText(/São 4 planos mensais, de 59,90\s€ a 499,90\s€ \+ IVA/)).toBeTruthy();
+    expect(screen.getByText(/São 3 planos mensais, de 59,90\s€ a 199,90\s€ \+ IVA/)).toBeTruthy();
   });
 
   it("o carrossel tem as seis telas e a primeira começa selecionada", async () => {

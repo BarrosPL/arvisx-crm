@@ -1,18 +1,21 @@
 /**
- * QUEM CUIDA DOS AGENTES DE IA (ArvisX, tarefa 3 dos planos).
+ * QUEM CUIDA DOS AGENTES DE IA (ArvisX, tarefa 3 dos planos; revisto em 12/11/2026).
  *
  * O aviso comercial fixo, num lugar só: a landing e o comparativo dos planos
  * mostram EXATAMENTE estas frases, pelo componente
  * `components/cobranca/QuemCuidaDosAgentes.tsx`. Não é texto de plano (esses
  * vêm do cadastro, em /admin/cobranca): é a regra de quem configura os agentes.
  *
- * A regra: nos planos sem o serviço sob medida, a gestão e a configuração dos
- * agentes de IA dentro da plataforma são do cliente; a Arvisx só desenvolve
- * soluções personalizadas no Equipe Completa.
+ * A regra: nos planos (Essencial, Standard e Premium), a gestão e a configuração
+ * dos agentes de IA dentro da plataforma são do cliente; a Arvisx só desenvolve
+ * soluções personalizadas pelos Agentes Arvisx, um serviço À PARTE de qualquer
+ * plano, contratado depois de uma reunião (/agendar) e de uma proposta, sem
+ * preço público e fora da cobrança do CRM.
  *
- * O Equipe Completa começa por uma reunião (/agendar), em que a equipe orienta a
- * assinatura; a assinatura segue sendo feita no CRM e nada a trava sem reunião
- * (tarefa 4 dos planos).
+ * Histórico: até 12/11/2026 esse serviço era o plano Equipe Completa, que saiu
+ * da oferta (arquivado em `cobranca_planos`, sem assinantes). O terceiro item,
+ * que era o do plano, virou o do serviço à parte. Não prometer quantidade de
+ * agentes nem funções fixas.
  *
  * Verdadeiro com o que o sistema faz: o Essencial não tem as telas de IA
  * (docs/arvisx/PLANOS.md), por isso a frase dele não fala em configurar agente.
@@ -25,19 +28,19 @@ export const QUEM_CUIDA_DOS_AGENTES = {
       id: "essencial",
       planos: "Essencial",
       texto:
-        "O Essencial não tem agentes de IA: a IA começa no Standard. A Arvisx não desenvolve soluções personalizadas nesse plano.",
+        "O Essencial não tem agentes de IA: a IA começa no Standard. A Arvisx só desenvolve soluções personalizadas pelo serviço à parte Agentes Arvisx.",
     },
     {
       id: "standard_e_premium",
       planos: "Standard e Premium",
       texto:
-        "Nesses planos, você é responsável pela gestão e pela configuração dos seus agentes de IA dentro da plataforma: conecta a sua credencial de IA, cadastra o conhecimento do seu negócio, define os fluxos e acompanha os resultados. A Arvisx não desenvolve soluções personalizadas nesses planos.",
+        "Nesses planos, você é responsável pela gestão e pela configuração dos seus agentes de IA dentro da plataforma: conecta a sua credencial de IA, cadastra o conhecimento do seu negócio, define os fluxos e acompanha os resultados. A Arvisx só desenvolve soluções personalizadas pelo serviço à parte Agentes Arvisx.",
     },
     {
-      id: "equipe_completa",
-      planos: "Equipe Completa",
+      id: "agentes_arvisx",
+      planos: "Agentes Arvisx (à parte)",
       texto:
-        "No Equipe Completa, a Arvisx entra em um processo de desenvolvimento de soluções personalizadas: começa por uma reunião, entende a sua operação e cria 4 agentes de IA sob medida, integrados ao CRM e às suas ferramentas. É o único plano em que a Arvisx desenvolve soluções para você.",
+        "Em qualquer plano, quem quiser agentes de IA desenvolvidos pela Arvisx contrata o serviço à parte, depois de uma reunião: a equipe entende a sua operação, envia a proposta e desenvolve os agentes sob medida, integrados ao CRM.",
     },
   ],
   consumo: "O consumo da IA é cobrado pelo seu provedor de IA, nunca pela Arvisx.",
@@ -45,7 +48,9 @@ export const QUEM_CUIDA_DOS_AGENTES = {
 
 /**
  * Na troca de um plano com o serviço sob medida para um plano sem ele: o que se
- * perde. Só diz o que o código faz (a saída é registrada e a equipe é avisada);
+ * perde. Só aparece para quem ESTÁ num plano com `inclui_agentes_arvisx` (o
+ * Equipe Completa, arquivado e sem assinantes), por isso a frase ficou como era.
+ * Só diz o que o código faz (a saída é registrada e a equipe é avisada);
  * não promete nada sobre o que já foi entregue.
  */
 export const SAIDA_DO_SOB_MEDIDA =

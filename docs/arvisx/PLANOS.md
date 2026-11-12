@@ -1,6 +1,14 @@
 # Planos do ArvisX CRM
 
 Referência para o dono e o Hermes criarem os planos à mão em **/admin/cobranca**.
+
+**Oferta em 2026-11-12: três planos, Essencial, Standard e Premium.** O plano
+Equipe Completa (€499,90) saiu da oferta nessa data, porque é prestação de
+serviço e não sistema: está arquivado em `cobranca_planos`, sem assinantes, e a
+página inicial não mostra o cartão dele. Os agentes de IA sob medida passaram a
+ser os **Agentes Arvisx**, um serviço à parte de qualquer plano (ver a seção
+"Agentes Arvisx (serviço à parte)").
+
 Nenhum plano é criado por seed nem por migration. O preço e os textos vêm sempre
 do cadastro do plano; o código não tem valor nem texto de plano escrito.
 
@@ -9,20 +17,23 @@ cadastrado no plano é SEM IVA. O imposto é escolhido em Admin › Cobrança �
 "Imposto (IVA) na cobrança": Desligado, Stripe Tax (você vende; exige o Stripe
 Tax ativo na conta, com endereço de origem e registro do IVA) ou Managed Payments
 (a Stripe é a vendedora oficial e recolhe o IVA; taxa adicional da Stripe). Com
-imposto, as telas e a página inicial mostram "+ IVA". O Equipe Completa é marcado
-"Fora do Managed Payments" e segue em Stripe Tax. O passo a passo está em
+imposto, as telas e a página inicial mostram "+ IVA". O Equipe Completa
+(arquivado) segue marcado "Fora do Managed Payments". O passo a passo está em
 `docs/arvisx/STRIPE-MANAGED-PAYMENTS.md`. Os planos oferecidos aparecem sozinhos na página inicial (seção Planos),
 lidos deste cadastro. A IA usa a credencial que o
 próprio cliente conecta, em todos os planos (o consumo é cobrado pelo provedor
 dele, nunca pela Arvisx). Empresas que já existem ficam em Premium sem cobrança.
 
-| | Essencial | Standard | Premium | Equipe Completa |
-|---|---|---|---|---|
-| Preço mensal | €59,90 | €129,90 | €199,90 | €499,90 |
-| Máximo de números conectados | 3 | 6 | vazio (ilimitado) | vazio (ilimitado) |
-| Máximo de pessoas | 5 | 10 | vazio (ilimitado) | vazio (ilimitado) |
-| Telas | 12 | 31 | 63 (todas) | 63 (todas) |
-| Inclui agentes Arvisx | não | não | não | **sim** |
+| | Essencial | Standard | Premium |
+|---|---|---|---|
+| Preço mensal | €59,90 | €129,90 | €199,90 |
+| Máximo de números conectados | 3 | 6 | vazio (ilimitado) |
+| Máximo de pessoas | 5 | 10 | vazio (ilimitado) |
+| Telas | 12 | 31 | 63 (todas) |
+| Inclui agentes Arvisx (campo do plano) | não | não | não |
+
+Nenhum plano ofertado marca "Inclui os agentes de IA feitos sob medida": os
+Agentes Arvisx são contratados fora do plano.
 
 ## Telas de cada plano
 
@@ -57,14 +68,13 @@ As listas estão escritas à mão em `tests/helpers/distribuicao-dos-planos.ts`;
 - Medir e gerir: Desempenho, Faturamento, Honorários, Meta Ads, Evolução da IA, Audit Log (Análise); Conversões, Meta Ads (Organização).
 - Integrar e controlar: Webhooks, Nuvemshop (Canais); API Tokens, Servidor MCP externo, Extensões, Dados externos, Marca (Organização).
 
-No Premium e no Equipe Completa basta deixar o perfil **Completa** sem
-personalizar: todas as telas.
+No Premium basta deixar o perfil **Completa** sem personalizar: todas as telas.
 
 ### Por que essa divisão
 
 - O Essencial é o que se precisa para atender e acompanhar clientes. LGPD fica aqui por obrigação legal.
 - O Standard entrega a ferramenta de agentes de IA (agentes, conhecimento, follow-up, fluxo, casos, controle de custo), que o próprio cliente configura, mais o cadastro B2B e a importação de dados. O código não limita a quantidade de agentes.
-- O Premium reúne o que faz a empresa crescer e se controlar: vender em escala, prospectar, medir, integrar e a IA avançada (vários agentes com roteamento, memória e ações próprias). Os 4 agentes do Equipe Completa usam Roteadores, Skills, Memória, Webhooks e API: por isso o Premium é o mínimo para eles.
+- O Premium reúne o que faz a empresa crescer e se controlar: vender em escala, prospectar, medir, integrar e a IA avançada (vários agentes com roteamento, memória e ações próprias). Os Agentes Arvisx (serviço à parte) são vendidos para qualquer plano; o que cada agente precisa das telas do CRM é visto na reunião.
 - Se uma tela do Standard fizer falta de verdade para o cliente, o dono ajusta a lista pelo /admin/cobranca.
 
 ## Textos de cada plano (para colar em /admin/cobranca)
@@ -72,8 +82,8 @@ personalizar: todas as telas.
 Campos do formulário, em "Textos do plano" (migration 9803): **Descrição curta**
 (até 140), **Para quem é** (até 200), **O que tem** (uma frase por linha, até 8
 de 120), **O que não tem** (uma frase por linha, até 5 de 200) e **Como
-funciona** (até 600, aparece em destaque no card). Campo vazio não aparece. No
-Equipe Completa, marque também "Inclui os 4 agentes de IA feitos sob medida".
+funciona** (até 600, aparece em destaque no card). Campo vazio não aparece. Não
+marque "Inclui os 4 agentes de IA feitos sob medida" em nenhum dos três planos.
 
 ### Essencial
 
@@ -124,37 +134,47 @@ Equipe Completa, marque também "Inclui os 4 agentes de IA feitos sob medida".
   - Integrações (API, webhooks, Nuvemshop) e marca própria
   - Canais e pessoas ilimitados
 - O que não tem:
-  - Não tem agentes feitos sob medida pela Arvisx (veja o Equipe Completa).
+  - Não tem agentes feitos sob medida pela Arvisx: esse é o serviço à parte Agentes Arvisx.
   - Você configura e gerencia os seus agentes; a Arvisx não cria agentes nesse plano.
 
-### Equipe Completa
+### Equipe Completa (arquivado em 2026-11-12, não recriar)
 
-- Descrição curta: O CRM completo e uma equipe de IA feita para a sua operação.
-- Para quem é: Para quem quer que a Arvisx entenda a operação e desenvolva os agentes junto com você.
-- O que tem:
-  - Tudo do Premium
-  - 4 agentes de IA criados pela Arvisx para o seu negócio
-  - Tudo em uma assinatura só
-- O que não tem:
-  - O prazo e o escopo de cada agente são combinados no primeiro contato.
-  - A IA usa a credencial do próprio cliente.
-- Como funciona: Começa por uma reunião com a nossa equipe, que orienta a assinatura. Depois da assinatura, a equipe entra em contato para desenvolver os 4 agentes.
+Saiu da oferta em 2026-11-12, por decisão do dono: é prestação de serviço, não
+sistema. O plano continua em `cobranca_planos`, arquivado e sem assinantes; não
+foi apagado. Custava €499,90 e prometia 4 agentes de IA sob medida. O que ele
+vendia passou a ser o serviço à parte Agentes Arvisx, sem quantidade fixa.
 
-O preço (€499,90) não vai no texto: o card mostra o preço do cadastro do plano.
+O que ficou no código só para quem tivesse esse plano, e por isso não dispara
+mais: a lista "Equipe Completa aguardando contato" de /admin/cobranca e o e-mail
+à equipe (migration 9804), a mensagem do painel da assinatura e a frase "Ao sair
+do Equipe Completa…" na troca de plano. Ficam para uma limpeza futura.
+
+## Agentes Arvisx (serviço à parte)
+
+Agentes de IA desenvolvidos pela equipe Arvisx depois de entender a operação do
+cliente, integrados ao CRM dele.
+
+- **Fora de qualquer plano.** Vale para quem assina o Essencial, o Standard ou o
+  Premium.
+- **Começa por uma reunião** de 30 minutos (/agendar; o botão fica na seção
+  "Agentes Arvisx" da página inicial). Depois da reunião a equipe envia a
+  proposta, com escopo, prazo e valor.
+- **Sem preço público.** O valor é orçado na reunião e cobrado fora da Stripe e
+  fora da cobrança do CRM. Não crie plano nem preço para os Agentes Arvisx em
+  /admin/cobranca.
+- **Sem prometer quantidade nem funções fixas.** O nome do assistente é o do
+  cliente, e o agente se apresenta como assistente virtual.
+- A IA usa a credencial do próprio cliente, como nos planos.
 
 ## Quem cuida dos agentes de IA
 
 Regra comercial (Lucas e Dr. Renan): no Essencial, no Standard e no Premium, a
 gestão e a configuração dos agentes de IA dentro da plataforma são do cliente. A
-Arvisx só entra em desenvolvimento de soluções personalizadas no Equipe Completa.
+Arvisx só desenvolve soluções personalizadas pelo serviço à parte Agentes Arvisx.
 
-O Equipe Completa começa por uma reunião (/agendar). Na reunião a equipe entende a
-operação e orienta a assinatura, que continua sendo feita no CRM. Não há trava: quem
-assinar o Equipe Completa sem reunião entra do mesmo jeito na lista "Equipe Completa
-aguardando contato" de /admin/cobranca (migration 9804). A reunião não depende de
-plano cadastrado: /agendar e o botão da seção do Equipe Completa na página inicial
-funcionam mesmo sem nenhum plano em /admin/cobranca (o botão "Agendar reunião" do
-card só aparece quando o plano está cadastrado e oferecido).
+A reunião não depende de plano cadastrado: /agendar e o botão da seção dos
+Agentes Arvisx na página inicial funcionam mesmo sem nenhum plano em
+/admin/cobranca.
 
 Esse aviso NÃO é texto de plano e não se cola em /admin/cobranca: é fixo, mora em
 `lib/cobranca/quem-cuida-dos-agentes.ts` e aparece igual na página inicial (abaixo
@@ -163,7 +183,7 @@ dos planos) e no comparativo dos planos (fim do teste, Assinar, Plano e cobranç
 
 ## Teste de 7 dias
 
-O teste de 7 dias é do plano que o cliente escolher: cadastre cada um dos quatro
+O teste de 7 dias é do plano que o cliente escolher: cadastre cada um dos três
 planos com `trial_dias = 7`. Não há plano de entrada separado.
 
 ## Ordem para colocar no ar
@@ -173,6 +193,6 @@ planos com `trial_dias = 7`. Não há plano de entrada separado.
    `deploy/arvisx/crm/migracoes-pos-baseline.txt`). Sem a 9802 no banco antes da
    imagem nova, toda empresa fica só com o Atendimento.
 3. Subir a imagem nova.
-4. Criar os 4 planos em /admin/cobranca, com os preços, as telas e os textos acima.
+4. Criar os 3 planos em /admin/cobranca, com os preços, as telas e os textos acima.
 5. Testar a assinatura em modo de teste da Stripe (`docs/arvisx/STRIPE-MODO-TESTE.md`).
 6. Só então reabrir o cadastro em /admin/cadastro.

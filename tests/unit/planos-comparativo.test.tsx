@@ -270,13 +270,21 @@ describe("quem cuida dos agentes de IA, no comparativo", () => {
   it("a frase é de capacidade e não promete trava: não limita agentes nem dá nome de agente", () => {
     const tudo = [...FRASES_DE_QUEM_CUIDA, SAIDA_DO_SOB_MEDIDA].join(" ");
     expect(tudo).toMatch(/você é responsável pela gestão e pela configuração dos seus agentes de IA/);
-    expect(tudo).toMatch(/É o único plano em que a Arvisx desenvolve soluções para você\./);
-    // Tarefa 4: o Equipe Completa começa por uma reunião — e só ele fala em reunião.
-    const porPlano = Object.fromEntries(QUEM_CUIDA_DOS_AGENTES.itens.map((i) => [i.id, i.texto as string]));
-    expect(porPlano.equipe_completa).toMatch(/soluções personalizadas: começa por uma reunião, entende a sua operação e cria 4 agentes de IA sob medida/);
-    expect(porPlano.essencial).not.toMatch(/reunião/);
-    expect(porPlano.standard_e_premium).not.toMatch(/reunião/);
-    expect(tudo).not.toMatch(/contratad[oa]s? à parte|em reunião|na reunião/);
+    // 12/11/2026: o Equipe Completa saiu da oferta. Os agentes sob medida são o
+    // serviço à parte Agentes Arvisx, para qualquer plano, por reunião e proposta
+    // — e só o item dele fala em reunião.
+    const itens = QUEM_CUIDA_DOS_AGENTES.itens.map((i) => ({ id: i.id as string, planos: i.planos as string, texto: i.texto as string }));
+    expect(itens.map((i) => i.id)).toEqual(["essencial", "standard_e_premium", "agentes_arvisx"]);
+    const porPlano = Object.fromEntries(itens.map((i) => [i.id, i.texto]));
+    expect(itens[2]!.planos).toBe("Agentes Arvisx (à parte)");
+    expect(porPlano.agentes_arvisx).toMatch(/^Em qualquer plano, quem quiser agentes de IA desenvolvidos pela Arvisx contrata o serviço à parte, depois de uma reunião: /);
+    expect(porPlano.agentes_arvisx).toMatch(/envia a proposta e desenvolve os agentes sob medida, integrados ao CRM\.$/);
+    for (const id of ["essencial", "standard_e_premium"]) {
+      expect(porPlano[id]).not.toMatch(/reunião/);
+      expect(porPlano[id]).toMatch(/A Arvisx só desenvolve soluções personalizadas pelo serviço à parte Agentes Arvisx\.$/);
+    }
+    // O aviso fixo não cita o plano que saiu, não promete quantidade nem dá preço.
+    expect(FRASES_DE_QUEM_CUIDA.join(" ")).not.toMatch(/Equipe Completa|único plano|\d+ agentes|€/);
     expect(tudo).not.toMatch(/\b(Sophia|Matheus|Pedro)\b|agente Financeiro/i);
     expect(tudo).not.toMatch(/\d+\s?%|sozinho|funcionário/i);
   });

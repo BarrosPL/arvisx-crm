@@ -67,13 +67,13 @@ const TITULO = "Arvisx CRM | Toda a sua operação de vendas e atendimento em um
 export const metadata: Metadata = {
   title: TITULO,
   description:
-    "Conversas, funil, agenda, propostas e chamadas de voz e vídeo num só lugar. Quatro planos, do atendimento à operação inteira com IA, todos com 7 dias de teste grátis. No plano Equipe Completa, a equipe Arvisx desenvolve agentes de IA sob medida.",
+    "Conversas, funil, agenda, propostas e chamadas de voz e vídeo num só lugar. Três planos, do atendimento à operação inteira com IA, todos com 7 dias de teste grátis. Agentes de IA sob medida são um serviço à parte, os Agentes Arvisx.",
   alternates: { canonical: "https://crm.arvisx.com.br/" },
   openGraph: {
     type: "website",
     title: TITULO,
     description:
-      "Conversas, funil, agenda, propostas e chamadas de voz e vídeo num só lugar. Quatro planos, do atendimento à operação inteira com IA.",
+      "Conversas, funil, agenda, propostas e chamadas de voz e vídeo num só lugar. Três planos, do atendimento à operação inteira com IA.",
     url: "https://crm.arvisx.com.br/",
     images: ["https://crm.arvisx.com.br/og-arvisx.jpg"],
     locale: "pt_BR",
@@ -165,7 +165,7 @@ export default async function HomePage() {
                 Toda a sua operação de vendas e atendimento <em>em um só CRM.</em>
               </h1>
               <p className="sub entra" style={atraso(".18s")}>
-                Atendimento, funil, agenda e chamadas de voz e vídeo num só CRM. Quatro planos, do
+                Atendimento, funil, agenda e chamadas de voz e vídeo num só CRM. Três planos, do
                 atendimento à operação inteira com IA.
               </p>
               <div className="cta-bloco entra" style={atraso(".28s")}>
@@ -692,11 +692,11 @@ export default async function HomePage() {
               </article>
             </div>
             <p className="chaves-nota">
-              Prefere que a Arvisx desenvolva os agentes para a sua operação? Esse serviço faz parte
-              do plano Equipe Completa. Comece por uma reunião.
+              Prefere que a Arvisx desenvolva os agentes para a sua operação? Esse é um serviço à
+              parte, os Agentes Arvisx, contratado depois de uma reunião.
             </p>
             <p className="chaves-link">
-              <a href="#agentes">Conheça o Equipe Completa</a>
+              <a href="#agentes">Conheça os Agentes Arvisx</a>
             </p>
           </div>
         </section>
@@ -812,7 +812,7 @@ export default async function HomePage() {
                         {destaque ? <span className="pl-selo">Mais completo</span> : null}
                         {plano.inclui_agentes_arvisx ? (
                           <span className="pl-selo forte">
-                            <Sparkle {...ico} weight="fill" /> 4 agentes de IA sob medida
+                            <Sparkle {...ico} weight="fill" /> Agentes de IA sob medida
                           </span>
                         ) : null}
                       </div>
@@ -846,7 +846,9 @@ export default async function HomePage() {
                           ))}
                         </ul>
                       ) : null}
-                      {/* O Equipe Completa começa pela reunião; os demais planos, pelo cadastro. */}
+                      {/* Nenhum plano ofertado tem a flag hoje (o Equipe Completa foi arquivado em 12/11/2026;
+                          os Agentes Arvisx são serviço à parte). O ramo fica para um plano que a tenha:
+                          esse começa pela reunião; os demais, pelo cadastro. */}
                       {plano.inclui_agentes_arvisx ? (
                         <a className="btn primario" href={LINKS.agendar}>
                           Agendar reunião
@@ -866,7 +868,7 @@ export default async function HomePage() {
             {/* O aviso fixo de quem configura os agentes: o mesmo texto do comparativo dos planos. */}
             <QuemCuidaDosAgentes variante="landing" />
             <p className="pc-link">
-              <a href="#agentes">Como funciona o Equipe Completa</a>
+              <a href="#agentes">Agentes de IA sob medida</a>
             </p>
           </div>
         </section>
@@ -874,13 +876,13 @@ export default async function HomePage() {
         <section className="faixa ag-arvisx" id="agentes">
           <div className="miolo">
             <div>
-              <p className="eyebrow">Equipe Completa · Soluções sob medida</p>
-              <h2>Quer agentes de IA feitos para a sua operação?</h2>
+              <p className="eyebrow">Agentes Arvisx · Soluções sob medida</p>
+              <h2>Quer ir além do CRM? Agentes de IA feitos para a sua operação.</h2>
               <p className="lede" style={{ marginTop: 16 }}>
-                No plano Equipe Completa,{" "}
-                <strong>o time da Arvisx desenvolve com você</strong>: 4 agentes de IA sob medida,
-                integrados ao CRM e às ferramentas que você já usa. É o único plano em que a Arvisx
-                desenvolve soluções personalizadas.
+                A nossa equipe entende como o seu negócio funciona e{" "}
+                <strong>desenvolve agentes de IA sob medida</strong>, integrados ao seu CRM. É um
+                serviço contratado à parte do plano, depois de uma conversa. Funciona com qualquer
+                plano.
               </p>
             </div>
             <div className="passos">
@@ -888,20 +890,19 @@ export default async function HomePage() {
                 <h3>Você agenda uma reunião de 30 minutos com o time Arvisx</h3>
               </article>
               <article className="passo">
-                <h3>Entendemos a sua operação e orientamos como assinar o Equipe Completa</h3>
+                <h3>Entendemos a sua operação e desenhamos os agentes com você</h3>
               </article>
               <article className="passo">
-                <h3>Desenvolvemos os 4 agentes e integramos ao seu CRM</h3>
+                <h3>Enviamos a proposta, desenvolvemos e integramos ao seu CRM</h3>
               </article>
             </div>
-            <div className="rodape-bloco" data-equipe-completa>
+            <div className="rodape-bloco" data-agentes-arvisx>
               <a className="btn primario" href={LINKS.agendar}>
                 Agendar reunião com o time Arvisx
               </a>
               <p className="discreta">
-                A assinatura do Equipe Completa é feita no CRM, com a orientação da nossa equipe na
-                reunião. O prazo e o escopo de cada agente são combinados com você. O nome do
-                assistente é o que você quiser. O agente se apresenta como assistente virtual.
+                O escopo, o prazo e o valor são combinados na proposta. O nome do assistente é o que
+                você quiser, e o agente se apresenta como assistente virtual.
               </p>
             </div>
           </div>
@@ -963,9 +964,8 @@ export default async function HomePage() {
               <details>
                 <summary>Quanto custa?</summary>
                 <p>
-                  <span>{quantoCusta}</span> O Equipe Completa inclui 4 agentes de IA desenvolvidos
-                  pela nossa equipe; nos demais planos, a Arvisx não desenvolve soluções
-                  personalizadas. O Equipe Completa começa por uma reunião.
+                  <span>{quantoCusta}</span> Os Agentes Arvisx são um serviço à parte, orçado na
+                  reunião; nos planos, você configura e gerencia os seus agentes.
                 </p>
               </details>
               <details>
@@ -1013,12 +1013,11 @@ export default async function HomePage() {
                 </p>
               </details>
               <details>
-                <summary>O que é o Equipe Completa?</summary>
+                <summary>O que são os Agentes Arvisx?</summary>
                 <p>
-                  É o único plano em que a Arvisx desenvolve soluções personalizadas. Você começa
-                  por uma reunião com a nossa equipe, que entende a sua operação e orienta a
-                  assinatura; depois criamos 4 agentes de IA sob medida, integrados ao seu CRM. Nos
-                  demais planos, você configura e gerencia os seus agentes.
+                  São agentes de IA desenvolvidos pela nossa equipe depois de entender a sua
+                  operação, integrados ao seu CRM. É um serviço contratado à parte, por reunião e
+                  proposta, e vale para qualquer plano.
                 </p>
               </details>
               <details>
@@ -1046,7 +1045,7 @@ export default async function HomePage() {
               <a href="#crm">O CRM</a>
               <a href="#chamadas">Chamadas de voz e vídeo</a>
               <a href="#plano">Preço</a>
-              <a href="#agentes">Equipe Completa</a>
+              <a href="#agentes">Agentes Arvisx</a>
               <a href="#para-quem">Para quem é</a>
               <a href="#faq">Perguntas frequentes</a>
             </nav>

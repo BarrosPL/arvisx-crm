@@ -2,8 +2,8 @@
  * GUARDA (ArvisX, tarefa 3 dos planos): nenhuma tela do cliente da landing nem
  * do comparativo dos planos escreve o nome de um agente nosso.
  *
- * Os agentes feitos sob medida são serviço do Equipe Completa e cada cliente dá
- * o nome que quiser ao seu. Um nome nosso numa tela de venda faria o cliente do
+ * Os agentes feitos sob medida são o serviço à parte Agentes Arvisx (até
+ * 12/11/2026, o plano Equipe Completa) e cada cliente dá o nome que quiser ao seu. Um nome nosso numa tela de venda faria o cliente do
  * Standard achar que recebe aquele agente pronto.
  *
  * "Financeiro" é também o nome de uma TELA do CRM (a aba do carrossel da
