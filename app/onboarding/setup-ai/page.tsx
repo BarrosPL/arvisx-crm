@@ -9,6 +9,7 @@ import { capacidadesPadraoDoOnboarding } from "@/lib/ai/agents/capacidades-padra
 import { TOOL_CATALOG } from "@/lib/mcp/tools/catalog";
 import { CONFERENCIAS_DE_SAIDA } from "@/lib/ai/guardrails/lista-de-conferencia";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { iaNoPlanoDaOrg } from "@/lib/onboarding/contexto";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,9 @@ export default async function SetupAiPage() {
   const user = await requireAuth();
   const activeOrg = await resolveActiveOrg(user);
   if (!activeOrg) redirect("/login");
+  // Plano sem IA (ArvisX: o Essencial): este passo não existe no roteiro. Link
+  // antigo ou endereço digitado volta ao roteador, que manda ao próximo passo.
+  if (!(await iaNoPlanoDaOrg(activeOrg.orgId))) redirect("/onboarding");
   const idioma = user.idioma;
 
   const supabase = await createClient();

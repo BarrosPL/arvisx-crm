@@ -26,6 +26,8 @@ interface Props {
    * `AuthProvider`, então o país vem da página, não do contexto (ausente = o leitor tolerante, o Brasil).
    */
   telefoneExemplo?: string;
+  /** O plano inclui os agentes de IA? Sem IA, os textos não falam de "funcionário". */
+  iaNoPlano?: boolean;
 }
 
 /**
@@ -226,6 +228,7 @@ export function ConnectWhatsappClient({
   sessionName,
   oficialPodeReceber,
   telefoneExemplo,
+  iaNoPlano = true,
 }: Props) {
   const t = useT();
   const [pending, startTransition] = useTransition();
@@ -427,7 +430,11 @@ export function ConnectWhatsappClient({
           <p className="mt-1">
             {t("Ele roda no seu próprio servidor. Dá para seguir sem ele agora e conectar o número depois, em")}{" "}
             <strong>{t("Canais › Conexões")}</strong> —{" "}
-            {t("seu funcionário fica pronto de qualquer jeito, só não terá por onde atender ainda.")}
+            {t(
+              iaNoPlano
+                ? "seu funcionário fica pronto de qualquer jeito, só não terá por onde atender ainda."
+                : "o resto fica pronto de qualquer jeito, só não haverá por onde atender ainda.",
+            )}
           </p>
         </div>
       )}

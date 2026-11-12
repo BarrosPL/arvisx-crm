@@ -18,7 +18,16 @@ import {
 import { FUSO_PADRAO, FUSOS_DO_ONBOARDING } from "@/lib/tempo/fusos";
 import { fusoDoNavegador } from "@/lib/tempo/fuso-do-navegador";
 
-export function WelcomeForm({ defaultOrgName, orgId }: { defaultOrgName: string; orgId: string }) {
+export function WelcomeForm({
+  defaultOrgName,
+  orgId,
+  iaNoPlano = true,
+}: {
+  defaultOrgName: string;
+  orgId: string;
+  /** O plano inclui os agentes de IA? Sem IA, os textos não falam de "funcionário". */
+  iaNoPlano?: boolean;
+}) {
   const t = useT();
   const [displayName, setDisplayName] = useState(defaultOrgName);
   const [oQueFaz, setOQueFaz] = useState("");
@@ -97,7 +106,9 @@ export function WelcomeForm({ defaultOrgName, orgId }: { defaultOrgName: string;
         />
         <p className="text-xs text-muted-foreground">
           {t(
-            "Uma linha basta. É com isso que seu funcionário aprende com quem ele está falando — e que a gente monta o quadro de clientes do seu jeito.",
+            iaNoPlano
+              ? "Uma linha basta. É com isso que seu funcionário aprende com quem ele está falando — e que a gente monta o quadro de clientes do seu jeito."
+              : "Uma linha basta. É com isso que o CRM monta o seu funil e a sua ficha de clientes.",
           )}
         </p>
       </div>
@@ -122,7 +133,11 @@ export function WelcomeForm({ defaultOrgName, orgId }: { defaultOrgName: string;
             momento — que outra aba pode ter trocado. */}
         <input type="hidden" name="organization_id" value={orgId} />
         <p className="text-xs text-muted-foreground">
-          {t("Decide o horário em que seu funcionário pode falar com clientes.")}
+          {t(
+            iaNoPlano
+              ? "Decide o horário em que seu funcionário pode falar com clientes."
+              : "É o fuso dos horários do seu atendimento.",
+          )}
         </p>
       </div>
 

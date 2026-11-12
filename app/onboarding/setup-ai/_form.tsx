@@ -81,6 +81,10 @@ export function SetupAiForm({ capacidades, conferencias }: Props) {
           setRegrasNaoSalvas(null);
           const res = await createDefaultAgent(formData);
           if (res && !res.ok) {
+            if (res.error === "fora_do_plano") {
+              toast.error(t(res.mensagem));
+              return;
+            }
             toast.error(`${t("Falha ao criar agente:")} ${res.error}`);
             return;
           }

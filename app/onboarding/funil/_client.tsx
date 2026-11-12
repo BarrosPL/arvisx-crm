@@ -22,9 +22,16 @@ import type { Sugestao } from "@/lib/onboarding/sugerir-funil";
 export function QuadroClient({
   atual,
   sugestao,
+  iaNoPlano = true,
 }: {
   atual: QuadroAtual | null;
   sugestao: Sugestao;
+  /**
+   * O plano da empresa inclui os agentes de IA? Sem IA (ArvisX: o Essencial) o
+   * quadro veio direto do pacote, sem tentativa de IA: nada de aviso de falha,
+   * e nenhuma coluna diz quando "ele" a usa.
+   */
+  iaNoPlano?: boolean;
 }) {
   const t = useT();
   const inicial: PropostaDeFunil =
@@ -85,7 +92,11 @@ export function QuadroClient({
         de que ela não está funcionando — descoberta que, calada, só chegaria com
         o primeiro cliente real.
       */}
-      {sugestao.origem === "ia" ? (
+      {!iaNoPlano ? (
+        <p className="rounded-md border p-3 text-sm" data-quadro-sem-ia>
+          {t("Sugerimos este quadro a partir do que você contou sobre o negócio. Ajuste o que quiser.")}
+        </p>
+      ) : sugestao.origem === "ia" ? (
         <p className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm">
           {t(
             "Seu funcionário montou este quadro olhando o que você me contou sobre o negócio. Ajuste o que quiser.",
@@ -137,11 +148,13 @@ export function QuadroClient({
                     onChange={(e) => renomear(i, e.target.value)}
                     maxLength={60}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    {explicacao
-                      ? `${t("Ele move o cliente para cá quando")} ${t(explicacao)}.`
-                      : t("Coluna que só vocês movem — ele não mexe nesta.")}
-                  </p>
+                  {iaNoPlano ? (
+                    <p className="text-xs text-muted-foreground">
+                      {explicacao
+                        ? `${t("Ele move o cliente para cá quando")} ${t(explicacao)}.`
+                        : t("Coluna que só vocês movem — ele não mexe nesta.")}
+                    </p>
+                  ) : null}
                 </div>
                 {/*
                   As colunas de fechou/não fechou não são removíveis: sem elas o

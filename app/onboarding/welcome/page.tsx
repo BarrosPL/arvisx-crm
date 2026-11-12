@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { lerRetratoDaInstalacao } from "@/lib/instalacao/retrato";
 import { JaEstaPronto } from "../_components/JaEstaPronto";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { iaNoPlanoDaOrg } from "@/lib/onboarding/contexto";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,8 @@ export default async function WelcomePage() {
 
   const supabase = await createClient();
   const retrato = await lerRetratoDaInstalacao({ supabase, orgId: activeOrg.orgId });
+  // Sem IA no plano o roteiro não monta "quem vai atender": fala da empresa.
+  const iaNoPlano = await iaNoPlanoDaOrg(activeOrg.orgId);
 
   return (
     <div className="space-y-6">
@@ -29,11 +32,16 @@ export default async function WelcomePage() {
           {traduzir("Boas-vindas ao", idioma)} {marca.nome}
         </h2>
         <p className="text-sm text-muted-foreground">
-          {traduzir("Vamos montar quem vai atender seus clientes — e onde ele vai trabalhar.", idioma)}
+          {traduzir(
+            iaNoPlano
+              ? "Vamos montar quem vai atender seus clientes — e onde ele vai trabalhar."
+              : "Vamos deixar a sua empresa pronta para atender: o WhatsApp, o funil e a equipe.",
+            idioma,
+          )}
         </p>
       </header>
 
-      <JaEstaPronto retrato={retrato} idioma={idioma} />
+      <JaEstaPronto retrato={retrato} idioma={idioma} iaNoPlano={iaNoPlano} />
 
       {/*
         O instalador NUNCA pergunta o nome do negócio: toda organização nasce
@@ -41,7 +49,7 @@ export default async function WelcomePage() {
         pessoa ter de apagá-lo antes de escrever o nome dela — e quem não
         percebia seguia com o placeholder no cabeçalho do sistema para sempre.
       */}
-      <WelcomeForm defaultOrgName={retrato.empresa.aindaSemNomeProprio ? "" : activeOrg.name} orgId={activeOrg.orgId} />
+      <WelcomeForm defaultOrgName={retrato.empresa.aindaSemNomeProprio ? "" : activeOrg.name} orgId={activeOrg.orgId} iaNoPlano={iaNoPlano} />
     </div>
   );
 }

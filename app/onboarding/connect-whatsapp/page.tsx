@@ -7,6 +7,7 @@ import { getWahaClient } from "@/lib/waha/client";
 import { ConnectWhatsappClient } from "./_client";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { perfilDoPais } from "@/lib/legal/perfil-do-pais";
+import { iaNoPlanoDaOrg } from "@/lib/onboarding/contexto";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,8 @@ export default async function ConnectWhatsappPage() {
   const idioma = user.idioma;
 
   const wahaConfigured = getWahaClient() !== null;
+  // Sem IA no plano o número é da EQUIPE, não de um "funcionário".
+  const iaNoPlano = await iaNoPlanoDaOrg(activeOrg.orgId);
 
   // Receber pelo canal oficial exige DOIS segredos, não um — a regra e o porquê
   // moram em `lib/channels/meta/webhook.ts`, ao lado de quem os consome. Agora os
@@ -31,10 +34,12 @@ export default async function ConnectWhatsappPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h2 className="text-2xl font-semibold tracking-tight">{traduzir("Dê um telefone a ele", idioma)}</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">{traduzir(iaNoPlano ? "Dê um telefone a ele" : "Conecte o seu WhatsApp", idioma)}</h2>
         <p className="text-sm text-muted-foreground">
           {traduzir(
-            "É por este número que ele vai atender seus clientes. Se você conecta pelo celular, tenha ele por perto.",
+            iaNoPlano
+              ? "É por este número que ele vai atender seus clientes. Se você conecta pelo celular, tenha ele por perto."
+              : "É por este número que a sua equipe vai atender os clientes. Se você conecta pelo celular, tenha ele por perto.",
             idioma,
           )}
         </p>
@@ -47,6 +52,7 @@ export default async function ConnectWhatsappPage() {
         sessionName={nomeCurtoDaSessao(activeOrg.orgId)}
         oficialPodeReceber={oficialPodeReceber}
         telefoneExemplo={perfilDoPais(activeOrg.country).telefoneExemplo}
+        iaNoPlano={iaNoPlano}
       />
     </div>
   );

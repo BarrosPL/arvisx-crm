@@ -24,8 +24,15 @@ export interface PassoDoOnboarding {
   /** O nome da PEÇA que a pessoa está montando, não o nome do sistema. */
   rotulo: string;
   /**
-   * O passo existe nesta instalação? Integração desligada não vira passo
-   * fantasma.
+   * O nome do passo para a empresa cujo plano NÃO tem agentes de IA (ArvisX: o
+   * Essencial). O roteiro de quem tem IA é sobre montar um "funcionário"; sem
+   * IA não há "ele", e o passo fala da empresa, da equipe e do atendimento.
+   * Ausente = o rótulo de sempre.
+   */
+  rotuloSemIa?: string;
+  /**
+   * O passo existe nesta instalação E neste plano? Integração desligada não
+   * vira passo fantasma, e passo de IA não aparece em plano sem IA.
    */
   existe: (ctx: ContextoDoPasso) => boolean;
   /** Já foi resolvido? (inclusive quando a pessoa escolheu pular) */
@@ -37,6 +44,12 @@ export interface PassoDoOnboarding {
 export interface ContextoDoPasso {
   /** A integração de loja está ligada nesta instalação? */
   lojaLigada: boolean;
+  /**
+   * O plano da empresa inclui os agentes de IA? Vem de
+   * `contextoDoOnboarding` (`lib/onboarding/contexto.ts`), a mesma leitura que
+   * trava as telas; leitura em falha chega aqui como `true`.
+   */
+  iaNoPlano: boolean;
 }
 
 /** Um passo marcado no estado — com ou sem `skipped`. */
@@ -61,6 +74,7 @@ export const PASSOS: readonly PassoDoOnboarding[] = [
     // O telefone é a primeira peça concreta do funcionário, e é o passo que
     // pede o celular na mão — o instalador já avisa para deixá-lo aberto.
     rotulo: "O telefone dele",
+    rotuloSemIa: "Seu WhatsApp",
     existe: () => true,
     cumprido: (s) => marcado(s.whatsapp),
     pulado: (s) => foiPulado(s.whatsapp),
@@ -75,7 +89,9 @@ export const PASSOS: readonly PassoDoOnboarding[] = [
   {
     segmento: "setup-ai",
     rotulo: "Treinar",
-    existe: () => true,
+    // Sem IA no plano não há quem treinar: a chave e o agente que este passo
+    // cria nunca responderiam (o motor não roda para o plano).
+    existe: (ctx) => ctx.iaNoPlano,
     cumprido: (s) => marcado(s.ai),
     pulado: (s) => foiPulado(s.ai),
   },
@@ -85,6 +101,7 @@ export const PASSOS: readonly PassoDoOnboarding[] = [
     // pessoa acabou de confirmar funcionando, e é o mesmo cérebro que vai
     // atender. Pedir o quadro antes obrigaria a montá-lo no escuro.
     rotulo: "Onde ele organiza",
+    rotuloSemIa: "Seu funil",
     existe: () => true,
     cumprido: (s) => marcado(s.funil),
     pulado: (s) => foiPulado(s.funil),
@@ -96,20 +113,27 @@ export const PASSOS: readonly PassoDoOnboarding[] = [
     // sistema" em "contratei alguém" — e é onde o erro aparece antes do
     // primeiro cliente real, não depois.
     rotulo: "Ver ele atender",
-    existe: () => true,
+    // O ensaio chama a API de agentes, que o plano sem IA recusa (403).
+    existe: (ctx) => ctx.iaNoPlano,
     cumprido: (s) => marcado(s.teste),
     pulado: (s) => foiPulado(s.teste),
   },
   {
     segmento: "invite-team",
     rotulo: "Quem trabalha com ele",
+    rotuloSemIa: "Sua equipe",
     existe: () => true,
     cumprido: (s) => marcado(s.team),
     pulado: (s) => foiPulado(s.team),
   },
 ] as const;
 
-/** Os passos que existem NESTA instalação, na ordem. */
+/** O rótulo do passo para ESTE plano: o neutro quando não há IA, o de sempre no resto. */
+export function rotuloDoPasso(passo: PassoDoOnboarding, ctx: ContextoDoPasso): string {
+  return ctx.iaNoPlano ? passo.rotulo : (passo.rotuloSemIa ?? passo.rotulo);
+}
+
+/** Os passos que existem NESTA instalação e NESTE plano, na ordem. */
 export function passosVisiveis(ctx: ContextoDoPasso): PassoDoOnboarding[] {
   return PASSOS.filter((p) => p.existe(ctx));
 }
@@ -143,7 +167,7 @@ export function resumoDoOnboarding(
 ): ItemDoResumo[] {
   return passosVisiveis(ctx).map((p) => ({
     segmento: p.segmento,
-    rotulo: p.rotulo,
+    rotulo: rotuloDoPasso(p, ctx),
     feito: p.cumprido(state) && !p.pulado(state),
     pulado: p.pulado(state),
   }));

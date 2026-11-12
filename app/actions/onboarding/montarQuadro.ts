@@ -23,6 +23,7 @@ import {
   type PropostaDeFunil,
 } from "@/lib/onboarding/proposta-de-funil";
 import { escolherPacotePorTexto, sugerirFunil, type Sugestao } from "@/lib/onboarding/sugerir-funil";
+import { iaNoPlanoDaOrg } from "@/lib/onboarding/contexto";
 import { requireOnboardingCtx, patchOnboardingState, loadOnboardingState, OnboardingError } from "./_shared";
 
 /** O funil que o gatilho semeou — o que a pessoa tem antes deste passo. */
@@ -136,6 +137,16 @@ export async function dadosDoPasso(orgId: string, negocio: string): Promise<Dado
     oQueFaz = state.welcome?.o_que_faz ?? "";
   } catch {
     oQueFaz = "";
+  }
+
+  // Plano sem IA (ArvisX: o Essencial): o quadro sai DIRETO do pacote, pelo
+  // que a pessoa contou do negócio. Nenhuma chamada de IA, e nenhum "não
+  // consegui pedir uma sugestão" — não houve tentativa para falhar.
+  if (!(await iaNoPlanoDaOrg(orgId))) {
+    return {
+      atual,
+      sugestao: { origem: "pacote", pacote: escolherPacotePorTexto(`${negocio} ${oQueFaz}`), porque: "" },
+    };
   }
 
   const ctx = { nome: negocio, oQueFaz };

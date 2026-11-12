@@ -12,6 +12,7 @@ import { audit } from "@/lib/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { aiAgentDefaultSchema, type PromptTemplate } from "@/lib/schemas/onboarding";
 import { publicarMemoriaDaOrg } from "@/lib/ai/memoria-da-org";
+import { iaNoPlanoDaOrg, MENSAGEM_IA_FORA_DO_PLANO } from "@/lib/onboarding/contexto";
 import {
   requireOnboardingCtx,
   patchOnboardingState,
@@ -102,7 +103,9 @@ export type CreateAgentResult =
       ok: false;
       error: "auth_required" | "no_active_org" | "invalid_input" | "db_error";
       details?: unknown;
-    };
+    }
+  /** O plano da empresa não tem agentes de IA: nada foi gravado. `mensagem` vai para a tela. */
+  | { ok: false; error: "fora_do_plano"; mensagem: string };
 
 export async function createDefaultAgent(formData: FormData): Promise<CreateAgentResult> {
   let ctx;
@@ -111,6 +114,13 @@ export async function createDefaultAgent(formData: FormData): Promise<CreateAgen
   } catch (err) {
     if (err instanceof OnboardingError) return { ok: false, error: err.code as never };
     throw err;
+  }
+
+  // A TRAVA DE SERVIDOR que faltava: server action não passa pela trava de
+  // `/api/v1`, então sem isto um plano sem IA criava um agente que o motor
+  // nunca roda. Antes de qualquer leitura ou escrita.
+  if (!(await iaNoPlanoDaOrg(ctx.orgId))) {
+    return { ok: false, error: "fora_do_plano", mensagem: MENSAGEM_IA_FORA_DO_PLANO };
   }
 
   const raw = {

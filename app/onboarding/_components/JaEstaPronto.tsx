@@ -19,17 +19,25 @@ import { traduzir } from "@/lib/i18n/dicionario";
 export function JaEstaPronto({
   retrato,
   idioma,
+  iaNoPlano = true,
 }: {
   retrato: RetratoDaInstalacao;
   idioma: Idioma;
+  /**
+   * O plano da empresa inclui os agentes de IA? Sem IA (ArvisX: o Essencial) a
+   * linha da chave de IA some — cobrar "falta a chave" de quem não pode usá-la
+   * seria o wizard pedindo o que o plano não entrega.
+   */
+  iaNoPlano?: boolean;
 }) {
   const t = (texto: string) => traduzir(texto, idioma);
-  const itens: { pronto: boolean; texto: string }[] = [
+  const todos: { pronto: boolean; texto: string; soComIa?: boolean }[] = [
     {
       pronto: true,
       texto: t("Servidor no ar e banco de dados instalado"),
     },
     {
+      soComIa: true,
       // Três estados, não dois: cadastrada-e-confirmada, cadastrada-e-sendo-
       // conferida, e nenhuma. A do meio existe porque a validação roda em
       // segundo plano — e dizer "falta a chave" a quem acabou de colá-la é a
@@ -56,6 +64,7 @@ export function JaEstaPronto({
     },
   ];
 
+  const itens = todos.filter((i) => iaNoPlano || !i.soComIa);
   const faltando = itens.filter((i) => !i.pronto).length;
 
   return (
@@ -82,7 +91,9 @@ export function JaEstaPronto({
       </ul>
       <p className="mt-3 text-xs text-muted-foreground">
         {faltando === 0
-          ? t("Agora é montar quem vai atender por você.")
+          ? iaNoPlano
+            ? t("Agora é montar quem vai atender por você.")
+            : t("Agora é deixar o atendimento pronto.")
           : t("O que falta a gente resolve nos próximos passos.")}
       </p>
     </section>

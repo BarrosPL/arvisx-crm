@@ -132,6 +132,57 @@ const CURADORIA: {
   },
 ];
 
+/**
+ * O tour de quem NÃO tem agentes de IA no plano (ArvisX: o Essencial).
+ *
+ * A curadoria de cima é inteira sobre o funcionário ("ele responde sozinho",
+ * "as ideias dele") e aponta para telas de IA que o plano não libera. Aqui
+ * ficam só telas do Atendimento, que todo plano tem, e os passos descrevem o
+ * que a EQUIPE faz — nenhum promete um comportamento automático.
+ */
+const CURADORIA_SEM_IA: typeof CURADORIA = [
+  {
+    href: "/app/inbox",
+    comoChamar: "As conversas",
+    porQue: "É aqui que as conversas chegam, para você e a equipe atenderem.",
+    comoFunciona: [
+      "O cliente manda uma mensagem no WhatsApp",
+      "A conversa aparece aqui, para você ou alguém da equipe responder",
+      "O histórico fica guardado na conversa, para quem atender depois",
+    ],
+  },
+  {
+    href: "/app/kanban",
+    comoChamar: "O quadro de clientes",
+    porQue: "Cada cliente em negociação é um cartão, e o quadro mostra em que etapa cada um está.",
+    comoFunciona: [
+      "As colunas são as que você acabou de montar",
+      "Você arrasta o cartão na mão quando quiser — o quadro é seu",
+      "Dá para mudar as colunas depois, quando quiser",
+    ],
+  },
+  {
+    href: "/app/contacts",
+    comoChamar: "Os seus clientes",
+    porQue: "As pessoas do outro lado da conversa, com o histórico de cada uma.",
+    comoFunciona: [
+      "Quem escreve para a empresa fica guardado como contato",
+      "Cada contato reúne as conversas e os dados da pessoa",
+      "Você encontra qualquer cliente pelo nome ou pelo telefone",
+    ],
+  },
+  {
+    href: "/app/tasks",
+    comoChamar: "O que ficou combinado",
+    porQue: "Para nada do que foi prometido ao cliente ficar só na memória.",
+    comoFunciona: [
+      "Você anota o que ficou combinado, com prazo",
+      "A tarefa fica na lista até alguém concluir",
+      "O que venceu sem ninguém fazer aparece para você cobrar",
+    ],
+  },
+];
+
 export interface PecaDoSistema {
   href: string;
   /** Como a peça é apresentada a quem acabou de montar o funcionário. */
@@ -159,9 +210,11 @@ export interface PecaDoSistema {
   comoFunciona: string[];
 }
 
-export function oQueMaisExiste(): PecaDoSistema[] {
+export function oQueMaisExiste(opcoes: { iaNoPlano?: boolean } = {}): PecaDoSistema[] {
   const porHref = new Map(NAV_DESTINATIONS.map((d) => [d.href as string, d]));
-  return CURADORIA.flatMap((c) => {
+  // `iaNoPlano` ausente = o tour de sempre (quem tem IA não muda).
+  const curadoria = opcoes.iaNoPlano === false ? CURADORIA_SEM_IA : CURADORIA;
+  return curadoria.flatMap((c) => {
     const d = porHref.get(c.href);
     // Destino que saiu do registro não vira card órfão apontando para o vazio.
     if (!d) return [];

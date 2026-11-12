@@ -19,7 +19,7 @@ import { sendOnboardingInvites } from "@/app/actions/onboarding/sendOnboardingIn
 import { ROLES, type Role } from "@/lib/schemas/team";
 import { ROTULO_DO_PAPEL } from "@/lib/auth/types";
 
-export function InviteTeamForm() {
+export function InviteTeamForm({ iaNoPlano = true }: { iaNoPlano?: boolean } = {}) {
   const t = useT();
   const [emailsRaw, setEmailsRaw] = useState("");
   const [role, setRole] = useState<Role>("agent");
@@ -71,7 +71,7 @@ export function InviteTeamForm() {
   return (
     <div className="space-y-4 rounded-lg border bg-background p-6">
       <div className="space-y-2">
-        <Label htmlFor="emails">{t("E-mail de quem vai trabalhar com ele")}</Label>
+        <Label htmlFor="emails">{t(iaNoPlano ? "E-mail de quem vai trabalhar com ele" : "E-mail de quem vai atender com você")}</Label>
         <Textarea
           id="emails"
           value={emailsRaw}

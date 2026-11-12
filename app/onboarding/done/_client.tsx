@@ -13,6 +13,7 @@ export function DoneClient({
   itens,
   pecas,
   noAr,
+  iaNoPlano = true,
 }: {
   itens: ItemDoResumo[];
   pecas: PecaDoSistema[];
@@ -22,6 +23,12 @@ export function DoneClient({
    * é cliente e não tem como perguntar sem um fetch que faria a tela piscar.
    */
   noAr: boolean;
+  /**
+   * O plano da empresa inclui os agentes de IA? No plano sem IA (ArvisX: o
+   * Essencial) o roteiro não montou funcionário nenhum, então a tela fala da
+   * empresa — e `noAr` não decide nada, porque não há agente para publicar.
+   */
+  iaNoPlano?: boolean;
 }) {
   const t = useT();
   const [pending, startTransition] = useTransition();
@@ -44,8 +51,12 @@ export function DoneClient({
    * o que coloca o atendente no ar, e pular um passo que não depende da IA
    * (telefone, equipe) não tira ninguém do ar.
    */
-  const titulo = noAr ? t("Tudo pronto!") : t("Quase lá!");
-  const resumo = !noAr
+  const titulo = !iaNoPlano || noAr ? t("Tudo pronto!") : t("Quase lá!");
+  const resumo = !iaNoPlano
+    ? pendentes.length === 0
+      ? t("Sua empresa está pronta: conecte, atenda e acompanhe tudo pelo Inbox.")
+      : t("Sua empresa já pode começar. O que ficou para depois continua te esperando.")
+    : !noAr
     ? semIa
       ? t("O passo da IA ficou para depois: ele ainda não foi treinado nem colocado no ar.")
       : t("Ele já foi treinado, mas o atendimento ainda não foi publicado — ele segue em rascunho.")
@@ -58,6 +69,13 @@ export function DoneClient({
       <div className="space-y-1 text-center">
         <h2 className="text-2xl font-semibold tracking-tight">{titulo}</h2>
         <p className="text-sm text-muted-foreground">{resumo}</p>
+        {!iaNoPlano ? (
+          <p className="text-xs text-muted-foreground" data-ia-fora-do-plano>
+            <a href="/app/settings/billing" className="underline underline-offset-2">
+              {t("Agentes de IA estão nos planos Standard e Premium.")}
+            </a>
+          </p>
+        ) : null}
       </div>
 
       <ul className="mx-auto max-w-sm space-y-2 text-left text-sm">

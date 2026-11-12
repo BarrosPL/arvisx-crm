@@ -9,15 +9,21 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  PASSOS,
   passosVisiveis,
   proximoPasso,
   resumoDoOnboarding,
+  rotuloDoPasso,
   type ContextoDoPasso,
 } from "@/lib/onboarding/passos";
 import type { OnboardingState } from "@/lib/schemas/onboarding";
 
-const SEM_LOJA: ContextoDoPasso = { lojaLigada: false };
-const COM_LOJA: ContextoDoPasso = { lojaLigada: true };
+// `iaNoPlano: true` é o roteiro de sempre (Standard, Premium, empresa isenta e
+// leitura em falha). O plano sem IA tem o seu bloco no fim do arquivo.
+const SEM_LOJA: ContextoDoPasso = { lojaLigada: false, iaNoPlano: true };
+const COM_LOJA: ContextoDoPasso = { lojaLigada: true, iaNoPlano: true };
+const SEM_IA: ContextoDoPasso = { lojaLigada: false, iaNoPlano: false };
+const SEM_IA_COM_LOJA: ContextoDoPasso = { lojaLigada: true, iaNoPlano: false };
 
 const VAZIO: OnboardingState = {};
 
@@ -114,5 +120,90 @@ describe("resumo final", () => {
     expect(rotulos).toContain("O telefone dele");
     expect(rotulos).toContain("Treinar");
     expect(rotulos).not.toContain("IA");
+  });
+});
+
+/**
+ * ONBOARDING DE ACORDO COM O PLANO (ArvisX).
+ *
+ * O roteiro era o mesmo para todos os planos e é inteiro sobre montar um
+ * "funcionário" de IA. No Essencial, que não tem IA, a pessoa colava uma chave e
+ * criava um agente que o motor nunca roda, e o ensaio respondia 403.
+ */
+describe("plano sem agentes de IA", () => {
+  const BOAS_VINDAS: OnboardingState["welcome"] = {
+    accepted_at: "x",
+    timezone: "America/Sao_Paulo",
+    display_name: "N",
+  };
+
+  it("⭐ os passos de IA não existem: nem treinar, nem ver ele atender", () => {
+    expect(passosVisiveis(SEM_IA).map((p) => p.segmento)).toEqual([
+      "welcome",
+      "connect-whatsapp",
+      "funil",
+      "invite-team",
+    ]);
+    // A loja é decisão da INSTALAÇÃO, e continua valendo no plano sem IA.
+    expect(passosVisiveis(SEM_IA_COM_LOJA).map((p) => p.segmento)).toEqual([
+      "welcome",
+      "connect-whatsapp",
+      "connect-nuvemshop",
+      "funil",
+      "invite-team",
+    ]);
+  });
+
+  it("controle: com IA no plano a lista é a de sempre, com os sete passos na ordem", () => {
+    expect(passosVisiveis(COM_LOJA).map((p) => p.segmento)).toEqual(PASSOS.map((p) => p.segmento));
+    expect(passosVisiveis(COM_LOJA).map((p) => p.segmento)).toEqual([
+      "welcome",
+      "connect-whatsapp",
+      "connect-nuvemshop",
+      "setup-ai",
+      "funil",
+      "testar",
+      "invite-team",
+    ]);
+  });
+
+  it("⭐ o roteador pula os passos de IA em vez de travar neles", () => {
+    const s: OnboardingState = { welcome: BOAS_VINDAS, whatsapp: { status: "WORKING" } };
+    expect(proximoPasso(s, SEM_IA)?.segmento).toBe("funil");
+    expect(proximoPasso(s, SEM_LOJA)?.segmento).toBe("setup-ai");
+
+    const comFunil: OnboardingState = { ...s, funil: { pipeline_id: "f", origem: "pacote", etapas: 6 } };
+    expect(proximoPasso(comFunil, SEM_IA)?.segmento).toBe("invite-team");
+    expect(proximoPasso(comFunil, SEM_LOJA)?.segmento).toBe("setup-ai");
+  });
+
+  it("⭐ termina sem `ai` nem `teste` no estado; com IA os mesmos dados ainda devem o passo de treinar", () => {
+    const s: OnboardingState = {
+      welcome: BOAS_VINDAS,
+      whatsapp: { status: "WORKING" },
+      funil: { pipeline_id: "f", origem: "pacote", etapas: 6 },
+      team: { invites_sent: 0, skipped: true },
+    };
+    expect(proximoPasso(s, SEM_IA)).toBeNull();
+    expect(proximoPasso(s, SEM_LOJA)?.segmento).toBe("setup-ai");
+  });
+
+  it("o resumo não lista (nem cobra) os passos de IA, e os rótulos falam da empresa", () => {
+    const resumo = resumoDoOnboarding({}, SEM_IA);
+    expect(resumo.map((i) => i.segmento)).toEqual(["welcome", "connect-whatsapp", "funil", "invite-team"]);
+    expect(resumo.map((i) => i.rotulo)).toEqual(["Seu negócio", "Seu WhatsApp", "Seu funil", "Sua equipe"]);
+    expect(resumo.map((i) => i.rotulo).join(" ")).not.toMatch(/(d?ele)|funcion|Treinar/i);
+  });
+
+  it("controle: com IA os rótulos são os de sempre", () => {
+    expect(resumoDoOnboarding({}, SEM_LOJA).map((i) => i.rotulo)).toEqual([
+      "Seu negócio",
+      "O telefone dele",
+      "Treinar",
+      "Onde ele organiza",
+      "Ver ele atender",
+      "Quem trabalha com ele",
+    ]);
+    for (const p of PASSOS) expect(rotuloDoPasso(p, COM_LOJA), p.segmento).toBe(p.rotulo);
   });
 });

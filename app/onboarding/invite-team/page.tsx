@@ -1,7 +1,8 @@
 import { emailConfigurado } from "@/lib/email/roteador";
 import { InviteTeamForm } from "./_form";
-import { requireAuth } from "@/lib/auth/server";
+import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { iaNoPlanoDaOrg } from "@/lib/onboarding/contexto";
 
 export const dynamic = "force-dynamic";
 
@@ -9,13 +10,19 @@ export default async function InviteTeamPage() {
   const user = await requireAuth();
   const idioma = user.idioma;
   const emailReady = await emailConfigurado();
+  // Sem organização o layout já mandou embora; aqui só decide o texto. Sem IA
+  // no plano não há "funcionário" que passe conversa adiante: a equipe atende.
+  const activeOrg = await resolveActiveOrg(user);
+  const iaNoPlano = activeOrg ? await iaNoPlanoDaOrg(activeOrg.orgId) : true;
   return (
     <div className="space-y-6">
       <header>
-        <h2 className="text-2xl font-semibold tracking-tight">{traduzir("Quem trabalha com ele", idioma)}</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">{traduzir(iaNoPlano ? "Quem trabalha com ele" : "Sua equipe", idioma)}</h2>
         <p className="text-sm text-muted-foreground">
           {traduzir(
-            "Seu funcionário não trabalha sozinho: quando ele passar uma conversa adiante, é uma dessas pessoas que atende.",
+            iaNoPlano
+              ? "Seu funcionário não trabalha sozinho: quando ele passar uma conversa adiante, é uma dessas pessoas que atende."
+              : "Quem vai atender as conversas com você.",
             idioma,
           )}
         </p>
@@ -38,7 +45,7 @@ export default async function InviteTeamPage() {
           </p>
         </div>
       ) : null}
-      <InviteTeamForm />
+      <InviteTeamForm iaNoPlano={iaNoPlano} />
     </div>
   );
 }

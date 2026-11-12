@@ -4,6 +4,7 @@ import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { dadosDoPasso } from "@/app/actions/onboarding/montarQuadro";
 import { QuadroClient } from "./_client";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { iaNoPlanoDaOrg } from "@/lib/onboarding/contexto";
 
 export const dynamic = "force-dynamic";
 
@@ -26,21 +27,25 @@ export default async function FunilPage() {
   const idioma = user.idioma;
 
   const { atual, sugestao } = await dadosDoPasso(activeOrg.orgId, activeOrg.name);
+  // Sem IA no plano não há "ele" que organize: o quadro é da empresa e da equipe.
+  const iaNoPlano = await iaNoPlanoDaOrg(activeOrg.orgId);
 
   return (
     <div className="space-y-6">
       <header>
         <h2 className="text-2xl font-semibold tracking-tight">
-          {traduzir("Onde ele organiza seus clientes", idioma)}
+          {traduzir(iaNoPlano ? "Onde ele organiza seus clientes" : "Seu funil de clientes", idioma)}
         </h2>
         <p className="text-sm text-muted-foreground">
           {traduzir(
-            "Cada cliente vira um cartão que anda por essas colunas. Ele mesmo move o cartão conforme a conversa avança — por isso cada coluna diz também quando ele deve usá-la.",
+            iaNoPlano
+              ? "Cada cliente vira um cartão que anda por essas colunas. Ele mesmo move o cartão conforme a conversa avança — por isso cada coluna diz também quando ele deve usá-la."
+              : "Cada cliente vira um cartão que anda por essas colunas. Você e a equipe movem o cartão conforme a conversa avança.",
             idioma,
           )}
         </p>
       </header>
-      <QuadroClient atual={atual} sugestao={sugestao} />
+      <QuadroClient atual={atual} sugestao={sugestao} iaNoPlano={iaNoPlano} />
     </div>
   );
 }

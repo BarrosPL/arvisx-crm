@@ -34,6 +34,7 @@ import {
   MENSAGEM_PROVEDOR_DESLIGADO,
   provedorDesligadoNaInstalacao,
 } from "@/lib/ai/pontos/provedores-oferecidos";
+import { iaNoPlanoDaOrg, MENSAGEM_IA_FORA_DO_PLANO } from "@/lib/onboarding/contexto";
 import { requireOnboardingCtx, OnboardingError } from "./_shared";
 
 export type ResultadoDaChave =
@@ -71,6 +72,12 @@ export async function salvarChaveDaIa(formData: FormData): Promise<ResultadoDaCh
   // faz o onboarding é o dono, mas o papel é verificado e não presumido.
   if (ctx.role !== "admin") {
     return { ok: false, erro: "Só um administrador pode cadastrar a chave da inteligência artificial." };
+  }
+
+  // A trava de servidor: server action não passa pela trava de `/api/v1`.
+  // Plano sem IA não guarda chave nem muda o padrão de IA da empresa.
+  if (!(await iaNoPlanoDaOrg(ctx.orgId))) {
+    return { ok: false, erro: MENSAGEM_IA_FORA_DO_PLANO };
   }
 
   const provider = String(formData.get("provider") ?? "");

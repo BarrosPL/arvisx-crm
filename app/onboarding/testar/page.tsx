@@ -4,6 +4,7 @@ import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { TestarClient } from "./_client";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { iaNoPlanoDaOrg } from "@/lib/onboarding/contexto";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,9 @@ export default async function TestarPage() {
   const user = await requireAuth();
   const activeOrg = await resolveActiveOrg(user);
   if (!activeOrg) redirect("/login");
+  // Plano sem IA: o ensaio chama a API de agentes, que responde 403
+  // `fora_do_plano`. O passo não existe no roteiro; volta ao roteador.
+  if (!(await iaNoPlanoDaOrg(activeOrg.orgId))) redirect("/onboarding");
   const idioma = user.idioma;
 
   const admin = createAdminClient();
