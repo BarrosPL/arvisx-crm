@@ -2,7 +2,7 @@
 
 /**
  * Instagram e Facebook Messenger conectados DIRETO na Meta — o cartão da
- * organização em Conexões › Redes sociais.
+ * organização em Conexões › Facebook / Instagram.
  *
  * A porta preferida (a primeira do catálogo, `lib/channels/social/catalog.ts`):
  * fica no topo da aba, acima da conexão por parceiro, que continua lá para quem
@@ -229,7 +229,7 @@ export function ConexaoDiretaMeta() {
         >
           {estado.falta.includes("sem_endereco_publico") && estado.falta.length === 1
             ? t("O endereço público desta instalação não está configurado, então a Meta não teria para onde devolver a conexão. Peça a quem administra a instalação para defini-lo.")
-            : t("O app da Meta desta instalação ainda não foi configurado. Peça a quem administra a instalação para cadastrar o App ID e a chave secreta em Administração › API Oficial da Meta. Até lá, use a conexão por parceiro abaixo.")}
+            : t("O app da Meta desta instalação ainda não foi configurado. Peça a quem administra a instalação para cadastrar o App ID e a chave secreta em Administração › API Oficial da Meta.")}
         </p>
       )}
 

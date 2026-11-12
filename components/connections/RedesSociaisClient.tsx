@@ -62,12 +62,22 @@ type State = {
   accounts: Account[];
   orphaned_channels: Orphaned[];
 };
+/**
+ * A conexão de redes sociais POR PARCEIRO fica escondida do cliente (decisão do
+ * dono, 12/11/2026): a aba mostra só a conexão direta pela Meta (Messenger e
+ * Instagram). Com `false`, o bloco "Conexão por parceiro" não é desenhado e a
+ * consulta a `/api/v1/channels/social` nem é feita. Nada foi apagado: o bloco,
+ * `lib/channels/social/*` e a rota continuam aqui; voltar a `true` reexibe tudo.
+ */
+const CONEXAO_POR_PARCEIRO_VISIVEL: boolean = false;
+
 export function RedesSociaisClient() {
   const t = useT();
   const params = useSearchParams();
   const query = useQuery({
     queryKey: ["social-connections"],
     queryFn: async () => (await apiClient.get<{ data: State }>("/api/v1/channels/social")).data,
+    enabled: CONEXAO_POR_PARCEIRO_VISIVEL,
   });
   const state = query.data;
   const [error, setError] = useState<string | null>(null);
@@ -188,19 +198,25 @@ export function RedesSociaisClient() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">{t("Redes sociais")}</h2>
+          <h2 className="text-lg font-semibold">{t("Facebook / Instagram")}</h2>
           <p className="text-sm text-muted-foreground">
-            {t("Conecte suas contas e receba mensagens no atendimento.")} {state?.label}
+            {t("Conecte o Messenger e o Instagram da sua empresa e receba as mensagens no atendimento.")}
+            {CONEXAO_POR_PARCEIRO_VISIVEL && state?.label ? ` ${state.label}` : null}
           </p>
         </div>
-        <Button variant="outline" onClick={() => void load()} disabled={!!busy}>
-          {t("Atualizar")}
-        </Button>
+        {/* "Atualizar" recarrega só a lista do parceiro; a conexão direta tem a própria consulta. */}
+        {CONEXAO_POR_PARCEIRO_VISIVEL && (
+          <Button variant="outline" onClick={() => void load()} disabled={!!busy}>
+            {t("Atualizar")}
+          </Button>
+        )}
       </div>
-      {/* A porta DIRETA vem primeiro: é a preferida do catálogo
-          (lib/channels/social/catalog.ts). A por parceiro segue abaixo, para
-          quem já a usa e para as redes que só existem por ela. */}
+      {/* A porta DIRETA é a única à vista: é a preferida do catálogo
+          (lib/channels/social/catalog.ts). A por parceiro, abaixo, está
+          escondida por CONEXAO_POR_PARCEIRO_VISIVEL. */}
       <ConexaoDiretaMeta />
+      {CONEXAO_POR_PARCEIRO_VISIVEL && (
+      <>
       <h3 className="pt-2 text-sm font-semibold text-muted-foreground">
         {t("Conexão por parceiro (opcional)")}
       </h3>
@@ -561,6 +577,8 @@ export function RedesSociaisClient() {
             </AlertDialogContent>
           </AlertDialog>
         </>
+      )}
+      </>
       )}
     </div>
   );

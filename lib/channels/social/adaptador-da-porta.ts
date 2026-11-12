@@ -107,7 +107,7 @@ export class PortaSemCredencialError extends Error {
     const oQue = emLista(falta.map((exigencia) => FRASES_DA_EXIGENCIA[exigencia]));
     super(
       `${rotuloDaRede(plataforma)}: falta ${oQue} para enviar pela ${porta.rotulo}. ` +
-        `Reconecte a conta em Redes sociais.`,
+        `Reconecte a conta em Conexões › Facebook / Instagram.`,
     );
     this.name = "PortaSemCredencialError";
     this.plataforma = plataforma;

@@ -39,9 +39,11 @@ const passos = dados.modulos.flatMap((m) =>
 );
 
 describe("o pacote do treinamento", () => {
-  it("tem os 58 módulos, os 1.090 passos e as 26 histórias do relatório", () => {
+  it("tem os 58 módulos, os 1.089 passos e as 26 histórias do relatório", () => {
     expect(dados.modulos).toHaveLength(58);
-    expect(passos).toHaveLength(1090);
+    // 1.090 no pacote; 1.089 desde 12/11/2026, quando o passo "Provedor parceiro"
+    // (conexoes › outros-canais › p3) saiu junto com a aba.
+    expect(passos).toHaveLength(1089);
     expect(dados.nichos.flatMap((n) => n.jornadas)).toHaveLength(26);
     expect(dados.nichos.flatMap((n) => n.jornadas.flatMap((j) => j.cenas))).toHaveLength(104);
   });
@@ -55,7 +57,7 @@ describe("o pacote do treinamento", () => {
       .filter(({ foto }) => !existsSync(path.join(PUBLICO, foto.src.replace(/^\//, ""))))
       .map(({ onde, foto }) => `${onde}: ${foto.src}`);
     expect(faltando).toEqual([]);
-    expect(todasAsFotos).toHaveLength(1080 + 104);
+    expect(todasAsFotos).toHaveLength(1079 + 104);
   });
 
   it("(b) todo passo tem foto ou aviso, nunca os dois, e os sem foto são os 10 do pacote", () => {

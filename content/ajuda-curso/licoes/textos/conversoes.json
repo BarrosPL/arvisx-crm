@@ -155,7 +155,7 @@
         {
           "id": "p1",
           "titulo": "Venda pelo canal da conversa",
-          "texto": "Esta chave só vale para quem NÃO preencheu a conexão direta do cartão de cima. Como esta clínica já tem a conexão, aqui ela não muda nada. Sem a conexão direta, a venda de quem veio de anúncio pode sair pelo provedor do número de WhatsApp. Isso só funciona quando o número foi conectado por um provedor parceiro que faz esse repasse e que já está ligado à sua fonte de dados da Meta. Um número conectado pelo QR Code não envia nada por aqui. Saem para o provedor o valor, a moeda, o telefone do cliente e a conversa. A chave vem desligada e salva assim que você clica: ligue só se a sua política de privacidade cobre esse uso.",
+          "texto": "Esta chave só vale para quem NÃO preencheu a conexão direta do cartão de cima. Como esta clínica já tem a conexão, aqui ela não muda nada. Sem a conexão direta, a venda de quem veio de anúncio pode sair pelo provedor do número de WhatsApp. Isso só funciona quando o número foi conectado por um provedor que faz esse repasse e que já está ligado à sua fonte de dados da Meta. Um número conectado pelo QR Code não envia nada por aqui. Saem para o provedor o valor, a moeda, o telefone do cliente e a conversa. A chave vem desligada e salva assim que você clica: ligue só se a sua política de privacidade cobre esse uso.",
           "rota": "/app/settings/conversoes",
           "antes": [
             {

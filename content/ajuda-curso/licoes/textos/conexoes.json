@@ -22,7 +22,7 @@
         {
           "id": "p1",
           "titulo": "Onde ficam os seus canais",
-          "texto": "Conexões é a tela dos canais por onde a clínica fala com os clientes. Só quem é administrador abre esta tela. No alto ficam as abas, uma por tipo de canal. A tela abre em \"Números por QR\", que são os números de WhatsApp conectados lendo um QR Code com o celular. As outras abas (\"API Oficial (Meta)\", \"Provedor parceiro\", \"Telefone\", \"Redes sociais\" e \"Chamada de voz\") aparecem na última lição. A faixa vermelha no alto aparece quando algum número cai. Ela é explicada no passo 5.",
+          "texto": "Conexões é a tela dos canais por onde a clínica fala com os clientes. Só quem é administrador abre esta tela. No alto ficam as abas, uma por tipo de canal. A tela abre em \"Números por QR\", que são os números de WhatsApp conectados lendo um QR Code com o celular. As outras abas (\"API Oficial (Meta)\", \"Telefone\", \"Facebook / Instagram\" e \"Chamada de voz\") aparecem na última lição. A faixa vermelha no alto aparece quando algum número cai. Ela é explicada no passo 5.",
           "rota": "/app/connections",
           "antes": [
             {
@@ -1045,7 +1045,7 @@
     {
       "id": "outros-canais",
       "titulo": "Os outros tipos de canal",
-      "objetivo": "Conhecer as abas da API Oficial da Meta, do provedor parceiro, do telefone, das redes sociais e da chamada de voz, e o que cada uma pede para funcionar.",
+      "objetivo": "Conhecer as abas da API Oficial da Meta, do telefone, do Facebook / Instagram e da chamada de voz, e o que cada uma pede para funcionar.",
       "papel": "admin",
       "busca": [
         "api oficial do whatsapp",
@@ -1141,44 +1141,6 @@
           ]
         },
         {
-          "id": "p3",
-          "titulo": "Provedor parceiro",
-          "texto": "A aba \"Provedor parceiro\" liga um número oficial do WhatsApp Business por meio de uma empresa parceira, cujo nome aparece no título do cartão. Você precisa ter conta com essa empresa. Cole a \"Conta\" (o identificador do número no painel do parceiro) e a \"Chave de API\" e clique em \"Conectar\". A chave é testada com o parceiro antes de ser guardada, e o selo \"Não conectado\" muda quando der certo. Logo depois, a tela mostra dois valores para colar no painel do parceiro. Copie na hora: o segredo só aparece uma vez, e sem esse passo as respostas dos clientes não chegam.",
-          "rota": "/app/connections?aba=parceiro",
-          "antes": [
-            {
-              "acao": "esperar",
-              "ms": 1500
-            }
-          ],
-          "destaques": [
-            {
-              "alvo": {
-                "rotulo": "Conta",
-                "exato": true
-              },
-              "rotulo": "Identificador no parceiro",
-              "tipo": "caixa"
-            },
-            {
-              "alvo": {
-                "rotulo": "Chave de API",
-                "exato": true
-              },
-              "rotulo": "Chave do parceiro",
-              "tipo": "caixa"
-            },
-            {
-              "alvo": {
-                "texto": "Não conectado",
-                "exato": true
-              },
-              "rotulo": "Situação",
-              "tipo": "caixa"
-            }
-          ]
-        },
-        {
           "id": "p4",
           "titulo": "Telefone",
           "texto": "A aba \"Telefone\" lista os números que recebem ligações. Cada número aponta para um agente de voz e um modo de atendimento. Para cadastrar, clique em \"Novo número\". As ligações só chegam se quem cuida da instalação tiver contratado e ligado a linha telefônica: cadastrar aqui, sozinho, não faz o telefone tocar. A clínica de exemplo ainda não tem nenhum.",
@@ -1211,8 +1173,8 @@
         },
         {
           "id": "p5",
-          "titulo": "Redes sociais",
-          "texto": "A aba \"Redes sociais\" traz as mensagens das suas contas em redes sociais para o atendimento. Ela usa um provedor externo que você precisa contratar. Primeiro cole a \"Chave de API\" desse provedor e clique em \"Buscar perfis\". Escolha o perfil da empresa e clique em \"Salvar conexão\". Depois autorize cada rede em \"Autorizar conta\" e, no cartão da conta, clique em \"Receber no atendimento\" para as mensagens entrarem na Inbox.",
+          "titulo": "Facebook / Instagram",
+          "texto": "A aba \"Facebook / Instagram\" traz as mensagens do Messenger e do Instagram da empresa para o atendimento, direto pela Meta. Clique em \"Conectar Instagram / Facebook\", entre com o Facebook e escolha a página da empresa. As mensagens do Messenger e do Instagram profissional ligado a essa página passam a chegar na Inbox. Se o botão estiver apagado, com o aviso de que o app da Meta ainda não foi configurado, peça a quem cuida da instalação para configurá-lo.",
           "rota": "/app/connections?aba=sociais",
           "antes": [
             {
@@ -1223,19 +1185,11 @@
           "destaques": [
             {
               "alvo": {
-                "rotulo": "Chave de API",
-                "exato": true
-              },
-              "rotulo": "Chave do provedor",
-              "tipo": "caixa"
-            },
-            {
-              "alvo": {
                 "role": "button",
-                "nome": "Buscar perfis",
+                "nome": "Conectar Instagram / Facebook",
                 "exato": true
               },
-              "rotulo": "Achar o perfil da empresa",
+              "rotulo": "Conectar pela Meta",
               "tipo": "seta"
             }
           ]

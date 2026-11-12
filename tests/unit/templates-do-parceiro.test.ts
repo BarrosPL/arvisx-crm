@@ -97,11 +97,18 @@ describe("os elos que somem sem barulho", () => {
     expect(fonte).toMatch(/queryKey: \["templates-da-conversa", fonte\]/);
   });
 
-  it("a aba existe dentro do canal do parceiro", () => {
-    // Sem porta, a tela não é alcançável — e o CI já reprova tela sem porta.
+  it("ArvisX: a aba do canal do parceiro saiu de Conexões, e o cliente de modelos continua no repositório", () => {
+    // Decisão do dono em 12/11/2026: o cliente não vê mais a conexão por
+    // provedor parceiro. A casca não monta mais o cliente de modelos SEM rota (o
+    // do parceiro); o da aba Graph, com rota, continua (caso abaixo). Nada foi
+    // apagado: os dois componentes seguem no disco para quando a aba voltar.
     const fonte = readFileSync("components/connections/ConexoesShell.tsx", "utf8");
-    expect(fonte).toMatch(/\n\s*<TemplatesParceiroClient \/>/);
-    expect(fonte).toMatch(/Modelos do parceiro/);
+    expect(fonte).not.toMatch(/<TemplatesParceiroClient \/>/);
+    expect(fonte).not.toMatch(/<CanalParceiroClient/);
+    expect(fonte).not.toMatch(/TabsTrigger value="parceiro"|TabsContent value="parceiro"/);
+    expect(fonte).not.toMatch(/t\("Provedor parceiro"\)|t\("Modelos do parceiro"\)/);
+    expect(readFileSync("components/connections/TemplatesParceiroClient.tsx", "utf8")).toMatch(/export function TemplatesParceiroClient/);
+    expect(readFileSync("components/connections/CanalParceiroClient.tsx", "utf8")).toMatch(/export function CanalParceiroClient/);
   });
 
   it("a aba Graph GERENCIA modelo — o gerenciar={false} saiu (#1734)", () => {

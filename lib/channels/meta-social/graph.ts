@@ -51,7 +51,7 @@ export function fraseDoErroDaGraph(d: DetalheDoErroDaGraph): string {
     return "Fora da janela de 24 horas: a Meta só aceita resposta a quem escreveu nas últimas 24 horas. Aguarde o cliente escrever de novo.";
   }
   if (code === 190 || code === 102) {
-    return "A autorização da Meta expirou ou foi removida. Reconecte a página em Conexões › Redes sociais.";
+    return "A autorização da Meta expirou ou foi removida. Reconecte a página em Conexões › Facebook / Instagram.";
   }
   if (code === 10 || (code !== null && code >= 200 && code < 300)) {
     return "A Meta recusou por falta de permissão. Reconecte a página e aceite todas as permissões pedidas.";

@@ -96,13 +96,18 @@ function chamadasDeSessao(): string[] {
 }
 
 describe("o passo do telefone pergunta como a pessoa já usa o número", () => {
-  it("abre com a pergunta e as três formas, não com o código", () => {
-    montar();
+  it("abre com a pergunta e as duas formas, não com o código", () => {
+    const { container } = montar();
 
     expect(screen.getByText(/como você já usa esse número/i)).toBeTruthy();
     expect(screen.getByTestId("forma-qr")).toBeTruthy();
     expect(screen.getByTestId("forma-oficial")).toBeTruthy();
-    expect(screen.getByTestId("forma-parceiro")).toBeTruthy();
+    // ArvisX, 12/11/2026: a forma "provedor parceiro" saiu da escolha (decisão do
+    // dono). São duas opções, e o texto de apoio fala "do outro", não "dos outros dois".
+    expect(container.querySelectorAll('[data-testid^="forma-"]')).toHaveLength(2);
+    expect(screen.queryByTestId("forma-parceiro")).toBeNull();
+    expect(container.textContent).not.toMatch(/provedor parceiro|empresa parceira/i);
+    expect(screen.getByText(/Se você nunca ouviu falar do outro, é o primeiro\./)).toBeTruthy();
 
     // O código não pode estar na tela antes de alguém escolher lê-lo.
     expect(screen.queryByAltText(/código qr/i)).toBeNull();
@@ -138,14 +143,16 @@ describe("o passo do telefone pergunta como a pessoa já usa o número", () => {
     expect(chamadasDeSessao()).toEqual([]);
   });
 
-  it("escolher provedor parceiro leva ao canal do parceiro", async () => {
+  it("nenhuma escolha leva ao canal do parceiro: ele não é mais oferecido", async () => {
     montar();
 
-    fireEvent.click(screen.getByTestId("forma-parceiro").querySelector("input")!);
-
-    await waitFor(() => expect(screen.getByTestId("dublê-parceiro")).toBeTruthy());
-    expect(screen.queryByTestId("dublê-oficial")).toBeNull();
-    expect(chamadasDeSessao()).toEqual([]);
+    for (const forma of ["forma-qr", "forma-oficial"]) {
+      fireEvent.click(screen.getByTestId(forma).querySelector("input")!);
+      await waitFor(() => expect(screen.queryByTestId("forma-qr")).toBeNull());
+      expect(screen.queryByTestId("dublê-parceiro")).toBeNull();
+      fireEvent.click(screen.getByText(/Escolher outra forma/));
+      await waitFor(() => expect(screen.getByTestId("forma-qr")).toBeTruthy());
+    }
   });
 
   it("dá para voltar e trocar de forma — escolher não tranca a porta", async () => {

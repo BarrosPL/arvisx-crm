@@ -110,7 +110,7 @@ export const socialAdapter: ChannelAdapter = {
       organizationId: envelope.organizationId,
       accountId: envelope.sessionRef,
     });
-    if (!creds) throw new Error("Reconecte esta conta em Redes sociais.");
+    if (!creds) throw new Error("Reconecte esta conta em Conexões › Facebook / Instagram.");
     await envelope.beforeSend?.();
     const result = await socialRequest(
       creds.apiKey,

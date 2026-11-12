@@ -6,7 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RedesSociaisClient } from "./RedesSociaisClient";
 import { CanalGraphParceiroClient } from "./CanalGraphParceiroClient";
 import { CanalOficialClient } from "./CanalOficialClient";
-import { CanalParceiroClient } from "./CanalParceiroClient";
 import { CanalVozClient } from "./CanalVozClient";
 import { ConnectionsClient } from "./ConnectionsClient";
 import { TemplatesClient } from "./TemplatesClient";
@@ -62,15 +61,18 @@ export function ConexoesShell({
       ? "sociais"
       : abaParam === "oficial"
       ? "oficial"
-      : abaParam === "parceiro"
-        ? "parceiro"
-        : abaParam === "telefonia"
-          ? "telefonia"
-          : abaParam === "voz"
-            ? "voz"
-            : abaParam === "graph" && graphParceiro
-              ? "graph"
-              : "numeros";
+      : abaParam === "telefonia"
+        ? "telefonia"
+        : abaParam === "voz"
+          ? "voz"
+          : abaParam === "graph" && graphParceiro
+            ? "graph"
+            : "numeros";
+  // `?aba=parceiro` não é mais uma aba (decisão do dono, 12/11/2026: o cliente não
+  // vê a conexão do WhatsApp por parceiro). Cai na aba padrão, como qualquer valor
+  // desconhecido, para os links antigos e a volta de `app/auth/partner-return`
+  // não abrirem uma tela vazia. Os componentes do parceiro (`CanalParceiroClient`,
+  // `TemplatesParceiroClient` sem rota) e o backend dele continuam no repositório.
   const sub = params.get("sub") === "templates" ? "templates" : "conexao";
 
   const irPara = (proximaAba: string, proximaSub?: string): void => {
@@ -98,13 +100,11 @@ export function ConexoesShell({
             ele reprova igual. */}
         <TabsTrigger value="numeros">{t("Números por QR")}</TabsTrigger>
         <TabsTrigger value="oficial">{t("API Oficial (Meta)")}</TabsTrigger>
-        {/* "Provedor parceiro" e não a marca: o rótulo da marca vem do servidor
-            (`lib/channels/connect`), porque a tela não pode nomear provider — e
-            porque no dia em que houver um segundo parceiro esta aba não muda.
-            Aqui fica o CONCEITO; lá dentro o cartão diz de quem se trata. */}
-        <TabsTrigger value="parceiro">{t("Provedor parceiro")}</TabsTrigger>
         <TabsTrigger value="telefonia">{t("Telefone")}</TabsTrigger>
-        <TabsTrigger value="sociais">{t("Redes sociais")}</TabsTrigger>
+        {/* O valor continua `sociais` (links salvos e as voltas de OAuth dependem
+            dele); o rótulo diz o que a aba conecta: Messenger e Instagram, direto
+            pela Meta. */}
+        <TabsTrigger value="sociais">{t("Facebook / Instagram")}</TabsTrigger>
         <TabsTrigger value="voz">{t("Chamada de voz")}</TabsTrigger>
         {graphParceiro && <TabsTrigger value="graph">{graphParceiro.label}</TabsTrigger>}
       </TabsList>
@@ -145,26 +145,6 @@ export function ConexoesShell({
           </Tabs>
         </TabsContent>
       )}
-
-      <TabsContent value="parceiro" className="mt-0">
-        {/* Sub-abas como no canal oficial, e pelo mesmo motivo: conectar e
-            gerenciar definições são tarefas diferentes, e empilhá-las numa tela
-            só faz a segunda sumir abaixo da dobra. O rótulo diz "do parceiro"
-            para não colidir com "Templates" da barra lateral, que significa
-            OUTRA coisa (respostas rápidas do atendente). */}
-        <Tabs value={sub} onValueChange={(v) => irPara("parceiro", v)} className="flex flex-col gap-4">
-          <TabsList>
-            <TabsTrigger value="conexao">{t("Conexão")}</TabsTrigger>
-            <TabsTrigger value="templates">{t("Modelos do parceiro")}</TabsTrigger>
-          </TabsList>
-          <TabsContent value="conexao" className="mt-0">
-            <CanalParceiroClient />
-          </TabsContent>
-          <TabsContent value="templates" className="mt-0">
-            <TemplatesParceiroClient />
-          </TabsContent>
-        </Tabs>
-      </TabsContent>
 
       <TabsContent value="oficial" className="mt-0">
         <Tabs value={sub} onValueChange={(v) => irPara("oficial", v)} className="flex flex-col gap-4">

@@ -158,7 +158,7 @@ export const metaSocialAdapter: ChannelAdapter = {
     const db = createAdminClient();
     const cred = await tokenDaSessao(db, envelope.organizationId, envelope.sessionRef);
     if (!cred) {
-      throw new Error("Esta conta está sem autorização da Meta. Reconecte em Conexões › Redes sociais.");
+      throw new Error("Esta conta está sem autorização da Meta. Reconecte em Conexões › Facebook / Instagram.");
     }
     const { appSecret } = await appDaMeta();
     const destinatario = envelope.providerConversationId;

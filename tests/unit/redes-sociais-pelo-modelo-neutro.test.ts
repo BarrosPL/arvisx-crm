@@ -184,7 +184,7 @@ describe("o adapter de uma porta sem credencial falha dizendo o que falta", () =
 
     await expect(adapter.send(ENVELOPE)).rejects.toThrow(PortaSemCredencialError);
     await expect(adapter.send(ENVELOPE)).rejects.toThrow(
-      "Instagram: falta a credencial da conta (token de acesso) para enviar pela conexão por parceiro. Reconecte a conta em Redes sociais.",
+      "Instagram: falta a credencial da conta (token de acesso) para enviar pela conexão por parceiro. Reconecte a conta em Conexões › Facebook / Instagram.",
     );
     // A prova de que não finge sucesso: o transporte não foi chamado uma vez
     // sequer. `{externalId: null}` seria o outro jeito de mentir — "não tentei"

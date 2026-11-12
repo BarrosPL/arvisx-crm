@@ -30328,19 +30328,11 @@
       "foto": "capturas/conexoes--outros-canais--p5.webp",
       "destaques": [
         {
-          "x": 305,
-          "y": 663,
-          "w": 1070,
-          "h": 40,
-          "rotulo": "Chave do provedor",
-          "tipo": "caixa"
-        },
-        {
-          "x": 305,
-          "y": 767,
-          "w": 119.796875,
+          "x": 1134,
+          "y": 353,
+          "w": 240,
           "h": 36,
-          "rotulo": "Achar o perfil da empresa",
+          "rotulo": "Conectar pela Meta",
           "tipo": "seta"
         }
       ],

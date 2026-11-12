@@ -9476,8 +9476,8 @@ export const DICIONARIO: Traducoes = {
     es: "No pude comunicarme con el servidor. Revisa tu conexión e intenta de nuevo.",
   },
   "Como você já usa esse número?": { es: "¿Cómo usas hoy ese número?" },
-  "Existe mais de um jeito de ter WhatsApp para empresa, e cada um conecta de um jeito. Se você nunca ouviu falar dos outros dois, é o primeiro.": {
-    es: "Hay más de una forma de usar WhatsApp para empresas, y cada una se conecta de manera distinta. Si nunca has oído hablar de las otras dos, es la primera.",
+  "Existe mais de um jeito de ter WhatsApp para empresa, e cada um conecta de um jeito. Se você nunca ouviu falar do outro, é o primeiro.": {
+    es: "Hay más de una forma de usar WhatsApp para empresas, y cada una se conecta de manera distinta. Si nunca has oído hablar de la otra, es la primera.",
   },
   "Leio um código com o celular": { es: "Escaneo un código con el celular" },
   "É assim para quase todo mundo. Você abre o WhatsApp no celular que vai atender e aponta para um código que aparece aqui.": {
@@ -14837,6 +14837,9 @@ export const DICIONARIO: Traducoes = {
   "Incidente resolvido com sucesso": { es: "Incidente resuelto correctamente" },
   "Erro ao resolver incidente": { es: "Error al resolver el incidente" },
   "Redes sociais": { es: "Redes sociales" },
+  // A aba de Conexões (antes "Redes sociais"): conexão direta pela Meta, Messenger + Instagram.
+  "Facebook / Instagram": { es: "Facebook / Instagram" },
+  "Conecte o Messenger e o Instagram da sua empresa e receba as mensagens no atendimento.": { es: "Conecta el Messenger y el Instagram de tu empresa y recibe los mensajes en la atención." },
   "Conecte suas contas e receba mensagens no atendimento.": { es: "Conecta tus cuentas y recibe mensajes en atención." },
   "A autorização não foi concluída. Tente conectar novamente e aceite as permissões necessárias.": { es: "La autorización no se completó. Intenta conectar de nuevo y acepta los permisos necesarios." },
   "Autorização concluída. Confira a conta na lista e ative o atendimento, quando disponível.": { es: "Autorización completada. Revisa la cuenta en la lista y activa la atención cuando esté disponible." },
@@ -19904,7 +19907,7 @@ export const DICIONARIO: Traducoes = {
   "Não foi possível desconectar.": { es: "No fue posible desconectar." },
   "O App ID tem só números. Copie do painel da Meta, em Configurações do app › Básico.": { es: "El ID de la app tiene solo números. Cópialo del panel de Meta, en Configuración de la app › Básica." },
   "O app da Meta desta instalação ainda não está configurado. Quem administra a instalação precisa cadastrar o App ID e a chave secreta em Administração › API Oficial da Meta.": { es: "La app de Meta de esta instalación aún no está configurada. Quien administra la instalación debe registrar el ID de la app y la clave secreta en Administración › API Oficial de Meta." },
-  "O app da Meta desta instalação ainda não foi configurado. Peça a quem administra a instalação para cadastrar o App ID e a chave secreta em Administração › API Oficial da Meta. Até lá, use a conexão por parceiro abaixo.": { es: "La app de Meta de esta instalación aún no fue configurada. Pide a quien administra la instalación que registre el ID de la app y la clave secreta en Administración › API Oficial de Meta. Mientras tanto, usa la conexión por socio de abajo." },
+  "O app da Meta desta instalação ainda não foi configurado. Peça a quem administra a instalação para cadastrar o App ID e a chave secreta em Administração › API Oficial da Meta.": { es: "La app de Meta de esta instalación aún no fue configurada. Pide a quien administra la instalación que registre el ID de la app y la clave secreta en Administración › API Oficial de Meta." },
   "O arquivo de configuração do servidor já traz um App ID. O que você salvar aqui passa a valer no lugar dele.": { es: "El archivo de configuración del servidor ya trae un ID de la app. Lo que guardes aquí pasa a valer en su lugar." },
   "O endereço público desta instalação não está configurado (NEXT_PUBLIC_APP_URL). Sem ele não há endereço para cadastrar na Meta.": { es: "La dirección pública de esta instalación no está configurada (NEXT_PUBLIC_APP_URL). Sin ella no hay dirección para registrar en Meta." },
   "O endereço público desta instalação não está configurado, então a Meta não teria para onde devolver a conexão. Peça a quem administra a instalação para defini-lo.": { es: "La dirección pública de esta instalación no está configurada, así que Meta no tendría adónde devolver la conexión. Pide a quien administra la instalación que la defina." },
@@ -19923,7 +19926,7 @@ export const DICIONARIO: Traducoes = {
   "URL dos Termos de Serviço": { es: "URL de los Términos del Servicio" },
   "Webhook (produtos Messenger e Instagram) — URL de callback": { es: "Webhook (productos Messenger e Instagram): URL de devolución de llamada" },
   "Fora da janela de 24 horas: a Meta só aceita resposta a quem escreveu nas últimas 24 horas. Aguarde o cliente escrever de novo.": { es: "Fuera de la ventana de 24 horas: Meta solo acepta respuesta a quien escribió en las últimas 24 horas. Espera a que el cliente escriba de nuevo." },
-  "A autorização da Meta expirou ou foi removida. Reconecte a página em Conexões › Redes sociais.": { es: "La autorización de Meta expiró o fue eliminada. Reconecta la página en Conexiones › Redes sociales." },
+  "A autorização da Meta expirou ou foi removida. Reconecte a página em Conexões › Facebook / Instagram.": { es: "La autorización de Meta expiró o fue eliminada. Reconecta la página en Conexiones › Facebook / Instagram." },
   "A Meta recusou por falta de permissão. Reconecte a página e aceite todas as permissões pedidas.": { es: "Meta lo rechazó por falta de permiso. Reconecta la página y acepta todos los permisos solicitados." },
   "Esta pessoa não está disponível para receber mensagens agora.": { es: "Esta persona no está disponible para recibir mensajes ahora." },
   "A Meta limitou as chamadas desta página por agora. Tente de novo em alguns minutos.": { es: "Meta limitó las llamadas de esta página por ahora. Inténtalo de nuevo en unos minutos." },

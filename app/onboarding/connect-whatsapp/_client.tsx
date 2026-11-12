@@ -360,7 +360,7 @@ export function ConnectWhatsappClient({
           <legend className="text-sm font-medium">{t("Como você já usa esse número?")}</legend>
           <p className="text-xs text-muted-foreground">
             {t(
-              "Existe mais de um jeito de ter WhatsApp para empresa, e cada um conecta de um jeito. Se você nunca ouviu falar dos outros dois, é o primeiro.",
+              "Existe mais de um jeito de ter WhatsApp para empresa, e cada um conecta de um jeito. Se você nunca ouviu falar do outro, é o primeiro.",
             )}
           </p>
           <div className="grid gap-2">
@@ -380,13 +380,9 @@ export function ConnectWhatsappClient({
               corpo={t("Você cadastrou o número na Meta e tem as credenciais em mãos. Não usa o celular para conectar.")}
               onEscolher={setForma}
             />
-            <Escolha
-              valor="parceiro"
-              atual={forma}
-              titulo={t("Contrato de um provedor parceiro")}
-              corpo={t("Uma empresa parceira cuida do seu WhatsApp e te deu uma chave de acesso.")}
-              onEscolher={setForma}
-            />
+            {/* A terceira forma (um provedor parceiro) saiu da escolha em 12/11/2026,
+                por decisão do dono. O ramo `forma === "parceiro"` abaixo continua,
+                sem nenhum botão que leve a ele. */}
           </div>
         </fieldset>
         <Saidas status={status} sessionName={info.session ?? ""} />
