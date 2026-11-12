@@ -22,6 +22,7 @@ import {
 import { apiClient } from "@/lib/api/client";
 import { canalDesativado } from "@/lib/channels/desativado";
 import { useT } from "@/hooks/i18n/useT";
+import { Warning } from "@/lib/ui/icons";
 import { ChannelAiAccess } from "./ChannelAiAccess";
 import { ConexaoDiretaMeta } from "./ConexaoDiretaMeta";
 import { RenomearConexao } from "./RenomearConexao";
@@ -70,6 +71,12 @@ type State = {
  * `lib/channels/social/*` e a rota continuam aqui; voltar a `true` reexibe tudo.
  */
 const CONEXAO_POR_PARCEIRO_VISIVEL: boolean = false;
+/**
+ * A conexão do Facebook / Instagram ainda está em homologação na Meta e não
+ * funciona para o cliente (decisão do dono, 12/11/2026). Com `true`, a aba abre
+ * com um aviso no topo e o botão de conectar apagado. Quando a Meta aprovar o app, voltar a `false`.
+ */
+const EM_HOMOLOGACAO: boolean = true;
 
 export function RedesSociaisClient() {
   const t = useT();
@@ -211,10 +218,27 @@ export function RedesSociaisClient() {
           </Button>
         )}
       </div>
+      {EM_HOMOLOGACAO && (
+        <div
+          role="status"
+          data-testid="aviso-homologacao-meta"
+          className="flex items-start gap-3 rounded-md border border-warning bg-warning-bg p-3 text-sm text-warning-fg"
+        >
+          <Warning size={20} className="mt-0.5 shrink-0" aria-hidden />
+          <div>
+            <p className="font-semibold">{t("Em homologação")}</p>
+            <p>
+              {t(
+                "A conexão com o Facebook e o Instagram está em homologação na Meta e ainda não está funcionando. Avisaremos assim que for liberada.",
+              )}
+            </p>
+          </div>
+        </div>
+      )}
       {/* A porta DIRETA é a única à vista: é a preferida do catálogo
           (lib/channels/social/catalog.ts). A por parceiro, abaixo, está
           escondida por CONEXAO_POR_PARCEIRO_VISIVEL. */}
-      <ConexaoDiretaMeta />
+      <ConexaoDiretaMeta emHomologacao={EM_HOMOLOGACAO} />
       {CONEXAO_POR_PARCEIRO_VISIVEL && (
       <>
       <h3 className="pt-2 text-sm font-semibold text-muted-foreground">

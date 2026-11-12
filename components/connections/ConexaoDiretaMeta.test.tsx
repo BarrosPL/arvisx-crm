@@ -15,10 +15,10 @@ vi.mock("./RenomearConexao", () => ({ RenomearConexao: () => <button>Renomear</b
 
 import { ConexaoDiretaMeta } from "./ConexaoDiretaMeta";
 
-function montar() {
+function montar(emHomologacao = false) {
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <ConexaoDiretaMeta />
+      <ConexaoDiretaMeta emHomologacao={emHomologacao} />
     </QueryClientProvider>,
   );
 }
@@ -34,6 +34,17 @@ it("app da Meta não configurado: botão desligado e a frase dizendo a quem pedi
   montar();
   expect(await screen.findByTestId("meta-app-nao-configurado")).toHaveTextContent(/Administração › API Oficial da Meta/);
   expect(screen.getByTestId("conectar-direto-meta")).toBeDisabled();
+});
+
+it("em homologação: botão de conectar apagado mesmo com o app da Meta pronto", async () => {
+  h.get.mockResolvedValue({ data: { disponivel: true, falta: [], conexoes: [] } });
+  montar(true);
+  const botao = await screen.findByTestId("conectar-direto-meta");
+  await vi.waitFor(() => expect(h.get).toHaveBeenCalled());
+  await new Promise((r) => setTimeout(r, 30));
+  expect(botao).toBeDisabled();
+  fireEvent.click(botao);
+  expect(h.post).not.toHaveBeenCalled();
 });
 
 it("pronto: Conectar pede a URL do login ao servidor", async () => {

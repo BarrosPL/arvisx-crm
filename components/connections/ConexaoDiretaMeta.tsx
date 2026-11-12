@@ -80,7 +80,11 @@ function nomeDaConexao(c: { display_name?: string | null; pagina?: string | null
   return [c.display_name, c.pagina, c.conta].find((v) => v && v.trim()) ?? "";
 }
 
-export function ConexaoDiretaMeta() {
+/**
+ * `emHomologacao`: a conexão ainda não foi liberada pela Meta. O botão de
+ * conectar fica apagado; quem já conectou segue podendo pausar e desconectar.
+ */
+export function ConexaoDiretaMeta({ emHomologacao = false }: { emHomologacao?: boolean } = {}) {
   const t = useT();
   const params = useSearchParams();
   const query = useQuery({
@@ -214,7 +218,7 @@ export function ConexaoDiretaMeta() {
         </div>
         <Button
           data-testid="conectar-direto-meta"
-          disabled={!estado || !!semAppDaMeta || !!ocupado}
+          disabled={emHomologacao || !estado || !!semAppDaMeta || !!ocupado}
           onClick={() => void iniciar()}
         >
           {ocupado === "iniciar" ? t("Abrindo…") : t("Conectar Instagram / Facebook")}

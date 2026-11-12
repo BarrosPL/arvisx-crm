@@ -122,6 +122,10 @@ describe("Conexões sem a aba do provedor parceiro", () => {
     expect(abaAberta()).toBe("Facebook / Instagram");
     expect(screen.getByRole("heading", { level: 2, name: "Facebook / Instagram" })).toBeTruthy();
     expect(screen.getByTestId("conexao-direta-meta")).toBeTruthy();
+    // Em homologação na Meta: o cliente vê o aviso ao abrir a aba.
+    expect(screen.getByTestId("aviso-homologacao-meta").textContent).toMatch(
+      /Em homologação.*ainda não está funcionando/,
+    );
     expect(container.textContent).not.toMatch(/Conexão por parceiro/);
     expect(container.textContent).not.toMatch(/Vincular o provedor|Conectar uma rede|Autorizar conta|Carregando/);
     expect(screen.queryByRole("button", { name: "Atualizar" })).toBeNull();

@@ -14875,6 +14875,8 @@ export const DICIONARIO: Traducoes = {
   "Redes sociais": { es: "Redes sociales" },
   // A aba de Conexões (antes "Redes sociais"): conexão direta pela Meta, Messenger + Instagram.
   "Facebook / Instagram": { es: "Facebook / Instagram" },
+  "A conexão com o Facebook e o Instagram está em homologação na Meta e ainda não está funcionando. Avisaremos assim que for liberada.": { es: "La conexión con Facebook e Instagram está en homologación en Meta y todavía no funciona. Avisaremos en cuanto esté disponible." },
+  "Em homologação": { es: "En homologación" },
   "Conecte o Messenger e o Instagram da sua empresa e receba as mensagens no atendimento.": { es: "Conecta el Messenger y el Instagram de tu empresa y recibe los mensajes en la atención." },
   "Conecte suas contas e receba mensagens no atendimento.": { es: "Conecta tus cuentas y recibe mensajes en atención." },
   "A autorização não foi concluída. Tente conectar novamente e aceite as permissões necessárias.": { es: "La autorización no se completó. Intenta conectar de nuevo y acepta los permisos necesarios." },
