@@ -3065,8 +3065,10 @@ html:has(.lp) {
 /* ---- planos (tarefa 2 dos planos): os cards lidos do cadastro ----
    A grade era de QUATRO colunas fixas; com três planos os cards ficavam
    estreitos, altos e encostados à esquerda. Agora a linha é centralizada e
-   cada card tem largura própria, valha a vitrine três ou quatro planos. */
-.lp .planos-grade {
+   cada card tem largura própria, valha a vitrine três ou quatro planos.
+   O seletor leva `.plano` de propósito: `.lp .plano ul { display: grid }`, lá em
+   cima, é mais específico que `.lp .planos-grade` e empilhava os cards. */
+.lp .plano .planos-grade {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
