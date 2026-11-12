@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { headers } from "next/headers";
 import { Toaster } from "sonner";
+import { marcaEhADoProduto } from "@/lib/branding";
 import { coresDaBarraDoNavegador } from "@/lib/branding/barra-do-navegador";
 import { MarcaDaInstalacaoProvider } from "@/lib/branding/contexto";
 import { cssDaMarca } from "@/lib/branding/css";
@@ -100,6 +101,30 @@ async function marcaResolvida(): Promise<{
 }
 
 /**
+ * As tags de compartilhamento (Open Graph e Twitter) com a arte de
+ * `public/og-arvisx.jpg`. O endereço da imagem é absoluto porque quem a busca é
+ * o servidor do WhatsApp ou da rede social, que não resolve caminho relativo.
+ */
+function cartaoDeCompartilhamento(
+  nome: string,
+  titulo: string,
+  descricao: string,
+): Pick<Metadata, "openGraph" | "twitter"> {
+  const imagem = new URL("/og-arvisx.jpg", env.NEXT_PUBLIC_APP_URL).toString();
+  return {
+    openGraph: {
+      type: "website",
+      siteName: nome,
+      title: titulo,
+      description: descricao,
+      locale: "pt_BR",
+      images: [{ url: imagem, width: 1200, height: 630, alt: nome }],
+    },
+    twitter: { card: "summary_large_image", title: titulo, description: descricao, images: [imagem] },
+  };
+}
+
+/**
  * Metadata dinâmica (não `export const metadata`) para a marca ser lida em RUNTIME.
  * Constante seria resolvida durante o `next build`, e a imagem self-host — que é
  * pré-buildada — carregaria a nossa marca para sempre. Ver `lib/branding.ts`.
@@ -116,13 +141,22 @@ async function marcaResolvida(): Promise<{
 export async function generateMetadata(): Promise<Metadata> {
   const { linha, marca } = await marcaResolvida();
   const { name } = marca;
+  const titulo = `${name} — atendimento e vendas por WhatsApp com agentes de IA`;
+  const descricao =
+    "Centralize o atendimento por WhatsApp num funil só. Agentes de IA resolvem o que dá pra resolver e passam para o time humano o que importa — com tudo registrado. Multi-tenant, LGPD-nativo, feito para operações brasileiras.";
   return {
     title: {
-      default: `${name} — atendimento e vendas por WhatsApp com agentes de IA`,
+      default: titulo,
       template: `%s · ${name}`,
     },
-    description:
-      "Centralize o atendimento por WhatsApp num funil só. Agentes de IA resolvem o que dá pra resolver e passam para o time humano o que importa — com tudo registrado. Multi-tenant, LGPD-nativo, feito para operações brasileiras.",
+    description: descricao,
+    // A imagem que aparece quando alguém cola um link da instalação no WhatsApp,
+    // no Instagram ou no LinkedIn. Mora aqui, e não só na página inicial, para
+    // valer em /login, /signup, /agendar e nas páginas legais: a página que não
+    // declara `openGraph` herda este. A arte soletra a marca do produto, então
+    // só sai quando a marca em vigor é a do produto — instalação com marca
+    // própria não pode ser anunciada com o logo de outra empresa.
+    ...(marcaEhADoProduto(marca) ? cartaoDeCompartilhamento(name, titulo, descricao) : {}),
     applicationName: name,
     authors: [{ name }],
     keywords: ["CRM", "atendimento", "WhatsApp", "IA conversacional", "LGPD", "multi-tenant"],
