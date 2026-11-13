@@ -20091,6 +20091,19 @@ export const DICIONARIO: Traducoes = {
   "Faça este passo no quadro em destaque, no topo desta tela.": { es: "Haz este paso en el recuadro destacado, en la parte superior de esta pantalla." },
   "Este passo é feito na tela {tela}. Clique nela no menu, ou no botão abaixo.": { es: "Este paso se hace en la pantalla {tela}. Haz clic en ella en el menú o en el botón de abajo." },
   "Ir para {tela}": { es: "Ir a {tela}" },
+  // Cadastro em dois passos: a escolha do plano antes do formulário (`EscolhaDoPlano`).
+  "Seus dados": { es: "Tus datos" },
+  "Qual plano se encaixa no seu caso?": { es: "¿Qué plan encaja en tu caso?" },
+  "Escolha o que melhor se encaixa no seu caso e teste por {n} dias. No fim do teste, se gostar, você faz a sua assinatura.": { es: "Elige el que mejor encaja en tu caso y pruébalo durante {n} días. Al final de la prueba, si te gusta, haces tu suscripción." },
+  "Escolha o que melhor se encaixa no seu caso.": { es: "Elige el que mejor encaja en tu caso." },
+  "Não tem agentes de IA": { es: "No incluye agentes de IA" },
+  "Testar o {plano} por {n} dias": { es: "Probar {plano} durante {n} días" },
+  "Escolher o {plano}": { es: "Elegir {plano}" },
+  "Esconder a comparação": { es: "Ocultar la comparación" },
+  "Comparar os planos": { es: "Comparar los planes" },
+  "{n} dias de teste. Se gostar, a assinatura é {preco} por {periodo}.": { es: "{n} días de prueba. Si te gusta, la suscripción es {preco} por {periodo}." },
+  "Criar conta e testar o {plano}": { es: "Crear cuenta y probar {plano}" },
+  "Você testa por {n} dias. No fim, se gostar, faz a sua assinatura.": { es: "Pruebas durante {n} días. Al final, si te gusta, haces tu suscripción." },
 };
 
 /**

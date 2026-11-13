@@ -86,9 +86,12 @@ const ico = { className: "ico", size: "1em", "aria-hidden": true } as const;
 const negrito = { ...ico, weight: "bold" } as const;
 
 // Botão de cadastro: com CADASTRO_ABERTO desligado vira "Lançamento em breve", sem link.
-function BotaoDeCadastro({ className, comSeta }: { className: string; comSeta: boolean }) {
+// `plano`: o botão de um cartão de plano leva a escolha ao cadastro (`?plano=<id>`),
+// que então pula o passo de escolher. Sem ele, quem clicava num plano aqui
+// chegava ao cadastro com outro plano marcado.
+function BotaoDeCadastro({ className, comSeta, plano }: { className: string; comSeta: boolean; plano?: string }) {
   return CADASTRO_ABERTO ? (
-    <a className={className} href={LINKS.cadastro}>
+    <a className={className} href={plano ? `${LINKS.cadastro}?plano=${encodeURIComponent(plano)}` : LINKS.cadastro}>
       <span>{OFERTA.cta}</span>
       {comSeta ? <ArrowRight {...negrito} /> : null}
     </a>
@@ -261,7 +264,7 @@ export default async function HomePage() {
         <section className="faixa dor claro">
           <div className="miolo">
             <div className="cabeca">
-              <p className="eyebrow">A dor</p>
+              <p className="eyebrow">A solução</p>
               <h2>Hoje a venda está espalhada em três lugares.</h2>
             </div>
             <div className="grade">
@@ -854,7 +857,7 @@ export default async function HomePage() {
                           Agendar reunião
                         </a>
                       ) : (
-                        <BotaoDeCadastro className={`btn ${destaque ? "primario" : "secundario"}`} comSeta={false} />
+                        <BotaoDeCadastro className={`btn ${destaque ? "primario" : "secundario"}`} comSeta={false} plano={plano.id} />
                       )}
                     </li>
                   );

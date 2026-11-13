@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { EntrarComGoogle } from "@/components/auth/EntrarComGoogle";
+import { EscolhaDoPlano } from "@/components/auth/EscolhaDoPlano";
 import { SignupForm } from "@/components/auth/SignupForm";
 import { SimboloDoProduto } from "@/components/branding/MarcaDoProduto";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,8 @@ import { idiomaDoVisitante } from "@/lib/i18n/idiomaAnonimo";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { lerCadastroNaTela, planoInicialDoSeletor, planosDoSeletor } from "@/lib/cobranca/cadastro";
+import { cartoesDoCadastro, planoDaUrl } from "@/lib/cobranca/cartoes-do-cadastro";
+import { planosDaVitrine } from "@/lib/landing/planos";
 import { tituloDaTelaPublica } from "@/lib/i18n/titulo-da-tela-publica";
 
 // A aba no idioma do visitante, como o corpo (`lib/i18n/titulo-da-tela-publica.ts`).
@@ -44,9 +47,9 @@ export const generateMetadata = () => tituloDaTelaPublica((t) => t("Criar conta"
 export default async function SignupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ invite?: string }>;
+  searchParams: Promise<{ invite?: string; plano?: string }>;
 }) {
-  const { invite } = await searchParams;
+  const { invite, plano: planoPedido } = await searchParams;
   const payload = invite ? verifyInviteToken(invite) : null;
   const convite = invite && payload ? { token: invite, email: payload.email } : undefined;
   const conviteExpirado = Boolean(invite) && !payload;
@@ -73,6 +76,12 @@ export default async function SignupPage({
   const cadastro = convite ? null : await lerCadastroNaTela(createAdminClient());
   const planos = planosDoSeletor(cadastro);
   const googleSemPlano = cadastro?.exigeEscolha ?? false;
+  // Cadastro em dois passos: com plano oferecido, a pessoa escolhe o plano ANTES
+  // do formulário, em cartões com o texto de cada um (os mesmos da página
+  // inicial). `?plano=<id>` é o botão do cartão da página inicial: a escolha já
+  // foi feita lá, e o primeiro passo é pulado. Vitrine que não lê = cartões só
+  // com nome e preço; nada trava. Ver `components/auth/EscolhaDoPlano.tsx`.
+  const cartoes = cartoesDoCadastro(planos, planos.length > 0 ? (await planosDaVitrine()).planos : []);
 
   // Convite VÁLIDO passa em qualquer modo — é o ponto inteiro do convite.
   const modo = convite ? null : await modoDeCadastro();
@@ -116,6 +125,7 @@ export default async function SignupPage({
   const googleLigado = (await estadoDoProvedorGoogle()) === "ligado";
 
   return (
+    <EscolhaDoPlano planos={cartoes} planoInicial={planoDaUrl(cartoes, planoPedido)} cabecalho={icone}>
     <div className="space-y-6">
       <div className="space-y-5">
         {icone}
@@ -186,5 +196,6 @@ export default async function SignupPage({
         </Link>
       </p>
     </div>
+    </EscolhaDoPlano>
   );
 }

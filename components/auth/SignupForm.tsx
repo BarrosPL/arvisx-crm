@@ -24,6 +24,7 @@ import { PasswordStrength } from "@/components/auth/PasswordStrength";
 import { AvisoSemResposta, useEnvioComTeto } from "@/components/auth/teto-da-espera";
 import type { PlanoDoCadastro } from "@/lib/cobranca/cadastro";
 import { formatCents } from "@/lib/money";
+import { usePlanoEscolhido } from "@/components/auth/EscolhaDoPlano";
 
 /**
  * Convite em curso: a conta está sendo criada para ACEITAR um convite, não para
@@ -56,6 +57,9 @@ export function SignupForm({
   const t = useT();
   const idioma = useIdioma();
   const router = useRouter();
+  // Cadastro em dois passos (`EscolhaDoPlano`): o plano já foi escolhido no passo
+  // anterior. Fora dele é `null` e o formulário segue com o seletor de sempre.
+  const escolhido = usePlanoEscolhido();
   const { pendente: isPending, semResposta, enviar } = useEnvioComTeto();
   const [serverError, setServerError] = useState<string | null>(null);
   const [contaExistente, setContaExistente] = useState(false);
@@ -82,7 +86,7 @@ export function SignupForm({
     defaultValues: {
       full_name: "",
       org_name: "",
-      cobranca_plan_id: planoInicial,
+      cobranca_plan_id: escolhido?.plano.id ?? planoInicial,
       email: convite?.email ?? "",
       password: "",
       password_confirm: "",
@@ -248,7 +252,35 @@ export function SignupForm({
           {t("Você começa com {n} dias de teste grátis. O plano você escolhe depois, em Plano e cobrança.").replace("{n}", String(diasDeTesteGratis))}
         </p>
       )}
-      {!convite && planos.length > 0 && (
+      {!convite && escolhido && (
+        <div
+          data-testid="plano-escolhido"
+          className="flex items-start justify-between gap-3 rounded-md border bg-muted/40 px-3 py-2.5 text-sm"
+        >
+          {/* O valor vai no formulário pelo `defaultValues`: o campo é só registrado. */}
+          <input type="hidden" {...register("cobranca_plan_id")} />
+          <p>
+            <span className="font-semibold">
+              {t("Plano")} {escolhido.plano.nome}
+            </span>
+            {" · "}
+            {escolhido.plano.trial_dias > 0
+              ? t("{n} dias de teste. Se gostar, a assinatura é {preco} por {periodo}.")
+                  .replace("{n}", String(escolhido.plano.trial_dias))
+                  .replace("{preco}", formatCents(escolhido.plano.preco_cents, escolhido.plano.moeda))
+                  .replace("{periodo}", escolhido.plano.intervalo === "ano" ? t("ano") : t("mês"))
+              : `${formatCents(escolhido.plano.preco_cents, escolhido.plano.moeda)} / ${escolhido.plano.intervalo === "ano" ? t("ano") : t("mês")}`}
+          </p>
+          <button
+            type="button"
+            onClick={escolhido.trocar}
+            className="shrink-0 font-medium underline underline-offset-4"
+          >
+            {t("Trocar")}
+          </button>
+        </div>
+      )}
+      {!convite && !escolhido && planos.length > 0 && (
         <div className="space-y-1.5">
           <Label htmlFor="cobranca_plan_id">{t("Plano")}</Label>
           <select id="cobranca_plan_id" className="h-10 w-full rounded-md border bg-background px-3 text-sm" {...register("cobranca_plan_id")}>
@@ -349,8 +381,20 @@ export function SignupForm({
       )}
       {semResposta && <AvisoSemResposta />}
       <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? t("Criando conta...") : t("Criar conta")}
+        {isPending
+          ? t("Criando conta...")
+          : escolhido && escolhido.plano.trial_dias > 0
+            ? t("Criar conta e testar o {plano}").replace("{plano}", escolhido.plano.nome)
+            : t("Criar conta")}
       </Button>
+      {escolhido && escolhido.plano.trial_dias > 0 && (
+        <p className="text-center text-xs text-muted-foreground">
+          {t("Você testa por {n} dias. No fim, se gostar, faz a sua assinatura.").replace(
+            "{n}",
+            String(escolhido.plano.trial_dias),
+          )}
+        </p>
+      )}
     </form>
   );
 }

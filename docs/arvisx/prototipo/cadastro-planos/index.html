@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cadastro · escolha do plano</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  html, body { margin: 0; }
+  body { background: var(--painel-3); color: var(--texto); font: 500 14px/1.5 var(--sans); min-height: 100vh; }
+  button { font: inherit; cursor: pointer; }
+  .mono { font-family: var(--mono); }
+
+  /* visor */
+  .v-topo { position: sticky; top: 0; z-index: 50; background: var(--navy); color: var(--inverso); padding: 12px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+  .v-topo h1 { font: 650 17px/1.1 var(--display); font-stretch: 112%; letter-spacing: -.02em; margin: 0; color: #fff; }
+  .v-topo h1 em { font-style: normal; color: var(--ouro); }
+  .v-grupo { display: flex; align-items: center; gap: 8px; }
+  .v-grupo > span { font: 500 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: #8b95a6; }
+  .seg { display: inline-flex; background: var(--navy-3); border: 1px solid var(--navy-linha); border-radius: 999px; padding: 3px; }
+  .seg button { border: 0; background: transparent; color: #b9c1ce; padding: 6px 13px; border-radius: 999px; font-weight: 700; font-size: 12.5px; white-space: nowrap; }
+  .seg button[aria-pressed="true"] { background: var(--ouro); color: var(--navy); }
+  .v-nota { margin: 14px 20px 0; background: var(--painel); border: 1px solid var(--linha); border-radius: var(--r-lg); padding: 14px 18px; }
+  .v-nota h2 { font: 650 15px/1.2 var(--display); font-stretch: 110%; margin: 0 0 6px; color: var(--navy); }
+  .v-nota ul { margin: 0; padding-left: 18px; color: var(--apoio); } .v-nota li { margin: 3px 0; } .v-nota li b { color: var(--texto); }
+  .palco { padding: 14px 20px 40px; display: flex; justify-content: center; }
+  .quadro { border: 1px solid var(--linha-forte); border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--sombra); width: 100%; background: var(--fundo); }
+  .palco.celular .quadro { max-width: 390px; }
+  .quadro-in { container-type: inline-size; background: var(--fundo); min-height: 760px; }
+
+  /* peças */
+  .bt { border: 1px solid transparent; border-radius: var(--r); padding: 11px 18px; font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+  .bt.ouro { background: var(--ouro); color: var(--navy); } .bt.ouro:hover { background: var(--ouro-claro); } .bt.ouro:disabled { opacity: .4; cursor: not-allowed; }
+  .bt.sec { background: var(--painel); border-color: var(--linha-forte); color: var(--texto); } .bt.bloco { width: 100%; box-sizing: border-box; }
+  .cp { display: grid; gap: 5px; margin-bottom: 13px; } .cp label { font-weight: 700; font-size: 13px; }
+  .cp input, .cp select { font: 500 14px/1.4 var(--sans); padding: 9px 11px; border: 1px solid var(--linha-forte); border-radius: var(--r); background: var(--painel); color: var(--texto); width: 100%; box-sizing: border-box; }
+  .cp input:focus, .cp select:focus { outline: 2px solid rgba(212,175,55,.55); outline-offset: 1px; border-color: var(--ouro); }
+  .c2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .aj { font-size: 12px; color: var(--apoio); margin: 0; }
+  .tg { font: 600 9.5px/1 var(--mono); letter-spacing: .07em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; background: var(--painel-3); color: var(--apoio); white-space: nowrap; display: inline-flex; gap: 5px; align-items: center; }
+  .tg.ouro { background: var(--ouro); color: var(--navy); } .tg.ia { background: var(--navy); color: var(--ouro); } .tg.ok { background: var(--ok-suave); color: var(--ok); }
+  .marca { display: flex; align-items: center; gap: 10px; } .marca img { height: 34px; }
+  .marca b { font: 700 15px/1 var(--display); font-stretch: 118%; letter-spacing: .14em; color: var(--navy); } .marca b em { font-style: normal; color: var(--ouro-escuro); margin-left: 4px; font-weight: 600; }
+  .marca.clara b { color: #fff; } .marca.clara b em { color: var(--ouro); }
+  .tit { font: 650 28px/1.08 var(--display); font-stretch: 112%; letter-spacing: -.03em; color: var(--navy); margin: 0; }
+  .sub { color: var(--apoio); margin: 8px 0 0; }
+  .teste { display: inline-flex; gap: 8px; align-items: center; background: var(--ok-suave); color: var(--ok); border-radius: 999px; padding: 7px 13px; font-weight: 700; font-size: 13px; }
+  @keyframes entra { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* fachada dividida (a de hoje) */
+  .fach { display: grid; grid-template-columns: 1.05fr 1fr; min-height: 760px; }
+  .fach .lado { background: var(--navy); color: var(--inverso); padding: 40px 48px; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+  .fach .lado::after { content: ""; position: absolute; right: -150px; bottom: -150px; width: 440px; height: 440px; border-radius: 50%; border: 1px solid rgba(212,175,55,.3); pointer-events: none; }
+  .fach .lado .eb { font: 600 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ouro); margin-top: 56px; }
+  .fach .lado h2 { font: 650 38px/1.03 var(--display); font-stretch: 118%; letter-spacing: -.035em; color: #fff; margin: 14px 0 0; max-width: 13ch; }
+  .fach .lado h2 em { font-style: normal; color: var(--ouro); }
+  .fach .form { padding: 40px 48px; display: flex; flex-direction: column; justify-content: center; }
+  .fach .form .dentro { width: 100%; max-width: 400px; margin: 0 auto; }
+  .entrar { text-align: center; font-size: 13px; color: var(--apoio); margin-top: 14px; } .entrar u { color: var(--texto); text-underline-offset: 3px; }
+
+  /* cartões de plano */
+  .planos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
+  .plano { position: relative; text-align: left; background: var(--painel); border: 2px solid var(--linha); border-radius: var(--r-lg); padding: 20px 18px 18px; display: flex; flex-direction: column; gap: 10px; color: var(--texto); transition: border-color .15s, box-shadow .15s, transform .15s; }
+  .plano:hover { border-color: var(--linha-forte); transform: translateY(-2px); }
+  .plano.on { border-color: var(--ouro); box-shadow: 0 0 0 4px rgba(212,175,55,.18), var(--sombra); }
+  .plano .selo { position: absolute; top: -11px; left: 16px; }
+  .plano .marcado { position: absolute; top: 14px; right: 14px; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--linha-forte); display: grid; place-items: center; font-size: 13px; color: transparent; }
+  .plano.on .marcado { background: var(--ouro); border-color: var(--ouro); color: var(--navy); }
+  .plano h3 { font: 650 20px/1.1 var(--display); font-stretch: 110%; margin: 0; color: var(--navy); }
+  .plano .curta { font-weight: 700; font-size: 13.5px; margin: 0; }
+  .plano .quem { font-size: 12.5px; color: var(--apoio); margin: 0; min-height: 3.6em; }
+  .plano .preco { display: flex; align-items: baseline; gap: 6px; padding: 10px 0; border-block: 1px solid var(--linha); }
+  .plano .preco b { font: 650 26px/1 var(--display); letter-spacing: -.02em; color: var(--navy); } .plano .preco span { font-size: 12.5px; color: var(--apoio); }
+  .plano ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13px; }
+  .plano li { display: flex; gap: 8px; align-items: flex-start; } .plano li i { color: var(--ok); font-size: 15px; margin-top: 2px; flex: none; }
+  .plano li.nao { color: var(--fraco); } .plano li.nao i { color: var(--fraco); }
+  .plano li.ia { font-weight: 700; } .plano li.ia i { color: var(--ouro-escuro); }
+  .plano .pe { margin-top: auto; padding-top: 6px; }
+  .resumo { background: var(--navy); color: #d8dce3; border-radius: var(--r-lg); padding: 14px 16px; display: flex; gap: 12px; align-items: center; animation: entra .3s both; }
+  .resumo i { font-size: 24px; color: var(--ouro); flex: none; } .resumo b { color: #fff; } .resumo .tx { flex: 1; min-width: 0; font-size: 13px; }
+  .resumo .troca { border: 0; background: none; color: var(--ouro-claro); text-decoration: underline; text-underline-offset: 3px; font-size: 12.5px; padding: 0; white-space: nowrap; }
+  .comparar { border: 0; background: none; color: var(--apoio); text-decoration: underline; text-underline-offset: 3px; font-size: 13px; padding: 0; }
+  .tabela-c { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; background: var(--painel); border: 1px solid var(--linha); border-radius: var(--r); overflow: hidden; animation: entra .3s both; }
+  .tabela-c th, .tabela-c td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--linha); } .tabela-c th { font: 600 10.5px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--apoio); background: var(--painel-2); }
+  .tabela-c td.sim { color: var(--ok); font-weight: 700; } .tabela-c td.nao { color: var(--fraco); } .tabela-c .col-on { background: var(--ouro-suave); }
+
+  /* A: cartões na página */
+  .pa { max-width: 1060px; margin: 0 auto; padding: 32px 28px 48px; }
+  .pa-cab { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 26px; }
+  .pa-passo { display: flex; align-items: center; gap: 10px; margin: 30px 0 14px; } .pa-passo .n { width: 26px; height: 26px; border-radius: 50%; background: var(--navy); color: var(--ouro); display: grid; place-items: center; font: 600 12px/1 var(--mono); }
+  .pa-passo h3 { font: 650 17px/1.2 var(--display); margin: 0; color: var(--navy); }
+  .pa-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); gap: 22px; align-items: start; background: var(--painel); border: 1px solid var(--linha); border-radius: var(--r-lg); padding: 22px; }
+
+  /* B: dois passos */
+  .pb { max-width: 1060px; margin: 0 auto; padding: 36px 28px 48px; }
+  .pb-topo { text-align: center; margin: 22px auto 28px; max-width: 620px; }
+  .pb .plano .bt { margin-top: 4px; }
+  .pb-form { max-width: 460px; margin: 26px auto 0; background: var(--painel); border: 1px solid var(--linha); border-radius: var(--r-lg); padding: 24px; animation: entra .35s both; }
+  .trilha { display: flex; justify-content: center; gap: 8px; align-items: center; font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--fraco); }
+  .trilha b { color: var(--navy); } .trilha i { width: 28px; height: 1px; background: var(--linha-forte); }
+
+  /* C: lado a lado */
+  .fach .lado.c { padding: 36px 36px; }
+  .lista-c { display: grid; gap: 10px; margin-top: 22px; position: relative; z-index: 1; }
+  .linha-c { text-align: left; background: var(--navy-2); border: 1.5px solid var(--navy-linha); border-radius: var(--r-lg); padding: 14px 16px; color: #d8dce3; display: block; width: 100%; box-sizing: border-box; transition: border-color .15s, background .15s; }
+  .linha-c:hover { border-color: #47536a; }
+  .linha-c.on { border-color: var(--ouro); background: var(--navy-3); box-shadow: 0 0 0 4px rgba(212,175,55,.14); }
+  .linha-c .cab-c { display: flex; align-items: center; gap: 10px; }
+  .linha-c .rd { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #47536a; flex: none; } .linha-c.on .rd { border-color: var(--ouro); background: radial-gradient(var(--ouro) 45%, transparent 50%); }
+  .linha-c h3 { font: 650 17px/1.1 var(--display); margin: 0; color: #fff; } .linha-c .curta { font-size: 12.5px; color: #a2abb9; margin: 0; }
+  .linha-c .pr { margin-left: auto; text-align: right; white-space: nowrap; } .linha-c .pr b { font: 650 18px/1 var(--display); color: #fff; } .linha-c .pr span { display: block; font-size: 11px; color: #8b95a6; margin-top: 3px; }
+  .linha-c .mais { display: none; margin: 12px 0 0 28px; } .linha-c.on .mais { display: block; animation: entra .25s both; }
+  .linha-c .mais p { font-size: 12.5px; color: #a2abb9; margin: 0 0 8px; }
+  .linha-c .mais ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 5px 14px; font-size: 12.5px; }
+  .linha-c .mais li { display: flex; gap: 7px; } .linha-c .mais li i { color: var(--ouro); margin-top: 2px; } .linha-c .mais li.nao { color: #6c7586; } .linha-c .mais li.nao i { color: #6c7586; }
+
+  @container (max-width: 760px) {
+    .fach { grid-template-columns: minmax(0, 1fr); } .fach .lado { padding: 24px 20px; } .fach .lado h2 { font-size: 26px; } .fach .lado .eb { margin-top: 24px; } .fach .form { padding: 24px 20px; }
+    .fach .lado.antes { display: none; }
+    .planos { grid-template-columns: minmax(0, 1fr); } .plano .quem { min-height: 0; }
+    .pa, .pb { padding: 20px 16px 36px; } .pa-form { grid-template-columns: minmax(0, 1fr); padding: 16px; } .c2 { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    .tit { font-size: 23px; } .linha-c .mais ul { grid-template-columns: 1fr; } .linha-c .mais { margin-left: 0; }
+    .tabela-c th, .tabela-c td { padding: 8px 7px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<header class="v-topo">
+  <h1>Cadastro <em>escolha do plano</em></h1>
+  <div class="v-grupo"><span>Ver</span><div class="seg" id="segVista">
+    <button data-vista="antes">Hoje</button><button data-vista="a">A · Cartões</button><button data-vista="b">B · Dois passos</button><button data-vista="c">C · Lado a lado</button></div></div>
+  <div class="v-grupo"><span>Tela</span><div class="seg" id="segTela"><button data-tela="computador">Computador</button><button data-tela="celular">Celular</button></div></div>
+</header>
+<section class="v-nota" id="nota"></section>
+<div class="palco" id="palco"><div class="quadro"><div class="quadro-in" id="tela"></div></div></div>
+
+<script>
+/* Textos e números dos planos: docs/arvisx/PLANOS.md (o que está cadastrado em /admin/cobranca). */
+const PLANOS = [
+  { id: "essencial", nome: "Essencial", preco: "€59,90", curta: "Atender e organizar.", quem: "Quem está começando ou atende com equipe pequena e quer sair do WhatsApp solto.",
+    tem: ["Conversas de todos os canais num lugar só", "Agenda", "Funis de vendas", "Contatos e tarefas", "Respostas rápidas"], limite: "Até 3 canais e 5 pessoas", ia: false,
+    naoTem: "Não tem agentes de IA", canais: "3", pessoas: "5", telas: "12" },
+  { id: "standard", nome: "Standard", preco: "€129,90", curta: "Atender e automatizar com IA.", quem: "Equipe que já atende bem e perde tempo respondendo o que se repete.",
+    tem: ["Tudo do Essencial", "Agentes de IA que respondem e fazem follow-up", "Base de conhecimento e fluxos de atendimento", "Cadastro de empresas e pessoas, e importação de planilhas", "Distribuição de atendimento"], limite: "Até 6 canais e 10 pessoas", ia: true,
+    naoTem: null, canais: "6", pessoas: "10", telas: "31" },
+  { id: "premium", nome: "Premium", preco: "€199,90", curta: "Operar a empresa inteira.", quem: "Empresa que vende, acompanha números e tem equipe e canais crescendo.",
+    tem: ["Tudo do Standard", "Propostas, produtos e comandas", "Campanhas, prospecção e Cold Call", "Desempenho, faturamento e honorários", "Configuração avançada de IA"], limite: "Canais e pessoas ilimitados", ia: true,
+    naoTem: null, canais: "Ilimitado", pessoas: "Ilimitado", telas: "63 (todas)" },
+];
+const RECOMENDADO = "standard";
+const S = { vista: "b", tela: "computador", plano: { antes: "essencial", a: RECOMENDADO, b: null, c: RECOMENDADO }, passoB: 1, comparar: false };
+const P = id => PLANOS.find(p => p.id === id);
+const sel = () => S.plano[S.vista];
+
+const NOTAS = {
+  antes: ["Hoje", ["O plano é uma <b>lista suspensa</b> no meio do formulário, com o <b>Essencial já marcado</b> (é o primeiro da lista, o mais barato).", "A lista só mostra nome, preço e dias de teste. <b>Nada diz que o Essencial não tem IA</b>.", "Os botões de plano da página inicial levam ao cadastro <b>sem levar a escolha</b>: quem clicou em Standard chega com Essencial marcado.", "Não custa nada testar um plano maior (7 dias grátis em todos), mas a tela não diz isso."]],
+  a: ["A · Cartões na própria página", ["Os três planos viram cartões acima do formulário, com o <b>Standard marcado e o selo \"Recomendado\"</b>.", "Cada cartão diz para quem é, o que tem e, no Essencial, que <b>não tem agentes de IA</b>.", "Um resumo ao lado do formulário repete o plano escolhido e o que acontece depois dos 7 dias.", "Uma tela só. É a que menos muda o caminho de hoje."]],
+  b: ["B · Dois passos, sem nada marcado (escolhida)", ["Primeiro a pessoa <b>escolhe o plano</b>; só depois aparece o formulário.", "<b>Nenhum plano vem marcado</b>: a escolha é sempre da pessoa. O Standard leva o selo \"Recomendado\".", "O texto convida a testar, sem empurrar a assinatura: <b>escolhe, testa 7 dias e, se gostar, assina</b>.", "No segundo passo o plano fica num resumo, com \"Trocar\"."]],
+  c: ["C · Lado a lado", ["Mantém a tela dividida de hoje. O <b>painel escuro vira a escolha do plano</b>, o formulário continua à direita.", "Standard marcado. Clicar num plano abre os detalhes dele.", "O botão do formulário passa a dizer o plano: \"Criar conta e testar o Standard\".", "No celular os planos vêm antes do formulário."]],
+};
+
+const marca = clara => `<div class="marca ${clara ? "clara" : ""}"><img src="../marca/${clara ? "arvisx-simbolo-branco" : "arvisx-simbolo"}.png" alt=""><b>ARVISX<em>CRM</em></b></div>`;
+function campos(dois) {
+  return `${dois ? `<div class="c2">` : ""}<div class="cp"><label>Seu nome</label><input type="text"></div><div class="cp"><label>Nome da empresa</label><input type="text"></div>${dois ? "</div>" : ""}
+    <div class="cp"><label>Email</label><input type="email"></div>
+    ${dois ? `<div class="c2">` : ""}<div class="cp"><label>Senha</label><input type="password"></div><div class="cp"><label>Confirmar senha</label><input type="password"></div>${dois ? "</div>" : ""}`;
+}
+const depois = p => `Hoje você não paga nada. Depois dos 7 dias de teste, <b>${p.preco} por mês</b>. Dá para trocar de plano ou cancelar quando quiser.`;
+function cartao(p, comBotao) {
+  const on = sel() === p.id;
+  return `<${comBotao ? "div" : "button"} class="plano ${on ? "on" : ""}" ${comBotao ? "" : `data-plano="${p.id}"`}>
+    ${p.id === RECOMENDADO ? `<span class="tg ouro selo"><i class="ph-fill ph-star"></i>Recomendado</span>` : ""}
+    ${comBotao ? "" : `<span class="marcado"><i class="ph-bold ph ph-check"></i></span>`}
+    <h3>${p.nome}</h3><p class="curta">${p.curta}</p><p class="quem">${p.quem}</p>
+    <div class="preco"><b>${p.preco}</b><span>/ mês · 7 dias de teste</span></div>
+    <ul>${p.tem.map(t => `<li class="${/Agentes de IA/.test(t) ? "ia" : ""}"><i class="${/Agentes de IA/.test(t) ? "ph-fill ph-sparkle" : "ph ph-check"}"></i>${t}</li>`).join("")}
+      <li><i class="ph ph-check"></i>${p.limite}</li>${p.naoTem ? `<li class="nao"><i class="ph ph-x"></i>${p.naoTem}</li>` : ""}</ul>
+    ${comBotao ? `<div class="pe"><button class="bt ${p.id === RECOMENDADO ? "ouro" : "sec"} bloco" data-escolhe="${p.id}">Testar o ${p.nome} por 7 dias</button></div>` : ""}
+  </${comBotao ? "div" : "button"}>`;
+}
+function tabela() {
+  const s = sel(), col = id => s === id ? "col-on" : "";
+  const linha = (rot, f) => `<tr><td>${rot}</td>${PLANOS.map(p => { const v = f(p); return `<td class="${col(p.id)} ${v === true ? "sim" : v === false ? "nao" : ""}">${v === true ? "Sim" : v === false ? "Não" : v}</td>`; }).join("")}</tr>`;
+  return `<table class="tabela-c"><thead><tr><th></th>${PLANOS.map(p => `<th class="${col(p.id)}">${p.nome}</th>`).join("")}</tr></thead><tbody>
+    ${linha("Preço por mês", p => p.preco)}${linha("Teste grátis", () => "7 dias")}${linha("Agentes de IA", p => p.ia)}${linha("Números conectados", p => p.canais)}${linha("Pessoas", p => p.pessoas)}${linha("Telas do sistema", p => p.telas)}
+    ${linha("Propostas, campanhas e relatórios", p => p.id === "premium")}</tbody></table>`;
+}
+const linkComparar = () => `<p style="margin:14px 0 0"><button class="comparar" data-ac="comparar">${S.comparar ? "Esconder a comparação" : "Comparar os três planos"}</button></p>${S.comparar ? tabela() : ""}`;
+
+const TELAS = {
+  antes: () => `<div class="fach"><div class="lado antes">${marca(true)}<div class="eb">O CRM da ArvisX</div><h2>O WhatsApp chega. A IA <em>atende e vende.</em></h2></div>
+    <div class="form"><div class="dentro"><h2 class="tit" style="font-size:24px;margin-bottom:18px">Criar conta</h2>
+      <div class="cp"><label>Seu nome</label><input type="text"></div><div class="cp"><label>Nome da empresa</label><input type="text"></div>
+      <div class="cp"><label>Plano</label><select>${PLANOS.map(p => `<option>${p.nome} — ${p.preco.replace("€", "€ ")} / mês · 7 dias de teste</option>`).join("")}</select></div>
+      <div class="cp"><label>Email</label><input type="email"></div><div class="cp"><label>Senha</label><input type="password"></div><div class="cp"><label>Confirmar senha</label><input type="password"></div>
+      <button class="bt ouro bloco">Criar conta</button><p class="entrar">Já tem conta? <u>Entrar</u></p></div></div></div>`,
+
+  a: () => { const p = P(sel()); return `<div class="pa"><div class="pa-cab">${marca(false)}<span class="teste"><i class="ph-fill ph-gift"></i>7 dias de teste grátis em qualquer plano</span></div>
+    <h2 class="tit">Crie a sua conta</h2><p class="sub">Escolha o plano para testar. Você só paga depois dos 7 dias, e pode trocar quando quiser.</p>
+    <div class="pa-passo"><span class="n">1</span><h3>Escolha o plano</h3></div>
+    <div class="planos">${PLANOS.map(x => cartao(x, false)).join("")}</div>${linkComparar()}
+    <div class="pa-passo"><span class="n">2</span><h3>Seus dados</h3></div>
+    <div class="pa-form"><div>${campos(true)}</div>
+      <div><div class="resumo" style="flex-direction:column;align-items:flex-start"><div style="display:flex;gap:10px;align-items:center"><i class="ph-fill ph-seal-check"></i><div><b>Plano ${p.nome}</b><div style="font-size:12px;color:#a2abb9">${p.curta}</div></div></div><div class="tx">${depois(p)}</div></div>
+        <button class="bt ouro bloco" style="margin-top:12px">Criar conta e testar o ${p.nome}</button><p class="entrar">Já tem conta? <u>Entrar</u></p></div></div></div>`; },
+
+  b: () => { const p = sel() ? P(sel()) : null; return `<div class="pb">${marca(false)}
+    <div class="trilha" style="margin-top:20px">${S.passoB === 1 ? "<b>1 · Plano</b>" : "1 · Plano"}<i></i>${S.passoB === 2 ? "<b>2 · Seus dados</b>" : "2 · Seus dados"}</div>
+    ${S.passoB === 1 ? `<div class="pb-topo"><h2 class="tit">Qual plano se encaixa no seu caso?</h2><p class="sub">Escolha o que melhor se encaixa no seu caso e teste por 7 dias. No fim do teste, se gostar, você faz a sua assinatura.</p></div>
+      <div class="planos">${PLANOS.map(x => cartao(x, true)).join("")}</div>${linkComparar()}<p class="entrar">Já tem conta? <u>Entrar</u></p>`
+    : `<div class="pb-form"><div class="resumo" style="margin-bottom:18px"><i class="ph-fill ph-seal-check"></i><div class="tx"><b>Plano ${p.nome}</b> · 7 dias de teste. Se gostar, a assinatura é ${p.preco} por mês.</div><button class="troca" data-ac="voltarB">Trocar</button></div>
+      <h2 class="tit" style="font-size:22px;margin-bottom:16px">Agora, os seus dados</h2>${campos(false)}
+      <button class="bt ouro bloco">Criar conta e testar o ${p.nome}</button><p class="aj" style="text-align:center;margin-top:10px">Você testa por 7 dias. No fim, se gostar, faz a sua assinatura.</p></div>`}</div>`; },
+
+  c: () => { const p = P(sel()); return `<div class="fach"><div class="lado c">${marca(true)}
+      <div class="eb" style="margin-top:28px">Escolha o plano · 7 dias de teste grátis em todos</div>
+      <div class="lista-c">${PLANOS.map(x => `<button class="linha-c ${sel() === x.id ? "on" : ""}" data-plano="${x.id}">
+        <div class="cab-c"><span class="rd"></span><div><h3>${x.nome} ${x.id === RECOMENDADO ? `<span class="tg ouro" style="vertical-align:3px;margin-left:4px">Recomendado</span>` : ""}</h3><p class="curta">${x.curta}</p></div><div class="pr"><b>${x.preco}</b><span>/ mês</span></div></div>
+        <div class="mais"><p>${x.quem}</p><ul>${x.tem.map(t => `<li><i class="${/Agentes de IA/.test(t) ? "ph-fill ph-sparkle" : "ph ph-check"}"></i>${t}</li>`).join("")}<li><i class="ph ph-check"></i>${x.limite}</li>${x.naoTem ? `<li class="nao"><i class="ph ph-x"></i>${x.naoTem}</li>` : ""}</ul></div></button>`).join("")}</div></div>
+    <div class="form"><div class="dentro"><h2 class="tit" style="font-size:24px">Criar conta</h2><p class="sub" style="margin-bottom:18px">Plano <b style="color:var(--texto)">${p.nome}</b>. ${depois(p).replace(/<\/?b>/g, "")}</p>
+      ${campos(false)}<button class="bt ouro bloco">Criar conta e testar o ${p.nome}</button><p class="entrar">Já tem conta? <u>Entrar</u></p></div></div></div>`; },
+};
+
+function render() {
+  document.querySelectorAll("#segVista button").forEach(b => b.setAttribute("aria-pressed", b.dataset.vista === S.vista));
+  document.querySelectorAll("#segTela button").forEach(b => b.setAttribute("aria-pressed", b.dataset.tela === S.tela));
+  const [t, itens] = NOTAS[S.vista];
+  document.getElementById("nota").innerHTML = `<h2>${t}</h2><ul>${itens.map(x => `<li>${x}</li>`).join("")}</ul>`;
+  document.getElementById("palco").className = "palco" + (S.tela === "celular" ? " celular" : "");
+  document.getElementById("tela").innerHTML = TELAS[S.vista]();
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return; const d = b.dataset;
+  if (d.vista) { S.vista = d.vista; S.comparar = false; }
+  else if (d.tela) S.tela = d.tela;
+  else if (d.plano) S.plano[S.vista] = d.plano;
+  else if (d.escolhe) { S.plano.b = d.escolhe; S.passoB = 2; }
+  else if (d.ac === "voltarB") S.passoB = 1;
+  else if (d.ac === "comparar") S.comparar = !S.comparar;
+  else return;
+  render();
+});
+new URLSearchParams(location.hash.slice(1)).forEach((v, k) => { if (k === "vista" || k === "tela") S[k] = v; if (k === "passo") { S.passoB = +v; if (+v === 2) S.plano.b = RECOMENDADO; } });
+render();
+</script>
+</body>
+</html>
