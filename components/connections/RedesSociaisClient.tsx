@@ -72,11 +72,15 @@ type State = {
  */
 const CONEXAO_POR_PARCEIRO_VISIVEL: boolean = false;
 /**
- * A conexão do Facebook / Instagram ainda está em homologação na Meta e não
- * funciona para o cliente (decisão do dono, 12/11/2026). Com `true`, a aba abre
- * com um aviso no topo e o botão de conectar apagado. Quando a Meta aprovar o app, voltar a `false`.
+ * A trava de homologação do Facebook / Instagram. Com `true`, a aba abre com um
+ * aviso no topo e o botão de conectar apagado.
+ *
+ * Está em `false` (decisão do dono, 13/11/2026): a Meta ainda está homologando
+ * o app, e é justamente por isso que o botão precisa FUNCIONAR — quem avalia o
+ * app entra numa conta criada para eles e testa a conexão de ponta a ponta. Com
+ * a trava ligada (12/11/2026), o avaliador encontrava o botão apagado.
  */
-const EM_HOMOLOGACAO: boolean = true;
+const EM_HOMOLOGACAO: boolean = false;
 
 export function RedesSociaisClient() {
   const t = useT();
