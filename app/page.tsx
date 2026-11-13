@@ -28,7 +28,6 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Sparkle,
-  Table,
   Tray,
   VideoCamera,
   Wallet,
@@ -265,7 +264,7 @@ export default async function HomePage() {
           <div className="miolo">
             <div className="cabeca">
               <p className="eyebrow">A solução</p>
-              <h2>Hoje a venda está espalhada em três lugares.</h2>
+              <h2>A venda que estava espalhada em três lugares agora fica em um só.</h2>
             </div>
             <div className="grade">
               <article className="cartao">
@@ -274,18 +273,18 @@ export default async function HomePage() {
                 </span>
                 <h3>O WhatsApp</h3>
                 <p>
-                  As conversas chegam a qualquer hora. Quem respondeu, quem ficou sem resposta e
-                  quem já fechou se misturam na mesma lista.
+                  As conversas deixam de se misturar numa lista só. Cada uma tem um dono, e a equipe
+                  vê quem respondeu e quem ainda está esperando.
                 </p>
               </article>
               <article className="cartao">
                 <span className="ic">
-                  <Table {...ico} />
+                  <Funnel {...ico} />
                 </span>
-                <h3>A planilha</h3>
+                <h3>O funil no lugar da planilha</h3>
                 <p>
-                  O controle vive numa planilha que só uma pessoa entende. Quando ela sai de férias,
-                  ninguém sabe em que pé está cada cliente.
+                  O controle sai da planilha que só uma pessoa entende. Cada cliente tem um cartão
+                  no funil, e a equipe inteira sabe em que pé ele está.
                 </p>
               </article>
               <article className="cartao">
@@ -294,13 +293,13 @@ export default async function HomePage() {
                 </span>
                 <h3>A proposta</h3>
                 <p>
-                  Cada proposta é montada do zero, num arquivo solto. Enviar, lembrar o cliente e
-                  saber se ele abriu vira trabalho manual.
+                  A proposta deixa de ser um arquivo solto, montado do zero. Ela sai do cartão do
+                  lead, e o negócio segue acompanhado no funil.
                 </p>
               </article>
             </div>
             <p className="virada">
-              <strong>Aqui, tudo fica na mesma tela.</strong> Conversa, funil, proposta, agenda e
+              <strong>Tudo fica na mesma tela.</strong> Conversa, funil, proposta, agenda e
               chamadas no mesmo lugar, com a equipe inteira dentro.
             </p>
           </div>

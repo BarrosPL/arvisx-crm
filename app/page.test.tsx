@@ -70,12 +70,14 @@ describe("/ — landing v3", () => {
     const { container } = await montar();
     expect(screen.queryByText(OFERTA.ctaEmBreve)).toBeNull();
     // topo + hero + Essencial, Standard e Premium
-    expect(container.querySelectorAll(`a[href="${LINKS.cadastro}"]`)).toHaveLength(2 + TRES.length);
+    // (o botão de cada plano leva a escolha junto: `/signup?plano=<id>`)
+    expect(container.querySelectorAll(`a[href="${LINKS.cadastro}"]`)).toHaveLength(2);
+    expect(container.querySelectorAll(`a[href^="${LINKS.cadastro}?plano="]`)).toHaveLength(TRES.length);
     for (const card of container.querySelectorAll("[data-plano]")) {
       const links = within(card as HTMLElement).getAllByRole("link");
       expect(links).toHaveLength(1);
       expect(links[0]).toHaveTextContent(OFERTA.cta);
-      expect(links[0]).toHaveAttribute("href", "/signup");
+      expect(links[0]?.getAttribute("href")).toMatch(/^\/signup\?plano=.+/);
     }
     expect(LINKS.cadastro).toBe("/signup");
     expect(LINKS.agendar).toBe("/agendar");
