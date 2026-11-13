@@ -3,6 +3,7 @@ import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { loadOnboardingState } from "@/app/actions/onboarding/_shared";
 import { proximoPasso } from "@/lib/onboarding/passos";
 import { contextoDoOnboarding } from "@/lib/onboarding/contexto";
+import { destinoDoRoteador, onboardingGuiadoLigado } from "@/lib/onboarding/guia";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,11 @@ export default async function OnboardingIndex() {
   if (onboardedAt) redirect("/app/inbox");
 
   // O contexto inclui o PLANO: sem IA no plano, os passos de IA não existem.
-  const passo = proximoPasso(state, await contextoDoOnboarding(activeOrg.orgId));
+  const contexto = await contextoDoOnboarding(activeOrg.orgId);
+  // Roteiro guiado (`ONBOARDING_GUIADO=on`): depois das boas-vindas os passos são
+  // feitos dentro do CRM, e o destino é a tela do passo que acabou de ser
+  // resolvido. Ver `lib/onboarding/guia.ts`.
+  if (onboardingGuiadoLigado()) redirect(destinoDoRoteador(state, contexto));
+  const passo = proximoPasso(state, contexto);
   redirect(passo ? `/onboarding/${passo.segmento}` : "/onboarding/done");
 }

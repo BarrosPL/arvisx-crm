@@ -40,6 +40,8 @@ services:
     environment:
       SUPABASE_DB_ADMIN_URL: ""
       EVENT_LOG_WORKER_DRAINS: "true"
+      # Onboarding guiado dentro do CRM (lib/onboarding/guia.ts). `off` no .env volta ao wizard.
+      ONBOARDING_GUIADO: ${ONBOARDING_GUIADO:-on}
     depends_on:
       init: {condition: service_completed_successfully}
       srh: {condition: service_started}

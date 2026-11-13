@@ -40,6 +40,9 @@ import { listarConexoesCaidas, type ConexaoCaida } from "@/lib/channels/health";
 import { VoiceCallProvider } from "@/components/voice/VoiceCallContext";
 import { ProvedorDaOcupacaoDoRodape } from "@/lib/ui/rodape-ocupado";
 import { acessoFoiRevogado } from "@/lib/auth/vinculo-revogado";
+import { loadOnboardingState } from "@/app/actions/onboarding/_shared";
+import { boasVindasFeitas, onboardingGuiadoLigado } from "@/lib/onboarding/guia";
+import { GuiaDoOnboarding } from "./_components/guia/GuiaDoOnboarding";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await loadAuthUser();
@@ -82,6 +85,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   let orgFuso: string | null = null;
   let enrolled = false;
   let needsMfaGate = false;
+  let guiaDoOnboarding: React.ReactNode = null;
 
   if (activeOrg) {
     const admin = createAdminClient();
@@ -174,7 +178,22 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     // Suspensão ANTES de onboarding: a org suspensa que nunca terminou o
     // onboarding ia para `/onboarding` e escapava da tela da suspensão.
     if (!ehOperante(orgRow?.status)) redirect("/account-suspended");
-    if (orgRow && !orgRow.onboarded_at && !user.support) redirect("/onboarding");
+    if (orgRow && !orgRow.onboarded_at && !user.support) {
+      // Roteiro guiado (ArvisX, `ONBOARDING_GUIADO=on`): depois das boas-vindas a
+      // pessoa entra no CRM e termina de montar a empresa aqui dentro, com o
+      // guia ao lado. A leitura a mais só acontece neste caminho, que acaba
+      // quando o onboarding acaba. Desligado, o portão é o de sempre.
+      const estadoDoOnboarding = onboardingGuiadoLigado()
+        ? (await loadOnboardingState(activeOrg.orgId)).state
+        : null;
+      if (!estadoDoOnboarding || !boasVindasFeitas(estadoDoOnboarding)) redirect("/onboarding");
+      // Quem monta a empresa é quem a administra; os outros só entram.
+      if (roleAtLeast(activeOrg.role, "admin")) {
+        guiaDoOnboarding = (
+          <GuiaDoOnboarding orgId={activeOrg.orgId} estado={estadoDoOnboarding} idioma={user.idioma} />
+        );
+      }
+    }
     // G4-02: expõe visibility_mode ao client (inbox decide visões visíveis).
     // Fonte confiável (admin client, org do cookie validado) — nunca do body.
     const mode = (orgRow?.settings as { visibility_mode?: VisibilityMode } | null)
@@ -301,6 +320,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           sidebarCollapsed={collapsed}
           podeAtender={Boolean(activeOrg && roleAtLeast(activeOrg.role, "agent"))}
         >
+          {guiaDoOnboarding}
           {children}
         </AppShell>
       </VoiceCallProvider>

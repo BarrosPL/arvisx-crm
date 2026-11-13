@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { BlocoDoGuia } from "@/app/app/_components/guia/BlocoDoGuia";
 import { ROLE_RANK } from "@/lib/auth/types";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -55,6 +56,8 @@ export default async function TeamPage({
 
   return (
     <div className="flex h-full flex-col gap-6 md:p-6">
+      {/* Roteiro guiado (ArvisX): o passo desta tela, enquanto ele é o da vez. */}
+      <BlocoDoGuia segmento="invite-team" />
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight">{t("Equipe")}</h1>

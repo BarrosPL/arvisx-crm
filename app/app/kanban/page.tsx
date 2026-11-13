@@ -6,6 +6,7 @@ import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { ROLE_RANK } from "@/lib/auth/types";
 import { createClient } from "@/lib/supabase/server";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { BlocoDoGuia } from "@/app/app/_components/guia/BlocoDoGuia";
 import { FunisClient, type FunilDaLista } from "./_client";
 
 export const dynamic = "force-dynamic";
@@ -66,6 +67,8 @@ export default async function KanbanPickerPage() {
 
   return (
     <div className="flex h-full flex-col gap-4 p-6">
+      {/* Roteiro guiado (ArvisX): o passo desta tela, enquanto ele é o da vez. */}
+      <BlocoDoGuia segmento="funil" />
       <header className="flex items-center gap-3">
         <Kanban size={28} className="text-muted-foreground" weight="duotone" />
         {/* Era "Pipelines" — nome de quem construiu o sistema, não de quem

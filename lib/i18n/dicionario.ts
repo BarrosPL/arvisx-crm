@@ -20081,6 +20081,16 @@ export const DICIONARIO: Traducoes = {
   "Conta Stripe real.": { es: "Cuenta Stripe real." },
   "Nenhum plano ativo para sincronizar.": { es: "Ningún plan activo para sincronizar." },
   "criado": { es: "creado" },
+  // Roteiro guiado dentro do CRM (ArvisX, `ONBOARDING_GUIADO`) — o painel do
+  // guia e o quadro do passo. Os títulos e as explicações de cada passo são os
+  // do wizard e já estão acima.
+  "Guia de montagem": { es: "Guía de montaje" },
+  "Montando o seu CRM": { es: "Armando tu CRM" },
+  "Recolher o guia": { es: "Ocultar la guía" },
+  "Abrir o guia": { es: "Abrir la guía" },
+  "Faça este passo no quadro em destaque, no topo desta tela.": { es: "Haz este paso en el recuadro destacado, en la parte superior de esta pantalla." },
+  "Este passo é feito na tela {tela}. Clique nela no menu, ou no botão abaixo.": { es: "Este paso se hace en la pantalla {tela}. Haz clic en ella en el menú o en el botón de abajo." },
+  "Ir para {tela}": { es: "Ir a {tela}" },
 };
 
 /**

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { ROLE_RANK } from "@/lib/auth/types";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { BlocoDoGuia } from "@/app/app/_components/guia/BlocoDoGuia";
 import { createClient } from "@/lib/supabase/server";
 import type { AgentRow } from "@/hooks/ai/useAgent";
 import { AgentsList } from "./_components/AgentsList";
@@ -54,6 +55,8 @@ export default async function AgentsListPage() {
 
   return (
     <div className="flex h-full flex-col gap-6 p-6">
+      {/* Roteiro guiado (ArvisX): o passo desta tela, enquanto ele é o da vez. */}
+      <BlocoDoGuia segmento="setup-ai" />
       <header className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">

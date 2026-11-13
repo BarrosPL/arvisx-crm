@@ -6,6 +6,7 @@ import { ROLE_RANK } from "@/lib/auth/types";
 import { ConexoesShell } from "@/components/connections/ConexoesShell";
 import { canalGraphParceiroLigado, GRAPH_PARTNER_LABEL } from "@/lib/channels/graph-parceiro/credentials";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { BlocoDoGuia } from "@/app/app/_components/guia/BlocoDoGuia";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Conexões" };
@@ -27,6 +28,8 @@ export default async function ConnectionsPage() {
 
   return (
     <div className="flex h-full flex-col gap-6 p-6">
+      {/* Roteiro guiado (ArvisX): o passo desta tela, enquanto ele é o da vez. */}
+      <BlocoDoGuia segmento="connect-whatsapp" />
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">{traduzir("Conexões", idioma)}</h1>
         <p className="text-sm text-muted-foreground">

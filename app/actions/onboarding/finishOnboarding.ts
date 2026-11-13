@@ -16,6 +16,21 @@ export type FinishOnboardingResult =
   | { ok: false; error: "auth_required" | "no_active_org" | "db_error"; details?: unknown };
 
 export async function finishOnboarding(): Promise<FinishOnboardingResult> {
+  const resultado = await concluirOnboarding();
+  if (!resultado.ok) return resultado;
+  redirect("/app/inbox");
+}
+
+/**
+ * A conclusão SEM o redirecionamento — o que o guia de dentro do CRM chama
+ * (roteiro guiado, ArvisX).
+ *
+ * O guia já está em `/app`, e o `redirect` da action para dentro do mesmo layout
+ * não refaz o layout: o painel continuava na tela com a empresa já concluída no
+ * banco (medido pela tela, três vezes). Ele chama esta função, recebe a
+ * resposta e recarrega a página por conta própria.
+ */
+export async function concluirOnboarding(): Promise<FinishOnboardingResult> {
   let ctx;
   try {
     ctx = await requireOnboardingCtx();
@@ -62,5 +77,5 @@ export async function finishOnboarding(): Promise<FinishOnboardingResult> {
     });
   }
 
-  redirect("/app/inbox");
+  return { ok: true, alreadyOnboarded };
 }
