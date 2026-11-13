@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Onboarding guiado dentro do CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--fundo); color: var(--texto); font: 500 14px/1.5 var(--sans); display: flex; flex-direction: column; overflow: hidden; }
+  button { font: inherit; cursor: pointer; }
+  .mono { font-family: var(--mono); }
+
+  /* faixa do protótipo */
+  .proto { background: #05070a; color: #b9c1ce; padding: 7px 16px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 12px; flex: none; }
+  .proto b { color: var(--ouro); font: 600 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+  .proto .seg { display: inline-flex; border: 1px solid var(--navy-linha); border-radius: 999px; padding: 2px; }
+  .proto .seg button { border: 0; background: none; color: #b9c1ce; padding: 4px 11px; border-radius: 999px; font-weight: 700; font-size: 12px; }
+  .proto .seg button[aria-pressed="true"] { background: var(--ouro); color: var(--navy); }
+  .proto a, .proto .lk { color: #b9c1ce; text-decoration: underline; text-underline-offset: 3px; background: none; border: 0; padding: 0; font-size: 12px; }
+  .proto .esp { flex: 1; }
+
+  /* casca do CRM */
+  .crm { flex: 1; min-height: 0; display: grid; grid-template-columns: 208px minmax(0, 1fr) 356px; }
+  .lat { background: var(--navy); color: #d8dce3; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+  .lat .org { display: flex; gap: 9px; align-items: center; padding: 2px 6px 14px; border-bottom: 1px solid var(--navy-linha); margin-bottom: 10px; }
+  .lat .org img { height: 28px; } .lat .org small { display: block; font: 500 9.5px/1 var(--mono); letter-spacing: .1em; color: var(--ouro); margin-bottom: 4px; }
+  .lat .org strong { font: 650 13.5px/1.2 var(--display); color: #fff; word-break: break-word; }
+  .lat .grp { font: 500 9.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: #6c7586; padding: 12px 8px 5px; }
+  .lat .it { display: flex; gap: 9px; align-items: center; width: 100%; border: 0; background: none; color: #b9c1ce; text-align: left; padding: 8px; border-radius: 7px; font-weight: 600; font-size: 13px; position: relative; }
+  .lat .it:hover { background: var(--navy-2); color: #fff; } .lat .it i { font-size: 17px; }
+  .lat .it.on { background: var(--navy-3); color: #fff; box-shadow: inset 2px 0 0 var(--ouro); } .lat .it.on i { color: var(--ouro); }
+  .lat .it .bdg { margin-left: auto; background: var(--sinal); color: #fff; font: 700 10px/1 var(--mono); padding: 3px 6px; border-radius: 999px; animation: entra .3s both; }
+  .princ { min-width: 0; overflow-y: auto; padding: 24px 28px 60px; }
+  .cabec { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: flex-end; margin-bottom: 6px; }
+  .cabec .eb { font: 600 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ouro-escuro); }
+  .cabec h1 { font: 650 26px/1.1 var(--display); font-stretch: 112%; letter-spacing: -.03em; color: var(--navy); margin: 6px 0 0; }
+  .cabec p { color: var(--apoio); margin: 5px 0 0; max-width: 64ch; }
+  .fio2 { height: 1px; background: var(--linha); margin: 14px 0 20px; position: relative; } .fio2::before { content: ""; position: absolute; left: 0; top: -2.5px; width: 6px; height: 6px; border-radius: 50%; background: var(--ouro); }
+
+  /* peças */
+  .bt { border: 1px solid transparent; border-radius: var(--r); padding: 9px 16px; font-weight: 700; font-size: 13.5px; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+  .bt.ouro { background: var(--ouro); color: var(--navy); } .bt.ouro:hover { background: var(--ouro-claro); } .bt.ouro:disabled { opacity: .45; cursor: not-allowed; }
+  .bt.sec { background: var(--painel); border-color: var(--linha-forte); color: var(--texto); } .bt.fant { background: none; color: var(--apoio); padding-inline: 6px; }
+  .cx { background: var(--painel); border: 1px solid var(--linha); border-radius: var(--r-lg); padding: 20px; }
+  .vazio2 { border: 1.5px dashed var(--linha-forte); border-radius: var(--r-lg); padding: 48px 20px; text-align: center; color: var(--apoio); }
+  .vazio2 > i { font-size: 40px; color: var(--fraco); display: block; margin-bottom: 8px; } .vazio2 h3 { font: 650 17px/1.2 var(--display); color: var(--navy); margin: 0 0 4px; } .vazio2 p { margin: 0 auto 16px; max-width: 46ch; }
+  .cp { display: grid; gap: 6px; margin-bottom: 16px; } .cp label, .lb { font-weight: 700; font-size: 13px; }
+  .cp input[type=text], .cp select, .cp textarea { font: 500 14px/1.4 var(--sans); padding: 9px 11px; border: 1px solid var(--linha-forte); border-radius: var(--r); background: var(--painel); color: var(--texto); width: 100%; box-sizing: border-box; }
+  .cp input:focus, .cp textarea:focus { outline: 2px solid rgba(212,175,55,.55); outline-offset: 1px; border-color: var(--ouro); }
+  .aj { font-size: 12px; color: var(--apoio); margin: 0; }
+  .tg { font: 600 9.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 999px; background: var(--painel-3); color: var(--apoio); white-space: nowrap; }
+  .tg.ok { background: var(--ok-suave); color: var(--ok); } .tg.ouro { background: var(--ouro-suave); color: var(--ouro-escuro); } .tg.novo { background: var(--sinal-suave); color: #1d5fa8; }
+  .av { width: 34px; height: 34px; border-radius: 50%; background: var(--painel-3); display: grid; place-items: center; font: 700 12px var(--sans); color: var(--navy); flex: none; }
+  .av.ia { background: var(--navy); color: var(--ouro); box-shadow: 0 0 0 2px var(--ouro); } .av.g { width: 48px; height: 48px; font-size: 17px; }
+  .op { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--linha); border-radius: var(--r); padding: 11px 12px; background: var(--painel); text-align: left; width: 100%; box-sizing: border-box; }
+  .op + .op { margin-top: 8px; } .op b { display: block; font-size: 13.5px; } .op span { display: block; font-size: 12px; color: var(--apoio); }
+  .op .rd { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--linha-forte); flex: none; margin-top: 2px; }
+  .op.on { border-color: var(--ouro); background: var(--ouro-suave); } .op.on .rd { border-color: var(--ouro-escuro); box-shadow: inset 0 0 0 3px var(--painel); background: var(--ouro-escuro); }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chips button { border: 1px solid var(--linha-forte); background: var(--painel); border-radius: 999px; padding: 7px 12px; font-weight: 700; font-size: 12.5px; color: var(--texto); display: inline-flex; gap: 6px; align-items: center; }
+  .chips button.on { background: var(--navy); border-color: var(--navy); color: #fff; } .chips button.on i { color: var(--ouro); }
+  .linha { display: flex; gap: 12px; align-items: center; background: var(--painel); border: 1px solid var(--linha); border-radius: var(--r); padding: 12px 14px; animation: entra .35s both; }
+  .linha + .linha { margin-top: 8px; } .linha .tx { flex: 1; min-width: 0; } .linha b { display: block; font-size: 14px; } .linha span.s { font-size: 12.5px; color: var(--apoio); }
+  @keyframes entra { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes pulso { 0% { box-shadow: 0 0 0 0 rgba(212,175,55,.7); } 100% { box-shadow: 0 0 0 12px rgba(212,175,55,0); } }
+  .alvo { outline: 2px solid var(--ouro) !important; outline-offset: 3px; animation: pulso 1.3s infinite; position: relative; z-index: 2; }
+  .dica { position: fixed; z-index: 60; background: var(--ouro); color: var(--navy); font-weight: 800; font-size: 12px; padding: 6px 11px; border-radius: 999px; pointer-events: none; box-shadow: var(--sombra-alta); display: none; white-space: nowrap; animation: balanca 1s infinite alternate ease-in-out; }
+  @keyframes balanca { from { transform: translateX(0); } to { transform: translateX(6px); } }
+
+  /* conexões */
+  .qrbox { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px; align-items: center; }
+  .qr { width: 200px; height: 200px; padding: 10px; background: #fff; border: 1px solid var(--linha); border-radius: var(--r); display: grid; grid-template-columns: repeat(21, 1fr); cursor: pointer; }
+  .qr i { background: var(--navy); } .qr i.b { background: transparent; }
+  .segm { display: inline-flex; border: 1px solid var(--linha-forte); border-radius: 999px; padding: 3px; }
+  .segm span { padding: 5px 12px; border-radius: 999px; font-weight: 700; font-size: 12px; color: var(--apoio); } .segm span.on { background: var(--navy); color: #fff; }
+
+  /* inbox */
+  .inbox { display: grid; grid-template-columns: 290px minmax(0, 1fr); border: 1px solid var(--linha); border-radius: var(--r-lg); overflow: hidden; background: var(--painel); min-height: 470px; }
+  .inbox .lst { border-right: 1px solid var(--linha); padding: 10px; }
+  .conv { display: flex; gap: 10px; align-items: center; padding: 10px; border-radius: 9px; background: var(--ouro-suave); animation: entra .4s both; }
+  .conv .tx { min-width: 0; flex: 1; } .conv b { font-size: 13px; display: block; } .conv span.s { font-size: 12px; color: var(--apoio); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .thr { display: flex; flex-direction: column; background: #e9e4da; min-width: 0; }
+  .thr-topo { background: var(--painel); border-bottom: 1px solid var(--linha); padding: 10px 14px; display: flex; gap: 10px; align-items: center; }
+  .thr-msgs { flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 7px; overflow-y: auto; max-height: 360px; }
+  .bal { max-width: 78%; padding: 8px 11px; border-radius: 12px; font-size: 13.5px; line-height: 1.4; animation: entra .3s both; box-shadow: 0 1px 1px rgba(0,0,0,.08); }
+  .bal.cli { align-self: flex-start; background: #fff; border-bottom-left-radius: 3px; }
+  .bal.ag, .bal.eq { align-self: flex-end; background: #d9fdd3; border-bottom-right-radius: 3px; }
+  .bal small { display: block; font: 600 9.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ouro-escuro); margin-bottom: 4px; }
+  .dig { display: inline-flex; gap: 3px; } .dig i { width: 6px; height: 6px; border-radius: 50%; background: var(--fraco); animation: dig 1s infinite; } .dig i:nth-child(2) { animation-delay: .15s; } .dig i:nth-child(3) { animation-delay: .3s; }
+  @keyframes dig { 0%, 60%, 100% { opacity: .3; transform: none; } 30% { opacity: 1; transform: translateY(-3px); } }
+  .thr-ent { display: flex; gap: 8px; padding: 10px; background: var(--painel); border-top: 1px solid var(--linha); }
+  .thr-ent input { flex: 1; min-width: 0; border: 1px solid var(--linha-forte); border-radius: 999px; padding: 9px 14px; font: 500 13.5px var(--sans); }
+
+  /* agentes */
+  .ed { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); gap: 20px; align-items: start; }
+  .previa { background: var(--navy); border-radius: var(--r-lg); padding: 18px; color: #d8dce3; position: sticky; top: 0; }
+  .previa .rot { font: 600 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ouro); margin-bottom: 12px; display: flex; gap: 7px; align-items: center; }
+  .previa .rot i { width: 7px; height: 7px; border-radius: 50%; background: var(--ouro); animation: pulso 1.6s infinite; }
+  .previa .quem { display: flex; gap: 12px; align-items: center; background: var(--painel); color: var(--texto); border-radius: var(--r); padding: 12px; }
+  .previa .quem b { font: 650 16px/1.1 var(--display); display: block; } .previa .quem span { font-size: 12px; color: var(--apoio); }
+  .previa .papo { background: #e9e4da; border-radius: var(--r); padding: 12px; display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }
+  .previa .regras { border: 1px solid var(--navy-linha); border-radius: var(--r); padding: 10px 12px; margin-top: 10px; font-size: 12.5px; } .previa .regras b { font: 600 10px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ouro); display: block; margin-bottom: 5px; } .previa .regras li { margin-left: 16px; }
+
+  /* kanban */
+  .quadro-f { display: flex; gap: 10px; overflow-x: auto; padding: 6px 4px 14px; align-items: stretch; }
+  .fcol { flex: 0 0 172px; background: var(--painel-2); border-radius: var(--r); padding: 10px; display: flex; flex-direction: column; gap: 6px; min-height: 250px; animation: entra .35s both; }
+  .fcol.sobre { outline: 2px dashed var(--ouro); outline-offset: 2px; }
+  .fcol .cab { display: flex; gap: 4px; align-items: flex-start; } .fcol .pega { cursor: grab; color: var(--fraco); font-size: 15px; margin-top: 2px; }
+  .fcol .nome { flex: 1; min-width: 0; font-weight: 800; font-size: 13px; outline: none; border-radius: 5px; padding: 1px 4px; cursor: text; }
+  .fcol .nome:hover { background: var(--painel); } .fcol .nome:focus { background: var(--ouro-suave); box-shadow: 0 0 0 1.5px var(--ouro); }
+  .fcol .x { border: 0; background: none; color: var(--fraco); padding: 2px; font-size: 13px; }
+  .fcol .ex { font-size: 11px; color: var(--apoio); margin: 0; line-height: 1.35; }
+  .fcol .ob { font: 600 9.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--fraco); }
+  .fcol.g { box-shadow: inset 0 3px 0 var(--ok); } .fcol.p { box-shadow: inset 0 3px 0 var(--erro); }
+  .fcard { background: var(--painel); border: 1px solid var(--ouro); border-radius: 8px; padding: 9px; cursor: grab; display: flex; gap: 8px; align-items: center; box-shadow: 0 0 0 3px rgba(212,175,55,.2); animation: entra .5s both; }
+  .fcard b { display: block; font-size: 12.5px; } .fcard span { color: var(--apoio); font-size: 11px; }
+  .fmais { flex: 0 0 120px; border: 1.5px dashed var(--linha-forte); border-radius: var(--r); background: none; color: var(--apoio); font-weight: 700; font-size: 12.5px; }
+
+  /* guia */
+  .guia { background: var(--navy); color: #d8dce3; display: flex; flex-direction: column; min-height: 0; border-left: 1px solid var(--navy-linha); }
+  .guia-cab { padding: 18px 18px 14px; border-bottom: 1px solid var(--navy-linha); }
+  .guia-cab small { font: 600 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ouro); }
+  .guia-cab h2 { font: 650 18px/1.15 var(--display); font-stretch: 110%; color: #fff; margin: 6px 0 10px; }
+  .guia-cab .barra { height: 6px; border-radius: 3px; background: var(--navy-linha); overflow: hidden; } .guia-cab .barra i { display: block; height: 100%; background: linear-gradient(90deg, var(--bronze), var(--ouro)); transition: width .5s; }
+  .guia-corpo { flex: 1; overflow-y: auto; padding: 14px 18px 18px; }
+  .mis { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 2px; }
+  .mis li { display: flex; gap: 9px; align-items: center; font-weight: 700; font-size: 13px; color: #6c7586; padding: 5px 0; }
+  .mis li i { font-size: 18px; } .mis li.feita { color: #aab2c0; } .mis li.feita i { color: #4fb37d; } .mis li.atual { color: #fff; } .mis li.atual i { color: var(--ouro); }
+  .mis li small { margin-left: auto; font: 500 10px/1 var(--mono); color: #6c7586; text-transform: uppercase; letter-spacing: .06em; }
+  .agora { background: var(--navy-3); border: 1px solid var(--navy-linha); border-radius: var(--r-lg); padding: 16px; animation: entra .35s both; }
+  .agora small { font: 600 10px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ouro); }
+  .agora h3 { font: 650 16px/1.2 var(--display); color: #fff; margin: 6px 0 4px; } .agora .desc { font-size: 12.5px; color: #8b95a6; margin: 0 0 12px; }
+  .agora .faca { background: var(--navy); border-left: 3px solid var(--ouro); border-radius: 0 var(--r) var(--r) 0; padding: 11px 13px; font-size: 14px; color: #fff; line-height: 1.45; }
+  .agora .faca b { color: var(--ouro-claro); }
+  .sim { border: 1.5px dashed #6fa8e6; background: rgba(47,127,214,.14); color: #a9cdf5; border-radius: var(--r); padding: 9px 12px; font-weight: 700; font-size: 12.5px; display: inline-flex; gap: 7px; align-items: center; margin-top: 10px; }
+  .sim small { font: 500 9.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: #6fa8e6; }
+  .cel { margin-top: 12px; border: 1.5px dashed #6fa8e6; border-radius: var(--r); padding: 10px; }
+  .cel > small { font: 500 9.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: #6fa8e6; display: block; margin-bottom: 8px; }
+  .cel button.q { display: block; width: 100%; text-align: left; border: 0; background: rgba(47,127,214,.14); color: #d6e6f8; border-radius: 8px; padding: 8px 10px; font-size: 12.5px; font-weight: 600; margin-bottom: 6px; }
+  .cel input { width: 100%; box-sizing: border-box; border: 1px solid var(--navy-linha); background: var(--navy); color: #fff; border-radius: 8px; padding: 8px 10px; font: 500 13px var(--sans); }
+  .pular { border: 0; background: none; color: #8b95a6; font-size: 12.5px; text-decoration: underline; text-underline-offset: 3px; margin-top: 12px; padding: 0; }
+  .fimg { text-align: center; padding: 10px 0; } .fimg .selo { width: 60px; height: 60px; border-radius: 50%; background: var(--ouro); color: var(--navy); display: grid; place-items: center; font-size: 28px; margin: 0 auto 12px; animation: entra .5s both; }
+  .fimg h3 { font: 650 22px/1.1 var(--display); color: #fff; margin: 0 0 6px; } .fimg p { color: #aab2c0; font-size: 13px; margin: 0 0 14px; }
+  .fimg a { color: #aab2c0; font-size: 12px; }
+
+  /* boas-vindas */
+  .veu { position: fixed; inset: 0; z-index: 80; background: rgba(15,19,26,.6); backdrop-filter: blur(3px); display: grid; place-items: center; padding: 16px; overflow-y: auto; }
+  .bv { background: var(--fundo); border-radius: 18px; width: min(560px, 100%); padding: 28px; box-shadow: var(--sombra-alta); animation: entra .4s both; }
+  .bv h2 { font: 650 26px/1.1 var(--display); font-stretch: 112%; letter-spacing: -.03em; color: var(--navy); margin: 0; } .bv > p { color: var(--apoio); margin: 6px 0 18px; }
+  .termos { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; } .termos u { text-underline-offset: 2px; }
+
+  @media (max-width: 1000px) {
+    body { overflow: auto; } .crm { grid-template-columns: minmax(0, 1fr); }
+    .lat { flex-direction: row; overflow-x: auto; padding: 8px; position: sticky; top: 0; z-index: 5; } .lat .org, .lat .grp { display: none; } .lat .it { width: auto; white-space: nowrap; }
+    .guia { order: -1; border-left: 0; } .mis { display: none; } .princ { padding: 16px 14px 40px; overflow: visible; }
+    .inbox, .ed, .qrbox { grid-template-columns: minmax(0, 1fr); } .inbox .lst { border-right: 0; border-bottom: 1px solid var(--linha); } .qr { margin: 0 auto; }
+  }
+</style>
+</head>
+<body>
+<div class="proto"><b>Protótipo</b><span>Onboarding guiado dentro do CRM</span>
+  <span class="seg" id="segPlano"><button data-plano="ia">Teste · Standard · Premium</button><button data-plano="sem">Essencial</button></span>
+  <button class="lk" data-ac="recomecar">Recomeçar</button><span class="esp"></span><a href="index.html">Versão anterior (antes e depois)</a></div>
+<div class="crm"><nav class="lat" id="lat"></nav><main class="princ" id="princ"></main><aside class="guia" id="guia"></aside></div>
+<div class="dica" id="dica">Clique aqui</div>
+<div id="veu"></div>
+
+<script>
+/* ============================== dados copiados do app ============================== */
+const PACOTES = [
+  { id: "clinica", como: "Clínica, consultório ou salão", ic: "ph-first-aid", nome: "Agendamentos", etapas: ["Novo contato", "Já respondi", "Entendendo o caso", "Quer agendar", "Escolhendo horário", "Consulta marcada", "Não vai marcar"] },
+  { id: "imobiliaria", como: "Imobiliária ou corretor", ic: "ph-house-line", nome: "Interessados", etapas: ["Novo interessado", "Já respondi", "Entendendo o que procura", "Sei o que oferecer", "Visitando imóveis", "Fechou negócio", "Desistiu"] },
+  { id: "servicos", como: "Serviços, agência ou obra", ic: "ph-wrench", nome: "Orçamentos", etapas: ["Pedido novo", "Já respondi", "Entendendo o projeto", "Orçamento enviado", "Negociando", "Fechou", "Não fechou"] },
+  { id: "curso", como: "Curso, mentoria ou infoproduto", ic: "ph-graduation-cap", nome: "Matrículas", etapas: ["Novo interessado", "Já respondi", "Tirando dúvidas", "Quer entrar", "Fechando condições", "Matriculado", "Desistiu"] },
+  { id: "loja", como: "Loja — online ou de rua", ic: "ph-storefront", nome: "Vendas", etapas: ["Novo contato", "Já respondi", "Escolhendo o produto", "Vai levar", "Aguardando pagamento", "Pedido pago", "Não comprou"] },
+  { id: "generico", como: "Outro tipo de negócio", ic: "ph-dots-three-circle", nome: "Clientes", etapas: ["Novo contato", "Já respondi", "Entendendo a necessidade", "Proposta enviada", "Negociando", "Fechou", "Não fechou"] },
+];
+const ORDEM = ["new", "contacted", "qualifying", "qualified", "negotiating", "won", "lost"];
+const EXP = { new: "acabou de chamar e ninguém respondeu ainda", contacted: "já foi respondido", qualifying: "ele está entendendo o que a pessoa precisa", qualified: "já dá para saber o que oferecer", negotiating: "está fechando preço, horário ou condições", won: "fechou negócio", lost: "não fechou" };
+const TONS = [
+  { t: "Próximo e caloroso", d: "Conversa como gente, puxa assunto, tranquiliza. Bom para quem vende no dia a dia." },
+  { t: "Objetivo e cordial", d: "Vai direto ao ponto sem ser seco, e sempre indica o próximo passo." },
+  { t: "Curto e prático", d: "Frases curtas, pergunta só o essencial e chama uma pessoa cedo." },
+];
+const EXEMPLO = "Oi! Vocês atendem hoje? Queria saber o preço.";
+const SUG = [EXEMPLO, "Vocês atendem sábado?", "Quero marcar um horário."];
+/* Respostas de ensaio do protótipo: no app, quem responde é o agente de verdade. */
+const RESP = [
+  { preco: n => `Oi! Que bom falar com você. Atendemos hoje sim, aqui na ${n}. O valor muda conforme o que você precisa: me conta um pouco mais que eu te passo certinho?`, sab: () => "Atendemos sim! Sábado costuma encher rápido. Quer que eu veja um horário para você?", marcar: () => "Ótimo, vamos marcar! Você prefere de manhã ou à tarde? Já vejo o que tem livre.", outro: n => `Oi! Aqui é da ${n}. Me conta como posso te ajudar?` },
+  { preco: n => `Olá. A ${n} atende hoje. O valor depende do serviço: qual você procura? Com isso já envio o preço.`, sab: () => "Sim, atendemos aos sábados. Posso verificar os horários disponíveis para você?", marcar: () => "Claro. Qual dia e período você prefere? Em seguida confirmo o horário.", outro: () => "Olá. Como posso ajudar? Diga o que precisa e indico o próximo passo." },
+  { preco: () => "Atendemos hoje. Qual serviço você quer? Passo o preço.", sab: () => "Sim, sábado tem. Quer um horário?", marcar: () => "Certo. Manhã ou tarde?", outro: () => "Oi. Do que você precisa?" },
+];
+const MISSOES = [
+  { id: "whatsapp", ia: "O telefone dele", sem: "Seu WhatsApp", tIa: "Dê um telefone a ele", tSem: "Conecte o seu WhatsApp", dIa: "É por este número que ele vai atender seus clientes. Se você conecta pelo celular, tenha ele por perto.", dSem: "É por este número que a sua equipe vai atender os clientes. Se você conecta pelo celular, tenha ele por perto." },
+  { id: "treinar", ia: "Treinar", sem: null, tIa: "Treine seu funcionário", dIa: "Quem ele é, como fala e o que pode prometer. Dá para mudar tudo depois." },
+  { id: "funil", ia: "Onde ele organiza", sem: "Seu funil", tIa: "Onde ele organiza seus clientes", tSem: "Seu funil de clientes", dIa: "Cada cliente vira um cartão que anda por essas colunas. Ele mesmo move o cartão conforme a conversa avança — por isso cada coluna diz também quando ele deve usá-la.", dSem: "Cada cliente vira um cartão que anda por essas colunas. Você e a equipe movem o cartão conforme a conversa avança." },
+  { id: "testar", ia: "Ver ele atender", sem: null, tIa: "Veja ele atender", dIa: "" },
+  { id: "equipe", ia: "Quem trabalha com ele", sem: "Sua equipe", tIa: "Quem trabalha com ele", tSem: "Sua equipe", dIa: "Seu funcionário não trabalha sozinho: quando ele passar uma conversa adiante, é uma dessas pessoas que atende.", dSem: "Quem vai atender as conversas com você." },
+];
+const NUM = "+55 11 98888-0142";
+
+/* ============================== estado ============================== */
+let S;
+function zera(plano) {
+  S = { plano, bemvindo: true, aceito: false, nome: "Clínica Vitalis", ramo: "clinica", detalhe: "", tela: "inbox", i: 0, pulou: {}, encerrado: false,
+    qr: false, conectado: false, oi: false, chat: [], digitando: false, bdgInbox: false, bdgKanban: false,
+    editando: false, agenteCriado: false, agente: "Lia", tom: 0, regras: "",
+    funilNome: "", funil: [], funilOk: false, cartao: 0,
+    emails: "", papel: "Atendente", convidados: [], convidou: false };
+  carregaPacote("clinica");
+}
+function carregaPacote(id) { const p = PACOTES.find(x => x.id === id); S.ramo = id; S.funilNome = p.nome; S.funil = p.etapas.map((n, i) => ({ nome: n, passo: ORDEM[i] })); S.cartao = 0; }
+const ia = () => S.plano === "ia";
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const nomeNeg = () => S.nome.trim() || "Minha Empresa";
+const nomeAg = () => S.agente.trim() || "Atendente IA";
+const ini = s => s.trim().split(/\s+/).slice(0, 2).map(x => x[0] || "").join("").toUpperCase() || "?";
+const temCartao = () => S.oi || S.chat.length > 0;
+const $ = s => document.querySelector(s);
+
+/* ============================== roteiro do guia ============================== */
+function passos() {
+  const p = [];
+  p.push({ m: "whatsapp", tx: "Clique em <b>Conexões</b>, no menu ao lado.", alvo: '[data-menu="conexoes"]', ok: () => S.tela === "conexoes" || S.conectado });
+  p.push({ m: "whatsapp", tx: "Clique em <b>Conectar WhatsApp</b>.", alvo: '[data-ac="abrirqr"]', ok: () => S.qr || S.conectado });
+  p.push({ m: "whatsapp", tx: "Abra o WhatsApp no celular e leia o QR Code que apareceu na tela.", alvo: ".qr", dica: "Aponte o celular", sim: ["conectar", "ph-qr-code", "Li o QR no celular"], ok: () => S.conectado });
+  p.push({ m: "whatsapp", tx: `Conectou. <b>Faça o teste:</b> mande um "oi" do seu celular para <span class="mono">${NUM}</span>.`, sim: ["oi", "ph-device-mobile", "Mandei um oi"], ok: () => S.oi });
+  p.push({ m: "whatsapp", tx: "Chegou uma mensagem. Clique em <b>Inbox</b> para ver.", alvo: '[data-menu="inbox"]', ok: () => S.tela === "inbox" });
+  if (ia()) {
+    p.push({ m: "treinar", tx: "As conversas chegam aqui. Agora falta quem responda: clique em <b>Agentes</b>.", alvo: '[data-menu="agentes"]', ok: () => S.tela === "agentes" || S.agenteCriado });
+    p.push({ m: "treinar", tx: "Clique em <b>Criar agente</b>.", alvo: '[data-ac="novoag"]', ok: () => S.editando || S.agenteCriado });
+    p.push({ m: "treinar", tx: "Dê um nome, escolha o jeito de falar e escreva as regras da casa. A resposta de exemplo muda ao lado. Depois clique em <b>Criar e continuar</b>.", alvo: '[data-ac="criarag"]', ok: () => S.agenteCriado });
+  }
+  p.push({ m: "funil", tx: (ia() ? "Agora, onde ele organiza os clientes: " : "As conversas chegam aqui. Agora o seu funil: ") + "clique em <b>Kanban</b>.", alvo: '[data-menu="kanban"]', ok: () => S.tela === "kanban" });
+  p.push({ m: "funil", tx: "Clique no nome de uma coluna para renomear e arraste para mudar a ordem. Quando estiver do seu jeito, clique em <b>Usar este quadro</b>.", alvo: '[data-ac="usarquadro"]', ok: () => S.funilOk });
+  if (ia()) {
+    p.push({ m: "testar", tx: "Hora de ver ele trabalhando. Volte ao <b>Inbox</b>.", alvo: '[data-menu="inbox"]', ok: () => S.tela === "inbox" });
+    p.push({ m: "testar", tx: S.conectado ? "Mande uma pergunta do seu celular, como se fosse um cliente." : "Escreva como se fosse um cliente. Nada é enviado pelo WhatsApp — é só um ensaio, entre você e ele.", cel: true, ok: () => S.chat.some(m => m.de === "ag") });
+    p.push({ m: "testar", tx: "Ele respondeu sozinho e o cartão andou no funil. Clique em <b>Kanban</b> para ver.", alvo: '[data-menu="kanban"]', ok: () => S.tela === "kanban" });
+  }
+  p.push({ m: "equipe", tx: "Por último, quem atende com você. Clique em <b>Equipe</b>.", alvo: '[data-menu="equipe"]', ok: () => S.tela === "equipe" });
+  p.push({ m: "equipe", tx: "Digite o e-mail de quem vai atender com você e clique em <b>Enviar convites</b>.", alvo: '[data-ac="convidar"]', ok: () => S.convidou });
+  return p;
+}
+function avanca() { const p = passos(); while (S.i < p.length && (S.pulou[p[S.i].m] || p[S.i].ok())) S.i++; }
+function pular() { const p = passos(), m = p[S.i].m; S.pulou[m] = true; if (m === "treinar") S.pulou.testar = true; S.editando = false; avanca(); }
+const missoesDoPlano = () => MISSOES.filter(m => ia() || m.sem);
+
+/* ============================== telas do CRM ============================== */
+function qr() { let h = "", s = 7; for (let i = 0; i < 441; i++) { s = (s * 1103515245 + 12345) & 0x7fffffff; const x = i % 21, y = (i / 21) | 0; const canto = (x < 7 && y < 7) || (x > 13 && y < 7) || (x < 7 && y > 13); const cheio = canto ? (x % 6 === 0 || y % 6 === 0 || x === 20 || y === 20 || x === 14 || y === 14 || (x % 7 > 1 && x % 7 < 5 && y % 7 > 1 && y % 7 < 5)) : s % 3 === 0; h += `<i class="${cheio ? "" : "b"}"></i>`; } return `<div class="qr" data-ac="conectar" role="img" aria-label="Código QR">${h}</div>`; }
+const cabec = (eb, t, s, acao = "") => `<div class="cabec"><div><div class="eb">${eb}</div><h1>${t}</h1><p>${s}</p></div><div>${acao}</div></div><div class="fio2"></div>`;
+const TELAS = {
+  inbox: () => {
+    const quem = S.oi ? "Você (seu celular)" : "Você (ensaio)", ult = S.chat[S.chat.length - 1];
+    return cabec("Atendimento", "Inbox", ia() ? "É aqui que as conversas chegam, com você e ele atendendo lado a lado." : "É aqui que as conversas chegam, para você e a equipe atenderem.") + (!S.chat.length
+      ? `<div class="vazio2"><i class="ph ph-tray"></i><h3>Nenhuma conversa ainda</h3><p>${S.conectado ? "Esperando a primeira mensagem chegar." : "Elas aparecem aqui assim que um número estiver conectado."}</p></div>`
+      : `<div class="inbox"><div class="lst"><div class="conv"><span class="av">VC</span><div class="tx"><b>${quem}</b><span class="s">${esc(ult.tx)}</span></div>${S.oi ? `<span class="tg novo">WhatsApp</span>` : `<span class="tg">ensaio</span>`}</div></div>
+        <div class="thr"><div class="thr-topo"><span class="av">VC</span><div><b>${quem}</b><div class="aj">${S.oi ? `<span class="mono">${NUM}</span>` : "Esta conversa não foi enviada a ninguém."}</div></div>${S.agenteCriado ? `<span class="tg ouro" style="margin-left:auto">${esc(nomeAg())} atendendo</span>` : ""}</div>
+          <div class="thr-msgs" id="msgs">${S.chat.map(m => `<div class="bal ${m.de}">${m.de === "ag" ? `<small>${esc(nomeAg())} · IA</small>` : m.de === "eq" ? `<small>Você</small>` : ""}${esc(m.tx)}</div>`).join("")}${S.digitando ? `<div class="bal ag"><span class="dig"><i></i><i></i><i></i></span></div>` : ""}</div>
+          <div class="thr-ent"><input id="f-resp" type="text" placeholder="Responder como equipe"><button class="bt sec" data-ac="respeq"><i class="ph ph-paper-plane-right"></i></button></div></div></div>`);
+  },
+  conexoes: () => cabec("Canais", "Conexões", "Os números por onde a empresa atende.", S.conectado || S.qr ? "" : `<button class="bt ouro" data-ac="abrirqr"><i class="ph ph-plus"></i>Conectar WhatsApp</button>`) + (S.conectado
+      ? `<div class="linha"><span class="av" style="background:var(--ok-suave);color:var(--ok)"><i class="ph-fill ph-whatsapp-logo"></i></span><div class="tx"><b>WhatsApp · <span class="mono">${NUM}</span></b><span class="s">O número está no ar.</span></div><span class="tg ok">Conectado</span></div><p class="aj" style="margin-top:12px">Novos canais começam em modo de teste. Após concluir a configuração, abra Conexões para autorizar seus números de teste ou liberar o público.</p>`
+      : S.qr ? `<div class="cx"><div class="qrbox">${qr()}<div><span class="lb">Como você já usa esse número?</span><p class="aj" style="margin:2px 0 12px">Uso o WhatsApp no celular · <u>Escolher outra forma</u></p><b>Pronto para conectar</b><p class="aj" style="margin-bottom:12px">Escolha QR Code ou código de pareamento e confirme no WhatsApp do celular.</p><span class="segm"><span class="on">QR Code</span><span>Conectar por código</span></span></div></div></div>`
+      : `<div class="vazio2"><i class="ph ph-whatsapp-logo"></i><h3>Nenhum número conectado</h3><p>${ia() ? MISSOES[0].dIa : MISSOES[0].dSem}</p><button class="bt ouro" data-ac="abrirqr"><i class="ph ph-plus"></i>Conectar WhatsApp</button></div>`),
+  agentes: () => cabec("Agente de IA", "Agentes", "Quem atende os seus clientes pelo WhatsApp.", S.agenteCriado || S.editando ? "" : `<button class="bt ouro" data-ac="novoag"><i class="ph ph-plus"></i>Criar agente</button>`) + (S.editando
+      ? `<div class="ed"><div class="cx"><div class="cp"><label for="f-ag">Como ele vai se chamar</label><input id="f-ag" type="text" data-m="agente" value="${esc(S.agente)}" maxlength="60"><p class="aj">É o nome que aparece para o seu time. O cliente vê só a conversa.</p></div>
+          <div class="cp"><span class="lb">O jeito dele falar</span><div>${TONS.map((t, i) => `<button class="op ${S.tom === i ? "on" : ""}" data-tom="${i}"><i class="rd"></i><div><b>${t.t}</b><span>${t.d}</span></div></button>`).join("")}</div></div>
+          <div class="cp"><label for="f-reg">As regras da casa (opcional)</label><textarea id="f-reg" rows="3" data-m="regras" placeholder="Nunca prometa desconto sem confirmar com uma pessoa.&#10;Horário de atendimento: 9h às 18h, de segunda a sexta.&#10;Sempre chame o cliente pelo primeiro nome.">${esc(S.regras)}</textarea><p class="aj">O que vale para qualquer atendimento aqui. Pode deixar em branco agora e escrever depois — ele aprende com você ao longo do tempo.</p></div>
+          <div style="display:flex;justify-content:flex-end"><button class="bt ouro" data-ac="criarag">Criar e continuar <i class="ph ph-arrow-right"></i></button></div></div>
+          <div class="previa"><div class="rot"><i></i>Como ele vai responder</div><div id="previa">${previaAg()}</div></div></div>`
+      : S.agenteCriado ? `<div class="linha"><span class="av ia g">${esc(ini(nomeAg()))}</span><div class="tx"><b>${esc(nomeAg())}</b><span class="s">${TONS[S.tom].t} · atende pela ${esc(nomeNeg())}</span></div><span class="tg ok">No ar</span></div>`
+      : `<div class="vazio2"><i class="ph ph-robot"></i><h3>Nenhum agente ainda</h3><p>${MISSOES[1].dIa}</p><button class="bt ouro" data-ac="novoag"><i class="ph ph-plus"></i>Criar agente</button></div>`),
+  kanban: () => cabec("CRM", esc(S.funilNome), ia() ? MISSOES[2].dIa : MISSOES[2].dSem, S.funilOk ? `<span class="tg ok">Quadro em uso</span>` : `<button class="bt ouro" data-ac="usarquadro"><i class="ph ph-check"></i>Usar este quadro</button>`)
+    + (S.funilOk ? "" : `<div class="cx" style="padding:12px 14px;margin-bottom:12px;${ia() && S.agenteCriado ? "border-color:rgba(46,139,87,.35);background:var(--ok-suave)" : ""}">${ia() && S.agenteCriado ? "Seu funcionário montou este quadro olhando o que você me contou sobre o negócio. Ajuste o que quiser." : "Sugerimos este quadro a partir do que você contou sobre o negócio. Ajuste o que quiser."}<div style="margin-top:8px"><span class="aj">Prefiro começar de um modelo pronto</span><div class="chips" style="margin-top:5px">${PACOTES.map(p => `<button data-modelo="${p.id}" class="${S.ramo === p.id ? "on" : ""}">${p.como}</button>`).join("")}</div></div></div>`)
+    + `<div class="quadro-f">${S.funil.map((e, i) => `<div class="fcol ${e.passo === "won" ? "g" : e.passo === "lost" ? "p" : ""}" data-col="${i}">
+        <div class="cab"><i class="ph ph-dots-six-vertical pega" draggable="true" data-arr="col" data-i="${i}" title="Arrastar coluna"></i><div class="nome" contenteditable="true" spellcheck="false" data-nomecol="${i}">${esc(e.nome)}</div>${S.funilOk || e.passo === "won" || e.passo === "lost" ? "" : `<button class="x" data-tira="${i}" aria-label="Remover coluna"><i class="ph ph-x"></i></button>`}</div>
+        ${!S.funilOk && (e.passo === "won" || e.passo === "lost") ? `<span class="ob">obrigatória</span>` : ""}
+        ${ia() && !S.funilOk ? `<p class="ex">${EXP[e.passo] ? `Ele move o cliente para cá quando ${EXP[e.passo]}.` : "Coluna que só vocês movem — ele não mexe nesta."}</p>` : ""}
+        ${temCartao() && S.cartao === i ? `<div class="fcard" draggable="true" data-arr="card"><span class="av">VC</span><div><b>${S.oi ? "Você (seu celular)" : "Você (ensaio)"}</b><span>${S.oi ? NUM : "ensaio"}</span></div></div>` : ""}</div>`).join("")}
+        ${!S.funilOk && S.funil.length < 8 ? `<button class="fmais" data-ac="maiscol"><i class="ph ph-plus"></i> Adicionar coluna</button>` : ""}</div>`,
+  equipe: () => { const mi = MISSOES[4]; return cabec("Organização", "Equipe", ia() ? mi.dIa : mi.dSem)
+    + (S.agenteCriado ? `<div class="linha"><span class="av ia">${esc(ini(nomeAg()))}</span><div class="tx"><b>${esc(nomeAg())}</b><span class="s">Agente de IA</span></div><span class="tg ouro">IA</span></div>` : "")
+    + `<div class="linha"><span class="av">VC</span><div class="tx"><b>Você</b><span class="s">Administrador</span></div><span class="tg ok">ativo</span></div>`
+    + S.convidados.map(e => `<div class="linha"><span class="av">${esc(e[0].toUpperCase())}</span><div class="tx"><b>${esc(e)}</b><span class="s">${esc(S.papel)}</span></div><span class="tg">convite enviado</span></div>`).join("")
+    + `<div class="cx" style="margin-top:16px"><div class="cp"><label for="f-em">E-mail de quem vai atender com você</label><textarea id="f-em" rows="3" data-m="emails" placeholder="alice@empresa.com&#10;bob@empresa.com">${esc(S.emails)}</textarea></div>
+        <div class="cp"><label for="f-pp">O que essas pessoas podem fazer</label><select id="f-pp" data-m="papel">${["Somente leitura", "Atendente", "Gerente", "Administrador"].map(p => `<option ${S.papel === p ? "selected" : ""}>${p}</option>`).join("")}</select></div>
+        <div style="display:flex;justify-content:flex-end"><button class="bt ouro" data-ac="convidar">Enviar convites</button></div></div>`; },
+};
+function previaAg() { return `<div class="quem"><span class="av ia g">${esc(ini(nomeAg()))}</span><div><b>${esc(nomeAg())}</b><span>${TONS[S.tom].t}</span></div></div><div class="papo"><div class="bal cli">${EXEMPLO}</div><div class="bal ag"><small>${esc(nomeAg())} · IA</small>${RESP[S.tom].preco(esc(nomeNeg()))}</div></div>${S.regras.trim() ? `<div class="regras"><b>Regras da casa</b>${S.regras.trim().split("\n").filter(Boolean).map(r => `<li>${esc(r)}</li>`).join("")}</div>` : ""}`; }
+
+/* ============================== menu, guia, boas-vindas ============================== */
+function menu() {
+  const it = (id, ic, rot, bdg) => `<button class="it ${S.tela === id ? "on" : ""}" data-menu="${id}"><i class="ph ${ic}"></i>${rot}${bdg ? `<span class="bdg">1</span>` : ""}</button>`;
+  return `<div class="org"><img src="../marca/arvisx-simbolo-branco.png" alt=""><div><small>ARVISX CRM</small><strong id="orgNome">${esc(nomeNeg())}</strong></div></div>
+    <div class="grp">Atendimento</div>${it("inbox", "ph-tray", "Inbox", S.bdgInbox)}
+    <div class="grp">CRM</div>${it("kanban", "ph-kanban", "Kanban", S.bdgKanban)}
+    ${ia() ? `<div class="grp">Agente de IA</div>${it("agentes", "ph-robot", "Agentes")}` : ""}
+    <div class="grp">Canais</div>${it("conexoes", "ph-plugs-connected", "Conexões")}
+    <div class="grp">Organização</div>${it("equipe", "ph-users-three", "Equipe")}`;
+}
+function guia() {
+  const p = passos(), ms = missoesDoPlano(), fim = S.i >= p.length, at = fim ? null : p[S.i], feitas = ms.filter(m => estado(m.id, p) !== "espera" && estado(m.id, p) !== "atual").length;
+  const lista = `<ul class="mis">${ms.map(m => { const e = estado(m.id, p); return `<li class="${e === "feita" || e === "pulada" ? "feita" : e}"><i class="${e === "feita" ? "ph-fill ph-check-circle" : e === "pulada" ? "ph ph-minus-circle" : e === "atual" ? "ph-fill ph-arrow-circle-right" : "ph ph-circle"}"></i>${ia() ? m.ia : m.sem}${e === "pulada" ? "<small>você pulou</small>" : ""}</li>`; }).join("")}</ul>`;
+  const cab = `<div class="guia-cab"><small>Guia · ${feitas} de ${ms.length}</small><h2>Montando o seu CRM</h2><div class="barra"><i style="width:${(fim ? 1 : S.i / p.length) * 100}%"></i></div></div>`;
+  if (fim) { const puladas = ms.some(m => S.pulou[m.id]);
+    return cab + `<div class="guia-corpo">${lista}<div class="agora"><div class="fimg"><div class="selo"><i class="ph-fill ph-check"></i></div><h3>Tudo pronto!</h3><p>${!ia() ? (puladas ? "Sua empresa já pode começar. O que ficou para depois continua te esperando." : "Sua empresa está pronta: conecte, atenda e acompanhe tudo pelo Inbox.") : S.pulou.treinar ? "O passo da IA ficou para depois: ele ainda não foi treinado nem colocado no ar." : puladas ? "Seu funcionário já está de pé. O que ficou para depois continua te esperando." : "Seu funcionário está montado. Daqui em diante é só acompanhar."}</p>${ia() ? "" : `<p><u>Agentes de IA estão nos planos Standard e Premium.</u></p>`}<button class="bt ouro" data-ac="encerrar">Começar a usar</button></div></div></div>`; }
+  const m = MISSOES.find(x => x.id === at.m), n = ms.findIndex(x => x.id === at.m) + 1;
+  return cab + `<div class="guia-corpo">${lista}<div class="agora"><small>Passo ${n} de ${ms.length}</small><h3>${ia() ? m.tIa : m.tSem}</h3>${(ia() ? m.dIa : m.dSem) ? `<p class="desc">${ia() ? m.dIa : m.dSem}</p>` : `<div style="height:8px"></div>`}
+    <div class="faca">${at.tx}</div>
+    ${at.sim ? `<button class="sim" data-ac="${at.sim[0]}"><i class="ph ${at.sim[1]}"></i>${at.sim[2]} <small>simular</small></button>` : ""}
+    ${at.cel ? `<div class="cel"><small>${S.conectado ? "Seu celular · simular" : "Ensaio"}</small>${SUG.map((s, i) => `<button class="q" data-sug="${i}">${s}</button>`).join("")}<input id="f-cli" type="text" placeholder="Escreva como se fosse um cliente" maxlength="4000"></div>` : ""}
+    <div><button class="pular" data-ac="pular">Pular por enquanto</button></div></div></div>`;
+}
+function estado(id, p) { if (S.pulou[id]) return "pulada"; const idx = p.map((x, i) => x.m === id ? i : -1).filter(i => i >= 0); if (S.i > idx[idx.length - 1]) return "feita"; return S.i >= idx[0] ? "atual" : "espera"; }
+function boasVindas() { return `<div class="veu"><div class="bv"><h2>Boas-vindas ao ArvisX CRM</h2><p>${ia() ? "Vamos montar quem vai atender seus clientes — e onde ele vai trabalhar." : "Vamos deixar a sua empresa pronta para atender: o WhatsApp, o funil e a equipe."}</p>
+  <div class="cp"><label for="f-nome">Como se chama o seu negócio?</label><input id="f-nome" type="text" data-m="nome" value="${esc(S.nome)}" maxlength="120"><p class="aj">É o nome que aparece para o seu time e nos relatórios. Pode ser clínica, loja, escritório — o que for seu.</p></div>
+  <div class="cp"><span class="lb">O que vocês fazem?</span><div class="chips">${PACOTES.map(p => `<button data-ramo="${p.id}" class="${S.ramo === p.id ? "on" : ""}"><i class="ph ${p.ic}"></i>${p.como}</button>`).join("")}</div>
+    <input type="text" data-m="detalhe" value="${esc(S.detalhe)}" maxlength="280" placeholder="Ex.: clínica odontológica, ou venda de roupa fitness pelo WhatsApp" style="margin-top:4px"><p class="aj">${ia() ? "Uma linha basta. É com isso que seu funcionário aprende com quem ele está falando — e que a gente monta o quadro de clientes do seu jeito." : "Uma linha basta. É com isso que o CRM monta o seu funil e a sua ficha de clientes."}</p></div>
+  <div class="cp"><label>Onde você atende</label><select><option>São Paulo</option><option>Lisboa</option><option>Manaus</option></select><p class="aj">${ia() ? "Decide o horário em que seu funcionário pode falar com clientes." : "É o fuso dos horários do seu atendimento."}</p></div>
+  <label class="termos"><input type="checkbox" id="f-aceito" ${S.aceito ? "checked" : ""}><span>Li e aceito os <u>Termos de Uso</u> e a <u>Política de Privacidade</u>.</span></label>
+  <div style="display:flex;justify-content:flex-end;margin-top:18px"><button class="bt ouro" data-ac="comecar" ${S.aceito ? "" : "disabled"}>Continuar <i class="ph ph-arrow-right"></i></button></div></div></div>`; }
+
+/* ============================== montagem ============================== */
+function render() {
+  if (S.tela === "agentes" && !ia()) S.tela = "inbox";
+  if (S.tela === "inbox") S.bdgInbox = false; if (S.tela === "kanban") S.bdgKanban = false;
+  if (!S.bemvindo) avanca();
+  document.querySelectorAll("#segPlano button").forEach(b => b.setAttribute("aria-pressed", b.dataset.plano === S.plano));
+  $("#lat").innerHTML = menu();
+  $("#princ").innerHTML = TELAS[S.tela]();
+  $("#guia").style.display = S.encerrado ? "none" : ""; document.querySelector(".crm").style.gridTemplateColumns = S.encerrado ? "208px minmax(0,1fr)" : "";
+  $("#guia").innerHTML = S.bemvindo || S.encerrado ? "" : guia();
+  $("#veu").innerHTML = S.bemvindo ? boasVindas() : "";
+  const m = $("#msgs"); if (m) m.scrollTop = m.scrollHeight;
+  marca();
+}
+function alvoAtual() { if (S.bemvindo || S.encerrado) return null; const p = passos(); return S.i < p.length ? p[S.i] : null; }
+function marca() {
+  const d = $("#dica"), at = alvoAtual(), el = at && at.alvo ? document.querySelector(at.alvo) : null;
+  document.querySelectorAll(".alvo").forEach(x => x.classList.remove("alvo"));
+  if (!el) { d.style.display = "none"; return; }
+  el.classList.add("alvo"); d.textContent = at.dica || "Clique aqui"; d.style.display = "block";
+  const r = el.getBoundingClientRect(), w = d.offsetWidth;
+  if (r.bottom < 0 || r.top > innerHeight) { d.style.display = "none"; return; }
+  if (!at.dica && r.right + w + 24 < innerWidth) { d.style.left = r.right + 12 + "px"; d.style.top = r.top + r.height / 2 - 14 + "px"; }
+  else { d.style.left = Math.max(8, r.left + r.width / 2 - w / 2) + "px"; d.style.top = r.bottom + 12 + "px"; }
+}
+function cliente(tx) {
+  if (!tx.trim() || S.digitando) return;
+  S.chat.push({ de: "cli", tx }); S.digitando = true; S.tela = "inbox"; render();
+  const t = tx.toLowerCase(), k = /marc|agend|hor[áa]rio/.test(t) ? "marcar" : /s[áa]bado|domingo|fim de semana/.test(t) ? "sab" : /pre[çc]o|valor|custa|quanto/.test(t) ? "preco" : "outro";
+  setTimeout(() => { S.digitando = false; S.chat.push({ de: "ag", tx: RESP[S.tom][k](nomeNeg()) }); const novo = Math.min(S.funil.length - 1, k === "marcar" ? 3 : Math.max(S.cartao, k === "outro" ? 1 : 2)); if (novo !== S.cartao) { S.cartao = novo; S.bdgKanban = true; } render(); }, 1400);
+}
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("button, [data-ac]"); if (!b) return; const d = b.dataset;
+  if (d.plano) zera(d.plano);
+  else if (d.menu) S.tela = d.menu;
+  else if (d.ramo) carregaPacote(d.ramo);
+  else if (d.modelo) carregaPacote(d.modelo);
+  else if (d.tom) S.tom = +d.tom;
+  else if (d.sug) return cliente(SUG[+d.sug]);
+  else if (d.tira) { S.funil.splice(+d.tira, 1); if (S.cartao >= S.funil.length) S.cartao = 0; }
+  else if (d.ac === "recomecar") zera(S.plano);
+  else if (d.ac === "comecar") S.bemvindo = false;
+  else if (d.ac === "abrirqr") S.qr = true;
+  else if (d.ac === "conectar") { S.conectado = true; S.qr = false; S.tela = "conexoes"; }
+  else if (d.ac === "oi") { S.oi = true; S.chat.push({ de: "cli", tx: "oi" }); S.bdgInbox = true; }
+  else if (d.ac === "novoag") S.editando = true;
+  else if (d.ac === "criarag") { S.agenteCriado = true; S.editando = false; }
+  else if (d.ac === "usarquadro") S.funilOk = true;
+  else if (d.ac === "maiscol") S.funil.splice(S.funil.length - 2, 0, { nome: "Nova coluna", passo: null });
+  else if (d.ac === "respeq") { const f = $("#f-resp"); if (!f.value.trim()) return; S.chat.push({ de: "eq", tx: f.value }); }
+  else if (d.ac === "convidar") { S.convidados = S.emails.split(/[\s,;]+/).filter(x => x.includes("@")); if (!S.convidados.length) return; S.convidou = true; S.emails = ""; }
+  else if (d.ac === "pular") pular();
+  else if (d.ac === "encerrar") S.encerrado = true;
+  else return;
+  render();
+});
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.id === "f-aceito") { S.aceito = t.checked; document.querySelector('[data-ac="comecar"]').disabled = !S.aceito; }
+  else if (t.dataset.m) { S[t.dataset.m] = t.value; const o = $("#orgNome"); if (o) o.textContent = nomeNeg(); const pv = $("#previa"); if (pv) pv.innerHTML = previaAg(); }
+  else if (t.dataset.nomecol) S.funil[+t.dataset.nomecol].nome = t.textContent;
+});
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter") return;
+  if (e.target.id === "f-cli") cliente(e.target.value);
+  else if (e.target.id === "f-resp") document.querySelector('[data-ac="respeq"]').click();
+  else if (e.target.dataset.nomecol) { e.preventDefault(); e.target.blur(); }
+});
+let arr = null;
+document.addEventListener("dragstart", e => { const a = e.target.closest("[data-arr]"); if (!a) return; arr = { tipo: a.dataset.arr, i: +a.dataset.i }; e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", "x"); });
+document.addEventListener("dragover", e => { const c = e.target.closest(".fcol"); if (!c || !arr) return; e.preventDefault(); document.querySelectorAll(".fcol.sobre").forEach(x => x.classList.remove("sobre")); c.classList.add("sobre"); });
+document.addEventListener("drop", e => { const c = e.target.closest(".fcol"); if (!c || !arr) return; e.preventDefault(); const para = +c.dataset.col;
+  if (arr.tipo === "card") S.cartao = para; else if (arr.i !== para && !S.funilOk) { const [m] = S.funil.splice(arr.i, 1); S.funil.splice(para, 0, m); }
+  arr = null; render(); });
+addEventListener("resize", marca); document.addEventListener("scroll", marca, true);
+
+zera("ia");
+/* #demo=N executa N ações do roteiro, para conferir telas por captura */
+const demo = +new URLSearchParams(location.hash.slice(1)).get("demo") || 0;
+if (new URLSearchParams(location.hash.slice(1)).get("plano") === "sem") zera("sem");
+if (demo) { S.bemvindo = false; const AC = ia()
+  ? [() => S.tela = "conexoes", () => S.qr = true, () => { S.conectado = true; S.qr = false; }, () => { S.oi = true; S.chat.push({ de: "cli", tx: "oi" }); S.bdgInbox = true; }, () => S.tela = "inbox", () => S.tela = "agentes", () => S.editando = true, () => { S.agenteCriado = true; S.editando = false; }, () => S.tela = "kanban", () => S.funilOk = true, () => S.tela = "inbox", () => { S.chat.push({ de: "cli", tx: SUG[2] }, { de: "ag", tx: RESP[0].marcar() }); S.cartao = 3; S.bdgKanban = true; }, () => S.tela = "kanban", () => S.tela = "equipe", () => { S.convidados = ["marcos@clinicavitalis.com"]; S.convidou = true; }]
+  : [() => S.tela = "conexoes", () => S.qr = true, () => { S.conectado = true; S.qr = false; }, () => { S.oi = true; S.chat.push({ de: "cli", tx: "oi" }); S.bdgInbox = true; }, () => S.tela = "inbox", () => S.tela = "kanban", () => S.funilOk = true, () => S.tela = "equipe", () => { S.convidados = ["marcos@clinicavitalis.com"]; S.convidou = true; }];
+  AC.slice(0, demo).forEach(f => { f(); avanca(); }); }
+render();
+</script>
+</body>
+</html>

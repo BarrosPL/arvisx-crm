@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Onboarding · antes e depois</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ------------------------------ visor ------------------------------ */
+  html, body { margin: 0; }
+  body { background: var(--painel-3); color: var(--texto); font: 500 14px/1.5 var(--sans); min-height: 100vh; }
+  button { font: inherit; cursor: pointer; }
+  .v-topo { position: sticky; top: 0; z-index: 50; background: var(--navy); color: var(--inverso); padding: 12px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+  .v-topo h1 { font: 650 17px/1.1 var(--display); font-stretch: 112%; letter-spacing: -.02em; margin: 0; color: #fff; }
+  .v-topo h1 em { font-style: normal; color: var(--ouro); }
+  .v-grupo { display: flex; align-items: center; gap: 8px; }
+  .v-grupo > span { font: 500 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: #8b95a6; }
+  .seg { display: inline-flex; background: var(--navy-3); border: 1px solid var(--navy-linha); border-radius: 999px; padding: 3px; }
+  .seg button { border: 0; background: transparent; color: #b9c1ce; padding: 6px 12px; border-radius: 999px; font-weight: 700; font-size: 12.5px; white-space: nowrap; }
+  .seg button[aria-pressed="true"] { background: var(--ouro); color: var(--navy); }
+  .v-trilha { display: flex; gap: 6px; overflow-x: auto; padding: 12px 20px 0; }
+  .v-trilha button { border: 1px solid var(--linha-forte); background: var(--painel); color: var(--apoio); border-radius: 999px; padding: 7px 13px; font-weight: 700; font-size: 12.5px; white-space: nowrap; display: inline-flex; align-items: center; gap: 7px; }
+  .v-trilha button .n { font: 600 10.5px/1 var(--mono); color: var(--fraco); }
+  .v-trilha button[aria-current="true"] { background: var(--navy); border-color: var(--navy); color: #fff; }
+  .v-trilha button[aria-current="true"] .n { color: var(--ouro); }
+  .v-trilha .sep { width: 1px; background: var(--linha-forte); margin: 4px 4px; flex: none; }
+  .v-plano { padding: 10px 20px 0; font-size: 12.5px; color: var(--apoio); }
+  .v-plano b { color: var(--navy); }
+  .palco { display: grid; gap: 16px; padding: 14px 20px 8px; grid-template-columns: minmax(0, 1fr); }
+  .palco.lado { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .palco.celular { justify-content: center; grid-template-columns: minmax(0, 390px); }
+  .palco.celular.lado { grid-template-columns: minmax(0, 390px) minmax(0, 390px); }
+  .q-rot { display: flex; align-items: center; gap: 8px; font: 600 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--apoio); margin-bottom: 8px; }
+  .q-rot .bola { width: 8px; height: 8px; border-radius: 50%; background: var(--fraco); }
+  .q-rot.depois { color: var(--ouro-escuro); } .q-rot.depois .bola { background: var(--ouro); }
+  .quadro { border: 1px solid var(--linha-forte); border-radius: var(--r-lg); background: var(--fundo); overflow: hidden; box-shadow: var(--sombra); }
+  .quadro-in { container-type: inline-size; background: var(--fundo); }
+  .v-notas { margin: 6px 20px 40px; background: var(--painel); border: 1px solid var(--linha); border-radius: var(--r-lg); padding: 16px 20px; }
+  .v-notas h2 { font: 650 15px/1.2 var(--display); font-stretch: 110%; margin: 0 0 8px; color: var(--navy); }
+  .v-notas ul { margin: 0; padding-left: 18px; color: var(--apoio); }
+  .v-notas li { margin: 3px 0; } .v-notas li b { color: var(--texto); }
+  .sim { border: 1.5px dashed var(--sinal); background: var(--sinal-suave); color: #1d5fa8; border-radius: var(--r); padding: 8px 12px; font-weight: 700; font-size: 12.5px; display: inline-flex; gap: 7px; align-items: center; }
+  .sim small { font: 500 10px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; opacity: .8; }
+
+  /* ------------------------------ peças comuns ------------------------------ */
+  .marca { display: flex; align-items: center; gap: 10px; }
+  .marca img { height: 32px; }
+  .marca .r { font: 500 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--fraco); }
+  .marca strong { display: block; font: 650 16px/1.15 var(--display); font-stretch: 110%; letter-spacing: -.02em; margin-top: 3px; }
+  .t2 { font: 650 26px/1.1 var(--display); font-stretch: 112%; letter-spacing: -.03em; color: var(--navy); margin: 0; }
+  .sub { color: var(--apoio); margin: 6px 0 0; max-width: 62ch; }
+  .cx { background: var(--painel); border: 1px solid var(--linha); border-radius: var(--r-lg); padding: 20px; }
+  .cp { display: grid; gap: 6px; margin-bottom: 16px; }
+  .cp label, .lb { font-weight: 700; font-size: 13px; }
+  .cp input[type=text], .cp select, .cp textarea { font: 500 14px/1.4 var(--sans); padding: 9px 11px; border: 1px solid var(--linha-forte); border-radius: var(--r); background: var(--painel); color: var(--texto); width: 100%; box-sizing: border-box; }
+  .cp input:focus, .cp textarea:focus, .cp select:focus { outline: 2px solid rgba(212,175,55,.55); outline-offset: 1px; border-color: var(--ouro); }
+  .aj { font-size: 12px; color: var(--apoio); margin: 0; }
+  .bt { border: 1px solid transparent; border-radius: var(--r); padding: 9px 16px; font-weight: 700; font-size: 13.5px; display: inline-flex; align-items: center; gap: 7px; }
+  .bt.ouro { background: var(--ouro); color: var(--navy); } .bt.ouro:hover { background: var(--ouro-claro); }
+  .bt.sec { background: var(--painel); border-color: var(--linha-forte); color: var(--texto); }
+  .bt.fant { background: transparent; color: var(--apoio); }
+  .rod { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 18px; }
+  .rod.dir { justify-content: flex-end; }
+  .termos { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; }
+  .termos u { text-underline-offset: 2px; }
+  .op { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--linha); border-radius: var(--r); padding: 11px 12px; background: var(--painel); text-align: left; width: 100%; box-sizing: border-box; }
+  .op + .op { margin-top: 8px; }
+  .op b { display: block; font-size: 13.5px; } .op span { display: block; font-size: 12px; color: var(--apoio); }
+  .op .rd { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--linha-forte); flex: none; margin-top: 2px; }
+  .op.on { border-color: var(--ouro); background: var(--ouro-suave); } .op.on .rd { border-color: var(--ouro-escuro); box-shadow: inset 0 0 0 3px var(--painel); background: var(--ouro-escuro); }
+  .faixa { border-radius: var(--r); padding: 10px 12px; font-size: 13px; border: 1px solid var(--linha); background: var(--painel); }
+  .faixa.ok { border-color: rgba(46,139,87,.35); background: var(--ok-suave); }
+  .osso { display: block; height: 8px; border-radius: 4px; background: var(--painel-3); margin: 8px 0; }
+  .qr { width: 190px; height: 190px; margin: 12px auto 0; padding: 10px; background: #fff; border: 1px solid var(--linha); border-radius: var(--r); display: grid; grid-template-columns: repeat(21, 1fr); gap: 0; }
+  .qr i { background: var(--navy); } .qr i.b { background: transparent; }
+  .segm { display: inline-flex; border: 1px solid var(--linha-forte); border-radius: 999px; padding: 3px; background: var(--painel); }
+  .segm span { padding: 5px 12px; border-radius: 999px; font-weight: 700; font-size: 12px; color: var(--apoio); }
+  .segm span.on { background: var(--navy); color: #fff; }
+
+  /* ------------------------------ ANTES (como é hoje) ------------------------------ */
+  .a { max-width: 760px; margin: 0 auto; padding: 28px 24px 56px; }
+  .a-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .a .passos { justify-content: space-between; margin: 18px 0 26px; padding: 0; list-style: none; }
+  .a .passos li + li::before { width: 14px; margin: 0 6px; }
+  .a .passos li { font-size: 12px; gap: 6px; }
+  .a-cab { margin-bottom: 18px; }
+  .a-lista { list-style: none; padding: 0; margin: 0 auto; max-width: 340px; display: grid; gap: 8px; font-size: 13.5px; }
+  .a-lista li { display: flex; align-items: center; gap: 8px; } .a-lista i { width: 8px; height: 8px; border-radius: 50%; background: #10b981; }
+  .a-pecas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; list-style: none; padding: 0; margin: 12px 0 0; }
+  .a-pecas li { border: 1px solid var(--linha); border-radius: var(--r); padding: 11px; font-size: 12px; color: var(--apoio); }
+  .a-pecas li b { color: var(--texto); font-size: 13.5px; } .a-pecas summary { cursor: pointer; text-decoration: underline; margin-top: 6px; } .a-pecas ol { padding-left: 18px; margin: 6px 0 0; }
+  .a-col { display: flex; gap: 8px; align-items: flex-start; border: 1px solid var(--linha); border-radius: var(--r); padding: 10px; margin-bottom: 8px; }
+  .a-col .n { width: 18px; text-align: center; font-size: 12px; color: var(--fraco); margin-top: 9px; }
+  .a-col .c { flex: 1; min-width: 0; } .a-col input { width: 100%; box-sizing: border-box; font: 500 14px var(--sans); padding: 8px 10px; border: 1px solid var(--linha-forte); border-radius: var(--r); }
+  .a-col p { margin: 4px 0 0; font-size: 12px; color: var(--apoio); } .a-col .ob { font-size: 12px; color: var(--fraco); margin-top: 9px; }
+  .a-vazio { display: grid; grid-template-columns: 150px 300px 1fr; min-height: 620px; }
+  .a-vazio .lat { background: var(--navy); padding: 16px 12px; } .a-vazio .lat i { display: block; height: 9px; border-radius: 5px; background: var(--navy-linha); margin: 14px 0; }
+  .a-vazio .lst { border-right: 1px solid var(--linha); background: var(--painel); padding: 16px; }
+  .a-vazio .meio { display: grid; place-items: center; color: var(--fraco); text-align: center; }
+  .a-vazio .meio i { font-size: 44px; display: block; margin-bottom: 8px; }
+
+  /* ------------------------------ DEPOIS (proposta) ------------------------------ */
+  .w { min-height: 720px; display: flex; flex-direction: column; }
+  .w-topo { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 28px; background: var(--painel); border-bottom: 1px solid var(--linha); }
+  .w-prog { min-width: 220px; } .w-prog span { font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--apoio); }
+  .w-prog .barra { height: 6px; border-radius: 3px; background: var(--painel-3); margin-top: 7px; overflow: hidden; }
+  .w-prog .barra i { display: block; height: 100%; background: linear-gradient(90deg, var(--bronze), var(--ouro)); border-radius: 3px; transition: width .5s; }
+  .w-passos { display: flex; gap: 6px; list-style: none; margin: 0; padding: 10px 28px; background: var(--painel); border-bottom: 1px solid var(--linha); overflow-x: auto; }
+  .w-passos li { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 12px; color: var(--fraco); white-space: nowrap; padding: 5px 10px; border-radius: 999px; }
+  .w-passos li.feito { color: var(--apoio); } .w-passos li.feito i { color: var(--ok); }
+  .w-passos li.atual { background: var(--ouro-suave); color: var(--navy); box-shadow: inset 0 0 0 1px var(--ouro); }
+  .w-corpo { flex: 1; display: grid; grid-template-columns: minmax(0, 460px) minmax(0, 1fr); }
+  .w-corpo.um { grid-template-columns: minmax(0, 1fr); }
+  .w-form { padding: 28px; }
+  .w-form .t2 { font-size: 24px; } .w-form .sub { margin-bottom: 18px; }
+  .w-prev { background: var(--navy); padding: 22px; display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden; }
+  .w-prev::before { content: ""; position: absolute; right: -120px; top: -120px; width: 340px; height: 340px; border-radius: 50%; border: 1px solid rgba(212,175,55,.25); }
+  .w-prev-rot { font: 600 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ouro); display: flex; gap: 7px; align-items: center; }
+  .w-prev-rot .pulso { width: 7px; height: 7px; border-radius: 50%; background: var(--ouro); animation: pulso 1.6s infinite; }
+  @keyframes pulso { 0% { box-shadow: 0 0 0 0 rgba(212,175,55,.6); } 100% { box-shadow: 0 0 0 9px rgba(212,175,55,0); } }
+  .w-prev-leg { color: #a2abb9; font-size: 12.5px; margin: 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chips button { border: 1px solid var(--linha-forte); background: var(--painel); border-radius: 999px; padding: 7px 12px; font-weight: 700; font-size: 12.5px; color: var(--texto); display: inline-flex; gap: 6px; align-items: center; }
+  .chips button.on { background: var(--navy); border-color: var(--navy); color: #fff; } .chips button.on i { color: var(--ouro); }
+
+  /* mini CRM */
+  .mini { background: var(--fundo); border-radius: var(--r-lg); overflow: hidden; display: grid; grid-template-columns: 132px minmax(0, 1fr); min-height: 320px; box-shadow: var(--sombra-alta); position: relative; }
+  .mini-lat { background: var(--navy-2); padding: 14px 10px; color: #d8dce3; border-right: 1px solid var(--navy-linha); }
+  .mini-lat .org { font: 650 12.5px/1.2 var(--display); color: #fff; padding: 0 6px 12px; border-bottom: 1px solid var(--navy-linha); margin-bottom: 8px; word-break: break-word; min-height: 16px; }
+  .mini-lat .org small { display: block; font: 500 9px/1 var(--mono); letter-spacing: .1em; color: var(--ouro); margin-bottom: 5px; }
+  .mini-lat .it { display: flex; gap: 7px; align-items: center; font-size: 11.5px; font-weight: 600; padding: 6px; border-radius: 6px; color: #aab2c0; }
+  .mini-lat .it.on { background: var(--navy-3); color: #fff; box-shadow: inset 2px 0 0 var(--ouro); }
+  .mini-lat .it.foco { box-shadow: 0 0 0 2px var(--ouro); color: #fff; animation: pulso 1.4s infinite; }
+  .mini-cont { padding: 14px; min-width: 0; }
+  .mini-cont h4 { font: 650 14px/1.2 var(--display); margin: 0 0 3px; color: var(--navy); } .mini-cont .s { font-size: 11px; color: var(--apoio); margin: 0 0 10px; }
+  .mcols { display: flex; gap: 7px; overflow: hidden; }
+  .mcol { flex: 1; min-width: 0; background: var(--painel-2); border-radius: 8px; padding: 7px; animation: entra .45s both; }
+  .mcol b { display: block; font-size: 10px; line-height: 1.2; color: var(--navy); min-height: 24px; }
+  .mcol .c { height: 26px; border-radius: 6px; background: var(--painel); border: 1px solid var(--linha); margin-top: 6px; }
+  .mcol .c.lead { height: auto; padding: 5px 6px; font-size: 10px; font-weight: 700; border-color: var(--ouro); box-shadow: 0 0 0 2px rgba(212,175,55,.25); animation: entra .4s both; }
+  .mcol.g b { color: var(--ok); } .mcol.p b { color: var(--erro); }
+  @keyframes entra { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .conv { display: flex; gap: 9px; align-items: center; padding: 9px; border-radius: 8px; background: var(--painel); border: 1px solid var(--linha); margin-bottom: 7px; animation: entra .4s both; }
+  .conv .av, .av { width: 30px; height: 30px; border-radius: 50%; background: var(--painel-3); display: grid; place-items: center; font: 700 11px var(--sans); color: var(--navy); flex: none; }
+  .av.ia { background: var(--navy); color: var(--ouro); box-shadow: 0 0 0 2px var(--ouro); }
+  .conv .tx { min-width: 0; flex: 1; } .conv b { font-size: 12.5px; display: block; } .conv span { font-size: 11.5px; color: var(--apoio); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tg { font: 600 9.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 999px; background: var(--painel-3); color: var(--apoio); white-space: nowrap; }
+  .tg.ok { background: var(--ok-suave); color: var(--ok); } .tg.ouro { background: var(--ouro-suave); color: var(--ouro-escuro); } .tg.novo { background: var(--sinal-suave); color: #1d5fa8; }
+  .vz { text-align: center; color: var(--fraco); font-size: 12px; padding: 40px 10px; border: 1.5px dashed var(--linha-forte); border-radius: var(--r); }
+  .ag { background: var(--painel); border-radius: var(--r-lg); padding: 16px; display: flex; gap: 12px; align-items: center; }
+  .ag .av { width: 46px; height: 46px; font-size: 16px; } .ag b { font: 650 17px/1.1 var(--display); display: block; } .ag span { font-size: 12px; color: var(--apoio); }
+  .ag-regras { background: var(--navy-3); border: 1px solid var(--navy-linha); border-radius: var(--r); padding: 11px 13px; color: #d8dce3; font-size: 12.5px; }
+  .ag-regras b { font: 600 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ouro); display: block; margin-bottom: 6px; }
+  .ag-regras li { margin-left: 16px; }
+
+  /* chat */
+  .zap { background: #e9e4da; border-radius: var(--r-lg); overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--linha-forte); }
+  .zap-topo { background: var(--navy); color: #fff; padding: 10px 14px; display: flex; gap: 10px; align-items: center; }
+  .zap-topo b { font-size: 13.5px; display: block; } .zap-topo span { font-size: 11px; color: #a2abb9; }
+  .zap-msgs { padding: 14px; display: flex; flex-direction: column; gap: 7px; min-height: 250px; max-height: 320px; overflow-y: auto; }
+  .bal { max-width: 82%; padding: 8px 11px; border-radius: 12px; font-size: 13px; line-height: 1.4; animation: entra .3s both; box-shadow: 0 1px 1px rgba(0,0,0,.08); }
+  .bal.eu { align-self: flex-end; background: #d9fdd3; border-bottom-right-radius: 3px; }
+  .bal.ele { align-self: flex-start; background: #fff; border-bottom-left-radius: 3px; }
+  .bal small { display: block; font: 600 9.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ouro-escuro); margin-bottom: 4px; }
+  .dig { display: inline-flex; gap: 3px; } .dig i { width: 6px; height: 6px; border-radius: 50%; background: var(--fraco); animation: dig 1s infinite; } .dig i:nth-child(2) { animation-delay: .15s; } .dig i:nth-child(3) { animation-delay: .3s; }
+  @keyframes dig { 0%, 60%, 100% { opacity: .3; transform: none; } 30% { opacity: 1; transform: translateY(-3px); } }
+  .zap-sug { display: flex; gap: 6px; padding: 0 14px 10px; flex-wrap: wrap; }
+  .zap-sug button { border: 1px solid var(--linha-forte); background: #fff; border-radius: 999px; padding: 5px 10px; font-size: 12px; font-weight: 600; }
+  .zap-ent { display: flex; gap: 8px; padding: 10px; background: #f3f0ea; }
+  .zap-ent input { flex: 1; min-width: 0; border: 1px solid var(--linha-forte); border-radius: 999px; padding: 9px 14px; font: 500 13.5px var(--sans); }
+  .zap-ent button { width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--ouro); color: var(--navy); font-size: 17px; display: grid; place-items: center; flex: none; }
+
+  /* funil */
+  .quadro-f { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 12px; align-items: stretch; }
+  .fcol { flex: 0 0 168px; background: var(--painel); border: 1px solid var(--linha); border-radius: var(--r); padding: 10px; display: flex; flex-direction: column; gap: 6px; min-height: 190px; animation: entra .35s both; }
+  .fcol.sobre { outline: 2px dashed var(--ouro); outline-offset: 2px; }
+  .fcol .cab { display: flex; gap: 4px; align-items: flex-start; }
+  .fcol .pega { cursor: grab; color: var(--fraco); font-size: 15px; margin-top: 2px; }
+  .fcol .nome { flex: 1; min-width: 0; font-weight: 800; font-size: 13px; outline: none; border-radius: 5px; padding: 1px 4px; cursor: text; }
+  .fcol .nome:hover { background: var(--painel-2); } .fcol .nome:focus { background: var(--ouro-suave); box-shadow: 0 0 0 1.5px var(--ouro); }
+  .fcol .x { border: 0; background: none; color: var(--fraco); padding: 2px; font-size: 13px; }
+  .fcol .ex { font-size: 11px; color: var(--apoio); margin: 0; line-height: 1.35; }
+  .fcol .ob { font: 600 9.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--fraco); }
+  .fcol.g { border-top: 3px solid var(--ok); } .fcol.p { border-top: 3px solid var(--erro); }
+  .fcard { margin-top: auto; background: var(--ouro-suave); border: 1px solid var(--ouro); border-radius: 8px; padding: 8px; font-size: 12px; cursor: grab; display: flex; gap: 7px; align-items: center; }
+  .fcard b { display: block; font-size: 12.5px; } .fcard span { color: var(--apoio); font-size: 11px; }
+  .fmais { flex: 0 0 120px; border: 1.5px dashed var(--linha-forte); border-radius: var(--r); background: transparent; color: var(--apoio); font-weight: 700; font-size: 12.5px; }
+
+  /* equipe / fim / app */
+  .pess { display: flex; gap: 10px; align-items: center; background: var(--painel); border-radius: var(--r); padding: 10px 12px; animation: entra .35s both; }
+  .pess + .pess { margin-top: 7px; } .pess b { font-size: 13px; display: block; } .pess span { font-size: 11.5px; color: var(--apoio); }
+  .pess .tg { margin-left: auto; }
+  .fim { max-width: 620px; margin: 0 auto; padding: 40px 24px; text-align: center; }
+  .fim .selo { width: 64px; height: 64px; border-radius: 50%; background: var(--navy); color: var(--ouro); display: grid; place-items: center; font-size: 30px; margin: 0 auto 14px; box-shadow: 0 0 0 6px rgba(212,175,55,.2); animation: entra .5s both; }
+  .fim ul { list-style: none; padding: 0; margin: 22px auto; max-width: 380px; text-align: left; display: grid; gap: 8px; }
+  .fim li { display: flex; gap: 10px; align-items: center; background: var(--painel); border: 1px solid var(--linha); border-radius: var(--r); padding: 10px 12px; font-weight: 700; font-size: 13.5px; animation: entra .4s both; }
+  .fim li i { color: var(--ok); font-size: 18px; } .fim li.pul { color: var(--apoio); } .fim li.pul i { color: var(--fraco); } .fim li small { margin-left: auto; font-weight: 500; color: var(--fraco); }
+  .fim .prox { background: var(--navy); color: #d8dce3; border-radius: var(--r-lg); padding: 16px; text-align: left; display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
+  .fim .prox i { font-size: 26px; color: var(--ouro); } .fim .prox b { color: #fff; display: block; }
+  .app { display: grid; grid-template-columns: 170px minmax(0, 1fr); min-height: 720px; position: relative; }
+  .app .mini-lat { padding: 16px 12px; } .app .mini-lat .it { font-size: 12.5px; padding: 8px; }
+  .app-cont { padding: 22px; min-width: 0; } .app-cont .conv { max-width: 520px; padding: 12px; }
+  .pp { position: absolute; right: 20px; bottom: 20px; width: 330px; background: var(--painel); border: 1px solid var(--linha-forte); border-radius: var(--r-lg); box-shadow: var(--sombra-alta); overflow: hidden; }
+  .pp-cab { background: var(--navy); color: #fff; padding: 12px 14px; } .pp-cab b { font: 650 14px/1.2 var(--display); } .pp-cab span { float: right; font: 600 11px/1.6 var(--mono); color: var(--ouro); }
+  .pp-cab .barra { height: 5px; border-radius: 3px; background: var(--navy-linha); margin-top: 9px; overflow: hidden; } .pp-cab .barra i { display: block; height: 100%; background: var(--ouro); transition: width .4s; }
+  .pp ul { list-style: none; margin: 0; padding: 6px; max-height: 250px; overflow-y: auto; }
+  .pp li button { width: 100%; text-align: left; border: 0; background: none; padding: 8px; border-radius: 8px; display: flex; gap: 9px; align-items: center; font-weight: 700; font-size: 13px; color: var(--texto); }
+  .pp li button:hover { background: var(--painel-2); } .pp li.on button { background: var(--ouro-suave); }
+  .pp li i { font-size: 18px; color: var(--linha-forte); } .pp li.feito i { color: var(--ok); } .pp li.feito button { color: var(--apoio); text-decoration: line-through; }
+  .coach { position: absolute; left: 190px; top: 90px; width: 330px; background: var(--navy); color: #d8dce3; border-radius: var(--r-lg); padding: 16px; box-shadow: var(--sombra-alta); animation: entra .3s both; z-index: 3; }
+  .coach::before { content: ""; position: absolute; left: -7px; top: 22px; width: 14px; height: 14px; background: var(--navy); transform: rotate(45deg); }
+  .coach b { color: #fff; font: 650 15px/1.2 var(--display); display: block; } .coach small { font: 500 10px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ouro); }
+  .coach p { margin: 8px 0; font-size: 13px; } .coach ol { margin: 0 0 12px; padding-left: 18px; font-size: 12.5px; color: #b9c1ce; } .coach ol li { margin: 4px 0; }
+
+  /* celular */
+  @container (max-width: 700px) {
+    .a { padding: 18px 14px 40px; } .a .passos .t { display: none; } .a-pecas { grid-template-columns: 1fr; }
+    .a-vazio { grid-template-columns: 1fr; } .a-vazio .lat, .a-vazio .lst { display: none; }
+    .w-topo { padding: 12px 14px; } .w-prog { min-width: 110px; } .w-passos { padding: 8px 14px; }
+    .w-corpo { grid-template-columns: minmax(0, 1fr); } .w-prev { order: -1; padding: 14px; } .w-form { padding: 18px 14px; }
+    .mini { grid-template-columns: minmax(0, 1fr); min-height: 0; } .mini-lat { display: none; } .mcol:nth-child(n+5) { display: none; }
+    .zap-msgs { min-height: 180px; }
+    .app { grid-template-columns: minmax(0, 1fr); } .app > .mini-lat { display: none; } .app-cont { padding: 14px; }
+    .pp { position: static; width: auto; margin: 0 14px 14px; } .coach { position: static; width: auto; margin: 0 14px 12px; } .coach::before { display: none; }
+  }
+  @media (max-width: 900px) { .palco.lado { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<header class="v-topo">
+  <h1>Onboarding <em>antes e depois</em></h1>
+  <div class="v-grupo"><span>Plano</span><div class="seg" id="segPlano">
+    <button data-plano="ia">Teste · Standard · Premium</button><button data-plano="sem">Essencial</button></div></div>
+  <div class="v-grupo"><span>Ver</span><div class="seg" id="segVista">
+    <button data-vista="antes">Antes</button><button data-vista="depois">Depois</button><button data-vista="lado">Lado a lado</button></div></div>
+  <div class="v-grupo"><span>Tela</span><div class="seg" id="segTela">
+    <button data-tela="computador">Computador</button><button data-tela="celular">Celular</button></div></div>
+</header>
+<p class="v-plano" id="vPlano"></p>
+<nav class="v-trilha" id="trilha" aria-label="Passos"></nav>
+<div class="palco" id="palco"></div>
+<section class="v-notas" id="notas"></section>
+
+<script>
+/* ============================== dados (copiados do app) ============================== */
+const PACOTES = [
+  { id: "clinica", como: "Clínica, consultório ou salão", ic: "ph-first-aid", nome: "Agendamentos", etapas: ["Novo contato", "Já respondi", "Entendendo o caso", "Quer agendar", "Escolhendo horário", "Consulta marcada", "Não vai marcar"] },
+  { id: "imobiliaria", como: "Imobiliária ou corretor", ic: "ph-house-line", nome: "Interessados", etapas: ["Novo interessado", "Já respondi", "Entendendo o que procura", "Sei o que oferecer", "Visitando imóveis", "Fechou negócio", "Desistiu"] },
+  { id: "servicos", como: "Serviços, agência ou obra", ic: "ph-wrench", nome: "Orçamentos", etapas: ["Pedido novo", "Já respondi", "Entendendo o projeto", "Orçamento enviado", "Negociando", "Fechou", "Não fechou"] },
+  { id: "curso", como: "Curso, mentoria ou infoproduto", ic: "ph-graduation-cap", nome: "Matrículas", etapas: ["Novo interessado", "Já respondi", "Tirando dúvidas", "Quer entrar", "Fechando condições", "Matriculado", "Desistiu"] },
+  { id: "loja", como: "Loja — online ou de rua", ic: "ph-storefront", nome: "Vendas", etapas: ["Novo contato", "Já respondi", "Escolhendo o produto", "Vai levar", "Aguardando pagamento", "Pedido pago", "Não comprou"] },
+  { id: "generico", como: "Outro tipo de negócio", ic: "ph-dots-three-circle", nome: "Clientes", etapas: ["Novo contato", "Já respondi", "Entendendo a necessidade", "Proposta enviada", "Negociando", "Fechou", "Não fechou"] },
+];
+const ORDEM = ["new", "contacted", "qualifying", "qualified", "negotiating", "won", "lost"];
+const EXP = { new: "acabou de chamar e ninguém respondeu ainda", contacted: "já foi respondido", qualifying: "ele está entendendo o que a pessoa precisa", qualified: "já dá para saber o que oferecer", negotiating: "está fechando preço, horário ou condições", won: "fechou negócio", lost: "não fechou" };
+const TONS = [
+  { t: "Próximo e caloroso", d: "Conversa como gente, puxa assunto, tranquiliza. Bom para quem vende no dia a dia." },
+  { t: "Objetivo e cordial", d: "Vai direto ao ponto sem ser seco, e sempre indica o próximo passo." },
+  { t: "Curto e prático", d: "Frases curtas, pergunta só o essencial e chama uma pessoa cedo." },
+];
+const EXEMPLO = "Oi! Vocês atendem hoje? Queria saber o preço.";
+const SUG = [EXEMPLO, "Vocês atendem sábado?", "Quero marcar um horário."];
+/* Respostas de ensaio do protótipo: no app, quem responde é o agente de verdade. */
+const RESP = [
+  { preco: n => `Oi! Que bom falar com você. Atendemos hoje sim, aqui na ${n}. O valor muda conforme o que você precisa: me conta um pouco mais que eu te passo certinho?`, sab: () => "Atendemos sim! Sábado costuma encher rápido. Quer que eu veja um horário para você?", marcar: () => "Ótimo, vamos marcar! Você prefere de manhã ou à tarde? Já vejo o que tem livre.", outro: n => `Oi! Aqui é da ${n}. Me conta como posso te ajudar?` },
+  { preco: n => `Olá. A ${n} atende hoje. O valor depende do serviço: qual você procura? Com isso já envio o preço.`, sab: () => "Sim, atendemos aos sábados. Posso verificar os horários disponíveis para você?", marcar: () => "Claro. Qual dia e período você prefere? Em seguida confirmo o horário.", outro: () => "Olá. Como posso ajudar? Diga o que precisa e indico o próximo passo." },
+  { preco: () => "Atendemos hoje. Qual serviço você quer? Passo o preço.", sab: () => "Sim, sábado tem. Quer um horário?", marcar: () => "Certo. Manhã ou tarde?", outro: () => "Oi. Do que você precisa?" },
+];
+const TOUR_IA = [
+  { menu: "Inbox", ic: "ph-tray", como: "As conversas", pq: "É aqui que as conversas chegam, com você e ele atendendo lado a lado.", passos: ["O cliente manda uma mensagem no WhatsApp", "Ele responde sozinho, seguindo as regras da casa que você escreveu", "Se você entrar na conversa, ele sai da frente e deixa você atender"] },
+  { menu: "Kanban", ic: "ph-kanban", como: "O quadro de clientes", pq: "Cada cliente vira um card, e ele mesmo move o card conforme a conversa anda.", passos: ["Cada cliente vira um cartão, na primeira coluna", "Conforme a conversa avança, ele move o cartão de coluna sozinho", "Você arrasta o cartão na mão quando quiser — o quadro é seu"] },
+  { menu: "Follow-ups", ic: "ph-arrow-u-up-left", como: "Voltar a falar com quem sumiu", pq: "Para nenhum cliente sumir no silêncio — ele volta a falar sozinho, na hora certa.", passos: ["O cliente para de responder no meio da conversa", "Depois do tempo que você definir, ele manda uma mensagem puxando o assunto", "Se o cliente responder, o retorno para na hora — ninguém é perseguido", "Se o cliente pedir para parar, ele para e não volta a escrever", "E você pode pausar, adiar, pular um passo ou cancelar quando quiser"] },
+  { menu: "Radar", ic: "ph-thermometer-cold", como: "O que está esfriando", pq: "Quem esfriou e ainda está aberto, para você agir antes de perder.", passos: ["Ele observa há quanto tempo cada negócio em aberto não tem resposta", "Os que estão esfriando sobem para o topo desta lista", "Você decide quem merece um empurrão seu, em vez de descobrir tarde demais"] },
+  { menu: "Alertas", ic: "ph-hand-palm", como: "Quando ele pede ajuda", pq: "Quando ele trava em algo que só uma pessoa resolve, o pedido aparece aqui.", passos: ["Ele encontra algo que não pode decidir sozinho — um desconto, uma exceção, um caso estranho", "Em vez de inventar, ele para e abre um pedido aqui", "Você decide, e ele volta a andar com a sua resposta"] },
+  { menu: "Casos", ic: "ph-bell-ringing", como: "Ser avisado no seu WhatsApp", pq: "Você não fica com o sistema aberto o dia todo — mas fica com o WhatsApp.", passos: ["Você escolhe um número da equipe para receber os avisos", "Quando ele trava e abre um pedido de ajuda, chega uma mensagem nesse número, na hora", "A mensagem traz o assunto e um link que abre o atendimento — e nunca o telefone do cliente", "Responder àquele número não chega ao cliente: ele é só da equipe", "Se você ligar a opção, a equipe também orienta a IA respondendo ao aviso com RESPONDER ou PERGUNTAR"] },
+  { menu: "Propostas", ic: "ph-lightbulb", como: "As ideias dele", pq: "Com o tempo ele sugere as próprias melhorias — e você decide se entram.", passos: ["Ele acompanha os próprios atendimentos e percebe o que poderia ir melhor", "Escreve a sugestão aqui, em português, e espera", "Nada muda sozinho: só entra em vigor quando VOCÊ aprovar"] },
+];
+const TOUR_SEM = [
+  { menu: "Inbox", ic: "ph-tray", como: "As conversas", pq: "É aqui que as conversas chegam, para você e a equipe atenderem.", passos: ["O cliente manda uma mensagem no WhatsApp", "A conversa aparece aqui, para você ou alguém da equipe responder", "O histórico fica guardado na conversa, para quem atender depois"] },
+  { menu: "Kanban", ic: "ph-kanban", como: "O quadro de clientes", pq: "Cada cliente em negociação é um cartão, e o quadro mostra em que etapa cada um está.", passos: ["As colunas são as que você acabou de montar", "Você arrasta o cartão na mão quando quiser — o quadro é seu", "Dá para mudar as colunas depois, quando quiser"] },
+  { menu: "Contatos", ic: "ph-address-book", como: "Os seus clientes", pq: "As pessoas do outro lado da conversa, com o histórico de cada uma.", passos: ["Quem escreve para a empresa fica guardado como contato", "Cada contato reúne as conversas e os dados da pessoa", "Você encontra qualquer cliente pelo nome ou pelo telefone"] },
+  { menu: "Tarefas", ic: "ph-check-square", como: "O que ficou combinado", pq: "Para nada do que foi prometido ao cliente ficar só na memória.", passos: ["Você anota o que ficou combinado, com prazo", "A tarefa fica na lista até alguém concluir", "O que venceu sem ninguém fazer aparece para você cobrar"] },
+];
+const PASSOS = [
+  { id: "welcome", ia: "Seu negócio", sem: "Seu negócio" },
+  { id: "whatsapp", ia: "O telefone dele", sem: "Seu WhatsApp" },
+  { id: "treinar", ia: "Treinar", sem: null },
+  { id: "funil", ia: "Onde ele organiza", sem: "Seu funil" },
+  { id: "testar", ia: "Ver ele atender", sem: null },
+  { id: "equipe", ia: "Quem trabalha com ele", sem: "Sua equipe" },
+  { id: "fim", ia: "Tela final", sem: "Tela final", extra: true },
+  { id: "app", ia: "Primeiro dia no CRM", sem: "Primeiro dia no CRM", extra: true },
+];
+const NOTAS = {
+  welcome: ["<b>Hoje:</b> três campos e um botão. Nada acontece até o fim.", "<b>Proposta:</b> o CRM aparece ao lado e muda enquanto a pessoa digita o nome e escolhe o ramo.", "<b>Ramo por botões</b> (os mesmos 6 modelos de funil que já existem) mais uma linha livre para detalhar.", "<b>Planos:</b> igual nos dois. Só muda o texto de apoio, como hoje."],
+  whatsapp: ["<b>Hoje:</b> lê o QR e a tela pula sozinha para o próximo passo.", "<b>Proposta:</b> ao conectar, a tela pede um \"oi\" do próprio celular e mostra a mensagem chegando no inbox ao lado.", "<b>Essencial:</b> mesmo passo, com o título \"Conecte o seu WhatsApp\" e sem falar de funcionário.", "Depende do WhatsApp da instalação estar no ar. Sem ele, o passo cai no aviso de hoje."],
+  treinar: ["<b>Hoje:</b> formulário longo. A pessoa só descobre como ele fala no passo de teste.", "<b>Proposta:</b> o cartão do funcionário ganha o nome ao digitar, e a mesma pergunta é respondida no jeito escolhido.", "As regras da casa aparecem no cartão conforme são escritas.", "<b>Essencial:</b> este passo não existe (como hoje)."],
+  funil: ["<b>Hoje:</b> lista de campos empilhados, um por coluna.", "<b>Proposta:</b> o quadro de verdade. Clicar no nome renomeia, arrastar a coluna muda a ordem, e um cartão de exemplo anda entre as colunas.", "Os modelos prontos viram botões acima do quadro.", "<b>Essencial:</b> mesmo quadro, sem a frase \"Ele move o cliente para cá quando…\"."],
+  testar: ["<b>Hoje:</b> uma caixa de texto e um bloco com a resposta. Uma mensagem por vez.", "<b>Proposta:</b> conversa de WhatsApp com perguntas prontas, \"digitando…\" e várias trocas.", "Ao lado, o cliente do ensaio vira cartão no funil e muda de coluna conforme a conversa anda.", "<b>Essencial:</b> este passo não existe (como hoje)."],
+  equipe: ["<b>Hoje:</b> caixa de e-mails e um seletor.", "<b>Proposta:</b> a equipe aparece ao lado conforme os e-mails entram, com o funcionário de IA no topo.", "<b>Essencial:</b> a lista mostra só as pessoas."],
+  fim: ["<b>Hoje:</b> resumo com bolinhas e o bloco \"O que mais tem aqui\", com explicações fechadas que pouca gente abre.", "<b>Proposta:</b> resumo com os passos conferidos e um aviso do que vem a seguir. As explicações saem daqui e vão para dentro do CRM.", "<b>Essencial:</b> mantém o link \"Agentes de IA estão nos planos Standard e Premium.\""],
+  app: ["<b>Hoje:</b> o botão \"Começar a usar\" entrega a pessoa num inbox vazio.", "<b>Proposta:</b> conversas de exemplo marcadas como exemplo e um painel \"Primeiros passos\" com progresso.", "Cada item acende a tela certa no menu e mostra o \"Como funciona\" que hoje fica escondido na tela final. Os textos são os mesmos.", "<b>Com IA:</b> 7 itens. <b>Essencial:</b> 4 itens, só telas do Atendimento."],
+};
+
+/* ============================== estado ============================== */
+const S = { plano: "ia", vista: "depois", tela: "computador", passo: "welcome",
+  nome: "Clínica Vitalis", ramo: "clinica", detalhe: "", fuso: "São Paulo", aceito: false,
+  forma: "celular", conectado: false, oi: false,
+  agente: "Lia", tom: 0, regras: "",
+  funilNome: "Agendamentos", funil: [], cartao: 0,
+  chat: [], digitando: false, etapaDoEnsaio: -1,
+  emails: "", papel: "Atendente",
+  tour: -1, vistos: {} };
+function carregaPacote(id) { const p = PACOTES.find(x => x.id === id); S.funilNome = p.nome; S.funil = p.etapas.map((n, i) => ({ nome: n, passo: ORDEM[i] })); S.cartao = 0; }
+carregaPacote("clinica");
+const ia = () => S.plano === "ia";
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const doPlano = () => PASSOS.filter(p => ia() || p.sem);
+const rot = p => ia() ? p.ia : p.sem;
+const nomeNeg = () => S.nome.trim() || "Minha Empresa";
+const nomeAg = () => S.agente.trim() || "Atendente IA";
+const ini = s => s.trim().split(/\s+/).slice(0, 2).map(x => x[0] || "").join("").toUpperCase() || "?";
+
+/* ============================== peças ============================== */
+function marca() { return `<div class="marca"><img src="../marca/arvisx-simbolo.png" alt=""><div><span class="r">ARVISX CRM</span><strong>${esc(nomeNeg())}</strong></div></div>`; }
+function qr() { let h = "", s = 7; for (let i = 0; i < 441; i++) { s = (s * 1103515245 + 12345) & 0x7fffffff; const x = i % 21, y = (i / 21) | 0; const canto = (x < 7 && y < 7) || (x > 13 && y < 7) || (x < 7 && y > 13); const cheio = canto ? (x % 6 === 0 || y % 6 === 0 || x === 20 || y === 20 || x === 14 || y === 14 || (x % 7 > 1 && x % 7 < 5 && y % 7 > 1 && y % 7 < 5)) : s % 3 === 0; h += `<i class="${cheio ? "" : "b"}"></i>`; } return `<div class="qr" role="img" aria-label="Código QR">${h}</div>`; }
+function menuItens() { return ia() ? ["Inbox", "Kanban", "Contatos", "Follow-ups", "Radar", "Alertas", "Casos", "Propostas"] : ["Inbox", "Kanban", "Contatos", "Tarefas"]; }
+const ICONE = { Inbox: "ph-tray", Kanban: "ph-kanban", Contatos: "ph-address-book", Tarefas: "ph-check-square", "Follow-ups": "ph-arrow-u-up-left", Radar: "ph-thermometer-cold", Alertas: "ph-hand-palm", Casos: "ph-bell-ringing", Propostas: "ph-lightbulb" };
+function lateral(ativo, foco) { return `<div class="mini-lat"><div class="org"><small>ARVISX CRM</small>${esc(nomeNeg())}</div>${menuItens().map(m => `<div class="it ${m === ativo ? "on" : ""} ${m === foco ? "foco" : ""}"><i class="ph ${ICONE[m]}"></i>${m}</div>`).join("")}</div>`; }
+function colunasMini(lead) { return `<div class="mcols">${S.funil.map((e, i) => `<div class="mcol ${e.passo === "won" ? "g" : e.passo === "lost" ? "p" : ""}" style="animation-delay:${i * 50}ms"><b>${esc(e.nome)}</b>${lead === i ? `<div class="c lead">Você (ensaio)</div>` : ""}${i < 3 && lead == null ? `<div class="c"></div>` : ""}${i === 0 && lead == null ? `<div class="c"></div>` : ""}</div>`).join("")}</div>`; }
+function mini(ativo, conteudo) { return `<div class="mini">${lateral(ativo)}<div class="mini-cont">${conteudo}</div></div>`; }
+
+/* ============================== ANTES ============================== */
+function cascaAntes(id, corpo) {
+  const l = doPlano().filter(p => !p.extra), at = l.findIndex(p => p.id === id);
+  return `<div class="a"><div class="a-topo">${marca()}</div><div class="fio" style="margin:0"></div>
+  <ol class="passos">${l.map((p, i) => `<li class="${at === -1 || i < at ? "feito" : i === at ? "atual" : ""}"><span class="n">${i + 1}</span><span class="t">${rot(p)}</span></li>`).join("")}</ol>${corpo}</div>`;
+}
+const cab = (t, s, extra = "") => `<header class="a-cab"><h2 class="t2">${t}</h2><p class="sub">${s}</p>${extra}</header>`;
+const ANTES = {
+  welcome: () => cascaAntes("welcome", cab("Boas-vindas ao ArvisX CRM", ia() ? "Vamos montar quem vai atender seus clientes — e onde ele vai trabalhar." : "Vamos deixar a sua empresa pronta para atender: o WhatsApp, o funil e a equipe.") + `<div class="cx">
+    <div class="cp"><label>Como se chama o seu negócio?</label><input type="text" value="${esc(S.nome)}" readonly><p class="aj">É o nome que aparece para o seu time e nos relatórios. Pode ser clínica, loja, escritório — o que for seu.</p></div>
+    <div class="cp"><label>O que vocês fazem?</label><input type="text" placeholder="Ex.: clínica odontológica, ou venda de roupa fitness pelo WhatsApp" readonly><p class="aj">${ia() ? "Uma linha basta. É com isso que seu funcionário aprende com quem ele está falando — e que a gente monta o quadro de clientes do seu jeito." : "Uma linha basta. É com isso que o CRM monta o seu funil e a sua ficha de clientes."}</p></div>
+    <div class="cp"><label>Onde você atende</label><select disabled><option>São Paulo</option></select><p class="aj">${ia() ? "Decide o horário em que seu funcionário pode falar com clientes." : "É o fuso dos horários do seu atendimento."}</p></div>
+    <label class="termos"><input type="checkbox" disabled><span>Li e aceito os <u>Termos de Uso</u> e a <u>Política de Privacidade</u>.</span></label>
+    <div class="rod dir"><button class="bt ouro">Continuar</button></div></div>`),
+  whatsapp: () => cascaAntes("whatsapp", cab(ia() ? "Dê um telefone a ele" : "Conecte o seu WhatsApp", ia() ? "É por este número que ele vai atender seus clientes. Se você conecta pelo celular, tenha ele por perto." : "É por este número que a sua equipe vai atender os clientes. Se você conecta pelo celular, tenha ele por perto.", `<p class="aj" style="margin-top:10px">Novos canais começam em modo de teste. Após concluir a configuração, abra Conexões para autorizar seus números de teste ou liberar o público.</p>`) + `<div class="cx">
+    <u class="aj">← Escolher outra forma</u>
+    <div class="faixa" style="margin-top:12px;background:var(--painel-2)"><b>Pronto para conectar</b><p class="aj">Escolha QR Code ou código de pareamento e confirme no WhatsApp do celular.</p>
+      <div style="text-align:center;margin-top:12px"><span class="segm"><span class="on">QR Code</span><span>Conectar por código</span></span></div>${qr()}</div>
+    <div class="rod" style="justify-content:flex-start"><button class="bt sec">Pular por enquanto</button><button class="bt ouro">Conectei em outro lugar</button></div></div>`),
+  treinar: () => cascaAntes("treinar", cab("Treine seu funcionário", "Quem ele é, como fala e o que pode prometer. Dá para mudar tudo depois.") + `<div class="cx" style="margin-bottom:14px"><b>O cérebro dele:</b> <span class="aj">da inteligência escolhida na instalação</span><p class="aj" style="margin-top:4px">Testei agora: a chave respondeu e tem crédito.</p></div><div class="cx">
+    <div class="cp"><label>Como ele vai se chamar</label><input type="text" value="Atendente IA" readonly><p class="aj">É o nome que aparece para o seu time. O cliente vê só a conversa.</p></div>
+    <div class="cp"><span class="lb">O jeito dele falar</span><div>${TONS.map((t, i) => `<div class="op ${i === 0 ? "on" : ""}"><i class="rd"></i><div><b>${t.t}</b><span>${t.d}</span></div></div>`).join("")}</div></div>
+    <div class="cp"><label>As regras da casa (opcional)</label><textarea rows="3" readonly placeholder="Nunca prometa desconto sem confirmar com uma pessoa.&#10;Horário de atendimento: 9h às 18h, de segunda a sexta.&#10;Sempre chame o cliente pelo primeiro nome."></textarea><p class="aj">O que vale para qualquer atendimento aqui. Pode deixar em branco agora e escrever depois — ele aprende com você ao longo do tempo.</p></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="faixa"><b>Ele já vem sabendo</b><i class="osso"></i><i class="osso" style="width:70%"></i><i class="osso" style="width:85%"></i></div><div class="faixa"><b>E nunca vai fazer</b><i class="osso"></i><i class="osso" style="width:60%"></i><p class="aj">Essas conferências acontecem antes de cada mensagem sair, e não têm interruptor.</p></div></div>
+    <div class="rod"><button class="bt fant">Pular</button><button class="bt ouro">Criar e continuar</button></div></div>`),
+  funil: () => cascaAntes("funil", cab(ia() ? "Onde ele organiza seus clientes" : "Seu funil de clientes", ia() ? "Cada cliente vira um cartão que anda por essas colunas. Ele mesmo move o cartão conforme a conversa avança — por isso cada coluna diz também quando ele deve usá-la." : "Cada cliente vira um cartão que anda por essas colunas. Você e a equipe movem o cartão conforme a conversa avança.") + `<div class="faixa ${ia() ? "ok" : ""}" style="margin-bottom:12px">${ia() ? "Seu funcionário montou este quadro olhando o que você me contou sobre o negócio. Ajuste o que quiser." : "Sugerimos este quadro a partir do que você contou sobre o negócio. Ajuste o que quiser."}</div><div class="cx">
+    <div class="cp"><label>Nome do quadro</label><input type="text" value="${esc(S.funilNome)}" readonly></div>
+    ${S.funil.map((e, i) => `<div class="a-col"><span class="n">${i + 1}</span><div class="c"><input value="${esc(e.nome)}" readonly aria-label="Nome da coluna">${ia() ? `<p>${EXP[e.passo] ? `Ele move o cliente para cá quando ${EXP[e.passo]}.` : "Coluna que só vocês movem — ele não mexe nesta."}</p>` : ""}</div>${e.passo === "won" || e.passo === "lost" ? `<span class="ob">obrigatória</span>` : `<i class="ph ph-x ob"></i>`}</div>`).join("")}
+    <button class="bt sec">Adicionar coluna</button></div>
+    <p style="margin:12px 0 0"><u class="aj">Prefiro começar de um modelo pronto</u></p>
+    <div class="rod"><button class="bt fant">Pular por enquanto</button><button class="bt ouro">Usar este quadro</button></div>`),
+  testar: () => cascaAntes("testar", cab("Veja ele atender", "Escreva como se fosse um cliente. Nada é enviado pelo WhatsApp — é só um ensaio, entre você e ele.") + `<div class="cx">
+    <div class="cp"><label>Escreva como se fosse um cliente</label><textarea rows="3" readonly>${EXEMPLO}</textarea></div>
+    <div class="rod dir" style="margin-top:0"><button class="bt ouro">Mandar mensagem</button></div>
+    <div class="faixa" style="margin-top:14px;background:var(--painel-2)"><span class="tg">Atendente IA respondeu</span><p style="margin:8px 0">${RESP[0].preco(esc(nomeNeg()))}</p><p class="aj">Esta conversa não foi enviada a ninguém e não aparece no seu inbox.</p></div></div>
+    <div class="rod"><button class="bt fant">Pular</button><button class="bt sec">Continuar</button></div>`),
+  equipe: () => cascaAntes("equipe", cab(ia() ? "Quem trabalha com ele" : "Sua equipe", ia() ? "Seu funcionário não trabalha sozinho: quando ele passar uma conversa adiante, é uma dessas pessoas que atende." : "Quem vai atender as conversas com você.") + `<div class="cx">
+    <div class="cp"><label>E-mail de quem vai atender com você</label><textarea rows="4" readonly placeholder="alice@empresa.com&#10;bob@empresa.com"></textarea></div>
+    <div class="cp"><label>O que essas pessoas podem fazer</label><select disabled><option>Atendente</option></select></div>
+    <div class="rod"><button class="bt fant">Pular por enquanto</button><button class="bt ouro">Enviar convites</button></div></div>`),
+  fim: () => { const tour = ia() ? TOUR_IA : TOUR_SEM; return cascaAntes("fim", `<div class="cx"><div style="text-align:center"><h2 class="t2">Tudo pronto!</h2><p class="sub" style="margin:6px auto 0">${ia() ? "Seu funcionário está montado. Daqui em diante é só acompanhar." : "Sua empresa está pronta: conecte, atenda e acompanhe tudo pelo Inbox."}</p>${ia() ? "" : `<p class="aj" style="margin-top:6px"><u>Agentes de IA estão nos planos Standard e Premium.</u></p>`}</div>
+    <ul class="a-lista" style="margin-top:18px">${doPlano().filter(p => !p.extra).map(p => `<li><i></i>${rot(p)}</li>`).join("")}</ul>
+    <div style="border-top:1px solid var(--linha);margin-top:22px;padding-top:18px"><b>O que mais tem aqui</b><p class="aj">Você não precisa mexer em nada disso agora. É só para saber que existe.</p>
+    <ul class="a-pecas">${tour.map(t => `<li><b><u>${t.como}</u></b> (${t.menu})<div style="margin-top:4px">${t.pq}</div><details><summary>Como funciona</summary><ol>${t.passos.map(x => `<li>${x}</li>`).join("")}</ol></details></li>`).join("")}</ul></div>
+    <div class="rod" style="justify-content:center"><button class="bt ouro">Começar a usar</button></div></div>`); },
+  app: () => `<div class="a-vazio"><div class="lat"><i></i><i style="width:70%"></i><i style="width:85%"></i><i style="width:60%"></i><i style="width:75%"></i></div><div class="lst"><i class="osso" style="width:50%"></i></div><div class="meio"><div><i class="ph ph-tray"></i>Inbox vazio.<br>Nenhuma orientação sobre o próximo passo.</div></div></div>`,
+};
+
+/* ============================== DEPOIS ============================== */
+function casca(id, form, prev, leg) {
+  const l = doPlano().filter(p => !p.extra), at = l.findIndex(p => p.id === id);
+  return `<div class="w"><header class="w-topo">${marca()}<div class="w-prog"><span>Passo ${at + 1} de ${l.length}</span><div class="barra"><i style="width:${(at + 1) / l.length * 100}%"></i></div></div></header>
+  <ol class="w-passos">${l.map((p, i) => `<li class="${i < at ? "feito" : i === at ? "atual" : ""}">${i < at ? `<i class="ph-fill ph-check-circle"></i>` : ""}${rot(p)}</li>`).join("")}</ol>
+  <div class="w-corpo ${prev == null ? "um" : ""}"><section class="w-form">${form}</section>${prev == null ? "" : `<aside class="w-prev"><div class="w-prev-rot"><i class="pulso"></i>Ao vivo · o seu CRM</div><div data-prev>${prev}</div><p class="w-prev-leg" data-leg>${leg || ""}</p></aside>`}</div></div>`;
+}
+const PREV = {
+  welcome: () => mini("Kanban", `<h4>${esc(S.funilNome)}</h4><p class="s">${esc(PACOTES.find(p => p.id === S.ramo).como)}${S.detalhe.trim() ? " · " + esc(S.detalhe.trim()) : ""}</p>${colunasMini(null)}`),
+  whatsapp: () => mini("Inbox", `<h4>Inbox</h4><p class="s">${S.conectado ? `<span class="tg ok">Conectado · +55 11 98888-0142</span>` : `<span class="tg">Sem número ainda</span>`}</p>${S.oi ? `<div class="conv"><span class="av">VC</span><div class="tx"><b>Você (seu celular)</b><span>oi</span></div><span class="tg novo">agora</span></div>` : `<div class="vz">${S.conectado ? "Esperando a primeira mensagem…" : "As conversas aparecem aqui assim que o número conectar."}</div>`}`),
+  treinar: () => `<div class="ag"><span class="av ia">${esc(ini(nomeAg()))}</span><div><b>${esc(nomeAg())}</b><span>${TONS[S.tom].t} · atende pela ${esc(nomeNeg())}</span></div></div>
+    <div class="zap" style="margin-top:12px"><div class="zap-msgs" style="min-height:0"><div class="bal eu">${EXEMPLO}</div><div class="bal ele"><small>${esc(nomeAg())}</small>${RESP[S.tom].preco(esc(nomeNeg()))}</div></div></div>
+    ${S.regras.trim() ? `<div class="ag-regras" style="margin-top:12px"><b>Regras da casa</b>${S.regras.trim().split("\n").filter(Boolean).map(r => `<li>${esc(r)}</li>`).join("")}</div>` : ""}`,
+  testar: () => `<div class="ag"><span class="av ia">${esc(ini(nomeAg()))}</span><div><b>${esc(nomeAg())}</b><span>${TONS[S.tom].t}</span></div></div><div style="height:12px"></div>` + mini("Kanban", `<h4>${esc(S.funilNome)}</h4><p class="s">${S.etapaDoEnsaio < 0 ? "O cliente do ensaio vira cartão aqui." : `Cartão em <b>${esc(S.funil[S.etapaDoEnsaio].nome)}</b>`}</p>${colunasMini(S.etapaDoEnsaio < 0 ? -2 : S.etapaDoEnsaio)}`),
+  equipe: () => { const es = S.emails.split(/[\s,;]+/).filter(e => e.includes("@")); return `${ia() ? `<div class="pess"><span class="av ia">${esc(ini(nomeAg()))}</span><div><b>${esc(nomeAg())}</b><span>Agente de IA · atende primeiro</span></div><span class="tg ouro">IA</span></div>` : ""}<div class="pess"><span class="av">VC</span><div><b>Você</b><span>Administrador</span></div><span class="tg ok">ativo</span></div>${es.map(e => `<div class="pess"><span class="av">${esc(e[0].toUpperCase())}</span><div><b>${esc(e)}</b><span>${esc(S.papel)}</span></div><span class="tg">convite</span></div>`).join("")}${es.length ? "" : `<div class="vz" style="margin-top:8px;color:#8b95a6;border-color:var(--navy-linha)">Quem você convidar aparece aqui.</div>`}`; },
+};
+const LEG = {
+  welcome: () => "O nome e o funil mudam aqui enquanto você preenche.",
+  whatsapp: () => S.oi ? (ia() ? "Chegou. Depois de treinar, é ele quem responde aqui." : "Chegou. É aqui que você e a equipe respondem.") : "É aqui que as conversas vão chegar.",
+  treinar: () => "A mesma pergunta, respondida no jeito que você escolher.",
+  testar: () => "Conforme a conversa anda, o cartão muda de coluna.",
+  equipe: () => ia() ? "Quando ele passar uma conversa adiante, é uma dessas pessoas que atende." : "Quem vai atender as conversas com você.",
+};
+const DEPOIS = {
+  welcome: () => casca("welcome", `<h2 class="t2">Boas-vindas ao ArvisX CRM</h2><p class="sub">${ia() ? "Vamos montar quem vai atender seus clientes — e onde ele vai trabalhar." : "Vamos deixar a sua empresa pronta para atender: o WhatsApp, o funil e a equipe."}</p>
+    <div class="cp"><label for="f-nome">Como se chama o seu negócio?</label><input id="f-nome" type="text" data-m="nome" value="${esc(S.nome)}" maxlength="120"><p class="aj">É o nome que aparece para o seu time e nos relatórios. Pode ser clínica, loja, escritório — o que for seu.</p></div>
+    <div class="cp"><span class="lb">O que vocês fazem?</span><div class="chips">${PACOTES.map(p => `<button data-ramo="${p.id}" class="${S.ramo === p.id ? "on" : ""}"><i class="ph ${p.ic}"></i>${p.como}</button>`).join("")}</div>
+      <input type="text" data-m="detalhe" value="${esc(S.detalhe)}" maxlength="280" placeholder="Ex.: clínica odontológica, ou venda de roupa fitness pelo WhatsApp" style="margin-top:4px"><p class="aj">${ia() ? "Uma linha basta. É com isso que seu funcionário aprende com quem ele está falando — e que a gente monta o quadro de clientes do seu jeito." : "Uma linha basta. É com isso que o CRM monta o seu funil e a sua ficha de clientes."}</p></div>
+    <div class="cp"><label>Onde você atende</label><select><option>São Paulo</option><option>Lisboa</option><option>Manaus</option></select><p class="aj">${ia() ? "Decide o horário em que seu funcionário pode falar com clientes." : "É o fuso dos horários do seu atendimento."}</p></div>
+    <label class="termos"><input type="checkbox"><span>Li e aceito os <u>Termos de Uso</u> e a <u>Política de Privacidade</u>.</span></label>
+    <div class="rod dir"><button class="bt ouro" data-ir="prox">Continuar <i class="ph ph-arrow-right"></i></button></div>`, PREV.welcome(), LEG.welcome()),
+  whatsapp: () => casca("whatsapp", `<h2 class="t2">${ia() ? "Dê um telefone a ele" : "Conecte o seu WhatsApp"}</h2><p class="sub">${ia() ? "É por este número que ele vai atender seus clientes. Se você conecta pelo celular, tenha ele por perto." : "É por este número que a sua equipe vai atender os clientes. Se você conecta pelo celular, tenha ele por perto."}</p>
+    <span class="lb">Como você já usa esse número?</span><p class="aj" style="margin:2px 0 8px">Existe mais de um jeito de ter WhatsApp para empresa, e cada um conecta de um jeito. Se você nunca ouviu falar do outro, é o primeiro.</p>
+    <button class="op ${S.forma === "celular" ? "on" : ""}" data-forma="celular"><i class="rd"></i><div><b>Uso o WhatsApp no celular</b><span>Conecte com QR Code ou digite um código de pareamento no WhatsApp do celular.</span></div></button>
+    <button class="op ${S.forma === "meta" ? "on" : ""}" data-forma="meta"><i class="rd"></i><div><b>Tenho conta oficial na Meta</b><span>Você cadastrou o número na Meta e tem as credenciais em mãos. Não usa o celular para conectar.</span></div></button>
+    ${S.forma === "meta" ? `<div class="faixa" style="margin-top:12px">Aqui entra o formulário das credenciais da Meta, igual ao de hoje.</div>` : !S.conectado ? `<div class="faixa" style="margin-top:12px;background:var(--painel-2)"><b>Pronto para conectar</b><p class="aj">Escolha QR Code ou código de pareamento e confirme no WhatsApp do celular.</p><div style="text-align:center;margin-top:10px"><span class="segm"><span class="on">QR Code</span><span>Conectar por código</span></span></div>${qr()}<div style="text-align:center;margin-top:12px"><button class="sim" data-ac="conectar"><i class="ph ph-qr-code"></i>Li o QR no celular <small>simular</small></button></div></div>`
+      : `<div class="faixa ok" style="margin-top:12px"><b><i class="ph-fill ph-check-circle" style="color:var(--ok)"></i> O número está no ar.</b><p style="margin:8px 0 0"><b>Faça o teste agora:</b> pegue o seu celular e mande um "oi" para <span class="mono">+55 11 98888-0142</span>.</p><p class="aj">A mensagem aparece ao lado em poucos segundos.</p>${S.oi ? `<p style="margin:10px 0 0;font-weight:700;color:var(--ok)">Chegou! O seu WhatsApp já fala com o CRM.</p>` : `<div style="margin-top:10px"><button class="sim" data-ac="oi"><i class="ph ph-device-mobile"></i>Mandei um oi <small>simular</small></button></div>`}</div>`}
+    <div class="rod"><button class="bt fant" data-ir="prox">Pular por enquanto</button><button class="bt ${S.conectado ? "ouro" : "sec"}" data-ir="prox">${S.conectado ? `Continuar <i class="ph ph-arrow-right"></i>` : "Conectei em outro lugar"}</button></div>`, PREV.whatsapp(), LEG.whatsapp()),
+  treinar: () => casca("treinar", `<h2 class="t2">Treine seu funcionário</h2><p class="sub">Quem ele é, como fala e o que pode prometer. Dá para mudar tudo depois.</p>
+    <div class="faixa ok" style="margin-bottom:16px"><b>O cérebro dele:</b> <span class="aj">da inteligência escolhida na instalação</span><br><span class="aj">Testei agora: a chave respondeu e tem crédito.</span></div>
+    <div class="cp"><label for="f-ag">Como ele vai se chamar</label><input id="f-ag" type="text" data-m="agente" value="${esc(S.agente)}" maxlength="60"><p class="aj">É o nome que aparece para o seu time. O cliente vê só a conversa.</p></div>
+    <div class="cp"><span class="lb">O jeito dele falar</span><div>${TONS.map((t, i) => `<button class="op ${S.tom === i ? "on" : ""}" data-tom="${i}"><i class="rd"></i><div><b>${t.t}</b><span>${t.d}</span></div></button>`).join("")}</div></div>
+    <div class="cp"><label for="f-reg">As regras da casa (opcional)</label><textarea id="f-reg" rows="3" data-m="regras" placeholder="Nunca prometa desconto sem confirmar com uma pessoa.&#10;Horário de atendimento: 9h às 18h, de segunda a sexta.&#10;Sempre chame o cliente pelo primeiro nome.">${esc(S.regras)}</textarea><p class="aj">O que vale para qualquer atendimento aqui. Pode deixar em branco agora e escrever depois — ele aprende com você ao longo do tempo.</p></div>
+    <details class="faixa"><summary style="cursor:pointer;font-weight:700">Ele já vem sabendo · E nunca vai fazer</summary><p class="aj" style="margin-top:8px">As duas listas de hoje, sem mudança. Essas conferências acontecem antes de cada mensagem sair, e não têm interruptor.</p></details>
+    <div class="rod"><button class="bt fant" data-ir="prox">Pular</button><button class="bt ouro" data-ir="prox">Criar e continuar <i class="ph ph-arrow-right"></i></button></div>`, PREV.treinar(), LEG.treinar()),
+  funil: () => casca("funil", `<h2 class="t2">${ia() ? "Onde ele organiza seus clientes" : "Seu funil de clientes"}</h2><p class="sub">${ia() ? "Cada cliente vira um cartão que anda por essas colunas. Ele mesmo move o cartão conforme a conversa avança — por isso cada coluna diz também quando ele deve usá-la." : "Cada cliente vira um cartão que anda por essas colunas. Você e a equipe movem o cartão conforme a conversa avança."}</p>
+    <div class="faixa ${ia() ? "ok" : ""}" style="margin-bottom:12px">${ia() ? "Seu funcionário montou este quadro olhando o que você me contou sobre o negócio. Ajuste o que quiser." : "Sugerimos este quadro a partir do que você contou sobre o negócio. Ajuste o que quiser."}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end;margin-bottom:10px"><div class="cp" style="margin:0;width:220px"><label for="f-q">Nome do quadro</label><input id="f-q" type="text" data-m="funilNome" value="${esc(S.funilNome)}"></div>
+      <div><span class="aj">Prefiro começar de um modelo pronto</span><div class="chips" style="margin-top:5px">${PACOTES.map(p => `<button data-modelo="${p.id}" class="${S.ramo === p.id ? "on" : ""}">${p.como}</button>`).join("")}</div></div></div>
+    <p class="aj" style="margin-bottom:8px"><i class="ph ph-hand-grabbing"></i> Clique no nome para renomear. Arraste a coluna para mudar a ordem. Arraste o cartão de exemplo para ver como ele anda.</p>
+    <div class="quadro-f">${S.funil.map((e, i) => `<div class="fcol ${e.passo === "won" ? "g" : e.passo === "lost" ? "p" : ""}" data-col="${i}">
+      <div class="cab"><i class="ph ph-dots-six-vertical pega" draggable="true" data-arr="col" data-i="${i}" title="Arrastar coluna"></i><div class="nome" contenteditable="true" spellcheck="false" data-nomecol="${i}">${esc(e.nome)}</div>${e.passo === "won" || e.passo === "lost" ? "" : `<button class="x" data-tira="${i}" aria-label="Remover coluna"><i class="ph ph-x"></i></button>`}</div>
+      ${e.passo === "won" || e.passo === "lost" ? `<span class="ob">obrigatória</span>` : ""}
+      ${ia() ? `<p class="ex">${EXP[e.passo] ? `Ele move o cliente para cá quando ${EXP[e.passo]}.` : "Coluna que só vocês movem — ele não mexe nesta."}</p>` : ""}
+      ${S.cartao === i ? `<div class="fcard" draggable="true" data-arr="card"><span class="av">MC</span><div><b>Marina Costa</b><span>cartão de exemplo</span></div></div>` : ""}</div>`).join("")}
+      ${S.funil.length < 8 ? `<button class="fmais" data-ac="maiscol"><i class="ph ph-plus"></i> Adicionar coluna</button>` : ""}</div>
+    ${S.funil.length >= 8 ? `<p class="aj">8 colunas é o máximo — mais que isso não cabe na tela do celular.</p>` : ""}
+    <div class="rod"><button class="bt fant" data-ir="prox">Pular por enquanto</button><button class="bt ouro" data-ir="prox">Usar este quadro <i class="ph ph-arrow-right"></i></button></div>`, null),
+  testar: () => casca("testar", `<h2 class="t2">Veja ele atender</h2><p class="sub">Escreva como se fosse um cliente. Nada é enviado pelo WhatsApp — é só um ensaio, entre você e ele.</p>
+    <div class="zap"><div class="zap-topo"><span class="av ia">${esc(ini(nomeAg()))}</span><div><b>${esc(nomeNeg())}</b><span>${esc(nomeAg())} · ensaio</span></div></div>
+      <div class="zap-msgs" id="msgs">${S.chat.length ? "" : `<div class="vz" style="background:rgba(255,255,255,.5)">Escolha uma pergunta abaixo ou escreva a sua.</div>`}${S.chat.map(m => `<div class="bal ${m.de}">${m.de === "ele" ? `<small>${esc(nomeAg())}</small>` : ""}${esc(m.tx)}</div>`).join("")}${S.digitando ? `<div class="bal ele"><span class="dig"><i></i><i></i><i></i></span></div>` : ""}</div>
+      <div class="zap-sug">${SUG.map((s, i) => `<button data-sug="${i}">${s}</button>`).join("")}</div>
+      <div class="zap-ent"><input id="f-chat" type="text" placeholder="Escreva como se fosse um cliente" maxlength="4000"><button data-ac="enviar" aria-label="Mandar mensagem"><i class="ph-fill ph-paper-plane-right"></i></button></div></div>
+    <p class="aj" style="margin-top:8px">Esta conversa não foi enviada a ninguém e não aparece no seu inbox.</p>
+    <div class="rod"><button class="bt fant" data-ir="prox">Pular</button><button class="bt ${S.chat.length > 1 ? "ouro" : "sec"}" data-ir="prox">Continuar <i class="ph ph-arrow-right"></i></button></div>`, PREV.testar(), LEG.testar()),
+  equipe: () => casca("equipe", `<h2 class="t2">${ia() ? "Quem trabalha com ele" : "Sua equipe"}</h2><p class="sub">${ia() ? "Seu funcionário não trabalha sozinho: quando ele passar uma conversa adiante, é uma dessas pessoas que atende." : "Quem vai atender as conversas com você."}</p>
+    <div class="cp"><label for="f-em">E-mail de quem vai atender com você</label><textarea id="f-em" rows="4" data-m="emails" placeholder="alice@empresa.com&#10;bob@empresa.com">${esc(S.emails)}</textarea></div>
+    <div class="cp"><label for="f-pp">O que essas pessoas podem fazer</label><select id="f-pp" data-m="papel">${["Somente leitura", "Atendente", "Gerente", "Administrador"].map(p => `<option ${S.papel === p ? "selected" : ""}>${p}</option>`).join("")}</select></div>
+    <div class="rod"><button class="bt fant" data-ir="prox">Pular por enquanto</button><button class="bt ouro" data-ir="prox">Enviar convites <i class="ph ph-arrow-right"></i></button></div>`, PREV.equipe(), LEG.equipe()),
+  fim: () => { const n = (ia() ? TOUR_IA : TOUR_SEM).length; return `<div class="w"><header class="w-topo">${marca()}<div class="w-prog"><span>Concluído</span><div class="barra"><i style="width:100%"></i></div></div></header><div class="fim">
+    <div class="selo"><i class="ph-fill ph-check"></i></div><h2 class="t2">Tudo pronto!</h2><p class="sub" style="margin:8px auto 0">${ia() ? "Seu funcionário está montado. Daqui em diante é só acompanhar." : "Sua empresa está pronta: conecte, atenda e acompanhe tudo pelo Inbox."}</p>${ia() ? "" : `<p class="aj" style="margin-top:6px"><u>Agentes de IA estão nos planos Standard e Premium.</u></p>`}
+    <ul>${doPlano().filter(p => !p.extra).map((p, i) => { const pul = p.id === "whatsapp" && !S.conectado; return `<li class="${pul ? "pul" : ""}" style="animation-delay:${i * 110}ms"><i class="${pul ? "ph ph-minus-circle" : "ph-fill ph-check-circle"}"></i>${rot(p)}${pul ? "<small>você pulou</small>" : ""}</li>`; }).join("")}</ul>
+    <div class="prox"><i class="ph ph-compass"></i><div><b>O que vem agora</b>${n} primeiros passos dentro do CRM, com a tela certa acesa a cada um. Você faz no seu ritmo.</div></div>
+    <button class="bt ouro" data-ir="prox" style="padding:12px 22px">Começar a usar <i class="ph ph-arrow-right"></i></button></div></div>`; },
+  app: () => { const tour = ia() ? TOUR_IA : TOUR_SEM, vistos = tour.filter((_, i) => S.vistos[S.plano + i]).length, t = S.tour >= 0 ? tour[S.tour] : null;
+    return `<div class="app">${lateral("Inbox", t ? t.menu : null)}<div class="app-cont"><h2 class="t2" style="font-size:22px">Inbox</h2><p class="sub" style="margin-bottom:14px">Conversas de exemplo, para o inbox não nascer vazio. Somem quando a primeira conversa real chegar.</p>
+      ${[["MC", "Marina Costa", "Oi, vocês atendem sábado?"], ["BT", "Bruno Tavares", "Quanto custa a avaliação?"], ["HM", "Helena Marques", "Consigo remarcar para quinta?"]].map(c => `<div class="conv"><span class="av">${c[0]}</span><div class="tx"><b>${c[1]}</b><span>${c[2]}</span></div><span class="tg ouro">exemplo</span></div>`).join("")}</div>
+      ${t ? `<div class="coach"><small>${t.menu} · no menu ao lado</small><b>${t.como}</b><p>${t.pq}</p><ol>${t.passos.map(x => `<li>${x}</li>`).join("")}</ol><button class="bt ouro" data-ac="entendi">Entendi <i class="ph ph-check"></i></button></div>` : ""}
+      <div class="pp"><div class="pp-cab"><span>${vistos}/${tour.length}</span><b>Primeiros passos</b><div class="barra"><i style="width:${vistos / tour.length * 100}%"></i></div></div>
+        <ul>${tour.map((x, i) => `<li class="${S.vistos[S.plano + i] ? "feito" : ""} ${S.tour === i ? "on" : ""}"><button data-tour="${i}"><i class="${S.vistos[S.plano + i] ? "ph-fill ph-check-circle" : "ph ph-circle"}"></i>${x.como}</button></li>`).join("")}</ul>
+        ${vistos === tour.length ? `<p class="aj" style="padding:0 14px 12px">Tudo visto. O painel se recolhe e fica guardado no Guia de uso.</p>` : ""}</div></div>`; },
+};
+
+/* ============================== montagem ============================== */
+const $ = s => document.querySelector(s);
+function render() {
+  if (!doPlano().some(p => p.id === S.passo)) S.passo = "welcome";
+  document.querySelectorAll("#segPlano button").forEach(b => b.setAttribute("aria-pressed", b.dataset.plano === S.plano));
+  document.querySelectorAll("#segVista button").forEach(b => b.setAttribute("aria-pressed", b.dataset.vista === S.vista));
+  document.querySelectorAll("#segTela button").forEach(b => b.setAttribute("aria-pressed", b.dataset.tela === S.tela));
+  $("#vPlano").innerHTML = ia() ? "<b>Teste, Standard e Premium</b> têm IA e seguem o mesmo roteiro: 6 passos, falando do \"funcionário\"." : "<b>Essencial</b> não tem IA: 4 passos (sem \"Treinar\" e sem \"Ver ele atender\"), falando da empresa e da equipe.";
+  let n = 0;
+  $("#trilha").innerHTML = doPlano().map(p => `${p.id === "fim" ? `<span class="sep"></span>` : ""}<button data-passo="${p.id}" aria-current="${p.id === S.passo}"><span class="n">${p.extra ? "+" : ++n}</span>${rot(p)}</button>`).join("");
+  const q = (lado, html) => `<div><div class="q-rot ${lado}"><span class="bola"></span>${lado === "antes" ? "Antes · como é hoje" : "Depois · proposta"}</div><div class="quadro"><div class="quadro-in" data-lado="${lado}">${html}</div></div></div>`;
+  const palco = $("#palco");
+  palco.className = "palco" + (S.vista === "lado" ? " lado" : "") + (S.tela === "celular" ? " celular" : "");
+  palco.innerHTML = (S.vista !== "depois" ? q("antes", ANTES[S.passo]()) : "") + (S.vista !== "antes" ? q("depois", DEPOIS[S.passo]()) : "");
+  $("#notas").innerHTML = `<h2>O que muda em "${rot(PASSOS.find(p => p.id === S.passo))}"</h2><ul>${NOTAS[S.passo].map(x => `<li>${x}</li>`).join("")}</ul>`;
+  escala();
+  const m = $("#msgs"); if (m) m.scrollTop = m.scrollHeight;
+}
+function escala() {
+  const W = S.tela === "celular" ? 390 : 1180;
+  document.querySelectorAll(".quadro").forEach(qd => { const el = qd.firstElementChild; el.style.zoom = 1; el.style.width = "auto"; const larg = S.tela === "celular" ? W : Math.max(W, qd.clientWidth); el.style.width = larg + "px"; el.style.zoom = Math.min(1, qd.clientWidth / larg); });
+}
+function prev() { const el = document.querySelector('[data-lado="depois"] [data-prev]'); if (el && PREV[S.passo]) { el.innerHTML = PREV[S.passo](); const l = document.querySelector('[data-lado="depois"] [data-leg]'); if (l) l.textContent = LEG[S.passo](); } document.querySelectorAll(".marca strong").forEach(x => x.textContent = nomeNeg()); }
+function ir(d) { const l = doPlano(), i = l.findIndex(p => p.id === S.passo); S.passo = l[Math.min(l.length - 1, Math.max(0, i + d))].id; render(); window.scrollTo({ top: 0 }); }
+function responde(tx) {
+  if (!tx.trim() || S.digitando) return;
+  S.chat.push({ de: "eu", tx }); S.digitando = true; if (S.etapaDoEnsaio < 0) S.etapaDoEnsaio = 0; render();
+  const t = tx.toLowerCase(), r = RESP[S.tom], k = /marc|agend|hor[áa]rio/.test(t) ? "marcar" : /s[áa]bado|domingo|fim de semana/.test(t) ? "sab" : /pre[çc]o|valor|custa|quanto/.test(t) ? "preco" : "outro";
+  setTimeout(() => { S.digitando = false; S.chat.push({ de: "ele", tx: r[k](nomeNeg()) }); S.etapaDoEnsaio = Math.min(S.funil.length - 1, k === "marcar" ? 3 : Math.max(S.etapaDoEnsaio, k === "outro" ? 1 : 2)); render(); const f = $("#f-chat"); if (f) f.focus(); }, 1300);
+}
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("button, [data-passo]"); if (!b) return; const d = b.dataset;
+  if (d.plano) { S.plano = d.plano; S.tour = -1; }
+  else if (d.vista) S.vista = d.vista;
+  else if (d.tela) S.tela = d.tela;
+  else if (d.passo) S.passo = d.passo;
+  else if (d.ir) return ir(1);
+  else if (d.ramo) { S.ramo = d.ramo; carregaPacote(d.ramo); }
+  else if (d.modelo) { S.ramo = d.modelo; carregaPacote(d.modelo); }
+  else if (d.forma) S.forma = d.forma;
+  else if (d.tom) S.tom = +d.tom;
+  else if (d.sug) return responde(SUG[+d.sug]);
+  else if (d.tira) { S.funil.splice(+d.tira, 1); if (S.cartao >= S.funil.length) S.cartao = 0; }
+  else if (d.tour) S.tour = +d.tour;
+  else if (d.ac === "conectar") S.conectado = true;
+  else if (d.ac === "oi") S.oi = true;
+  else if (d.ac === "enviar") { const f = $("#f-chat"); return responde(f.value); }
+  else if (d.ac === "maiscol") S.funil.splice(S.funil.length - 2, 0, { nome: "Nova coluna", passo: null });
+  else if (d.ac === "entendi") { const tour = ia() ? TOUR_IA : TOUR_SEM; S.vistos[S.plano + S.tour] = true; const prox = tour.findIndex((_, i) => !S.vistos[S.plano + i]); S.tour = prox; }
+  else return;
+  render();
+});
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset.m) { S[t.dataset.m] = t.value; prev(); }
+  else if (t.dataset.nomecol) S.funil[+t.dataset.nomecol].nome = t.textContent;
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter" && e.target.id === "f-chat") responde(e.target.value);
+  if (e.key === "Enter" && e.target.dataset.nomecol) { e.preventDefault(); e.target.blur(); }
+});
+/* arrastar: coluna (ordem) e cartão de exemplo (entre colunas) */
+let arr = null;
+document.addEventListener("dragstart", e => { const a = e.target.closest("[data-arr]"); if (!a) return; arr = { tipo: a.dataset.arr, i: +a.dataset.i }; e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", "x"); });
+document.addEventListener("dragover", e => { const c = e.target.closest(".fcol"); if (!c || !arr) return; e.preventDefault(); document.querySelectorAll(".fcol.sobre").forEach(x => x.classList.remove("sobre")); c.classList.add("sobre"); });
+document.addEventListener("drop", e => { const c = e.target.closest(".fcol"); if (!c || !arr) return; e.preventDefault(); const para = +c.dataset.col;
+  if (arr.tipo === "card") S.cartao = para; else if (arr.i !== para) { const [m] = S.funil.splice(arr.i, 1); S.funil.splice(para, 0, m); }
+  arr = null; render(); });
+document.addEventListener("dragend", () => { arr = null; document.querySelectorAll(".fcol.sobre").forEach(x => x.classList.remove("sobre")); });
+addEventListener("resize", escala);
+/* endereço com estado, para abrir direto numa tela: #passo=funil&vista=lado&plano=sem&tela=celular */
+new URLSearchParams(location.hash.slice(1)).forEach((v, k) => { if (["passo", "vista", "plano", "tela"].includes(k)) S[k] = v; });
+render();
+</script>
+</body>
+</html>
