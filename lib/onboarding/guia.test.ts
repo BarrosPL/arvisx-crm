@@ -15,6 +15,7 @@ import {
   TELA_DA_MISSAO,
   TELA_DE_ENTRADA,
   destinoDoRoteador,
+  destinoForaDoWizard,
   missaoAtual,
   missoesDoGuia,
   onboardingGuiadoLigado,
@@ -140,5 +141,37 @@ describe("a lista que o guia desenha", () => {
       "/app/inbox",
       "/app/team",
     ]);
+  });
+});
+
+describe("o wizard antigo não é desenhado depois das boas-vindas", () => {
+  it("antes das boas-vindas, a página do wizard é a da pessoa", () => {
+    expect(destinoForaDoWizard("/onboarding/welcome", {}, COM_IA)).toBeNull();
+    expect(destinoForaDoWizard("/onboarding", {}, COM_IA)).toBeNull();
+  });
+
+  it("o roteador responde com a mesma tela que as actions", () => {
+    for (const estado of [BOAS_VINDAS, WHATSAPP, AGENTE, FUNIL, TESTE, TUDO]) {
+      expect(destinoForaDoWizard("/onboarding", estado, COM_IA)).toBe(destinoDoRoteador(estado, COM_IA));
+      expect(destinoForaDoWizard("/onboarding/", estado, COM_IA)).toBe(destinoDoRoteador(estado, COM_IA));
+    }
+  });
+
+  it("toda página de passo do wizard devolve à tela da missão da vez", () => {
+    for (const p of PASSOS) {
+      expect(destinoForaDoWizard(`/onboarding/${p.segmento}`, WHATSAPP, COM_IA)).toBe("/app/ai/agents");
+    }
+    expect(destinoForaDoWizard("/onboarding/done", WHATSAPP, COM_IA)).toBe("/app/ai/agents");
+    expect(destinoForaDoWizard("/onboarding/welcome", BOAS_VINDAS, SEM_IA)).toBe("/app/connections");
+  });
+
+  it("sem missão pendente, o wizard devolve à entrada do CRM", () => {
+    expect(destinoForaDoWizard("/onboarding/done", TUDO, COM_IA)).toBe(TELA_DE_ENTRADA);
+  });
+
+  it("a loja, que ainda mora no wizard, só abre enquanto é a missão da vez", () => {
+    expect(destinoForaDoWizard("/onboarding/connect-nuvemshop", WHATSAPP, COM_LOJA)).toBeNull();
+    expect(destinoForaDoWizard("/onboarding/funil", WHATSAPP, COM_LOJA)).toBe("/onboarding/connect-nuvemshop");
+    expect(destinoForaDoWizard("/onboarding/connect-nuvemshop", BOAS_VINDAS, COM_LOJA)).toBe("/app/connections");
   });
 });

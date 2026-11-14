@@ -38,8 +38,8 @@ export type SegmentoComBloco = "connect-whatsapp" | "setup-ai" | "funil" | "invi
  * Em qualquer outro caso devolve `null` e a tela fica exatamente como sempre foi.
  *
  * O formulário é o do wizard, importado — nenhuma cópia. A action dele grava o
- * passo e redireciona para `/onboarding`, e o roteador devolve a pessoa a esta
- * mesma tela, já sem o quadro e com o resultado na lista de baixo.
+ * passo e devolve a pessoa a esta mesma tela (`seguirNoRoteiro`), já sem o
+ * quadro e com o resultado na lista de baixo.
  *
  * Com o roteiro desligado, a primeira linha devolve `null` antes de qualquer
  * consulta: instalação que não usa o guia não paga nada por ele.

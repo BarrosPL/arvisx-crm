@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { exigirProvaDeMfa, requireAuth, resolveActiveOrg } from "@/lib/auth/server";
@@ -13,6 +14,7 @@ import { marcaDaSaida } from "@/lib/branding/saida";
 import { baseDoStorage } from "@/lib/branding/logo";
 import { passosVisiveis, rotuloDoPasso } from "@/lib/onboarding/passos";
 import { contextoDoOnboarding } from "@/lib/onboarding/contexto";
+import { destinoForaDoWizard, onboardingGuiadoLigado } from "@/lib/onboarding/guia";
 import { IdiomaProvider } from "@/lib/i18n/IdiomaProvider";
 
 export default async function OnboardingLayout({ children }: { children: React.ReactNode }) {
@@ -34,6 +36,17 @@ export default async function OnboardingLayout({ children }: { children: React.R
   // Os passos que ESTA instalação oferece, com o que já foi resolvido. O
   // indicador não decide mais nada sozinho — ele desenha o que recebe.
   const contexto = await contextoDoOnboarding(activeOrg.orgId);
+
+  // Roteiro guiado (`ONBOARDING_GUIADO=on`): depois das boas-vindas NENHUMA
+  // página do wizard é desenhada — nem a casca. Quem chega aqui (voltar do
+  // navegador, aba antiga, link salvo, o botão "Continuar" dos formulários) é
+  // devolvido ao CRM antes de qualquer tela. O caminho vem do `proxy.ts`
+  // (`x-pathname`); sem ele, vale a regra do roteador.
+  if (onboardingGuiadoLigado()) {
+    const caminho = (await headers()).get("x-pathname") ?? "/onboarding";
+    const destino = destinoForaDoWizard(caminho, state, contexto);
+    if (destino) redirect(destino);
+  }
   const passos = passosVisiveis(contexto).map((p) => ({
     segmento: p.segmento,
     rotulo: rotuloDoPasso(p, contexto),

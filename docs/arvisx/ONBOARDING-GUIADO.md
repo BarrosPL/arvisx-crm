@@ -37,8 +37,12 @@ Depois das boas-vindas, a empresa nova entra direto no CRM e termina de se monta
 - `lib/onboarding/guia.ts`: a chave, a tela de cada passo, as missões e o destino do roteador. A ordem e o
   "cumprido" continuam em `lib/onboarding/passos.ts`.
 - `app/app/layout.tsx`: o portão deixa entrar quem já fez as boas-vindas e renderiza o guia.
-- `app/onboarding/page.tsx`: com o guia ligado, o roteador devolve a pessoa à tela do passo que ela acabou de
-  resolver.
+- `app/actions/onboarding/_seguir.ts`: `seguirNoRoteiro` encerra cada action. Com o guia ligado ela responde
+  direto com a tela do CRM e manda refazer o layout de `/app`; no wizard, segue para `/onboarding`.
+- `app/onboarding/layout.tsx`: com o guia ligado e as boas-vindas feitas, nenhuma página do wizard é desenhada
+  (`destinoForaDoWizard`): quem chega por voltar do navegador, aba antiga ou link salvo volta ao CRM.
+- `app/onboarding/page.tsx`: o roteador devolve a pessoa à tela do passo que ela acabou de resolver (usado pelos
+  botões "Continuar" dos formulários, que recarregam a página).
 - `app/app/_components/guia/`: `GuiaDoOnboarding` (servidor), `GuiaFlutuante` (painel) e `BlocoDoGuia` (quadro
   do passo, usado em Conexões, Agentes, Funis e Equipe).
 - Os formulários e as actions são os do wizard, importados sem cópia.
@@ -50,3 +54,10 @@ Depois das boas-vindas, a empresa nova entra direto no CRM e termina de se monta
 - As páginas `/onboarding/*` continuam existindo. Com o guia desligado, tudo funciona como antes.
 - As boas-vindas continuam sendo uma página inteira, fora do CRM.
 - O ensaio do agente não cria conversa no Inbox nem cartão no funil (é o mesmo ensaio do wizard).
+
+## Correção de 14/11/2026: a tela antiga aparecia no meio do guia
+
+As actions dos passos terminavam em `redirect("/onboarding")` e o roteador devolvia ao CRM. Como `/onboarding`
+mora sob a casca do wizard, a navegação desenhava o cabeçalho e o indicador de passos antigos a cada passo
+concluído ou pulado, e no último passo a pessoa ficava parada nela. Medido pela tela antes e depois
+(`evidence/onboarding-guiado/correcao-2026-11-14/`). Hoje nenhuma action do guia passa por `/onboarding`.

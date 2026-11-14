@@ -4,7 +4,7 @@
  * Server Action: create the tenant's first ai_agent (default) and stamp the
  * onboarding state. Uses canonical Spec 05 defaults baked into ai_agents.
  */
-import { redirect } from "next/navigation";
+import { seguirNoRoteiro } from "./_seguir";
 import { z } from "zod";
 
 import { publishFirstVersion } from "@/lib/ai/agents/first-publication";
@@ -319,7 +319,7 @@ export async function createDefaultAgent(formData: FormData): Promise<CreateAgen
     return { ok: true, agent_id: agent.id, regras_nao_salvas: regrasNaoSalvas };
   }
 
-  redirect("/onboarding");
+  return seguirNoRoteiro(ctx.orgId);
 }
 
 export async function skipAi(): Promise<void> {
@@ -327,5 +327,5 @@ export async function skipAi(): Promise<void> {
   await patchOnboardingState(ctx.orgId, {
     ai: { agent_id: "", prompt_template: "skipped", skipped: true },
   });
-  redirect("/onboarding");
+  return seguirNoRoteiro(ctx.orgId);
 }

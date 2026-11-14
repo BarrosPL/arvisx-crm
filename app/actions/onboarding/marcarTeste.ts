@@ -8,7 +8,7 @@
  * chegou a responder alguma coisa: é a diferença entre "vi funcionando" e
  * "passei por aqui".
  */
-import { redirect } from "next/navigation";
+import { seguirNoRoteiro } from "./_seguir";
 
 import { audit } from "@/lib/audit";
 import { requireOnboardingCtx, patchOnboardingState } from "./_shared";
@@ -22,7 +22,7 @@ export async function marcarTesteFeito(respondeu: boolean): Promise<void> {
     organizationId: ctx.orgId,
     metadata: { respondeu },
   });
-  redirect("/onboarding");
+  return seguirNoRoteiro(ctx.orgId);
 }
 
 export async function pularTeste(): Promise<void> {
@@ -33,5 +33,5 @@ export async function pularTeste(): Promise<void> {
     actorUserId: ctx.userId,
     organizationId: ctx.orgId,
   });
-  redirect("/onboarding");
+  return seguirNoRoteiro(ctx.orgId);
 }

@@ -12,8 +12,9 @@
  * a equipe em Equipe. Um guia fixo diz o próximo clique.
  *
  * Os formulários e as actions são os do wizard, sem cópia: a action grava o
- * passo e redireciona para `/onboarding`, e é o roteador de lá que devolve a
- * pessoa à tela certa (`destinoDoRoteador`).
+ * passo e encerra em `seguirNoRoteiro` (`app/actions/onboarding/_seguir.ts`),
+ * que no guia responde direto com a tela certa (`destinoDoRoteador`), sem
+ * passar por `/onboarding` — a casca do wizard não pode aparecer no meio.
  *
  * Desligado por padrão: sem `ONBOARDING_GUIADO=on` nada aqui é alcançado e o
  * wizard segue como sempre foi.
@@ -118,8 +119,8 @@ export function missoesDoGuia(state: OnboardingState, ctx: ContextoDoPasso): Mis
 /**
  * Para onde o roteador de `/onboarding` manda no roteiro guiado.
  *
- * As actions do wizard terminam em `redirect("/onboarding")`. No wizard, o
- * roteador responde com o PRÓXIMO passo. Aqui ele responde com a tela do passo
+ * No wizard, o roteador responde com o PRÓXIMO passo. Aqui (e em
+ * `seguirNoRoteiro`, que as actions chamam) a resposta é a tela do passo
  * que a pessoa ACABOU de resolver: é nela que o resultado aparece, e é o guia
  * que diz qual é o próximo clique. Mandar direto à tela seguinte esconderia o
  * que ela acabou de fazer.
@@ -133,4 +134,31 @@ export function destinoDoRoteador(state: OnboardingState, ctx: ContextoDoPasso):
   if (!anterior) return TELA_DE_ENTRADA;
   const tela = TELA_DA_MISSAO[anterior.segmento];
   return tela?.depois ?? tela?.href ?? TELA_DE_ENTRADA;
+}
+
+/**
+ * A página do wizard pedida NÃO deve ser desenhada no roteiro guiado? Devolve
+ * para onde mandar a pessoa, ou `null` quando a página é mesmo a dela.
+ *
+ * Depois das boas-vindas, o wizard só tem uma página legítima: a da missão que
+ * ainda mora nele (a loja, `TELA_DA_MISSAO` com `href` em `/onboarding`), e só
+ * enquanto ela é a missão da vez. Todo o resto volta para o CRM:
+ *  - `/onboarding` (o roteador): a tela do passo que acabou de ser resolvido;
+ *  - qualquer outra (`/onboarding/funil`, `/onboarding/done`, as boas-vindas já
+ *    aceitas...): a tela da missão da vez, que é onde o guia pede que ela esteja.
+ *
+ * É o `layout` do wizard que pergunta, antes de desenhar a casca: sem isto, a
+ * pessoa via o cabeçalho e o indicador de passos antigos a cada volta.
+ */
+export function destinoForaDoWizard(
+  caminho: string,
+  state: OnboardingState,
+  ctx: ContextoDoPasso,
+): string | null {
+  if (!boasVindasFeitas(state)) return null;
+  const limpo = caminho.replace(/\/+$/, "") || "/";
+  if (limpo === "/onboarding") return destinoDoRoteador(state, ctx);
+  const atual = missaoAtual(state, ctx);
+  const telaDaVez = atual ? (TELA_DA_MISSAO[atual.segmento]?.href ?? TELA_DE_ENTRADA) : TELA_DE_ENTRADA;
+  return limpo === telaDaVez ? null : telaDaVez;
 }

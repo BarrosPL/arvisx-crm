@@ -25,7 +25,7 @@
  * bloqueia o onboarding: os links voltam em `undelivered` para o admin copiar.
  */
 import { randomUUID } from "node:crypto";
-import { redirect } from "next/navigation";
+import { seguirNoRoteiro } from "./_seguir";
 import { z } from "zod";
 
 import { audit, isServiceRoleConfigured } from "@/lib/audit";
@@ -72,7 +72,7 @@ export async function sendOnboardingInvites(payload: InvitePayload): Promise<Sen
       organizationId: ctx.orgId,
       metadata: { skipped: true, count: 0 },
     });
-    redirect("/onboarding");
+    return seguirNoRoteiro(ctx.orgId);
   }
 
   let input;
@@ -142,5 +142,5 @@ export async function sendOnboardingInvites(payload: InvitePayload): Promise<Sen
     return { ok: true, sent, failed, undelivered };
   }
 
-  redirect("/onboarding");
+  return seguirNoRoteiro(ctx.orgId);
 }

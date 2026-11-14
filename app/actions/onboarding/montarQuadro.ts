@@ -8,7 +8,7 @@
  * (grava o que a pessoa aprovou). Fazer as duas num clique economizaria uma tela
  * e trocaria o quadro do dono por um texto que ele nunca viu.
  */
-import { redirect } from "next/navigation";
+import { seguirNoRoteiro } from "./_seguir";
 import { generateText } from "ai";
 
 import { audit } from "@/lib/audit";
@@ -282,7 +282,7 @@ export async function aplicarQuadro(formData: FormData): Promise<ResultadoDoQuad
     metadata: { origem, etapas: proposta.etapas.length, nome: proposta.nome },
   });
 
-  redirect("/onboarding");
+  return seguirNoRoteiro(ctx.orgId);
 }
 
 /** As recusas da função do banco, ditas para quem não sabe o que é uma FK. */
@@ -318,5 +318,5 @@ export async function pularQuadro(): Promise<void> {
     resourceType: "organization",
     resourceId: ctx.orgId,
   });
-  redirect("/onboarding");
+  return seguirNoRoteiro(ctx.orgId);
 }
