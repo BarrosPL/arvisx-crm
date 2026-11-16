@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Incidentes</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="40">
+<meta name="rota" content="/admin/incidents">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .filtros .filtro { min-width: 160px; justify-content: space-between; }
+  .tabela td.quando { color: var(--apoio); font-size: 12px; white-space: nowrap; }
+  .tabela td.tipo { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+  .tabela td.tenant { font-weight: 600; white-space: nowrap; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/admin/incidents" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin Plataforma</div>
+          <h1>Incidentes</h1>
+          <p><span class="mono">5</span> incidentes</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="filtros">
+        <button class="filtro" aria-label="Status">Abertos<i class="ph-light ph-caret-down"></i></button>
+        <button class="filtro" aria-label="Severidade">Todas severidades<i class="ph-light ph-caret-down"></i></button>
+      </div>
+
+      <div class="cartao">
+        <table class="tabela rolavel">
+          <thead>
+            <tr>
+              <th>Quando</th>
+              <th>Tipo</th>
+              <th>Tenant</th>
+              <th>Severidade</th>
+              <th>Status</th>
+              <th><span class="sr">Ver</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="quando">há cerca de 2 horas</td>
+              <td class="tipo">channel.session_failed</td>
+              <td class="tenant">Odonto Sul</td>
+              <td><span class="tag erro">Crítico</span></td>
+              <td><span class="tag">Aberto</span></td>
+              <td><a href="#" class="link pequeno">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="quando">há cerca de 5 horas</td>
+              <td class="tipo">lgpd.sla_alarm_triggered</td>
+              <td class="tenant">Bella Pele</td>
+              <td><span class="tag erro">Crítico</span></td>
+              <td><span class="tag">Aberto</span></td>
+              <td><a href="#" class="link pequeno">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="quando">há 1 dia</td>
+              <td class="tipo">channel.session_failed</td>
+              <td class="tenant">Sorriso &amp; Cia</td>
+              <td><span class="tag aviso">Atenção</span></td>
+              <td><span class="tag">Aberto</span></td>
+              <td><a href="#" class="link pequeno">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="quando">há 2 dias</td>
+              <td class="tipo">ai.budget_exceeded</td>
+              <td class="tenant">Clínica Vitalis</td>
+              <td><span class="tag aviso">Atenção</span></td>
+              <td><span class="tag">Aberto</span></td>
+              <td><a href="#" class="link pequeno">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="quando">há 4 dias</td>
+              <td class="tipo">webhook.delivery_failed</td>
+              <td><span class="fraco pequeno">—</span></td>
+              <td><span class="tag sinal">Info</span></td>
+              <td><span class="tag">Aberto</span></td>
+              <td><a href="#" class="link pequeno">Ver</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell-admin.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

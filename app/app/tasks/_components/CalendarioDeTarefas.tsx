@@ -98,7 +98,7 @@ export function CalendarioDeTarefas({ tarefas, podeEditar, aoAbrirTarefa, aoClic
         {cabecalhos.map((rotulo) => (
           <div
             key={rotulo}
-            className="py-2 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+            className="py-2 text-center text-[11px] font-semibold text-muted-foreground"
           >
             {rotulo}
           </div>

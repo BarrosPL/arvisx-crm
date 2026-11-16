@@ -254,7 +254,7 @@ export function ListaDeTarefas({
         <section key={grupo.faixa}>
           <h2
             className={cn(
-              "mb-1 px-3 text-xs font-semibold uppercase tracking-wider",
+              "mb-1 px-3 text-xs font-semibold",
               grupo.faixa === "atrasada" ? "text-destructive" : "text-muted-foreground",
             )}
           >

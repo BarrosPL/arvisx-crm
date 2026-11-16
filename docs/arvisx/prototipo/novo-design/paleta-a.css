@@ -1,0 +1,10 @@
+/* Opção A — "Marinho e ouro": a paleta de hoje (navy #0F131A, ouro #D4AF37),
+   com os papéis trocados: o marinho passa a ser a ação, o ouro vira só sinal. */
+:root {
+  --fundo: #ebeae4;
+  --painel: #ffffff;
+  --painel-2: #f4f3ee;
+  --painel-3: #e7e5dd;
+  --linha: #e8e6de;
+  --linha-forte: #d3d0c5;
+}

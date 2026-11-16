@@ -102,10 +102,10 @@ export function InteligenciaDele({ inicial }: { inicial: EstadoDaChave }) {
 
   if (!temChave) {
     return (
-      <section className="space-y-3 rounded-lg border border-amber-500/40 bg-amber-500/5 p-5">
+      <section className="space-y-3 rounded-lg border border-warning/30 bg-warning-bg p-5">
         <div>
-          <h3 className="text-sm font-medium">{t("Ele ainda não tem cérebro")}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h3 className="text-[13px] font-medium">{t("Ele ainda não tem cérebro")}</h3>
+          <p className="mt-1 text-[13px] text-muted-foreground">
             {t(
               "Seu funcionário pensa com a inteligência artificial que você contratar. A instalação não trouxe nenhuma chave — cole a sua aqui e ele já nasce funcionando.",
             )}
@@ -119,7 +119,7 @@ export function InteligenciaDele({ inicial }: { inicial: EstadoDaChave }) {
               id="provedor_da_ia"
               value={provedor}
               onChange={(e) => setProvedor(e.target.value)}
-              className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+              className="h-9 w-full rounded-md border border-border-strong bg-surface px-3 text-[13px] shadow-xs"
             >
               {/* A assinatura do ChatGPT nunca: ela não se cola, conecta-se pelo login em Credenciais. */}
               {PROVEDORES.filter((p) => p.id !== PROVEDOR_POR_ASSINATURA || p.id === provedor).map((p) => (
@@ -208,7 +208,7 @@ export function InteligenciaDele({ inicial }: { inicial: EstadoDaChave }) {
 
   return (
     <section className="space-y-1 rounded-lg border bg-background p-5">
-      <h3 className="text-sm font-medium">
+      <h3 className="text-[13px] font-medium">
         {t("O cérebro dele:")} {chave.rotulo}
         {chave.final ? (
           <span className="ml-1 font-normal text-muted-foreground">
@@ -216,13 +216,13 @@ export function InteligenciaDele({ inicial }: { inicial: EstadoDaChave }) {
           </span>
         ) : null}
       </h3>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-[13px] text-muted-foreground">
         {prova?.estado === "conferindo" && t("Conferindo se a chave tem crédito…")}
         {prova?.estado === "ok" && t("Testei agora: a chave respondeu e tem crédito.")}
         {prova?.estado === "problema" && (
           <>
             {t("A chave foi aceita, mas o teste não passou:")}{" "}
-            <span className="text-amber-700 dark:text-amber-500">
+            <span className="text-warning">
               {t(explicacaoParaQuemInstala(prova.codigo))}
             </span>
           </>

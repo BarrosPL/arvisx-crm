@@ -162,7 +162,7 @@ export function SidebarContent({
     <>
       <div
         className={cn(
-          "flex h-14 items-center border-b border-sidebar-border px-4",
+          "flex h-16 items-center px-4 pt-2",
           collapsed ? "justify-center" : "justify-start",
         )}
       >
@@ -182,8 +182,8 @@ export function SidebarContent({
               build — a imagem pré-buildada rejeitaria o domínio do self-hoster.
               Altura fixa e largura livre porque a arte enviada tem proporção
               desconhecida; forçar as duas distorceria o logo de quem configurou. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             {logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={logo}
                 alt={nome}
@@ -225,14 +225,14 @@ export function SidebarContent({
           // O desenho do produto, inline (ver `components/branding/MarcaDoProduto.tsx`):
           // logotipo com a barra aberta, só o símbolo com ela recolhida.
           collapsed ? (
-            <SimboloDoProduto nome={nome} sobreEscuro className="h-8 w-8" />
+            <SimboloDoProduto nome={nome} className="h-8 w-8" />
           ) : (
-            <LogotipoDoProduto nome={nome} sobreEscuro className="h-auto w-full max-w-[170px]" />
+            <LogotipoDoProduto nome={nome} className="h-auto w-full max-w-[170px]" />
           )
         ) : (
           <span
             className={cn(
-              "min-w-0 truncate font-semibold tracking-tight text-white",
+              "min-w-0 truncate font-semibold tracking-tight text-text",
               collapsed && "sr-only",
             )}
             title={nome}
@@ -267,7 +267,7 @@ export function SidebarContent({
       {/* Issue #2722 — no trilho recolhido (64px) não cabe controle ao lado
           do símbolo: ele vira uma faixa imediatamente abaixo da marca. */}
       {showCollapseControl && collapsed && (
-        <div className="border-b border-sidebar-border px-2 py-1">
+        <div className="px-2 py-1">
           <BotaoDeRecolher
             collapsed
             isPending={isPending}
@@ -350,7 +350,7 @@ export function SidebarContent({
                     type="button"
                     onClick={() => toggleGrupo(group.id)}
                     aria-expanded={aberto}
-                    className="flex w-full items-center justify-between rounded-md px-3 py-1 font-mono text-[10.5px] font-medium tracking-[0.14em] text-sidebar-muted uppercase transition-colors hover:text-sidebar-foreground"
+                    className="flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-medium text-sidebar-muted transition-colors hover:text-sidebar-active-foreground"
                   >
                     {t(group.label)}
                     <CaretDown
@@ -383,14 +383,14 @@ export function SidebarContent({
                           aria-current={isActive ? "page" : undefined}
                           onClick={onNavigate}
                           className={cn(
-                            "relative flex items-center gap-3 rounded-md px-3 py-1 text-sm transition-colors",
+                            "relative flex h-[34px] items-center gap-2.5 rounded-full px-3 text-[13px] font-medium transition-colors",
                             isActive
-                              ? "relative bg-sidebar-active text-sidebar-active-foreground before:absolute before:top-1.5 before:-left-2 before:bottom-1.5 before:w-0.5 before:rounded-r before:bg-cta"
-                              : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-white",
+                              ? "bg-sidebar-active font-semibold text-sidebar-active-foreground shadow-xs ring-1 ring-border"
+                              : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-active-foreground",
                             collapsed && "justify-center px-2",
                           )}
                         >
-                          <Icon size={18} weight={isActive ? "fill" : "regular"} aria-hidden />
+                          <Icon size={18} weight={isActive ? "regular" : "light"} aria-hidden />
                           {!collapsed && <span className="truncate">{t(item.label)}</span>}
                           {item.healthDot && (
                             <ConnectionHealthDot
@@ -415,10 +415,10 @@ export function SidebarContent({
                         aria-current={pathname === group.hub.href ? "page" : undefined}
                         onClick={onNavigate}
                         className={cn(
-                          "flex items-center gap-3 rounded-md px-3 py-1 text-sm transition-colors",
+                          "flex h-[34px] items-center gap-2.5 rounded-full px-3 text-xs font-medium transition-colors",
                           pathname === group.hub.href
-                            ? "relative bg-sidebar-active text-sidebar-active-foreground before:absolute before:top-1.5 before:-left-2 before:bottom-1.5 before:w-0.5 before:rounded-r before:bg-cta"
-                            : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-white",
+                            ? "bg-sidebar-active font-semibold text-sidebar-active-foreground shadow-xs ring-1 ring-border"
+                            : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-active-foreground",
                           collapsed && "justify-center px-2",
                         )}
                       >
@@ -433,7 +433,7 @@ export function SidebarContent({
           );
         })}
       </nav>
-      <div className="border-t border-sidebar-border p-2">
+      <div className="p-2">
         {rodape && (
           <Link
             href={rodape.href}
@@ -442,10 +442,10 @@ export function SidebarContent({
             aria-current={pathname.startsWith(rodape.href) ? "page" : undefined}
             onClick={onNavigate}
             className={cn(
-              "mb-0.5 flex items-center gap-3 rounded-md px-3 py-1 text-sm transition-colors",
+              "mb-0.5 flex h-[34px] items-center gap-2.5 rounded-full px-3 text-[13px] font-medium transition-colors",
               pathname.startsWith(rodape.href)
-                ? "relative bg-sidebar-active text-sidebar-active-foreground before:absolute before:top-1.5 before:-left-2 before:bottom-1.5 before:w-0.5 before:rounded-r before:bg-cta"
-                : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-white",
+                ? "bg-sidebar-active font-semibold text-sidebar-active-foreground shadow-xs ring-1 ring-border"
+                : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-active-foreground",
               collapsed && "justify-center px-2",
             )}
           >
@@ -462,10 +462,10 @@ export function SidebarContent({
             aria-current={pathname.startsWith(guia.href) ? "page" : undefined}
             onClick={onNavigate}
             className={cn(
-              "mb-0.5 flex items-center gap-3 rounded-md px-3 py-1 text-sm transition-colors",
+              "mb-0.5 flex h-[34px] items-center gap-2.5 rounded-full px-3 text-[13px] font-medium transition-colors",
               pathname.startsWith(guia.href)
-                ? "relative bg-sidebar-active text-sidebar-active-foreground before:absolute before:top-1.5 before:-left-2 before:bottom-1.5 before:w-0.5 before:rounded-r before:bg-cta"
-                : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-white",
+                ? "bg-sidebar-active font-semibold text-sidebar-active-foreground shadow-xs ring-1 ring-border"
+                : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-active-foreground",
               collapsed && "justify-center px-2",
             )}
           >
@@ -485,10 +485,10 @@ export function SidebarContent({
             aria-current={pathname.startsWith(ajuda.href) ? "page" : undefined}
             onClick={onNavigate}
             className={cn(
-              "mb-0.5 flex items-center gap-3 rounded-md px-3 py-1 text-sm transition-colors",
+              "mb-0.5 flex h-[34px] items-center gap-2.5 rounded-full px-3 text-[13px] font-medium transition-colors",
               pathname.startsWith(ajuda.href)
-                ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                ? "bg-sidebar-active font-semibold text-sidebar-active-foreground shadow-xs ring-1 ring-border"
+                : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-active-foreground",
               collapsed && "justify-center px-2",
             )}
           >
@@ -537,7 +537,7 @@ function BotaoDeRecolher({
       onClick={onClick}
       disabled={isPending}
       className={cn(
-        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-active-foreground",
         (collapsed || soIcone) && "justify-center px-2",
       )}
       aria-label={rotulo}
@@ -592,7 +592,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
         // `duration-base` em vez do `duration-200` literal: 200ms é o mesmo
         // número, mas vindo de `--duration-base`. A Lei de movimento fecha a
         // tabela de durações, e número solto é o que a faz apodrecer.
-        "sticky top-[var(--faixas-de-cima,0px)] z-30 flex h-[calc(100dvh-var(--faixas-de-cima,0px))] shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-base",
+        "sticky top-[var(--faixas-de-cima,0px)] z-30 flex h-[calc(100dvh-var(--faixas-de-cima,0px))] shrink-0 flex-col bg-sidebar text-sidebar-foreground transition-[width] duration-base",
         collapsed ? "w-16" : "w-60",
       )}
     >

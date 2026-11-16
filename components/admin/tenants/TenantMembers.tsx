@@ -45,7 +45,7 @@ export function TenantMembers({ organizationId, readOnly = false }: TenantMember
 
   return (
     <div className="space-y-4 rounded-lg border bg-card p-5">
-      <h2 className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
+      <h2 className="text-sm font-semibold text-muted-foreground">
         {t("Membros e e-mails de acesso")}
       </h2>
 

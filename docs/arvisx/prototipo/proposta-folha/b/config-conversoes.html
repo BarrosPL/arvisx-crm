@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conversões</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="660">
+<meta name="rota" content="/app/settings/conversoes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .pilha { display: grid; gap: 20px; }
+  .pilha > * { min-width: 0; }
+  .bloco-chave { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .bloco-chave label, .chave-topo label, .chave-linha label { font-weight: 600; font-size: 13px; display: block; }
+  .bloco-chave p { color: var(--fraco); font-size: 12px; margin-top: 4px; }
+  .chave-topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .chave-topo p { font-size: 12px; max-width: 72ch; margin-top: 4px; }
+  .chave-linha { display: flex; align-items: flex-start; gap: 12px; }
+  .chave-linha.centro { align-items: center; }
+  .chave-linha p { color: var(--fraco); font-size: 12px; margin-top: 4px; }
+  .botoes { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  h3.titulo { font-weight: 600; font-size: 14px; }
+  .topo-regras { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .topo-regras > div:first-child { max-width: 72ch; flex: 1; min-width: 240px; }
+  .topo-regras p { color: var(--apoio); font-size: 13px; margin-top: 4px; }
+  .topo-regras .lado { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; color: var(--apoio); font-size: 13px; }
+  .regras { display: grid; gap: 12px; }
+  .regras > li { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 16px; min-width: 0; }
+  .regras .cabeca { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .regras .cabeca > div { min-width: 0; }
+  .regras .cabeca strong { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .regras .cabeca span { color: var(--fraco); font-size: 12px; }
+  .regras .detalhe { margin-top: 16px; }
+  .regras .detalhe.curto { max-width: 384px; }
+  .com-botao { display: flex; gap: 8px; }
+  .com-botao input { flex: 1; min-width: 0; }
+  fieldset.venda { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 16px; display: grid; gap: 16px; min-width: 0; }
+  fieldset.venda legend { padding: 0 6px; font-weight: 600; font-size: 13px; }
+  .linha-titulo { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .caixa-borda { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 16px; font-size: 13px; min-width: 0; }
+  .caixa-borda > p.t { font-weight: 600; }
+  .caixa-borda ol { list-style: decimal; padding-left: 20px; margin-top: 8px; display: grid; gap: 8px; }
+  code.bloco { display: block; margin-top: 10px; padding: 8px; border-radius: var(--r-sm); background: var(--painel-2); font: 400 12px/1.5 var(--mono); word-break: break-all; overflow-x: auto; }
+  .secao-borda { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 16px; display: grid; gap: 12px; background: var(--painel); min-width: 0; }
+  .secao-borda h2, .secao-livre h2 { font-size: 16px; font-weight: 600; }
+  .secao-borda p, .secao-livre > p { color: var(--apoio); font-size: 13px; max-width: 80ch; }
+  .secao-livre { display: grid; gap: 12px; min-width: 0; }
+  .secao-livre > *, .secao-borda > * { min-width: 0; }
+  .linha-pend { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .linha-pend span { color: var(--apoio); font-size: 13px; }
+  .tabela td { vertical-align: top; }
+  .tabela td small { display: block; color: var(--fraco); font-size: 12px; margin-top: 4px; }
+  .tabela td.motivo { min-width: 260px; }
+  .tabela td.nq { white-space: nowrap; }
+  ul.pontos { list-style: disc; padding-left: 20px; display: grid; gap: 8px; color: var(--apoio); font-size: 13px; max-width: 80ch; }
+  @media (max-width: 860px) { .com-botao { flex-wrap: wrap; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/app/settings" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua empresa</div>
+          <h1>Conversões</h1>
+          <p>Quando um negócio que veio de anúncio é marcado como ganho, o valor da venda volta para a plataforma que trouxe o cliente. É esse retorno que ensina o anúncio a procurar mais gente parecida com quem comprou.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <nav class="abas" aria-label="Seções de conversões">
+        <a href="#" aria-selected="true" aria-current="page">Configuração</a>
+        <a href="#">Histórico de envios</a>
+        <a href="#">Diagnóstico</a>
+        <a href="#">Links rastreáveis</a>
+      </nav>
+
+      <div class="pilha">
+        <!-- FormularioDeConversoes (Meta) -->
+        <form class="cartao">
+          <div class="corpo form">
+            <div class="campo">
+              <label for="dataset_id">Identificador do destino de conversões</label>
+              <input type="text" id="dataset_id" class="mono" inputmode="numeric" placeholder="123456789012345" value="874512096334127">
+              <span class="ajuda">Só números. Você encontra no gerenciador de anúncios, na fonte de dados que recebe as conversões.</span>
+            </div>
+            <div class="campo">
+              <label for="access_token">Token de acesso</label>
+              <input type="password" id="access_token" autocomplete="off" placeholder="Gravado. Deixe em branco para manter.">
+              <span class="ajuda">Guardado criptografado. Ele nunca volta para esta tela depois de salvo.</span>
+            </div>
+            <div class="campo">
+              <label for="test_event_code">Código de teste (opcional)</label>
+              <input type="text" id="test_event_code" class="mono" placeholder="TEST12345">
+              <span class="ajuda">Enquanto preenchido, as vendas vão marcadas como teste e não contam para a otimização. Apague quando terminar de conferir.</span>
+            </div>
+            <div class="bloco-chave">
+              <div><label for="enabled">Reportar vendas automaticamente</label><p>Desligar pausa o envio e mantém a credencial gravada.</p></div>
+              <span class="chave ligada" role="switch" aria-checked="true" id="enabled"></span>
+            </div>
+            <div class="botoes"><button type="submit" class="btn primario">Salvar conexão</button></div>
+          </div>
+        </form>
+
+        <!-- LeadSubmittedCausal -->
+        <div class="cartao">
+          <div class="corpo chave-topo">
+            <div>
+              <label for="meta_lead_birth">Enviar LeadSubmitted por clique CTWA à Meta</label>
+              <p class="apoio">Quando alguém clicar em um anúncio Click-to-WhatsApp e efetivamente enviar uma mensagem, o sistema poderá registrar um LeadSubmitted na Meta. Apenas abrir a conversa não gera conversão.</p>
+            </div>
+            <span class="chave ligada" role="switch" aria-checked="true" id="meta_lead_birth"></span>
+          </div>
+        </div>
+
+        <!-- VendaPeloCanal -->
+        <div class="cartao">
+          <div class="corpo chave-topo">
+            <div>
+              <label for="report_via_channel">Enviar vendas pelo canal da conversa</label>
+              <p class="apoio">Sem conexão direta com a Meta, a venda de quem veio de anúncio pode ir pelo canal intermediado do WhatsApp, quando ele já liga o seu conjunto de dados da Meta ao número. Saem para o provedor do canal o valor, a moeda, o telefone do cliente e a conversa. Vem desligado: ligue só se a sua política de privacidade cobre esse uso.</p>
+            </div>
+            <span class="chave" role="switch" aria-checked="false" id="report_via_channel"></span>
+          </div>
+        </div>
+
+        <!-- IdentidadeDaConversao -->
+        <form class="cartao">
+          <div class="corpo form">
+            <div>
+              <h3 class="titulo">Página e conta do WhatsApp Business das vendas de clique-para-WhatsApp</h3>
+              <p class="apoio pequeno" style="max-width:80ch;margin-top:4px">Quando a venda vem de anúncio clique-para-WhatsApp, a Meta exige o ID da Página ou o ID da conta do WhatsApp Business junto do evento. Sem nenhum dos dois, ela recusa a venda e o motivo aparece na lista de pendências. Preencha o que estiver vinculado ao seu conjunto de dados.</p>
+            </div>
+            <div class="campo">
+              <label for="meta_page_id">ID da Página</label>
+              <input type="text" id="meta_page_id" class="mono" inputmode="numeric" placeholder="123456789012345" value="106432987510448">
+              <span class="ajuda">Só números. É o ID da página do Facebook que abre a conversa do anúncio.</span>
+            </div>
+            <div class="campo">
+              <label for="meta_waba_id">ID da conta do WhatsApp Business</label>
+              <input type="text" id="meta_waba_id" class="mono" inputmode="numeric" placeholder="104987654321098">
+              <span class="ajuda">Só números. Serve quando não há página a informar: a Meta aceita um ou outro, não os dois juntos.</span>
+            </div>
+            <div><button type="submit" class="btn navy">Salvar</button></div>
+          </div>
+        </form>
+
+        <!-- RegrasDeConversaoMeta -->
+        <div class="cartao">
+          <div class="corpo pilha" style="gap:16px">
+            <div class="topo-regras">
+              <div>
+                <h3 class="titulo">O que cada etapa do funil informa à Meta</h3>
+                <p>Além da venda, a Meta pode saber de quem recebeu orçamento ou agendou. Cada etapa ligada envia o seu evento uma vez por negócio, quando ele entra ali, e o anúncio aprende antes de a venda fechar.</p>
+              </div>
+              <div class="lado"><span><span class="mono">1</span> de <span class="mono">4</span> etapas enviando</span><button class="btn secundario">Usar o recomendado</button></div>
+            </div>
+            <ul class="regras">
+              <li><div class="cabeca"><div><strong>Primeiro contato</strong><span>CRM Vivo — Clínica · não envia evento</span></div><span class="chave" role="switch" aria-checked="false" aria-label="Enviar evento à Meta nesta etapa"></span></div></li>
+              <li><div class="cabeca"><div><strong>Avaliação</strong><span>CRM Vivo — Clínica · não envia evento</span></div><span class="chave" role="switch" aria-checked="false" aria-label="Enviar evento à Meta nesta etapa"></span></div></li>
+              <li>
+                <div class="cabeca"><div><strong>Proposta enviada</strong><span>CRM Vivo — Clínica · Início de compra (orçamento)</span></div><span class="chave ligada" role="switch" aria-checked="true" aria-label="Enviar evento à Meta nesta etapa"></span></div>
+                <div class="detalhe curto campo">
+                  <label for="evento-meta-3">Evento enviado à Meta</label>
+                  <select id="evento-meta-3"><option>Lead enviado (LeadSubmitted)</option><option>Lead qualificado (QualifiedLead)</option><option selected>Início de compra (orçamento) (InitiateCheckout)</option><option>Adicionou ao carrinho (AddToCart)</option><option>Viu o conteúdo (ViewContent)</option></select>
+                </div>
+              </li>
+              <li><div class="cabeca"><div><strong>Negociação</strong><span>CRM Vivo — Clínica · não envia evento</span></div><span class="chave" role="switch" aria-checked="false" aria-label="Enviar evento à Meta nesta etapa"></span></div></li>
+            </ul>
+            <p class="fraco pequeno">Os eventos só saem quando o negócio muda de etapa — pela equipe, pela IA ou por automação — e só para quem veio de anúncio da Meta. Saem sem valor: o valor vai na compra. Movimentos anteriores a ligar a regra não são enviados.</p>
+            <div><button class="btn navy">Salvar regras</button></div>
+          </div>
+        </div>
+
+        <!-- FormularioDeConversoesGoogle -->
+        <form class="cartao">
+          <div class="corpo form">
+            <p class="apoio">Integração atual: Data Manager. Ative a Data Manager API no projeto Google Cloud usado na autorização. A confirmação pode levar alguns minutos.</p>
+            <div class="linha-titulo"><h3 class="titulo">Google Ads</h3><a href="#" class="link pequeno">Reconectar</a></div>
+            <div class="campo">
+              <label for="google_customer_id">Conta de anúncios (Customer ID)</label>
+              <input type="text" id="google_customer_id" class="mono" inputmode="numeric" placeholder="123-456-7890" value="482-915-3306">
+              <span class="ajuda">10 dígitos. Com ou sem hífen — tanto faz, a gente limpa.</span>
+            </div>
+            <div class="campo">
+              <label for="google_login_customer_id">Conta de gerente (opcional)</label>
+              <input type="text" id="google_login_customer_id" class="mono" inputmode="numeric" placeholder="123-456-7890">
+              <span class="ajuda">Preencha só se você acessa a conta acima através de uma conta MCC/gerente.</span>
+            </div>
+            <fieldset class="venda">
+              <legend>Venda (negócio ganho)</legend>
+              <div class="campo">
+                <label for="google_conversion_action_id">Ação de conversão da venda (ID)</label>
+                <div class="com-botao"><input type="text" id="google_conversion_action_id" class="mono" inputmode="numeric" placeholder="123456789" value="7104482215"><button type="button" class="btn secundario" disabled title="Criar direto no Google exige o developer token do Google Ads nesta instalação e a conta reconectada. Enquanto isso, cole o ID da ação.">Criar no Google</button></div>
+                <span class="ajuda">Recebe a compra quando o negócio é marcado como ganho. Deixe vazio se você só quer enviar etapas do funil.</span>
+              </div>
+              <div class="campo">
+                <label for="google_purchase_category">Categoria da conversão</label>
+                <select id="google_purchase_category"><option>Padrão</option><option>Contato (conversa, ligação, e-mail)</option><option>Envio de formulário de lead</option><option>Lead importado</option><option>Lead qualificado</option><option>Lead convertido</option><option>Pedido de orçamento</option><option>Agendamento</option><option selected>Compra</option><option>Cadastro</option><option>Assinatura paga</option><option>Início de checkout</option><option>Adicionou ao carrinho</option><option>Lead por ligação</option><option>Visita à loja</option><option>Venda em loja física</option><option>Visualização de página</option><option>Download</option><option>Pedido de rota</option><option>Clique de saída</option><option>Engajamento</option></select>
+              </div>
+              <div class="campo">
+                <label for="google_purchase_value_mode">Valor do negócio</label>
+                <select id="google_purchase_value_mode"><option>Enviar a venda; o valor vai quando estiver preenchido</option><option selected>Só enviar venda com valor preenchido</option><option>Enviar a venda sempre sem valor</option></select>
+                <span class="ajuda">Com o valor, o Google pode otimizar por receita e não só por volume. Venda sem valor vai sem valor — nunca como zero.</span>
+              </div>
+            </fieldset>
+            <div class="chave-linha">
+              <span class="chave" role="switch" aria-checked="false" id="google_send_hashed_phone"></span>
+              <div><label for="google_send_hashed_phone">Enviar o telefone do contato criptografado</label><p>O telefone vai em SHA-256, nunca em claro, e ajuda o Google a ligar a conversão a quem clicou no anúncio. É dado pessoal: ligue só se a sua política de privacidade cobre esse uso.</p></div>
+            </div>
+            <div class="chave-linha centro">
+              <span class="chave ligada" role="switch" aria-checked="true" id="google_enabled"></span>
+              <label for="google_enabled">Enviar conversões para o Google Ads</label>
+            </div>
+            <button type="submit" class="btn navy">Salvar</button>
+          </div>
+        </form>
+
+        <!-- RegrasDeConversaoGoogle -->
+        <div class="cartao">
+          <div class="corpo pilha" style="gap:16px">
+            <div class="topo-regras">
+              <div>
+                <h3 class="titulo">O que cada etapa do funil informa ao Google Ads</h3>
+                <p>Quanto mais cedo você avisa, mais dados a campanha tem para aprender — mas só a venda ensina o Google a buscar quem compra. Cada etapa ligada envia a sua ação de conversão uma vez por negócio, quando ele entra ali.</p>
+              </div>
+              <div class="lado"><span><span class="mono">1</span> de <span class="mono">4</span> etapas enviando</span><button class="btn secundario">Usar o recomendado</button></div>
+            </div>
+            <ul class="regras">
+              <li>
+                <div class="cabeca"><div><strong>Primeiro contato</strong><span>CRM Vivo — Clínica · Novo lead · Contato (conversa, ligação, e-mail)</span></div><span class="chave ligada" role="switch" aria-checked="true" aria-label="Enviar conversão nesta etapa"></span></div>
+                <div class="detalhe form c2">
+                  <div class="campo"><label for="nome-1">Nome da conversão</label><input type="text" id="nome-1" maxlength="100" placeholder="ex.: Lead qualificado" value="Novo lead"></div>
+                  <div class="campo"><label for="acao-1">Ação de conversão (ID)</label><div class="com-botao"><input type="text" id="acao-1" class="mono" inputmode="numeric" placeholder="123456789" value="7104482390"><button type="button" class="btn secundario" disabled title="Criar direto no Google exige o developer token do Google Ads nesta instalação e a conta reconectada. Enquanto isso, cole o ID da ação.">Criar no Google</button></div></div>
+                  <div class="campo"><label for="categoria-1">Categoria da conversão</label>
+                    <select id="categoria-1"><option>Padrão</option><option selected>Contato (conversa, ligação, e-mail)</option><option>Envio de formulário de lead</option><option>Lead importado</option><option>Lead qualificado</option><option>Lead convertido</option><option>Pedido de orçamento</option><option>Agendamento</option><option>Compra</option><option>Cadastro</option><option>Assinatura paga</option><option>Início de checkout</option><option>Adicionou ao carrinho</option><option>Lead por ligação</option><option>Visita à loja</option><option>Venda em loja física</option><option>Visualização de página</option><option>Download</option><option>Pedido de rota</option><option>Clique de saída</option><option>Engajamento</option></select>
+                    <span class="ajuda">É como o Google agrupa a conversão nos relatórios e nos lances.</span>
+                  </div>
+                  <div class="campo"><label for="canal-1">Canal de entrada</label><select id="canal-1"><option selected>Todos os canais</option><option>Só WhatsApp</option><option>Só fora do WhatsApp</option></select></div>
+                  <div class="chave-linha centro largo"><span class="chave ligada" role="switch" aria-checked="true" id="incluida-1"></span><label for="incluida-1">Incluir na coluna "Conversões" (os lances otimizam por ela)</label></div>
+                </div>
+              </li>
+              <li><div class="cabeca"><div><strong>Avaliação</strong><span>CRM Vivo — Clínica · não envia conversão</span></div><span class="chave" role="switch" aria-checked="false" aria-label="Enviar conversão nesta etapa"></span></div></li>
+              <li><div class="cabeca"><div><strong>Proposta enviada</strong><span>CRM Vivo — Clínica · não envia conversão</span></div><span class="chave" role="switch" aria-checked="false" aria-label="Enviar conversão nesta etapa"></span></div></li>
+              <li><div class="cabeca"><div><strong>Negociação</strong><span>CRM Vivo — Clínica · não envia conversão</span></div><span class="chave" role="switch" aria-checked="false" aria-label="Enviar conversão nesta etapa"></span></div></li>
+            </ul>
+            <p class="fraco pequeno">As conversões só saem quando o negócio muda de etapa — pela equipe, pela IA ou por automação — e só para quem veio de anúncio do Google. Movimentos anteriores a ligar a regra não são enviados.</p>
+            <div><button class="btn navy">Salvar regras</button></div>
+          </div>
+        </div>
+
+        <!-- FormularioDeCapturaDeUtm plataforma="google" -->
+        <form class="cartao">
+          <div class="corpo form">
+            <div>
+              <p style="font-weight: 600">Captura de origem do Google Ads</p>
+              <p class="apoio" style="margin-top:4px">Em vez do link do WhatsApp, o botão da sua página aponta para este endereço. Ele guarda a origem, cria um código curto e abre o WhatsApp com esse código no texto — o visitante não vê nada além do botão de sempre.</p>
+            </div>
+            <div class="campo">
+              <label for="google_captura_numero">Para qual WhatsApp mandar</label>
+              <input type="text" id="google_captura_numero" class="mono" placeholder="+5511999998888" value="+5511999990000">
+              <span class="ajuda">Formato internacional, com o código do país. Os números já conectados aparecem como sugestão.</span>
+            </div>
+            <div class="campo">
+              <label for="google_captura_texto">Texto que a pessoa vai enviar</label>
+              <input type="text" id="google_captura_texto" placeholder="Olá! Vim pelo site. [ref:{token}]" value="Olá! Vim pelo site. [ref:{token}]">
+              <span class="ajuda">Precisa conter o campo do código — é onde o código curto entra antes de abrir o WhatsApp.</span>
+            </div>
+            <div class="bloco-chave">
+              <div><label for="google_captura_habilitada">Endereço de captura ligado</label><p>Desligar faz o endereço parar de responder. Quem já usa o link do WhatsApp direto não é afetado.</p></div>
+              <span class="chave ligada" role="switch" aria-checked="true" id="google_captura_habilitada"></span>
+            </div>
+            <div class="caixa-borda">
+              <p class="t">Cole este endereço no botão da sua página</p>
+              <p style="margin-top:8px">O botão do site precisa repassar gclid, gbraid ou wbraid recebidos na página. Um endereço fixo sem esses parâmetros não identifica o clique. Mantenha o código na mensagem enviada ao WhatsApp.</p>
+              <code class="bloco">https://crm.clinicavitalis.com.br/api/v1/anuncios/google/clinica-vitalis</code>
+              <p class="fraco pequeno" style="margin-top:8px">Os campos entre chaves são preenchidos pela própria plataforma de anúncio quando você os põe nos parâmetros de URL do anúncio. Se a sua página serve mais de uma campanha, o botão precisa repassar os parâmetros que a página recebeu — sem isso a conversa entra sem origem.</p>
+              <button type="button" class="btn secundario" style="margin-top:12px">Copiar endereço</button>
+            </div>
+            <div class="botoes"><button type="submit" class="btn navy">Salvar endereço de captura</button></div>
+          </div>
+        </form>
+
+        <p class="apoio">Aceite da API não confirma atribuição ao anúncio. Confira os diagnósticos no gerenciador da plataforma. Depois de corrigir uma pendência, use o botão de reprocessamento.</p>
+
+        <!-- pendências -->
+        <section class="secao-livre">
+          <div class="linha-pend">
+            <h2>Conversões que não foram reportadas</h2>
+            <span><span class="mono">38</span> conversões aceitas pela plataforma</span>
+          </div>
+          <div class="cartao sem-sombra">
+            <table class="tabela rolavel">
+              <thead><tr><th>Negócio</th><th>Evento</th><th>Origem</th><th>Valor</th><th>O que houve</th><th>Quando</th><th>Próximo passo</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><a href="#" class="link">Implante unitário — Bruno Tavares</a></td>
+                  <td>Compra</td>
+                  <td>Meta Ads</td>
+                  <td class="nq mono">—</td>
+                  <td class="motivo">A venda fechou sem valor preenchido. A Meta exige valor e moeda em uma compra — preencha o valor do negócio e use o botão de reprocessamento. No Google, você também pode escolher enviar a venda sem valor em "Valor do negócio".</td>
+                  <td class="nq mono fraco">02/11/2026, 16:42:08</td>
+                  <td><button class="btn secundario p">Verificar ou tentar novamente</button></td>
+                </tr>
+                <tr>
+                  <td><a href="#" class="link">Clareamento — Helena Marques</a></td>
+                  <td>Entrada na etapa Proposta enviada</td>
+                  <td>Meta Ads</td>
+                  <td class="nq mono">—</td>
+                  <td class="motivo">Falha temporária. Uma nova tentativa foi agendada automaticamente.</td>
+                  <td class="nq mono fraco">03/11/2026, 09:15:31</td>
+                  <td><button class="btn secundario p">Verificar ou tentar novamente</button></td>
+                </tr>
+                <tr>
+                  <td><a href="#" class="link">Aparelho ortodôntico — Caio Ribeiro</a></td>
+                  <td>Compra</td>
+                  <td>Google Ads</td>
+                  <td class="nq mono">R$ 4.800,00</td>
+                  <td class="motivo">A plataforma recusou o envio. O detalhe ao lado é a resposta dela.<small>CLICK_NOT_FOUND</small></td>
+                  <td class="nq mono fraco">31/10/2026, 11:03:47</td>
+                  <td><button class="btn secundario p">Verificar ou tentar novamente</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ScriptDoSite -->
+        <section class="secao-borda">
+          <h2>Script para instalar no site</h2>
+          <p>Salve e ligue a captura do Google ou do site. Depois, copie este script uma única vez para todas as páginas do seu site, antes de fechar o head. Se trocar os números configurados, copie o script novamente.</p>
+          <code class="bloco" style="margin-top:0">&lt;script defer src="https://crm.clinicavitalis.com.br/rastreio/v1.js" data-org="clinica-vitalis" data-google-whatsapp="5511999990000" data-meta-whatsapp="5511999990000" referrerpolicy="no-referrer"&gt;&lt;/script&gt;</code>
+          <div><button class="btn secundario">Copiar script do site</button></div>
+          <p>Mantenha os links normais de WhatsApp nos botões. O script ajusta apenas os links dos números configurados, inclusive os adicionados depois. Sem origem reconhecida, o link original permanece.</p>
+          <p>A origem fica na mesma aba e no mesmo domínio durante a navegação. Uma nova campanha substitui a anterior. Ao clicar, o CRM gera o código na mensagem; ele precisa ser enviado pelo visitante. A mensagem usada é a que você salvou na captura.</p>
+          <p>Para não guardar a origem na aba, adicione data-storage="none" ao script. Para excluir um link, adicione data-rastreio-ignorar nele. Botões controlados apenas por JavaScript e links abreviados precisam de adaptação no site.</p>
+          <p>Teste abrindo o site com os parâmetros de uma campanha, navegando para outra página e clicando no WhatsApp. Confira o código na mensagem e a origem no contato. UTMs identificam a campanha no CRM; não garantem atribuição de conversão pela Meta.</p>
+        </section>
+
+        <!-- Quem chegou pelo site -->
+        <section class="secao-livre">
+          <h2>Quem chegou pelo site</h2>
+          <p>Quando a pessoa vê a campanha numa página sua e toca num botão que abre o WhatsApp, o link desse botão pode levar a origem junto. O código abaixo vai no texto da mensagem, e a conversa entra no CRM já com a origem do site.</p>
+
+          <div class="caixa-borda" style="background:var(--painel)">
+            <p class="t">Como montar o link do botão</p>
+            <ol>
+              <li>Monte o texto que a pessoa vai enviar — uma saudação basta — e termine com o código.</li>
+              <li>Troque o número pelo WhatsApp da empresa e o texto pelo seu, mantendo o código no fim:</li>
+            </ol>
+            <code class="bloco">https://wa.me/5511999999999?text=Ol%C3%A1!%20Vim%20pelo%20site.%20%5Bdk1%3AeyJ1dG1fY2FtcGFpZ24iOiJwcm9tby1qdW5pbmEiLCJ1dG1fc291cmNlIjoiaW5zdGFncmFtIn0%5D</code>
+            <p class="fraco pequeno" style="margin-top:12px">Este exemplo foi gerado por esta tela. Os campos que o código aceita são: utm_source, utm_medium, utm_campaign, utm_term, utm_content, utm_adset, utm_ad, utm_placement, gclid, fbclid.</p>
+          </div>
+
+          <!-- FormularioDeCapturaDeUtm (meta) -->
+          <form class="cartao">
+            <div class="corpo form">
+              <div>
+                <p style="font-weight: 600">Endereço de captura (sem script na página)</p>
+                <p class="apoio" style="margin-top:4px">Em vez do link do WhatsApp, o botão da sua página aponta para este endereço. Ele guarda a origem, cria um código curto e abre o WhatsApp com esse código no texto — o visitante não vê nada além do botão de sempre.</p>
+              </div>
+              <div class="campo">
+                <label for="meta_captura_numero">Para qual WhatsApp mandar</label>
+                <input type="text" id="meta_captura_numero" class="mono" placeholder="+5511999998888" value="+5511999990000">
+                <span class="ajuda">Formato internacional, com o código do país. Os números já conectados aparecem como sugestão.</span>
+              </div>
+              <div class="campo">
+                <label for="meta_captura_texto">Texto que a pessoa vai enviar</label>
+                <input type="text" id="meta_captura_texto" placeholder="Olá! Vim pelo site. [ref:{token}]" value="Olá! Vim pelo site. [ref:{token}]">
+                <span class="ajuda">Precisa conter o campo do código — é onde o código curto entra antes de abrir o WhatsApp.</span>
+              </div>
+              <div class="bloco-chave">
+                <div><label for="meta_captura_habilitada">Endereço de captura ligado</label><p>Desligar faz o endereço parar de responder. Quem já usa o link do WhatsApp direto não é afetado.</p></div>
+                <span class="chave ligada" role="switch" aria-checked="true" id="meta_captura_habilitada"></span>
+              </div>
+              <div class="caixa-borda">
+                <p class="t">Cole este endereço no botão da sua página</p>
+                <code class="bloco">https://crm.clinicavitalis.com.br/api/v1/anuncios/meta/clinica-vitalis?utm_source=meta&amp;utm_campaign={{campaign.name}}&amp;utm_adset={{adset.name}}&amp;utm_ad={{ad.name}}&amp;utm_placement={{placement}}</code>
+                <p class="fraco pequeno" style="margin-top:8px">Os campos entre chaves são preenchidos pela própria plataforma de anúncio quando você os põe nos parâmetros de URL do anúncio. Se a sua página serve mais de uma campanha, o botão precisa repassar os parâmetros que a página recebeu — sem isso a conversa entra sem origem.</p>
+                <button type="button" class="btn secundario" style="margin-top:12px">Copiar endereço</button>
+              </div>
+              <div class="botoes"><button type="submit" class="btn navy">Salvar endereço de captura</button></div>
+            </div>
+          </form>
+
+          <ul class="pontos">
+            <li>O código vale só na primeira mensagem do contato: quem recebe um link encaminhado não ganha a origem de quem encaminhou.</li>
+            <li>Ele nunca sobrescreve uma origem já gravada, inclusive a de anúncio: quem chegou do Meta ou do Google antes mantém o anúncio.</li>
+            <li>Só campos de campanha viajam no código, e nenhum dado pessoal: nome, telefone, e-mail e documento ficam de fora. O código inteiro tem um teto de <span class="mono">3000</span> caracteres.</li>
+            <li>A origem aparece na ficha do contato e no filtro "Site (landing page)" da lista de contatos.</li>
+          </ul>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

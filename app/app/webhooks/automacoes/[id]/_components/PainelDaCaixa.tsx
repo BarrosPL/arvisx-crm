@@ -57,7 +57,7 @@ function Cabecalho({ visual, titulo, etapa }: { visual: VisualDaCaixa; titulo: s
         <Icone size={16} aria-hidden />
       </span>
       <div className="min-w-0">
-        {etapa ? <p className="text-xs font-medium uppercase tracking-wide text-text-muted">{etapa}</p> : null}
+        {etapa ? <p className="text-xs font-medium text-text-muted">{etapa}</p> : null}
         <h2 className="text-base font-semibold text-text">{titulo}</h2>
       </div>
     </div>
@@ -628,11 +628,11 @@ export function ResumoDaAutomacao({
       <Problemas lista={problemasGerais} />
       <dl className="space-y-3 text-sm">
         <div>
-          <dt className="text-xs font-medium uppercase tracking-wide text-text-muted">{t("Quando")}</dt>
+          <dt className="text-xs font-medium text-text-muted">{t("Quando")}</dt>
           <dd className="text-text">{evento ? t(TRIGGER_LABELS[evento as TriggerEvent] ?? evento) : t("Escolha o gatilho")}</dd>
         </div>
         <div>
-          <dt className="text-xs font-medium uppercase tracking-wide text-text-muted">{t("Se")}</dt>
+          <dt className="text-xs font-medium text-text-muted">{t("Se")}</dt>
           <dd className="text-text">
             {condicoes === 0
               ? t("Sem condições: roda em todo evento.")
@@ -642,7 +642,7 @@ export function ResumoDaAutomacao({
           </dd>
         </div>
         <div>
-          <dt className="text-xs font-medium uppercase tracking-wide text-text-muted">{t("Então")}</dt>
+          <dt className="text-xs font-medium text-text-muted">{t("Então")}</dt>
           <dd>
             {percurso.acoes.length === 0 ? (
               <span className="text-text-muted">{t("Nenhuma ação ligada.")}</span>

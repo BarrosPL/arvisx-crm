@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Propostas</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="750">
+<meta name="rota" content="/app/settings/tenant/proposals">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .link-modelos { font-size: 13.5px; text-decoration: underline; text-underline-offset: 4px; }
+  .liga { display: flex; align-items: flex-start; gap: 10px; }
+  .liga .chave { margin-top: 1px; }
+  .liga strong { display: block; font-size: 13.5px; font-weight: 600; }
+  .liga span.ajuda { display: block; color: var(--apoio); font-size: 12px; margin-top: 4px; }
+</style>
+</head>
+<body data-rota="/app/settings">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua empresa</div>
+          <h1>Propostas</h1>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao">
+        <div class="corpo form">
+          <p><a href="#" class="link-modelos">Modelos de proposta</a></p>
+          <div class="liga"><span class="chave ligada" role="switch" aria-checked="true" id="proposals_enabled"></span><strong>Ligar propostas comerciais para esta organização</strong></div>
+          <div class="campo"><label for="proposals_valid_days">Validade padrão (dias)</label><input type="number" id="proposals_valid_days" class="mono" min="1" value="15"></div>
+          <div class="campo"><label for="proposals_conditions">Condições padrão</label><textarea id="proposals_conditions" rows="4">Pagamento em até 6x sem juros no cartão ou 5% de desconto à vista no Pix. Os valores valem para o plano de tratamento descrito nesta proposta; procedimentos adicionais são orçados à parte.</textarea></div>
+          <div class="liga"><span class="chave ligada" role="switch" aria-checked="true" id="proposals_avisar_whatsapp"></span><div><strong>Avisar no WhatsApp da equipe quando a IA rascunhar uma proposta</strong><span class="ajuda">Usa o número configurado em Aviso no WhatsApp. Sem ele configurado e ligado, nada é enviado.</span></div></div>
+          <div><button class="btn primario">Salvar</button></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

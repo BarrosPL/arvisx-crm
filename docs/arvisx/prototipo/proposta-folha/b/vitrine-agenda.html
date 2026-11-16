@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kit visual da Agenda</title>
+<meta name="grupo" content="Entrada">
+<meta name="ordem" content="490">
+<meta name="rota" content="/vitrine-agenda">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  /* as oito trilhas de cor de pessoa: valores do app (app/globals.css, --agenda-pessoa-1..8) */
+  :root { --p1: #ac4d40; --p2: #bd7c20; --p3: #7e6f01; --p4: #11a19b; --p5: #0b7a9a; --p6: #608bda; --p7: #7b5bad; --p8: #cc77b1; }
+  .t1 { --cor: var(--p1); } .t2 { --cor: var(--p2); } .t3 { --cor: var(--p3); } .t4 { --cor: var(--p4); }
+  .t5 { --cor: var(--p5); } .t6 { --cor: var(--p6); } .t7 { --cor: var(--p7); } .t8 { --cor: var(--p8); }
+  .vitrine { max-width: 1152px; margin: 0 auto; padding: 24px; display: grid; gap: 40px; }
+  .vitrine > * { min-width: 0; }
+  .vitrine > header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .vitrine > header h1 { font-family: var(--display); font-stretch: 112%; font-weight: 600; letter-spacing: -.03em; font-size: 24px; line-height: 1.15; color: var(--navy); }
+  .vitrine > header p { color: var(--apoio); max-width: 72ch; }
+  .secao-v { display: grid; gap: 12px; }
+  .secao-v > * { min-width: 0; }
+  .secao-v h2 { font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+  .secao-v h2 + p { color: var(--apoio); margin-top: 2px; max-width: 672px; }
+  .amostra { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: var(--r-sm); border: 1px solid var(--linha); background: var(--painel); }
+  .amostra i { width: 32px; height: 32px; border-radius: 4px; background: var(--cor); flex: none; }
+  .amostra strong { display: block; font-size: 12px; }
+  .amostra span { font: 500 11px/1.4 var(--mono); color: var(--fraco); }
+  .avatar.t1, .avatar.t2, .avatar.t3, .avatar.t4 { background: var(--cor); color: #fff; }
+  .periodo { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .periodo .nav { display: flex; align-items: center; gap: 4px; }
+  .periodo .nav strong { margin-left: 6px; }
+  .periodo .dir { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .pessoas { display: flex; align-items: center; }
+  .pessoas .avatar { margin-left: -8px; box-shadow: 0 0 0 2px var(--fundo); }
+  .pessoas .avatar:first-child { margin-left: 0; }
+  .rolagem-grade { overflow: auto; height: 560px; }
+  .grade-agenda { display: grid; grid-template-columns: 48px repeat(7, minmax(0, 1fr)); min-width: 0; }
+  .grade-agenda .horas { border-right: 1px solid var(--linha); }
+  .grade-agenda .cab-h, .grade-agenda .cab-d { height: 32px; border-bottom: 1px solid var(--linha); display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 12px; color: var(--apoio); }
+  .grade-agenda .cab-d .n { font: 600 12px/1 var(--mono); color: var(--texto); }
+  .grade-agenda .hoje .cab-d { color: var(--ouro-escuro); font-weight: 600; }
+  .grade-agenda .hoje .cab-d .n { background: var(--navy); color: var(--ouro); border-radius: 6px; padding: 3px 5px; }
+  .grade-agenda .hora { height: 48px; position: relative; }
+  .grade-agenda .hora span { position: absolute; top: -7px; right: 6px; font: 500 12px/1 var(--mono); color: var(--fraco); }
+  .grade-agenda .hora:first-child span { top: 4px; }
+  .grade-agenda .dia { border-right: 1px solid var(--linha); min-width: 0; }
+  .grade-agenda .dia:last-child { border-right: 0; }
+  .grade-agenda .corpo-d { position: relative; height: 720px; background: repeating-linear-gradient(to bottom, var(--linha) 0 1px, transparent 1px 48px); }
+  .grade-agenda .fds .corpo-d { background-color: var(--fundo); }
+  .compromisso { position: absolute; left: 2px; right: 2px; border-radius: 4px; padding: 2px 6px; background: color-mix(in oklab, var(--cor) 12%, var(--painel)); border-left: 3px solid var(--cor); font-size: 12px; line-height: 1.25; overflow: hidden; }
+  .compromisso strong { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .compromisso span { display: block; color: var(--apoio); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+  .compromisso.curto { padding: 1px 6px; display: flex; gap: 4px; align-items: center; }
+  .compromisso.curto strong { flex: none; }
+  .compromisso.pendente { border-style: dashed; border-width: 1px 1px 1px 3px; border-color: var(--aviso); border-left-color: var(--cor); }
+  .compromisso.cancelado { opacity: .55; text-decoration: line-through; }
+  .compromisso.realizado strong::after { content: " ✓"; color: var(--ok); }
+  .compromisso.google { background: repeating-linear-gradient(135deg, var(--painel-2) 0 6px, var(--painel-3) 6px 12px); border-left-color: var(--fraco); color: var(--apoio); opacity: .8; }
+  .agora { position: absolute; left: 0; right: 0; height: 1px; background: var(--erro); z-index: 2; }
+  .agora::before { content: ""; position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: var(--erro); }
+  .marcacao { display: flex; width: fit-content; max-width: 100%; overflow: hidden; }
+  .marcacao aside { width: 280px; flex: none; padding: 16px; border-right: 1px solid var(--linha); background: var(--painel-2); }
+  .marcacao .quem-m { display: flex; align-items: center; gap: 8px; }
+  .marcacao h3 { font-size: 16px; font-weight: 600; line-height: 1.2; margin: 12px 0 16px; }
+  .marcacao .mes { padding: 16px; min-width: 0; width: 440px; }
+  .marcacao .mes-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+  .marcacao .mes-cab > div { display: flex; gap: 2px; }
+  .marcacao .nota-m { margin-bottom: 12px; padding: 12px; border-radius: var(--r-sm); border: 1px solid var(--linha); background: var(--painel-2); }
+  .marcacao .nota-m strong { display: block; }
+  .marcacao .nota-m p { font-size: 12px; color: var(--apoio); margin-top: 4px; }
+  .marcacao .nota-m a { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+  .marcacao .miudo { font-size: 12px; line-height: 16px; color: var(--fraco); margin-bottom: 8px; }
+  .marcacao .miudo.alerta { color: var(--aviso); font-size: 12px; }
+  .mes-grade { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  .mes-grade .ds { text-align: center; font: 500 12px/24px var(--mono); color: var(--fraco); text-transform: none; }
+  .mes-grade .dia-m { aspect-ratio: 1; border-radius: var(--r-sm); font: 500 13px/1 var(--mono); color: var(--fraco); }
+  .mes-grade .dia-m.livre { background: var(--ouro-suave); color: var(--navy); font-weight: 600; }
+  .mes-grade .dia-m.hoje { box-shadow: inset 0 0 0 1px var(--navy); }
+  .mes-grade .dia-m.fora { opacity: .4; }
+  .historico .segmento { flex-wrap: wrap; }
+  .historico .segmento button { display: inline-flex; align-items: center; gap: 6px; }
+  .historico .segmento .cont { font: 600 11px/1 var(--mono); padding: 3px 6px; border-radius: 8px; background: var(--painel-3); color: var(--apoio); }
+  .historico .caixa-hist { margin-top: 12px; height: 380px; overflow: auto; }
+  .historico .linha { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--linha); }
+  .historico .linha:last-child { border-bottom: 0; }
+  .historico .trilha { width: 3px; height: 32px; border-radius: 4px; flex: none; background: var(--cor); }
+  .historico .quando { width: 112px; flex: none; }
+  .historico .quando strong { display: block; font-size: 13px; font-weight: 600; }
+  .historico .quando span { font: 500 12px/1.4 var(--mono); color: var(--fraco); }
+  .historico .quem { flex: 1; min-width: 0; }
+  .historico .quem a { font-size: 13px; text-decoration: underline; }
+  .historico .quem span { display: block; font-size: 12px; color: var(--fraco); }
+  .historico .acoes-h { display: flex; gap: 2px; flex: none; }
+  .esqueleto { display: flex; height: 280px; overflow: hidden; padding: 0; }
+  .esqueleto .col-h { width: 48px; flex: none; border-right: 1px solid var(--linha); }
+  .esqueleto .col-d { flex: 1; min-width: 0; border-right: 1px solid var(--linha); padding: 40px 6px 6px; display: grid; gap: 8px; align-content: start; }
+  .esqueleto .col-d:last-child { border-right: 0; }
+  .esqueleto .col-d span { display: block; height: 40px; border-radius: 4px; background: var(--painel-3); }
+  .esqueleto .col-d span.alto { height: 64px; }
+  .erro-agenda { height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 32px; text-align: center; border-radius: var(--r-lg); border: 1px solid #f0bcbc; background: var(--erro-suave); }
+  .erro-agenda > i { font-size: 30px; color: var(--erro); }
+  .erro-agenda strong { display: block; }
+  .erro-agenda p { font-size: 12px; color: var(--apoio); max-width: 384px; margin-top: 4px; }
+  @media (max-width: 860px) {
+    .vitrine { padding: 16px; }
+    .rolagem-grade .grade-agenda { min-width: 820px; }
+    .marcacao { flex-direction: column; width: 100%; }
+    .marcacao aside { width: auto; border-right: 0; border-bottom: 1px solid var(--linha); }
+    .marcacao .mes { width: auto; }
+    .historico .quando { width: 86px; }
+    .historico .acoes-h, .historico .linha .tag { display: none; }
+    .erro-agenda { height: auto; }
+  }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/vitrine-agenda" data-raiz="../..">
+<div class="vitrine">
+  <header>
+    <div>
+      <h1>Kit visual da Agenda</h1>
+      <p>Componentes puros, alimentados por dados de mentira. Sem banco, sem rota — o desenho decidido antes de haver o que exibir.</p>
+    </div>
+    <button type="button" class="btn secundario p">Tema: claro</button>
+  </header>
+
+    <section class="secao-v">
+      <div>
+        <h2>As oito trilhas de cor</h2>
+        <p>Oito matizes espalhados e nomeáveis, derivados por cálculo: cada par passa em contraste (mínimo 3:1) e nenhum encosta no verde da marca. O par mais próximo fica a 0,119 no claro e 0,116 no escuro — a paleta de referência para daltonismo faz 0,156 com sete cores. Cor nunca vem sozinha: a inicial acompanha sempre.</p>
+      </div>
+      <div class="grade c4" style="gap:8px">
+        <div class="amostra t1"><i aria-hidden="true"></i><div><strong>Telha</strong><span>trilha 1</span></div></div>
+        <div class="amostra t2"><i aria-hidden="true"></i><div><strong>Âmbar</strong><span>trilha 2</span></div></div>
+        <div class="amostra t3"><i aria-hidden="true"></i><div><strong>Oliva</strong><span>trilha 3</span></div></div>
+        <div class="amostra t4"><i aria-hidden="true"></i><div><strong>Turquesa</strong><span>trilha 4</span></div></div>
+        <div class="amostra t5"><i aria-hidden="true"></i><div><strong>Azul</strong><span>trilha 5</span></div></div>
+        <div class="amostra t6"><i aria-hidden="true"></i><div><strong>Índigo</strong><span>trilha 6</span></div></div>
+        <div class="amostra t7"><i aria-hidden="true"></i><div><strong>Violeta</strong><span>trilha 7</span></div></div>
+        <div class="amostra t8"><i aria-hidden="true"></i><div><strong>Framboesa</strong><span>trilha 8</span></div></div>
+      </div>
+    </section>
+
+    <section class="secao-v">
+      <div>
+        <h2>A grade</h2>
+        <p>Dia, semana e mês. A régua do agora, os blocos com a faixa na cor de quem atende, e a ocupação vinda do Google — hachurada, esmaecida e sem ações.</p>
+      </div>
+      <div class="periodo">
+        <div class="nav">
+          <button type="button" class="btn fantasma icone p" aria-label="Período anterior"><i class="ph-light ph-caret-left"></i></button>
+          <button type="button" class="btn fantasma icone p" aria-label="Próximo período"><i class="ph-light ph-caret-right"></i></button>
+          <strong>Agosto de 2026</strong>
+        </div>
+        <div class="dir">
+          <div class="pessoas">
+            <span class="avatar t1" title="Ana Prado">AP</span><span class="avatar t2" title="Bruno Sales">BS</span><span class="avatar t3" title="Clara Nunes">CN</span><span class="avatar t4" title="Davi Rocha">DR</span>
+          </div>
+          <div class="segmento"><button type="button" aria-pressed="false">Dia</button><button type="button" aria-pressed="true">Semana</button><button type="button" aria-pressed="false">Mês</button></div>
+          <button type="button" class="btn primario p"><i class="ph-light ph-calendar-plus"></i>Novo agendamento</button>
+        </div>
+      </div>
+      <div class="cartao rolagem-grade">
+        <div class="grade-agenda">
+          <div class="horas"><div class="cab-h"></div><div class="hora"><span>07:00</span></div><div class="hora"><span>08:00</span></div><div class="hora"><span>09:00</span></div><div class="hora"><span>10:00</span></div><div class="hora"><span>11:00</span></div><div class="hora"><span>12:00</span></div><div class="hora"><span>13:00</span></div><div class="hora"><span>14:00</span></div><div class="hora"><span>15:00</span></div><div class="hora"><span>16:00</span></div><div class="hora"><span>17:00</span></div><div class="hora"><span>18:00</span></div><div class="hora"><span>19:00</span></div><div class="hora"><span>20:00</span></div><div class="hora"><span>21:00</span></div></div>
+          <div class="dia fds"><div class="cab-d">dom <span class="n">23</span></div><div class="corpo-d"></div></div>
+          <div class="dia"><div class="cab-d">seg <span class="n">24</span></div><div class="corpo-d"><div class="compromisso t1" style="top:96px;height:34px"><strong>Avaliação inicial</strong><span>Marina Alves</span></div><div class="compromisso t2 curto" style="top:168px;height:22px"><strong>Retorno</strong><span>Pedro Lima</span></div><div class="compromisso t2 realizado curto" style="top:384px;height:22px"><strong>Consulta</strong><span>Vera Lins</span></div></div></div>
+          <div class="dia"><div class="cab-d">ter <span class="n">25</span></div><div class="corpo-d"><div class="compromisso t3" style="top:336px;height:70px"><strong>Visita ao imóvel</strong><span>Família Souza</span></div></div></div>
+          <div class="dia hoje"><div class="cab-d">qua <span class="n">26</span></div><div class="corpo-d"><div class="compromisso google" style="top:240px;height:46px"><strong>Almoço da equipe</strong></div><div class="compromisso t1 curto" style="top:384px;height:22px"><strong>Consulta</strong><span>Rita Campos</span></div><div class="compromisso t4 pendente" style="top:432px;height:70px;right:50%"><strong>Procedimento</strong><span>João Bento</span></div><div class="compromisso t1 curto" style="top:432px;height:22px;left:50%"><strong>Encaixe</strong><span>Léo Martins</span></div><div class="agora" style="top:365.6px"></div></div></div>
+          <div class="dia"><div class="cab-d">qui <span class="n">27</span></div><div class="corpo-d"><div class="compromisso t2 cancelado curto" style="top:72px;height:22px"><strong>Retorno</strong><span>Ícaro Melo</span></div><div class="compromisso t3" style="top:192px;height:46px"><strong>Reunião comercial</strong><span>Loja Verde</span></div></div></div>
+          <div class="dia"><div class="cab-d">sex <span class="n">28</span></div><div class="corpo-d"><div class="compromisso google" style="top:96px;height:94px"><strong>Bloqueado (particular)</strong></div><div class="compromisso t4" style="top:312px;height:34px"><strong>Consulta</strong><span>Sofia Braga</span></div></div></div>
+          <div class="dia fds"><div class="cab-d">sáb <span class="n">29</span></div><div class="corpo-d"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="secao-v">
+      <div>
+        <h2>O painel de marcar</h2>
+        <p>Três tempos: escolher o dia, escolher o horário, confirmar. A coluna de horários não está lá no começo — ela entra pela direita quando o dia é escolhido, e o painel cresce junto.</p>
+      </div>
+      <div class="cartao marcacao">
+        <aside>
+          <div class="quem-m"><span class="avatar p t1">AP</span><strong>Ana Prado</strong></div>
+          <h3>Agendar Consulta</h3>
+          <div class="campo">
+            <label for="dur-AP">Duração (minutos)</label>
+            <input id="dur-AP" type="number" value="30" min="5" max="1440" step="5">
+            <span class="ajuda">O padrão é a duração do serviço. Mude se este atendimento precisar de mais ou menos tempo.</span>
+          </div>
+        </aside>
+        <div class="mes">
+          <div class="mes-cab">
+            <strong>Agosto de 2026</strong>
+            <div><button type="button" class="btn fantasma icone p" aria-label="Mês anterior"><i class="ph-light ph-caret-left"></i></button><button type="button" class="btn fantasma icone p" aria-label="Próximo mês"><i class="ph-light ph-caret-right"></i></button></div>
+          </div>
+          <div class="mes-grade">
+            <span class="ds">do</span><span class="ds">2ª</span><span class="ds">3ª</span><span class="ds">4ª</span><span class="ds">5ª</span><span class="ds">6ª</span><span class="ds">sá</span>
+            <button type="button" class="dia-m fora" disabled>26</button><button type="button" class="dia-m fora" disabled>27</button><button type="button" class="dia-m fora" disabled>28</button><button type="button" class="dia-m fora" disabled>29</button><button type="button" class="dia-m fora" disabled>30</button><button type="button" class="dia-m fora" disabled>31</button><button type="button" class="dia-m" disabled>1</button>
+            <button type="button" class="dia-m" disabled>2</button><button type="button" class="dia-m" disabled>3</button><button type="button" class="dia-m" disabled>4</button><button type="button" class="dia-m" disabled>5</button><button type="button" class="dia-m" disabled>6</button><button type="button" class="dia-m" disabled>7</button><button type="button" class="dia-m" disabled>8</button>
+            <button type="button" class="dia-m" disabled>9</button><button type="button" class="dia-m" disabled>10</button><button type="button" class="dia-m" disabled>11</button><button type="button" class="dia-m" disabled>12</button><button type="button" class="dia-m" disabled>13</button><button type="button" class="dia-m" disabled>14</button><button type="button" class="dia-m" disabled>15</button>
+            <button type="button" class="dia-m" disabled>16</button><button type="button" class="dia-m" disabled>17</button><button type="button" class="dia-m" disabled>18</button><button type="button" class="dia-m" disabled>19</button><button type="button" class="dia-m" disabled>20</button><button type="button" class="dia-m" disabled>21</button><button type="button" class="dia-m" disabled>22</button>
+            <button type="button" class="dia-m" disabled>23</button><button type="button" class="dia-m" disabled>24</button><button type="button" class="dia-m" disabled>25</button><button type="button" class="dia-m livre hoje">26</button><button type="button" class="dia-m" disabled>27</button><button type="button" class="dia-m livre">28</button><button type="button" class="dia-m" disabled>29</button>
+            <button type="button" class="dia-m" disabled>30</button><button type="button" class="dia-m livre">31</button><button type="button" class="dia-m fora" disabled>1</button><button type="button" class="dia-m fora" disabled>2</button><button type="button" class="dia-m fora" disabled>3</button><button type="button" class="dia-m fora" disabled>4</button><button type="button" class="dia-m fora" disabled>5</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="secao-v">
+      <div>
+        <h2>Quando a pessoa pediu para não receber mensagens</h2>
+        <p>Marcar continua permitido — opt-out é vontade sobre o canal, não sobre o atendimento. O que muda é o lembrete, e a tela diz isso ANTES de confirmar: o produto não mandar é uma decisão, o produto não avisar que não ia mandar é um bug.</p>
+      </div>
+      <div class="cartao marcacao">
+        <aside>
+          <div class="quem-m"><span class="avatar p t3">CN</span><strong>Clara Nunes</strong></div>
+          <h3>Agendar Consulta</h3>
+          <div class="campo">
+            <label for="dur-CN">Duração (minutos)</label>
+            <input id="dur-CN" type="number" value="30" min="5" max="1440" step="5">
+            <span class="ajuda">O padrão é a duração do serviço. Mude se este atendimento precisar de mais ou menos tempo.</span>
+          </div>
+        </aside>
+        <div class="mes">
+          <div class="mes-cab">
+            <strong>Agosto de 2026</strong>
+            <div><button type="button" class="btn fantasma icone p" aria-label="Mês anterior"><i class="ph-light ph-caret-left"></i></button><button type="button" class="btn fantasma icone p" aria-label="Próximo mês"><i class="ph-light ph-caret-right"></i></button></div>
+          </div>
+          <div class="mes-grade">
+            <span class="ds">do</span><span class="ds">2ª</span><span class="ds">3ª</span><span class="ds">4ª</span><span class="ds">5ª</span><span class="ds">6ª</span><span class="ds">sá</span>
+            <button type="button" class="dia-m fora" disabled>26</button><button type="button" class="dia-m fora" disabled>27</button><button type="button" class="dia-m fora" disabled>28</button><button type="button" class="dia-m fora" disabled>29</button><button type="button" class="dia-m fora" disabled>30</button><button type="button" class="dia-m fora" disabled>31</button><button type="button" class="dia-m" disabled>1</button>
+            <button type="button" class="dia-m" disabled>2</button><button type="button" class="dia-m" disabled>3</button><button type="button" class="dia-m" disabled>4</button><button type="button" class="dia-m" disabled>5</button><button type="button" class="dia-m" disabled>6</button><button type="button" class="dia-m" disabled>7</button><button type="button" class="dia-m" disabled>8</button>
+            <button type="button" class="dia-m" disabled>9</button><button type="button" class="dia-m" disabled>10</button><button type="button" class="dia-m" disabled>11</button><button type="button" class="dia-m" disabled>12</button><button type="button" class="dia-m" disabled>13</button><button type="button" class="dia-m" disabled>14</button><button type="button" class="dia-m" disabled>15</button>
+            <button type="button" class="dia-m" disabled>16</button><button type="button" class="dia-m" disabled>17</button><button type="button" class="dia-m" disabled>18</button><button type="button" class="dia-m" disabled>19</button><button type="button" class="dia-m" disabled>20</button><button type="button" class="dia-m" disabled>21</button><button type="button" class="dia-m" disabled>22</button>
+            <button type="button" class="dia-m" disabled>23</button><button type="button" class="dia-m" disabled>24</button><button type="button" class="dia-m" disabled>25</button><button type="button" class="dia-m livre hoje">26</button><button type="button" class="dia-m" disabled>27</button><button type="button" class="dia-m livre">28</button><button type="button" class="dia-m" disabled>29</button>
+            <button type="button" class="dia-m" disabled>30</button><button type="button" class="dia-m livre">31</button><button type="button" class="dia-m fora" disabled>1</button><button type="button" class="dia-m fora" disabled>2</button><button type="button" class="dia-m fora" disabled>3</button><button type="button" class="dia-m fora" disabled>4</button><button type="button" class="dia-m fora" disabled>5</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="secao-v">
+      <div>
+        <h2>O histórico</h2>
+        <p>Lista, não grade: a grade responde “como está meu dia”, a lista responde “o que aconteceu com esta pessoa”. Quatro divisões na ordem em que quem atende precisa delas, e ações só onde fazem sentido — remarcar o que já passou seria oferta falsa.</p>
+      </div>
+      <div class="historico">
+        <div class="segmento" role="tablist" aria-label="Filtrar o histórico">
+          <button type="button" role="tab" aria-pressed="true">Próximos <span class="cont">5</span></button>
+          <button type="button" role="tab" aria-pressed="false">Aguardando confirmação <span class="cont">1</span></button>
+          <button type="button" role="tab" aria-pressed="false">Passados <span class="cont">5</span></button>
+          <button type="button" role="tab" aria-pressed="false">Cancelados <span class="cont">1</span></button>
+        </div>
+        <ul class="cartao caixa-hist">
+          <li class="linha">
+            <span class="trilha t1" aria-hidden="true"></span>
+            <div class="quando"><strong>26 de ago</strong><span>15:00 – 15:30</span></div>
+            <div class="quem"><a href="#">Rita Campos</a><span>Consulta · com Ana Prado</span></div>
+            <span class="avatar p t1">AP</span>
+            <span class="tag">Confirmado</span>
+            <div class="acoes-h"><button type="button" class="btn fantasma p" disabled>Remarcar</button><button type="button" class="btn fantasma p" disabled>Cancelar</button></div>
+          </li>
+          <li class="linha">
+            <span class="trilha t3" aria-hidden="true"></span>
+            <div class="quando"><strong>27 de ago</strong><span>11:00 – 12:00</span></div>
+            <div class="quem"><a href="#">Loja Verde</a><span>Call · com Clara Nunes</span></div>
+            <span class="avatar p t3">CN</span>
+            <span class="tag">Confirmado</span>
+            <div class="acoes-h"><button type="button" class="btn fantasma p" disabled>Remarcar</button><button type="button" class="btn fantasma p" disabled>Cancelar</button></div>
+          </li>
+          <li class="linha">
+            <span class="trilha t3" aria-hidden="true"></span>
+            <div class="quando"><strong>28 de ago</strong><span>09:00 – 11:00</span></div>
+            <div class="quem"><a href="#">Bloqueado (particular)</a><span>Agendamento · com Clara Nunes</span></div>
+            <span class="avatar p t3">CN</span>
+            <span class="tag">Confirmado</span>
+            <div class="acoes-h"><button type="button" class="btn fantasma p" disabled>Remarcar</button><button type="button" class="btn fantasma p" disabled>Cancelar</button></div>
+          </li>
+          <li class="linha">
+            <span class="trilha t4" aria-hidden="true"></span>
+            <div class="quando"><strong>28 de ago</strong><span>13:30 – 14:15</span></div>
+            <div class="quem"><a href="#">Sofia Braga</a><span>Consulta · com Davi Rocha</span></div>
+            <span class="avatar p t4">DR</span>
+            <span class="tag">Confirmado</span>
+            <div class="acoes-h"><button type="button" class="btn fantasma p" disabled>Remarcar</button><button type="button" class="btn fantasma p" disabled>Cancelar</button></div>
+          </li>
+          <li class="linha">
+            <span class="trilha t1" aria-hidden="true"></span>
+            <div class="quando"><strong>26 de ago</strong><span>16:00 – 16:30</span></div>
+            <div class="quem"><a href="#">Léo Martins</a><span>Consulta · com Ana Prado</span></div>
+            <span class="avatar p t1">AP</span>
+            <span class="tag">Confirmado</span>
+            <div class="acoes-h"><button type="button" class="btn fantasma p" disabled>Remarcar</button><button type="button" class="btn fantasma p" disabled>Cancelar</button></div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="secao-v">
+      <div>
+        <h2>Quando ninguém publicou horário — e o que a rota conta além dos slots</h2>
+        <p>“Não publiquei meus horários” e “não tenho vaga” chegariam como a mesma lista vazia se a API não os separasse. A rota separa, e a tela usa: aqui aparecem os três avisos que ela devolve além dos horários — jornada não publicada, fuso suposto por ninguém ter escolhido, e agenda conectada que parou de atualizar.</p>
+      </div>
+      <div class="cartao marcacao">
+        <aside>
+          <div class="quem-m"><span class="avatar p t4">DR</span><strong>Davi Rocha</strong></div>
+          <h3>Agendar Consulta</h3>
+          <div class="campo">
+            <label for="dur-DR">Duração (minutos)</label>
+            <input id="dur-DR" type="number" value="30" min="5" max="1440" step="5">
+            <span class="ajuda">O padrão é a duração do serviço. Mude se este atendimento precisar de mais ou menos tempo.</span>
+          </div>
+        </aside>
+        <div class="mes">
+          <div class="mes-cab">
+            <strong>Agosto de 2026</strong>
+            <div><button type="button" class="btn fantasma icone p" aria-label="Mês anterior"><i class="ph-light ph-caret-left"></i></button><button type="button" class="btn fantasma icone p" aria-label="Próximo mês"><i class="ph-light ph-caret-right"></i></button></div>
+          </div>
+          <div class="nota-m">
+            <strong>A jornada de atendimento ainda não foi publicada</strong>
+            <p>Sem eles ninguém consegue marcar — nem quem atende, nem o agente.</p>
+            <a href="#">Configurar meus horários de atendimento</a>
+          </div>
+          <p class="miudo">Estamos supondo o fuso — ninguém escolheu ainda. O agente oferece horário usando ele.</p>
+          <p class="miudo alerta">A agenda conectada Google · ana@clinica.com não atualiza desde ontem às 18h. Os horários dela seguem bloqueados por precaução.</p>
+          <div class="mes-grade">
+            <span class="ds">do</span><span class="ds">2ª</span><span class="ds">3ª</span><span class="ds">4ª</span><span class="ds">5ª</span><span class="ds">6ª</span><span class="ds">sá</span>
+            <button type="button" class="dia-m fora" disabled>26</button><button type="button" class="dia-m fora" disabled>27</button><button type="button" class="dia-m fora" disabled>28</button><button type="button" class="dia-m fora" disabled>29</button><button type="button" class="dia-m fora" disabled>30</button><button type="button" class="dia-m fora" disabled>31</button><button type="button" class="dia-m" disabled>1</button>
+            <button type="button" class="dia-m" disabled>2</button><button type="button" class="dia-m" disabled>3</button><button type="button" class="dia-m" disabled>4</button><button type="button" class="dia-m" disabled>5</button><button type="button" class="dia-m" disabled>6</button><button type="button" class="dia-m" disabled>7</button><button type="button" class="dia-m" disabled>8</button>
+            <button type="button" class="dia-m" disabled>9</button><button type="button" class="dia-m" disabled>10</button><button type="button" class="dia-m" disabled>11</button><button type="button" class="dia-m" disabled>12</button><button type="button" class="dia-m" disabled>13</button><button type="button" class="dia-m" disabled>14</button><button type="button" class="dia-m" disabled>15</button>
+            <button type="button" class="dia-m" disabled>16</button><button type="button" class="dia-m" disabled>17</button><button type="button" class="dia-m" disabled>18</button><button type="button" class="dia-m" disabled>19</button><button type="button" class="dia-m" disabled>20</button><button type="button" class="dia-m" disabled>21</button><button type="button" class="dia-m" disabled>22</button>
+            <button type="button" class="dia-m" disabled>23</button><button type="button" class="dia-m" disabled>24</button><button type="button" class="dia-m" disabled>25</button><button type="button" class="dia-m hoje" disabled>26</button><button type="button" class="dia-m" disabled>27</button><button type="button" class="dia-m" disabled>28</button><button type="button" class="dia-m" disabled>29</button>
+            <button type="button" class="dia-m" disabled>30</button><button type="button" class="dia-m" disabled>31</button><button type="button" class="dia-m fora" disabled>1</button><button type="button" class="dia-m fora" disabled>2</button><button type="button" class="dia-m fora" disabled>3</button><button type="button" class="dia-m fora" disabled>4</button><button type="button" class="dia-m fora" disabled>5</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="secao-v">
+      <div>
+        <h2>Os estados</h2>
+        <p>Vazio, carregando e erro — os três que aparecem antes de qualquer dado existir, e que decidem a primeira impressão de quem acabou de instalar.</p>
+      </div>
+      <div class="cartao">
+        <div class="vazio">
+          <div class="elo"><i class="ph-light ph-calendar-blank"></i></div>
+          <h3>Sua agenda está livre esta semana</h3>
+          <p>Agendamentos aparecem aqui quando alguém marca pela tela, quando o agente marca por você, ou quando chegam da agenda do Google conectada.</p>
+          <button type="button" class="btn secundario">Criar um tipo de agendamento</button>
+        </div>
+      </div>
+      <div class="cartao esqueleto" aria-busy="true" aria-label="Carregando a agenda">
+        <div class="col-h"></div>
+        <div class="col-d"><span style="margin-top:0px"></span><span class="alto"></span></div>
+        <div class="col-d"><span style="margin-top:28px"></span></div>
+        <div class="col-d"><span style="margin-top:56px"></span><span class="alto"></span></div>
+        <div class="col-d"><span style="margin-top:0px"></span></div>
+        <div class="col-d"><span style="margin-top:28px"></span><span class="alto"></span></div>
+        <div class="col-d"><span style="margin-top:56px"></span></div>
+        <div class="col-d"><span style="margin-top:0px"></span><span class="alto"></span></div>
+      </div>
+      <div class="erro-agenda" role="alert">
+        <i class="ph-light ph-warning-octagon"></i>
+        <div>
+          <strong>Não consegui carregar a agenda</strong>
+          <p>A agenda do Google de Ana Prado desconectou — o Google recusou a credencial guardada. Reconectar resolve; até lá, os agendamentos dela vindos de fora não aparecem.</p>
+        </div>
+        <button type="button" class="btn secundario p"><i class="ph-light ph-arrows-clockwise"></i>Tentar de novo</button>
+      </div>
+    </section>
+</div>
+<script src="../folha.js"></script>
+</body>
+</html>

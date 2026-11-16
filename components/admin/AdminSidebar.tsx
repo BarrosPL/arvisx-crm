@@ -47,25 +47,30 @@ export function AdminSidebar({ userEmail, variant = "desktop", modulosLigados = 
   const destinos = destinosDoAdmin(modulosLigados);
 
   return (
+    // Design "Folha": o menu fica SOLTO sobre a névoa (`bg-sidebar`), sem borda
+    // à direita e sem fios internos — quem delimita o trabalho é a folha branca
+    // ao lado (`AdminShell`). Mesmos estilos de item de `components/shell/Sidebar.tsx`.
     <aside
       className={cn(
-        "flex flex-col border-r bg-card",
+        "flex flex-col bg-sidebar text-sidebar-foreground",
         isMobile ? "h-full w-full" : "hidden w-60 shrink-0 lg:flex",
       )}
     >
-      <div className="flex h-14 items-center gap-3 border-b px-4">
+      <div className="flex h-16 items-center gap-3 px-4 pt-2">
         {/* O nome já está escrito ao lado — o símbolo é reforço, não legenda. */}
         {marcaEhADoProduto(marca) && (
           <SimboloDoProduto nome={marca.name} decorativo className="h-8 w-8" />
         )}
-        <div className="flex flex-col">
-          <span className="text-xs uppercase tracking-wider text-muted-foreground">
+        <div className="flex min-w-0 flex-col">
+          <span className="truncate text-xs font-medium text-sidebar-muted">
             {marca.name}
           </span>
-          <span className="text-sm font-semibold tracking-tight">{t("Admin Plataforma")}</span>
+          <span className="text-[13px] font-semibold tracking-tight text-sidebar-active-foreground">
+            {t("Admin Plataforma")}
+          </span>
         </div>
       </div>
-      <nav className="flex-1 space-y-1 overflow-y-auto p-2" aria-label={t("Navegação plataforma")}>
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-1" aria-label={t("Navegação plataforma")}>
         {destinos.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + "/");
@@ -76,27 +81,27 @@ export function AdminSidebar({ userEmail, variant = "desktop", modulosLigados = 
               href={item.href}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                "flex h-[34px] items-center gap-2.5 rounded-full px-3 text-[13px] font-medium transition-colors",
                 isActive
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                  ? "bg-sidebar-active font-semibold text-sidebar-active-foreground shadow-xs ring-1 ring-border"
+                  : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-active-foreground",
               )}
             >
-              <Icon size={18} weight={isActive ? "fill" : "regular"} aria-hidden />
+              <Icon size={18} weight={isActive ? "regular" : "light"} aria-hidden />
               <span className="truncate">{t(item.label)}</span>
             </Link>
           );
         })}
       </nav>
-      <div className="space-y-2 border-t p-3">
+      <div className="space-y-2 p-3">
         <Link
           href="/app"
-          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-active-foreground"
         >
           <ArrowRight size={14} aria-hidden />
           <span>{t("Voltar pra app")}</span>
         </Link>
-        <p className="truncate px-2 text-xs text-muted-foreground" title={userEmail}>
+        <p className="truncate px-2 text-xs text-sidebar-muted" title={userEmail}>
           {userEmail}
         </p>
       </div>

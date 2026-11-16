@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dados externos — conexão</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="820">
+<meta name="rota" content="/app/integracao-dados/[id]">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .fontes { margin-bottom: 16px; overflow: hidden; }
+  .fontes .gatilho { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; text-align: left; }
+  .fontes .gatilho .tit { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+  .fontes .gatilho .tit i { font-size: 14px; }
+  .fontes .dentro { border-top: 1px solid var(--linha); padding: 16px; display: grid; gap: 16px; }
+  .fontes fieldset { border: 0; display: grid; gap: 8px; }
+  .fontes fieldset label { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; cursor: pointer; }
+  .fontes fieldset input { margin-top: 3px; accent-color: var(--navy); }
+  .ferramentas { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .ferramentas .entrada { height: 32px; width: 256px; max-width: 100%; }
+  .ferramentas .so-views { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
+  .ferramentas .so-views input { accent-color: var(--navy); }
+  .ferramentas .contagem { margin-left: auto; color: var(--apoio); font-size: 13px; }
+  .schema { font: 600 12px/1 var(--mono); letter-spacing: 0; text-transform: none; color: var(--apoio); padding: 6px 4px; }
+  .catalogo { display: grid; gap: 4px; }
+  .catalogo li { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--linha); border-radius: var(--r-sm); min-height: 44px; }
+  .catalogo li input { width: 16px; height: 16px; accent-color: var(--navy); flex: none; }
+  .catalogo li .nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+  .fontes .rodape { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--linha); padding-top: 12px; }
+  .fontes .rodape .botoes { display: flex; gap: 8px; margin-left: auto; }
+  .explorador { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 16px; align-items: start; }
+  .explorador > * { min-width: 0; }
+  .caixa-borda { border: 1px solid var(--linha); border-radius: var(--r); background: var(--painel); overflow: hidden; }
+  .caixa-borda > .tit { border-bottom: 1px solid var(--linha); padding: 8px 12px; font-weight: 600; font-size: 13px; }
+  .arvore { padding: 8px; }
+  .arvore li button { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 8px; border-radius: var(--r-sm); text-align: left; font-size: 13px; }
+  .arvore li button:hover, .arvore li button[aria-current="true"] { background: var(--tinta-suave); }
+  .arvore li button[aria-current="true"] { font-weight: 600; }
+  .grade-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--linha); padding: 8px 12px; }
+  .grade-cab .ident { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+  .grade-cab .ident b { font-weight: 600; }
+  .grade-cab .pag { display: flex; align-items: center; gap: 8px; }
+  .grade-cab select { height: 32px; width: 110px; padding: 0 8px; border-radius: var(--r-sm); border: 1px solid var(--linha-forte); background: var(--painel); font-size: 13px; }
+  .rola { overflow-x: auto; }
+  .rola .tabela { min-width: 860px; }
+  .rola .tabela th { text-transform: none; letter-spacing: 0; font-size: 12px; }
+  .rola .tabela td { font-family: var(--mono); font-size: 12px; padding: 8px 14px; white-space: nowrap; }
+  .pk { display: inline-block; padding: 1px 4px; border-radius: 4px; background: var(--painel-3); color: var(--apoio); font: 600 11px/1.4 var(--mono); margin-right: 4px; }
+  .grade-pe { border-top: 1px solid var(--linha); padding: 8px 12px; font-size: 12px; color: var(--apoio); }
+  @media (max-width: 1100px) { .explorador { grid-template-columns: 1fr; } }
+  @media (max-width: 860px) {
+    .ferramentas .entrada { width: 100%; }
+    .ferramentas .contagem { margin-left: 0; }
+  }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/app/settings" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Dados externos</div>
+          <h1>ERP da clínica</h1>
+          <p><span class="mono">erp.clinicavitalis.example:5432/vitalis_erp · leitura_crm</span> · somente leitura</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <!-- O que o assistente pode ver -->
+      <div class="cartao fontes" id="fontes">
+        <button type="button" class="gatilho" aria-expanded="true">
+          <span class="tit"><i class="ph-light ph-caret-down"></i>O que o assistente pode ver</span>
+          <span class="tag ok"><span class="mono">4</span> tabelas liberadas</span>
+        </button>
+        <div class="dentro">
+          <p class="apoio">Marque as tabelas que o assistente pode consultar neste banco. O que não estiver marcado, ele não enxerga.</p>
+
+          <fieldset>
+            <legend class="sr">Modo</legend>
+            <label><input type="radio" name="modo" checked><span>Só o que eu marcar (recomendado)</span></label>
+            <label><input type="radio" name="modo"><span>Tudo que o usuário do banco enxerga</span></label>
+          </fieldset>
+
+          <div>
+            <div class="ferramentas" style="margin-bottom:12px">
+              <input type="text" class="entrada" placeholder="Buscar tabela ou view" aria-label="Buscar tabela ou view">
+              <label class="so-views"><input type="checkbox">Só views</label>
+              <button class="btn secundario p">Marcar todas as visíveis</button>
+              <button class="btn secundario p">Desmarcar as visíveis</button>
+              <span class="contagem"><span class="mono">4 / 7</span> liberadas</span>
+            </div>
+
+            <p class="schema">public</p>
+            <ul class="catalogo">
+              <li><input type="checkbox" checked aria-label="Liberar public.agendamentos"><span class="nome mono">agendamentos</span><button class="btn fantasma p">Detalhes</button></li>
+              <li><input type="checkbox" checked aria-label="Liberar public.orcamentos"><span class="nome mono">orcamentos</span><button class="btn fantasma p">Detalhes</button></li>
+              <li><input type="checkbox" checked aria-label="Liberar public.pacientes"><span class="nome mono">pacientes</span><button class="btn fantasma p">Detalhes</button></li>
+              <li><input type="checkbox" aria-label="Liberar public.pagamentos"><span class="nome mono">pagamentos</span></li>
+              <li><input type="checkbox" checked aria-label="Liberar public.procedimentos"><span class="nome mono">procedimentos</span><button class="btn fantasma p">Detalhes</button></li>
+              <li><input type="checkbox" aria-label="Liberar public.usuarios"><span class="nome mono">usuarios</span></li>
+              <li><input type="checkbox" aria-label="Liberar public.vw_agenda_do_dia"><span class="nome mono">vw_agenda_do_dia</span><span class="tag">view</span></li>
+            </ul>
+          </div>
+
+          <div class="rodape">
+            <span class="fraco pequeno"></span>
+            <div class="botoes">
+              <button class="btn fantasma p" disabled>Descartar alterações</button>
+              <button class="btn primario p" disabled>Salvar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Explorador -->
+      <div class="explorador">
+        <aside class="caixa-borda">
+          <div class="tit">Tabelas</div>
+          <div class="arvore">
+            <p class="schema">public</p>
+            <ul>
+              <li><button type="button" aria-current="true"><span class="mono">agendamentos</span></button></li>
+              <li><button type="button"><span class="mono">orcamentos</span></button></li>
+              <li><button type="button"><span class="mono">pacientes</span></button></li>
+              <li><button type="button"><span class="mono">procedimentos</span></button></li>
+            </ul>
+          </div>
+        </aside>
+
+        <section class="caixa-borda">
+          <div class="grade-cab">
+            <div class="ident"><b class="mono">public.agendamentos</b><span class="apoio">~<span class="mono">1.284</span> linhas (estimativa)</span></div>
+            <div class="pag">
+              <select aria-label="Linhas por página"><option>25 / pág.</option><option selected>50 / pág.</option><option>100 / pág.</option><option>200 / pág.</option></select>
+              <button class="btn secundario p icone" aria-label="Página anterior" disabled><i class="ph-light ph-caret-left"></i></button>
+              <button class="btn secundario p icone" aria-label="Próxima página" disabled><i class="ph-light ph-caret-right"></i></button>
+            </div>
+          </div>
+          <div class="rola">
+            <table class="tabela compacta">
+              <thead>
+                <tr><th title="Chave primária"><span class="pk">PK</span>id</th><th>paciente_nome</th><th>telefone</th><th>procedimento</th><th>profissional</th><th>data_hora</th><th>status</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>4812</td><td>Marina Costa</td><td>+55 11 98234-1107</td><td>Avaliação</td><td>Dra. Renata Borges</td><td>2026-11-03T09:00:00.000Z</td><td>confirmado</td></tr>
+                <tr><td>4813</td><td>Bruno Tavares</td><td>+55 11 97718-4420</td><td>Limpeza</td><td>Dr. Marcos Lima</td><td>2026-11-03T10:30:00.000Z</td><td>confirmado</td></tr>
+                <tr><td>4814</td><td>Helena Marques</td><td>+55 11 99102-7765</td><td>Clareamento</td><td>Dra. Renata Borges</td><td>2026-11-03T14:00:00.000Z</td><td>pendente</td></tr>
+                <tr><td>4815</td><td>Caio Ribeiro</td><td>+55 11 96540-3318</td><td>Implante — retorno</td><td>Dr. Marcos Lima</td><td>2026-11-04T08:30:00.000Z</td><td>confirmado</td></tr>
+                <tr><td>4816</td><td>Família Andrade</td><td>+55 11 98877-2051</td><td>Avaliação</td><td>Dra. Renata Borges</td><td>2026-11-04T11:00:00.000Z</td><td>remarcado</td></tr>
+                <tr><td>4817</td><td>Carlos — Clínica Vida Odonto</td><td>+55 11 97001-6642</td><td>Ortodontia — manutenção</td><td>Dr. Marcos Lima</td><td>2026-11-05T15:30:00.000Z</td><td>cancelado</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="grade-pe mono">1–6</div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

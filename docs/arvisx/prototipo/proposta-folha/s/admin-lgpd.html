@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LGPD</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="80">
+<meta name="rota" content="/admin/lgpd">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+  .aviso-faixa { align-items: center; margin-bottom: 24px; }
+  .aviso-faixa > span { flex: 1; min-width: 0; }
+  .aviso-faixa strong { display: inline; }
+  .aviso-faixa a { flex: none; font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+  .filtros .filtro { min-width: 160px; justify-content: space-between; }
+  .tabela td { white-space: nowrap; font-size: 12px; }
+  .tabela td.id { font-family: var(--mono); font-size: 12px; color: var(--apoio); }
+  .tabela td.quando { color: var(--apoio); }
+  .tabela .tag { height: 20px; font-size: 11px; }
+  .tabela .tag.tipo { font-size: 12px; font-weight: 500; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/admin/lgpd" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="aviso-faixa erro" role="alert">
+        <i class="ph-fill ph-warning"></i>
+        <span><strong>2</strong> solicitações vencendo em menos de 24h ou já vencidas — ação imediata requerida.</span>
+        <a href="#">Ver detalhes</a>
+      </div>
+
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin Plataforma</div>
+          <h1>LGPD — Cross-tenant</h1>
+          <p><span class="mono">6</span> solicitações</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="filtros">
+        <button class="filtro" aria-label="Status">Todos os status<i class="ph-light ph-caret-down"></i></button>
+        <button class="filtro" aria-label="Tipo">Todos os tipos<i class="ph-light ph-caret-down"></i></button>
+        <button class="filtro" aria-label="Risco">Todos os riscos<i class="ph-light ph-caret-down"></i></button>
+      </div>
+
+      <div class="cartao">
+        <table class="tabela rolavel">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Tipo</th>
+              <th>Tenant</th>
+              <th>Recebido em</th>
+              <th>Vence em</th>
+              <th>Risco</th>
+              <th>Status</th>
+              <th><span class="sr">Ver</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="id">#e4c7a920</td>
+              <td><span class="tag contorno tipo">Solicitação de dados</span></td>
+              <td><span class="tag contorno" title="bella-pele"><i class="ph-light ph-buildings"></i>Bella Pele</span></td>
+              <td class="quando">há 13 dias</td>
+              <td class="mono">17h em atraso</td>
+              <td><span class="tag erro">Vencido</span></td>
+              <td><span class="tag">Revisão</span></td>
+              <td><a href="#" class="link">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="id">#5f19b3c8</td>
+              <td><span class="tag contorno tipo">Solicitação de dados</span></td>
+              <td><span class="tag contorno" title="sorriso-cia"><i class="ph-light ph-buildings"></i>Sorriso &amp; Cia</span></td>
+              <td class="quando">há 9 dias</td>
+              <td class="mono">9h restantes</td>
+              <td><span class="tag erro">Crítico</span></td>
+              <td><span class="tag navy">Processando</span></td>
+              <td><a href="#" class="link">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="id">#a1b2c3d4</td>
+              <td><span class="tag contorno tipo">Anonimização cliente</span></td>
+              <td><span class="tag contorno" title="clinica-vitalis"><i class="ph-light ph-buildings"></i>Clínica Vitalis</span></td>
+              <td class="quando">há 12 dias</td>
+              <td class="mono">10d restantes</td>
+              <td><span class="tag">Alerta</span></td>
+              <td><span class="tag navy">Processando</span></td>
+              <td><a href="#" class="link">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="id">#0c8d71ef</td>
+              <td><span class="tag contorno tipo">Anonimização cliente</span></td>
+              <td><span class="tag contorno" title="odonto-sul"><i class="ph-light ph-buildings"></i>Odonto Sul</span></td>
+              <td class="quando">há 2 dias</td>
+              <td class="mono">19d restantes</td>
+              <td><span class="tag contorno">OK</span></td>
+              <td><span class="tag">Recebido</span></td>
+              <td><a href="#" class="link">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="id">#72be4a06</td>
+              <td><span class="tag contorno tipo">Anonimização tenant</span></td>
+              <td><span class="fraco">—</span></td>
+              <td class="quando">há 20 dias</td>
+              <td>—</td>
+              <td><span class="tag contorno">OK</span></td>
+              <td><span class="tag contorno">Concluído</span></td>
+              <td><a href="#" class="link">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="id">#d93a58b1</td>
+              <td><span class="tag contorno tipo">Solicitação de dados</span></td>
+              <td><span class="tag contorno" title="clinica-vitalis"><i class="ph-light ph-buildings"></i>Clínica Vitalis</span></td>
+              <td class="quando">há 26 dias</td>
+              <td>—</td>
+              <td><span class="tag contorno">OK</span></td>
+              <td><span class="tag erro">Falhou</span></td>
+              <td><a href="#" class="link">Ver</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell-admin.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

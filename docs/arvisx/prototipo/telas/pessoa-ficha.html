@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ficha da pessoa</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="970">
+<meta name="rota" content="/app/people/[id]">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+.vinc { padding: 10px 0; border-bottom: 1px solid var(--linha); font-size: 13.5px; }
+  .vinc:first-child { padding-top: 0; }
+  .vinc:last-child { border-bottom: 0; padding-bottom: 0; }
+  .vinc a { font-weight: 700; }
+  .vinc a.mono { font-weight: 500; font-size: 13px; }
+  .vinc div { color: var(--apoio); }
+</style>
+</head>
+<body data-rota="/app/people">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+<a href="#" class="volta"><i class="ph ph-arrow-left"></i>Pessoas</a>
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM · Pessoas</div>
+          <h1>Renata Albuquerque</h1>
+          <p>renata@odontosul.com.br</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="grade c2">
+        <div class="cartao">
+          <div class="cab"><h2>Empresas</h2></div>
+          <div class="corpo">
+            <div class="vinc"><a href="#">Odonto Sul</a><div>Diretora administrativa</div></div>
+            <div class="vinc"><a href="#">Implantec</a><div>Sócia</div></div>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="cab"><h2>Telefones (contacts)</h2></div>
+          <div class="corpo">
+            <div class="vinc"><a href="#" class="mono">+55 51 99812-4410</a></div>
+            <div class="vinc"><a href="#" class="mono">+55 51 3221-8800</a></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

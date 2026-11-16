@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aviso de agendamento</title>
+<meta name="grupo" content="Atendimento">
+<meta name="ordem" content="810">
+<meta name="rota" content="/app/agenda/avisos">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .campo.m select, .campo.m input { max-width: 384px; }
+  .campo.c input { max-width: 288px; }
+  .caixa-chave { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 1px solid var(--linha); border-radius: var(--r); }
+  .caixa-chave strong { display: block; font-size: 13px; }
+  .caixa-chave p { color: var(--apoio); font-size: 12px; margin-top: 3px; }
+  .linha-btn { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .linha-btn .ok-txt { display: inline-flex; align-items: center; gap: 5px; color: var(--apoio); font-size: 12px; }
+  .linha-btn .ok-txt i { font-size: 16px; }
+  .entregas li { padding: 10px 0; border-bottom: 1px solid var(--linha); }
+  .entregas li:last-child { border-bottom: 0; padding-bottom: 0; }
+  .entregas .l1 { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+  .entregas .l1 strong { font-size: 13px; }
+  .entregas .l2 { display: block; color: var(--apoio); font-size: 12px; }
+  .entregas .er { display: block; color: var(--erro); font-size: 12px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/app/agenda" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Atendimento · Agenda</div>
+          <h1>Aviso de agendamento</h1>
+          <p>Receba no WhatsApp cada horário marcado, remarcado ou cancelado, e às 7h o resumo do dia.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <div class="cartao">
+          <div class="corpo form">
+            <div class="caixa-chave">
+              <span class="chave" role="switch" aria-checked="false" aria-label="Usar o mesmo número do aviso de caso"></span>
+              <div>
+                <strong>Usar o mesmo número do aviso de caso</strong>
+                <p>Os avisos vão para <span class="mono">••••0142</span>, enviados por Recepção Vitalis. Se você trocar esse número no aviso de caso, estes avisos acompanham.</p>
+              </div>
+            </div>
+
+            <div class="campo m">
+              <label for="conexao">Conexão que envia os avisos</label>
+              <select id="conexao"><option selected>Recepção Vitalis</option><option>Comercial</option></select>
+              <span class="ajuda">Só aparecem aqui os números que conseguem mandar uma mensagem a qualquer hora.</span>
+            </div>
+
+            <div class="campo c">
+              <label for="telefone">Número que recebe os avisos</label>
+              <input id="telefone" type="tel" class="mono" value="+5511976540318" placeholder="+5511999998888">
+              <span class="ajuda">Comece pelo código do país. Um celular do Brasil fica assim: +55, DDD e o número.</span>
+            </div>
+
+            <div class="campo m">
+              <label for="grupo">Grupo do WhatsApp que também recebe os avisos</label>
+              <select id="grupo"><option>Nenhum grupo</option><option selected>Recepção — Clínica Vitalis</option><option>Dentistas — escala</option></select>
+              <span class="ajuda">Opcional. A equipe vê no grupo os mesmos avisos e o resumo das 7h, sem ninguém repassar.</span>
+            </div>
+
+            <div class="caixa-chave">
+              <span class="chave ligada" role="switch" aria-checked="true" aria-label="Receber avisos de agendamento no WhatsApp"></span>
+              <div>
+                <strong>Receber avisos de agendamento no WhatsApp</strong>
+                <p>Chega o primeiro nome do cliente, o serviço, o dia e a hora, quem atende e de onde veio: IA, equipe ou Google Agenda.</p>
+              </div>
+            </div>
+
+            <div>
+              <div class="linha-btn">
+                <button class="btn primario">Salvar</button>
+                <button class="btn secundario"><i class="ph-light ph-paper-plane-tilt"></i>Enviar teste</button>
+                <span class="ok-txt"><i class="ph-light ph-check-circle"></i>Enviado para <span class="mono">••••0318</span> e para o grupo Recepção — Clínica Vitalis</span>
+              </div>
+              <p class="apoio pequeno" style="margin-top:8px">O teste manda uma mensagem de verdade e conta no limite diário desse número. Salve antes de testar.</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="apoio pequeno">Das 22h às 7h não sai aviso, para não acordar ninguém: o que for marcado nesse horário aparece no resumo das 7h. O horário é o da empresa.</p>
+
+        <div class="cartao">
+          <div class="corpo">
+            <h2 class="secao" style="font-size: 14px;margin-bottom:4px">Últimos avisos</h2>
+            <ul class="entregas">
+              <li><div class="l1"><strong>Novo agendamento</strong><span class="mono fraco pequeno">03/11/2026, 10:24</span></div><span class="l2">Enviado · <span class="mono">••••0318</span></span></li>
+              <li><div class="l1"><strong>Remarcado</strong><span class="mono fraco pequeno">03/11/2026, 09:05</span></div><span class="l2">Enviado · <span class="mono">••••0318</span></span></li>
+              <li><div class="l1"><strong>Resumo do dia</strong><span class="mono fraco pequeno">03/11/2026, 07:00</span></div><span class="l2">Enviado · <span class="mono">••••0318</span></span></li>
+              <li><div class="l1"><strong>Novo agendamento</strong><span class="mono fraco pequeno">02/11/2026, 22:41</span></div><span class="l2">Entrou no resumo das 7h · <span class="mono">••••0318</span></span></li>
+              <li><div class="l1"><strong>Cancelado</strong><span class="mono fraco pequeno">02/11/2026, 16:12</span></div><span class="l2">Não saiu · <span class="mono">••••0318</span></span><span class="er">O aviso ficou mais de 24 horas sem conseguir sair e foi encerrado.</span></li>
+              <li><div class="l1"><strong>Novo agendamento</strong><span class="mono fraco pequeno">02/11/2026, 14:30</span></div><span class="l2">Enviado · <span class="mono">••••0318</span></span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

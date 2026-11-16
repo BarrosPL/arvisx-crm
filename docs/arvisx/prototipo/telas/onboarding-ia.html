@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Treinar</title>
+<meta name="grupo" content="Entrada">
+<meta name="ordem" content="420">
+<meta name="rota" content="/onboarding/setup-ai">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .onb { max-width: 760px; margin: 0 auto; padding: 32px 24px 64px; }
+  .onb-topo { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+  .onb-topo .lockup img { height: 36px; } .onb-topo .lockup b { font-size: 20px; }
+  .onb-topo .org { text-align: right; }
+  .onb-topo .org .rotulo { margin-bottom: 3px; }
+  .onb-topo .org strong { font-family: var(--display); font-stretch: 110%; font-weight: 650; letter-spacing: -.02em; font-size: 16px; }
+  .onb .passos { justify-content: space-between; margin: 20px 0 28px; }
+  .onb-cab { margin-bottom: 20px; }
+  .onb-cab h2 { font-family: var(--display); font-stretch: 112%; font-weight: 650; letter-spacing: -.03em; font-size: 26px; line-height: 1.1; color: var(--navy); }
+  .onb-cab p { color: var(--apoio); margin-top: 6px; max-width: 64ch; }
+  .onb .cartao + .cartao { margin-top: 16px; }
+  .rodape-nav { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 20px; }
+  .cerebro h3 { font-size: 13.5px; font-weight: 700; }
+  .cerebro p { color: var(--apoio); margin-top: 4px; }
+  .jeitos { border: 0; padding: 0; margin: 0; min-width: 0; }
+  .jeitos legend { font-weight: 600; font-size: 13px; padding: 0; margin-bottom: 6px; }
+  .jeitos .op { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid var(--linha); border-radius: var(--r-sm); cursor: pointer; }
+  .jeitos .op + .op { margin-top: 8px; }
+  .jeitos .op.marcada { border-color: var(--ouro); background: var(--ouro-suave); }
+  .jeitos .op input { margin-top: 3px; flex: none; accent-color: var(--ouro-escuro); }
+  .jeitos .op strong { display: block; font-size: 13.5px; font-weight: 600; }
+  .jeitos .op span span { display: block; font-size: 12px; color: var(--apoio); }
+  .sabe { margin-top: 16px; }
+  .sabe h3 { font-size: 13.5px; font-weight: 700; }
+  .sabe ul { margin-top: 8px; display: grid; gap: 4px; font-size: 12px; color: var(--apoio); }
+  .sabe .nota { margin-top: 8px; font-size: 12px; color: var(--apoio); }
+  @media (max-width: 860px) {
+    .onb { padding: 20px 16px 48px; }
+    .onb-topo img { height: 28px; }
+    .onb .passos li + li::before { width: 12px; margin: 0 4px; }
+    .onb .passos li { gap: 6px; }
+    .rodape-nav .btn { flex: 1; }
+    .sabe.grade { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>
+</head>
+<body data-rota="/onboarding/setup-ai">
+<div class="onb">
+  <header class="onb-topo">
+    <span class="lockup g escuro" aria-label="ARVISX CRM"><img src="../marca/arvisx-simbolo.png" alt=""><b>ARVISX<em>CRM</em></b></span>
+    <div class="org"><span class="rotulo">ARVISX CRM</span><strong>Clínica Vitalis</strong></div>
+  </header>
+  <div class="fio" style="margin:0"></div>
+  <ol class="passos" aria-label="Passos">
+    <li class="feito"><span class="n">1</span><span class="t">Seu negócio</span></li>
+    <li class="feito"><span class="n">2</span><span class="t">O telefone dele</span></li>
+    <li class="atual"><span class="n">3</span><span class="t">Treinar</span></li>
+    <li><span class="n">4</span><span class="t">Onde ele organiza</span></li>
+    <li><span class="n">5</span><span class="t">Ver ele atender</span></li>
+    <li><span class="n">6</span><span class="t">Quem trabalha com ele</span></li>
+  </ol>
+
+  <main>
+    <header class="onb-cab">
+      <h2>Treine seu funcionário</h2>
+      <p>Quem ele é, como fala e o que pode prometer. Dá para mudar tudo depois.</p>
+    </header>
+
+    <section class="cartao cerebro"><div class="corpo">
+      <h3>O cérebro dele: Anthropic</h3>
+      <p>Testei agora: a chave respondeu e tem crédito.</p>
+    </div></section>
+
+    <form novalidate>
+      <section class="cartao"><div class="corpo form">
+        <div class="campo">
+          <label for="name">Como ele vai se chamar</label>
+          <input id="name" type="text" value="Lia — AgendaPlus">
+          <span class="ajuda">É o nome que aparece para o seu time. O cliente vê só a conversa.</span>
+        </div>
+        <fieldset class="jeitos">
+          <legend>O jeito dele falar</legend>
+          <label class="op marcada"><input type="radio" name="prompt_template" checked><span><strong>Próximo e caloroso</strong><span>Conversa como gente, puxa assunto, tranquiliza. Bom para quem vende no dia a dia.</span></span></label>
+          <label class="op"><input type="radio" name="prompt_template"><span><strong>Objetivo e cordial</strong><span>Vai direto ao ponto sem ser seco, e sempre indica o próximo passo.</span></span></label>
+          <label class="op"><input type="radio" name="prompt_template"><span><strong>Curto e prático</strong><span>Frases curtas, pergunta só o essencial e chama uma pessoa cedo.</span></span></label>
+        </fieldset>
+        <div class="campo">
+          <label for="regras">As regras da casa (opcional)</label>
+          <textarea id="regras" rows="5" placeholder="Nunca prometa desconto sem confirmar com uma pessoa.&#10;Horário de atendimento: 9h às 18h, de segunda a sexta.&#10;Sempre chame o cliente pelo primeiro nome."></textarea>
+          <span class="ajuda">O que vale para qualquer atendimento aqui. Pode deixar em branco agora e escrever depois — ele aprende com você ao longo do tempo.</span>
+        </div>
+      </div></section>
+
+      <div class="grade c2 sabe">
+        <section class="cartao"><div class="corpo">
+          <h3>Ele já vem sabendo</h3>
+          <ul>
+            <li>· Ver o que a empresa atende</li>
+            <li>· Ver horários livres na agenda</li>
+            <li>· Ver os compromissos marcados</li>
+            <li>· Ver se o horário está livre e já marcar</li>
+            <li>· Marcar consulta ou sessão</li>
+            <li>· Remarcar um compromisso</li>
+            <li>· Confirmar um horário combinado</li>
+            <li>· Registrar se a pessoa veio ou faltou</li>
+            <li>· Procurar cliente</li>
+            <li>· Ver ficha do cliente</li>
+            <li>· Anotar dado que o cliente informou</li>
+            <li>· Listar oportunidades do funil</li>
+            <li>· Ver uma oportunidade</li>
+            <li>· Listar funis</li>
+            <li>· Criar oportunidade no funil</li>
+            <li>· Atualizar uma oportunidade</li>
+            <li>· Mover oportunidade de etapa</li>
+            <li>· Ver as compras do cliente</li>
+            <li>· Procurar produto na loja</li>
+            <li>· Rascunhar proposta comercial</li>
+            <li>· Preparar a proposta com o cliente</li>
+            <li>· Ver as etapas de um funil</li>
+          </ul>
+        </div></section>
+        <section class="cartao"><div class="corpo">
+          <h3>E nunca vai fazer</h3>
+          <ul>
+            <li>· Respeitar quem pediu para parar</li>
+            <li>· Respeitar dados apagados e a base legal</li>
+            <li>· Segurar o ritmo de envio</li>
+            <li>· Respeitar a janela do WhatsApp</li>
+            <li>· Variar o texto das mensagens iguais</li>
+            <li>· Não prometer preço ou prazo por conta própria</li>
+            <li>· Não confirmar condição que só o cliente citou</li>
+            <li>· Conferir promessas em texto livre</li>
+            <li>· Conferir afirmações de fato na resposta</li>
+            <li>· Não prometer atendimento humano que não existe</li>
+            <li>· Não falar a nossa língua com o seu cliente</li>
+            <li>· Não fazer afirmação clínica</li>
+            <li>· Deixar valores e negociação com a equipe</li>
+            <li>· Não prometer checar a agenda sem checar de verdade</li>
+            <li>· Só oferecer horário que a agenda devolveu</li>
+            <li>· Conferir a escrita antes de afirmar registro</li>
+            <li>· Dizer que é um assistente quando perguntam</li>
+          </ul>
+          <p class="nota">Essas conferências acontecem antes de cada mensagem sair, e não têm interruptor.</p>
+        </div></section>
+      </div>
+
+      <div class="rodape-nav">
+        <button type="button" class="btn fantasma">Pular</button>
+        <button type="submit" class="btn primario">Criar e continuar</button>
+      </div>
+    </form>
+  </main>
+</div>
+</body>
+</html>

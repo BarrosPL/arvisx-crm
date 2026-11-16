@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guia da extensão</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="830">
+<meta name="rota" content="/app/extensions/[id]">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .pilha { display: grid; gap: 20px; }
+  .capa > .cab { justify-content: flex-start; gap: 8px; background: var(--ouro-suave); border-radius: var(--r-lg) var(--r-lg) 0 0; }
+  .capa > .corpo { padding: 24px 28px; }
+  .capa h1 { font-family: var(--display); font-stretch: 112%; font-weight: 600; letter-spacing: -.03em; font-size: 24px; line-height: 1.1; color: var(--navy); }
+  .capa .resumo { color: var(--apoio); margin-top: 8px; max-width: 64ch; }
+  .capa .portas { display: flex; align-items: center; gap: 8px; margin-top: 16px; color: var(--apoio); font-size: 12px; }
+  .capa .portas i { font-size: 16px; color: var(--ouro-escuro); flex: none; }
+  .guia { padding: 24px; }
+  .guia .ident { display: flex; align-items: flex-start; gap: 12px; }
+  .guia .ic { width: 40px; height: 40px; border-radius: var(--r-sm); background: var(--ouro-suave); color: var(--ouro-escuro); display: grid; place-items: center; font-size: 24px; flex: none; }
+  .guia h2 { font-size: 16px; font-weight: 600; }
+  .guia .ident p { color: var(--apoio); margin-top: 4px; }
+  .guia .blocos { display: grid; gap: 16px; margin-top: 20px; }
+  .guia .blocos section { border-left: 2px solid color-mix(in srgb, var(--ouro) 38%, var(--painel)); padding-left: 16px; }
+  .guia .blocos h3 { font-size: 13px; font-weight: 600; }
+  .guia .blocos p { color: var(--apoio); margin-top: 4px; white-space: pre-line; }
+  .guia .pe-guia { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--linha); }
+  .guia .pe-guia p { color: var(--apoio); font-size: 12px; margin-top: 8px; }
+  @media (max-width: 860px) { .capa > .corpo, .guia { padding: 18px; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/app/settings" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <a href="#" class="volta"><i class="ph-light ph-caret-left"></i>Voltar às extensões</a>
+
+      <div class="pilha">
+        <header class="cartao capa">
+          <div class="cab"><span class="tag ok">Ativa</span><span class="mono fraco pequeno">v1.0.0</span></div>
+          <div class="corpo">
+            <h1>Retorno de paciente</h1>
+            <p class="resumo">Duas rotinas curtas para a recepção não perder quem tratou e não remarcou: quem falar hoje e quais encaixes a semana ainda tem.</p>
+            <div class="portas"><i class="ph-light ph-list-checks"></i>Abre Agenda e Conversas; não lê seus dados.</div>
+          </div>
+        </header>
+
+        <article class="cartao guia">
+          <div class="ident">
+            <span class="ic"><i class="ph-light ph-list-checks"></i></span>
+            <div>
+              <h2>Quem falar hoje</h2>
+              <p>A lista do dia: pacientes que terminaram uma etapa do tratamento e ainda não têm o retorno marcado.</p>
+            </div>
+          </div>
+          <div class="blocos">
+            <section>
+              <h3>Comece pelos mais antigos</h3>
+              <p>Abra as conversas paradas há mais de 30 dias. Quem tratou há mais tempo é quem está mais perto de desistir do retorno.</p>
+            </section>
+            <section>
+              <h3>Uma mensagem curta, com data</h3>
+              <p>Lembre o que foi feito e ofereça dois horários.
+Pergunta aberta ("quando você pode?") costuma ficar sem resposta.</p>
+            </section>
+            <section>
+              <h3>Sem resposta em dois dias</h3>
+              <p>Tente uma vez mais, em outro horário do dia. Depois disso, deixe anotado na conversa e siga para o próximo.</p>
+            </section>
+          </div>
+          <div class="pe-guia">
+            <button class="btn primario"><i class="ph-light ph-arrow-right"></i>Abrir Conversas</button>
+            <p>A ativação e a permissão serão verificadas novamente antes de abrir Tarefas.</p>
+          </div>
+        </article>
+
+        <article class="cartao guia">
+          <div class="ident">
+            <span class="ic"><i class="ph-light ph-book-open"></i></span>
+            <div>
+              <h2>Encaixes da semana</h2>
+              <p>Onde a agenda ainda tem espaço para oferecer retorno sem empurrar para o mês que vem.</p>
+            </div>
+          </div>
+          <div class="blocos">
+            <section>
+              <h3>Olhe a semana inteira</h3>
+              <p>Na Agenda, veja os dias com janelas de 30 minutos livres. Retorno cabe em horário curto.</p>
+            </section>
+            <section>
+              <h3>Guarde dois horários por dia</h3>
+              <p>Um de manhã e um no fim da tarde. São os que os pacientes mais aceitam quando a recepção liga.</p>
+            </section>
+          </div>
+          <div class="pe-guia">
+            <button class="btn secundario"><i class="ph-light ph-arrow-right"></i>Abrir Agenda</button>
+            <p>A ativação e a permissão serão verificadas novamente antes de abrir Tarefas.</p>
+          </div>
+        </article>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

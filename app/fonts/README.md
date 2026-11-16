@@ -21,6 +21,7 @@ que o `next/font/google` baixava.
 | `source-serif-4-200-900-latin.woff2` | Source Serif 4 | variável 200–900 | latin | `sourceserif4/v14` |
 | `ibm-plex-sans-300-700-latin.woff2` | IBM Plex Sans | variável, usada em 300–700 | latin | `ibmplexsans/v23` |
 | `jetbrains-mono-100-800-latin.woff2` | JetBrains Mono | variável 100–800 | latin | `jetbrainsmono/v24` |
+| `hanken-grotesk-100-900-{latin,latin-ext}.woff2` | Hanken Grotesk | variável 100–900 | latin + latin-ext (um arquivo por subset) | `hankengrotesk/v12` |
 
 ## Como baixar de novo
 

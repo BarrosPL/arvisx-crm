@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inbox · conversa</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="30">
+<meta name="rota" content="/admin/inbox/[conversationId]">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .conversas .filtros-conv { padding: 12px; display: grid; gap: 8px; border-bottom: 1px solid var(--linha); }
+  .conv { display: block; }
+  .conv .l { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+  .conv .tenant { margin: 5px 0; }
+  .conv .tenant .tag, .thread .cab .tag.t { height: 18px; font-size: 11px; padding: 0 6px; font-weight: 500; }
+  .conv .previa { margin-top: 0; min-width: 0; }
+  .thread .cab { height: auto; min-height: 60px; }
+  .thread .cab .l1 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .thread .cab .l1 .tag { height: 20px; font-size: 11px; text-transform: capitalize; }
+  .so-leitura { display: flex; align-items: center; gap: 8px; padding: 12px 20px; background: var(--painel-2); border-top: 1px solid var(--linha); color: var(--apoio); font-size: 12px; }
+  .so-leitura i { font-size: 16px; flex: none; }
+  .so-leitura b { font-weight: 600; }
+  .painel-contato .bloco .nome { font-weight: 600; }
+  .painel-contato .bloco .lin { display: flex; align-items: center; gap: 6px; color: var(--apoio); font-size: 12px; margin-top: 6px; }
+  .painel-contato .bloco .cap { text-transform: capitalize; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/admin/inbox" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo cheia">
+      <div class="inbox aberta">
+        <section class="conversas" aria-label="Conversas">
+          <div class="filtros-conv">
+            <div class="busca-linha"><i class="ph-light ph-magnifying-glass"></i><input type="text" placeholder="Buscar mensagem..."></div>
+            <div class="campo"><select><option selected>Todos</option><option>Pendente</option><option>Aberto</option><option>Resolvido</option></select></div>
+          </div>
+          <div class="lista-conv">
+            <div class="conv nao-lida" aria-current="true">
+              <div class="l"><span class="nome">Marina Costa</span><span class="hora">14:08</span></div>
+              <div class="tenant"><span class="tag contorno" title="clinica-vitalis"><i class="ph-light ph-buildings"></i>Clínica Vitalis</span></div>
+              <div class="l"><p class="previa">Quinta não dá. Tem como ser sábado de manhã? E vocês pa…</p><span class="cont">2</span></div>
+            </div>
+            <div class="conv nao-lida">
+              <div class="l"><span class="nome">Bruno Tavares</span><span class="hora">13:52</span></div>
+              <div class="tenant"><span class="tag contorno" title="sorriso-cia"><i class="ph-light ph-buildings"></i>Sorriso &amp; Cia</span></div>
+              <div class="l"><p class="previa">Consigo encaixar hoje à tarde? Tá doendo muito</p><span class="cont">1</span></div>
+            </div>
+            <div class="conv">
+              <div class="l"><span class="nome">Carlos — Clínica Vida Odonto</span><span class="hora">11:30</span></div>
+              <div class="tenant"><span class="tag contorno" title="clinica-vitalis"><i class="ph-light ph-buildings"></i>Clínica Vitalis</span></div>
+              <div class="l"><p class="previa">Fechado então, confirma a quarta às 15h?</p></div>
+            </div>
+            <div class="conv">
+              <div class="l"><span class="nome">Grupo Odonto Sul</span><span class="hora">09:17</span></div>
+              <div class="tenant"><span class="tag contorno" title="odonto-sul"><i class="ph-light ph-buildings"></i>Odonto Sul</span></div>
+              <div class="l"><p class="previa">Entendi. Vou encaminhar a proposta corporativa para o c…</p></div>
+            </div>
+            <div class="conv">
+              <div class="l"><span class="nome">Helena Marques</span><span class="hora">1 dia</span></div>
+              <div class="tenant"><span class="tag contorno" title="bella-pele"><i class="ph-light ph-buildings"></i>Bella Pele</span></div>
+              <div class="l"><p class="previa">Obrigada! Até sexta então.</p></div>
+            </div>
+            <div class="conv">
+              <div class="l"><span class="nome">Família Andrade</span><span class="hora">3 dias</span></div>
+              <div class="tenant"><span class="tag contorno" title="sorriso-cia"><i class="ph-light ph-buildings"></i>Sorriso &amp; Cia</span></div>
+              <div class="l"><p class="previa">Vocês atendem as duas crianças no mesmo horário?</p></div>
+            </div>
+            <div style="padding:12px;text-align:center"><a href="#" class="apoio pequeno" style="text-decoration:underline;text-underline-offset:3px">Carregar mais</a></div>
+          </div>
+        </section>
+
+        <section class="thread" aria-label="Conversa">
+          <div class="cab">
+            <div style="min-width:0">
+              <div class="l1"><span class="nome">Marina Costa</span><span class="tag">pending</span></div>
+              <div style="margin-top:4px"><span class="tag contorno t" title="clinica-vitalis"><i class="ph-light ph-buildings"></i>Clínica Vitalis</span></div>
+            </div>
+          </div>
+          <div class="mensagens">
+            <div class="balao deles">Oi! Vi no Instagram o clareamento, quanto fica?<span class="hora">18:51</span></div>
+            <div class="balao ia"><span class="quem">IA · Lia — AgendaPlus</span>Oi, Marina! Que bom que você veio. O clareamento a laser na Clínica Vitalis sai por R$ 1.800 em até 6x sem juros, com avaliação inclusa. Quer que eu veja um horário para você conhecer a clínica?<span class="hora">18:51 <i class="ph-light ph-checks" style="color:var(--sinal)"></i></span></div>
+            <div class="balao deles">Quero sim! Mas só consigo depois das 18h, vocês atendem?<span class="hora">19:04</span></div>
+            <div class="balao ia"><span class="quem">IA · Lia — AgendaPlus</span>Atendemos até as 20h de segunda a sexta. Posso reservar quinta às 18h30 para a avaliação?<span class="hora">19:04 <i class="ph-light ph-checks" style="color:var(--sinal)"></i></span></div>
+            <div class="balao nos"><span class="quem">Atendente · Ana Souza</span>Marina, aqui é a Ana da recepção. Se quinta ficar ruim me avisa que vejo outro dia com a doutora.<span class="hora">09:12 <i class="ph-light ph-checks"></i></span></div>
+            <div class="balao deles">Quinta não dá. Tem como ser sábado de manhã? E vocês parcelam no boleto?<span class="hora">14:06</span></div>
+            <div class="balao deles">Consigo chegar umas 9h.<span class="hora">14:08</span></div>
+          </div>
+          <div class="so-leitura">
+            <i class="ph-light ph-lock"></i>
+            <span>Modo somente-leitura. <b>Use “Impersonate” (em breve, S-11.07) para responder.</b></span>
+          </div>
+        </section>
+
+        <aside class="painel-contato">
+          <div class="bloco">
+            <h3>Contato</h3>
+            <div class="nome">Marina Costa</div>
+            <div class="lin mono"><i class="ph-light ph-phone"></i>+55 11 97702-3318</div>
+            <div class="lin">mar***@gmail.com</div>
+          </div>
+          <div class="bloco" style="border-bottom:0">
+            <h3>Tenant</h3>
+            <div style="display:flex;align-items:center;gap:8px"><i class="ph-light ph-buildings apoio"></i><span class="nome">Clínica Vitalis</span></div>
+            <div class="lin">Slug: <span class="mono">clinica-vitalis</span></div>
+            <div class="lin cap">Status: active</div>
+            <div style="margin-top:10px"><a href="#" class="link pequeno">Abrir tenant <i class="ph-light ph-arrow-right" style="font-size: 12px;vertical-align:-1px"></i></a></div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell-admin.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

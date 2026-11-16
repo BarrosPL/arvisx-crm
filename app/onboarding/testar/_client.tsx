@@ -97,8 +97,8 @@ export function TestarClient({ nome, agenteId, versaoId }: Props) {
     <div className="space-y-4">
       {semAgente && (
         <div className="rounded-lg border bg-background p-6" role="status">
-          <p className="text-sm font-medium">{t("Você ainda não montou seu funcionário.")}</p>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-[13px] font-medium">{t("Você ainda não montou seu funcionário.")}</p>
+          <p className="mt-1 text-[13px] text-muted-foreground">
             {t(
               "Sem ninguém treinado, não há o que testar. Dá para voltar ao passo anterior agora ou fazer isso depois, em IA › Agentes.",
             )}
@@ -108,10 +108,10 @@ export function TestarClient({ nome, agenteId, versaoId }: Props) {
 
       {rascunho && (
         <div className="rounded-lg border bg-background p-6" role="status">
-          <p className="text-sm font-medium">
+          <p className="text-[13px] font-medium">
             {funcionario} {t("está como")} <strong>{t("rascunho")}</strong> — {t("ainda não foi para o ar.")}
           </p>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-[13px] text-muted-foreground">
             {t(
               "Rascunho não responde mensagem, então não há o que ensaiar. O passo anterior explicou o que falta; você pode resolver depois em IA › Agentes.",
             )}
@@ -143,11 +143,11 @@ export function TestarClient({ nome, agenteId, versaoId }: Props) {
           </div>
 
           {desfecho?.tipo === "resposta" && (
-            <div className="space-y-2 rounded-md border bg-muted/40 p-4">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">
+            <div className="space-y-2 rounded-md border border-brand/40 bg-surface p-4">
+              <p className="text-xs font-medium text-text-subtle">
                 {funcionario} {t("respondeu")}
               </p>
-              <p className="whitespace-pre-wrap text-sm">{desfecho.texto}</p>
+              <p className="whitespace-pre-wrap text-[13px]">{desfecho.texto}</p>
               <p className="text-xs text-muted-foreground">
                 {t("Esta conversa não foi enviada a ninguém e não aparece no seu inbox.")}
               </p>
@@ -157,9 +157,9 @@ export function TestarClient({ nome, agenteId, versaoId }: Props) {
           {desfecho?.tipo === "erro" && (
             <div
               role="alert"
-              className="space-y-2 rounded-md border border-amber-300/60 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-950/20"
+              className="space-y-2 rounded-md border border-warning/30 bg-warning-bg p-4"
             >
-              <p className="text-sm font-medium">
+              <p className="text-[13px] font-medium">
                 {t(
                   "Ele não conseguiu responder — e é melhor descobrir isso agora do que com um cliente de verdade.",
                 )}
@@ -167,7 +167,7 @@ export function TestarClient({ nome, agenteId, versaoId }: Props) {
               <p className="text-xs text-muted-foreground">
                 {t("Motivo:")} <code className="break-all">{desfecho.mensagem}</code>
               </p>
-              <p className="text-sm">
+              <p className="text-[13px]">
                 {t(
                   "As causas mais comuns são a chave da empresa de IA sem saldo ou o modelo indisponível. Dá para conferir em",
                 )}{" "}

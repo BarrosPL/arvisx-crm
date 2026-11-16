@@ -114,7 +114,7 @@ export function TenantOverview({ organization, counts, integrations, cobrancaLig
     <div className="space-y-6">
       {/* Info card */}
       <div className="rounded-lg border bg-card p-5">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3">
           {t("Informações")}
         </h2>
         <div>
@@ -133,7 +133,7 @@ export function TenantOverview({ organization, counts, integrations, cobrancaLig
 
       {/* Counts row */}
       <div>
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3">
           {t("Volumes")}
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -148,7 +148,7 @@ export function TenantOverview({ organization, counts, integrations, cobrancaLig
       {/* Integrations + WAHA */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="rounded-lg border bg-card p-5">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <h2 className="text-sm font-semibold text-muted-foreground mb-3">
             {t("Integrações")}
           </h2>
           <div>
@@ -170,7 +170,7 @@ export function TenantOverview({ organization, counts, integrations, cobrancaLig
 
         {/* LGPD + AI */}
         <div className="rounded-lg border bg-card p-5">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <h2 className="text-sm font-semibold text-muted-foreground mb-3">
             {t("Compliance & IA")}
           </h2>
           <div>

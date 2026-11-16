@@ -1,0 +1,36 @@
+/* Opção B — "Petróleo": névoa levemente esverdeada, tinta azul-petróleo, ouro
+   só na IA. Títulos de página sem serifa (Hanken Grotesk). */
+:root {
+  --display: "Hanken Grotesk", "Segoe UI", Arial, sans-serif;
+  --t-peso: 600;
+  --t-esp: -.032em;
+
+  --navy: #0f3d45;
+  --navy-2: #154a53;
+  --navy-3: #1c5963;
+  --navy-linha: #2c6c75;
+
+  --ouro: #d4af37;
+  --ouro-claro: #f3da8c;
+  --ouro-escuro: #75600f;
+  --ouro-suave: #faf5e0;
+  --sinal: #2860c0;
+  --sinal-suave: #eaf1fc;
+
+  --fundo: #eef2f1;
+  --painel: #ffffff;
+  --painel-2: #f5f8f7;
+  --painel-3: #e8eeec;
+  --linha: #e3e9e7;
+  --linha-forte: #d0d9d6;
+
+  --texto: #0e2023;
+  --apoio: #485a5e;
+  --fraco: #5c6d70;
+
+  --ok: #1b7650;
+  --ok-suave: #e3f3ea;
+
+  --aviso: #9a5e0c; --aviso-suave: #fcf2e2;
+  --erro: #b42f2f;  --erro-suave: #fbeaea;
+}

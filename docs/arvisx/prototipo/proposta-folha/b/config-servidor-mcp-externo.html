@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Servidor MCP externo</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="690">
+<meta name="rota" content="/app/settings/servidor-mcp-externo">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .painel-mcp { max-width: 672px; display: grid; gap: 20px; }
+  .cartao > .cab { display: block; }
+  .cartao > .cab p { color: var(--apoio); font-size: 12px; margin-top: 4px; }
+  .botoes { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .remover { color: var(--erro); width: fit-content; }
+  .ferramentas { display: grid; gap: 6px; margin-top: 8px; }
+  .ferramentas li { border: 1px solid var(--linha); border-radius: var(--r-sm); padding: 8px 12px; font-size: 13px; overflow-wrap: anywhere; }
+  .ferramentas code { font-family: var(--mono); font-size: 12px; font-weight: 600; }
+  .ferramentas span { color: var(--apoio); margin-left: 8px; }
+  code.host { font-family: var(--mono); }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/app/settings" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Dados e acesso</div>
+          <h1>Servidor MCP externo</h1>
+          <p>O endereço e a chave do sistema de fora que a IA desta empresa pode consultar. Só o dono da instalação vê esta tela.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="painel-mcp">
+        <div class="cartao">
+          <div class="cab">
+            <h2>Endereço e chave</h2>
+            <p>O endereço precisa ser um servidor público em https. Rede interna, localhost e segredo colado no endereço são recusados na hora de salvar.</p>
+          </div>
+          <div class="corpo form">
+            <div class="campo">
+              <label for="mcp-endpoint">Endereço do servidor MCP</label>
+              <input type="text" id="mcp-endpoint" class="mono" placeholder="https://erp.example.com/mcp" value="https://erp.clinicavitalis.com.br/mcp" spellcheck="false">
+            </div>
+            <div class="campo">
+              <label for="mcp-chave">Chave de acesso</label>
+              <input type="password" id="mcp-chave" spellcheck="false">
+              <span class="ajuda">A chave é gravada cifrada e não é mostrada de novo: depois de salvar, a tela revela só os quatro últimos caracteres.</span>
+            </div>
+            <div class="botoes">
+              <button class="btn primario">Salvar</button>
+              <button class="btn secundario">Testar conexão</button>
+            </div>
+            <p class="fraco pequeno">Remover apaga o endereço e a chave desta empresa: a IA deixa de alcançar o servidor de fora.</p>
+            <button class="btn fantasma remover">Remover</button>
+          </div>
+        </div>
+
+        <!-- resultado de "Testar conexão" -->
+        <div class="cartao">
+          <div class="cab">
+            <h2>O que o servidor oferece</h2>
+            <p>O servidor respondeu com 4 ferramentas.</p>
+          </div>
+          <div class="corpo">
+            <p class="fraco pequeno">Endereço consultado: <code class="host">erp.clinicavitalis.com.br</code></p>
+            <ul class="ferramentas">
+              <li><code>consultar_paciente</code><span>Busca o cadastro do paciente pelo CPF ou telefone.</span></li>
+              <li><code>listar_procedimentos</code><span>Lista os procedimentos e os valores da tabela vigente.</span></li>
+              <li><code>consultar_orcamento</code><span>Devolve o orçamento aberto de um paciente.</span></li>
+              <li><code>consultar_parcelas</code><span>Mostra as parcelas em aberto e as já pagas de um tratamento.</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

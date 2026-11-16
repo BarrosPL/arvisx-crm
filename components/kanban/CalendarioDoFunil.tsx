@@ -290,7 +290,7 @@ export function CalendarioDoFunil({ pipelineId, pipeline: funil, stages, leads }
           {cabecalho.map((rotulo, i) => (
             <div
               key={`${rotulo}-${i}`}
-              className="py-2 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+              className="py-2 text-center text-[11px] font-semibold text-muted-foreground"
             >
               {rotulo}
             </div>

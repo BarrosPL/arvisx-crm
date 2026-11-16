@@ -65,10 +65,10 @@ export function DoneClient({
       : t("Seu funcionário já está de pé. O que ficou para depois continua te esperando.");
 
   return (
-    <div className="space-y-6 rounded-lg border bg-background p-6">
+    <div className="space-y-6 rounded-lg border border-border bg-surface p-6">
       <div className="space-y-1 text-center">
         <h2 className="text-2xl font-semibold tracking-tight">{titulo}</h2>
-        <p className="text-sm text-muted-foreground">{resumo}</p>
+        <p className="text-[13px] text-muted-foreground">{resumo}</p>
         {!iaNoPlano ? (
           <p className="text-xs text-muted-foreground" data-ia-fora-do-plano>
             <a href="/app/settings/billing" className="underline underline-offset-2">
@@ -78,14 +78,14 @@ export function DoneClient({
         ) : null}
       </div>
 
-      <ul className="mx-auto max-w-sm space-y-2 text-left text-sm">
+      <ul className="mx-auto max-w-sm space-y-2 text-left text-[13px]">
         {itens.map((it) => (
           <li key={it.segmento} className="flex items-center gap-2">
             <span
               aria-hidden
               className={
                 "inline-block h-2 w-2 rounded-full " +
-                (it.feito ? "bg-emerald-500" : "bg-muted-foreground/30")
+                (it.feito ? "bg-success" : "bg-border-strong")
               }
             />
             <span className={it.feito ? "" : "text-muted-foreground"}>
@@ -112,7 +112,7 @@ export function DoneClient({
       */}
       <section className="space-y-3 border-t pt-6">
         <div>
-          <h3 className="text-sm font-medium">{t("O que mais tem aqui")}</h3>
+          <h3 className="text-[13px] font-medium">{t("O que mais tem aqui")}</h3>
           <p className="text-xs text-muted-foreground">
             {t("Você não precisa mexer em nada disso agora. É só para saber que existe.")}
           </p>
@@ -132,7 +132,7 @@ export function DoneClient({
         <ul className="grid gap-2 sm:grid-cols-2">
           {pecas.map((p) => (
             <li key={p.href} className="rounded-md border p-3">
-              <a href={p.href} className="text-sm font-medium underline-offset-2 hover:underline">
+              <a href={p.href} className="text-[13px] font-medium underline-offset-2 hover:underline">
                 {t(p.comoChamar)}
               </a>
               <span className="ml-1 text-xs text-muted-foreground">({t(p.label)})</span>
@@ -147,7 +147,7 @@ export function DoneClient({
                     <li key={passo} className="flex gap-2 text-xs text-muted-foreground">
                       <span
                         aria-hidden
-                        className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[10px]"
+                        className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[11px]"
                       >
                         {i + 1}
                       </span>

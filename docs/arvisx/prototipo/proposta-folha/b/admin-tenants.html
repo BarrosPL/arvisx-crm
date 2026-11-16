@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tenants</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="110">
+<meta name="rota" content="/admin/tenants">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .tabela td.atalhos { text-align: right; white-space: nowrap; }
+  .tabela td.atalhos .btn.pausa { color: var(--apoio); }
+  .filtros select.filtro { appearance: auto; padding-right: 8px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/admin/tenants" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin da plataforma</div>
+          <h1>Tenants</h1>
+          <p><span class="mono">4</span> tenants</p>
+        </div>
+        <div class="acoes">
+          <a href="#" class="btn primario"><i class="ph-light ph-plus"></i>Novo tenant</a>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="filtros">
+        <div class="busca-linha"><i class="ph-light ph-magnifying-glass"></i><input type="search" placeholder="Buscar por nome, slug ou CNPJ..." aria-label="Buscar tenants"></div>
+        <select class="filtro" aria-label="Filtrar por status">
+          <option selected>Todos os status</option>
+          <option>Ativo</option>
+          <option>Onboarding</option>
+          <option>Suspenso</option>
+          <option>Redigido</option>
+        </select>
+      </div>
+
+      <div class="cartao">
+        <table class="tabela rolavel">
+          <thead>
+            <tr>
+              <th>Slug</th>
+              <th>Nome</th>
+              <th>CNPJ</th>
+              <th>Status</th>
+              <th class="num">Users</th>
+              <th class="num">Conversas</th>
+              <th>Criado em</th>
+              <th><span class="sr">Ações</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono">clinica-vitalis</td>
+              <td class="nome">Clínica Vitalis</td>
+              <td class="mono apoio">27.418.906/...</td>
+              <td><span class="tag ok">Ativo</span></td>
+              <td class="num">3</td>
+              <td class="num">1284</td>
+              <td class="mono apoio">14/08/26</td>
+              <td class="atalhos">
+                <a href="#" class="btn fantasma p icone" title="Acompanhar a saúde de Clínica Vitalis" aria-label="Acompanhar a saúde de Clínica Vitalis"><i class="ph-light ph-eye"></i></a>
+                <a href="#" class="btn fantasma p icone" title="Editar os dados de Clínica Vitalis" aria-label="Editar os dados de Clínica Vitalis"><i class="ph-light ph-pencil-simple"></i></a>
+                <button class="btn fantasma p icone pausa" title="Suspender Clínica Vitalis" aria-label="Suspender Clínica Vitalis"><i class="ph-light ph-pause"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td class="mono">sorriso-cia</td>
+              <td class="nome">Sorriso &amp; Cia</td>
+              <td class="mono apoio">41.207.553/...</td>
+              <td><span class="tag ok">Ativo</span></td>
+              <td class="num">5</td>
+              <td class="num">2317</td>
+              <td class="mono apoio">02/06/26</td>
+              <td class="atalhos">
+                <a href="#" class="btn fantasma p icone" title="Acompanhar a saúde de Sorriso &amp; Cia" aria-label="Acompanhar a saúde de Sorriso &amp; Cia"><i class="ph-light ph-eye"></i></a>
+                <a href="#" class="btn fantasma p icone" title="Editar os dados de Sorriso &amp; Cia" aria-label="Editar os dados de Sorriso &amp; Cia"><i class="ph-light ph-pencil-simple"></i></a>
+                <button class="btn fantasma p icone pausa" title="Suspender Sorriso &amp; Cia" aria-label="Suspender Sorriso &amp; Cia"><i class="ph-light ph-pause"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td class="mono">odonto-sul</td>
+              <td class="nome">Odonto Sul</td>
+              <td class="mono apoio">—</td>
+              <td><span class="tag sinal">Onboarding</span></td>
+              <td class="num">1</td>
+              <td class="num">0</td>
+              <td class="mono apoio">30/10/26</td>
+              <td class="atalhos">
+                <a href="#" class="btn fantasma p icone" title="Acompanhar a saúde de Odonto Sul" aria-label="Acompanhar a saúde de Odonto Sul"><i class="ph-light ph-eye"></i></a>
+                <a href="#" class="btn fantasma p icone" title="Editar os dados de Odonto Sul" aria-label="Editar os dados de Odonto Sul"><i class="ph-light ph-pencil-simple"></i></a>
+                <button class="btn fantasma p icone pausa" title="Suspender Odonto Sul" aria-label="Suspender Odonto Sul"><i class="ph-light ph-pause"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td class="mono">bella-pele</td>
+              <td class="nome">Bella Pele</td>
+              <td class="mono apoio">33.950.118/...</td>
+              <td><span class="tag aviso">Suspenso</span></td>
+              <td class="num">2</td>
+              <td class="num">486</td>
+              <td class="mono apoio">19/03/26</td>
+              <td class="atalhos">
+                <a href="#" class="btn fantasma p icone" title="Acompanhar a saúde de Bella Pele" aria-label="Acompanhar a saúde de Bella Pele"><i class="ph-light ph-eye"></i></a>
+                <a href="#" class="btn fantasma p icone" title="Editar os dados de Bella Pele" aria-label="Editar os dados de Bella Pele"><i class="ph-light ph-pencil-simple"></i></a>
+                <button class="btn fantasma p icone" title="Reativar Bella Pele" aria-label="Reativar Bella Pele"><i class="ph-light ph-play"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell-admin.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

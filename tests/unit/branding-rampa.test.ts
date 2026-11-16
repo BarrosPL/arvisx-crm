@@ -30,7 +30,8 @@ const CSS = fs.readFileSync(path.join(RAIZ, "app/globals.css"), "utf8");
  * mexesse na paleta do design system veria este teste verde contra a paleta de ontem, e
  * a catraca deixaria de calibrar contra a régua. Lendo do arquivo, mudar a paleta do
  * produto quebra este teste — que é exatamente o aviso que se quer (foi o que aconteceu
- * na troca da Sage `#506d48` pela navy ArvisX `#283a55`).
+ * na troca da Sage `#506d48` pela navy ArvisX `#283a55`, e de novo na troca da navy
+ * pela Petróleo `#0f3d45` do design Folha).
  */
 /**
  * O bloco `:root` sai por casamento de chaves, e não por `slice` entre duas
@@ -111,14 +112,14 @@ describe("rampaDeSemente — catraca de calibração contra o design system", ()
     // por não ter o que comparar — instrumento morto tem cara de teste verde.
     expect(esperados).toHaveLength(11);
     expect(new Set(esperados).size).toBe(11);
-    expect(esperados[K]).toBe("#283a55");
+    expect(esperados[K]).toBe("#0f3d45");
   });
 
-  it("reproduz os 11 stops ArvisX a partir de #283a55 com Δ ≤ 2/255 por canal", () => {
-    // A rampa do globals.css FOI gerada por `rampaDeSemente("#283a55")`, então hoje o
+  it("reproduz os 11 stops Petróleo a partir de #0f3d45 com Δ ≤ 2/255 por canal", () => {
+    // A rampa do globals.css FOI gerada por `rampaDeSemente("#0f3d45")`, então hoje o
     // Δ é 0; a tolerância de 2/255 continua para o dia em que a paleta for retocada à
     // mão (na Sage, que foi desenhada antes da função, era onde o Δ vivia).
-    const derivada = rampaDeSemente("#283a55");
+    const derivada = rampaDeSemente("#0f3d45");
     const distancias = esperados.map((esperado, i) => distanciaPorCanal(esperado, derivada[i]!));
     expect(
       Math.max(...distancias),

@@ -36,7 +36,7 @@ export function VersionFooter({
   const instalada = (
     <p
       className={cn(
-        "px-3 py-1 font-mono text-[10.5px] text-sidebar-muted",
+        "px-3 py-1 text-xs text-sidebar-muted",
         collapsed && "px-0 text-center",
       )}
       title={titulo}
@@ -55,7 +55,7 @@ export function VersionFooter({
         onClick={onNavigate}
         title={`${t("Nova versão")} ${novo} ${t("disponível")}`}
         className={cn(
-          "flex items-center gap-2 rounded-md px-3 py-2 text-xs text-foreground hover:bg-accent/50",
+          "flex items-center gap-2 rounded-md px-3 py-2 text-xs text-foreground hover:bg-sidebar-hover",
           collapsed && "justify-center px-2",
         )}
       >

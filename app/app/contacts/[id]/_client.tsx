@@ -79,7 +79,7 @@ function NivelDaOrigem({ rotulo, valor }: { rotulo: string; valor: string | null
   if (!valor) return null;
   return (
     <div>
-      <dt className="text-xs uppercase text-muted-foreground">{rotulo}</dt>
+      <dt className="text-xs text-muted-foreground">{rotulo}</dt>
       <dd className="mt-1 break-words">{valor}</dd>
     </div>
   );
@@ -117,7 +117,7 @@ function BlocoDeTelefones({ contato, t }: { contato: Contact; t: (texto: string)
   const extras = contato.additional_phones ?? [];
   return (
     <div className="md:col-span-2">
-      <dt className="text-xs uppercase text-muted-foreground">{t("Telefones")}</dt>
+      <dt className="text-xs text-muted-foreground">{t("Telefones")}</dt>
       <dd className="mt-1">
         <ul className="flex flex-col gap-2">
           {contato.phone_number && (
@@ -489,17 +489,17 @@ export function ContactDetailClient({ contactId, paineisDeModulo = [], acessosMc
           <Card className="p-4">
             <dl className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
               <div>
-                <dt className="text-xs uppercase text-muted-foreground">{t("Nome")}</dt>
+                <dt className="text-xs text-muted-foreground">{t("Nome")}</dt>
                 <dd className="mt-1">{contact.name ?? "—"}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase text-muted-foreground">{t("Nome")} · WhatsApp</dt>
+                <dt className="text-xs text-muted-foreground">{t("Nome")} · WhatsApp</dt>
                 <dd className="mt-1">{contact.display_name ?? "—"}</dd>
               </div>
               {contact.address_book_name && (
                 <div>
                   {/* Só a equipe vê: nenhuma mensagem usa este nome (PR #2439). */}
-                  <dt className="text-xs uppercase text-muted-foreground">{t("Nome na agenda do celular")}</dt>
+                  <dt className="text-xs text-muted-foreground">{t("Nome na agenda do celular")}</dt>
                   <dd className="mt-1">{contact.address_book_name}</dd>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {t("Só a equipe vê. Para usar em mensagens, copie para o nome.")}
@@ -507,7 +507,7 @@ export function ContactDetailClient({ contactId, paineisDeModulo = [], acessosMc
                 </div>
               )}
               <div>
-                <dt className="text-xs uppercase text-muted-foreground">Email</dt>
+                <dt className="text-xs text-muted-foreground">Email</dt>
                 <dd className="mt-1">{contact.email ?? "—"}</dd>
               </div>
               {/*
@@ -518,7 +518,7 @@ export function ContactDetailClient({ contactId, paineisDeModulo = [], acessosMc
                 <BlocoDeTelefones contato={contact} t={t} />
               ) : (
                 <div>
-                  <dt className="text-xs uppercase text-muted-foreground">{t("Telefone")}</dt>
+                  <dt className="text-xs text-muted-foreground">{t("Telefone")}</dt>
                   <dd className="mt-1">
                     {contact.phone_number ? phoneForDisplay(contact.phone_number) : "—"}
                     {contact.phone_number && textoDoTipoDoTelefone(contact.phone_type, t) && (
@@ -531,7 +531,7 @@ export function ContactDetailClient({ contactId, paineisDeModulo = [], acessosMc
               )}
               {linksDoContato.length > 0 && (
                 <div>
-                  <dt className="text-xs uppercase text-muted-foreground">{t("Links")}</dt>
+                  <dt className="text-xs text-muted-foreground">{t("Links")}</dt>
                   <dd className="mt-1">
                     <ListaDeLinks links={linksDoContato} />
                   </dd>
@@ -546,7 +546,7 @@ export function ContactDetailClient({ contactId, paineisDeModulo = [], acessosMc
                 aniversário de ontem para quem olha.
               */}
               <div>
-                <dt className="text-xs uppercase text-muted-foreground">
+                <dt className="text-xs text-muted-foreground">
                   {t("Data de nascimento")}
                 </dt>
                 <dd className="mt-1">
@@ -555,7 +555,7 @@ export function ContactDetailClient({ contactId, paineisDeModulo = [], acessosMc
               </div>
               {(contact.zip_code || contact.street || contact.city || contact.state) && (
                 <div className="sm:col-span-2">
-                  <dt className="text-xs uppercase text-muted-foreground">{t("Endereço")}</dt>
+                  <dt className="text-xs text-muted-foreground">{t("Endereço")}</dt>
                   <dd className="mt-1">
                     {[contact.street, contact.number, contact.complement, contact.district, contact.city, contact.state, contact.zip_code]
                       .filter(Boolean)
@@ -571,7 +571,7 @@ export function ContactDetailClient({ contactId, paineisDeModulo = [], acessosMc
                 anúncio — mesmo com o `utm_source` da campanha gravado ao lado.
               */}
               <div>
-                <dt className="text-xs uppercase text-muted-foreground">{t("Origem")}</dt>
+                <dt className="text-xs text-muted-foreground">{t("Origem")}</dt>
                 <dd className="mt-1">
                   {origem.origem === ORIGEM_AGENDA_DO_CELULAR ? t("Agenda do celular") : origem.origem}
                 </dd>
@@ -589,7 +589,7 @@ export function ContactDetailClient({ contactId, paineisDeModulo = [], acessosMc
               <NivelDaOrigem rotulo={t("Posicionamento")} valor={origem.posicionamento} />
               {origem.semPosicionamentoDeAnuncio && (
                 <div>
-                  <dt className="text-xs uppercase text-muted-foreground">
+                  <dt className="text-xs text-muted-foreground">
                     {t("Posicionamento")}
                   </dt>
                   <dd className="mt-1 text-sm text-muted-foreground">
@@ -598,7 +598,7 @@ export function ContactDetailClient({ contactId, paineisDeModulo = [], acessosMc
                 </div>
               )}
               <div>
-                <dt className="text-xs uppercase text-muted-foreground">{t("Última atividade")}</dt>
+                <dt className="text-xs text-muted-foreground">{t("Última atividade")}</dt>
                 <dd className="mt-1">
                   {contact.last_activity_at
                     ? format(new Date(contact.last_activity_at), "dd/MM/yyyy HH:mm", {
@@ -608,7 +608,7 @@ export function ContactDetailClient({ contactId, paineisDeModulo = [], acessosMc
                 </dd>
               </div>
               <div>
-                <dt className="text-xs uppercase text-muted-foreground">{t("Criado em")}</dt>
+                <dt className="text-xs text-muted-foreground">{t("Criado em")}</dt>
                 <dd className="mt-1">
                   {format(new Date(contact.created_at), "dd/MM/yyyy", { locale: localeDaData })}
                 </dd>
@@ -621,7 +621,7 @@ export function ContactDetailClient({ contactId, paineisDeModulo = [], acessosMc
               */}
               {clientesLigado && contact.first_service_at && (
                 <div>
-                  <dt className="text-xs uppercase text-muted-foreground">
+                  <dt className="text-xs text-muted-foreground">
                     {t("Cliente desde")}
                   </dt>
                   <dd className="mt-1">
@@ -632,7 +632,7 @@ export function ContactDetailClient({ contactId, paineisDeModulo = [], acessosMc
                 </div>
               )}
               <div>
-                <dt className="text-xs uppercase text-muted-foreground">Tags</dt>
+                <dt className="text-xs text-muted-foreground">Tags</dt>
                 <dd className="mt-1 flex flex-wrap gap-1">
                   {contact.tags.length === 0
                     ? "—"

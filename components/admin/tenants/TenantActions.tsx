@@ -46,7 +46,7 @@ export function TenantActions({ organization, counts }: TenantActionsProps) {
   return (
     <>
       <div className="rounded-lg border bg-card p-5 space-y-4">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+        <h2 className="text-sm font-semibold text-muted-foreground">
           {t("Ações")}
         </h2>
 

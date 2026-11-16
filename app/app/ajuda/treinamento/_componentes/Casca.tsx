@@ -82,7 +82,7 @@ export function CascaDoTreinamento({
           </div>
           {grupos.map((g) => (
             <div key={g.grupo} className="flex flex-col gap-1">
-              <h2 className="px-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <h2 className="px-2.5 text-xs font-semibold text-muted-foreground">
                 {g.grupo}
               </h2>
               <ul className="flex flex-col">
@@ -95,7 +95,7 @@ export function CascaDoTreinamento({
             </div>
           ))}
           <div className="flex flex-col gap-1">
-            <h2 className="px-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <h2 className="px-2.5 text-xs font-semibold text-muted-foreground">
               Histórias por nicho
             </h2>
             <ul className="flex flex-col">

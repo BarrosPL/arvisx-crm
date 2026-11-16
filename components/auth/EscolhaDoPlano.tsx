@@ -90,7 +90,7 @@ export function EscolhaDoPlano({
     >
       <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
         {cabecalho}
-        <p className="mt-6 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        <p className="mt-6 text-center text-xs font-medium text-muted-foreground">
           <span className="text-foreground">1 · {t("Plano")}</span>
           <span aria-hidden className="mx-2 inline-block h-px w-7 bg-border align-middle" />
           2 · {t("Seus dados")}
@@ -119,7 +119,7 @@ export function EscolhaDoPlano({
               }
             >
               {plano.recomendado ? (
-                <span className="absolute -top-3 left-4 rounded-full bg-[var(--color-cta)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-cta-fg)]">
+                <span className="absolute -top-3 left-4 rounded-full bg-[var(--color-cta)] px-2.5 py-1 text-[11px] font-semibold text-[var(--color-cta-fg)]">
                   {t("Recomendado")}
                 </span>
               ) : null}
@@ -188,7 +188,7 @@ export function EscolhaDoPlano({
               <div className="mt-3 overflow-x-auto rounded-md border bg-surface">
                 <table className="w-full min-w-[28rem] text-left text-sm">
                   <thead>
-                    <tr className="border-b bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
+                    <tr className="border-b bg-muted/40 text-xs text-muted-foreground">
                       <th className="px-3 py-2 font-medium" />
                       {planos.map((p) => (
                         <th key={p.id} className="px-3 py-2 font-medium">

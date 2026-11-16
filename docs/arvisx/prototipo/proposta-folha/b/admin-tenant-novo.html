@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nova organização</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="120">
+<meta name="rota" content="/admin/tenants/new">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .obrig { color: var(--erro); }
+  fieldset.editor { border: 1px solid var(--linha); border-radius: var(--r); padding: 16px; display: grid; gap: 12px; min-width: 0; }
+  fieldset.editor legend { padding: 0 4px; font-weight: 600; font-size: 13px; }
+  fieldset.editor > p { color: var(--apoio); font-size: 12px; }
+  fieldset.editor summary { cursor: pointer; font-weight: 600; font-size: 13px; }
+  .aviso-molde { border-radius: var(--r-sm); background: var(--painel-2); padding: 12px; color: var(--apoio); font-size: 13px; }
+  .botoes { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 8px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/admin/tenants" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin da plataforma · Tenants</div>
+          <h1>Nova organização</h1>
+          <p>Você terá acesso como administrador e poderá concluir a configuração inicial.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao">
+        <div class="cab"><h2>Dados da organização</h2></div>
+        <div class="corpo">
+          <form class="form">
+            <div class="campo">
+              <label for="display_name">Nome de exibição <span class="obrig">*</span></label>
+              <input type="text" id="display_name" placeholder="Loja da Maria">
+            </div>
+            <div class="campo">
+              <label for="slug">Slug <span class="obrig">*</span></label>
+              <input type="text" id="slug" class="mono" placeholder="tienda-de-maria">
+              <span class="ajuda">Apenas letras minúsculas, números e hífens. Gerado automaticamente.</span>
+            </div>
+            <div class="campo">
+              <label for="legal_name">Razão social</label>
+              <input type="text" id="legal_name" placeholder="Maria da Silva LTDA">
+            </div>
+            <div class="campo">
+              <label for="cnpj">CNPJ</label>
+              <input type="text" id="cnpj" class="mono" placeholder="00.000.000/0000-00" inputmode="numeric" maxlength="18">
+            </div>
+            <div class="campo">
+              <label for="plano_id">Plano de cobrança</label>
+              <select id="plano_id" aria-label="Plano de cobrança">
+                <option selected>Sem cobrança (isenta)</option>
+                <option>Essencial · R$ 197,00 por mês · 14 dias de teste</option>
+                <option>Profissional · R$ 397,00 por mês · 14 dias de teste</option>
+                <option>Profissional anual · R$ 3.970,00 por ano · 7 dias de teste</option>
+              </select>
+              <span class="ajuda">Com um plano, a empresa começa em teste grátis pelos dias do plano. Isenta, ela não paga e não tem limites.</span>
+            </div>
+            <div class="campo">
+              <label for="owner_email">E-mail do responsável <span class="obrig">*</span></label>
+              <input type="email" id="owner_email" placeholder="responsable@empresa.com">
+            </div>
+
+            <fieldset class="editor">
+              <legend>Interface</legend>
+              <p>Define quais áreas aparecem na navegação. As permissões continuam sendo determinadas pelo papel. Links de conversas e avisos podem abrir áreas autorizadas que estejam ocultas.</p>
+              <div class="campo">
+                <label for="perfil-interface">Perfil de interface</label>
+                <select id="perfil-interface"><option selected>Completa</option><option>Simplificada</option></select>
+                <span class="ajuda">Trocar o perfil restaura sua seleção padrão. Perfil, segurança e acesso à equipe de quem administra continuam disponíveis.</span>
+              </div>
+              <details>
+                <summary>Personalizar áreas visíveis</summary>
+              </details>
+            </fieldset>
+
+            <p class="aviso-molde">A IA desta empresa vai nascer copiada de Sorriso &amp; Cia, o molde escolhido em Recursos opcionais: o modelo de cada função e o modelo padrão, com a chave de IA desta instalação.</p>
+
+            <div class="botoes">
+              <button type="button" class="btn primario">Criar organização</button>
+              <button type="button" class="btn secundario">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell-admin.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

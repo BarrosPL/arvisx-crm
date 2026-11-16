@@ -63,14 +63,14 @@ export function PaletaDaAutomacao({ evento, temCondicoes, onAdd, variant = "desk
       )}
       data-testid="paleta-da-automacao"
     >
-      <h2 className="px-1 pb-1 text-xs font-medium uppercase tracking-wide text-text-muted">{t("Filtro")}</h2>
+      <h2 className="px-1 pb-1 text-xs font-medium text-text-muted">{t("Filtro")}</h2>
       {item(
         "condicoes",
         VISUAL_DAS_CONDICOES,
         t("Condições"),
         temCondicoes ? t("As condições ficam numa caixa só, e ela já está no desenho.") : null,
       )}
-      <h2 className="px-1 pb-1 pt-3 text-xs font-medium uppercase tracking-wide text-text-muted">{t("Ações")}</h2>
+      <h2 className="px-1 pb-1 pt-3 text-xs font-medium text-text-muted">{t("Ações")}</h2>
       {ACOES_DA_PALETA.filter((tipo) => acaoOferecida(tipo, modulosLigados)).map((tipo) =>
         item(
           tipo,

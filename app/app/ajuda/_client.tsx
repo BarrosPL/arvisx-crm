@@ -58,7 +58,7 @@ export function AjudaConteudo({
       <div className="grid gap-6 md:grid-cols-2">
         {blocos.map((bloco) => (
           <section key={bloco.titulo} className="flex flex-col gap-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <h2 className="text-sm font-semibold text-muted-foreground">
               {t(bloco.titulo)}
             </h2>
             <ul className="flex flex-col divide-y rounded-lg border">

@@ -70,19 +70,19 @@ export function JaEstaPronto({
   return (
     <section
       aria-labelledby="ja-pronto"
-      className="rounded-lg border bg-background p-5"
+      className="rounded-lg border border-border bg-surface p-5"
     >
-      <h3 id="ja-pronto" className="text-sm font-medium">
+      <h3 id="ja-pronto" className="text-[13px] font-medium">
         {t("Você já instalou o sistema. Isto aqui já está de pé:")}
       </h3>
-      <ul className="mt-3 space-y-1.5 text-sm">
+      <ul className="mt-3 space-y-1.5 text-[13px]">
         {itens.map((it) => (
           <li key={it.texto} className="flex items-start gap-2">
             <span
               aria-hidden
               className={
                 "mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full " +
-                (it.pronto ? "bg-emerald-500" : "bg-amber-500")
+                (it.pronto ? "bg-success" : "bg-warning")
               }
             />
             <span className={it.pronto ? "" : "text-muted-foreground"}>{it.texto}</span>

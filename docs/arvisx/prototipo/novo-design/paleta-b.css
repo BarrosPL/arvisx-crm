@@ -1,0 +1,30 @@
+/* Opção B — "Verde-garrafa e ouro": paleta nova. O ouro do logo continua; o
+   marinho dá lugar a um verde-garrafa profundo sobre uma tela sálvia clara.
+   Nenhum CRM de WhatsApp conhecido usa esse par, e ele conversa com o público
+   (assessorias, escritórios, clínicas): sóbrio, com cara de casa estabelecida. */
+:root {
+  --navy: #0f3b33;
+  --navy-2: #14483f;
+  --navy-3: #1b584d;
+  --navy-linha: #2a6a5e;
+
+  --ouro: #d4af37;
+  --ouro-claro: #f3da8c;
+  --ouro-escuro: #94761a;
+  --ouro-suave: #faf4dc;
+  --bronze: #a8742c;
+
+  --fundo: #e7ece4;
+  --painel: #ffffff;
+  --painel-2: #f1f4ee;
+  --painel-3: #e2e8de;
+  --linha: #e2e8dd;
+  --linha-forte: #c7d0c2;
+
+  --texto: #0c1f1b;
+  --apoio: #53635d;
+  --fraco: #84928b;
+
+  --ok: #1f8a5b;
+  --ok-suave: #e2f3ea;
+}

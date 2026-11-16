@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audit Entry</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="70">
+<meta name="rota" content="/admin/audit/[entryId]">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .cabecalho .titulo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .cabecalho h1.cod { font-family: var(--mono); font-stretch: 100%; font-size: 20px; letter-spacing: -.01em; overflow-wrap: anywhere; min-width: 0; }
+  pre.json { overflow: auto; padding: 16px; border-radius: var(--r-sm); border: 1px solid var(--linha); background: var(--painel-2); font: 400 12px/1.6 var(--mono); }
+  .kv { display: grid; gap: 8px; font-size: 13.5px; }
+  .kv > div { display: flex; gap: 8px; min-width: 0; }
+  .kv dt { width: 112px; flex: none; color: var(--apoio); }
+  .kv dd { flex: 1; min-width: 0; word-break: break-all; }
+  .kv dd.m { font-family: var(--mono); font-size: 12.5px; }
+  .kv dd.corta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .col { display: grid; gap: 16px; align-content: start; min-width: 0; }
+  .cartao.sem-sombra .corpo h2 { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+  h2.rot { font-size: 14px; font-weight: 700; }
+</style>
+</head>
+<body data-rota="/admin/audit">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <a href="#" class="volta"><i class="ph ph-caret-left"></i>Audit Log</a>
+      <div class="cabecalho">
+        <div style="min-width:0">
+          <div class="titulo"><h1 class="cod">platform_admin.impersonate_started</h1><span class="tag mono">clinica-vitalis</span><span class="tag aviso">Platform Admin</span></div>
+          <p><span class="mono">03/11/2026 13:44:26</span>&nbsp;·&nbsp;há 42 minutos</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="grade c2">
+        <div class="col">
+          <h2 class="rot">Metadata</h2>
+<pre class="json">{
+  "reason": "Suporte: cliente relatou falha no envio de mensagens",
+  "target_user_id": "2b1f8d34-5a6c-4e0b-9d71-c38a4f6e1b92",
+  "organization_slug": "clinica-vitalis",
+  "expires_in_minutes": 30
+}</pre>
+          <div class="cartao sem-sombra"><div class="corpo">
+            <dl class="kv">
+              <div><dt>Request ID</dt><dd class="m">req_01JBX4T7Q9M2K8ZP5H3VNE6RWD</dd></div>
+              <div><dt>Resource Type</dt><dd>organization</dd></div>
+              <div><dt>Resource ID</dt><dd class="m">3f2a9c1e-6b7d-4a58-8e21-5c0d9f4b7a13</dd></div>
+              <div><dt>Bypassed RLS</dt><dd>Sim</dd></div>
+              <div><dt>Actor IP</dt><dd class="m">189.44.112.37</dd></div>
+              <div><dt>User Agent</dt><dd class="corta" title="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36</dd></div>
+            </dl>
+          </div></div>
+        </div>
+
+        <div class="col">
+          <div class="cartao sem-sombra"><div class="corpo">
+            <h2>Actor</h2>
+            <dl class="kv">
+              <div><dt>User ID</dt><dd class="m">7c9e6679-7425-40de-944b-e07fc1f90ae7</dd></div>
+              <div><dt>Email</dt><dd>a****@clinicavitalis.com.br</dd></div>
+            </dl>
+          </div></div>
+
+          <div class="cartao sem-sombra"><div class="corpo">
+            <h2>Tenant</h2>
+            <dl class="kv">
+              <div><dt>Nome</dt><dd>Clínica Vitalis</dd></div>
+              <div><dt>Slug</dt><dd class="m">clinica-vitalis</dd></div>
+              <div><dt>Status</dt><dd>active</dd></div>
+            </dl>
+            <a href="#" class="btn secundario p" style="margin-top:12px">Ver tenant</a>
+          </div></div>
+
+          <div class="cartao sem-sombra"><div class="corpo">
+            <h2>Recurso</h2>
+            <p class="apoio" style="margin-bottom:12px;overflow-wrap:anywhere">organization&nbsp;·&nbsp;<span class="mono">3f2a9c1e-6b7d-4a58-8e21-5c0d9f4b7a13</span></p>
+            <a href="#" class="btn secundario p">Abrir recurso</a>
+          </div></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell-admin.js"></script>
+</body>
+</html>

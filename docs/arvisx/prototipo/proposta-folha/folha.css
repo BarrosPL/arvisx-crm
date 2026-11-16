@@ -1,0 +1,353 @@
+/* ==========================================================================
+   ARVISX CRM — proposta de design "Folha" (11/2026), com a varredura de UI.
+
+   Só a roupa muda. As telas são as MESMAS de ../telas (mesmo HTML, mesmo
+   conteúdo, mesma posição de cada coisa); `montar.mjs` copia cada uma, passa as
+   medidas pela régua (ver RÉGUA abaixo) e carrega esta folha por cima.
+   As cores vêm de paleta-a.css ou paleta-b.css.
+
+   A ideia:
+   - o menu fica solto sobre uma névoa clara; o trabalho acontece numa única
+     folha branca; dentro dela quem organiza é o fio fino e o espaço;
+   - a ação principal é a tinta escura; o ouro fica só onde há agente de IA.
+
+   RÉGUA (uma escala só, para tudo combinar):
+   - texto: 11 · 12 · 13 · 14 · 16 · 18 · 24 · 30 px; pesos 400 · 500 · 600;
+   - altura de controle: 30 (pequeno) · 36 (padrão) · 42 (grande); no celular
+     36 · 40 · 44, para o dedo;
+   - cantos: 4 · 6 · 8 · 12 px e a pílula;
+   - espaço: múltiplos de 4.
+   ========================================================================== */
+
+:root {
+  --sans: "Hanken Grotesk", "Segoe UI", Arial, sans-serif;
+  --mono: "Hanken Grotesk", "Segoe UI", Arial, sans-serif;
+  --display: "Newsreader", Georgia, serif;
+  --t-peso: 500;
+  --t-esp: -.01em;
+
+  --lateral: 244px;
+  --lateral-min: 64px;
+  --topo: 56px;
+  --vao: 8px;
+  --r-sm: 6px;
+  --r: 8px;
+  --r-lg: 12px;
+  --r-folha: 14px;
+  --pilula: 999px;
+
+  --h-p: 30px;
+  --h: 36px;
+  --h-g: 42px;
+
+  --tinta-suave: color-mix(in srgb, var(--navy) 5%, var(--painel));
+  --tinta-media: color-mix(in srgb, var(--navy) 10%, var(--painel));
+  --sombra: 0 1px 2px color-mix(in srgb, var(--navy) 5%, transparent);
+  --sombra-alta: 0 1px 2px color-mix(in srgb, var(--navy) 6%, transparent), 0 12px 28px -16px color-mix(in srgb, var(--navy) 24%, transparent);
+}
+
+body { font-size: 14px; letter-spacing: -.003em; font-variant-numeric: tabular-nums; }
+strong, b { font-weight: 600; }
+:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; border-radius: 6px; }
+.mono, .num { font-size: 1em; letter-spacing: 0; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--navy); }
+
+/* ------------------------------ casca ------------------------------------ */
+
+.lateral { background: transparent; color: var(--apoio); border-right: 0; }
+.lateral .marca { height: calc(var(--topo) + var(--vao)); padding: var(--vao) 18px 0; border-bottom: 0; }
+.lateral nav { padding: 8px 10px 0; scrollbar-color: var(--linha-forte) transparent; }
+.lateral .grupo { margin-bottom: 16px; }
+.lateral .grupo > button { padding: 6px 10px; color: var(--fraco); font: 500 12px/1 var(--sans); letter-spacing: 0; text-transform: none; }
+.lateral li a {
+  height: 32px; padding: 0 10px; border-radius: 8px;
+  color: color-mix(in srgb, var(--texto) 80%, var(--fundo)); font-weight: 500; font-size: 13px;
+  transition: background .14s, color .14s, box-shadow .14s;
+}
+.lateral li a i { color: var(--apoio); font-size: 18px; }
+.lateral li a:hover { background: color-mix(in srgb, var(--navy) 6%, transparent); color: var(--texto); }
+.lateral li a:hover i { color: var(--texto); }
+.lateral li a[aria-current="page"] { background: var(--painel); color: var(--texto); font-weight: 600; box-shadow: 0 0 0 1px var(--linha), var(--sombra); }
+.lateral li a[aria-current="page"] i { color: var(--texto); }
+.lateral li a[aria-current="page"]::before { display: none; }
+.lateral li a .cont { height: 18px; min-width: 18px; padding: 0 5px; border-radius: 6px; background: var(--sinal-suave); color: var(--sinal); font: 600 11px/18px var(--sans); }
+.lateral li a .cont.ouro { background: var(--ouro-suave); color: var(--ouro-escuro); }
+.lateral li a .ponto { width: 7px; height: 7px; box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 16%, transparent); }
+.lateral li a.hub { color: var(--fraco); font-size: 12px; }
+.lateral li a.hub i { color: var(--fraco); }
+.lateral .rodape { border-top: 0; padding: 8px 10px 12px; }
+.lateral .rodape a { height: 32px; border-radius: 8px; font-size: 13px; color: color-mix(in srgb, var(--texto) 80%, var(--fundo)); }
+.lateral .rodape a i { color: var(--apoio); }
+.lateral .rodape a:hover { background: color-mix(in srgb, var(--navy) 6%, transparent); color: var(--texto); }
+.lateral .rodape a[aria-current="page"] { background: var(--painel); color: var(--texto); box-shadow: 0 0 0 1px var(--linha), var(--sombra); }
+.lateral .rodape a[aria-current="page"] i { color: var(--texto); }
+.lateral .versao { color: var(--fraco); font: 400 12px/1 var(--sans); letter-spacing: 0; }
+.lateral .versao button { color: var(--fraco); width: 28px; height: 28px; border-radius: 6px; display: grid; place-items: center; }
+.lateral .versao button:hover { background: color-mix(in srgb, var(--navy) 6%, transparent); color: var(--texto); }
+.casca.recolhida .lateral .grupo { border-top-color: var(--linha-forte); }
+
+/* a folha: uma superfície só, recuada da borda da janela */
+.principal { margin: var(--vao) var(--vao) var(--vao) 0; background: var(--painel); border: 1px solid var(--linha); border-radius: var(--r-folha); }
+.topo {
+  top: var(--vao); height: var(--topo); padding: 0 20px 0 16px;
+  background: var(--painel); backdrop-filter: none; border-bottom: 1px solid var(--linha);
+  border-radius: calc(var(--r-folha) - 1px) calc(var(--r-folha) - 1px) 0 0;
+  box-shadow: 0 -1px 0 0 var(--linha), 0 -10px 0 0 var(--fundo);
+}
+/* os dois cantos de cima continuam redondos quando a página rola por baixo */
+.topo::before, .topo::after {
+  content: ""; position: absolute; top: -10px; width: 14px; height: 24px; pointer-events: none;
+  background:
+    linear-gradient(var(--fundo), var(--fundo)) top / 100% 9px no-repeat,
+    radial-gradient(circle at var(--cx) 100%, transparent 13.4px, var(--fundo) 14px) bottom / 100% 14px no-repeat;
+}
+.topo::before { left: -1px; --cx: 100%; }
+.topo::after { right: -1px; --cx: 0%; }
+
+.topo .org { padding: 5px 10px 5px 5px; border-radius: 8px; font-weight: 600; letter-spacing: -.01em; }
+.topo .org:hover { background: var(--painel-2); }
+.topo .org .sigla { width: 26px; height: 26px; border-radius: 6px; background: var(--navy); color: #fff; font: 600 11px/1 var(--sans); letter-spacing: .02em; }
+.topo .busca { max-width: 420px; height: var(--h); border-radius: 8px; background: var(--painel-2); border-color: transparent; font-size: 13px; }
+.topo .busca:hover { border-color: var(--linha-forte); }
+.topo .busca kbd { border: 0; background: var(--painel); border-radius: 4px; font: 500 11px/1 var(--sans); box-shadow: 0 0 0 1px var(--linha); }
+.topo .icone { width: var(--h); height: var(--h); border-radius: 8px; color: var(--apoio); }
+.topo .icone:hover { background: var(--painel-2); color: var(--texto); }
+.topo .icone.idioma { font: 600 12px/1 var(--sans); }
+.topo .icone .cont { top: 4px; right: 4px; font: 600 11px/16px var(--sans); box-shadow: 0 0 0 2px var(--painel); }
+.topo .usuario { border-radius: var(--pilula); }
+.topo .usuario:hover { background: var(--painel-2); }
+
+.avatar { background: var(--tinta-media); color: var(--navy); font: 600 11px/1 var(--sans); }
+.avatar.claro { background: var(--tinta-suave); color: var(--navy); }
+.avatar.ia { background: var(--navy); color: var(--ouro-claro); box-shadow: 0 0 0 2px var(--painel), 0 0 0 3px var(--ouro); }
+
+/* ------------------------------ conteúdo ---------------------------------- */
+
+.conteudo { padding: 28px 32px 56px; }
+.conteudo.cheia { padding: 0; min-height: calc(100vh - var(--topo) - 2 * var(--vao) - 2px); }
+
+.cabecalho { margin-bottom: 24px; align-items: center; }
+.cabecalho .eyebrow { color: var(--fraco); font: 500 12px/1 var(--sans); letter-spacing: 0; text-transform: none; margin-bottom: 10px; gap: 0; }
+.cabecalho .eyebrow::before { display: none; }
+.cabecalho h1 { font-family: var(--display); font-stretch: 100%; font-weight: var(--t-peso); font-size: 30px; letter-spacing: var(--t-esp); line-height: 1.1; color: var(--texto); }
+.cabecalho p { margin-top: 8px; font-size: 14px; }
+.fio { background: var(--linha); margin-bottom: 24px; }
+.fio::after { display: none; }
+h2.secao { font-family: var(--sans); font-stretch: 100%; font-weight: 600; font-size: 16px; letter-spacing: -.015em; }
+h2.secao small { font: 400 12px/1 var(--sans); letter-spacing: 0; }
+h3.sub { font-weight: 600; }
+.pequeno { font-size: 12px; }
+.rotulo { font: 500 12px/1 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fraco); }
+.migalha { font-size: 12px; }
+.migalha a:hover { text-decoration-color: var(--navy); }
+
+/* ------------------------------ botões ------------------------------------ */
+
+.btn { height: var(--h); padding: 0 14px; border-radius: 8px; font-weight: 600; font-size: 13px; transition: background .14s, border-color .14s, color .14s, box-shadow .14s, transform .06s; }
+.btn i { font-size: 16px; }
+.btn.primario, .btn.navy { background: var(--navy); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 1px 2px color-mix(in srgb, var(--navy) 30%, transparent); }
+.btn.primario:hover, .btn.navy:hover { background: var(--navy-3); }
+.btn.secundario { background: var(--painel); border-color: var(--linha-forte); box-shadow: var(--sombra); }
+.btn.secundario:hover { background: var(--painel-2); border-color: color-mix(in srgb, var(--navy) 28%, var(--linha-forte)); }
+.btn.fantasma:hover { background: var(--painel-2); }
+.btn.p { height: var(--h-p); padding: 0 10px; border-radius: 6px; font-size: 12px; }
+.btn.p i { font-size: 14px; }
+.btn.g { height: var(--h-g); padding: 0 18px; font-size: 14px; }
+/* botão pequeno ao lado de um campo ou botão padrão sobe para a mesma altura: a linha fica reta */
+.btn.p:is(:has(~ :is(select, .entrada, .busca-linha, .filtro, .btn:not(.p), input:not([type="checkbox"], [type="radio"]))), :is(select, .entrada, .busca-linha, .filtro, .btn:not(.p), input:not([type="checkbox"], [type="radio"])) ~ .btn.p) { height: var(--h); padding: 0 12px; border-radius: 8px; font-size: 13px; }
+.btn.icone { width: var(--h); padding: 0; }
+.btn.icone.p { width: var(--h-p); }
+.link:not(.cartao) { color: var(--texto); font-weight: 600; text-decoration-color: var(--linha-forte); text-decoration-thickness: 1px; }
+.link:not(.cartao):hover { color: var(--navy); text-decoration-color: var(--navy); }
+
+/* ------------------------------ cartões ----------------------------------- */
+
+.cartao { border: 1px solid var(--linha); border-radius: var(--r-lg); box-shadow: none; }
+.cartao.navy { border-color: var(--navy); }
+.cartao.ouro { border-color: color-mix(in srgb, var(--ouro) 38%, var(--painel)); }
+.cartao > .cab { padding: 14px 20px; }
+.cartao > .cab h2, .cartao > .cab h3 { font-size: 14px; font-weight: 600; letter-spacing: -.01em; }
+.cartao > .cab .apoio { font-size: 12px; }
+.cartao > .corpo { padding: 20px; }
+.cartao > .pe { padding: 12px 20px; }
+.cartao.link:hover { border-color: color-mix(in srgb, var(--navy) 30%, var(--linha-forte)); transform: none; box-shadow: var(--sombra); }
+.grade { gap: 16px; }
+
+.indicador { padding: 20px; }
+.indicador .valor { font-family: var(--sans); font-stretch: 100%; font-weight: 600; font-size: 30px; letter-spacing: -.035em; }
+.indicador .valor small { font: 500 13px/1 var(--sans); }
+.indicador .delta { font: 500 12px/1 var(--sans); margin-top: 12px; }
+
+/* ------------------------------ etiquetas --------------------------------- */
+
+.tag { height: 22px; padding: 0 8px; font: 500 12px/1 var(--sans); border-radius: 6px; }
+.tag.mono { font-family: var(--sans); font-size: 12px; letter-spacing: 0; }
+.tag.navy { color: #fff; }
+.tag.ok { color: color-mix(in srgb, var(--ok) 86%, #000); }
+.tag.aviso { color: color-mix(in srgb, var(--aviso) 80%, #000); }
+.tag.erro { color: color-mix(in srgb, var(--erro) 88%, #000); }
+.tag.sinal { color: color-mix(in srgb, var(--sinal) 88%, #000); }
+.ia-tag { font: 600 12px/1 var(--sans); letter-spacing: 0; text-transform: none; }
+.ia-tag::before { width: 9px; height: 9px; border-width: 1.5px; }
+
+/* ------------------------------ formulários ------------------------------- */
+
+.campo label { font-weight: 500; font-size: 13px; }
+.campo .ajuda, .campo .erro-txt { font-size: 12px; }
+.entrada, .campo input[type="text"], .campo input[type="email"], .campo input[type="password"], .campo input[type="number"], .campo input[type="tel"], .campo input[type="url"], .campo select, .campo textarea,
+.conteudo :is(select, input[type="text"], input[type="search"], input[type="email"], input[type="number"], input[type="tel"], input[type="url"], input[type="date"], input[type="datetime-local"], input[type="time"], input:not([type])):not(.busca-linha *, .compositor *, .sem-caixa) {
+  height: var(--h); padding: 0 12px; border-radius: 8px; font-size: 13px;
+  background-color: var(--painel); border: 1px solid var(--linha-forte); color: var(--texto); box-shadow: var(--sombra);
+  transition: border-color .12s, box-shadow .12s;
+}
+.campo textarea { height: auto; padding: 10px 12px; }
+.entrada:focus, .campo input:focus, .campo select:focus, .campo textarea:focus,
+.conteudo :is(select, input):not(.busca-linha *, .compositor *, [type="checkbox"], [type="radio"], [type="file"], [type="color"], [type="range"]):focus { outline: 0; border-color: var(--navy); box-shadow: 0 0 0 3px var(--tinta-media); }
+.campo input.mono, .campo textarea.mono { font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+input[type="file"] { font-size: 13px; color: var(--apoio); }
+input[type="file"]::file-selector-button {
+  height: var(--h-p); margin-right: 10px; padding: 0 10px; border-radius: 6px; cursor: pointer;
+  font: 600 12px/1 var(--sans); color: var(--texto); background: var(--painel); border: 1px solid var(--linha-forte);
+}
+.caixa input { accent-color: var(--navy); }
+.chave { border-radius: var(--pilula); }
+.chave.ligada { background: var(--navy); }
+.linha-chave { padding: 16px 0; }
+.linha-chave strong { font-weight: 600; font-size: 13px; }
+.linha-chave .apoio { font-size: 12px; }
+.busca-linha { height: var(--h); border-radius: 8px; border-color: var(--linha-forte); box-shadow: var(--sombra); font-size: 13px; }
+.busca-linha:focus-within { border-color: var(--navy); box-shadow: 0 0 0 3px var(--tinta-media); }
+
+/* ------------------------------ abas / filtros ---------------------------- */
+
+.abas { margin-bottom: 24px; }
+.abas a, .abas button { font-weight: 500; font-size: 13px; padding: 10px 12px; }
+.abas [aria-selected="true"] { color: var(--texto); font-weight: 600; }
+.abas [aria-selected="true"]::after { height: 1.5px; background: var(--navy); border-radius: 0; }
+.abas .cont { font: 600 11px/1 var(--sans); border-radius: 4px; }
+.abas [aria-selected="true"] .cont { background: var(--tinta-media); color: var(--navy); }
+.segmento { border: 0; border-radius: 8px; background: var(--painel-2); padding: 3px; }
+.segmento button { height: 30px; padding: 0 12px; border-radius: 6px; font-weight: 500; font-size: 13px; }
+.segmento [aria-pressed="true"] { color: var(--texto); font-weight: 600; box-shadow: 0 0 0 1px var(--linha), var(--sombra); }
+.filtros { gap: 8px; margin-bottom: 16px; }
+.filtro { height: var(--h); padding: 0 10px 0 12px; border-radius: 8px; border-color: var(--linha-forte); font-weight: 500; font-size: 13px; box-shadow: var(--sombra); }
+.filtro.ativo { border-color: color-mix(in srgb, var(--navy) 35%, var(--painel)); background: var(--tinta-suave); }
+.chip { height: var(--h-p); border-radius: var(--pilula); border-color: var(--linha-forte); font-weight: 500; font-size: 12px; }
+.chip[aria-pressed="true"] { color: #fff; }
+
+/* ------------------------------ tabelas ----------------------------------- */
+
+/* o texto só para leitor de tela fica preso à célula; solto, ele alargava a página inteira */
+.tabela th, .tabela td { position: relative; }
+.tabela th { padding: 10px 16px; background: transparent; color: var(--fraco); font: 500 12px/1.2 var(--sans); letter-spacing: 0; text-transform: none; }
+.tabela td { padding: 12px 16px; font-size: 13px; }
+.tabela.compacta td { padding: 8px 16px; }
+.tabela tbody tr:hover td { background: var(--painel-2); }
+.tabela .nome { font-weight: 600; }
+.tabela .sub { font-size: 12px; }
+.lista > li { padding: 12px 20px; }
+.lista > li:hover { background: var(--painel-2); }
+.lista .texto strong { font-weight: 600; font-size: 13px; }
+.lista .texto span { font-size: 12px; }
+
+/* ------------------------------ vazio / avisos ---------------------------- */
+
+.vazio .elo { width: 44px; height: 44px; border: 1px solid var(--linha-forte); border-radius: 12px; color: var(--apoio); font-size: 20px; margin-bottom: 16px; }
+.vazio .elo::after { display: none; }
+.vazio h3 { font-family: var(--sans); font-stretch: 100%; font-weight: 600; font-size: 16px; letter-spacing: -.015em; }
+.aviso-faixa { border-color: transparent; border-radius: var(--r); padding: 12px 16px; font-size: 13px; }
+.aviso-faixa.aviso { color: color-mix(in srgb, var(--aviso) 62%, #000); }
+.barra { border-radius: var(--pilula); }
+.barra > span { background: var(--navy); border-radius: var(--pilula); }
+
+/* ------------------------------ kanban ------------------------------------ */
+
+.kanban { gap: 12px; }
+.coluna { background: var(--painel-2); border: 0; }
+.coluna .cab { padding: 12px 12px 8px; }
+.coluna .cab h3 { font-weight: 600; font-size: 13px; }
+.coluna .cab .cont, .coluna .cab .soma { font-family: var(--sans); font-size: 12px; }
+.coluna .cartoes { padding: 0 8px 8px; }
+.card-negocio { border: 1px solid var(--linha); box-shadow: var(--sombra); transition: border-color .14s, box-shadow .14s; }
+.card-negocio.esfriando, .card-negocio.parado { border-left: 1px solid var(--linha); }
+.card-negocio:hover { border-color: color-mix(in srgb, var(--navy) 30%, var(--linha-forte)); box-shadow: var(--sombra-alta); }
+.card-negocio .titulo { font-weight: 600; font-size: 13px; }
+.card-negocio .valor { font: 600 13px/1 var(--sans); }
+.card-negocio .tempo { font: 500 12px/1 var(--sans); }
+
+/* ------------------------------ inbox / conversa -------------------------- */
+
+.conversas { border-radius: calc(var(--r-folha) - 1px) 0 0 calc(var(--r-folha) - 1px); }
+.conversas .cab { border-bottom: 0; padding: 16px 16px 8px; }
+.conversas .cab h1 { font-family: var(--display); font-stretch: 100%; font-weight: var(--t-peso); font-size: 24px; letter-spacing: var(--t-esp); }
+.conv { margin: 0 8px 2px; padding: 12px; border-bottom: 0; border-radius: var(--r); transition: background .14s; }
+.conv:hover { background: var(--painel-2); }
+.conv[aria-current="true"] { background: var(--tinta-suave); box-shadow: none; }
+.conv .nome { font-weight: 600; font-size: 13px; }
+.conv .previa { font-size: 12px; }
+.conv .hora { font: 500 12px/1 var(--sans); }
+.conv .cont { border-radius: 6px; font: 600 11px/18px var(--sans); }
+.thread { background: var(--painel-2); }
+.thread .cab .nome { font-weight: 600; }
+.thread .dia { font: 500 12px/1 var(--sans); letter-spacing: 0; text-transform: none; }
+.balao { border-radius: 12px; box-shadow: none; padding: 8px 12px; font-size: 14px; }
+.balao .hora { font: 500 11px/1 var(--sans); }
+.balao.deles { border-color: var(--linha); border-bottom-left-radius: 4px; }
+.balao.nos { color: #fff; border-bottom-right-radius: 4px; }
+.balao.ia { border-color: color-mix(in srgb, var(--ouro) 55%, var(--painel)); border-bottom-right-radius: 4px; box-shadow: none; }
+.balao.ia .quem, .balao.nos .quem { font: 600 12px/1 var(--sans); letter-spacing: 0; text-transform: none; }
+.balao.sistema { border-style: solid; border-color: var(--linha); font-size: 12px; }
+.compositor { padding: 12px 20px 16px; }
+.compositor .caixa-msg { border-radius: 12px; box-shadow: var(--sombra); }
+.compositor .caixa-msg:focus-within { border-color: var(--navy); box-shadow: 0 0 0 3px var(--tinta-media); }
+.compositor .ferr button { border-radius: 6px; }
+.painel-contato { border-radius: 0 calc(var(--r-folha) - 1px) calc(var(--r-folha) - 1px) 0; }
+.painel-contato .bloco { padding: 16px 20px; }
+.painel-contato .bloco h3 { font: 500 12px/1 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fraco); }
+
+/* ------------------------------ timeline / passos ------------------------- */
+
+.timeline .quando { font: 500 12px/1 var(--sans); }
+.timeline .oque { font-size: 13px; }
+.timeline .oque strong { font-weight: 600; }
+.passos li { font-size: 12px; }
+.passos li .n { font: 600 11px/1 var(--sans); border-width: 1.5px; }
+.passos li.feito .n { background: var(--navy); border-color: var(--navy); color: #fff; }
+.passos li.atual .n { border-color: var(--navy); color: var(--navy); box-shadow: 0 0 0 3px var(--tinta-media); }
+
+/* ------------------------------ hubs (telas "Ver tudo em…") --------------- */
+
+.hub-secao h2 { font: 500 12px/1 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fraco); }
+.hub-card { padding: 16px; }
+.hub-card .ic { width: 36px; height: 36px; background: var(--painel-2); color: var(--texto); border-color: var(--linha); border-radius: 8px; }
+.hub-card h3 { font-weight: 600; font-size: 14px; }
+.hub-card p { font-size: 12px; }
+
+/* ------------------------------ celular ----------------------------------- */
+
+@media (max-width: 860px) {
+  :root { --h-p: 36px; --h: 40px; --h-g: 44px; }
+  .principal { margin: 0; border: 0; border-radius: 0; }
+  .topo { top: 0; padding: 0 12px; border-radius: 0; box-shadow: none; }
+  .topo::before, .topo::after { display: none; }
+  .topo .busca { background: transparent; width: 40px; height: 40px; }
+  .conteudo { padding: 20px 16px 104px; }
+  .conteudo.cheia { min-height: calc(100vh - var(--topo)); }
+  .cabecalho { align-items: flex-start; margin-bottom: 20px; }
+  .cabecalho h1 { font-size: 24px; }
+  .btn.p, .chip { font-size: 13px; padding: 0 12px; }
+  .segmento button { height: 34px; }
+  /* 16px no campo evita o zoom automático do iPhone ao tocar */
+  .entrada, .campo input, .campo select, .campo textarea, .busca-linha input, .conteudo :is(select, input):not([type="checkbox"], [type="radio"]) { font-size: 16px; }
+  .abas a, .abas button { padding: 12px; }
+  .conversas, .painel-contato { border-radius: 0; }
+  .barra-inferior { background: var(--painel); border-top: 1px solid var(--linha); }
+  .barra-inferior a { color: var(--fraco); font: 500 11px/1 var(--sans); min-height: 44px; justify-content: center; }
+  .barra-inferior a[aria-current="page"] { color: var(--texto); font-weight: 600; }
+  .acoes-fixas { background: color-mix(in srgb, var(--painel) 95%, transparent); }
+}
+
+/* ------------------------------ telas sem casca (onboarding, erro, legal) -- */
+
+/* o "CRM" dourado do logotipo escrito não se lia sobre fundo claro */
+.lockup.escuro b em { color: var(--ouro-escuro); }

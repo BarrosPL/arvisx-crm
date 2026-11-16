@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Usuários</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="160">
+<meta name="rota" content="/admin/users">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .filtros select.filtro { appearance: auto; padding-right: 8px; }
+  .tabela .tenant strong { display: block; font-size: 12px; }
+  .tabela .tenant span { font: 500 11px/1.3 var(--mono); color: var(--fraco); }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/admin/users" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin da plataforma</div>
+          <h1>Usuários</h1>
+          <p><span class="mono">8</span> usuários</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="filtros">
+        <div class="busca-linha"><i class="ph-light ph-magnifying-glass"></i><input type="search" placeholder="Buscar por email ou nome..." aria-label="Buscar usuários"></div>
+        <select class="filtro" aria-label="Filtrar por tenant">
+          <option selected>Todos os tenants</option>
+          <option>Clínica Vitalis</option>
+          <option>Sorriso &amp; Cia</option>
+          <option>Odonto Sul</option>
+          <option>Bella Pele</option>
+        </select>
+        <select class="filtro" aria-label="Filtrar por role">
+          <option selected>Todos os roles</option>
+          <option>Admin</option>
+          <option>Manager</option>
+          <option>Agente</option>
+          <option>Viewer</option>
+        </select>
+      </div>
+
+      <div class="cartao">
+        <table class="tabela rolavel">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Nome</th>
+              <th>Tenant</th>
+              <th>Role</th>
+              <th>Último acesso</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono">ana.souza@clinicavitalis.com.br</td>
+              <td class="nome">Ana Souza</td>
+              <td class="tenant"><strong>Clínica Vitalis</strong><span>clinica-vitalis</span></td>
+              <td><span class="tag erro">Admin</span></td>
+              <td class="apoio pequeno">há 12 minutos</td>
+              <td><span class="tag ok">Ativo</span></td>
+              <td><a href="#" class="link pequeno">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="mono">ana.souza@clinicavitalis.com.br</td>
+              <td class="nome">Ana Souza</td>
+              <td class="tenant"><strong>Odonto Sul</strong><span>odonto-sul</span></td>
+              <td><span class="tag erro">Admin</span></td>
+              <td class="apoio pequeno">há 12 minutos</td>
+              <td><span class="tag ok">Ativo</span></td>
+              <td><a href="#" class="link pequeno">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="mono">marcos.lima@clinicavitalis.com.br</td>
+              <td class="nome">Marcos Lima</td>
+              <td class="tenant"><strong>Clínica Vitalis</strong><span>clinica-vitalis</span></td>
+              <td><span class="tag aviso">Manager</span></td>
+              <td class="apoio pequeno">há cerca de 2 horas</td>
+              <td><span class="tag ok">Ativo</span></td>
+              <td><a href="#" class="link pequeno">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="mono">renata.borges@clinicavitalis.com.br</td>
+              <td class="nome">Renata Borges</td>
+              <td class="tenant"><strong>Clínica Vitalis</strong><span>clinica-vitalis</span></td>
+              <td><span class="tag sinal">Agente</span></td>
+              <td class="apoio pequeno">há 1 dia</td>
+              <td><span class="tag ok">Ativo</span></td>
+              <td><a href="#" class="link pequeno">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="mono">paula.reis@sorrisoecia.com.br</td>
+              <td class="nome">Paula Reis</td>
+              <td class="tenant"><strong>Sorriso &amp; Cia</strong><span>sorriso-cia</span></td>
+              <td><span class="tag erro">Admin</span></td>
+              <td class="apoio pequeno">há cerca de 5 horas</td>
+              <td><span class="tag ok">Ativo</span></td>
+              <td><a href="#" class="link pequeno">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="mono">recepcao@sorrisoecia.com.br</td>
+              <td class="nome"><span class="apoio">—</span></td>
+              <td class="tenant"><strong>Sorriso &amp; Cia</strong><span>sorriso-cia</span></td>
+              <td><span class="tag sinal">Agente</span></td>
+              <td class="apoio pequeno">há 3 dias</td>
+              <td><span class="tag ok">Ativo</span></td>
+              <td><a href="#" class="link pequeno">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="mono">diego.farias@odontosul.com.br</td>
+              <td class="nome">Diego Farias</td>
+              <td class="tenant"><strong>Odonto Sul</strong><span>odonto-sul</span></td>
+              <td><span class="tag">Viewer</span></td>
+              <td class="apoio pequeno">—</td>
+              <td><span class="tag ok">Ativo</span></td>
+              <td><a href="#" class="link pequeno">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="mono">juliana.prado@bellapele.com.br</td>
+              <td class="nome">Juliana Prado</td>
+              <td class="tenant"><strong>Bella Pele</strong><span>bella-pele</span></td>
+              <td><span class="tag aviso">Manager</span></td>
+              <td class="apoio pequeno">há 2 meses</td>
+              <td><span class="tag erro">Revogado</span></td>
+              <td><a href="#" class="link pequeno">Ver</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell-admin.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

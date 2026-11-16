@@ -260,7 +260,7 @@ export function ComparacaoDeFichas({ ids, principalId, onEscolherPrincipal }: Pr
         const igual = ehIgual(linha.celulas[0], linha.celulas[1]);
         return (
           <div key={linha.rotulo} className="contents">
-            <div className="pt-2 text-xs uppercase text-muted-foreground">
+            <div className="pt-2 text-xs text-muted-foreground">
               {linha.rotulo}
               {igual ? <span className="block normal-case">{t("igual nas duas")}</span> : null}
             </div>

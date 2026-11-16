@@ -87,7 +87,14 @@ export function AppShell({ sidebarCollapsed, podeAtender, children }: AppShellPr
         SEGUNDA medida da mesma coisa — a que discordava e deixava a barra por
         cima da lista.
       */}
-      <div className="flex min-h-[calc(100dvh-var(--faixas-de-cima,0px))] min-w-0 flex-1 flex-col">
+      {/*
+        Design "Folha": de `md` para cima esta coluna é a FOLHA — uma superfície
+        branca só, recuada 8px da janela, com fio fino e cantos de 14px. O menu
+        fica solto sobre a névoa (`bg-background`) ao lado. A classe `folha` e o
+        desconto `--folha-vao` moram no fim de `app/globals.css`; no celular a
+        folha ocupa a tela inteira, sem recuo.
+      */}
+      <div className="folha flex min-h-[calc(100dvh-var(--faixas-de-cima,0px)-var(--folha-vao,0px))] min-w-0 flex-1 flex-col bg-surface">
         <TopBar />
         {/*
           O RODAPÉ DESCONTA O QUE AS PEÇAS FIXAS OCUPAM (issue #1305).

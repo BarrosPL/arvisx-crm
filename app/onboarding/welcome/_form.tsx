@@ -51,7 +51,7 @@ export function WelcomeForm({
 
   return (
     <form
-      className="space-y-5 rounded-lg border bg-background p-6"
+      className="space-y-5 rounded-lg border border-border bg-surface p-6"
       action={(formData) => {
         if (!accepted) {
           toast.error(t("Aceite os termos para continuar."));
@@ -141,7 +141,7 @@ export function WelcomeForm({
         </p>
       </div>
 
-      <label className="flex items-start gap-2 text-sm">
+      <label className="flex items-start gap-2 text-[13px]">
         <input
           type="checkbox"
           checked={accepted}

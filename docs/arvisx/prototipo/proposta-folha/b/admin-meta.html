@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API Oficial (Meta)</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="220">
+<meta name="rota" content="/admin/meta">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .cartao .corpo > h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .cartao .corpo > p.desc { color: var(--apoio); font-size: 13px; margin-bottom: 14px; }
+  .cartao .corpo > h3 { font-size: 13px; font-weight: 600; }
+  .linha-botao { display: flex; gap: 8px; align-items: center; }
+  .linha-botao input { flex: 1; min-width: 0; }
+  .rodape-form { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .rodape-form.fim { justify-content: flex-end; }
+  .nota { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 12px; font-size: 12px; color: var(--apoio); }
+  .nota.ambar { background: var(--aviso-suave); border-color: #f3d7ac; color: #7d4d0d; }
+  .nota strong { color: var(--texto); }
+  .bloco-chave { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 14px 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .bloco-chave > div:first-child { flex: 1; min-width: 220px; display: grid; gap: 4px; }
+  .bloco-chave strong { font-size: 14px; }
+  .bloco-chave p { color: var(--apoio); font-size: 13px; }
+  .bloco-chave p b { color: var(--texto); font-weight: 600; }
+  .bloco-chave select { width: 200px; max-width: 100%; }
+
+  .enderecos { display: grid; gap: 10px; }
+  .enderecos .rot { font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/admin/meta" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin da plataforma</div>
+          <h1>API Oficial da Meta desta instalação</h1>
+          <p>É com estas duas informações que o sistema confere que cada mensagem recebida pelo número oficial veio mesmo da Meta. Elas valem para a instalação inteira — cada empresa conecta o próprio número depois, em Conexões.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <div class="cartao">
+          <div class="corpo form">
+            <div class="campo">
+              <label for="meta-app-secret">Chave secreta do aplicativo</label>
+              <input type="password" id="meta-app-secret" autocomplete="off" placeholder="••••••••  (já cadastrada)">
+              <span class="ajuda">Já existe uma chave cadastrada. Deixe em branco para mantê-la, ou digite uma nova para substituir.</span>
+            </div>
+            <div class="rodape-form">
+              <span class="fraco pequeno">Última alteração em <span class="mono">03/11/2026, 14:40</span>.</span>
+              <button class="btn primario" disabled>Salvar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="corpo form">
+            <div>
+              <h2 style="font-size: 16px;font-weight: 600;margin-bottom:4px">Token de verificação</h2>
+              <p class="apoio" style="font-size: 13px">Gerado em <span class="mono">03/11/2026, 14:40</span>.</p>
+            </div>
+            <p class="fraco pequeno">No painel da Meta, em WhatsApp › Configuração › Webhook, este token vai no campo “Verificar token”. O outro campo, “URL de callback”, é de cada número: ele aparece em Conexões › API Oficial (Meta), depois que o número é conectado. Abra Conexões em outra aba, para não perder o token desta página. <a href="#" class="link">Abrir Conexões em outra aba</a></p>
+            <div class="rodape-form fim">
+              <button class="btn secundario">Gerar novo token</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="corpo form">
+            <div>
+              <h2 style="font-size: 16px;font-weight: 600;margin-bottom:4px">Instagram e Facebook Messenger</h2>
+              <p class="apoio" style="font-size: 13px">O mesmo app conecta o Instagram e o Messenger das empresas desta instalação, sem parceiro. Falta só o App ID, que é público — a chave secreta e o token de verificação são os de cima.</p>
+            </div>
+            <div class="campo">
+              <label for="meta-app-id">App ID</label>
+              <div class="linha-botao">
+                <input type="text" id="meta-app-id" class="mono" inputmode="numeric" autocomplete="off" value="1284507392615483" placeholder="Só números">
+                <button class="btn secundario" disabled>Salvar</button>
+              </div>
+              <span class="ajuda">Fica no painel da Meta, em Configurações do app › Básico, ao lado da chave secreta.</span>
+            </div>
+            <div class="enderecos">
+              <p class="fraco pequeno">Cole estes endereços no painel da Meta. O passo a passo completo está no guia da instalação.</p>
+              <div class="campo">
+                <span class="rot">Webhook (produtos Messenger e Instagram) — URL de callback</span>
+                <div class="linha-botao"><input type="text" class="mono" readonly value="https://crm.arvisx.com.br/api/v1/webhooks/meta-social"><button class="btn secundario">Copiar</button></div>
+              </div>
+              <div class="campo">
+                <span class="rot">URI de redirecionamento do OAuth válido (Login do Facebook)</span>
+                <div class="linha-botao"><input type="text" class="mono" readonly value="https://crm.arvisx.com.br/auth/meta-social-return"><button class="btn secundario">Copiar</button></div>
+              </div>
+              <div class="campo">
+                <span class="rot">URL de callback de exclusão de dados</span>
+                <div class="linha-botao"><input type="text" class="mono" readonly value="https://crm.arvisx.com.br/api/v1/webhooks/meta-social/exclusao-de-dados"><button class="btn secundario">Copiar</button></div>
+              </div>
+              <div class="campo">
+                <span class="rot">URL da Política de Privacidade</span>
+                <div class="linha-botao"><input type="text" class="mono" readonly value="https://crm.arvisx.com.br/legal/privacy"><button class="btn secundario">Copiar</button></div>
+              </div>
+              <div class="campo">
+                <span class="rot">URL dos Termos de Serviço</span>
+                <div class="linha-botao"><input type="text" class="mono" readonly value="https://crm.arvisx.com.br/legal/terms"><button class="btn secundario">Copiar</button></div>
+              </div>
+              <div class="campo">
+                <span class="rot">Página de instruções de exclusão de dados</span>
+                <div class="linha-botao"><input type="text" class="mono" readonly value="https://crm.arvisx.com.br/exclusao-de-dados"><button class="btn secundario">Copiar</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell-admin.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

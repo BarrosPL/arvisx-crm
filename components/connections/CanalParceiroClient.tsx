@@ -89,7 +89,7 @@ function ParaColar({ rotulo, valor }: { rotulo: string; valor: string }) {
   const t = useT();
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+      <span className="text-xs font-medium text-muted-foreground">
         {rotulo}
       </span>
       <div className="flex items-center gap-2">

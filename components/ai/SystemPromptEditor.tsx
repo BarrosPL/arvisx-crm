@@ -54,7 +54,7 @@ export function SystemPromptEditor({ value, onChange, disabled }: Props) {
       </div>
 
       <aside className="space-y-2 rounded-md border bg-muted/30 p-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <p className="text-xs font-semibold text-muted-foreground">
           {t("Placeholders")}
         </p>
         <ul className="space-y-1.5">

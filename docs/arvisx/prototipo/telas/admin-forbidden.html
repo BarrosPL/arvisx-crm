@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acesso negado</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="100">
+<meta name="rota" content="/admin/forbidden">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .negado { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 32px 16px; }
+  .negado .cartao { width: 100%; max-width: 512px; padding: 32px; text-align: center; }
+  .negado h1 { font-family: var(--display); font-stretch: 112%; font-weight: 650; letter-spacing: -.03em; font-size: 24px; color: var(--navy); }
+  .negado p { color: var(--apoio); margin-top: 12px; }
+  .negado .acoes { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 24px; }
+</style>
+</head>
+<body data-rota="/admin/forbidden">
+<main class="negado">
+  <div class="cartao">
+    <h1>Acesso negado</h1>
+    <p>Esta área é restrita a administradores da plataforma com MFA ativo. Se você acredita que isso é um erro, contate o time de operações.</p>
+    <div class="acoes">
+      <a href="#" class="btn secundario">Início</a>
+      <a href="#" class="btn primario">Voltar para /app</a>
+    </div>
+  </div>
+</main>
+</body>
+</html>

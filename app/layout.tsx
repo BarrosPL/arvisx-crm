@@ -71,6 +71,19 @@ const archivo = localFont({
   variable: "--font-archivo",
 });
 
+// Design "Folha" (11/2026): o produto inteiro fala em Hanken Grotesk, texto e
+// título. Manrope e Archivo continuam carregadas porque a landing, a página de
+// agendamento e a fachada do login ainda as citam pela custom property.
+const hanken = localFont({
+  src: [
+    { path: "./fonts/hanken-grotesk-100-900-latin.woff2", style: "normal" },
+    { path: "./fonts/hanken-grotesk-100-900-latin-ext.woff2", style: "normal" },
+  ],
+  weight: "100 900",
+  display: "swap",
+  variable: "--font-hanken",
+});
+
 const plexMono = localFont({
   src: "./fonts/jetbrains-mono-100-800-latin.woff2",
   weight: "100 800",
@@ -390,7 +403,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       lang="pt-BR"
       data-theme="light"
       suppressHydrationWarning
-      className={`${atkinson.variable} ${manrope.variable} ${archivo.variable} ${plexMono.variable}`}
+      className={`${atkinson.variable} ${hanken.variable} ${manrope.variable} ${archivo.variable} ${plexMono.variable}`}
     >
       <head>
         {/* Primeiro de tudo: a cor da instalação, antes do CSS e do script de tema. */}

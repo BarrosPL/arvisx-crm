@@ -196,7 +196,7 @@ export function RevisaoDoDocumento({ leadId, podeDecidir, aoDecidir }: Props) {
         {(itens ?? []).map((p) => (
           <li key={p.id} data-proposta={p.campo} className="rounded-md border bg-background p-3">
             <div className="flex flex-wrap items-baseline gap-2">
-              <span className="text-xs uppercase tracking-wide text-text-muted">{p.rotulo}</span>
+              <span className="text-xs text-text-muted">{p.rotulo}</span>
               <span className="font-medium">{valorParaExibir(p.valor_proposto)}</span>
               {/* O valor atual fica à vista: sem ele, "confirmar" não diz o que
                   vai ser substituído. */}

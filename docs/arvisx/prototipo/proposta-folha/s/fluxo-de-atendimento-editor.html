@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor do fluxo de atendimento</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="820">
+<meta name="rota" content="/app/ai/atendimento/[id]">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+  .barra-pub { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 20px; background: var(--painel); border-bottom: 1px solid var(--linha); }
+  .barra-pub .esq { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+  .barra-pub h1 { font-family: var(--display); font-stretch: 108%; font-weight: 600; letter-spacing: -.02em; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .barra-pub .dir { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .construtor { display: grid; grid-template-columns: 224px minmax(0, 1fr) 384px; flex: 1; min-height: 0; }
+  .paleta { border-right: 1px solid var(--linha); background: var(--painel); padding: 14px 12px; overflow-y: auto; }
+  .paleta h2 { font: 600 11px/1 var(--mono); letter-spacing: 0; text-transform: none; color: var(--apoio); margin-bottom: 10px; }
+  .paleta button { display: flex; align-items: center; gap: 10px; width: 100%; height: 34px; padding: 0 8px; border-radius: var(--r-sm); font-weight: 600; font-size: 12px; color: var(--texto); border: 1px solid var(--linha); background: var(--painel-2); margin-bottom: 6px; }
+  .paleta button:hover { border-color: var(--linha-forte); }
+  .pt-no { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; flex: none; color: #fff; }
+  .pt-no.ouro { background: var(--ouro); color: var(--navy); }
+  .pt-no.sinal { background: var(--sinal); }
+  .pt-no.erro { background: var(--erro); }
+  .canvas { position: relative; background-color: var(--fundo); background-image: radial-gradient(var(--linha-forte) 1px, transparent 1px); background-size: 18px 18px; overflow: auto; padding: 32px 24px 80px; }
+  .trilha { display: flex; flex-direction: column; align-items: center; gap: 0; width: fit-content; max-width: 100%; margin: 0 auto; }
+  .trilha .liga { width: 2px; height: 34px; background: var(--linha-forte); position: relative; }
+  .trilha .liga::after { content: ""; position: absolute; left: -3px; bottom: 0; border: 4px solid transparent; border-top: 6px solid var(--linha-forte); }
+  .no { position: relative; width: 224px; max-width: 100%; background: var(--painel); border: 1px solid var(--linha); border-left-width: 1px; border-radius: var(--r); padding: 10px 12px; box-shadow: var(--sombra); display: flex; gap: 10px; align-items: flex-start; }
+  .no .txt { min-width: 0; flex: 1; }
+  .no .rotulo-no { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .no .sub { color: var(--apoio); font-size: 12px; line-height: 1.35; margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  
+  
+  
+  .no.sel { box-shadow: 0 0 0 2px var(--painel), 0 0 0 4px var(--navy), var(--sombra-alta); }
+  .controles { position: absolute; left: 16px; bottom: 16px; display: flex; flex-direction: column; background: var(--painel); border: 1px solid var(--linha); border-radius: var(--r-sm); box-shadow: var(--sombra); }
+  .controles button { width: 30px; height: 30px; display: grid; place-items: center; color: var(--apoio); border-bottom: 1px solid var(--linha); font-size: 14px; }
+  .controles button:last-child { border-bottom: 0; }
+  .add-no-cel { display: none; }
+  .painel-no { border-left: 1px solid var(--linha); background: var(--painel); overflow-y: auto; padding: 16px 18px 24px; min-width: 0; }
+  .painel-no h2 { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+  .painel-no .nota { color: var(--apoio); font-size: 12px; margin: 4px 0 16px; }
+  .painel-no .form { gap: 14px; }
+  .painel-no .fechar { display: none; }
+  .painel-no .bloco-etapas { border-top: 1px solid var(--linha); padding-top: 14px; display: grid; gap: 8px; }
+  .painel-no .bloco-etapas .tit { font-weight: 600; font-size: 13px; }
+  .painel-no .bloco-etapas .funil { font-weight: 600; font-size: 12px; margin-top: 4px; }
+  .painel-no .bloco-etapas .caixa { font-size: 13px; }
+  .painel-no .linha-chave { padding: 0; border: 0; justify-content: flex-start; gap: 10px; }
+  .painel-no .rodape-no { border-top: 1px solid var(--linha); padding-top: 14px; }
+  @media (max-width: 1100px) {
+    .construtor { grid-template-columns: minmax(0, 1fr) 340px; }
+    .paleta { display: none; }
+    .add-no-cel { display: inline-flex; position: absolute; left: 16px; bottom: 16px; }
+    .controles { left: auto; right: 16px; }
+  }
+  @media (max-width: 860px) {
+    .construtor { grid-template-columns: minmax(0, 1fr); }
+    .canvas { padding: 24px 16px 72px; }
+    .painel-no { border-left: 0; border-top: 1px solid var(--linha); position: relative; }
+    .painel-no .fechar { display: inline-flex; position: absolute; top: 10px; right: 10px; }
+    .barra-pub { padding: 10px 12px; }
+    .barra-pub .dir .btn { flex: 1; }
+  }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/app/ai" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo cheia">
+      <!-- Barra de publicação (no roteiro de atendimento não há gatilho de relógio nem política de handoff) -->
+      <div class="barra-pub">
+        <div class="esq">
+          <h1>Agendamento de consulta</h1>
+          <button class="btn fantasma p icone" aria-label="Renomear fluxo"><i class="ph-light ph-pencil-simple"></i></button>
+          <span class="tag ok">Ativo</span>
+        </div>
+        <div class="dir">
+          <button class="btn secundario p" disabled>Salvar</button>
+          <button class="btn primario p"><i class="ph-light ph-rocket-launch"></i>Publicar</button>
+          <button class="btn secundario p">Desativar</button>
+          <button class="btn secundario p">Rollback</button>
+          <button class="btn secundario p"><i class="ph-light ph-tree-structure"></i>Organizar</button>
+          <button class="btn perigo p"><i class="ph-light ph-trash"></i>Excluir nó</button>
+        </div>
+      </div>
+
+      <div class="construtor">
+        <!-- Paleta: só as caixas do roteiro de atendimento -->
+        <aside class="paleta">
+          <h2>Adicionar nó</h2>
+          <button><span class="pt-no ouro"><i class="ph-light ph-play"></i></span>Gatilho</button>
+          <button><span class="pt-no sinal"><i class="ph-light ph-question"></i></span>Pergunta</button>
+          <button><span class="pt-no ouro"><i class="ph-light ph-puzzle-piece"></i></span>Skill</button>
+          <button><span class="pt-no erro"><i class="ph-light ph-flag"></i></span>Fim</button>
+        </aside>
+
+        <!-- Canvas -->
+        <div class="canvas">
+          <div class="trilha">
+            <div class="no ouro sel"><span class="pt-no ouro"><i class="ph-light ph-play"></i></span><div class="txt"><div class="rotulo-no">Início do fluxo</div><div class="sub">Início do fluxo</div></div></div>
+            <div class="liga"></div>
+            <div class="no sinal"><span class="pt-no sinal"><i class="ph-light ph-question"></i></span><div class="txt"><div class="rotulo-no">Nome do paciente</div><div class="sub">Nome completo · obrigatória</div></div></div>
+            <div class="liga"></div>
+            <div class="no sinal"><span class="pt-no sinal"><i class="ph-light ph-question"></i></span><div class="txt"><div class="rotulo-no">Procedimento</div><div class="sub">Procedimento desejado · obrigatória</div></div></div>
+            <div class="liga"></div>
+            <div class="no sinal"><span class="pt-no sinal"><i class="ph-light ph-question"></i></span><div class="txt"><div class="rotulo-no">Convênio</div><div class="sub">Convênio · opcional</div></div></div>
+            <div class="liga"></div>
+            <div class="no ouro"><span class="pt-no ouro"><i class="ph-light ph-puzzle-piece"></i></span><div class="txt"><div class="rotulo-no">Puxar skill</div><div class="sub">agendar-consulta</div></div></div>
+            <div class="liga"></div>
+            <div class="no erro"><span class="pt-no erro"><i class="ph-light ph-flag"></i></span><div class="txt"><div class="rotulo-no">Fim do fluxo</div><div class="sub">Convertido</div></div></div>
+          </div>
+          <button class="btn navy p add-no-cel"><i class="ph-light ph-plus"></i>Adicionar nó</button>
+          <div class="controles"><button aria-label="Aproximar"><i class="ph-light ph-plus"></i></button><button aria-label="Afastar"><i class="ph-light ph-minus"></i></button><button aria-label="Ajustar à tela"><i class="ph-light ph-arrows-out"></i></button><button aria-label="Travar"><i class="ph-light ph-lock"></i></button></div>
+        </div>
+
+        <!-- Painel do nó: o Início do roteiro -->
+        <aside class="painel-no">
+          <button class="btn fantasma p icone fechar" aria-label="Fechar"><i class="ph-light ph-x"></i></button>
+          <h2><span class="pt-no ouro"><i class="ph-light ph-play"></i></span>Gatilho</h2>
+          <p class="nota">Alterações aplicam no rascunho ao digitar — salve na barra de publicação.</p>
+          <div class="form">
+            <div class="campo"><label>Rótulo</label><input type="text" value="Início do fluxo" maxlength="60"></div>
+
+            <p class="apoio" style="border-top:1px solid var(--linha);padding-top:14px">O roteiro começa quando a mensagem do cliente tem uma palavra-gatilho, quando um roteador de intenção o aponta ou quando o card do cliente entra numa etapa escolhida abaixo — uma vez por entrada na etapa, e não enquanto ele fica lá.</p>
+            <div class="campo"><label>Palavras-gatilho (separe por vírgula)</label><input type="text" value="agendar, marcar consulta, horário, avaliação"></div>
+
+            <div class="bloco-etapas">
+              <p class="tit">Começar quando o card entrar na etapa</p>
+              <p class="fraco pequeno">Marque as etapas do funil em que este roteiro deve começar sozinho. Vale do próximo turno da conversa daquele cliente em diante — não é instantâneo. Os cards que já estão na etapa quando você a marca também começam, na próxima mensagem do cliente.</p>
+              <p class="funil">CRM Vivo — Clínica</p>
+              <label class="caixa"><input type="checkbox" checked>Primeiro contato · CRM Vivo — Clínica</label>
+              <label class="caixa"><input type="checkbox">Avaliação · CRM Vivo — Clínica</label>
+              <label class="caixa"><input type="checkbox">Proposta enviada · CRM Vivo — Clínica</label>
+              <label class="caixa"><input type="checkbox">Negociação · CRM Vivo — Clínica</label>
+            </div>
+
+            <div class="campo"><label>Máximo de tentativas por pergunta</label><input type="number" value="3" min="1" max="10" class="mono"><span class="ajuda">Depois de tantas vezes sem resposta, a pergunta é encerrada como não respondida e deixa de ser feita.</span></div>
+            <div class="campo"><label>Encerrar o roteiro depois de quantas horas sem resposta</label><input type="number" placeholder="72" min="1" max="720" class="mono"><span class="ajuda">Em branco, o roteiro encerra depois de 72 horas sem resposta.</span></div>
+
+            <div>
+              <div class="linha-chave"><span class="chave ligada" role="switch" aria-checked="true"></span><strong>Pode recomeçar para quem já concluiu</strong></div>
+              <p class="fraco pequeno" style="margin-top:6px">Desligado, o cliente que já respondeu tudo não recebe as mesmas perguntas de novo, mesmo repetindo a palavra-gatilho. Ligue para roteiros que se repetem, como agendamento.</p>
+            </div>
+
+            <div class="rodape-no"><button class="btn secundario bloco" style="color:var(--erro)"><i class="ph-light ph-trash"></i>Excluir nó</button></div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

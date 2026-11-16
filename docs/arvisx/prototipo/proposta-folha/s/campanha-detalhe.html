@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Campanha</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="930">
+<meta name="rota" content="/app/campaigns/[id]">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+.bloco { display: grid; gap: 16px; }
+  .titulo-linha { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .nota { color: var(--apoio); font-size: 12px; line-height: 1.5; }
+  .progresso-cab { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+  .progresso-cab h2 { font-size: 14px; font-weight: 600; }
+  .linha-texto { font-size: 13px; }
+  .balões { display: flex; align-items: flex-start; gap: 12px; }
+  .msg { white-space: pre-wrap; font-size: 13px; line-height: 1.55; }
+  .cab select { height: 34px; padding: 0 10px; border-radius: var(--r-sm); background: var(--painel); border: 1px solid var(--linha-forte); font-size: 13px; max-width: 100%; }
+  .dest { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 18px; border-bottom: 1px solid var(--linha); font-size: 13px; }
+  .dest .quem { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dest .estado { flex: none; color: var(--apoio); text-align: right; }
+  @media (max-width: 860px) { .dest .estado { flex: 0 1 auto; max-width: 55%; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/app/campaigns" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+<a href="#" class="volta"><i class="ph-light ph-arrow-bend-up-left"></i>Campanhas</a>
+      <div class="cabecalho">
+        <div style="min-width:0">
+          <div class="eyebrow">CRM · Campanhas</div>
+          <div class="titulo-linha"><h1>Reativação de clientes parados</h1><span class="tag ok"><i class="ph-light ph-paper-plane-tilt"></i>Enviando</span></div>
+        </div>
+        <div class="acoes">
+          <button class="btn primario">Pausar</button>
+          <button class="btn secundario">Cancelar campanha</button>
+          <button class="btn navy">Duplicar</button>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="bloco">
+        <div class="grade c4">
+          <div class="cartao indicador"><div class="rotulo">Na lista</div><div class="valor">142</div></div>
+          <div class="cartao indicador"><div class="rotulo">Enviadas</div><div class="valor">96</div></div>
+          <div class="cartao indicador"><div class="rotulo">Entregues</div><div class="valor">91</div></div>
+          <div class="cartao indicador"><div class="rotulo">Responderam</div><div class="valor">17</div></div>
+        </div>
+
+        <div class="cartao"><div class="corpo">
+          <div class="progresso-cab"><h2>Progresso</h2><span class="apoio mono">68%</span></div>
+          <div class="barra g" role="progressbar" aria-valuenow="68" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso do envio"><span style="width:68%"></span></div>
+          <p class="nota" style="margin-top:10px"><span class="mono">46</span> ainda não enviadas · <span class="mono">3</span> falharam · <span class="mono">1</span> pediram para parar</p>
+        </div></div>
+
+        <div class="cartao">
+          <div class="cab"><h2>Quem responder</h2></div>
+          <div class="corpo" style="display:grid;gap:6px">
+            <p class="linha-texto">Vira card no funil: <strong>CRM Vivo — Clínica</strong></p>
+            <p class="linha-texto">Quem atende a resposta: <strong>Lia — AgendaPlus</strong></p>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="cab"><h2>Números desta campanha</h2></div>
+          <div class="corpo" style="display:grid;gap:8px">
+            <p class="nota">A cada envio, a campanha usa o número com mais folga no teto do dia — e o número que a pessoa já conhece, quando ela já conversou com algum deles.</p>
+            <ul class="linha-texto">
+              <li>• Recepção — <span class="mono">+55 11 98800-1010</span></li>
+              <li>• Comercial — <span class="mono">+55 11 97700-2020</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="cab"><h2>Ritmo desta campanha</h2></div>
+          <div class="corpo form">
+            <p class="nota">Em branco, vale o ritmo do número (Conexões › Proteção de envio). O que você puser aqui só pode deixar mais devagar.</p>
+            <p class="nota">Número por QR envia uma mensagem por minuto: é a proteção contra banimento. O envio rápido é do número oficial.</p>
+            <div class="form c2">
+              <div class="campo"><label for="r-intervalo">Intervalo mínimo entre mensagens (segundos)</label><input id="r-intervalo" type="number" class="mono"></div>
+              <div class="campo"><label for="r-dia">Máximo por dia</label><input id="r-dia" type="number" class="mono" value="150"></div>
+              <div class="campo"><label for="r-hora">Máximo por hora</label><input id="r-hora" type="number" class="mono"></div>
+              <div></div>
+              <div class="campo"><label for="r-inicio">Enviar só a partir das (hora)</label><input id="r-inicio" type="number" class="mono" value="9"></div>
+              <div class="campo"><label for="r-fim">Parar de enviar às (hora)</label><input id="r-fim" type="number" class="mono" value="18"></div>
+            </div>
+            <div class="balões">
+              <span class="chave" role="switch" aria-checked="false"></span>
+              <div><strong style="font-size: 13px">Dividir a mensagem em balões, um por parágrafo</strong><p class="nota">Até 3 balões por pessoa; o que passar disso vai junto no último. Cada balão conta no limite diário do número.</p></div>
+            </div>
+            <div><button class="btn secundario p">Salvar ritmo</button></div>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="cab"><h2>Mensagem</h2></div>
+          <div class="corpo" style="display:grid;gap:10px">
+            <p class="msg">{{saudacao}}, {{primeiro_nome|"tudo bem"}}! Faz um tempo que não nos falamos por aqui. A Clínica Vitalis está com agenda aberta para a revisão semestral — quer que eu veja um horário para você?</p>
+            <p class="nota">Base legal: consentimento</p>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="cab"><h2>Quem está na lista</h2>
+            <select aria-label="Filtrar destinatários"><option selected>Todos</option><option>Ainda não enviadas</option><option>Enviadas</option><option>Entregues</option><option>Lidas</option><option>Responderam</option><option>Fora da lista</option><option>Falharam</option></select>
+          </div>
+          <div>
+            <div class="dest"><span class="quem">Helena Marques</span><span class="estado">Respondeu</span></div>
+            <div class="dest"><span class="quem">Caio Ribeiro</span><span class="estado">Respondeu</span></div>
+            <div class="dest"><span class="quem">Patrícia Nunes</span><span class="estado">Lida</span></div>
+            <div class="dest"><span class="quem">Sônia Vasconcelos</span><span class="estado">Lida</span></div>
+            <div class="dest"><span class="quem">Rogério Paiva</span><span class="estado">Entregue</span></div>
+            <div class="dest"><span class="quem">Marina Costa</span><span class="estado">Entregue</span></div>
+            <div class="dest"><span class="quem">Bruno Tavares</span><span class="estado">Enviada</span></div>
+            <div class="dest"><span class="quem">Família Andrade</span><span class="estado">Falhou</span></div>
+            <div class="dest"><span class="quem"><span class="mono">+55 11 94412-7730</span></span><span class="estado">Na fila</span></div>
+            <div class="dest"><span class="quem"><span class="mono">+55 11 93308-5521</span></span><span class="estado">Na fila</span></div>
+            <div class="dest"><span class="quem">Grupo Odonto Sul</span><span class="estado">Pediu para não receber mensagens</span></div>
+            <div class="dest"><span class="quem">Carlos — Clínica Vida Odonto</span><span class="estado">Mesmo telefone de outro contato da lista</span></div>
+            <div style="padding:12px 18px"><button class="btn secundario p">Carregar mais</button></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

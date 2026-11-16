@@ -134,8 +134,8 @@ function Escolha({
     <label
       data-testid={`forma-${valor}`}
       data-marcada={marcada ? "sim" : "nao"}
-      className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
-        marcada ? "border-primary bg-primary/5" : "border-border hover:bg-muted/40"
+      className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors ${
+        marcada ? "border-cta bg-cta-leve" : "border-border hover:bg-muted/40"
       }`}
     >
       <input
@@ -144,11 +144,11 @@ function Escolha({
         value={valor}
         checked={marcada}
         onChange={() => onEscolher(valor)}
-        className="mt-1 h-4 w-4 shrink-0 accent-primary"
+        className="mt-1 h-4 w-4 shrink-0 accent-cta"
         aria-label={titulo}
       />
       <span className="space-y-1">
-        <span className="block text-sm font-medium">{titulo}</span>
+        <span className="block text-[13px] font-medium">{titulo}</span>
         <span className="block text-xs text-muted-foreground">{corpo}</span>
       </span>
     </label>
@@ -360,7 +360,7 @@ export function ConnectWhatsappClient({
     return (
       <div className="space-y-4 rounded-lg border bg-background p-6">
         <fieldset className="space-y-3">
-          <legend className="text-sm font-medium">{t("Como você já usa esse número?")}</legend>
+          <legend className="text-[13px] font-medium">{t("Como você já usa esse número?")}</legend>
           <p className="text-xs text-muted-foreground">
             {t(
               "Existe mais de um jeito de ter WhatsApp para empresa, e cada um conecta de um jeito. Se você nunca ouviu falar do outro, é o primeiro.",
@@ -399,7 +399,7 @@ export function ConnectWhatsappClient({
         <VoltarParaEscolha onVoltar={() => setForma(null)} />
 
         {forma === "oficial" && !oficialPodeReceber && (
-          <div className="rounded-md border border-amber-300/60 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/40 dark:text-amber-100">
+          <div className="rounded-md border border-warning/30 bg-warning-bg p-4 text-[13px] text-warning-fg">
             <p className="font-medium">
               {t("Este servidor ainda não está pronto para RECEBER por este caminho.")}
             </p>
@@ -425,7 +425,7 @@ export function ConnectWhatsappClient({
     <div className="space-y-4 rounded-lg border bg-background p-6">
       <VoltarParaEscolha onVoltar={() => setForma(null)} />
       {!wahaConfigured && (
-        <div className="rounded-md border border-amber-300/60 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/40 dark:text-amber-100">
+        <div className="rounded-md border border-warning/30 bg-warning-bg p-4 text-[13px] text-warning-fg">
           <p className="font-medium">{t("O WhatsApp desta instalação ainda não subiu.")}</p>
           <p className="mt-1">
             {t("Ele roda no seu próprio servidor. Dá para seguir sem ele agora e conectar o número depois, em")}{" "}
@@ -450,7 +450,7 @@ export function ConnectWhatsappClient({
             em "INIT", sem código, sem erro e sem próximo passo. A pessoa olha
             uma palavra que não significa nada e não sabe se espera ou desiste.
           */}
-          <p className="text-sm font-medium">{rotuloDoEstado(busy ? "STARTING" : status, t)}</p>
+          <p className="text-[13px] font-medium">{rotuloDoEstado(busy ? "STARTING" : status, t)}</p>
           <p className="mt-1 text-xs text-muted-foreground">{explicacaoDoEstado(busy ? "STARTING" : status, t)}</p>
 
           {/*
@@ -492,14 +492,14 @@ export function ConnectWhatsappClient({
           )}
 
           {status === "WORKING" && (
-            <p className="mt-3 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+            <p className="mt-3 text-[13px] font-medium text-success">
               ✓ {t("Conectado! Avançando…")}
             </p>
           )}
 
           {status === "FAILED" && (
             <div className="mt-3 space-y-2">
-              <p className="text-sm text-destructive">
+              <p className="text-[13px] text-destructive">
                 {t("O código expirou antes de alguém escanear. É normal — ele vale só alguns minutos.")}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -514,7 +514,7 @@ export function ConnectWhatsappClient({
 
           {(status === "ERROR" || status === "NOT_STARTED" || status === "STOPPED") && (
             <div className="mt-3 space-y-2">
-              <p className="text-sm">
+              <p className="text-[13px]">
                 {t(
                   "O serviço de WhatsApp desta instalação não respondeu. Ele roda no seu servidor, junto com o resto do sistema — quem instalou consegue religá-lo.",
                 )}

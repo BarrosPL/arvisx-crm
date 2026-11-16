@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Detalhe da importação</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="980">
+<meta name="rota" content="/app/imports/[id]">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+.tabela td { white-space: nowrap; }
+  .tabela td.num { text-align: left; font-family: var(--mono); font-size: 12.5px; }
+  .tabela td.id { font-family: var(--mono); font-size: 12px; }
+  .tabela td.erro-col { font-size: 12px; max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
+  .so-conflitos { margin-bottom: 16px; font-size: 13.5px; }
+</style>
+</head>
+<body data-rota="/app/imports">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+<a href="#" class="volta"><i class="ph ph-arrow-left"></i>Importações</a>
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM · Importações</div>
+          <h1>empresas-feira-marco.xlsx</h1>
+          <p>completed · <span class="mono">104</span> certas · <span class="mono">11</span> conflitos · <span class="mono">5</span> falhas</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <label class="caixa so-conflitos"><input type="checkbox"><span>Só conflitos</span></label>
+
+      <div class="cartao">
+        <table class="tabela rolavel">
+          <thead><tr><th>#</th><th>Status</th><th>Erro</th><th>Company</th><th>Person</th><th>Contact</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td>success</td><td class="erro-col">—</td><td class="id">3a7f10c2</td><td class="id">91be44d0</td><td class="id">c5d2e8a1</td></tr>
+            <tr><td class="num">2</td><td>success</td><td class="erro-col">—</td><td class="id">7d02b9e4</td><td class="id">0f6a3c18</td><td class="id">48e1b7f3</td></tr>
+            <tr><td class="num">3</td><td>conflict</td><td class="erro-col">Telefone já vinculado a outra pessoa.</td><td class="id">b84c6e21</td><td class="id">5c9d0a72</td><td class="id">—</td></tr>
+            <tr><td class="num">4</td><td>success</td><td class="erro-col">—</td><td class="id">e19a4f07</td><td class="id">a3b7c5d9</td><td class="id">2e6f8b14</td></tr>
+            <tr><td class="num">5</td><td>failed</td><td class="erro-col">Telefone inválido.</td><td class="id">—</td><td class="id">—</td><td class="id">—</td></tr>
+            <tr><td class="num">6</td><td>success</td><td class="erro-col">—</td><td class="id">6c3e9d58</td><td class="id">d47a1f06</td><td class="id">9b0c2e75</td></tr>
+            <tr><td class="num">7</td><td>success</td><td class="erro-col">—</td><td class="id">3a7f10c2</td><td class="id">72e5b8a3</td><td class="id">f1d4c6a9</td></tr>
+            <tr><td class="num">8</td><td>conflict</td><td class="erro-col">Telefone já cadastrado (outro envio chegou antes).</td><td class="id">14f8a2c6</td><td class="id">be60d391</td><td class="id">—</td></tr>
+            <tr><td class="num">9</td><td>failed</td><td class="erro-col">Linha vazia — sem empresa, pessoa ou telefone.</td><td class="id">—</td><td class="id">—</td><td class="id">—</td></tr>
+            <tr><td class="num">10</td><td>success</td><td class="erro-col">—</td><td class="id">9e2b7c40</td><td class="id">—</td><td class="id">—</td></tr>
+            <tr><td class="num">11</td><td>success</td><td class="erro-col">—</td><td class="id">c07d5a13</td><td class="id">38f9e2b6</td><td class="id">a6c1d0e7</td></tr>
+            <tr><td class="num">12</td><td>conflict</td><td class="erro-col">Telefone já vinculado a outra pessoa.</td><td class="id">5b1e8f92</td><td class="id">e2a4c7d0</td><td class="id">—</td></tr>
+            <tr><td class="num">13</td><td>failed</td><td class="erro-col">Telefone obrigatório para criar contact.</td><td class="id">d6a09b3e</td><td class="id">—</td><td class="id">—</td></tr>
+            <tr><td class="num">14</td><td>success</td><td class="erro-col">—</td><td class="id">81c4e7f5</td><td class="id">4d7b0a29</td><td class="id">0c8e3f6b</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

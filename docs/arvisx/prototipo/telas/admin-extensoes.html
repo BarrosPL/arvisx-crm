@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Extensões</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="290">
+<meta name="rota" content="/admin/extensoes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .cartao .corpo > h2 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .cartao .corpo > p.desc { color: var(--apoio); font-size: 13px; margin-bottom: 14px; }
+  .cartao .corpo > h3 { font-size: 13.5px; font-weight: 700; }
+  .linha-botao { display: flex; gap: 8px; align-items: center; }
+  .linha-botao input { flex: 1; min-width: 0; }
+  .rodape-form { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .rodape-form.fim { justify-content: flex-end; }
+  .nota { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 12px; font-size: 12.5px; color: var(--apoio); }
+  .nota.ambar { background: var(--aviso-suave); border-color: #f3d7ac; color: #7d4d0d; }
+  .nota strong { color: var(--texto); }
+  .bloco-chave { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 14px 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .bloco-chave > div:first-child { flex: 1; min-width: 220px; display: grid; gap: 4px; }
+  .bloco-chave strong { font-size: 14px; }
+  .bloco-chave p { color: var(--apoio); font-size: 13px; }
+  .bloco-chave p b { color: var(--texto); font-weight: 600; }
+  .bloco-chave select { width: 200px; max-width: 100%; }
+
+  .itens { display: grid; gap: 12px; margin-top: 12px; font-size: 13.5px; }
+  .itens strong { font-weight: 600; overflow-wrap: anywhere; }
+  .itens strong small { font-weight: 400; font-size: inherit; color: var(--apoio); }
+  .itens p { font-size: 12px; color: var(--apoio); }
+</style>
+</head>
+<body data-rota="/admin/extensoes">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin da plataforma</div>
+          <h1>Extensões da instalação</h1>
+          <p>O que este servidor conhece, de onde veio e quem está usando. Instalar e configurar continua sendo feito dentro de cada empresa.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <div class="cartao">
+          <div class="corpo">
+            <h2>De onde vêm as extensões</h2>
+            <p class="apoio" style="font-size:13.5px">O catálogo admitido neste servidor. É a origem que o instalador aceita.</p>
+            <div class="itens">
+              <div><strong>https://extensoes.arvisx.com.br/catalogo.json</strong><p>Revisão <span class="mono">3</span> · admitido em <span class="mono">28 de out. de 2026</span> · impressão digital <span class="mono">9c4e1f7a02bd</span></p></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Instaladas neste servidor</h2>
+            <p class="apoio" style="font-size:13.5px">Cada extensão é instalada uma vez no servidor e ligada por empresa.</p>
+            <div class="itens">
+              <div><strong>deskcomm/retorno-de-paciente <small>v<span class="mono">1.0.0</span></small></strong><p>2 de 3 empresa(s) com ela ligada · instalada em <span class="mono">03 de nov. de 2026</span></p></div>
+              <div><strong>deskcomm/primeira-semana <small>v<span class="mono">1.0.0</span></small></strong><p>0 de 1 empresa(s) com ela ligada · instalada em <span class="mono">30 de out. de 2026</span></p></div>
+              <div><strong>deskcomm/carrinho-abandonado <small>v<span class="mono">1.0.0</span></small></strong><p>Nenhuma empresa usa esta extensão · instalada em <span class="mono">28 de out. de 2026</span></p></div>
+            </div>
+          </div>
+        </div>
+
+        <p class="apoio" style="font-size:13.5px">Para instalar ou configurar uma extensão, entre na empresa: <a href="#" class="link">Extensões da empresa →</a></p>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell-admin.js"></script>
+</body>
+</html>

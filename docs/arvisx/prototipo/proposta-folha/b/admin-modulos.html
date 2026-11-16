@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Módulos</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="300">
+<meta name="rota" content="/admin/modulos">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .cartao .corpo > h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .cartao .corpo > p.desc { color: var(--apoio); font-size: 13px; margin-bottom: 14px; }
+  .cartao .corpo > h3 { font-size: 13px; font-weight: 600; }
+  .linha-botao { display: flex; gap: 8px; align-items: center; }
+  .linha-botao input { flex: 1; min-width: 0; }
+  .rodape-form { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .rodape-form.fim { justify-content: flex-end; }
+  .nota { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 12px; font-size: 12px; color: var(--apoio); }
+  .nota.ambar { background: var(--aviso-suave); border-color: #f3d7ac; color: #7d4d0d; }
+  .nota strong { color: var(--texto); }
+  .bloco-chave { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 14px 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .bloco-chave > div:first-child { flex: 1; min-width: 220px; display: grid; gap: 4px; }
+  .bloco-chave strong { font-size: 14px; }
+  .bloco-chave p { color: var(--apoio); font-size: 13px; }
+  .bloco-chave p b { color: var(--texto); font-weight: 600; }
+  .bloco-chave select { width: 200px; max-width: 100%; }
+
+  .modulo { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .modulo h3 { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .modulo p { margin-top: 4px; color: var(--apoio); font-size: 13px; max-width: 62ch; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/admin/modulos" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin da plataforma</div>
+          <h1>Módulos da instalação</h1>
+          <p>Módulos opcionais com tabela própria, criados quando você instala — quem não instala não carrega as tabelas dele. Instalar aqui vale para todas as organizações desta instalação.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <div class="cartao">
+          <div class="corpo modulo">
+            <div>
+              <h3>Honorários (advocacia)</h3>
+              <p>Contrato de honorários (fixo, êxito ou misto) e o calendário de parcelas, ligado ao caixa do núcleo. Para escritórios de advocacia que cobram por caso.</p>
+            </div>
+            <button class="btn primario p">Instalar</button>
+          </div>
+        </div>
+        <div class="cartao">
+          <div class="corpo modulo">
+            <div>
+              <h3>Comandas <span class="tag ok">Instalado</span></h3>
+              <p>A comanda do atendimento: itens, forma de pagamento, comissões e fidelidade. O caixa continua no sistema mesmo sem este módulo. Toda instalação anterior a esta versão continua com Comandas ligada.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell-admin.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

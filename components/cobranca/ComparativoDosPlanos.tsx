@@ -104,7 +104,7 @@ export function ComparativoDosPlanos(p: PropsDoComparativo) {
               </p>
               {plano.como_funciona && (
                 <div data-como-funciona className="rounded-md border border-cta/40 bg-cta-leve p-3">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-cta-forte">{t("Como funciona")}</p>
+                  <p className="mb-1 text-xs font-semibold text-cta-forte">{t("Como funciona")}</p>
                   <p>{plano.como_funciona}</p>
                 </div>
               )}

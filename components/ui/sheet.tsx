@@ -56,7 +56,7 @@ SheetOverlay.displayName = SheetPrimitive.Overlay.displayName;
  * 120/200/320/420ms — e 500ms numa gaveta é o que a lei chama de "parece
  * travado".
  */
-const sheetVariants = cva("ds-gaveta fixed z-50 gap-4 bg-background p-6 shadow-lg", {
+const sheetVariants = cva("ds-gaveta fixed z-50 gap-4 bg-surface p-6 shadow-xl", {
   variants: {
     side: {
       top: "inset-x-0 top-0 border-b",

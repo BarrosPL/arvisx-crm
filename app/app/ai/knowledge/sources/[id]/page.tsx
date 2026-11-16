@@ -80,13 +80,13 @@ export default async function MaterialPage({ params }: { params: Promise<{ id: s
                 key={`${i + 1}-${item.question}`}
                 className="rounded-lg border border-border bg-surface p-4"
               >
-                <p className="text-xs font-medium tracking-wide text-text-muted uppercase">
+                <p className="text-xs font-medium text-text-muted">
                   {t("Pergunta")}
                 </p>
                 <p className="mt-1 font-medium" data-testid={`material-pergunta-${i}`}>
                   {item.question}
                 </p>
-                <p className="mt-3 text-xs font-medium tracking-wide text-text-muted uppercase">
+                <p className="mt-3 text-xs font-medium text-text-muted">
                   {t("Resposta")}
                 </p>
                 <p

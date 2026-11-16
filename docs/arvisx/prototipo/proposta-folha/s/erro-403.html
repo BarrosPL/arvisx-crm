@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>403 — Sem permissão</title>
+<meta name="grupo" content="Entrada">
+<meta name="ordem" content="440">
+<meta name="rota" content="/403">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+  main.centro { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 32px 16px; }
+  .centro .cartao { width: 100%; max-width: 448px; }
+  .centro .cartao > .corpo { padding: 32px; }
+  .centro .meio { text-align: center; }
+  .centro h1 { font-family: var(--display); font-stretch: 112%; font-weight: 600; letter-spacing: -.03em; font-size: 24px; line-height: 1.15; color: var(--navy); }
+  .centro h1.menor { font-size: 18px; }
+  .centro .texto-c { color: var(--apoio); margin-top: 8px; }
+  .centro .acoes-c { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 24px; }
+  .centro .simbolo { width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 18px; background: var(--painel); border: 1px solid var(--linha); display: grid; place-items: center; box-shadow: var(--sombra); }
+  .centro .simbolo img { height: 36px; width: auto; }
+  .centro .fio { width: 96px; margin: 16px auto; }
+  .centro .pilha { display: flex; flex-direction: column; align-items: stretch; gap: 12px; margin-top: 16px; }
+  .centro .sub-link { text-align: center; text-decoration: underline; text-underline-offset: 4px; }
+  @media (max-width: 860px) { .centro .cartao > .corpo { padding: 24px 20px; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/403" data-raiz="../..">
+<main class="centro">
+  <div class="cartao"><div class="corpo meio">
+    <h1>403 — Sem permissão</h1>
+    <p class="texto-c">Você não tem acesso a essa área.</p>
+    <div class="acoes-c">
+      <a href="#" class="btn secundario">Voltar</a>
+      <a href="#" class="btn primario">Voltar pra Inbox</a>
+    </div>
+  </div></div>
+</main>
+<script src="../folha.js"></script>
+</body>
+</html>

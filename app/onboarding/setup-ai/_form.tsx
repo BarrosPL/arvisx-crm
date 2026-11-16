@@ -133,14 +133,14 @@ export function SetupAiForm({ capacidades, conferencias }: Props) {
         </div>
 
         <fieldset className="space-y-2">
-          <legend className="text-sm font-medium">{t("O jeito dele falar")}</legend>
+          <legend className="text-[13px] font-medium">{t("O jeito dele falar")}</legend>
           <div className="grid gap-2">
             {JEITOS.map((j) => (
               <label
                 key={j.id}
                 className={cn(
                   "flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors",
-                  jeito === j.id ? "border-primary bg-primary/5" : "hover:bg-muted/40",
+                  jeito === j.id ? "border-cta bg-cta-leve" : "hover:bg-muted/40",
                 )}
               >
                 <input
@@ -152,7 +152,7 @@ export function SetupAiForm({ capacidades, conferencias }: Props) {
                   className="mt-1"
                 />
                 <span>
-                  <span className="block text-sm font-medium">{t(j.titulo)}</span>
+                  <span className="block text-[13px] font-medium">{t(j.titulo)}</span>
                   <span className="block text-xs text-muted-foreground">{t(j.desc)}</span>
                 </span>
               </label>
@@ -191,7 +191,7 @@ export function SetupAiForm({ capacidades, conferencias }: Props) {
       */}
       <div className="grid gap-3 sm:grid-cols-2">
         <section className="rounded-lg border bg-background p-4">
-          <h3 className="text-sm font-medium">{t("Ele já vem sabendo")}</h3>
+          <h3 className="text-[13px] font-medium">{t("Ele já vem sabendo")}</h3>
           <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
             {capacidades.map((c) => (
               <li key={c}>· {c}</li>
@@ -199,7 +199,7 @@ export function SetupAiForm({ capacidades, conferencias }: Props) {
           </ul>
         </section>
         <section className="rounded-lg border bg-background p-4">
-          <h3 className="text-sm font-medium">{t("E nunca vai fazer")}</h3>
+          <h3 className="text-[13px] font-medium">{t("E nunca vai fazer")}</h3>
           <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
             {conferencias.map((c) => (
               <li key={c}>· {c}</li>
@@ -214,9 +214,9 @@ export function SetupAiForm({ capacidades, conferencias }: Props) {
       {regrasNaoSalvas && (
         <div
           role="alert"
-          className="space-y-2 rounded-md border border-amber-300/60 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-950/20"
+          className="space-y-2 rounded-md border border-warning/30 bg-warning-bg p-4"
         >
-          <p className="text-sm font-medium">
+          <p className="text-[13px] font-medium">
             {t("O atendente foi criado, mas as")} <strong>{t("regras da casa")}</strong>{" "}
             {t("não foram gravadas. Copie o que você escreveu antes de sair — e salve de novo em")}{" "}
             <strong>{t("IA › Memória")}</strong>.
@@ -230,9 +230,9 @@ export function SetupAiForm({ capacidades, conferencias }: Props) {
       {causa === "chave" && (
         <div
           role="alert"
-          className="space-y-3 rounded-md border border-amber-300/60 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-950/20"
+          className="space-y-3 rounded-md border border-warning/30 bg-warning-bg p-4"
         >
-          <p className="text-sm font-medium">
+          <p className="text-[13px] font-medium">
             {t("Seu atendente foi criado, mas ficou como")} <strong>{t("rascunho")}</strong>{" "}
             {t("— ele ainda não tem com o que pensar.")}
           </p>
@@ -240,12 +240,12 @@ export function SetupAiForm({ capacidades, conferencias }: Props) {
             // A chave EXISTE, está gravada, e o que falta é o provedor confirmar.
             // Dizer "não achei chave" aqui é falso — e manda a pessoa colar de
             // novo o que ela acabou de colar (#1007).
-            <p className="text-sm">
+            <p className="text-[13px]">
               {t("A chave que você colou ainda não foi confirmada pelo provedor.")}{" "}
               {t("Assim que ela for confirmada, publique de novo — não precisa colar outra.")}
             </p>
           ) : (
-            <p className="text-sm">
+            <p className="text-[13px]">
               {t("Não achei chave")} {provedorLegivel(provedor, t)}{" "}
               {t("nem cadastrada aqui, nem vinda da instalação. Cole a chave no campo acima («o cérebro dele») e crie o atendente de novo — ou cadastre em")}{" "}
               <strong>{t("IA › Credenciais")}</strong>.
@@ -277,9 +277,9 @@ export function SetupAiForm({ capacidades, conferencias }: Props) {
       {causa === "modelo" && (
         <div
           role="alert"
-          className="space-y-3 rounded-md border border-amber-300/60 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-950/20"
+          className="space-y-3 rounded-md border border-warning/30 bg-warning-bg p-4"
         >
-          <p className="text-sm font-medium">
+          <p className="text-[13px] font-medium">
             {t("Seu atendente foi criado, mas ficou como")} <strong>{t("rascunho")}</strong>{" "}
             {t("— e rascunho não responde mensagem.")}
           </p>
@@ -290,7 +290,7 @@ export function SetupAiForm({ capacidades, conferencias }: Props) {
             apareceu percorrendo o wizard num ambiente com 400 modelos baixados.
           */}
           {motivoDoModelo === "nenhum_com_ferramentas" ? (
-            <p className="text-sm">
+            <p className="text-[13px]">
               {t("Os modelos")} {provedorLegivel(provedor, t)}{" "}
               {t(
                 "que esta instalação conhece não sabem usar ferramentas — sem isso ele conversaria bem e nunca criaria um cliente nem moveria um negócio no funil. Escolha outra empresa de IA em",
@@ -298,7 +298,7 @@ export function SetupAiForm({ capacidades, conferencias }: Props) {
               <strong>{t("IA › Provedores")}</strong>.
             </p>
           ) : (
-            <p className="text-sm">
+            <p className="text-[13px]">
               {t("Esta instalação ainda não tem a lista de modelos")} {provedorLegivel(provedor, t)}.{" "}
               {t("Ela é baixada automaticamente uma vez por dia; depois disso, publique em")}{" "}
               <strong>{t("IA › Agentes")}</strong>.
@@ -322,9 +322,9 @@ export function SetupAiForm({ capacidades, conferencias }: Props) {
       {naoPublicado && (
         <div
           role="alert"
-          className="space-y-3 rounded-md border border-amber-300/60 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-950/20"
+          className="space-y-3 rounded-md border border-warning/30 bg-warning-bg p-4"
         >
-          <p className="text-sm font-medium">
+          <p className="text-[13px] font-medium">
             {t("Seu agente foi criado, mas ficou como")} <strong>{t("rascunho")}</strong>:{" "}
             {t(
               "não consegui ler os números de WhatsApp desta instalação, então não dá pra dizer em qual número ele atenderia — e rascunho não responde mensagem.",
@@ -333,7 +333,7 @@ export function SetupAiForm({ capacidades, conferencias }: Props) {
           <p className="text-xs text-muted-foreground">
             {t("Erro do banco de dados:")} <code className="break-all">{naoPublicado}</code>
           </p>
-          <p className="text-sm">
+          <p className="text-[13px]">
             {t("Tente de novo no botão abaixo (clicar de novo não cria um segundo agente) ou siga agora e publique depois em")}{" "}
             <strong>{t("IA › Agentes")}</strong>.
           </p>

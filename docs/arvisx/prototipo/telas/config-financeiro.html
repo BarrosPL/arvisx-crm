@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Financeiro</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="730">
+<meta name="rota" content="/app/settings/tenant/financeiro">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .cartao .corpo { display: grid; gap: 12px; }
+  .cartao .corpo > h2 { font-size: 15px; font-weight: 700; }
+  .cartao .corpo > p.desc { color: var(--apoio); font-size: 13px; max-width: 78ch; }
+  .cartao .corpo > p.nota { color: var(--apoio); font-size: 12px; max-width: 78ch; }
+  .linha-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+  .linha-form .entrada { width: auto; flex: 1 1 170px; min-width: 0; max-width: 260px; }
+  .linha-form .entrada.curta { flex: 0 0 96px; }
+  .linha-form label.rot { display: flex; flex-direction: column; gap: 4px; color: var(--apoio); font-size: 12px; }
+  .linha-form label.rot .entrada { flex: none; width: 80px; }
+  .linha-form .dica { width: 100%; color: var(--apoio); font-size: 12px; }
+  .itens { display: grid; gap: 4px; }
+  .itens li { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; min-width: 0; }
+  .itens.caixa-linha li { border: 1px solid var(--linha); border-radius: var(--r-sm); padding: 4px 4px 4px 10px; }
+  .itens li > span:first-child { min-width: 0; }
+  .itens .dir { display: flex; align-items: center; gap: 2px; flex: none; }
+  .itens .fechar { border: 0; background: none; color: var(--apoio); font-size: 18px; padding: 4px 8px; cursor: pointer; }
+  @media (max-width: 860px) { .linha-form .entrada { max-width: none; flex-basis: 100%; } .linha-form .entrada.curta { flex: 1 1 96px; } }
+</style>
+</head>
+<body data-rota="/app/settings">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua empresa</div>
+          <h1>Financeiro</h1>
+          <p>Onde o dinheiro fica, como o cliente paga e como cada lançamento é classificado.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <!-- Contas -->
+        <section class="cartao"><div class="corpo">
+          <h2>Contas</h2>
+          <p class="desc">Onde o dinheiro fica. O saldo que aparece nos relatórios é sempre somado dos lançamentos — o valor aqui é só o ponto de partida.</p>
+          <div class="linha-form">
+            <input type="text" class="entrada" aria-label="Nome da conta" placeholder="Ex.: Caixa">
+            <select class="entrada" aria-label="Tipo da conta"><option selected>Caixa</option><option>Banco</option><option>Outra</option></select>
+            <button class="btn primario">Adicionar conta</button>
+          </div>
+          <ul class="itens">
+            <li><span>Caixa · Caixa</span><span class="dir"><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Desativar</button></span></li>
+            <li><span>Conta corrente · Banco</span><span class="dir"><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Desativar</button></span></li>
+            <li><span>Maquininha · Outra</span><span class="dir"><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Desativar</button></span></li>
+          </ul>
+        </div></section>
+
+        <!-- Formas de pagamento -->
+        <section class="cartao"><div class="corpo">
+          <h2>Formas de pagamento</h2>
+          <p class="desc">Como o cliente paga. A conta escolhida aqui é onde esse dinheiro entra quando a comanda é fechada.</p>
+          <div class="linha-form">
+            <input type="text" class="entrada" aria-label="Nome da forma de pagamento" placeholder="Ex.: Pix">
+            <select class="entrada" aria-label="Conta de destino"><option selected>Decidir depois</option><option>Caixa</option><option>Conta corrente</option><option>Maquininha</option></select>
+            <button class="btn secundario">Adicionar forma</button>
+          </div>
+          <ul class="itens">
+            <li><span>Pix → Conta corrente</span><span class="dir"><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Desativar</button></span></li>
+            <li><span>Dinheiro → Caixa</span><span class="dir"><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Desativar</button></span></li>
+            <li><span>Cartão de crédito → Maquininha</span><span class="dir"><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Desativar</button></span></li>
+            <li><span>Boleto → ⚠️ sem conta definida</span><span class="dir"><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Desativar</button></span></li>
+          </ul>
+        </div></section>
+
+        <!-- Plano de contas -->
+        <section class="cartao"><div class="corpo">
+          <h2>Plano de contas</h2>
+          <p class="desc">Como cada lançamento é classificado. Entrada e saída são coisas diferentes.</p>
+          <div class="linha-form">
+            <input type="text" class="entrada" aria-label="Nome do plano de contas" placeholder="Ex.: Serviços">
+            <select class="entrada" aria-label="Entrada ou saída"><option selected>Entrada ou saída?</option><option>Entrada</option><option>Saída</option></select>
+            <button class="btn secundario">Adicionar plano</button>
+          </div>
+          <ul class="itens">
+            <li><span>Serviços · Entrada</span><span class="dir"><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Desativar</button></span></li>
+            <li><span>Aluguel · Saída</span><span class="dir"><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Desativar</button></span></li>
+            <li><span>Material odontológico · Saída</span><span class="dir"><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Desativar</button></span></li>
+            <li><span>Comissão · Saída</span><span class="dir"><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Desativar</button></span></li>
+          </ul>
+        </div></section>
+
+        <!-- Comissão -->
+        <section class="cartao"><div class="corpo">
+          <h2>Comissão</h2>
+          <p class="desc">Quanto cada pessoa recebe por atendimento. Sem regra, a comissão é zero.</p>
+          <p class="nota">A regra mais específica vence: pessoa e serviço vence pessoa, que vence serviço. Não é o maior percentual que ganha.</p>
+          <div class="linha-form">
+            <select class="entrada" aria-label="Pessoa"><option selected>Qualquer pessoa</option><option>Ana Souza</option><option>Marcos Lima</option><option>Renata Borges</option></select>
+            <select class="entrada" aria-label="Serviço"><option selected>Qualquer serviço</option><option>Avaliação</option><option>Limpeza</option><option>Clareamento</option><option>Implante</option></select>
+            <input type="text" class="entrada curta mono" aria-label="Percentual" placeholder="30" inputmode="decimal">
+            <button class="btn secundario" disabled>Adicionar regra</button>
+            <p class="dica">Escolha ao menos uma pessoa ou um serviço.</p>
+          </div>
+          <ul class="itens caixa-linha">
+            <li><span>Marcos Lima · <span class="mono">30%</span></span><span class="dir"><button class="btn fantasma p">Editar</button><button class="fechar" aria-label="Remover regra">×</button></span></li>
+            <li><span>Renata Borges · Implante · <span class="mono">40%</span></span><span class="dir"><button class="btn fantasma p">Editar</button><button class="fechar" aria-label="Remover regra">×</button></span></li>
+            <li><span>Clareamento · <span class="mono">20%</span></span><span class="dir"><button class="btn fantasma p">Editar</button><button class="fechar" aria-label="Remover regra">×</button></span></li>
+          </ul>
+        </div></section>
+
+        <!-- Todo mês -->
+        <section class="cartao"><div class="corpo">
+          <h2>Todo mês</h2>
+          <p class="desc">Aluguel, internet, contador. O sistema abre a conta no dia certo.</p>
+          <p class="nota">Nasce como conta a pagar, nunca como paga: o sistema sabe que vence, não sabe se você pagou.</p>
+          <div class="linha-form">
+            <input type="text" class="entrada" aria-label="Nome do lançamento" placeholder="Ex.: Aluguel">
+            <select class="entrada" aria-label="Entrada ou saída"><option selected>Saída</option><option>Entrada</option></select>
+            <select class="entrada" aria-label="Conta"><option selected>Escolha a conta</option><option>Caixa</option><option>Conta corrente</option><option>Maquininha</option></select>
+            <input type="text" class="entrada curta mono" aria-label="Valor" placeholder="0,00" inputmode="decimal">
+            <label class="rot">Dia do mês<input type="text" class="entrada mono" inputmode="numeric" value="5"></label>
+            <button class="btn secundario" disabled>Adicionar</button>
+          </div>
+          <ul class="itens caixa-linha">
+            <li><span>Aluguel · Saída · <span class="mono">R$ 4.200,00</span> · dia <span class="mono">5</span></span><span class="dir"><button class="btn fantasma p">Editar</button><button class="fechar" aria-label="Remover lançamento recorrente">×</button></span></li>
+            <li><span>Internet · Saída · <span class="mono">R$ 189,90</span> · dia <span class="mono">10</span></span><span class="dir"><button class="btn fantasma p">Editar</button><button class="fechar" aria-label="Remover lançamento recorrente">×</button></span></li>
+            <li><span>Contador · Saída · <span class="mono">R$ 650,00</span> · dia <span class="mono">15</span></span><span class="dir"><button class="btn fantasma p">Editar</button><button class="fechar" aria-label="Remover lançamento recorrente">×</button></span></li>
+          </ul>
+        </div></section>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

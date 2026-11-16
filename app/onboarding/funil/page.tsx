@@ -36,7 +36,7 @@ export default async function FunilPage() {
         <h2 className="text-2xl font-semibold tracking-tight">
           {traduzir(iaNoPlano ? "Onde ele organiza seus clientes" : "Seu funil de clientes", idioma)}
         </h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-[13px] text-muted-foreground">
           {traduzir(
             iaNoPlano
               ? "Cada cliente vira um cartão que anda por essas colunas. Ele mesmo move o cartão conforme a conversa avança — por isso cada coluna diz também quando ele deve usá-la."

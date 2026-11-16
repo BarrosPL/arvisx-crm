@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recursos opcionais</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="280">
+<meta name="rota" content="/admin/sistema">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .cartao .corpo > h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .cartao .corpo > p.desc { color: var(--apoio); font-size: 13px; margin-bottom: 14px; }
+  .cartao .corpo > h3 { font-size: 13px; font-weight: 600; }
+  .linha-botao { display: flex; gap: 8px; align-items: center; }
+  .linha-botao input { flex: 1; min-width: 0; }
+  .rodape-form { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .rodape-form.fim { justify-content: flex-end; }
+  .nota { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 12px; font-size: 12px; color: var(--apoio); }
+  .nota.ambar { background: var(--aviso-suave); border-color: #f3d7ac; color: #7d4d0d; }
+  .nota strong { color: var(--texto); }
+  .bloco-chave { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 14px 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .bloco-chave > div:first-child { flex: 1; min-width: 220px; display: grid; gap: 4px; }
+  .bloco-chave strong { font-size: 14px; }
+  .bloco-chave p { color: var(--apoio); font-size: 13px; }
+  .bloco-chave p b { color: var(--texto); font-weight: 600; }
+  .bloco-chave select { width: 200px; max-width: 100%; }
+
+  .bloco { display: grid; gap: 12px; margin-bottom: 32px; }
+  .bloco > h2.secao { margin: 0; }
+  .recursos { display: grid; gap: 12px; }
+  .recurso { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 14px 16px; background: var(--painel); }
+  .recurso > div:first-child { min-width: 0; display: grid; gap: 4px; }
+  .recurso strong { font-size: 14px; }
+  .recurso p { color: var(--apoio); font-size: 13px; overflow-wrap: anywhere; }
+  .recurso p.meta { font-size: 12px; color: var(--fraco); }
+  .recurso .lado { display: flex; align-items: center; gap: 8px; flex: none; }
+  .resumo-molde { display: grid; gap: 8px; font-size: 13px; }
+  .resumo-molde ul { display: grid; gap: 4px; }
+  .resumo-molde li { display: flex; flex-wrap: wrap; gap: 0 8px; }
+  .assinatura { font-size: 13px; display: grid; gap: 4px; margin-top: 4px; }
+  .assinatura p { color: var(--texto); }
+  .assinatura p.fraco { color: var(--apoio); }
+  #molde-de-ia-empresa { width: 280px; }
+  @media (max-width: 640px) { .recurso { flex-direction: column; } #molde-de-ia-empresa { width: 100%; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/admin/sistema" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin da plataforma</div>
+          <h1>Recursos opcionais</h1>
+          <p>Tudo o que se liga e desliga nesta instalação, num lugar só. Vale para todas as empresas hospedadas aqui.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <section class="bloco">
+        <h2 class="secao">Módulos</h2>
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Módulos opcionais</h2>
+            <p class="desc">Recursos que a maioria das instalações não usa. Desligados, eles não aparecem para nenhuma empresa daqui.</p>
+            <div class="pilha">
+              <div class="bloco-chave">
+                <div><strong>Banco de dados externo</strong><p>Ligado, cada empresa pode conectar o banco de outro sistema (um ERP, outro CRM) para o agente consultar. Isso guarda a senha daquele banco neste servidor e abre conexão com ele. Desligado, a tela, o menu e as ferramentas do agente somem.</p><p>Ao ligar, aparece no menu em: <b>Configurações › Dados externos</b></p></div>
+                <span class="chave" role="switch" aria-checked="false" aria-label="Banco de dados externo"></span>
+              </div>
+              <div class="bloco-chave">
+                <div><strong>Fluxos de atendimento</strong><p>Ligado, cada empresa pode montar roteiros de perguntas que a IA conduz durante a conversa (nome, CPF, interesse…), e as respostas aparecem na ficha do cliente. Desligado, a tela, o menu e o roteiro no atendimento da IA somem.</p><p>Aparece no menu em: <b>Agente de IA › Ver tudo em IA › Fluxos de atendimento</b></p></div>
+                <span class="chave ligada" role="switch" aria-checked="true" aria-label="Fluxos de atendimento"></span>
+              </div>
+              <div class="bloco-chave">
+                <div><strong>Propostas comerciais</strong><p>Ligado, cada empresa ainda precisa ligar o módulo de proposta comercial nas configurações dela — o caminho aparece abaixo. A IA levanta o que o cliente precisa, monta a proposta pelos modelos da empresa e o PDF sai pelo WhatsApp. Desligado, nenhuma empresa vê a tela, o menu nem as ferramentas do agente.</p><p>Aparece no menu em: <b>Configurações › Propostas</b></p></div>
+                <span class="chave ligada" role="switch" aria-checked="true" aria-label="Propostas comerciais"></span>
+              </div>
+              <div class="bloco-chave">
+                <div><strong>Empresas e pessoas (venda para empresas)</strong><p>Ligado, cada empresa ganha no CRM o cadastro de Empresas (razão social e CNPJ, com os dados públicos preenchidos pela BrasilAPI), as Pessoas que decidem dentro delas, com vários telefones, e a importação de planilha CSV ou Excel. Consultar um CNPJ manda o número para a BrasilAPI. Desligado, as telas e o menu somem.</p><p>Aparece no menu em: <b>CRM › Ver tudo em CRM › Empresas</b>, <b>CRM › Ver tudo em CRM › Pessoas</b>, <b>CRM › Ver tudo em CRM › Importações</b></p></div>
+                <span class="chave ligada" role="switch" aria-checked="true" aria-label="Empresas e pessoas (venda para empresas)"></span>
+              </div>
+              <div class="bloco-chave">
+                <div><strong>Cobrança dos seus clientes</strong><p>Ligado, você cria planos e cobra as empresas hospedadas aqui, com teste grátis e suspensão automática de quem não paga. Empresas que já existem ficam isentas; você escolhe quem passa a pagar. Desligado, os limites dos planos deixam de valer e as empresas suspensas por falta de pagamento são liberadas; nada é cancelado no provedor de pagamento.</p><p>Não cria porta no menu do CRM: a tela é Cobrança, aqui no Admin.</p></div>
+                <span class="chave ligada" role="switch" aria-checked="true" aria-label="Cobrança dos seus clientes"></span>
+              </div>
+              <div class="bloco-chave">
+                <div><strong>Login do Codex por assinatura</strong><p>Ligado, cada empresa vê em Credenciais o painel para conectar a própria conta do Codex. Desligado por padrão: sem este interruptor nada aparece para as empresas, e a reserva de chamada continua sendo a chave de API da organização.</p><p>Não cria porta no menu do CRM: ele libera um painel em <b>Agente de IA › Ver tudo em IA › Credenciais</b>.</p></div>
+                <span class="chave" role="switch" aria-checked="false" aria-label="Login do Codex por assinatura"></span>
+              </div>
+              <div class="bloco-chave">
+                <div><strong>Setores de atendimento</strong><p>Ligado, cada empresa ganha na Equipe a aba Setores, para agrupar os atendentes por área, e a aba Atendimento passa a mostrar e filtrar o setor de cada um. A conversa com setor definido vai só para quem atende aquele setor, dentro do horário dele; conversa sem setor continua indo pelo número. Desligado, a aba e a coluna somem e a distribuição volta a ser a de antes; os setores já cadastrados ficam guardados.</p><p>Não cria porta no menu do CRM: ele libera uma aba em <b>Configurações › Equipe</b>.</p></div>
+                <span class="chave ligada" role="switch" aria-checked="true" aria-label="Setores de atendimento"></span>
+              </div>
+              <div class="bloco-chave">
+                <div><strong>Avisos para a equipe</strong><p>Ligado, o administrador de cada empresa pode escrever um aviso com título e texto, e ele chega como notificação nos aparelhos da equipe que ativaram as notificações. Desligado, ninguém envia avisos; os já enviados ficam guardados.</p><p>Não cria porta no menu do CRM: por enquanto o aviso é enviado pela API, em /api/v1/avisos.</p></div>
+                <span class="chave" role="switch" aria-checked="false" aria-label="Avisos para a equipe"></span>
+              </div>
+              <div class="bloco-chave">
+                <div><strong>Conferir WhatsApp na prospecção</strong><p>Ligado, a prospecção pergunta ao WhatsApp, pela conexão por QR da empresa, se cada telefone achado numa busca tem conta, e quem não tem sai da abordagem. A pergunta sai do número da empresa, para todo telefone achado, a qualquer hora; consulta em massa assim pode chamar a atenção do WhatsApp e arriscar o número. Desligado, nada é consultado e a abordagem segue como antes.</p><p>Não cria porta no menu do CRM: a conferência aparece na lista de empresas em <b>CRM › Ver tudo em CRM › Prospecção</b>.</p></div>
+                <span class="chave" role="switch" aria-checked="false" aria-label="Conferir WhatsApp na prospecção"></span>
+              </div>
+              <div class="bloco-chave">
+                <div><strong>Ferramentas externas por agente</strong><p>Ligado, a tela de cada agente ganha a seção Servidores MCP, para conectar sistemas de terceiros com chave fixa ou com o login de cada cliente, que autoriza a própria conta por um link na conversa. Desligado, a seção some, o agente deixa de usar esses servidores e os links de autorização param de abrir; o que já foi cadastrado fica guardado.</p><p>Não cria porta no menu do CRM: ele libera uma seção na tela de cada agente, em <b>Agente de IA › Agentes</b>.</p></div>
+                <span class="chave" role="switch" aria-checked="false" aria-label="Ferramentas externas por agente"></span>
+              </div>
+              <div class="bloco-chave">
+                <div><strong>Cold Call (fila de ligações)</strong><p>Ligado, cada empresa ganha no CRM a tela Cold Call: um funil próprio, a importação da lista e a ligação para um lead por vez, pelo canal de voz quando ele está pareado ou pelo discador do aparelho. Quem pediu para não ser incomodado, contato pessoal e contato anonimizado não recebem ligação. Desligado, a tela e o menu somem.</p><p>Ao ligar, aparece no menu em: <b>CRM › Ver tudo em CRM › Cold Call</b></p></div>
+                <span class="chave" role="switch" aria-checked="false" aria-label="Cold Call (fila de ligações)"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <ul class="recursos">
+          <li class="recurso">
+            <div>
+              <strong>Honorários</strong>
+              <p>Contratos de honorários com parcelas e o controle do que já foi pago.</p>
+              <p class="meta">Quem administra o servidor · Padrão: desligado</p>
+            </div>
+            <div class="lado"><span class="tag ">Desligado</span><a href="#" class="btn secundario p">Ajustar</a></div>
+          </li>
+          <li class="recurso">
+            <div>
+              <strong>Comandas</strong>
+              <p>A comanda do atendimento: itens, forma de pagamento, comissões e fidelidade.</p>
+              <p class="meta">Quem administra o servidor · Padrão: desligado</p>
+            </div>
+            <div class="lado"><span class="tag ok">Ligado</span><a href="#" class="btn secundario p">Ajustar</a></div>
+          </li>
+        </ul>
+      </section>
+
+      <section class="bloco">
+        <h2 class="secao">Comportamento</h2>
+        <div class="cartao">
+          <div class="corpo">
+            <h2>O que esta instalação faz</h2>
+            <p class="desc">Cada escolha vale para todas as empresas daqui. Quem cuida do servidor pode declarar um valor no arquivo de ambiente, mas ele só responde até a primeira leitura do banco: a partir daí, manda o que estiver aqui.</p>
+            <div class="pilha">
+              <div class="bloco-chave campo" style="flex-direction:row">
+                <div><strong>Proteção de gasto de IA</strong><p>Decide o que acontece quando o gasto passa do teto que a empresa escolheu. Não liga a proteção de ninguém: só pode afrouxá-la.</p></div>
+                <select id="orcamento-de-ia" aria-label="Proteção de gasto de IA"><option selected>Respeita o teto de cada empresa</option><option>Só avisa, nunca para a IA</option><option>Desligada</option></select>
+              </div>
+              <div class="bloco-chave">
+                <div><strong>Exigir assinatura nas entregas do canal</strong><p>Ligado, toda entrega de webhook precisa vir assinada com o segredo da sessão. Desligado por padrão porque nem todo servidor de canal assina: ligar sem que ele assine corta a entrada de mensagens.</p>
+                  <div class="assinatura">
+                    <p>As últimas entregas do WhatsApp chegaram assinadas: sim (última em <span class="mono">03/11/2026, 14:21</span>).</p>
+                    <p style="font-weight: 600" role="status">Pode ligar: o WhatsApp já assina.</p>
+                  </div>
+                </div>
+                <span class="chave" role="switch" aria-checked="false" aria-label="Exigir assinatura nas entregas do canal"></span>
+              </div>
+              <div class="bloco-chave campo" style="flex-direction:row">
+                <div><strong>Divulgação de pagamento no atendimento</strong><p>Injetar acrescenta o texto de divulgação à primeira mensagem. Vetar bloqueia o envio sem ele e devolve ao modelo a razão, para ele reescrever.</p></div>
+                <select id="divulgacao-de-pagamento" aria-label="Divulgação de pagamento no atendimento"><option selected>Injetar</option><option>Vetar</option></select>
+              </div>
+              <div class="bloco-chave">
+                <div><strong>Conferência de promessa antes de enviar</strong><p>Ligado, cada envio passa por uma conferência de modelo para não prometer o que a empresa não cumpre. Custa uma chamada de modelo por envio.</p></div>
+                <span class="chave ligada" role="switch" aria-checked="true" aria-label="Conferência de promessa antes de enviar"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cartao" id="molde-de-ia">
+          <div class="corpo">
+            <h2>IA das empresas novas</h2>
+            <p class="desc">Toda empresa criada daqui em diante nasce com a mesma escolha de modelo por função da empresa que você escolher aqui. As empresas que já existem não mudam.</p>
+            <div class="pilha">
+              <div class="bloco-chave campo" style="flex-direction:row">
+                <div><strong>Copiar a IA de</strong><p>Copia o modelo de cada função e o modelo padrão, sempre usando a chave de IA desta instalação. Chaves, Jev, agentes e base de conhecimento nunca são copiados.</p></div>
+                <select id="molde-de-ia-empresa" aria-label="IA das empresas novas"><option>Nenhuma (cada empresa começa com o padrão do produto)</option><option>Bella Pele</option><option selected>Clínica Vitalis</option><option>Odonto Sul</option><option>Sorriso &amp; Cia</option></select>
+              </div>
+              <div class="resumo-molde">
+                <p>A próxima empresa vai nascer com 4 funções de IA configuradas:</p>
+                <ul>
+                  <li><span class="mono">claude-sonnet-4-6</span><span class="apoio">Anthropic · 3 funções</span></li>
+                  <li><span class="mono">claude-haiku-4-5</span><span class="apoio">Anthropic · 1 função</span></li>
+                </ul>
+                <p>Modelo padrão: <span class="mono">claude-sonnet-4-6</span> <span class="apoio">· Anthropic</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <ul class="recursos">
+          <li class="recurso">
+            <div>
+              <strong>Quem pode criar conta</strong>
+              <p>Cadastro aberto, só por convite ou com aprovação.</p>
+              <p class="meta">Quem administra o servidor · Padrão: ligado</p>
+            </div>
+            <div class="lado"><span class="tag sinal">Veja na tela dele</span><a href="#" class="btn secundario p">Ajustar</a></div>
+          </li>
+          <li class="recurso">
+            <div>
+              <strong>Destinos internos</strong>
+              <p>Libera endereços da rede interna, como um modelo de IA rodando na própria máquina.</p>
+              <p class="meta">Quem administra o servidor · Padrão: desligado</p>
+            </div>
+            <div class="lado"><span class="tag sinal">Veja na tela dele</span><a href="#" class="btn secundario p">Ajustar</a></div>
+          </li>
+        </ul>
+      </section>
+
+      <section class="bloco">
+        <div>
+          <h2 class="secao" style="margin-bottom:4px">Depende do servidor</h2>
+          <p class="apoio" style="font-size: 13px">Só leitura. Estes dependem de credencial ou do arquivo de ambiente do servidor. Nenhum valor de segredo aparece aqui.</p>
+        </div>
+        <ul class="recursos">
+          <li class="recurso">
+            <div>
+              <strong>E-mail</strong>
+              <p>Sem ele não sai convite de equipe, recuperação de senha nem entrega de dados da LGPD.</p>
+              <p>Cadastre o servidor de e-mail ou o serviço externo na tela de E-mail.</p>
+              <p class="meta">Quem administra o servidor · Padrão: desligado</p>
+            </div>
+            <div class="lado"><span class="tag ok">Configurado</span><a href="#" class="btn secundario p">Ajustar</a></div>
+          </li>
+          <li class="recurso">
+            <div>
+              <strong>Google Agenda</strong>
+              <p>Cada pessoa conecta a própria agenda do Google na Agenda.</p>
+              <p>Cadastre o app do Google na tela Google Agenda.</p>
+              <p class="meta">Quem administra o servidor · Padrão: desligado</p>
+            </div>
+            <div class="lado"><span class="tag ok">Configurado</span><a href="#" class="btn secundario p">Ajustar</a></div>
+          </li>
+          <li class="recurso">
+            <div>
+              <strong>API Oficial da Meta</strong>
+              <p>Permite conectar números pela API oficial do WhatsApp.</p>
+              <p>Cadastre o app da Meta na tela API Oficial (Meta).</p>
+              <p class="meta">Quem administra o servidor · Padrão: desligado</p>
+            </div>
+            <div class="lado"><span class="tag ok">Configurado</span><a href="#" class="btn secundario p">Ajustar</a></div>
+          </li>
+          <li class="recurso">
+            <div>
+              <strong>WhatsApp oficial por parceiro</strong>
+              <p>Um segundo fornecedor de WhatsApp oficial, numa aba própria em Conexões.</p>
+              <p>No arquivo de ambiente do servidor, ligue o canal do parceiro (bloco do parceiro no .env.example) e reinicie o app.</p>
+              <p class="meta">Quem administra o servidor · Padrão: desligado</p>
+            </div>
+            <div class="lado"><span class="tag ">Não configurado</span></div>
+          </li>
+          <li class="recurso">
+            <div>
+              <strong>Chamada de voz pelo WhatsApp</strong>
+              <p>Fazer e receber chamada de voz pelo número. Depois, cada empresa aceita o risco e liga.</p>
+              <p>No arquivo de ambiente, WACALLS_API_BASE_URL e WACALLS_API_TOKEN, e voz em COMPOSE_PROFILES.</p>
+              <p class="meta">Quem administra o servidor · Padrão: desligado</p>
+            </div>
+            <div class="lado"><span class="tag ">Não configurado</span></div>
+          </li>
+          <li class="recurso">
+            <div>
+              <strong>Videochamada (Jitsi Meet)</strong>
+              <p>Abrir sala de vídeo no header da conversa: o contato entra pelo link no chat, sem instalar nada.</p>
+              <p>No arquivo de ambiente, JITSI_SERVER_URL apontando para a origem da sala (ex.: https://meet.jit.si). Vazio = o botão Vídeo não aparece.</p>
+              <p class="meta">Quem administra o servidor · Padrão: desligado</p>
+            </div>
+            <div class="lado"><span class="tag ">Não configurado</span></div>
+          </li>
+          <li class="recurso">
+            <div>
+              <strong>Telefonia por SIP</strong>
+              <p>Atender e ligar por telefone de verdade, com agente de voz.</p>
+              <p>No servidor, telefonia em COMPOSE_PROFILES e os arquivos do Asterisk. Este app não enxerga isso.</p>
+              <p class="meta">Quem administra o servidor · Padrão: desligado</p>
+            </div>
+            <div class="lado"><span class="tag sinal">Não dá para ver daqui</span></div>
+          </li>
+          <li class="recurso">
+            <div>
+              <strong>Nuvemshop</strong>
+              <p>Conecta a loja Nuvemshop da empresa: pedidos e clientes.</p>
+              <p>No arquivo de ambiente, NUVEMSHOP_APP_ID, NUVEMSHOP_CLIENT_ID e NUVEMSHOP_CLIENT_SECRET.</p>
+              <p class="meta">Quem administra o servidor · Padrão: desligado</p>
+            </div>
+            <div class="lado"><span class="tag ">Não configurado</span></div>
+          </li>
+          <li class="recurso">
+            <div>
+              <strong>Google Ads</strong>
+              <p>Permite às empresas devolver a venda ao anúncio do Google.</p>
+              <p>No arquivo de ambiente, as três variáveis GOOGLE_ADS_*.</p>
+              <p class="meta">Quem administra o servidor · Padrão: desligado</p>
+            </div>
+            <div class="lado"><span class="tag ">Não configurado</span></div>
+          </li>
+          <li class="recurso">
+            <div>
+              <strong>Notificação com a aba fechada</strong>
+              <p>Os alertas chegam na bandeja do computador mesmo com o sistema fechado.</p>
+              <p>Nasce pronto pelo kit de instalação, mas só funciona em endereço com https (em http://IP nenhum navegador entrega o aviso com o sistema fechado). Se aparecer desligado, rode no servidor: bash hostgator-setup-kit/update.sh</p>
+              <p class="meta">Quem administra o servidor · Padrão: ligado</p>
+            </div>
+            <div class="lado"><span class="tag ok">Configurado</span></div>
+          </li>
+          <li class="recurso">
+            <div>
+              <strong>Transcrição de áudio por outro serviço</strong>
+              <p>Manda a transcrição dos áudios para um serviço compatível que você escolher.</p>
+              <p>No arquivo de ambiente, TRANSCRIPTION_BASE_URL.</p>
+              <p class="meta">Quem administra o servidor · Padrão: desligado</p>
+            </div>
+            <div class="lado"><span class="tag ">Não configurado</span></div>
+          </li>
+        </ul>
+      </section>
+    </main>
+  </div>
+</div>
+<script src="../../shell-admin.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

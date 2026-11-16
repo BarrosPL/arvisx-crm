@@ -744,7 +744,7 @@ function ColunaDeDia({
           "sticky top-0 z-20 flex h-8 items-center justify-center gap-1.5 border-b border-border bg-surface px-2",
         )}
       >
-        <span className="truncate text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+        <span className="truncate text-[11px] font-semibold text-text-muted">
           {format(dia, "EEE", { locale: localeDaData }).replace(".", "")}
         </span>
         <span
@@ -863,7 +863,7 @@ function VisaoDeMes({
         {semanas[0]?.map((d) => (
           <div
             key={`cab-${d.toISOString()}`}
-            className="px-2 py-1.5 text-center text-[11px] font-semibold uppercase tracking-wide text-text-muted"
+            className="px-2 py-1.5 text-center text-[11px] font-semibold text-text-muted"
           >
             {format(d, "EEEEEE", { locale: localeDaData }).replace(".", "")}
           </div>

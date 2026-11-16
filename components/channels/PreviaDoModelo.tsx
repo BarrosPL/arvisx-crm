@@ -176,7 +176,7 @@ export function PreviaDoModelo({ previa, tom = "aviso" }: { previa: PreviaDaMens
       aria-label={t("Prévia da mensagem")}
       className={`mt-2 flex flex-col gap-1.5 rounded-md border p-2.5 ${cor.moldura}`}
     >
-      <span className={`text-[10px] font-medium tracking-wide uppercase ${cor.rotulo}`}>
+      <span className={`text-[11px] font-medium ${cor.rotulo}`}>
         {t("Prévia da mensagem")}
       </span>
 
@@ -195,7 +195,7 @@ export function PreviaDoModelo({ previa, tom = "aviso" }: { previa: PreviaDaMens
           key={card.indice}
           className={`flex flex-col gap-1.5 rounded-md border border-dashed p-1.5 ${cor.tracejado}`}
         >
-          <span className={`text-[10px] font-medium tracking-wide uppercase ${cor.rotulo}`}>
+          <span className={`text-[11px] font-medium ${cor.rotulo}`}>
             {t("Item do carrossel")} {card.indice + 1}
           </span>
           <Bloco bloco={card} prefixo={`previa-card-${card.indice}-`} tom={tom} />

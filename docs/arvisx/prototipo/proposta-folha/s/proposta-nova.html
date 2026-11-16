@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nova Proposta</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="990">
+<meta name="rota" content="/app/proposals/novo">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+.obrig { color: var(--erro); }
+  .cartao > .pe { padding: 18px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/app/proposals" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+<a href="#" class="volta"><i class="ph-light ph-arrow-left"></i>Voltar às propostas</a>
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM · Propostas</div>
+          <h1>Nova Proposta Comercial</h1>
+          <p>Preencha as informações básicas para iniciar o rascunho da proposta. Os itens, produtos e valores poderão ser adicionados no editor a seguir.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao">
+        <div class="corpo form">
+          <div class="campo">
+            <label for="lead-select">Negócio (Lead) <span class="obrig">*</span></label>
+            <div class="busca-linha"><i class="ph-light ph-magnifying-glass"></i><input type="search" placeholder="Filtrar negócio por título, cliente ou telefone…"></div>
+            <select id="lead-select">
+              <option>Selecione o negócio...</option>
+              <option selected>Ortodontia adulto — Helena Marques</option>
+              <option>Protocolo superior — Bruno Tavares</option>
+              <option>Implante unitário — Sônia Vasconcelos</option>
+              <option>Contrato corporativo — Grupo Odonto Sul</option>
+              <option>4 tratamentos — Família Andrade</option>
+              <option>Prótese fixa — Patrícia Nunes</option>
+              <option>Clareamento — Marina Costa</option>
+              <option>Avaliação inicial — Rogério Paiva</option>
+            </select>
+            <span class="ajuda">A proposta será vinculada ao negócio e ao contato correspondente.</span>
+          </div>
+          <div class="campo">
+            <label for="titulo-input">Título da proposta <span class="obrig">*</span></label>
+            <input id="titulo-input" type="text" placeholder="Ex.: Proposta de Prestação de Serviços, Orçamento Especial" value="Ortodontia adulto — alinhadores">
+            <span class="ajuda">Identificação que aparecerá para o cliente e na lista de propostas.</span>
+          </div>
+          <div class="campo">
+            <label for="valid-until-input">Validade da proposta</label>
+            <input id="valid-until-input" type="text" class="mono" value="18/11/2026">
+            <span class="ajuda">Data limite até a qual os valores e condições são garantidos.</span>
+          </div>
+          <div class="campo">
+            <label for="condicoes-input">Condições de pagamento / Observações</label>
+            <textarea id="condicoes-input" rows="3" placeholder="Ex.: Pagamento em até 3x sem juros no cartão ou 5% de desconto à vista via Pix.">Entrada de 20% e o restante em até 10x sem juros no cartão.</textarea>
+          </div>
+        </div>
+        <div class="pe">
+          <button class="btn secundario">Cancelar</button>
+          <button class="btn primario">Criar e abrir editor</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

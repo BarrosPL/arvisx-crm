@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ArvisX CRM — varredura de UI</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<style>
+  :root { --fundo: #f0f2f5; --painel: #fff; --linha: #e8ebf0; --texto: #141a24; --apoio: #4f596a; --fraco: #636c7b; --tinta: #17202e; --ok: #1f7446; --ok-suave: #e7f4ec; --aviso: #9a5e0c; --aviso-suave: #fcf2e2; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font: 14px/1.55 "Hanken Grotesk", "Segoe UI", Arial, sans-serif; background: var(--fundo); color: var(--texto); padding: 32px 16px 80px; }
+  main { max-width: 920px; margin: 0 auto; background: var(--painel); border: 1px solid var(--linha); border-radius: 14px; padding: 40px 44px 48px; }
+  h1 { font: 500 30px/1.1 "Newsreader", Georgia, serif; letter-spacing: -.01em; }
+  h2 { font-size: 16px; font-weight: 600; margin: 40px 0 12px; }
+  p { color: var(--apoio); max-width: 70ch; }
+  .lede { margin-top: 10px; }
+  a { color: var(--texto); font-weight: 600; text-decoration-color: #d8dde5; text-underline-offset: 3px; }
+  .abrir { display: inline-flex; align-items: center; height: 36px; padding: 0 14px; margin-top: 20px; border-radius: 8px; background: var(--tinta); color: #fff; text-decoration: none; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 13px; }
+  th { text-align: left; font-weight: 500; font-size: 12px; color: var(--fraco); padding: 10px 12px; border-bottom: 1px solid var(--linha); }
+  td { padding: 12px; border-bottom: 1px solid var(--linha); vertical-align: top; }
+  td:first-child { font-weight: 600; width: 30%; }
+  td.n { white-space: nowrap; font-variant-numeric: tabular-nums; width: 13%; }
+  td.n b { font-weight: 600; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 500; }
+  .ok { background: var(--ok-suave); color: var(--ok); }
+  .pend { background: var(--aviso-suave); color: var(--aviso); }
+  ul { margin: 0 0 0 18px; color: var(--apoio); }
+  li { margin-bottom: 8px; max-width: 72ch; }
+  li b { color: var(--texto); font-weight: 600; }
+  .nota { margin-top: 28px; font-size: 12px; color: var(--fraco); }
+  @media (max-width: 640px) { main { padding: 24px 18px 32px; } td:first-child { width: auto; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Varredura de UI</h1>
+  <p class="lede">As 64 telas de dentro do CRM foram medidas por ferramenta, no computador (1440 px) e no celular (390 px), e olhadas uma a uma em captura. Abaixo, o que foi achado, o que já está corrigido no protótipo e o que depende de decisão sua. Texto, dados e posição de cada coisa continuam iguais.</p>
+  <a class="abrir" href="index.html">Abrir o protótipo com as correções</a>
+
+  <h2>O que foi medido e corrigido</h2>
+  <table>
+    <thead><tr><th>Achado</th><th>Antes</th><th>Depois</th><th>O que mudou</th></tr></thead>
+    <tbody>
+      <tr><td>Texto com pouco contraste</td><td class="n"><b>668</b> pontos</td><td class="n"><b>3</b></td><td>O cinza do texto secundário e as cores das etiquetas (verde, âmbar, vermelho, azul, ouro) ficavam abaixo do mínimo de leitura (4,5:1). Escureci os seis tons. Os 3 que restam são iniciais em avatares coloridos da Agenda e um ponto separador.</td></tr>
+      <tr><td>Tamanhos de letra</td><td class="n"><b>24</b> tamanhos</td><td class="n"><b>8</b></td><td>Havia 9, 10, 10,5, 11, 11,5, 12, 12,5, 13, 13,5… Agora uma escala só: 11, 12, 13, 14, 16, 18, 24 e 30.</td></tr>
+      <tr><td>Pesos de letra</td><td class="n"><b>7</b></td><td class="n"><b>3</b></td><td>400, 500 e 600. Saem os pesos intermediários (620, 650) e o negrito pesado.</td></tr>
+      <tr><td>Altura de botões e campos</td><td class="n">28, 30, 32, 34, 36…</td><td class="n"><b>30</b> e <b>36</b></td><td>Botão media 34 e campo 36, então a linha de filtros ficava torta. Agora botão, campo, seletor e filtro têm 36; o botão pequeno tem 30. Datas e seletor de arquivo, que apareciam com a cara padrão do navegador, entraram no mesmo desenho.</td></tr>
+      <tr><td>Controles desalinhados na mesma linha</td><td class="n"><b>14</b> casos</td><td class="n"><b>2</b></td><td>Botão pequeno ao lado de campo padrão agora sobe para a altura do campo.</td></tr>
+      <tr><td>Cantos arredondados</td><td class="n"><b>16</b> raios</td><td class="n"><b>4</b> + pílula</td><td>De 2 a 16 px sem regra. Agora 4, 6, 8 e 12.</td></tr>
+      <tr><td>Rótulos em CAIXA ALTA com letras afastadas</td><td class="n"><b>56</b> tipos</td><td class="n"><b>0</b></td><td>Viraram texto comum, pequeno e discreto.</td></tr>
+      <tr><td>Página mais larga que a janela</td><td class="n"><b>2</b> telas</td><td class="n"><b>0</b></td><td>Equipe (computador) e API Tokens (celular) rolavam para o lado. Causa: um texto invisível para leitor de tela solto dentro da tabela.</td></tr>
+      <tr><td>Alvo de toque pequeno no celular</td><td class="n"><b>270</b></td><td class="n"><b>44</b></td><td>No celular, botão e campo passam a ter 40 (pequeno 36), e o campo usa letra 16 para o iPhone não dar zoom ao tocar. Os 44 restantes estão quase todos na Inbox, que tem barra própria.</td></tr>
+      <tr><td>Faixa colorida na lateral de cartão</td><td class="n"><b>14</b></td><td class="n"><b>8</b></td><td>Saiu dos negócios do funil, dos avisos, das execuções e dos passos do follow-up (o texto e a etiqueta já dizem o estado). Ficou só na Agenda, onde a faixa é a convenção de calendário.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Para tirar a cara de sistema feito por IA</h2>
+  <p>Já aplicado no protótipo:</p>
+  <ul style="margin-top:10px">
+    <li><b>Ouro só na IA.</b> Item escolhido, caixa de marcar, barra de progresso e ícones de atalho usavam dourado; agora usam a tinta escura. O ouro passa a significar uma coisa só: agente de IA.</li>
+    <li><b>Sem rótulo em caixa alta com letras afastadas</b> acima de cada bloco, sem bolinha antes do título, sem anel duplo no estado vazio.</li>
+    <li><b>Sem faixa colorida na lateral</b> dos cartões e sem cartão que "pula" ao passar o mouse; só a borda escurece.</li>
+    <li><b>Uma régua só</b> de tamanho, peso, altura e canto, em vez de valores quebrados (13,5 px, raio 7, peso 650).</li>
+    <li><b>Menos caixa dentro de caixa:</b> uma folha branca, fios finos, sem sombra em cada cartão.</li>
+  </ul>
+
+  <h2>Depende de decisão sua (não mexi)</h2>
+  <ul>
+    <li><span class="tag pend">texto</span> <b>Travessão em quase toda frase</b> ("Customer 360 — busque, filtre…", "Lia — AgendaPlus"). É o sinal mais forte de texto escrito por IA. Trocar por vírgula, ponto ou dois-pontos muda o texto das telas, então só faço se você autorizar.</li>
+    <li><span class="tag pend">texto</span> <b>Mistura de inglês e português</b> na mesma tela: "Audit Log", "Customer 360", "healthy", "pending", "completed", "roles", "tenant", "plaintext".</li>
+    <li><span class="tag pend">layout</span> <b>Largura do conteúdo muda de tela para tela</b> (algumas ocupam a folha toda, outras param em 560 ou 760 px e deixam um vazio à direita). Corrigir pede decidir a largura de cada tipo de tela.</li>
+    <li><span class="tag pend">layout</span> <b>Telas "Ver tudo em…" e Configurações</b> são grades de cartão com ícone, título e descrição, todos iguais. Uma lista em linhas, agrupada, lê mais rápido e parece menos modelo pronto. Muda a posição das coisas.</li>
+    <li><span class="tag pend">layout</span> <b>Botão pequeno demais como ação principal</b> em várias linhas de tabela e cartão (Editar, Remarcar, Cancelar com 30 px). Vale rever quais são ação de verdade e quais podem virar menu "…".</li>
+    <li><span class="tag pend">visual</span> <b>Título com serifa (opção A)</b> é bonito, mas "serifa elegante sobre fundo claro" também é um visual comum em tela gerada por IA. A opção B, sem serifa, foge disso.</li>
+    <li><span class="tag pend">visual</span> <b>Ícone em quase todo botão.</b> Deixar ícone só onde ajuda a achar (Novo, Exportar, Excluir) limpa bastante.</li>
+  </ul>
+
+  <p class="nota">Como refazer a medição: <code>node docs/arvisx/prototipo/servir.mjs</code> e, em outro terminal, <code>node docs/arvisx/prototipo/proposta-folha/varrer.mjs a</code>. O resultado completo, tela por tela, fica em <code>varredura-a.json</code> e <code>varredura-b.json</code>. Não medidos: tema escuro, login, onboarding, e o comportamento com dados reais (nomes longos, listas vazias).</p>
+</main>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dossiê do follow-up</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="840">
+<meta name="rota" content="/app/ai/followups/enrollments/[id]">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+  .pilha { display: grid; gap: 20px; }
+  .cabecalho h1 { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .campos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  .campos .rotulo { margin-bottom: 4px; }
+  .campos .v { font-size: 13px; }
+  .onde p { font-size: 13px; }
+  .onde p + p { margin-top: 4px; }
+  .onde .relogio { display: flex; align-items: center; gap: 6px; color: var(--apoio); }
+  .onde .relogio i { font-size: 16px; flex: none; }
+  .acoes-dossie { display: flex; gap: 8px; flex-wrap: wrap; }
+  .acoes-dossie .cancelar i { color: var(--erro); }
+  .esperas { display: grid; gap: 14px; }
+  .esperas .l1 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; }
+  .esperas .pedido { color: var(--aviso); font-size: 12px; }
+  .esperas .motivo { color: var(--apoio); font-size: 12px; }
+  .esperas .faixa { color: var(--fraco); font-size: 12px; }
+  .timeline .detalhe { color: var(--apoio); font-size: 12px; margin-top: 2px; }
+  .timeline .quando { margin: 4px 0 0; }
+  .timeline > li.pessoa::before { background: var(--navy); border-color: var(--navy); }
+  .timeline > li.cliente::before { border-style: dashed; }
+  @media (max-width: 860px) { .campos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/app/ai/followups" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <a href="#" class="volta"><i class="ph-light ph-caret-left"></i>Fila de follow-ups</a>
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Agente de IA · Follow-ups</div>
+          <h1>Marina Costa <span class="tag sinal">Aguardando resposta</span></h1>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <div class="campos">
+          <div><span class="rotulo">Fluxo</span><span class="v">Retomada de contato (demonstração)</span></div>
+          <div><span class="rotulo">Agente</span><span class="v"><span class="ia-tag">Lia — AgendaPlus</span></span></div>
+          <div><span class="rotulo">Começou</span><span class="v mono">01/11/2026 10:12</span></div>
+          <div><span class="rotulo">Etapas executadas</span><span class="v mono">4</span></div>
+        </div>
+
+        <section class="cartao onde">
+          <div class="cab"><h2>Onde está agora</h2></div>
+          <div class="corpo">
+            <p><strong>Esperar a resposta</strong> <span class="apoio">(Interpretação da resposta — classifica a resposta em: quer marcar, sem interesse, depois)</span></p>
+            <p class="relogio"><i class="ph-light ph-clock"></i>Volta a andar em 1 dia (<span class="mono">04/11/2026 10:15</span>)</p>
+          </div>
+        </section>
+
+        <section class="acoes-dossie">
+          <button class="btn secundario p"><i class="ph-light ph-pause"></i>Pausar</button>
+          <button class="btn secundario p"><i class="ph-light ph-clock"></i>Adiar</button>
+          <button class="btn secundario p"><i class="ph-light ph-skip-forward"></i>Pular este passo</button>
+          <button class="btn fantasma p cancelar"><i class="ph-light ph-trash"></i>Cancelar follow-up</button>
+        </section>
+
+        <section class="cartao ouro">
+          <div class="cab">
+            <div>
+              <h2>O tempo que o agente escolheu</h2>
+              <span class="apoio">Decidido há 2 dias · anthropic/claude-sonnet-4-6</span>
+            </div>
+            <span class="ia-tag">IA</span>
+          </div>
+          <div class="corpo">
+            <ul class="esperas">
+              <li>
+                <div class="l1"><span>Esperar antes de retomar</span><strong>esperar 2 dias</strong></div>
+                <p class="motivo">A paciente disse que ia conferir a agenda do trabalho; dois dias dão tempo de ela voltar sem parecer cobrança.</p>
+                <p class="faixa">seu limite: de 1 dia a 3 dias</p>
+              </li>
+              <li>
+                <div class="l1"><span>Esperar antes da última tentativa</span><strong>esperar 5 dias</strong><span class="tag aviso">bateu no seu limite</span></div>
+                <p class="pedido">a IA pediu 7 dias</p>
+                <p class="motivo">Sem resposta à primeira retomada, um intervalo maior evita insistência na mesma semana.</p>
+                <p class="faixa">seu limite: de 2 dias a 5 dias</p>
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="cartao">
+          <div class="cab"><h2>O que já aconteceu</h2></div>
+          <div class="corpo">
+            <ul class="timeline">
+              <li>
+                <div class="oque">Começou porque o cliente voltou a escrever</div>
+                <div class="quando">Início · 01/11/2026 10:12</div>
+              </li>
+              <li class="ouro">
+                <div class="oque">Pediu ao agente para planejar os tempos de espera</div>
+                <div class="quando">Início · 01/11/2026 10:12</div>
+              </li>
+              <li class="ouro">
+                <div class="oque">O agente decidiu quanto esperar em cada passo</div>
+                <div class="quando">Início · 01/11/2026 10:13</div>
+              </li>
+              <li>
+                <div class="oque">Seguiu em frente</div>
+                <div class="detalhe">foi para Esperar antes de retomar</div>
+                <div class="quando">Início · 01/11/2026 10:13</div>
+              </li>
+              <li>
+                <div class="oque">Começou a esperar</div>
+                <div class="detalhe">volta a olhar em 03 de nov., 10:13 (tempo escolhido pelo agente)</div>
+                <div class="quando">Esperar antes de retomar · 01/11/2026 10:13</div>
+              </li>
+              <li class="pessoa">
+                <div class="oque">Adiado por uma pessoa da equipe</div>
+                <div class="detalhe">adiado para 03 de nov., 10:15</div>
+                <div class="quando">Esperar antes de retomar · Renata Borges · 02/11/2026 16:40</div>
+              </li>
+              <li>
+                <div class="oque">Seguiu em frente</div>
+                <div class="detalhe">foi para Mensagem de retomada</div>
+                <div class="quando">Esperar antes de retomar · 03/11/2026 10:15</div>
+              </li>
+              <li class="ouro">
+                <div class="oque">Pediu ao agente para escrever a mensagem</div>
+                <div class="quando">Mensagem de retomada · 03/11/2026 10:15</div>
+              </li>
+              <li>
+                <div class="oque">Mensagem enviada</div>
+                <div class="quando">Mensagem de retomada · 03/11/2026 10:15</div>
+              </li>
+              <li>
+                <div class="oque">Seguiu em frente</div>
+                <div class="detalhe">foi para Esperar a resposta</div>
+                <div class="quando">Mensagem de retomada · 03/11/2026 10:15</div>
+              </li>
+              <li>
+                <div class="oque">Esperando a resposta do cliente</div>
+                <div class="detalhe">se ele não responder até 04 de nov., 10:15, o fluxo segue sem a resposta</div>
+                <div class="quando">Esperar a resposta · 03/11/2026 10:15</div>
+              </li>
+            </ul>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

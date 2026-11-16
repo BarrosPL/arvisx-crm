@@ -75,8 +75,10 @@ describe("a evolução dos ganhos no Desempenho", () => {
     expect(celulas).toEqual(["02/10", "0"]);
 
     // O mesmo `Card` para os dois: o ancestral comum é o próprio Cartão.
-    const cartaoDoGrafico = grafico.closest("div.rounded-xl");
-    const cartaoDaTabela = linhaParada?.closest("div.rounded-xl");
+    // Design "Folha": o `Card` base passou de `rounded-xl` para `rounded-lg`
+    // (components/ui/card.tsx); o gancho acompanha, a garantia é a mesma.
+    const cartaoDoGrafico = grafico.closest("div.rounded-lg");
+    const cartaoDaTabela = linhaParada?.closest("div.rounded-lg");
     expect(cartaoDoGrafico).not.toBeNull();
     expect(cartaoDaTabela).toBe(cartaoDoGrafico);
     // …e o Cartão é o da série, com o título e o total — não outro qualquer.

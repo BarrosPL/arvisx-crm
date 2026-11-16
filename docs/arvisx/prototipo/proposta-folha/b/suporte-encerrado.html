@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Encerre o acompanhamento para continuar</title>
+<meta name="grupo" content="Entrada">
+<meta name="ordem" content="420">
+<meta name="rota" content="/support-ended">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .faixa-suporte { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 16px; background: var(--aviso-suave); border-bottom: 1px solid #f3d7ac; color: #7d4d0d; font-size: 13px; }
+  .faixa-suporte span { min-width: 0; }
+  .faixa-suporte .btn { flex: none; }
+  .fim { max-width: 576px; margin: 0 auto; padding: 32px; }
+  .fim h1 { font-family: var(--display); font-stretch: 112%; font-weight: 600; letter-spacing: -.03em; font-size: 18px; line-height: 1.2; color: var(--navy); }
+  .fim p { color: var(--apoio); margin-top: 12px; }
+  @media (max-width: 860px) { .fim { padding: 24px 16px; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/support-ended" data-raiz="../..">
+<main>
+  <div class="faixa-suporte" role="alert">
+    <span>Acompanhamento encerrado <strong>Clínica Vitalis</strong></span>
+    <button type="button" class="btn secundario p">Sair do acompanhamento</button>
+  </div>
+  <div class="fim">
+    <h1>Encerre o acompanhamento para continuar</h1>
+    <p>O prazo ou as permissões desta sessão mudaram. Saia do acompanhamento para voltar à sua organização.</p>
+  </div>
+</main>
+<script src="../folha.js"></script>
+</body>
+</html>

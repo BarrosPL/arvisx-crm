@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Credenciais</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="270">
+<meta name="rota" content="/admin/configuracao">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .cartao .corpo > h2 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .cartao .corpo > p.desc { color: var(--apoio); font-size: 13px; margin-bottom: 14px; }
+  .cartao .corpo > h3 { font-size: 13.5px; font-weight: 700; }
+  .linha-botao { display: flex; gap: 8px; align-items: center; }
+  .linha-botao input { flex: 1; min-width: 0; }
+  .rodape-form { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .rodape-form.fim { justify-content: flex-end; }
+  .nota { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 12px; font-size: 12.5px; color: var(--apoio); }
+  .nota.ambar { background: var(--aviso-suave); border-color: #f3d7ac; color: #7d4d0d; }
+  .nota strong { color: var(--texto); }
+  .bloco-chave { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 14px 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .bloco-chave > div:first-child { flex: 1; min-width: 220px; display: grid; gap: 4px; }
+  .bloco-chave strong { font-size: 14px; }
+  .bloco-chave p { color: var(--apoio); font-size: 13px; }
+  .bloco-chave p b { color: var(--texto); font-weight: 600; }
+  .bloco-chave select { width: 200px; max-width: 100%; }
+
+  .campo-inst { display: grid; gap: 8px; padding: 16px 0; border-top: 1px solid var(--linha); }
+  .campo-inst:first-child { border-top: 0; padding-top: 0; }
+  .campo-inst:last-child { padding-bottom: 0; }
+  .campo-inst .topo-campo { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .campo-inst .topo-campo label, .campo-inst .topo-campo .rot { font-size: 13.5px; font-weight: 600; }
+  .campo-inst p { font-size: 13px; color: var(--apoio); }
+  .campo-inst p.agora { font-size: 12px; color: var(--fraco); }
+  .campo-inst .linha-botao { flex-wrap: wrap; }
+  .campo-inst .linha-botao input { min-width: 160px; }
+  .campo-inst .porque { justify-self: start; font-size: 12px; font-weight: 600; color: var(--apoio); text-decoration: underline; text-underline-offset: 2px; padding: 4px 0; background: none; border: 0; cursor: pointer; text-align: left; }
+  .origem { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--apoio); }
+  .origem i { width: 6px; height: 6px; border-radius: 50%; background: var(--fraco); display: block; }
+  .origem.ausente { color: var(--aviso); } .origem.ausente i { background: var(--aviso); }
+  .origem.banco { color: var(--ok); } .origem.banco i { background: var(--ok); }
+
+  .cartao .corpo > p.resumo { color: var(--apoio); font-size: 13.5px; }
+  .cartao .corpo > p.ponteiro { font-size: 13.5px; margin-top: 8px; }
+  .cartao .corpo > .campos { margin-top: 14px; }
+</style>
+</head>
+<body data-rota="/admin/configuracao">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin da plataforma</div>
+          <h1>Configuração da instalação</h1>
+          <p>O que este servidor precisa saber para funcionar. O que dá para trocar aqui, você troca e vale na hora — sem mexer no servidor.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <div class="cartao">
+          <div class="corpo">
+            <h2>E-mail</h2>
+            <p class="resumo">Sem isto o sistema não envia convite para a equipe nem recuperação de senha.</p>
+            <p class="ponteiro"><a href="#" class="link">O serviço de envio de e-mail — próprio ou externo — fica em E-mail →</a></p>
+            <div class="campos">
+          <div class="campo-inst campo">
+            <div class="topo-campo"><label for="config-SUPPORT_EMAIL">E-mail de suporte</label><span class="origem banco"><i></i>Definido aqui nesta tela</span></div>
+            <p>O endereço que o sistema mostra a quem usa, quando alguém precisa de ajuda.</p>
+            <p class="agora">Agora: <span class="mono">suporte@arvisx.com.br</span></p>
+            <div class="linha-botao">
+              <input type="text" id="config-SUPPORT_EMAIL" autocomplete="off" placeholder="Escreva para substituir">
+              <button class="btn secundario" disabled>Salvar</button>
+              <button class="btn fantasma">Voltar ao padrão</button>
+            </div>
+          </div>
+            </div>
+          </div>
+        </div>
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Segurança e privacidade</h2>
+            <p class="resumo">Contatos obrigatórios e as chaves que protegem o que está guardado.</p>
+            <div class="campos">
+          <div class="campo-inst campo">
+            <div class="topo-campo"><label for="config-LGPD_DPO_EMAIL">E-mail do encarregado de dados (DPO)</label><span class="origem ambiente"><i></i>Vem do arquivo de instalação do servidor</span></div>
+            <p>O contato obrigatório pela LGPD para pedidos de privacidade. Aparece nos documentos legais.</p>
+            <p class="agora">Agora: <span class="mono">dpo@arvisx.com.br</span></p>
+            <div class="linha-botao">
+              <input type="text" id="config-LGPD_DPO_EMAIL" autocomplete="off" placeholder="Escreva para substituir">
+              <button class="btn secundario" disabled>Salvar</button>
+            </div>
+          </div>
+          <div class="campo-inst">
+            <div class="topo-campo"><span class="rot">Senha das tarefas automáticas</span><span class="origem ambiente"><i></i>Vem do arquivo de instalação do servidor</span></div>
+            <p>Protege as rotinas que rodam sozinhas — cobrança de follow-up, limpeza, verificações.</p>
+            <p class="agora">Guardado, terminando em <span class="mono">••••9f3a</span></p>
+            <button type="button" class="porque" aria-expanded="false">Tem um par em outro programa do servidor · por quê?</button>
+          </div>
+          <div class="campo-inst">
+            <div class="topo-campo"><span class="rot">Chave que tranca as credenciais</span><span class="origem ambiente"><i></i>Vem do arquivo de instalação do servidor</span></div>
+            <p>É com ela que o sistema embaralha as senhas guardadas — inclusive as que você digita nesta tela.</p>
+            <p class="agora">Guardado, terminando em <span class="mono">••••c71e</span></p>
+            <button type="button" class="porque" aria-expanded="false">É a chave que protege as outras · por quê?</button>
+          </div>
+          <div class="campo-inst">
+            <div class="topo-campo"><span class="rot">Chave que assina os documentos de privacidade</span><span class="origem ambiente"><i></i>Vem do arquivo de instalação do servidor</span></div>
+            <p>Assina digitalmente os relatórios de dados que a LGPD obriga a entregar.</p>
+            <p class="agora">Guardado, terminando em <span class="mono">••••40bd</span></p>
+            <button type="button" class="porque" aria-expanded="false">É a chave que protege as outras · por quê?</button>
+          </div>
+            </div>
+          </div>
+        </div>
+        <div class="cartao">
+          <div class="corpo">
+            <h2>WhatsApp</h2>
+            <p class="resumo">As senhas que ligam o sistema ao programa que conecta o WhatsApp.</p>
+            <div class="campos">
+          <div class="campo-inst">
+            <div class="topo-campo"><span class="rot">Senha de acesso ao WhatsApp</span><span class="origem ambiente"><i></i>Vem do arquivo de instalação do servidor</span></div>
+            <p>A senha que o sistema usa para falar com o programa que conecta o WhatsApp.</p>
+            <p class="agora">Guardado, terminando em <span class="mono">••••a28c</span></p>
+            <button type="button" class="porque" aria-expanded="false">Tem um par em outro programa do servidor · por quê?</button>
+          </div>
+          <div class="campo-inst">
+            <div class="topo-campo"><span class="rot">Senha de conferência das mensagens recebidas</span><span class="origem ambiente"><i></i>Vem do arquivo de instalação do servidor</span></div>
+            <p>Garante que as mensagens que chegam vieram mesmo do WhatsApp, e não de um impostor.</p>
+            <p class="agora">Guardado, terminando em <span class="mono">••••5d10</span></p>
+            <button type="button" class="porque" aria-expanded="false">Tem um par em outro programa do servidor · por quê?</button>
+          </div>
+          <div class="campo-inst campo">
+            <div class="topo-campo"><label for="config-ZERNIO_PLATFORM_API_KEY">Chave da conta da instalação no provedor parceiro</label><span class="origem ausente"><i></i>Não configurado</span></div>
+            <p>Com ela, cada empresa conecta o número oficial do WhatsApp com um clique, sem ter conta no provedor. Os números ficam na conta da instalação e entram na fatura dela.</p>
+            <div class="linha-botao">
+              <input type="password" id="config-ZERNIO_PLATFORM_API_KEY" autocomplete="off" placeholder="Escreva para configurar">
+              <button class="btn secundario" disabled>Salvar</button>
+            </div>
+          </div>
+            </div>
+          </div>
+        </div>
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Banco de dados</h2>
+            <p class="resumo">Onde ficam todos os seus dados.</p>
+            <div class="campos">
+          <div class="campo-inst">
+            <div class="topo-campo"><span class="rot">Endereço do banco de dados</span><span class="origem ambiente"><i></i>Vem do arquivo de instalação do servidor</span></div>
+            <p>Onde ficam todos os seus dados.</p>
+            <button type="button" class="porque" aria-expanded="false">Necessária para o sistema ligar · por quê?</button>
+          </div>
+          <div class="campo-inst">
+            <div class="topo-campo"><span class="rot">Senha administrativa do banco</span><span class="origem ambiente"><i></i>Vem do arquivo de instalação do servidor</span></div>
+            <p>A credencial que dá ao sistema acesso total aos dados.</p>
+            <p class="agora">Guardado, terminando em <span class="mono">••••e6b2</span></p>
+            <button type="button" class="porque" aria-expanded="false">Necessária para o sistema ligar · por quê?</button>
+          </div>
+            </div>
+          </div>
+        </div>
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Fila de tarefas</h2>
+            <p class="resumo">Controla o ritmo dos envios.</p>
+            <div class="campos">
+          <div class="campo-inst">
+            <div class="topo-campo"><span class="rot">Senha da fila de tarefas</span><span class="origem ambiente"><i></i>Vem do arquivo de instalação do servidor</span></div>
+            <p>Protege a fila que controla o ritmo dos envios e evita bloqueio do seu número.</p>
+            <p class="agora">Guardado, terminando em <span class="mono">••••71fa</span></p>
+            <button type="button" class="porque" aria-expanded="false">Tem um par em outro programa do servidor · por quê?</button>
+          </div>
+            </div>
+          </div>
+        </div>
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Inteligência artificial</h2>
+            <p class="resumo">Como o atendimento automático opera.</p>
+            <p class="ponteiro"><a href="#" class="link">A IA com que as empresas novas nascem se escolhe em Recursos opcionais →</a></p>
+            <div class="campos">
+          <div class="campo-inst">
+            <div class="topo-campo"><span class="rot">Modo de distribuição das conversas da IA</span><span class="origem ambiente"><i></i>Vem do arquivo de instalação do servidor</span></div>
+            <p>Decide como o programa de segundo plano pega as conversas para responder.</p>
+            <button type="button" class="porque" aria-expanded="false">Lida por outro programa ao ligar · por quê?</button>
+          </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell-admin.js"></script>
+</body>
+</html>

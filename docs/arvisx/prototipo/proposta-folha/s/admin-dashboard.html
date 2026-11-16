@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="10">
+<meta name="rota" content="/admin/dashboard">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+  .kpis { display: grid; gap: 16px; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-bottom: 24px; }
+  .kpis .indicador { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .kpis .indicador > i { font-size: 18px; color: var(--fraco); flex: none; }
+  .kpis .indicador .delta { line-height: 1.4; }
+  .kpis .atencao .valor, .kpis .atencao > i { color: var(--aviso); }
+  .kpis .perigo .valor, .kpis .perigo > i { color: var(--erro); }
+  .alertas li { display: flex; align-items: flex-start; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--linha); }
+  .alertas li:last-child { border-bottom: 0; }
+  .alertas li > i { font-size: 16px; color: var(--apoio); margin-top: 2px; flex: none; }
+  .alertas .l { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .alertas .l b { font-weight: 600; }
+  .alertas p { color: var(--apoio); font-size: 12px; margin-top: 2px; }
+  @media (max-width: 1100px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 860px) { .kpis { grid-template-columns: 1fr; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/admin/dashboard" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin Plataforma</div>
+          <h1>Dashboard</h1>
+          <p>Visão cross-tenant — atualiza a cada 30 segundos.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="kpis">
+        <div class="cartao indicador">
+          <div><span class="rotulo">Tenants Ativos</span><div class="valor">4</div><div class="delta">organizações ativas</div></div>
+          <i class="ph-light ph-buildings"></i>
+        </div>
+        <div class="cartao indicador atencao">
+          <div><span class="rotulo">Pendentes &gt;10min</span><div class="valor">3</div><div class="delta">conversas sem resposta</div></div>
+          <i class="ph-light ph-clock"></i>
+        </div>
+        <div class="cartao indicador atencao">
+          <div><span class="rotulo">Alertas WAHA</span><div class="valor">1</div><div class="delta">sessões com problema</div></div>
+          <i class="ph-light ph-wifi-slash"></i>
+        </div>
+        <div class="cartao indicador perigo">
+          <div><span class="rotulo">LGPD em Risco</span><div class="valor">2</div><div class="delta">requisições próximas do prazo</div></div>
+          <i class="ph-light ph-scales"></i>
+        </div>
+        <div class="cartao indicador atencao">
+          <div><span class="rotulo">Budgets IA</span><div class="valor">1</div><div class="delta">tenants com gasto acumulado ≥80% do teto</div></div>
+          <i class="ph-light ph-chart-bar"></i>
+        </div>
+      </div>
+
+      <div class="cartao">
+        <div class="cab">
+          <h2 style="display:flex;align-items:center;gap:8px"><i class="ph-light ph-warning" style="color:var(--erro);font-size: 16px"></i>Alertas ativos</h2>
+          <span class="apoio"><span class="mono">5</span> alertas</span>
+        </div>
+        <ul class="alertas">
+          <li><i class="ph-light ph-wifi-slash"></i><div><div class="l"><b>Odonto Sul</b><span class="tag erro">Crítico</span><span class="tag">WAHA</span></div><p>Sessão WAHA com suspeita de banimento</p></div></li>
+          <li><i class="ph-light ph-scales"></i><div><div class="l"><b>Bella Pele</b><span class="tag erro">Crítico</span><span class="tag">LGPD</span></div><p>Requisição LGPD vencida em 02/11/2026</p></div></li>
+          <li><i class="ph-light ph-scales"></i><div><div class="l"><b>Sorriso &amp; Cia</b><span class="tag contorno">Atenção</span><span class="tag">LGPD</span></div><p>Prazo LGPD expira em 04/11/2026</p></div></li>
+          <li><i class="ph-light ph-chart-bar"></i><div><div class="l"><b>Clínica Vitalis</b><span class="tag contorno">Atenção</span><span class="tag">IA Budget</span></div><p>Budget IA 86% do teto (gasto acumulado)</p></div></li>
+          <li><i class="ph-light ph-clock"></i><div><div class="l"><b>Sorriso &amp; Cia</b><span class="tag contorno">Atenção</span><span class="tag">Overflow</span></div><p>3 conversas pendentes sem atendimento</p></div></li>
+        </ul>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell-admin.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

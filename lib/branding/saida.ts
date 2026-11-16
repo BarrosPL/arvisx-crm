@@ -101,21 +101,30 @@ const ACCENT_DO_PRODUTO = stop(
  * disto cada template tinha a própria paleta cinza inventada (`#111827`,
  * `#6b7280`, `#1c1917`, `#57534e`, `#78716c` — cinco tons de dois sistemas
  * diferentes em três arquivos), e o corpo do e-mail não parecia o produto.
- * Os índices são os mesmos que `app/globals.css` usa para texto e texto suave.
+ *
+ * ── CONGELADOS no redesign "Folha" (15/11/2026) ──────────────────────────────
+ *
+ * Até o redesign estes quatro eram LIDOS da régua (`claro.neutros`, graus 9, 6,
+ * 0 e 2). O redesign trocou a régua do app para a paleta Petróleo, e a decisão
+ * do dono é que os e-mails NÃO fazem parte dele: saem idênticos aos de antes.
+ * Como a leitura da régua arrastaria a paleta nova para todo e-mail, os hex de
+ * antes ficam escritos aqui. Quem cobra são os fixtures byte a byte
+ * (`tests/unit/convite-email-html-preservado.test.ts`,
+ * `tests/unit/lgpd-texto-segue-o-pais.test.tsx`). Mudar a cara do e-mail é
+ * decisão escrita: troca-se aqui e regrava-se o fixture.
  */
 export const NEUTROS_DE_SAIDA = {
-  /** Corpo do texto. */
-  texto: stop(REGUA_DO_PRODUTO.claro.neutros, 9),
+  /** Corpo do texto. Era o grau 9 dos neutros claros de antes do redesign. */
+  texto: "#0f131a",
   /**
-   * Rodapé, legenda, aviso — o que não é a mensagem principal. Grau 6
-   * (`#5b6372`), o mesmo `--color-text-muted` do `app/globals.css`: o grau 5
-   * dava 3,2:1 sobre branco, abaixo do mínimo de leitura.
+   * Rodapé, legenda, aviso — o que não é a mensagem principal. Era o grau 6:
+   * o grau 5 dava 3,2:1 sobre branco, abaixo do mínimo de leitura.
    */
-  suave: stop(REGUA_DO_PRODUTO.claro.neutros, 6),
-  /** Fundo da página do e-mail. */
-  fundo: stop(REGUA_DO_PRODUTO.claro.neutros, 0),
-  /** Régua e borda. */
-  linha: stop(REGUA_DO_PRODUTO.claro.neutros, 2),
+  suave: "#5b6372",
+  /** Fundo da página do e-mail. Era o grau 0. */
+  fundo: "#f7f6f2",
+  /** Régua e borda. Era o grau 2. */
+  linha: "#e4e1d8",
 } as const;
 
 /** O que sobra quando nada pôde ser lido. Uma instalação funcionando. */

@@ -82,8 +82,15 @@ describe("quem desconta as faixas", () => {
     const casca = readFileSync("app/app/_components/AppShell.tsx", "utf8");
     const inbox = readFileSync("components/inbox/InboxLayout.tsx", "utf8");
     // As DUAS caixas da casca: a de fora e a coluna do conteúdo.
-    expect(casca.split("min-h-[calc(100dvh-var(--faixas-de-cima,0px))]").length - 1).toBe(2);
-    expect(inbox).toMatch(/h-\[calc\(100dvh-var\(--faixas-de-cima,0px\)-3\.5rem/);
+    // A coluna do conteúdo é a "folha" (design Folha): além das faixas, ela
+    // desconta `--folha-vao`, o recuo e o fio da folha. A grade do Inbox também.
+    expect(casca.split("min-h-[calc(100dvh-var(--faixas-de-cima,0px))]").length - 1).toBe(1);
+    expect(
+      casca.split("min-h-[calc(100dvh-var(--faixas-de-cima,0px)-var(--folha-vao,0px))]").length - 1,
+    ).toBe(1);
+    expect(inbox).toMatch(
+      /h-\[calc\(100dvh-var\(--faixas-de-cima,0px\)-var\(--folha-vao,0px\)-3\.5rem/,
+    );
   });
 
   it("a barra de cima e a lateral grudam ABAIXO das faixas, sem passar por baixo delas", () => {
@@ -93,7 +100,7 @@ describe("quem desconta as faixas", () => {
     // documento medir tela + faixa no computador.
     const topo = readFileSync("components/shell/TopBar.tsx", "utf8");
     const lateral = readFileSync("components/shell/Sidebar.tsx", "utf8");
-    expect(topo).toMatch(/<header className="sticky top-\[var\(--faixas-de-cima,0px\)\] /);
+    expect(topo).toMatch(/<header className="folha-topo sticky top-\[var\(--faixas-de-cima,0px\)\] /);
     expect(lateral).toMatch(
       /"sticky top-\[var\(--faixas-de-cima,0px\)\] z-30 flex h-\[calc\(100dvh-var\(--faixas-de-cima,0px\)\)\] /,
     );

@@ -29,8 +29,8 @@ export function ContadorDaFila({ compacto }: { compacto: boolean }) {
       aria-label={rotulo}
       title={rotulo}
       className={cn(
-        "rounded-full bg-info font-mono text-[10px] leading-none font-semibold text-white tabular-nums",
-        compacto ? "absolute top-1 right-1 h-2 w-2" : "ml-auto px-1.5 py-0.5",
+        "text-[11px] leading-[18px] font-semibold tabular-nums",
+        compacto ? "absolute top-1 right-1 h-2 w-2 rounded-full bg-info" : "ml-auto h-[18px] min-w-[18px] rounded-full px-[5px] text-center bg-info-bg text-info-fg",
       )}
     >
       {compacto ? null : esperando}

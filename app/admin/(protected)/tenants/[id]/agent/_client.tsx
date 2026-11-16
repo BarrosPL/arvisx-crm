@@ -53,7 +53,7 @@ export function TenantAgentClient({ id }: TenantAgentClientProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
+        <h2 className="text-sm font-semibold text-muted-foreground">
           {t("Agente")}
         </h2>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -83,11 +83,11 @@ export function TenantAgentClient({ id }: TenantAgentClientProps) {
 
               <dl className="mt-3 grid grid-cols-1 gap-3 text-xs sm:grid-cols-3">
                 <div>
-                  <dt className="tracking-wider text-muted-foreground uppercase">{t("Tipo")}</dt>
+                  <dt className="text-muted-foreground">{t("Tipo")}</dt>
                   <dd className="mt-1">{agente.kind}</dd>
                 </div>
                 <div>
-                  <dt className="tracking-wider text-muted-foreground uppercase">
+                  <dt className="text-muted-foreground">
                     {t("Versão publicada")}
                   </dt>
                   <dd className="mt-1">
@@ -97,7 +97,7 @@ export function TenantAgentClient({ id }: TenantAgentClientProps) {
                   </dd>
                 </div>
                 <div>
-                  <dt className="tracking-wider text-muted-foreground uppercase">
+                  <dt className="text-muted-foreground">
                     {t("Publicado em")}
                   </dt>
                   <dd className="mt-1">

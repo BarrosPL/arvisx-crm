@@ -120,7 +120,7 @@ export function TimelineView({ contactId, types }: Props) {
         const date = diaLocalDaChave(key);
         return (
           <section key={key} className="space-y-2">
-            <h3 className="sticky top-0 z-10 bg-background py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <h3 className="sticky top-0 z-10 bg-background py-1 text-xs font-semibold text-muted-foreground">
               {dayHeader(date, t, localeDaData)}
             </h3>
             <ul className="space-y-2">

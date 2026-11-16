@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guia de uso — Clínicas</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="540">
+<meta name="rota" content="/app/ajuda/treinamento/historias/clinicas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+  .guia-casca { display: flex; align-items: flex-start; gap: 24px; min-width: 0; }
+  .guia-menu { width: 288px; flex: none; position: sticky; top: 0; max-height: calc(100vh - 96px); overflow-y: auto; }
+  .guia-menu .abre { display: none; width: 100%; min-height: 44px; align-items: center; justify-content: space-between; padding: 0 12px; border: 1px solid var(--linha); border-radius: var(--r); background: var(--painel); font-weight: 600; font-size: 13px; }
+  .guia-menu nav { display: flex; flex-direction: column; gap: 20px; padding: 12px; border: 1px solid var(--linha); border-radius: var(--r); background: var(--painel); }
+  .guia-menu h2 { font: 600 11px/1 var(--mono); letter-spacing: 0; text-transform: none; color: var(--apoio); padding: 0 10px; margin-bottom: 6px; }
+  .guia-menu a { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; padding: 6px 10px; border-radius: var(--r-sm); font-size: 13px; }
+  .guia-menu a:hover { background: var(--painel-2); }
+  .guia-menu a > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .guia-menu a small { flex: none; font-size: 12px; color: var(--apoio); }
+  .guia-menu a[aria-current="page"] { background: var(--tinta-suave); color: var(--texto); font-weight: 600; }
+  .guia-corpo { flex: 1; min-width: 0; }
+  @media (max-width: 860px) {
+    .guia-casca { flex-direction: column; align-items: stretch; gap: 16px; }
+    .guia-menu { width: auto; position: static; max-height: none; overflow: visible; }
+    .guia-menu .abre { display: flex; }
+    .guia-menu nav { display: none; }
+  }
+  .guia-cab { display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; border-bottom: 1px solid var(--linha); margin-bottom: 32px; }
+  .guia-cab .sobre { font: 600 11px/1 var(--mono); letter-spacing: 0; text-transform: none; color: var(--ouro-escuro); }
+  .guia-cab h1 { font-family: var(--display); font-stretch: 112%; font-weight: 600; letter-spacing: -.03em; font-size: 24px; line-height: 1.1; color: var(--navy); }
+  .guia-cab > p { color: var(--apoio); max-width: 72ch; }
+  .bloco-passo { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
+  .bloco-passo + .bloco-passo { margin-top: 24px; }
+  .bloco-passo h3 { display: flex; align-items: baseline; gap: 8px; font-size: 16px; font-weight: 600; }
+  .bloco-passo h3 .n { flex: none; font-size: 13px; color: var(--ouro-escuro); }
+  .foto { position: relative; margin: 0; width: 100%; aspect-ratio: 1440 / 900; overflow: hidden; border: 1px solid var(--linha); border-radius: var(--r); background: var(--painel-2); }
+  .foto img { display: block; width: 100%; height: auto; }
+  .foto svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .selo { display: flex; align-items: center; justify-content: center; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--ouro); color: var(--navy); font: 600 12px/1 var(--mono); }
+  .foto .selo { position: absolute; transform: translate(-50%, -50%); width: 28px; height: 28px; font-size: 12px; box-shadow: 0 0 0 2px #fff; }
+  .destaques { display: grid; gap: 6px; font-size: 13px; }
+  .destaques li { display: flex; align-items: flex-start; gap: 8px; }
+  @media (max-width: 860px) { .bloco-passo { padding: 16px; } .foto .selo { width: 20px; height: 20px; font-size: 12px; } }
+  .historia { display: flex; flex-direction: column; gap: 12px; padding: 20px; margin-bottom: 20px; }
+  .historia h2 { font-family: var(--display); font-stretch: 110%; font-weight: 600; letter-spacing: -.02em; font-size: 18px; color: var(--navy); }
+  .dados { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 24px; font-size: 13px; }
+  .dados dt { font-weight: 600; }
+  .historia .dados dd { color: var(--apoio); }
+  .historia .obs { padding: 8px 12px; border-radius: var(--r-sm); background: var(--painel-2); font-size: 12px; color: var(--apoio); }
+  .montar { display: flex; flex-direction: column; gap: 8px; padding: 20px; margin-top: 20px; border: 1px dashed var(--linha-forte); border-radius: var(--r-lg); }
+  .montar h3 { font-size: 13px; font-weight: 600; }
+  .montar ul { display: grid; gap: 8px; font-size: 13px; }
+  .montar li { display: flex; flex-direction: column; }
+  .montar li span { color: var(--apoio); }
+  @media (max-width: 860px) { .historia, .montar { padding: 16px; } .dados { grid-template-columns: minmax(0, 1fr); gap: 2px; } .dados dd { margin-bottom: 8px; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/app/ajuda/treinamento" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="guia-casca">
+        <aside class="guia-menu">
+          <button type="button" class="abre" aria-expanded="false"><span>Módulos e histórias</span><span aria-hidden="true">▼</span></button>
+          <nav aria-label="Módulos do guia de uso">
+            <div><a href="#"><span>Início e busca</span></a></div>
+            <div>
+              <h2>Atendimento</h2>
+              <ul>
+                <li><a href="#"><span>Inbox</span><small>9 lições</small></a></li>
+                <li><a href="#"><span>Radar</span><small>5 lições</small></a></li>
+                <li><a href="#"><span>Agenda</span><small>7 lições</small></a></li>
+                <li><a href="#"><span>Respostas rápidas</span><small>5 lições</small></a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>CRM</h2>
+              <ul>
+                <li><a href="#"><span>Prospecção</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Funis</span><small>7 lições</small></a></li>
+                <li><a href="#"><span>Campanhas</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Contatos</span><small>7 lições</small></a></li>
+                <li><a href="#"><span>Empresas</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Pessoas</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Tarefas</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Planos de tarefa</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Chamadas</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Produtos</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Importações</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Propostas do dia a dia</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Comandas</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Etapas do funil</span><small>4 lições</small></a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>Agente de IA</h2>
+              <ul>
+                <li><a href="#"><span>Agentes</span><small>7 lições</small></a></li>
+                <li><a href="#"><span>Follow-ups</span><small>7 lições</small></a></li>
+                <li><a href="#"><span>Fluxos de atendimento</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Roteadores</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Credenciais</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Provedores</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Conhecimento</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Memória</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Skills</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Casos</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Alertas</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Aviso no WhatsApp</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Propostas da IA</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Execuções</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Uso e orçamento</span><small>3 lições</small></a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>Canais</h2>
+              <ul>
+                <li><a href="#"><span>Conexões</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Webhooks</span><small>6 lições</small></a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>Análise</h2>
+              <ul>
+                <li><a href="#"><span>Desempenho</span><small>7 lições</small></a></li>
+                <li><a href="#"><span>Meta Ads</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Atividades</span><small>4 lições</small></a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>Configurações</h2>
+              <ul>
+                <li><a href="#"><span>Tipos de agendamento</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Aviso de agendamento</span><small>5 lições</small></a></li>
+                <li><a href="#"><span>Propostas</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Modelos de proposta</span><small>5 lições</small></a></li>
+                <li><a href="#"><span>Financeiro</span><small>5 lições</small></a></li>
+                <li><a href="#"><span>Meta de vendas</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Perfil</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Segurança</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Notificações</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>App no celular</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Equipe</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Distribuição de atendimento</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Automações</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Tags</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Recursos opcionais</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Organização</span><small>5 lições</small></a></li>
+                <li><a href="#"><span>Conversões</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Meta Ads (conexão)</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>LGPD</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>API Tokens</span><small>3 lições</small></a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>Histórias por nicho</h2>
+              <ul>
+                <li><a href="#"><span>Advocacia</span><small>3 histórias</small></a></li>
+                <li><a href="#" aria-current="page"><span>Clínicas</span><small>3 histórias</small></a></li>
+                <li><a href="#"><span>Consórcio</span><small>3 histórias</small></a></li>
+                <li><a href="#"><span>Contabilidade</span><small>2 histórias</small></a></li>
+                <li><a href="#"><span>E-commerce</span><small>2 histórias</small></a></li>
+                <li><a href="#"><span>Escolas e cursos</span><small>3 histórias</small></a></li>
+                <li><a href="#"><span>Imobiliárias</span><small>3 histórias</small></a></li>
+                <li><a href="#"><span>Infoprodutos</span><small>3 histórias</small></a></li>
+                <li><a href="#"><span>Seguros</span><small>2 histórias</small></a></li>
+                <li><a href="#"><span>Oficinas e assistência técnica</span><small>2 histórias</small></a></li>
+              </ul>
+            </div>
+          </nav>
+        </aside>
+        <div class="guia-corpo">
+          <article>
+            <header class="guia-cab">
+              <p class="sobre">Histórias por nicho</p>
+              <h1>Clínicas</h1>
+              <p>Recepção, horários e continuidade do cuidado com decisões clínicas reservadas aos profissionais.</p>
+            </header>
+
+            <section>
+              <div class="cartao historia">
+                <h2>Da pergunta ao horário combinado</h2>
+                <dl class="dados">
+                  <dt>Empresa</dt><dd>Clínica Bem Viver (fictícia)</dd>
+                  <dt>Contexto</dt><dd>Marina Exemplo pede avaliação postural em 27 de outubro de 2026, às 9h30.</dd>
+                  <dt>Resultado</dt><dd>Avaliação postural registrada e resposta de confirmação.</dd>
+                </dl>
+                <p class="obs">Telas reais com estados reconstituídos. A sequência não comprova a execução do motor de IA; envio externo simulado. As fotos desta sequência são reconstituições com dados fictícios, não a gravação da execução.</p>
+              </div>
+
+              <ol>
+                <li class="cartao bloco-passo">
+                  <h3><span class="n">1. Chegada</span><span>Uma primeira consulta</span></h3>
+                  <dl class="dados">
+                    <dt>O cliente</dt><dd>Marina Exemplo pergunta se pode marcar uma consulta inicial.</dd>
+                    <dt>A operação</dt><dd>O roteiro começa com a recepção identificando o serviço desejado, sem pedir um relato clínico detalhado no chat.</dd>
+                    <dt>O ganho</dt><dd>A conversa começa pelo que é necessário para organizar a visita.</dd>
+                  </dl>
+            <figure class="foto">
+              <img src="../../../../../public/ajuda-curso/historias/capturas/demo-clinicas-primeira-consulta--historia--chegada.webp" alt="Uma primeira consulta" width="1440" height="900" loading="lazy" decoding="async" style="width:100%;height:auto">
+              <svg viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
+                <defs><mask id="veu-7"><rect width="1440" height="900" fill="#fff"/><rect x="530" y="74" width="596" height="808" rx="8" fill="#000"/></mask></defs>
+                <rect width="1440" height="900" fill="rgba(15, 19, 26, 0.38)" mask="url(#veu-7)"/>
+                <rect x="530" y="74" width="596" height="808" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/>
+                
+              </svg>
+              <span class="selo" aria-hidden="true" style="left:34.861%;top:53.111%">1</span>
+            </figure>
+            <ol class="destaques" aria-label="Destaques da foto">
+              <li><span class="selo" aria-hidden="true">1</span><span>Uma primeira consulta</span></li>
+            </ol>
+                </li>
+                <li class="cartao bloco-passo">
+                  <h3><span class="n">2. Qualificação</span><span>Disponibilidade compatível</span></h3>
+                  <dl class="dados">
+                    <dt>O cliente</dt><dd>Marina solicita 27 de outubro às 9h30, se houver disponibilidade.</dd>
+                    <dt>A operação</dt><dd>No roteiro, o agente consulta a disponibilidade antes de marcar. A foto reconstitui a leitura do compromisso na agenda local.</dd>
+                    <dt>O ganho</dt><dd>Preferência e agenda são consideradas juntas.</dd>
+                  </dl>
+            <figure class="foto">
+              <img src="../../../../../public/ajuda-curso/historias/capturas/demo-clinicas-primeira-consulta--historia--qualificacao.webp" alt="Disponibilidade compatível" width="1440" height="900" loading="lazy" decoding="async" style="width:100%;height:auto">
+              <svg viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
+                <defs><mask id="veu-8"><rect width="1440" height="900" fill="#fff"/><rect x="283" y="335" width="1114" height="68.5" rx="8" fill="#000"/></mask></defs>
+                <rect width="1440" height="900" fill="rgba(15, 19, 26, 0.38)" mask="url(#veu-8)"/>
+                <rect x="283" y="335" width="1114" height="68.5" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/>
+                
+              </svg>
+              <span class="selo" aria-hidden="true" style="left:17.708%;top:41.028%">1</span>
+            </figure>
+            <ol class="destaques" aria-label="Destaques da foto">
+              <li><span class="selo" aria-hidden="true">1</span><span>Disponibilidade compatível</span></li>
+            </ol>
+                </li>
+                <li class="cartao bloco-passo">
+                  <h3><span class="n">3. Ação</span><span>Escolha explícita</span></h3>
+                  <dl class="dados">
+                    <dt>O cliente</dt><dd>Marina autoriza a marcação para o horário pedido, se estiver livre.</dd>
+                    <dt>A operação</dt><dd>No roteiro, a ferramenta de agenda grava o compromisso. A foto reconstitui seus detalhes com dados fictícios.</dd>
+                    <dt>O ganho</dt><dd>Escolher um horário não se confunde com garantir uma vaga sem registro.</dd>
+                  </dl>
+            <figure class="foto">
+              <img src="../../../../../public/ajuda-curso/historias/capturas/demo-clinicas-primeira-consulta--historia--acao.webp" alt="Escolha explícita" width="1440" height="900" loading="lazy" decoding="async" style="width:100%;height:auto">
+              <svg viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
+                <defs><mask id="veu-9"><rect width="1440" height="900" fill="#fff"/><rect x="1050" y="-6" width="396" height="912" rx="8" fill="#000"/></mask></defs>
+                <rect width="1440" height="900" fill="rgba(15, 19, 26, 0.38)" mask="url(#veu-9)"/>
+                <rect x="1050" y="-6" width="396" height="912" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/>
+                
+              </svg>
+              <span class="selo" aria-hidden="true" style="left:70.972%;top:50.000%">1</span>
+            </figure>
+            <ol class="destaques" aria-label="Destaques da foto">
+              <li><span class="selo" aria-hidden="true">1</span><span>Escolha explícita</span></li>
+            </ol>
+                </li>
+                <li class="cartao bloco-passo">
+                  <h3><span class="n">4. Continuidade</span><span>A recepção acompanha</span></h3>
+                  <dl class="dados">
+                    <dt>O cliente</dt><dd>Marina Exemplo quer saber se precisa de outra confirmação.</dd>
+                    <dt>A operação</dt><dd>A recepção confere o compromisso na lista e esclarece a situação registrada; orientações clínicas ficam com o profissional.</dd>
+                    <dt>O ganho</dt><dd>A equipe consegue continuar a partir do compromisso, sem refazer a conversa.</dd>
+                  </dl>
+            <figure class="foto">
+              <img src="../../../../../public/ajuda-curso/historias/capturas/demo-clinicas-primeira-consulta--historia--continuidade.webp" alt="A recepção acompanha" width="1440" height="900" loading="lazy" decoding="async" style="width:100%;height:auto">
+              <svg viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
+                <defs><mask id="veu-10"><rect width="1440" height="900" fill="#fff"/><rect x="283" y="565" width="1114" height="69.5" rx="8" fill="#000"/></mask></defs>
+                <rect width="1440" height="900" fill="rgba(15, 19, 26, 0.38)" mask="url(#veu-10)"/>
+                <rect x="283" y="565" width="1114" height="69.5" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/>
+                
+              </svg>
+              <span class="selo" aria-hidden="true" style="left:17.708%;top:66.639%">1</span>
+            </figure>
+            <ol class="destaques" aria-label="Destaques da foto">
+              <li><span class="selo" aria-hidden="true">1</span><span>A recepção acompanha</span></li>
+            </ol>
+                </li>
+              </ol>
+
+              <div class="montar">
+                <h3>Para montar isso no seu CRM</h3>
+                <ul>
+                  <li><a href="#" class="link">Agentes › Instruções, capacidades e conhecimento</a><span>Configurar e publicar somente as capacidades necessárias ao agente do roteiro.</span></li>
+                  <li><a href="#" class="link">Inbox › Conhecendo a Inbox</a><span>Reconhecer a conversa e a ficha do contato.</span></li>
+                  <li><a href="#" class="link">Agenda › A agenda de cada pessoa da equipe</a><span>Conferir a agenda de um profissional.</span></li>
+                  <li><a href="#" class="link">Agenda › Marcar um novo agendamento</a><span>Registrar o compromisso com o contato e quem atende.</span></li>
+                  <li><a href="#" class="link">Agenda › A lista de compromissos</a><span>Acompanhar a situação do compromisso na lista.</span></li>
+                </ul>
+              </div>
+            </section>
+          </article>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

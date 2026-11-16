@@ -86,7 +86,13 @@ export default async function PublicLayout({ children }: { children: React.React
         data-theme="light"
         className="grid min-h-screen grid-cols-1 bg-background text-text [color-scheme:light] lg:grid-cols-[1.1fr_1fr]"
       >
-        <section className="fachada-painel relative flex flex-col justify-between gap-6 overflow-hidden bg-sidebar px-6 py-7 text-white lg:px-14 lg:py-10">
+        {/*
+          Cores FIXAS no painel (petróleo, ouro e os cinzas do texto): no design
+          "Folha" o token `sidebar` virou claro (o menu solto sobre a névoa) e
+          `cta` virou petróleo, e o painel escrito com eles ficava claro com
+          letra branca. O painel é escuro nos dois temas, como em fachada.css.
+        */}
+        <section className="fachada-painel relative flex flex-col justify-between gap-6 overflow-hidden bg-[#0f3d45] px-6 py-7 text-white lg:px-14 lg:py-10">
           <div className="relative z-[1] flex justify-start [&_img]:max-h-12">
             {marca.logoUrl || marca.logoDarkUrl ? (
               <div className="flex justify-start">
@@ -146,7 +152,7 @@ export default async function PublicLayout({ children }: { children: React.React
             ) : null}
           </div>
           <div className="relative z-[1] hidden lg:block">
-            <p className="mb-4 flex items-center gap-2 font-mono text-[10.5px] tracking-[0.18em] text-cta uppercase before:h-1.5 before:w-1.5 before:rounded-full before:bg-cta">
+            <p className="mb-4 flex items-center gap-2 font-mono text-[10.5px] tracking-[0.18em] text-[#d4af37] uppercase before:h-1.5 before:w-1.5 before:rounded-full before:bg-[#d4af37]">
               {t("O CRM da ArvisX")}
             </p>
             <p className="max-w-[14ch] font-display text-4xl leading-[1.05] font-semibold tracking-[-0.03em] text-white">
@@ -158,24 +164,24 @@ export default async function PublicLayout({ children }: { children: React.React
               </span>{" "}
               {t("atende e vende.")}
             </p>
-            <p className="mt-4 max-w-[34ch] text-[15px] text-sidebar-foreground">
+            <p className="mt-4 max-w-[34ch] text-[15px] text-[#a2abb9]">
               {t(
                 "Agentes de IA que atendem, qualificam e vendem no WhatsApp, dentro do CRM da sua empresa.",
               )}
             </p>
-            <div className="relative mt-6 h-px w-28 bg-sidebar-border after:absolute after:top-[-3px] after:left-0 after:h-[7px] after:w-[7px] after:rounded-full after:bg-cta" />
+            <div className="relative mt-6 h-px w-28 bg-[#2c6c75] after:absolute after:top-[-3px] after:left-0 after:h-[7px] after:w-[7px] after:rounded-full after:bg-[#d4af37]" />
           </div>
-          <ul className="relative z-[1] hidden gap-2.5 text-sm text-sidebar-foreground lg:grid">
+          <ul className="relative z-[1] hidden gap-2.5 text-sm text-[#a2abb9] lg:grid">
             <li className="flex items-center gap-2.5">
-              <Inbox size={18} className="text-cta" aria-hidden />
+              <Inbox size={18} className="text-[#d4af37]" aria-hidden />
               {t("Inbox com a IA e a equipe lado a lado")}
             </li>
             <li className="flex items-center gap-2.5">
-              <Kanban size={18} className="text-cta" aria-hidden />
+              <Kanban size={18} className="text-[#d4af37]" aria-hidden />
               {t("Funil, agenda e propostas no mesmo lugar")}
             </li>
             <li className="flex items-center gap-2.5">
-              <ShieldCheck size={18} className="text-cta" aria-hidden />
+              <ShieldCheck size={18} className="text-[#d4af37]" aria-hidden />
               {t("Seus dados no seu servidor, com LGPD")}
             </li>
           </ul>
@@ -242,17 +248,17 @@ export default async function PublicLayout({ children }: { children: React.React
           </div>
           <span
             aria-hidden
-            className="fa-ponto absolute top-[22%] right-[18%] hidden h-2 w-2 rounded-full bg-cta shadow-[0_0_18px_4px_rgba(212,175,55,0.35)] lg:block"
+            className="fa-ponto absolute top-[22%] right-[18%] hidden h-2 w-2 rounded-full bg-[#d4af37] shadow-[0_0_18px_4px_rgba(212,175,55,0.35)] lg:block"
           />
           <span
             aria-hidden
-            className="fa-ponto absolute right-[36%] bottom-[30%] hidden h-[5px] w-[5px] rounded-full bg-cta shadow-[0_0_18px_4px_rgba(212,175,55,0.35)] lg:block"
+            className="fa-ponto absolute right-[36%] bottom-[30%] hidden h-[5px] w-[5px] rounded-full bg-[#d4af37] shadow-[0_0_18px_4px_rgba(212,175,55,0.35)] lg:block"
           />
           <span
             aria-hidden
-            className="fa-ponto absolute top-[36%] right-[52%] hidden h-1 w-1 rounded-full bg-cta opacity-70 shadow-[0_0_18px_4px_rgba(212,175,55,0.35)] lg:block"
+            className="fa-ponto absolute top-[36%] right-[52%] hidden h-1 w-1 rounded-full bg-[#d4af37] opacity-70 shadow-[0_0_18px_4px_rgba(212,175,55,0.35)] lg:block"
           />
-          <p className="hidden font-mono text-[11px] tracking-[0.08em] text-sidebar-muted uppercase lg:block">
+          <p className="hidden font-mono text-[11px] tracking-[0.08em] text-[#8fa3a8] uppercase lg:block">
             {marca.nome}
           </p>
         </section>

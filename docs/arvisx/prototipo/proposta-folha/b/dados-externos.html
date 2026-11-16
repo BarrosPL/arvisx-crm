@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dados externos</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="810">
+<meta name="rota" content="/app/integracao-dados">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .linha-topo { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .linha-topo h2 { font-size: 13px; font-weight: 600; color: var(--apoio); }
+  .conexoes { display: grid; gap: 12px; }
+  .conexao { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px; }
+  .conexao .info { min-width: 0; display: grid; gap: 4px; }
+  .conexao .nome-linha { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .conexao .nome-linha a { font-weight: 600; }
+  .conexao .nome-linha a:hover { text-decoration: underline; text-decoration-color: var(--ouro); text-underline-offset: 3px; }
+  .conexao .endereco { color: var(--apoio); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .conexao .pequeno { font-size: 12px; }
+  .conexao .alerta { color: var(--aviso); font-size: 12px; }
+  .conexao .aviso-teste { border: 1px solid #f3d7ac; background: var(--aviso-suave); color: #7d4d0d; border-radius: var(--r-sm); padding: 8px; font-size: 12px; }
+  .conexao .botoes { display: flex; align-items: center; gap: 6px; flex: none; }
+  @media (max-width: 860px) {
+    .conexao { flex-direction: column; align-items: stretch; }
+    .conexao .endereco { white-space: normal; overflow-wrap: anywhere; }
+  }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/app/settings" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Dados e acesso</div>
+          <h1>Dados externos</h1>
+          <p>Conecte um banco de dados de outro sistema — o seu segundo CRM, um ERP, uma planilha num banco PostgreSQL ou MySQL — e o agente passa a consultá-lo em tempo real. A conexão é sempre somente leitura: nada que o agente faz altera o banco de origem.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="linha-topo">
+        <h2><span class="mono">2</span> conexões</h2>
+        <button class="btn primario p"><i class="ph-light ph-plus"></i>Nova conexão</button>
+      </div>
+
+      <div class="conexoes">
+        <div class="cartao conexao">
+          <div class="info">
+            <div class="nome-linha"><a href="#">ERP da clínica</a><span class="tag ok">Conectada</span><span class="tag contorno">PostgreSQL</span></div>
+            <p class="endereco mono">erp.clinicavitalis.example:5432/vitalis_erp · leitura_crm</p>
+            <p class="apoio pequeno"><span class="mono">4</span> tabelas liberadas</p>
+          </div>
+          <div class="botoes">
+            <a href="#" class="btn secundario p">Explorar</a>
+            <button class="btn fantasma p">Testar</button>
+            <button class="btn fantasma p icone" aria-label="Editar"><i class="ph-light ph-pencil-simple"></i></button>
+            <button class="btn fantasma p icone" aria-label="Remover"><i class="ph-light ph-trash"></i></button>
+          </div>
+        </div>
+
+        <div class="cartao conexao">
+          <div class="info">
+            <div class="nome-linha"><a href="#">Sistema de agendamento</a><span class="tag ok">Conectada</span><span class="tag contorno">MySQL</span></div>
+            <p class="endereco mono">agenda.clinicavitalis.example:3306/agendaplus · crm_leitura</p>
+            <div class="aviso-teste" role="status"><p>Este usuário lê o banco inteiro. Libere só as tabelas e views que o assistente deve ver.</p></div>
+            <p class="apoio pequeno"><span class="mono">1</span> tabela liberada</p>
+            <p class="alerta">Nas conversas, o assistente consulta este banco sem limitar ao cliente que está falando. Escolha, em Editar, a coluna que identifica o cliente.</p>
+          </div>
+          <div class="botoes">
+            <a href="#" class="btn secundario p">Explorar</a>
+            <button class="btn fantasma p">Testar</button>
+            <button class="btn fantasma p icone" aria-label="Editar"><i class="ph-light ph-pencil-simple"></i></button>
+            <button class="btn fantasma p icone" aria-label="Remover"><i class="ph-light ph-trash"></i></button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cadastro</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="260">
+<meta name="rota" content="/admin/cadastro">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .cartao .corpo > h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .cartao .corpo > p.desc { color: var(--apoio); font-size: 13px; margin-bottom: 14px; }
+  .cartao .corpo > h3 { font-size: 13px; font-weight: 600; }
+  .linha-botao { display: flex; gap: 8px; align-items: center; }
+  .linha-botao input { flex: 1; min-width: 0; }
+  .rodape-form { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .rodape-form.fim { justify-content: flex-end; }
+  .nota { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 12px; font-size: 12px; color: var(--apoio); }
+  .nota.ambar { background: var(--aviso-suave); border-color: #f3d7ac; color: #7d4d0d; }
+  .nota strong { color: var(--texto); }
+  .bloco-chave { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 14px 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .bloco-chave > div:first-child { flex: 1; min-width: 220px; display: grid; gap: 4px; }
+  .bloco-chave strong { font-size: 14px; }
+  .bloco-chave p { color: var(--apoio); font-size: 13px; }
+  .bloco-chave p b { color: var(--texto); font-weight: 600; }
+  .bloco-chave select { width: 200px; max-width: 100%; }
+
+  .pedido { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 14px 16px; }
+  .pedido > div:first-child { min-width: 0; }
+  .pedido strong { display: block; font-size: 14px; overflow: hidden; text-overflow: ellipsis; }
+  .pedido span { color: var(--apoio); font-size: 13px; overflow-wrap: anywhere; }
+  .pedido .botoes { display: flex; gap: 8px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/admin/cadastro" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin da plataforma</div>
+          <h1>Cadastro</h1>
+          <p>Quem pode criar uma conta nesta instalação.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Quem pode criar conta</h2>
+            <p class="desc">Vale para a instalação inteira, não para uma empresa só. Quem já tem conta continua entrando normalmente.</p>
+            <div class="pilha">
+              <div class="bloco-chave">
+                <div><strong>Cadastro apenas por convite</strong><p>Desligado: quem chega sem convite pode criar conta, e a empresa espera a sua aprovação.</p></div>
+                <span class="chave" role="switch" aria-checked="false" aria-label="Cadastro apenas por convite"></span>
+              </div>
+              <div class="bloco-chave">
+                <div><strong>Cadastro com aprovação</strong><p>Ligado: quem cria conta sem convite pede a empresa, e ela só é criada quando você aprova o pedido nesta tela.</p></div>
+                <span class="chave ligada" role="switch" aria-checked="true" aria-label="Cadastro com aprovação"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Pedidos aguardando aprovação</h2>
+            <p class="desc">Aprovar cria a empresa e torna quem pediu administrador dela.</p>
+            <div class="pilha" style="gap:12px">
+              <div class="pedido">
+                <div><strong>Sorriso & Cia</strong><span>marcos.lima@sorrisoecia.com.br</span></div>
+                <div class="botoes"><button class="btn secundario p">Recusar</button><button class="btn primario p">Aprovar</button></div>
+              </div>
+              <div class="pedido">
+                <div><strong>Odonto Sul</strong><span>renata.borges@odontosul.com.br</span></div>
+                <div class="botoes"><button class="btn secundario p">Recusar</button><button class="btn navy p">Aprovar</button></div>
+              </div>
+              <div class="pedido">
+                <div><strong>Bella Pele</strong><span>contato@bellapele.com.br</span></div>
+                <div class="botoes"><button class="btn secundario p">Recusar</button><button class="btn navy p">Aprovar</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell-admin.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

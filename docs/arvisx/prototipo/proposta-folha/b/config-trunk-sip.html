@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trunk SIP</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="790">
+<meta name="rota" content="/app/settings/voip-trunk">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .cabecalho p code { font-family: var(--mono); font-size: 12px; }
+  .cartao .cab h2 { font-size: 16px; font-weight: 600; }
+  .campo label .nota { color: var(--apoio); font-weight: 400; }
+  .liga { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 13px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/app/settings" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Dados e acesso</div>
+          <h1>Trunk SIP</h1>
+          <p>Credenciais de registro do seu provedor SIP (Asterisk/AudioSocket). Depois de salvar, aplique o bloco abaixo em <code>asterisk/pjsip.conf</code> na VPS — a aplicação ainda é manual.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao">
+        <div class="cab"><h2>Provedor SIP</h2></div>
+        <div class="corpo form">
+          <div class="campo"><label for="host">Host</label><input type="text" id="host" class="mono" placeholder="sip.provedor.example" value="sip.voztelecom.example"></div>
+          <div class="campo"><label for="port">Porta</label><input type="number" id="port" class="mono" value="5060"></div>
+          <div class="campo"><label for="username">Usuário</label><input type="text" id="username" class="mono" value="clinicavitalis"></div>
+          <div class="campo"><label for="password">Senha <span class="nota">(configurada, termina em <span class="mono">7k2Q</span>)</span></label><input type="password" id="password" placeholder="Deixe em branco para manter a atual"></div>
+          <div class="campo"><label for="from_domain">From-domain (opcional)</label><input type="text" id="from_domain" class="mono" placeholder="IP público da VPS, se o provedor exigir"></div>
+          <div class="liga"><span class="chave ligada" role="switch" aria-checked="true" id="is_active"></span>Ativo</div>
+          <div><button class="btn primario">Salvar</button></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

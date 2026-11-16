@@ -1,0 +1,30 @@
+/* Opção A — "Névoa": névoa fria, tinta marinho da marca, ouro só na IA.
+   Títulos de página em Newsreader (serifa leve). */
+:root {
+  --navy: #17202e;
+  --navy-2: #1f2a3b;
+  --navy-3: #2a374b;
+  --navy-linha: #33415a;
+
+  --ouro: #d4af37;
+  --ouro-claro: #f1d47c;
+  --ouro-escuro: #75600f;
+  --ouro-suave: #faf5e3;
+  --sinal: #2860c0;
+  --sinal-suave: #eaf1fc;
+
+  --fundo: #f0f2f5;
+  --painel: #ffffff;
+  --painel-2: #f6f7f9;
+  --painel-3: #eceff3;
+  --linha: #e8ebf0;
+  --linha-forte: #d8dde5;
+
+  --texto: #141a24;
+  --apoio: #4f596a;
+  --fraco: #636c7b;
+
+  --ok: #1f7446;    --ok-suave: #e7f4ec;
+  --aviso: #9a5e0c; --aviso-suave: #fcf2e2;
+  --erro: #b42f2f;  --erro-suave: #fbeaea;
+}

@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Etapas do funil</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="740">
+<meta name="rota" content="/app/settings/tenant/pipelines">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .funil .corpo { display: grid; gap: 24px; }
+  .funil header h2 { font-size: 16px; font-weight: 600; }
+  .funil header p { color: var(--apoio); font-size: 12px; }
+  .secao-funil { display: grid; gap: 14px; min-width: 0; }
+  .secao-funil + .secao-funil, .secao-funil.borda { border-top: 1px solid var(--linha); padding-top: 24px; }
+  .secao-funil h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .secao-funil .txt { color: var(--apoio); font-size: 13px; line-height: 1.6; max-width: 78ch; }
+  .colunas { display: grid; grid-template-columns: 24px minmax(0, 1fr) 190px 84px 200px 104px; gap: 12px; align-items: center; }
+  .cab-etapas { padding: 0 16px; color: var(--apoio); font-size: 12px; font-weight: 600; }
+  .cab-etapas .c { text-align: center; }
+  .etapas { border: 1px solid var(--linha); border-radius: var(--r); }
+  .etapas > li { display: grid; gap: 12px; padding: 16px; border-bottom: 1px solid var(--linha); min-width: 0; }
+  .etapas > li:last-child { border-bottom: 0; }
+  .etapas .colunas { align-items: start; }
+  .etapas .colunas > * { min-width: 0; }
+  .etapas .n { color: var(--apoio); font-size: 12px; padding-top: 11px; }
+  .etapas .so-cel { display: none; color: var(--apoio); font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+  .etapas .setas { display: flex; justify-content: center; gap: 2px; }
+  .etapas .mini { color: var(--apoio); font-size: 12px; line-height: 1.45; margin-top: 6px; }
+  .etapas .mini + .btn { margin-top: 6px; }
+  .etapas .extra { color: var(--apoio); font-size: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .etapas .extra strong { font-weight: 600; }
+  .etapas .extra .entrada { width: 70px; }
+  .etapas .extra a { text-decoration: underline; text-underline-offset: 2px; }
+  .mapa-passos { border: 1px solid var(--linha); border-radius: var(--r); }
+  .mapa-passos > li { display: flex; align-items: center; gap: 16px; padding: 16px; border-bottom: 1px solid var(--linha); }
+  .mapa-passos > li:last-child { border-bottom: 0; }
+  .mapa-passos .quem { width: 256px; flex: none; min-width: 0; }
+  .mapa-passos .quem strong { display: block; font-size: 13px; }
+  .mapa-passos .quem span { color: var(--apoio); font-size: 12px; }
+  .mapa-passos > li > i { color: var(--apoio); flex: none; }
+  .mapa-passos .onde { flex: 1; min-width: 0; }
+  .rodape-dir { display: flex; justify-content: flex-end; }
+  @media (max-width: 1100px) {
+    .cab-etapas { display: none; }
+    .etapas .colunas { grid-template-columns: 1fr; }
+    .etapas .so-cel { display: block; }
+    .etapas .n { padding-top: 0; }
+    .etapas .setas { justify-content: flex-start; }
+    .mapa-passos > li { flex-direction: column; align-items: stretch; gap: 8px; }
+    .mapa-passos .quem { width: auto; }
+    .mapa-passos > li > i { display: none; }
+  }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/app/settings" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua empresa</div>
+          <h1>Etapas do funil</h1>
+          <p>Para onde o agente leva o card em cada passo do atendimento, vocabulário, custom fields e motivos de perda.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao funil">
+        <div class="corpo">
+          <header>
+            <h2>CRM Vivo — Clínica</h2>
+            <p class="mono">/crm-vivo-clinica</p>
+          </header>
+
+          <!-- Etapas deste funil -->
+          <div class="secao-funil">
+            <div>
+              <h3>Etapas deste funil</h3>
+              <p class="txt">Estas são as colunas do seu quadro, na ordem em que o cliente avança. Você pode renomear, criar, reordenar e arquivar.</p>
+              <p class="txt">Duas colunas têm papel especial: a <strong>de fechamento</strong> é onde o negócio vira venda, e a <strong>de perda</strong> é onde ele se perde. Cada funil precisa de uma de cada — por isso a marcação se muda de lugar, não se apaga.</p>
+            </div>
+
+            <div class="colunas cab-etapas">
+              <span></span>
+              <span>Nome da coluna (clique para renomear)</span>
+              <span>Chance de fechamento (0 a 100)</span>
+              <span class="c">Ordem</span>
+              <span>O que acontece nesta coluna</span>
+              <span></span>
+            </div>
+
+            <ul class="etapas">
+              <li>
+                <div class="colunas">
+                  <span class="n mono">1.</span>
+                  <div><span class="so-cel">Nome da coluna (clique para renomear)</span><input type="text" class="entrada" value="Primeiro contato" aria-label="Nome da etapa «Primeiro contato»"></div>
+                  <div><span class="so-cel">Chance de fechamento (0 a 100)</span><input type="number" class="entrada mono" value="10" min="0" max="100">
+                    <p class="mini"><span class="mono">42</span> negócios encerrados passaram por esta etapa; <span class="mono">13</span> foram ganhos (<span class="mono">31%</span>). Período: de <span class="mono">05/08/2026</span> a <span class="mono">03/11/2026</span></p>
+                    <button class="btn secundario p">Usar 31%?</button>
+                    <p class="mini"><span class="mono">8</span> negócios nesta etapa agora — mediana de <span class="mono">6</span> h desde a entrada (stage_changed_at).</p>
+                  </div>
+                  <div><span class="so-cel">Ordem</span><div class="setas"><button class="btn fantasma p icone" disabled aria-label="Mover «Primeiro contato» uma coluna para trás"><i class="ph-light ph-caret-up"></i></button><button class="btn fantasma p icone" aria-label="Mover «Primeiro contato» uma coluna para frente"><i class="ph-light ph-caret-down"></i></button></div></div>
+                  <div><span class="so-cel">O que acontece nesta coluna</span><select class="entrada" aria-label="Papel de «Primeiro contato» no funil"><option selected>Nada especial</option><option>Aqui o cliente fecha</option><option>Aqui o cliente desiste</option></select></div>
+                  <button class="btn fantasma p"><i class="ph-light ph-archive"></i>Arquivar</button>
+                </div>
+                <div class="extra"><strong>Janela de esfriando (vazio = 24 h de padrão)</strong><input type="number" class="entrada mono" placeholder="0" min="0"><span>dias</span><input type="number" class="entrada mono" placeholder="0" min="0"><span>horas</span></div>
+                <p class="extra">Fluxos de follow-up armados nesta etapa: Boas-vindas da clínica.</p>
+                <label class="extra"><span class="chave" role="switch" aria-checked="false" aria-label="Avisar a equipe na Central quando um negócio entrar em «Primeiro contato»"></span>Avisar a equipe na Central quando um negócio entrar aqui</label>
+                <p class="extra">O assistente usa esta etapa para «Primeiro contato». <a href="#mapeamento">Mudar isso</a></p>
+              </li>
+              <li>
+                <div class="colunas">
+                  <span class="n mono">2.</span>
+                  <div><span class="so-cel">Nome da coluna (clique para renomear)</span><input type="text" class="entrada" value="Avaliação" aria-label="Nome da etapa «Avaliação»"></div>
+                  <div><span class="so-cel">Chance de fechamento (0 a 100)</span><input type="number" class="entrada mono" value="35" min="0" max="100">
+                    <p class="mini"><span class="mono">27</span> negócios encerrados passaram por esta etapa; <span class="mono">13</span> foram ganhos (<span class="mono">48%</span>). Período: de <span class="mono">05/08/2026</span> a <span class="mono">03/11/2026</span></p>
+                    <button class="btn secundario p">Usar 48%?</button>
+                    <p class="mini"><span class="mono">5</span> negócios nesta etapa agora — mediana de <span class="mono">31</span> h desde a entrada (stage_changed_at).</p>
+                  </div>
+                  <div><span class="so-cel">Ordem</span><div class="setas"><button class="btn fantasma p icone" aria-label="Mover «Avaliação» uma coluna para trás"><i class="ph-light ph-caret-up"></i></button><button class="btn fantasma p icone" aria-label="Mover «Avaliação» uma coluna para frente"><i class="ph-light ph-caret-down"></i></button></div></div>
+                  <div><span class="so-cel">O que acontece nesta coluna</span><select class="entrada" aria-label="Papel de «Avaliação» no funil"><option selected>Nada especial</option><option>Aqui o cliente fecha</option><option>Aqui o cliente desiste</option></select></div>
+                  <button class="btn fantasma p"><i class="ph-light ph-archive"></i>Arquivar</button>
+                </div>
+                <div class="extra"><strong>Janela de esfriando (vazio = 24 h de padrão)</strong><input type="number" class="entrada mono" value="2" min="0"><span>dias</span><input type="number" class="entrada mono" value="0" min="0"><span>horas</span></div>
+                <p class="extra">Fluxos de follow-up armados nesta etapa: Lembrete de avaliação.</p>
+                <label class="extra"><span class="chave" role="switch" aria-checked="false" aria-label="Avisar a equipe na Central quando um negócio entrar em «Avaliação»"></span>Avisar a equipe na Central quando um negócio entrar aqui</label>
+                <p class="extra">O assistente usa esta etapa para «Em qualificação». <a href="#mapeamento">Mudar isso</a></p>
+              </li>
+              <li>
+                <div class="colunas">
+                  <span class="n mono">3.</span>
+                  <div><span class="so-cel">Nome da coluna (clique para renomear)</span><input type="text" class="entrada" value="Proposta enviada" aria-label="Nome da etapa «Proposta enviada»"></div>
+                  <div><span class="so-cel">Chance de fechamento (0 a 100)</span><input type="number" class="entrada mono" value="60" min="0" max="100">
+                    <p class="mini"><span class="mono">4</span> negócios encerrados passaram por esta etapa; <span class="mono">3</span> foram ganhos (<span class="mono">75%</span>). Poucos casos para sugerir. Período: de <span class="mono">05/08/2026</span> a <span class="mono">03/11/2026</span></p>
+                    <p class="mini"><span class="mono">3</span> negócios nesta etapa agora — mediana de <span class="mono">52</span> h desde a entrada (stage_changed_at).</p>
+                  </div>
+                  <div><span class="so-cel">Ordem</span><div class="setas"><button class="btn fantasma p icone" aria-label="Mover «Proposta enviada» uma coluna para trás"><i class="ph-light ph-caret-up"></i></button><button class="btn fantasma p icone" aria-label="Mover «Proposta enviada» uma coluna para frente"><i class="ph-light ph-caret-down"></i></button></div></div>
+                  <div><span class="so-cel">O que acontece nesta coluna</span><select class="entrada" aria-label="Papel de «Proposta enviada» no funil"><option selected>Nada especial</option><option>Aqui o cliente fecha</option><option>Aqui o cliente desiste</option></select></div>
+                  <button class="btn fantasma p"><i class="ph-light ph-archive"></i>Arquivar</button>
+                </div>
+                <div class="extra"><strong>Janela de esfriando (vazio = 24 h de padrão)</strong><input type="number" class="entrada mono" value="3" min="0"><span>dias</span><input type="number" class="entrada mono" value="0" min="0"><span>horas</span></div>
+                <p class="extra">Nenhum fluxo de follow-up armado nesta etapa.</p>
+                <label class="extra"><span class="chave ligada" role="switch" aria-checked="true" aria-label="Avisar a equipe na Central quando um negócio entrar em «Proposta enviada»"></span>Avisar a equipe na Central quando um negócio entrar aqui</label>
+              </li>
+              <li>
+                <div class="colunas">
+                  <span class="n mono">4.</span>
+                  <div><span class="so-cel">Nome da coluna (clique para renomear)</span><input type="text" class="entrada" value="Negociação" aria-label="Nome da etapa «Negociação»"></div>
+                  <div><span class="so-cel">Chance de fechamento (0 a 100)</span><input type="number" class="entrada mono" placeholder="—" min="0" max="100">
+                    <p class="mini">Sem dados no período — nenhum negócio encerrado passou por esta etapa. Período: de <span class="mono">05/08/2026</span> a <span class="mono">03/11/2026</span></p>
+                  </div>
+                  <div><span class="so-cel">Ordem</span><div class="setas"><button class="btn fantasma p icone" aria-label="Mover «Negociação» uma coluna para trás"><i class="ph-light ph-caret-up"></i></button><button class="btn fantasma p icone" aria-label="Mover «Negociação» uma coluna para frente"><i class="ph-light ph-caret-down"></i></button></div></div>
+                  <div><span class="so-cel">O que acontece nesta coluna</span><select class="entrada" aria-label="Papel de «Negociação» no funil"><option selected>Nada especial</option><option>Aqui o cliente fecha</option><option>Aqui o cliente desiste</option></select></div>
+                  <button class="btn fantasma p"><i class="ph-light ph-archive"></i>Arquivar</button>
+                </div>
+                <div class="extra"><strong>Janela de esfriando (vazio = 24 h de padrão)</strong><input type="number" class="entrada mono" placeholder="0" min="0"><span>dias</span><input type="number" class="entrada mono" placeholder="0" min="0"><span>horas</span></div>
+                <p class="extra">Nenhum fluxo de follow-up armado nesta etapa.</p>
+                <label class="extra"><span class="chave" role="switch" aria-checked="false" aria-label="Avisar a equipe na Central quando um negócio entrar em «Negociação»"></span>Avisar a equipe na Central quando um negócio entrar aqui</label>
+                <p class="extra">O assistente usa esta etapa para «Em negociação». <a href="#mapeamento">Mudar isso</a></p>
+              </li>
+              <li>
+                <div class="colunas">
+                  <span class="n mono">5.</span>
+                  <div><span class="so-cel">Nome da coluna (clique para renomear)</span><input type="text" class="entrada" value="Ganho" aria-label="Nome da etapa «Ganho»"></div>
+                  <div><span class="so-cel">Chance de fechamento (0 a 100)</span><input type="number" class="entrada mono" placeholder="100" disabled title="Etapa de fechamento ou de perda: a chance vale 100 e 0 na regra, sem calibração."></div>
+                  <div><span class="so-cel">Ordem</span><div class="setas"><button class="btn fantasma p icone" aria-label="Mover «Ganho» uma coluna para trás"><i class="ph-light ph-caret-up"></i></button><button class="btn fantasma p icone" aria-label="Mover «Ganho» uma coluna para frente"><i class="ph-light ph-caret-down"></i></button></div></div>
+                  <div><span class="so-cel">O que acontece nesta coluna</span><select class="entrada" aria-label="Papel de «Ganho» no funil"><option>Nada especial</option><option selected>Aqui o cliente fecha</option><option>Aqui o cliente desiste</option></select></div>
+                  <button class="btn fantasma p"><i class="ph-light ph-archive"></i>Arquivar</button>
+                </div>
+                <div class="extra"><strong>Janela de esfriando (vazio = 24 h de padrão)</strong><input type="number" class="entrada mono" placeholder="0" min="0"><span>dias</span><input type="number" class="entrada mono" placeholder="0" min="0"><span>horas</span></div>
+                <p class="extra">Nenhum fluxo de follow-up armado nesta etapa.</p>
+                <label class="extra"><span class="chave ligada" role="switch" aria-checked="true" aria-label="Avisar a equipe na Central quando um negócio entrar em «Ganho»"></span>Avisar a equipe na Central quando um negócio entrar aqui</label>
+                <p class="extra">O assistente usa esta etapa para «Ganho». <a href="#mapeamento">Mudar isso</a></p>
+              </li>
+              <li>
+                <div class="colunas">
+                  <span class="n mono">6.</span>
+                  <div><span class="so-cel">Nome da coluna (clique para renomear)</span><input type="text" class="entrada" value="Perdido" aria-label="Nome da etapa «Perdido»"></div>
+                  <div><span class="so-cel">Chance de fechamento (0 a 100)</span><input type="number" class="entrada mono" placeholder="0" disabled title="Etapa de fechamento ou de perda: a chance vale 100 e 0 na regra, sem calibração."></div>
+                  <div><span class="so-cel">Ordem</span><div class="setas"><button class="btn fantasma p icone" aria-label="Mover «Perdido» uma coluna para trás"><i class="ph-light ph-caret-up"></i></button><button class="btn fantasma p icone" disabled aria-label="Mover «Perdido» uma coluna para frente"><i class="ph-light ph-caret-down"></i></button></div></div>
+                  <div><span class="so-cel">O que acontece nesta coluna</span><select class="entrada" aria-label="Papel de «Perdido» no funil"><option>Nada especial</option><option>Aqui o cliente fecha</option><option selected>Aqui o cliente desiste</option></select></div>
+                  <button class="btn fantasma p"><i class="ph-light ph-archive"></i>Arquivar</button>
+                </div>
+                <div class="extra"><strong>Janela de esfriando (vazio = 24 h de padrão)</strong><input type="number" class="entrada mono" placeholder="0" min="0"><span>dias</span><input type="number" class="entrada mono" placeholder="0" min="0"><span>horas</span></div>
+                <p class="extra">Nenhum fluxo de follow-up armado nesta etapa.</p>
+                <label class="extra"><span class="chave" role="switch" aria-checked="false" aria-label="Avisar a equipe na Central quando um negócio entrar em «Perdido»"></span>Avisar a equipe na Central quando um negócio entrar aqui</label>
+                <p class="extra">O assistente usa esta etapa para «Perdido». <a href="#mapeamento">Mudar isso</a></p>
+              </li>
+            </ul>
+
+            <div><button class="btn fantasma p"><i class="ph-light ph-plus"></i>Acrescentar etapa ao fim</button></div>
+          </div>
+
+          <!-- Para onde o card vai em cada passo -->
+          <div class="secao-funil borda" id="mapeamento">
+            <div>
+              <h3>Para onde o card vai em cada passo</h3>
+              <p class="txt">Quando o agente avança no atendimento, o card do cliente pode andar sozinho no seu funil. Escolha para qual etapa ele vai em cada momento. Deixar em «não mover» é uma escolha válida — o card fica onde está e o agente segue trabalhando.</p>
+            </div>
+            <ul class="mapa-passos">
+              <li><div class="quem"><strong>Novo lead</strong><span>a pessoa acabou de chamar e ninguém respondeu ainda</span></div><i class="ph-light ph-arrow-right"></i><div class="onde"><select class="entrada" aria-label="Etapa para «Novo lead»"><option selected>Não mover o card</option><option>Proposta enviada</option></select></div></li>
+              <li><div class="quem"><strong>Primeiro contato</strong><span>o agente já respondeu pela primeira vez</span></div><i class="ph-light ph-arrow-right"></i><div class="onde"><select class="entrada" aria-label="Etapa para «Primeiro contato»"><option>Não mover o card</option><option selected>Primeiro contato</option><option>Proposta enviada</option></select></div></li>
+              <li><div class="quem"><strong>Em qualificação</strong><span>o agente está entendendo o que a pessoa precisa</span></div><i class="ph-light ph-arrow-right"></i><div class="onde"><select class="entrada" aria-label="Etapa para «Em qualificação»"><option>Não mover o card</option><option selected>Avaliação</option><option>Proposta enviada</option></select></div></li>
+              <li><div class="quem"><strong>Qualificado</strong><span>o agente já entendeu a necessidade</span></div><i class="ph-light ph-arrow-right"></i><div class="onde"><select class="entrada" aria-label="Etapa para «Qualificado»"><option selected>Não mover o card</option><option>Proposta enviada</option></select></div></li>
+              <li><div class="quem"><strong>Em negociação</strong><span>conversa de preço, proposta ou agendamento</span></div><i class="ph-light ph-arrow-right"></i><div class="onde"><select class="entrada" aria-label="Etapa para «Em negociação»"><option>Não mover o card</option><option>Proposta enviada</option><option selected>Negociação</option></select></div></li>
+              <li><div class="quem"><strong>Ganho</strong><span>a pessoa fechou</span></div><i class="ph-light ph-arrow-right"></i><div class="onde"><select class="entrada" aria-label="Etapa para «Ganho»"><option>Não mover o card</option><option selected>Ganho</option></select></div></li>
+              <li><div class="quem"><strong>Perdido</strong><span>a pessoa desistiu ou parou de responder</span></div><i class="ph-light ph-arrow-right"></i><div class="onde"><select class="entrada" aria-label="Etapa para «Perdido»"><option>Não mover o card</option><option selected>Perdido</option></select></div></li>
+            </ul>
+            <div class="rodape-dir"><button class="btn primario" disabled>Salvar estas escolhas</button></div>
+          </div>
+
+          <!-- Editor do funil (recolhido) -->
+          <div class="secao-funil borda">
+            <div><button class="btn secundario p" aria-expanded="false"><i class="ph-light ph-caret-down"></i>Editar vocabulário e campos deste funil</button></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

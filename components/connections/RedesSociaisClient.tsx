@@ -374,7 +374,7 @@ export function RedesSociaisClient() {
               <Card key={account.id} className="flex flex-col gap-3 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                    <p className="text-xs font-medium text-muted-foreground">
                       {state.networks.find((n) => n.id === account.platform)?.label ??
                         account.platform}
                     </p>

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clínica Vitalis · Saúde</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="150">
+<meta name="rota" content="/admin/tenants/[id]/health">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .titulo-tenant { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .slug { font: 500 12px/1 var(--mono); padding: 4px 8px; border-radius: 6px; background: var(--painel-2); color: var(--apoio); }
+  .abas .breve { font-size: 11px; font-weight: 400; opacity: .6; }
+  .abas [aria-disabled="true"] { cursor: not-allowed; }
+  .barra-secao { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .barra-secao .rotulo { margin: 0; }
+  .saude { padding: 20px; display: flex; flex-direction: column; gap: 16px; border-width: 2px; min-width: 0; }
+  .saude.ok { border-color: var(--ok); }
+  .saude.atencao { border-color: var(--aviso); }
+  .saude.critico { border-color: var(--erro); }
+  .saude .cab-saude { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .saude .nome-saude { display: flex; align-items: center; gap: 8px; color: var(--apoio); font: 600 12px/1 var(--mono); letter-spacing: 0; text-transform: none; }
+  .saude .nome-saude i { font-size: 18px; }
+  .saude .principal-valor { font: 600 24px/1 var(--display); letter-spacing: -.02em; }
+  .saude .detalhes { border-top: 1px solid var(--linha); padding-top: 12px; display: grid; gap: 6px; }
+  .saude .detalhes div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 12px; }
+  .saude .detalhes .ch { color: var(--apoio); white-space: nowrap; }
+  .saude .detalhes .vl { font-weight: 600; text-align: right; overflow-wrap: anywhere; min-width: 0; }
+  @media (max-width: 1280px) and (min-width: 861px) { .grade.c4.saudes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/admin/tenants" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <a href="#" class="volta"><i class="ph-light ph-caret-left"></i>Tenants</a>
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin da plataforma · Tenants</div>
+          <div class="titulo-tenant">
+            <h1>Clínica Vitalis</h1>
+            <code class="slug">clinica-vitalis</code>
+            <span class="tag ok">Ativo</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="fio"></div>
+
+      <nav class="abas">
+        <a href="#">Visão Geral</a>
+        <a href="#" aria-selected="true">Saúde</a>
+        <a href="#">Agente</a>
+        <a href="#" aria-disabled="true">Equipe <span class="breve">em breve</span></a>
+        <a href="#" aria-disabled="true">Uso <span class="breve">em breve</span></a>
+      </nav>
+
+      <div class="barra-secao">
+        <h2 class="rotulo">Status de Saúde</h2>
+        <span class="apoio pequeno">Atualizado às <span class="mono">14:32:07</span></span>
+      </div>
+
+      <div class="grade c4 saudes">
+        <div class="cartao saude ok">
+          <div class="cab-saude">
+            <span class="nome-saude"><i class="ph-light ph-wifi-high"></i>WAHA</span>
+            <span class="tag ok">OK</span>
+          </div>
+          <div class="principal-valor">2/2 conectadas</div>
+          <div class="detalhes">
+            <div><span class="ch mono">vitalis-recepcao</span><span class="vl mono">WORKING</span></div>
+            <div><span class="ch mono">vitalis-comercial</span><span class="vl mono">WORKING</span></div>
+          </div>
+        </div>
+
+        <div class="cartao saude ok">
+          <div class="cab-saude">
+            <span class="nome-saude"><i class="ph-light ph-storefront"></i>Nuvemshop</span>
+            <span class="tag ok">OK</span>
+          </div>
+          <div class="principal-valor">Conectado</div>
+          <div class="detalhes">
+            <div><span class="ch">Última sync</span><span class="vl mono">03/11/2026, 14:10</span></div>
+            <div><span class="ch">Expira em</span><span class="vl mono">291d</span></div>
+            <div><span class="ch">Token expira</span><span class="vl mono">21/08/2027, 16:05</span></div>
+          </div>
+        </div>
+
+        <div class="cartao saude atencao">
+          <div class="cab-saude">
+            <span class="nome-saude"><i class="ph-light ph-brain"></i>Orçamento IA</span>
+            <span class="tag aviso">Atenção</span>
+          </div>
+          <div class="principal-valor">82% usado</div>
+          <div class="detalhes">
+            <div><span class="ch">Consumido</span><span class="vl mono">US$ 41,00</span></div>
+            <div><span class="ch">Orçamento</span><span class="vl mono">US$ 50,00</span></div>
+            <div><span class="ch">Limite</span><span class="vl">Só avisa</span></div>
+          </div>
+        </div>
+
+        <div class="cartao saude ok">
+          <div class="cab-saude">
+            <span class="nome-saude"><i class="ph-light ph-clipboard-text"></i>Audit Lag</span>
+            <span class="tag ok">OK</span>
+          </div>
+          <div class="principal-valor">42s</div>
+          <div class="detalhes">
+            <div><span class="ch">Último evento</span><span class="vl mono">03/11/2026, 14:31</span></div>
+            <div><span class="ch">Lag</span><span class="vl mono">42s</span></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell-admin.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

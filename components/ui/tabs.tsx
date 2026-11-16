@@ -68,7 +68,7 @@ const TabsTrigger = React.forwardRef<
       //
       // `lg:` é o mesmo corte que `components/ui/button.tsx` usa para separar
       // "quem aciona é dedo" de "quem aciona é cursor".
-      "inline-flex min-h-11 items-center justify-center rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap ring-offset-background transition-[background-color,color,box-shadow] duration-fast focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50 relative data-[state=active]:text-foreground data-[state=active]:after:absolute data-[state=active]:after:inset-x-2 data-[state=active]:after:-bottom-px data-[state=active]:after:h-0.5 data-[state=active]:after:rounded-t data-[state=active]:after:bg-cta lg:min-h-0",
+      "inline-flex min-h-11 items-center justify-center rounded-full px-3 py-1 text-[13px] font-medium whitespace-nowrap ring-offset-background transition-[background-color,color,box-shadow] duration-fast focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50 relative data-[state=active]:font-semibold data-[state=active]:text-foreground data-[state=active]:after:absolute data-[state=active]:after:inset-x-2 data-[state=active]:after:-bottom-px data-[state=active]:after:h-[1.5px] data-[state=active]:after:bg-cta lg:min-h-0",
       className,
     )}
     {...props}

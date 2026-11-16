@@ -7,15 +7,15 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<"tex
     return (
       <textarea
         className={cn(
-          "flex min-h-[80px] w-full rounded-md border border-border-strong bg-surface px-4 py-3",
+          "flex min-h-[80px] w-full rounded-md border border-border-strong bg-surface px-3 py-2.5 shadow-xs",
           // `text-base md:text-sm` — pelo mesmo motivo do `components/ui/input.tsx`:
           // o Safari do iPhone dá zoom na página quando o campo recebe foco com
           // fonte menor que 16px, e `text-sm` são 14. A régua inteira está no
           // comentário daquele arquivo.
-          "text-base leading-relaxed text-text placeholder:text-text-muted md:text-sm",
+          "text-base leading-relaxed text-text placeholder:text-text-subtle md:text-[13px]",
           "transition-[border-color,box-shadow] duration-fast ease-out",
           "hover:border-border-strong",
-          "focus-visible:border-cta focus-visible:ring-2 focus-visible:ring-cta-leve focus-visible:outline-hidden",
+          "focus-visible:border-cta focus-visible:ring-[3px] focus-visible:ring-cta-leve focus-visible:outline-hidden",
           "disabled:cursor-not-allowed disabled:opacity-55",
           "aria-[invalid=true]:border-error aria-[invalid=true]:focus-visible:ring-error-bg",
           className,

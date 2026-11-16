@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clínica Vitalis</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="130">
+<meta name="rota" content="/admin/tenants/[id]">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .titulo-tenant { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .slug { font: 500 12px/1 var(--mono); padding: 4px 8px; border-radius: 6px; background: var(--painel-2); color: var(--apoio); }
+  .abas .breve { font-size: 10px; font-weight: 400; opacity: .6; }
+  .abas [aria-disabled="true"] { cursor: not-allowed; }
+  .pilha { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; min-width: 0; }
+  .cx { padding: 20px; }
+  .info > div { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 8px 0; border-bottom: 1px solid var(--linha); }
+  .info > div:last-child { border-bottom: 0; }
+  .info .ch { color: var(--apoio); }
+  .info .vl { font-weight: 600; text-align: right; min-width: 0; overflow-wrap: anywhere; }
+  .volumes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+  .volumes .cartao { padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+  .volumes strong { font: 700 24px/1.1 var(--mono); }
+  .volumes span { color: var(--apoio); font-size: 12px; line-height: 1.25; }
+  .membros { list-style: none; margin: 0; padding: 0; }
+  .membros li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--linha); }
+  .membros li:last-child { border-bottom: 0; }
+  .membros p { font-weight: 600; overflow-wrap: anywhere; margin-bottom: 6px; }
+  .membros .etqs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .acoes-tenant { display: grid; gap: 14px; align-content: start; }
+  .cobranca { display: grid; gap: 16px; }
+  .cobranca dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; margin: 0; }
+  .cobranca dt { color: var(--apoio); }
+  .cobranca dd { margin: 0; }
+  .linha-campos { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+  .molde { display: grid; gap: 8px; }
+  .aviso-cor { color: var(--aviso); }
+  @media (max-width: 1100px) { .volumes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .volumes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+</head>
+<body data-rota="/admin/tenants">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <a href="#" class="volta"><i class="ph ph-caret-left"></i>Tenants</a>
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin da plataforma · Tenants</div>
+          <div class="titulo-tenant">
+            <h1>Clínica Vitalis</h1>
+            <code class="slug">clinica-vitalis</code>
+            <span class="tag ok">Ativo</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="fio"></div>
+
+      <nav class="abas">
+        <a href="#" aria-selected="true">Visão Geral</a>
+        <a href="#">Saúde</a>
+        <a href="#">Agente</a>
+        <a href="#" aria-disabled="true">Equipe <span class="breve">em breve</span></a>
+        <a href="#" aria-disabled="true">Uso <span class="breve">em breve</span></a>
+      </nav>
+
+      <div class="pilha">
+        <div class="grade lateral-dir">
+          <div class="pilha">
+            <div class="cartao cx">
+              <h2 class="rotulo">Informações</h2>
+              <div class="info">
+                <div><span class="ch">Razão social</span><span class="vl">Clínica Vitalis Odontologia Ltda</span></div>
+                <div><span class="ch">CNPJ</span><span class="vl mono">27.418.906/0001-52</span></div>
+                <div><span class="ch">Onboarding concluído</span><span class="vl mono">14/08/2026, 10:32</span></div>
+                <div><span class="ch">Criado em</span><span class="vl mono">14/08/2026, 09:47</span></div>
+              </div>
+            </div>
+
+            <div>
+              <h2 class="rotulo">Volumes</h2>
+              <div class="volumes">
+                <div class="cartao"><strong>3</strong><span>Usuários</span></div>
+                <div class="cartao"><strong>1.284</strong><span>Conversas</span></div>
+                <div class="cartao"><strong>18.932</strong><span>Mensagens</span></div>
+                <div class="cartao"><strong>412</strong><span>Leads</span></div>
+                <div class="cartao"><strong>57</strong><span>Pedidos</span></div>
+              </div>
+            </div>
+
+            <div class="grade c2">
+              <div class="cartao cx">
+                <h2 class="rotulo">Integrações</h2>
+                <div class="info">
+                  <div><span class="ch">Nuvemshop</span><span class="vl"><span class="tag ok">Conectado</span></span></div>
+                  <div><span class="ch">Conectado em</span><span class="vl mono">21/08/2026, 16:05</span></div>
+                  <div><span class="ch">WAHA sessions</span><span class="vl mono">2</span></div>
+                </div>
+              </div>
+              <div class="cartao cx">
+                <h2 class="rotulo">Compliance &amp; IA</h2>
+                <div class="info">
+                  <div><span class="ch">Solicitações LGPD pendentes</span><span class="vl mono aviso-cor">1 <i class="ph-fill ph-warning" aria-label="Pendências LGPD"></i></span></div>
+                  <div><span class="ch">Invocações IA (30d)</span><span class="vl mono">6.417</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cartao cx">
+              <h2 class="rotulo">Membros e e-mails de acesso</h2>
+              <ul class="membros">
+                <li>
+                  <div>
+                    <p>ana.souza@clinicavitalis.com.br</p>
+                    <div class="etqs"><span class="tag">Administrador</span><span class="tag sinal">Dono</span><span class="tag navy">Admin da plataforma</span></div>
+                  </div>
+                  <button class="btn secundario p" disabled title="O e-mail de um administrador da plataforma só é trocado pelo próprio dono da conta.">Alterar e-mail</button>
+                </li>
+                <li>
+                  <div>
+                    <p>marcos.lima@clinicavitalis.com.br</p>
+                    <div class="etqs"><span class="tag">Gerente</span></div>
+                  </div>
+                  <button class="btn secundario p">Alterar e-mail</button>
+                </li>
+                <li>
+                  <div>
+                    <p>renata.borges@clinicavitalis.com.br</p>
+                    <div class="etqs"><span class="tag">Atendente</span></div>
+                  </div>
+                  <button class="btn secundario p">Alterar e-mail</button>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cartao cx acoes-tenant">
+            <h2 class="rotulo">Ações</h2>
+            <button class="btn secundario bloco" aria-label="Acompanhar Clínica Vitalis">Acompanhar organização</button>
+            <button class="btn secundario bloco">Editar dados</button>
+            <button class="btn perigo bloco" aria-label="Suspender tenant">Suspender tenant</button>
+            <p class="apoio pequeno">Para excluir um tenant, suspenda-o primeiro.</p>
+          </div>
+        </div>
+
+        <div class="cartao cx molde">
+          <h2 class="secao">IA copiada do molde</h2>
+          <p>Esta empresa nasceu com a IA de Sorriso &amp; Cia. <span class="apoio mono">14/08/2026, 09:47</span></p>
+          <p class="apoio">4 funções de IA copiadas · Modelo padrão: <span class="mono">anthropic/claude-sonnet-4-6</span></p>
+          <p class="apoio pequeno">Depois de nascer, a IA é desta empresa: trocar o molde não muda o que ela já tem.</p>
+        </div>
+
+        <div class="cartao cx cobranca" aria-labelledby="cobranca-do-tenant">
+          <h2 class="secao" id="cobranca-do-tenant">Cobrança</h2>
+          <dl>
+            <dt>Plano</dt><dd>Profissional</dd>
+            <dt>Situação</dt><dd>Em dia</dd>
+          </dl>
+          <div class="linha-campos">
+            <div class="campo">
+              <label for="plano-da-empresa">Plano da empresa</label>
+              <select id="plano-da-empresa"><option>Essencial</option><option selected>Profissional</option><option>Profissional anual</option></select>
+            </div>
+            <button class="btn primario">Trocar plano</button>
+          </div>
+          <div class="linha-campos">
+            <div class="campo">
+              <label for="prazo-ate">Dar prazo até</label>
+              <input type="text" id="prazo-ate" class="mono" placeholder="dd/mm/aaaa">
+            </div>
+            <button class="btn secundario" disabled>Dar prazo</button>
+            <button class="btn secundario">Tornar isenta</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell-admin.js"></script>
+</body>
+</html>

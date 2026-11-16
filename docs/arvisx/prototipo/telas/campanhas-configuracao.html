@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configuração de campanhas</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="950">
+<meta name="rota" content="/app/campaigns/settings">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+.cartao { margin-bottom: 16px; }
+  .nota { color: var(--apoio); font-size: 12.5px; line-height: 1.5; }
+  .cab-texto { padding: 16px 18px 0; }
+  .cab-texto h2 { font-size: 14px; font-weight: 700; }
+  .cab-texto p { margin-top: 4px; }
+  .form > *, .itens { min-width: 0; }
+  .itens { border-top: 1px solid var(--linha); margin-top: 4px; }
+  .item { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--linha); }
+  .item:last-child { border-bottom: 0; padding-bottom: 0; }
+  .item .txt { min-width: 0; }
+  .item .txt strong { display: block; font-size: 13.5px; }
+  .item .txt span { display: block; color: var(--apoio); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item.centro { align-items: center; font-size: 13.5px; }
+</style>
+</head>
+<body data-rota="/app/campaigns">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+<a href="#" class="volta"><i class="ph ph-arrow-bend-up-left"></i>Campanhas</a>
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM · Campanhas</div>
+          <h1>Configuração de campanhas</h1>
+          <p>O que vale para todas as campanhas, e não para uma só.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao">
+        <div class="cab-texto"><h2>Padrões desta organização</h2><p class="nota">Campo vazio significa herdar o número. Toda campanha nova nasce com estes valores e pode ficar mais devagar, nunca mais rápida.</p></div>
+        <div class="corpo form">
+          <div class="campo"><label for="atribuicao">Contar como resposta até (horas depois do envio)</label><input id="atribuicao" type="number" class="mono" value="72"><span class="nota">Uma mensagem que chega depois desse prazo é conversa nova, não resposta à campanha. Isso muda o número de respostas que a tela mostra, inclusive das campanhas já enviadas.</span></div>
+          <div class="form c2">
+            <div class="campo"><label for="p-intervalo">Intervalo mínimo entre mensagens (segundos)</label><input id="p-intervalo" type="number" class="mono"></div>
+            <div class="campo"><label for="p-dia">Máximo por dia</label><input id="p-dia" type="number" class="mono" value="150"></div>
+            <div class="campo"><label for="p-hora">Máximo por hora</label><input id="p-hora" type="number" class="mono" value="40"></div>
+            <div></div>
+            <div class="campo"><label for="p-inicio">Enviar só a partir das (hora)</label><input id="p-inicio" type="number" class="mono" value="9"></div>
+            <div class="campo"><label for="p-fim">Parar de enviar às (hora)</label><input id="p-fim" type="number" class="mono" value="18"></div>
+          </div>
+          <p class="nota">A proteção do número — ritmo, janela e aquecimento que valem para tudo que sai por ele — fica em <a href="#" class="link">Conexões › Proteção de envio</a>.</p>
+          <div><button class="btn primario p">Salvar padrões</button></div>
+        </div>
+      </div>
+
+      <div class="cartao">
+        <div class="cab-texto"><h2>Textos salvos</h2><p class="nota">Copy que você reusa entre campanhas. Mudar um texto aqui não muda mensagem que já foi preparada nem que já foi enviada.</p></div>
+        <div class="corpo form">
+          <div class="campo"><label for="t-nome">Nome</label><input id="t-nome" type="text" placeholder="Ex.: Primeiro contato — produtor"></div>
+          <div class="campo"><label for="t-corpo">Texto</label><textarea id="t-corpo" rows="4"></textarea></div>
+          <div><button class="btn secundario p" disabled>Salvar texto</button></div>
+          <div class="itens">
+            <div class="item"><div class="txt"><strong>Retorno semestral</strong><span>{{saudacao}}, {{primeiro_nome|"tudo bem"}}! Já faz seis meses da sua última consulta na Clínica Vitalis. Quer que eu veja um horário para a revisão?</span></div><button class="btn secundario p">Apagar</button></div>
+            <div class="item"><div class="txt"><strong>Reativação — clientes parados</strong><span>{{saudacao}}, {{primeiro_nome|"tudo bem"}}! Faz um tempo que não nos falamos por aqui. A Clínica Vitalis está com agenda aberta para a revisão semestral — quer que eu veja um horário para você?</span></div><button class="btn secundario p">Apagar</button></div>
+            <div class="item"><div class="txt"><strong>Aviso de agenda fechada</strong><span>{{saudacao}}! Passando para avisar que a Clínica Vitalis não abre neste feriado. Se precisar remarcar, é só responder por aqui.</span></div><button class="btn secundario p">Apagar</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cartao">
+        <div class="cab-texto"><h2>Lista de exclusão</h2><p class="nota">Números que nenhuma campanha alcança. Diferente de quem pediu para parar: aqui o atendimento continua normal se a pessoa escrever — isto é uma decisão sua, não dela.</p></div>
+        <div class="corpo form">
+          <div class="form c2">
+            <div class="campo"><label for="x-tel">Telefone com DDI e DDD</label><input id="x-tel" type="text" class="mono" placeholder="+5511999998888"></div>
+            <div class="campo"><label for="x-motivo">Motivo (opcional)</label><input id="x-motivo" type="text"></div>
+          </div>
+          <div><button class="btn secundario p" disabled>Excluir das campanhas</button></div>
+          <div class="itens">
+            <div class="item centro"><span>termina em <span class="mono">4020</span> · Fornecedor, não é paciente</span><button class="btn secundario p">Tirar da lista</button></div>
+            <div class="item centro"><span>termina em <span class="mono">7730</span> · Pediu por telefone para não receber promoções</span><button class="btn secundario p">Tirar da lista</button></div>
+            <div class="item centro"><span>termina em <span class="mono">1188</span></span><button class="btn secundario p">Tirar da lista</button></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

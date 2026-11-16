@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modelo de proposta</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="770">
+<meta name="rota" content="/app/settings/tenant/proposals/modelos/[slug]">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+  .editor-modelo { display: grid; grid-template-columns: minmax(0, 1fr) 256px; gap: 24px; align-items: start; }
+  .editor-modelo .col { display: grid; gap: 16px; min-width: 0; }
+  .pede strong { font-weight: 600; }
+  .pede ul { list-style: disc; padding-left: 20px; margin-top: 4px; display: grid; gap: 4px; }
+  code.var { font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; }
+  .secao-modelo { padding: 12px; display: grid; gap: 8px; }
+  .secao-modelo .topo-secao { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .secao-modelo .topo-secao .entrada { flex: 1 1 200px; width: auto; min-width: 0; }
+  .secao-modelo textarea.entrada { height: auto; min-height: 96px; padding: 10px 12px; line-height: 1.5; resize: vertical; }
+  .secao-modelo .marcas { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; }
+  .secao-modelo .marcas label { display: flex; align-items: center; gap: 6px; }
+  .secao-modelo .marcas input { accent-color: var(--navy); }
+  .acoes-modelo { display: flex; flex-wrap: wrap; gap: 8px; }
+  .campos-usados { display: grid; gap: 8px; font-size: 13px; min-width: 0; }
+  .campos-usados h2 { font-size: 14px; font-weight: 600; }
+  .campos-usados p { color: var(--apoio); font-size: 12px; }
+  .campos-usados ul { display: grid; gap: 4px; }
+  @media (max-width: 1000px) { .editor-modelo { grid-template-columns: minmax(0, 1fr); } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/app/settings" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua empresa</div>
+          <h1>Modelo de proposta</h1>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="editor-modelo">
+        <div class="col">
+          <div class="campo"><label for="nome-modelo">Nome do modelo</label><input type="text" id="nome-modelo" value="Plano de tratamento odontológico"></div>
+          <div class="campo"><label for="desc-modelo">Para que serve (opcional)</label><input type="text" id="desc-modelo" value="Proposta de tratamento depois da avaliação: procedimentos, prazo e investimento."></div>
+
+          <div class="aviso-faixa info pede"><i class="ph-light ph-info"></i><div>
+            <strong>Este modelo vai pedir ao cliente:</strong>
+            <ul>
+              <li><code class="var">{{project.objective}}</code> — Objetivo do projeto</li>
+              <li><code class="var">{{scope.services_list}}</code> — Serviços oferecidos</li>
+              <li><code class="var">{{included.list}}</code> — O que está incluído</li>
+              <li><code class="var">{{schedule.estimated_days}}</code> — Prazo (dias úteis)</li>
+            </ul>
+          </div></div>
+
+          <div class="cartao secao-modelo">
+            <div class="topo-secao"><input type="text" class="entrada" aria-label="Título da seção" value="Apresentação"><button class="btn fantasma p" aria-label="Subir seção">↑</button><button class="btn fantasma p" aria-label="Descer seção">↓</button><button class="btn fantasma p">Remover</button></div>
+            <textarea class="entrada" aria-label="Texto da seção" rows="4">Olá, {{client.name}}! Depois da sua avaliação na Clínica Vitalis, preparamos este plano de tratamento pensando em {{project.objective}}.</textarea>
+            <div class="marcas"><label><input type="checkbox" checked>Obrigatória</label><label><input type="checkbox">Só aparece se tiver dado</label></div>
+          </div>
+          <div class="cartao secao-modelo">
+            <div class="topo-secao"><input type="text" class="entrada" aria-label="Título da seção" value="Procedimentos indicados"><button class="btn fantasma p" aria-label="Subir seção">↑</button><button class="btn fantasma p" aria-label="Descer seção">↓</button><button class="btn fantasma p">Remover</button></div>
+            <textarea class="entrada" aria-label="Texto da seção" rows="4">Os procedimentos indicados para o seu caso são:
+
+{{scope.services_list}}</textarea>
+            <div class="marcas"><label><input type="checkbox" checked>Obrigatória</label><label><input type="checkbox">Só aparece se tiver dado</label></div>
+          </div>
+          <div class="cartao secao-modelo">
+            <div class="topo-secao"><input type="text" class="entrada" aria-label="Título da seção" value="O que está incluído"><button class="btn fantasma p" aria-label="Subir seção">↑</button><button class="btn fantasma p" aria-label="Descer seção">↓</button><button class="btn fantasma p">Remover</button></div>
+            <textarea class="entrada" aria-label="Texto da seção" rows="4">{{included.list}}</textarea>
+            <div class="marcas"><label><input type="checkbox">Obrigatória</label><label><input type="checkbox" checked>Só aparece se tiver dado</label></div>
+          </div>
+          <div class="cartao secao-modelo">
+            <div class="topo-secao"><input type="text" class="entrada" aria-label="Título da seção" value="Prazo"><button class="btn fantasma p" aria-label="Subir seção">↑</button><button class="btn fantasma p" aria-label="Descer seção">↓</button><button class="btn fantasma p">Remover</button></div>
+            <textarea class="entrada" aria-label="Texto da seção" rows="4">O tratamento completo leva cerca de {{schedule.estimated_days}} dias úteis, contados a partir da primeira sessão.</textarea>
+            <div class="marcas"><label><input type="checkbox" checked>Obrigatória</label><label><input type="checkbox">Só aparece se tiver dado</label></div>
+          </div>
+          <div class="cartao secao-modelo">
+            <div class="topo-secao"><input type="text" class="entrada" aria-label="Título da seção" value="Investimento"><button class="btn fantasma p" aria-label="Subir seção">↑</button><button class="btn fantasma p" aria-label="Descer seção">↓</button><button class="btn fantasma p">Remover</button></div>
+            <textarea class="entrada" aria-label="Texto da seção" rows="4">Investimento total: {{investment.total_formatted}}.
+
+Esta proposta vale por {{commercial_terms.validity_days}} dias.</textarea>
+            <div class="marcas"><label><input type="checkbox" checked>Obrigatória</label><label><input type="checkbox">Só aparece se tiver dado</label></div>
+          </div>
+
+          <div class="acoes-modelo"><button class="btn secundario">+ Seção</button><button class="btn primario">Salvar modelo</button></div>
+        </div>
+
+        <aside class="campos-usados">
+          <h2>Campos usados</h2>
+          <p>Escreva {{campo}} no texto; a proposta troca pelo valor de cada cliente.</p>
+          <ul>
+            <li><code class="var">{{client.name}}</code> — Nome do cliente</li>
+            <li><code class="var">{{project.objective}}</code> — Objetivo do projeto</li>
+            <li><code class="var">{{scope.services_list}}</code> — Serviços oferecidos</li>
+            <li><code class="var">{{included.list}}</code> — O que está incluído</li>
+            <li><code class="var">{{schedule.estimated_days}}</code> — Prazo (dias úteis)</li>
+            <li><code class="var">{{investment.total_formatted}}</code> — Investimento total</li>
+            <li><code class="var">{{commercial_terms.validity_days}}</code> — Validade da proposta (dias)</li>
+          </ul>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

@@ -179,8 +179,15 @@ describe("o que o sistema ajustou, com as duas cores (#2482)", () => {
 
       it("roxo + cinza: o aviso de cor neutra é do MODO ESCURO, nunca da cor principal", () => {
         const camada = caso.camada({ accent_hex: "#7a5cd6", accent_dark_hex: "#333333" });
+        // O motivo do meio é da cor PRINCIPAL sobre o tema que ela pinta, e nasceu
+        // com a paleta Petróleo: o accent claro do roxo (`#604aa6`, a rampa anda +1)
+        // fica a ΔE simulado 0,0423 da `--color-info` clara nova, `#2860c0` — abaixo
+        // do piso 0,05, então a derivação gira a semântica 25°. Contra a `#2f7fd6` da
+        // ArvisX a distância era 0,1095 e nada se movia. Ele não contradiz o que este
+        // caso vigia: continua não havendo motivo da principal sobre o ESCURO.
         expect(sigla(camada)).toEqual([
           "accent_deslocado|claro|--color-accent",
+          "semantica_deslocada|claro|info",
           "cor_escura_acromatica|escuro|--color-accent",
         ]);
         const texto = textos(camada);

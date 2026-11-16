@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cobrança</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="310">
+<meta name="rota" content="/admin/cobranca">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .cartao .corpo > h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .cartao .corpo > p.desc { color: var(--apoio); font-size: 13px; margin-bottom: 14px; }
+  .cartao .corpo > h3 { font-size: 13px; font-weight: 600; }
+  .linha-botao { display: flex; gap: 8px; align-items: center; }
+  .linha-botao input { flex: 1; min-width: 0; }
+  .rodape-form { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .rodape-form.fim { justify-content: flex-end; }
+  .nota { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 12px; font-size: 12px; color: var(--apoio); }
+  .nota.ambar { background: var(--aviso-suave); border-color: #f3d7ac; color: #7d4d0d; }
+  .nota strong { color: var(--texto); }
+  .bloco-chave { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 14px 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .bloco-chave > div:first-child { flex: 1; min-width: 220px; display: grid; gap: 4px; }
+  .bloco-chave strong { font-size: 14px; }
+  .bloco-chave p { color: var(--apoio); font-size: 13px; }
+  .bloco-chave p b { color: var(--texto); font-weight: 600; }
+  .bloco-chave select { width: 200px; max-width: 100%; }
+
+  .passos-cob { display: grid; gap: 12px; margin-top: 12px; }
+  .passos-cob li { display: flex; gap: 12px; font-size: 13px; }
+  .passos-cob .marca { flex: none; color: var(--fraco); }
+  .passos-cob li.feito .marca { color: var(--ok); }
+  .passos-cob li.feito .tit { color: var(--apoio); text-decoration: line-through; }
+  .passos-cob .tit { font-weight: 600; }
+  .passos-cob li.feito .tit { font-weight: 400; }
+  .passos-cob p { margin-bottom: 4px; }
+  .passos-cob p.como { color: var(--apoio); }
+  .situacao { display: grid; gap: 8px; font-size: 13px; }
+  .situacao .tit { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .situacao h2 { font-size: 16px; font-weight: 600; }
+  .problemas { list-style: disc; padding-left: 20px; display: grid; gap: 4px; font-size: 13px; margin-top: 8px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/admin/cobranca" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin da plataforma</div>
+          <h1>Cobrança dos seus clientes</h1>
+          <p>Os planos que você vende e as empresas que pagam. Empresa sem plano é isenta: não paga e não tem limites.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="aviso-faixa aviso" role="alert" style="margin-bottom:20px"><i class="ph-light ph-warning"></i><div>Modo de teste: suas empresas reais ainda não conseguem pagar. Quando a compra de teste der certo, troque para a chave de produção em Conexão.</div></div>
+
+      <div class="abas" role="tablist">
+        <button role="tab" aria-selected="true">Visão geral</button>
+        <button role="tab" aria-selected="false">Conexão</button>
+        <button role="tab" aria-selected="false">Régua</button>
+        <button role="tab" aria-selected="false">Planos</button>
+        <button role="tab" aria-selected="false">Clientes</button>
+      </div>
+
+      <div class="pilha" style="gap:24px">
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Primeira cobrança: o que falta</h2>
+            <ol class="passos-cob">
+              <li class="feito"><span class="marca" aria-hidden="true">✓</span><div><p class="tit">Conecte sua conta do provedor de pagamento</p></div></li>
+              <li class="feito"><span class="marca" aria-hidden="true">✓</span><div><p class="tit">Crie um plano e marque o do cadastro</p></div></li>
+              <li class="feito"><span class="marca" aria-hidden="true">✓</span><div><p class="tit">Receba o primeiro aviso de pagamento</p></div></li>
+              <li class="feito"><span class="marca" aria-hidden="true">✓</span><div><p class="tit">Conclua uma compra de teste</p></div></li>
+              <li class="feito"><span class="marca" aria-hidden="true">✓</span><div><p class="tit">Configure o envio de e-mail</p></div></li>
+              <li><span class="marca" aria-hidden="true">○</span><div><p class="tit">Troque para a chave de produção</p><p class="como">Quando a compra de teste der certo, cole em Conexão a chave de produção (sk_live_ ou rk_live_). Até lá, clientes reais NÃO conseguem pagar.</p><a href="#" class="link">Fazer agora</a></div></li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="corpo situacao">
+            <div class="tit"><h2>Situação da cobrança</h2><span class="tag aviso">MODO DE TESTE</span></div>
+            <p>Último aviso do provedor: <span class="mono">03/11/2026, 10:12</span></p>
+            <p>Última leitura bem-sucedida: <span class="mono">03/11/2026, 13:05</span></p>
+          </div>
+        </div>
+
+        <div class="cartao" role="region" aria-label="Problemas para resolver">
+          <div class="corpo">
+            <h2>Problemas para resolver</h2>
+            <ul class="problemas">
+              <li>1 aviso do provedor sem empresa correspondente nos últimos 90 dias.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell-admin.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

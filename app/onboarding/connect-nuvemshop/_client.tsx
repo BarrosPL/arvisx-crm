@@ -24,7 +24,7 @@ export function ConnectNuvemshopClient() {
 
   return (
     <div className="space-y-4 rounded-lg border bg-background p-6">
-      <p className="text-sm">
+      <p className="text-[13px]">
         {t("Ao clicar em")} <strong>{t("Conectar")}</strong> {t("você será redirecionado para autorizar o")}{" "}
         {marca.name} {t("na sua conta Nuvemshop.")}
       </p>

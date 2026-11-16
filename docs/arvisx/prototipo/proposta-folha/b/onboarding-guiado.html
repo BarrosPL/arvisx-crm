@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guia de montagem</title>
+<meta name="grupo" content="Entrada">
+<meta name="ordem" content="450">
+<meta name="rota" content="/app/connections">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .bloco-guia { border: 2px solid var(--ouro); border-radius: var(--r-lg); background: var(--painel); box-shadow: var(--sombra); padding: 24px; margin-bottom: 24px; }
+  .bloco-guia > header h2 { font-family: var(--display); font-stretch: 110%; font-weight: 600; letter-spacing: -.02em; font-size: 18px; color: var(--navy); }
+  .bloco-guia > header p { color: var(--apoio); margin-top: 4px; }
+  .bloco-guia > .nota-teste { color: var(--apoio); margin-top: 16px; }
+  .bloco-guia .escolha { margin-top: 16px; padding: 24px; border: 1px solid var(--linha); border-radius: var(--r); background: var(--fundo); }
+  .bloco-guia fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+  .bloco-guia legend { font-weight: 600; font-size: 13px; padding: 0; }
+  .bloco-guia fieldset > p { font-size: 12px; color: var(--apoio); margin: 6px 0 12px; }
+  .bloco-guia .op { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid var(--linha); border-radius: var(--r); background: var(--painel); cursor: pointer; }
+  .bloco-guia .op + .op { margin-top: 8px; }
+  .bloco-guia .op input { margin-top: 3px; flex: none; accent-color: var(--ouro-escuro); }
+  .bloco-guia .op strong { display: block; font-size: 13px; font-weight: 600; }
+  .bloco-guia .op span span { display: block; font-size: 12px; color: var(--apoio); margin-top: 3px; }
+  .bloco-guia .saidas { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .linha-topo { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .linha-topo .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+  .nota { color: var(--apoio); font-size: 13px; margin-bottom: 16px; }
+  .link-cfg { display: inline-block; margin: 0 0 20px; }
+  .primeiro { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 32px; text-align: center; color: var(--apoio); }
+  .primeiro i { font-size: 30px; color: var(--fraco); }
+  /* painel fixo do guia */
+  .guia { position: fixed; right: 16px; bottom: 16px; z-index: 40; width: min(352px, calc(100vw - 32px)); }
+  .guia .painel { background: var(--painel); border: 1px solid var(--linha); border-radius: var(--r-lg); box-shadow: var(--sombra-alta); overflow: hidden; }
+  .guia .painel > header { padding: 16px; border-bottom: 1px solid var(--linha); }
+  .guia .cab-linha { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .guia .rotulo { margin-bottom: 0; }
+  .guia h2 { font-family: var(--display); font-stretch: 108%; font-weight: 600; letter-spacing: -.02em; font-size: 16px; margin-top: 6px; color: var(--navy); }
+  .guia .recolher { flex: none; font-size: 12px; color: var(--apoio); text-decoration: underline; text-underline-offset: 4px; }
+  .guia .barra { margin-top: 12px; height: 6px; border-radius: 4px; background: var(--painel-3); overflow: hidden; }
+  .guia .barra span { display: block; height: 100%; width: 0; border-radius: 4px; background: var(--ouro); }
+  .guia .dentro { padding: 16px; }
+  .guia .missoes { display: grid; gap: 6px; font-size: 13px; }
+  .guia .missoes li { display: flex; align-items: center; gap: 8px; color: var(--apoio); }
+  .guia .missoes li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--linha-forte); flex: none; }
+  .guia .missoes li.atual { color: var(--texto); font-weight: 600; }
+  .guia .missoes li.atual::before { background: var(--navy); }
+  .guia .passo { margin-top: 16px; padding: 16px; border: 1px solid var(--linha); border-radius: var(--r-sm); background: var(--fundo); }
+  .guia .passo h3 { font-size: 13px; font-weight: 600; }
+  .guia .passo p { margin-top: 12px; padding-left: 12px; border-left: 2px solid var(--ouro); font-size: 13px; }
+  .guia .abrir { display: none; justify-content: flex-end; }
+  .guia .abrir .btn { box-shadow: var(--sombra-alta); }
+  @media (min-width: 1024px) { .conteudo { padding-right: 392px; } }
+  @media (max-width: 1023px) { .guia .painel { display: none; } .guia .abrir { display: flex; } }
+  @media (max-width: 860px) {
+    .guia { bottom: 80px; }
+    .bloco-guia { padding: 16px; }
+    .bloco-guia .escolha { padding: 16px; }
+    .bloco-guia .saidas .btn { flex: 1; }
+  }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/app/connections" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <section class="bloco-guia" aria-label="Guia de montagem">
+        <header>
+          <span class="rotulo">Guia de montagem</span>
+          <h2>Dê um telefone a ele</h2>
+          <p>É por este número que ele vai atender seus clientes. Se você conecta pelo celular, tenha ele por perto.</p>
+        </header>
+        <p class="nota-teste">Novos canais começam em modo de teste. Após concluir a configuração, abra Conexões para autorizar seus números de teste ou liberar o público.</p>
+        <div class="escolha">
+          <fieldset>
+            <legend>Como você já usa esse número?</legend>
+            <p>Existe mais de um jeito de ter WhatsApp para empresa, e cada um conecta de um jeito. Se você nunca ouviu falar do outro, é o primeiro.</p>
+            <label class="op"><input type="radio" name="forma-de-conectar" aria-label="Uso o WhatsApp no celular"><span><strong>Uso o WhatsApp no celular</strong><span>Conecte com QR Code ou digite um código de pareamento no WhatsApp do celular.</span></span></label>
+            <label class="op"><input type="radio" name="forma-de-conectar" aria-label="Tenho conta oficial na Meta"><span><strong>Tenho conta oficial na Meta</strong><span>Você cadastrou o número na Meta e tem as credenciais em mãos. Não usa o celular para conectar.</span></span></label>
+          </fieldset>
+          <div class="saidas">
+            <button class="btn secundario">Pular por enquanto</button>
+            <button class="btn primario">Conectei em outro lugar</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Canais</div>
+          <h1>Conexões</h1>
+          <p>Por onde seu negócio fala com o cliente. Conecte números por QR ou o número oficial da Meta, e acompanhe a saúde de cada um.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="abas" role="tablist">
+        <a href="#" role="tab" aria-selected="true">Números por QR</a>
+        <a href="#" role="tab" aria-selected="false">API Oficial (Meta)</a>
+        <a href="#" role="tab" aria-selected="false">Provedor parceiro</a>
+        <a href="#" role="tab" aria-selected="false">Telefone</a>
+        <a href="#" role="tab" aria-selected="false">Redes sociais</a>
+        <a href="#" role="tab" aria-selected="false">Chamada de voz</a>
+      </div>
+
+      <div class="linha-topo">
+        <p class="apoio">Nenhum número conectado ainda.</p>
+        <div class="acoes">
+          <button class="btn secundario p">Agendar pausa</button>
+          <button class="btn secundario p"><i class="ph-light ph-plus"></i>Conectar novo WhatsApp</button>
+        </div>
+      </div>
+      <p class="nota">Novos canais começam em modo de teste, sem respostas automáticas até você autorizar números ou liberar o público.</p>
+
+      <a href="#" class="link link-cfg">Configurar responsáveis por número</a>
+
+      <div class="cartao primeiro">
+        <i class="ph-light ph-phone"></i>
+        <p>Conecte seu primeiro número de WhatsApp para começar a atender.</p>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Painel do guia: aberto em tela larga; em tela estreita, na tela do passo, nasce recolhido (botão) -->
+<aside class="guia" aria-label="Guia de montagem">
+  <div class="painel">
+    <header>
+      <div class="cab-linha">
+        <div>
+          <span class="rotulo">Guia de montagem · <span class="mono">0/5</span></span>
+          <h2>Montando o seu CRM</h2>
+        </div>
+        <button type="button" class="recolher">Recolher o guia</button>
+      </div>
+      <div class="barra" role="progressbar" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0"><span></span></div>
+    </header>
+    <div class="dentro">
+      <ol class="missoes">
+        <li class="atual">O telefone dele</li>
+        <li>Treinar</li>
+        <li>Onde ele organiza</li>
+        <li>Ver ele atender</li>
+        <li>Quem trabalha com ele</li>
+      </ol>
+      <section class="passo">
+        <h3>Dê um telefone a ele</h3>
+        <p>Faça este passo no quadro em destaque, no topo desta tela.</p>
+      </section>
+    </div>
+  </div>
+  <div class="abrir"><button type="button" class="btn navy">Abrir o guia · 0/5</button></div>
+</aside>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

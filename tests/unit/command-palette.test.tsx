@@ -79,7 +79,9 @@ describe("CommandPalette", () => {
     const destacada = screen.getByRole("option", { selected: true });
     // Cinza sobre o verde do destaque dava 1,2:1. Sem opacidade: o piso de
     // 4,5:1 de lib/branding/contraste.ts só vale para a cor de frente INTEIRA.
-    for (const apoio of [destacada.querySelector("p")!, destacada.querySelector("span.uppercase")!]) {
+    // Design "Folha": a etiqueta do grupo deixou a caixa alta, então o gancho
+    // `span.uppercase` sumiu; ela continua sendo o único `span.truncate` do item.
+    for (const apoio of [destacada.querySelector("p")!, destacada.querySelector("span.truncate")!]) {
       expect(apoio.classList).toContain("text-accent-foreground");
       expect(apoio.className).not.toMatch(/text-accent-foreground\//);
       expect(apoio.className).not.toContain("text-muted-foreground");

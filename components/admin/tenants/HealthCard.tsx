@@ -78,7 +78,7 @@ export function HealthCard({
           <span className="w-5 h-5 shrink-0" aria-hidden>
             {icon}
           </span>
-          <span className="text-xs font-semibold uppercase tracking-wider leading-none">
+          <span className="text-xs font-semibold leading-none">
             {title}
           </span>
         </div>

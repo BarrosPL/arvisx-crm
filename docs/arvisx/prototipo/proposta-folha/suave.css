@@ -1,0 +1,106 @@
+/* ==========================================================================
+   ARVISX CRM — "Folha suave": a mesma proposta Folha (Petróleo), mais macia.
+
+   Entra DEPOIS de folha.css e da paleta, só nas telas de s/. Nada muda de lugar
+   nem de texto; mudam os cantos, as sombras e os fios:
+   - cantos: 6 · 10 · 12 · 18 px, folha em 24, e pílula em tudo que se clica
+     (botão, filtro, busca, etiqueta, item do menu);
+   - sombra mais larga e mais fraca no lugar do fio duro;
+   - fios um tom mais claros.
+   ========================================================================== */
+
+:root {
+  --r-sm: 10px;
+  --r: 12px;
+  --r-lg: 18px;
+  --r-folha: 24px;
+
+  --linha: #e9eeec;
+  --linha-forte: #d8e0dd;
+
+  --sombra: 0 1px 2px color-mix(in srgb, var(--navy) 4%, transparent), 0 4px 12px -6px color-mix(in srgb, var(--navy) 10%, transparent);
+  --sombra-alta: 0 2px 4px color-mix(in srgb, var(--navy) 5%, transparent), 0 18px 36px -18px color-mix(in srgb, var(--navy) 26%, transparent);
+}
+
+:focus-visible { border-radius: 10px; }
+
+/* ------------------------------ casca ------------------------------------ */
+
+.lateral li a, .lateral .rodape a { height: 34px; padding: 0 12px; border-radius: var(--pilula); }
+.lateral li a .cont { border-radius: var(--pilula); padding: 0 6px; }
+.lateral .versao button { border-radius: 50%; }
+
+.principal { box-shadow: var(--sombra); }
+/* os cantos de cima da folha, agora com 24px, seguem redondos quando a página rola */
+.topo::before, .topo::after {
+  width: 24px; height: 34px;
+  background:
+    linear-gradient(var(--fundo), var(--fundo)) top / 100% 9px no-repeat,
+    radial-gradient(circle at var(--cx) 100%, transparent 23.4px, var(--fundo) 24px) bottom / 100% 24px no-repeat;
+}
+.topo { padding: 0 22px 0 18px; }
+.topo .org { border-radius: 12px; }
+.topo .org .sigla { border-radius: 9px; }
+.topo .busca { border-radius: var(--pilula); padding-left: 16px; }
+.topo .busca kbd { border-radius: 6px; }
+.topo .icone { border-radius: 50%; }
+
+/* ------------------------------ botões ------------------------------------ */
+
+.btn, .btn.p { border-radius: var(--pilula) !important; }
+.btn { padding: 0 16px; }
+.btn.g { padding: 0 22px; }
+.btn.icone { padding: 0; }
+.btn.primario, .btn.navy { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 2px 6px -2px color-mix(in srgb, var(--navy) 45%, transparent); }
+input[type="file"]::file-selector-button { border-radius: var(--pilula); padding: 0 12px; }
+
+/* ------------------------------ cartões ----------------------------------- */
+
+.cartao { box-shadow: var(--sombra); }
+.cartao.link:hover { box-shadow: var(--sombra-alta); }
+.hub-card .ic { border-radius: 12px; }
+.vazio .elo { border-radius: 16px; }
+.aviso-faixa { border-radius: 14px; }
+
+/* ------------------------------ etiquetas --------------------------------- */
+
+.tag { border-radius: var(--pilula); padding: 0 10px; }
+.abas .cont { border-radius: var(--pilula); }
+.abas [aria-selected="true"]::after { height: 2px; border-radius: 2px; }
+
+/* ------------------------------ formulários ------------------------------- */
+
+.entrada, .campo :is(input, select, textarea),
+.conteudo :is(select, input):not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]):not(.busca-linha *, .compositor *, .sem-caixa) { border-radius: 12px !important; }
+.busca-linha { border-radius: var(--pilula); padding-left: 14px; }
+.segmento { border-radius: var(--pilula); }
+.segmento button { border-radius: var(--pilula); padding: 0 14px; }
+.filtro { border-radius: var(--pilula); padding: 0 12px 0 14px; }
+
+/* ------------------------------ tabelas / listas -------------------------- */
+
+.tabela tbody tr:hover td:first-child { border-radius: 10px 0 0 10px; }
+.tabela tbody tr:hover td:last-child { border-radius: 0 10px 10px 0; }
+
+/* ------------------------------ kanban ------------------------------------ */
+
+.coluna { border-radius: 18px; }
+.card-negocio { border-radius: 14px; }
+
+/* ------------------------------ inbox / conversa -------------------------- */
+
+.conv { border-radius: 14px; }
+.conv .cont { border-radius: var(--pilula); }
+.balao { border-radius: 18px; padding: 9px 14px; }
+.balao.deles { border-bottom-left-radius: 6px; }
+.balao.nos, .balao.ia { border-bottom-right-radius: 6px; }
+.balao.sistema { border-radius: var(--pilula); }
+.compositor .caixa-msg { border-radius: 22px; padding-left: 16px; }
+.compositor .ferr button { border-radius: 50%; }
+
+/* ------------------------------ celular ----------------------------------- */
+
+@media (max-width: 860px) {
+  .principal { box-shadow: none; }
+  .topo { padding: 0 12px; }
+}

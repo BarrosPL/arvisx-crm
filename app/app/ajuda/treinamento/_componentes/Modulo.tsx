@@ -31,7 +31,7 @@ export function ConteudoDoModulo({ modulo }: { modulo: ModuloDoTreinamento }) {
   return (
     <article className="flex flex-col gap-8">
       <header className="flex flex-col gap-2 border-b pb-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-cta-forte)]">
+        <p className="text-xs font-semibold text-[var(--color-cta-forte)]">
           Guia de uso
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">{modulo.titulo}</h1>
@@ -57,7 +57,7 @@ export function ConteudoDoModulo({ modulo }: { modulo: ModuloDoTreinamento }) {
           className="flex scroll-mt-4 flex-col gap-5"
         >
           <div className="flex flex-col gap-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <p className="text-xs font-semibold text-muted-foreground">
               Lição {i + 1} de {modulo.licoes.length}
             </p>
             <h2 id={`${ancoraDaLicao(l.id)}-titulo`} className="text-xl font-semibold tracking-tight">

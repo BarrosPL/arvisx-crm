@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ficha da empresa</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="960">
+<meta name="rota" content="/app/companies/[id]">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+.kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; font-size: 13px; }
+  .kv dt { color: var(--apoio); }
+  .kv dd { min-width: 0; overflow-wrap: anywhere; }
+  .cnpj { font-family: var(--mono); color: var(--apoio); margin-top: 6px; }
+  .decisor { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--linha); font-size: 13px; }
+  .decisor:first-child { padding-top: 0; }
+  .decisor a { font-weight: 600; }
+  .decisor span { color: var(--apoio); text-align: right; }
+  .fones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .fone { border: 1px solid var(--linha); border-radius: var(--r-sm); padding: 10px 12px; font-size: 13px; }
+  .fone a { font-family: var(--mono); font-size: 13px; }
+  .fone div { color: var(--apoio); }
+  @media (max-width: 860px) { .fones { grid-template-columns: 1fr; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/app/companies" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+<a href="#" class="volta"><i class="ph-light ph-arrow-left"></i>Empresas</a>
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM · Empresas</div>
+          <h1>Odonto Sul</h1>
+          <p class="cnpj">12.345.678/0001-90</p>
+        </div>
+        <div class="acoes">
+          <button class="btn secundario">Enriquecer CNPJ</button>
+          <button class="btn secundario">Editar empresa</button>
+          <button class="btn perigo">Excluir empresa</button>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="grade c2">
+        <div class="cartao">
+          <div class="cab"><h2>Dados cadastrais</h2></div>
+          <div class="corpo">
+            <dl class="kv">
+              <dt>Razão social</dt><dd>Grupo Odonto Sul Ltda</dd>
+              <dt>Situação</dt><dd>ATIVA</dd>
+              <dt>Porte</dt><dd>DEMAIS</dd>
+              <dt>CNAE</dt><dd>8630504 — Atividade odontológica</dd>
+              <dt>Endereço</dt><dd>Avenida Ipiranga, 1840, Azenha, Porto Alegre, RS, 90160-093</dd>
+              <dt>Enriquecimento</dt><dd>done</dd>
+            </dl>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="cab"><h2>Pessoas / decisores</h2></div>
+          <div class="corpo">
+            <div class="decisor"><a href="#">Renata Albuquerque</a><span>Diretora administrativa</span></div>
+            <div class="decisor"><a href="#">Gustavo Peixoto</a><span>Coordenador de compras</span></div>
+            <div class="decisor" style="border-bottom:0;padding-bottom:0"><a href="#">Dra. Lívia Mattos</a><span>Responsável técnica</span></div>
+          </div>
+        </div>
+
+        <div class="cartao" style="grid-column:1/-1">
+          <div class="cab"><h2>Telefones</h2></div>
+          <div class="corpo">
+            <div class="fones">
+              <div class="fone"><a href="#">+55 51 99812-4410</a><div>Renata Albuquerque</div></div>
+              <div class="fone"><a href="#">+55 51 99655-0937</a><div>Gustavo Peixoto</div></div>
+              <div class="fone"><a href="#">+55 51 3221-8800</a><div>Grupo Odonto Sul</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

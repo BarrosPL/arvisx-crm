@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solicitação LGPD</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="90">
+<meta name="rota" content="/admin/lgpd/requests/[id]">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .cabecalho .titulo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .cabecalho h1.cod { font-family: var(--mono); font-stretch: 100%; font-size: 18px; letter-spacing: -.01em; }
+  .cabecalho p.nota { font-size: 12px; font-style: italic; }
+  .sla-topo { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--apoio); margin-bottom: 6px; }
+  .marcos { margin-top: 18px; }
+  .marcos li { position: relative; padding: 0 0 16px 24px; color: var(--apoio); font-size: 13px; line-height: 1.3; }
+  .marcos li:last-child { padding-bottom: 0; }
+  .marcos li::before { content: ""; position: absolute; left: 0; top: 2px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--linha-forte); background: var(--painel-2); }
+  .marcos li.feito::before { background: var(--ok); border-color: var(--ok); }
+  .marcos li::after { content: ""; position: absolute; left: 5.5px; top: 18px; bottom: 0; width: 1px; background: var(--linha-forte); }
+  .marcos li:last-child::after { display: none; }
+  .marcos li small { display: block; font-size: 12px; opacity: .75; margin-top: 2px; }
+  .det { display: grid; gap: 8px; font-size: 13px; }
+  .det > div { display: flex; justify-content: space-between; gap: 16px; min-width: 0; }
+  .det dt { color: var(--apoio); flex: none; }
+  .det dd { text-align: right; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .det dd.m { font-family: var(--mono); font-size: 12px; }
+  .trilha li { position: relative; padding: 0 0 14px 20px; min-width: 0; }
+  .trilha li:last-child { padding-bottom: 0; }
+  .trilha li::before { content: ""; position: absolute; left: 0; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--linha-forte); }
+  .trilha li::after { content: ""; position: absolute; left: 3.5px; top: 18px; bottom: 0; width: 1px; background: var(--linha); }
+  .trilha li:last-child::after { display: none; }
+  .trilha .acao { font: 600 13px/1.4 var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .trilha .quando { font-size: 12px; color: var(--apoio); }
+  .trilha .quando .por { margin-left: 8px; opacity: .7; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/admin/lgpd" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <a href="#" class="volta"><i class="ph-light ph-caret-left"></i>LGPD Cross-tenant</a>
+      <div class="cabecalho">
+        <div style="min-width:0">
+          <div class="titulo"><h1 class="cod">#a1b2c3d4</h1><span class="tag navy">Processando</span><span class="tag contorno">Anonimização cliente</span><span class="tag contorno" title="clinica-vitalis"><i class="ph-light ph-buildings"></i>Clínica Vitalis</span></div>
+          <p>Recebido em <span class="mono">22/10/2026</span> às <span class="mono">09:14</span> · Vence em <span class="mono">13/11/2026</span></p>
+          <p class="nota">Somente leitura — aprovação é feita pelo operador no contexto do tenant.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="grade c2">
+        <div class="cartao">
+          <div class="cab"><h2>Linha do tempo SLA</h2></div>
+          <div class="corpo">
+            <div class="sla-topo"><span class="mono">D+12 (hoje)</span><span class="mono">10d restantes</span></div>
+            <div class="barra ok" role="progressbar" aria-valuenow="54" aria-valuemin="0" aria-valuemax="100"><span style="width:54%"></span></div>
+            <ol class="marcos">
+              <li class="feito">D+0 — Recebido<small>22 de out 2026</small></li>
+              <li class="feito">D+10 — Processamento<small>01 de nov 2026</small></li>
+              <li>D+15 — Anonimização concluída<small>06 de nov 2026</small></li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="cab"><h2>Detalhes</h2></div>
+          <div class="corpo">
+            <dl class="det">
+              <div><dt>ID completo</dt><dd class="m">a1b2c3d4-0f6e-4c2b-9a17-3e5d8b7c4f01</dd></div>
+              <div><dt>Tipo</dt><dd>Anonimização cliente</dd></div>
+              <div><dt>Status</dt><dd>Processando</dd></div>
+              <div><dt>Origem</dt><dd>manual</dd></div>
+              <div><dt>Escopo</dt><dd>contact</dd></div>
+              <div><dt>Tentativas</dt><dd class="mono">1</dd></div>
+              <div><dt>Tenant</dt><dd>Clínica Vitalis</dd></div>
+              <div><dt>Slug</dt><dd>clinica-vitalis</dd></div>
+              <div><dt>Contact ID</dt><dd class="m">9a40c6d1-2e7b-4f83-b5a0-6d1c8e3f7a24</dd></div>
+            </dl>
+          </div>
+        </div>
+
+        <div class="cartao" style="grid-column:1/-1">
+          <div class="cab"><h2>Trilha de auditoria (3)</h2></div>
+          <div class="corpo">
+            <ol class="trilha">
+              <li><p class="acao">lgpd.redact_received</p><p class="quando"><span class="mono">22/10/2026 09:14:03</span><span class="por">por <span class="mono">2b1f8d34…</span></span></p></li>
+              <li><p class="acao">lgpd.art12_notice_sent</p><p class="quando"><span class="mono">22/10/2026 09:14:05</span></p></li>
+              <li><p class="acao">lgpd.manually_approved</p><p class="quando"><span class="mono">27/10/2026 16:38:51</span><span class="por">por <span class="mono">2b1f8d34…</span></span></p></li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell-admin.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

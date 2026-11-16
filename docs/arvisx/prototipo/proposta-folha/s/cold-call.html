@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cold Call</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="920">
+<meta name="rota" content="/app/cold-call">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+.secao-topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .secao-topo h2 { font-family: var(--display); font-stretch: 108%; font-weight: 600; font-size: 18px; letter-spacing: -.02em; }
+  .secao-topo p { color: var(--apoio); margin-top: 2px; }
+  .barra-fila { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px; border-bottom: 1px solid var(--linha); }
+  .barra-fila select { height: 38px; padding: 0 12px; border-radius: var(--r-sm); background: var(--painel); border: 1px solid var(--linha-forte); font-weight: 600; font-size: 13px; max-width: 100%; }
+  .barra-fila .busca-linha { flex: 1; min-width: 200px; max-width: 290px; }
+  .rola { overflow-x: auto; }
+  .rola .tabela { min-width: 860px; }
+  .tabela td { white-space: nowrap; }
+  .tabela td.sel, .tabela th.sel { width: 40px; padding-right: 0; }
+  .tabela input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--navy); }
+  .tabela td.data { font-family: var(--mono); font-size: 12px; color: var(--apoio); }
+  .fluxo { display: inline-flex; align-items: center; gap: 7px; }
+  .fluxo i { color: var(--ouro-escuro); font-size: 14px; }
+  .nao-ligar { color: var(--erro); font-weight: 600; }
+  .pe-fila { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px; border-top: 1px solid var(--linha); }
+  .pe-fila .pag { margin-right: auto; padding-left: 4px; font: 500 12px/1 var(--mono); color: var(--apoio); }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/app/cold-call" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo ">
+<div class="cabecalho" style="margin-bottom:12px">
+        <div>
+          <div class="eyebrow">CRM</div>
+          <h1>Cold Call</h1>
+        </div>
+        <div class="acoes"><button class="btn secundario">Importar planilha</button></div>
+      </div>
+      <div class="abas" role="tablist" aria-label="Cold Call">
+        <button role="tab" aria-selected="true">Ações manuais</button>
+        <button role="tab" aria-selected="false">Roteiro</button>
+        <button role="tab" aria-selected="false">Funil</button>
+        <button role="tab" aria-selected="false">Como configurar</button>
+      </div>
+
+      <div class="secao-topo">
+        <div>
+          <h2>Ações manuais</h2>
+          <p>Ligações para fazer, um contato por vez, com o roteiro e o resultado de cada uma.</p>
+        </div>
+        <button class="btn primario"><i class="ph-fill ph-play"></i>Vamos começar</button>
+      </div>
+
+      <div class="cartao">
+        <div class="barra-fila">
+          <select aria-label="Etapa">
+            <option selected>Fila de ligações (8)</option>
+            <option>Todos (13)</option>
+            <option>Na fila (5)</option>
+            <option>Não atendeu (2)</option>
+            <option>Caixa postal (1)</option>
+            <option>Follow-up (2)</option>
+            <option>Reunião pedida (2)</option>
+            <option>Perdido (1)</option>
+          </select>
+          <div class="busca-linha"><i class="ph-light ph-magnifying-glass"></i><input type="search" placeholder="Buscar por nome ou telefone" aria-label="Buscar por nome ou telefone"></div>
+          <select aria-label="Selecionar responsável">
+            <option selected>Selecionar responsável</option>
+            <option>Ana Souza</option>
+            <option>Marcos Lima</option>
+            <option>Renata Borges</option>
+          </select>
+        </div>
+        <div class="rola"><table class="tabela">
+          <thead><tr><th class="sel"><input type="checkbox" aria-label="Selecionar todos"></th><th>Contatos</th><th>Campanha/fluxo</th><th>Atribuído a</th><th>Tipo</th><th>Status</th><th>Data da adição</th><th><span class="sr">Tirar da fila</span></th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="sel"><input type="checkbox" aria-label="Selecionar Sorriso &amp; Cia"></td>
+              <td><div class="pessoa"><span class="avatar claro">SC</span><div><span class="nome">Sorriso &amp; Cia</span><span class="sub mono">+55 19 99214-3301</span></div></div></td>
+              <td><span class="fluxo"><i class="ph-fill ph-phone"></i>Cold Call</span></td>
+              <td><span class="fluxo"><span class="avatar p">ML</span>Marcos Lima</span></td>
+              <td>Ligação</td>
+              <td>Não iniciada</td>
+              <td class="data">03 de nov. de 2026, 09:12</td>
+              <td><button class="btn fantasma icone p" title="Tirar da fila" aria-label="Tirar da fila: Sorriso &amp; Cia"><i class="ph-light ph-trash"></i></button></td>
+            </tr>
+            <tr>
+              <td class="sel"><input type="checkbox" aria-label="Selecionar Bella Pele"></td>
+              <td><div class="pessoa"><span class="avatar claro">BP</span><div><span class="nome">Bella Pele</span><span class="sub mono">+55 11 98120-4477</span></div></div></td>
+              <td><span class="fluxo"><i class="ph-fill ph-phone"></i>Cold Call</span></td>
+              <td><span class="fluxo"><span class="avatar p">ML</span>Marcos Lima</span></td>
+              <td>Ligação</td>
+              <td>Não iniciada</td>
+              <td class="data">03 de nov. de 2026, 09:12</td>
+              <td><button class="btn fantasma icone p" title="Tirar da fila" aria-label="Tirar da fila: Bella Pele"><i class="ph-light ph-trash"></i></button></td>
+            </tr>
+            <tr>
+              <td class="sel"><input type="checkbox" aria-label="Selecionar Odonto Prime Jardins"></td>
+              <td><div class="pessoa"><span class="avatar claro">OP</span><div><span class="nome">Odonto Prime Jardins</span><span class="sub mono">+55 11 97355-1290</span></div></div></td>
+              <td><span class="fluxo"><i class="ph-fill ph-phone"></i>Cold Call</span></td>
+              <td><span class="fluxo"><span class="avatar p">RB</span>Renata Borges</span></td>
+              <td>Ligação</td>
+              <td>Não iniciada</td>
+              <td class="data">03 de nov. de 2026, 09:12</td>
+              <td><button class="btn fantasma icone p" title="Tirar da fila" aria-label="Tirar da fila: Odonto Prime Jardins"><i class="ph-light ph-trash"></i></button></td>
+            </tr>
+            <tr>
+              <td class="sel"><input type="checkbox" aria-label="Selecionar Centro Odontológico Andrade"></td>
+              <td><div class="pessoa"><span class="avatar claro">CA</span><div><span class="nome">Centro Odontológico Andrade</span><span class="sub mono">+55 11 96488-2015</span></div></div></td>
+              <td><span class="fluxo"><i class="ph-fill ph-phone"></i>Cold Call</span></td>
+              <td><span class="fluxo"><span class="avatar p">RB</span>Renata Borges</span></td>
+              <td>Ligação</td>
+              <td>Não atendeu <span class="fraco pequeno mono">· 1x</span></td>
+              <td class="data">02 de nov. de 2026, 16:40</td>
+              <td><button class="btn fantasma icone p" title="Tirar da fila" aria-label="Tirar da fila: Centro Odontológico Andrade"><i class="ph-light ph-trash"></i></button></td>
+            </tr>
+            <tr>
+              <td class="sel"><input type="checkbox" aria-label="Selecionar Implantec"></td>
+              <td><div class="pessoa"><span class="avatar claro">IM</span><div><span class="nome">Implantec</span><span class="sub mono">+55 41 99870-6642</span></div></div></td>
+              <td><span class="fluxo"><i class="ph-fill ph-phone"></i>Cold Call</span></td>
+              <td><span class="fluxo"><span class="avatar p">ML</span>Marcos Lima</span></td>
+              <td>Ligação</td>
+              <td>Caixa postal <span class="fraco pequeno mono">· 2x</span></td>
+              <td class="data">30 de out. de 2026, 11:05</td>
+              <td><button class="btn fantasma icone p" title="Tirar da fila" aria-label="Tirar da fila: Implantec"><i class="ph-light ph-trash"></i></button></td>
+            </tr>
+            <tr>
+              <td class="sel"><input type="checkbox" aria-label="Selecionar Dental Prime"></td>
+              <td><div class="pessoa"><span class="avatar claro">DP</span><div><span class="nome">Dental Prime</span><span class="sub mono">Não ligar</span></div></div></td>
+              <td><span class="fluxo"><i class="ph-fill ph-phone"></i>Cold Call</span></td>
+              <td><span class="fraco">—</span></td>
+              <td>Ligação</td>
+              <td><span class="nao-ligar">Não ligar · Pediu para não ser incomodado</span></td>
+              <td class="data">30 de out. de 2026, 11:05</td>
+              <td><button class="btn fantasma icone p" title="Tirar da fila" aria-label="Tirar da fila: Dental Prime"><i class="ph-light ph-trash"></i></button></td>
+            </tr>
+            <tr>
+              <td class="sel"><input type="checkbox" aria-label="Selecionar Clínica Sorrir Mais"></td>
+              <td><div class="pessoa"><span class="avatar claro">CS</span><div><span class="nome">Clínica Sorrir Mais</span><span class="sub mono">+55 11 95501-7823</span></div></div></td>
+              <td><span class="fluxo"><i class="ph-fill ph-phone"></i>Cold Call</span></td>
+              <td><span class="fluxo"><span class="avatar p">AS</span>Ana Souza</span></td>
+              <td>Ligação</td>
+              <td>Não atendeu <span class="fraco pequeno mono">· 3x</span></td>
+              <td class="data">29 de out. de 2026, 14:22</td>
+              <td><button class="btn fantasma icone p" title="Tirar da fila" aria-label="Tirar da fila: Clínica Sorrir Mais"><i class="ph-light ph-trash"></i></button></td>
+            </tr>
+            <tr>
+              <td class="sel"><input type="checkbox" aria-label="Selecionar Ortho Master"></td>
+              <td><div class="pessoa"><span class="avatar claro">OM</span><div><span class="nome">Ortho Master</span><span class="sub mono">Sem telefone</span></div></div></td>
+              <td><span class="fluxo"><i class="ph-fill ph-phone"></i>Cold Call</span></td>
+              <td><span class="fraco">—</span></td>
+              <td>Ligação</td>
+              <td>Não iniciada</td>
+              <td class="data">29 de out. de 2026, 14:22</td>
+              <td><button class="btn fantasma icone p" title="Tirar da fila" aria-label="Tirar da fila: Ortho Master"><i class="ph-light ph-trash"></i></button></td>
+            </tr>
+          </tbody>
+        </table></div>
+        <div class="pe-fila">
+          <span class="pag">Página 1 de 1</span>
+          <button class="btn secundario p" disabled><i class="ph-light ph-caret-left"></i>Anterior</button>
+          <button class="btn secundario p" disabled>Próxima<i class="ph-light ph-caret-right"></i></button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

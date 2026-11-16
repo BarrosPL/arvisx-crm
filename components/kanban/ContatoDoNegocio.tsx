@@ -411,7 +411,7 @@ function PessoasRelacionadas({ leadId }: { leadId: string | null }) {
   const pessoas = data?.data ?? [];
   return (
     <div className="mt-3 space-y-1" data-testid="pessoas-relacionadas">
-      <p className="text-[11px] font-medium tracking-wide text-text-muted uppercase">
+      <p className="text-[11px] font-medium text-text-muted">
         {t("Pessoas relacionadas")}
       </p>
       {pessoas.length === 0 ? (

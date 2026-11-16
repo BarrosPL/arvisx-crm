@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marca</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="250">
+<meta name="rota" content="/admin/marca">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .cartao .corpo > h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .cartao .corpo > p.desc { color: var(--apoio); font-size: 13px; margin-bottom: 14px; }
+  .cartao .corpo > h3 { font-size: 13px; font-weight: 600; }
+  .linha-botao { display: flex; gap: 8px; align-items: center; }
+  .linha-botao input { flex: 1; min-width: 0; }
+  .rodape-form { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .rodape-form.fim { justify-content: flex-end; }
+  .nota { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 12px; font-size: 12px; color: var(--apoio); }
+  .nota.ambar { background: var(--aviso-suave); border-color: #f3d7ac; color: #7d4d0d; }
+  .nota strong { color: var(--texto); }
+  .bloco-chave { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 14px 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .bloco-chave > div:first-child { flex: 1; min-width: 220px; display: grid; gap: 4px; }
+  .bloco-chave strong { font-size: 14px; }
+  .bloco-chave p { color: var(--apoio); font-size: 13px; }
+  .bloco-chave p b { color: var(--texto); font-weight: 600; }
+  .bloco-chave select { width: 200px; max-width: 100%; }
+
+  .cor-linha { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .cor-linha .amostra { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--linha-forte); flex: none; }
+  .campo .cor-linha input[type="text"] { width: 144px; flex: none; }
+  .tira { display: flex; overflow: hidden; border-radius: var(--r); border: 1px solid var(--linha-forte); }
+  .tira span { height: 56px; flex: 1; }
+  .legenda { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 12px; margin-top: 12px; }
+  .legenda li { display: flex; align-items: center; gap: 8px; }
+  .legenda i { width: 16px; height: 16px; border-radius: 6px; border: 1px solid var(--linha-forte); display: block; flex: none; }
+  .arquivo-linha { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .arquivo-linha input[type="file"] { max-width: 100%; min-width: 0; font-size: 13px; }
+  .previas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .previa { height: 96px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--linha-forte); border-radius: 10px; padding: 0 16px; }
+  .previa img { max-height: 48px; max-width: 100%; width: auto; object-fit: contain; }
+  .icone-previa { width: 40px; height: 40px; border: 1px solid var(--linha-forte); border-radius: 10px; display: grid; place-items: center; flex: none; }
+  .icone-previa img { width: 32px; height: 32px; object-fit: contain; }
+  .origem-linha { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; padding: 8px 0; border-bottom: 1px solid var(--linha); font-size: 13px; }
+  .origem-linha:last-of-type { border-bottom: 0; }
+  .contraste { display: grid; gap: 4px; font-size: 13px; margin-top: 8px; }
+  .contraste li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; }
+  .contraste .passa { color: var(--ok); }
+  pre.exemplo { margin-top: 8px; overflow-x: auto; border-radius: var(--r); background: var(--painel-2); padding: 12px; font: 400 12px/1.5 var(--mono); }
+  details summary { cursor: pointer; font-weight: 600; font-size: 13px; }
+  @media (max-width: 560px) { .previas { grid-template-columns: 1fr; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/admin/marca" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin da plataforma</div>
+          <h1>Marca</h1>
+          <p>O nome e a cor que este sistema mostra para todo mundo que usa esta instalação.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <div class="cartao">
+          <div class="corpo form">
+            <div class="campo">
+              <label for="app_name">Nome do sistema</label>
+              <input type="text" id="app_name" value="ArvisX CRM" placeholder="ArvisX CRM" maxlength="120" autocomplete="off">
+              <span class="ajuda">Deixe em branco para voltar ao nome padrão. Este nome já aparece no título da aba do navegador, na tela de login, nos menus laterais, nos e-mails que o sistema envia (para as empresas que não definiram um nome próprio), no aplicativo de verificação em duas etapas e no arquivo de códigos de recuperação que o usuário baixa. Ainda NÃO chega às telas de cadastro nem às da configuração inicial: essas continuam com o nome gravado no arquivo de instalação do servidor até a próxima atualização da stack.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="corpo form">
+            <div class="campo">
+              <label for="accent_hex">Cor da marca</label>
+              <div class="cor-linha">
+                <span class="amostra" style="background:#d4af37" title="Escolher a cor visualmente"></span>
+                <input type="text" id="accent_hex" class="mono" value="#d4af37" placeholder="#7a5cd6" spellcheck="false" autocomplete="off">
+              </div>
+              <span class="ajuda">Deixe em branco para voltar à cor padrão do sistema.</span>
+            </div>
+            <div class="campo">
+              <label for="accent_dark_hex">Cor da marca no tema escuro (opcional)</label>
+              <div class="cor-linha">
+                <span class="amostra" style="background:#808080" title="Escolher a cor visualmente"></span>
+                <input type="text" id="accent_dark_hex" class="mono" value="" placeholder="#7a5cd6" spellcheck="false" autocomplete="off">
+              </div>
+              <span class="ajuda">Deixe em branco para os dois modos usarem a cor acima.</span>
+            </div>
+            <div>
+              <p class="apoio" style="font-size: 13px;margin-bottom:8px">A partir da sua cor o sistema monta esta escala e escolhe, dentro dela, o tom que vai nos botões:</p>
+              <div class="tira" role="img" aria-label="Escala de 11 tons gerada a partir da sua cor, do mais claro ao mais escuro. Os tons em uso estão descritos na lista abaixo.">
+                <span title="#fbf6e4" style="background:#fbf6e4"></span>
+                <span title="#f5eac2" style="background:#f5eac2"></span>
+                <span title="#eddb97" style="background:#eddb97"></span>
+                <span title="#e4cb6b" style="background:#e4cb6b"></span>
+                <span title="#dcbd4d" style="background:#dcbd4d;box-shadow:inset 0 0 0 3px #1a1a1a"></span>
+                <span title="#d4af37" style="background:#d4af37;box-shadow:inset 0 0 0 3px #1a1a1a"></span>
+                <span title="#b8962b" style="background:#b8962b;box-shadow:inset 0 0 0 3px #fff"></span>
+                <span title="#967921" style="background:#967921"></span>
+                <span title="#735c19" style="background:#735c19"></span>
+                <span title="#4f3f11" style="background:#4f3f11"></span>
+                <span title="#2e2409" style="background:#2e2409"></span>
+              </div>
+              <ul class="legenda">
+                <li><i style="background:#d4af37"></i><span>Sua cor</span><span class="mono fraco">#d4af37</span></li>
+                <li><i style="background:#b8962b"></i><span>Botões no modo claro</span><span class="mono fraco">#b8962b</span></li>
+                <li><i style="background:#dcbd4d"></i><span>Botões no modo escuro</span><span class="mono fraco">#dcbd4d</span></li>
+              </ul>
+              <p class="fraco pequeno" style="margin-top:8px;font-size: 12px">No modo escuro o sistema usa naturalmente um tom mais claro da escala, para a cor não se perder no fundo escuro.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="corpo form">
+            <div class="campo">
+              <label for="logo-instalacao">Logo</label>
+              <div class="arquivo-linha">
+                <input type="file" id="logo-instalacao" accept="image/png,image/jpeg">
+                <button type="button" class="btn secundario">Remover</button>
+              </div>
+              <span class="ajuda">PNG ou JPG, até 512 KB. Prefira fundo transparente. SVG não é aceito: ele pode executar código quando aberto direto pelo endereço da imagem.</span>
+            </div>
+            <div class="campo">
+              <label for="logo-escuro-instalacao">Logo para o tema escuro (opcional)</label>
+              <div class="arquivo-linha">
+                <input type="file" id="logo-escuro-instalacao" accept="image/png,image/jpeg">
+                <button type="button" class="btn secundario">Remover logo escuro</button>
+              </div>
+              <span class="ajuda">Use uma versão legível sobre fundo escuro. Ela aparece sem moldura branca. Sem ela, o logo padrão mantém a proteção de contraste. PNG ou JPG, até 512 KB.</span>
+            </div>
+            <div>
+              <p class="apoio" style="font-size: 13px;margin-bottom:8px">Como o logo aparece nas duas aparências do sistema:</p>
+              <div class="previas">
+                <div><div class="previa" style="background:#ffffff"><img src="../../marca/arvisx-crm-oficial.png" alt="ArvisX CRM"></div><p class="fraco" style="font-size: 12px;margin-top:4px">Aparência clara</p></div>
+                <div><div class="previa" style="background:#14171c"><img src="../../marca/arvisx-crm-oficial-escuro.png" alt="ArvisX CRM"></div><p class="fraco" style="font-size: 12px;margin-top:4px">Aparência escura</p></div>
+              </div>
+            </div>
+            <div class="campo">
+              <label for="icone-da-aba">Ícone do aplicativo e do navegador</label>
+              <div class="arquivo-linha">
+                <span class="icone-previa"><img src="../../marca/arvisx-simbolo-oficial.png" alt="Ícone da aba"></span>
+                <input type="file" id="icone-da-aba" accept="image/png,image/jpeg">
+                <button type="button" class="btn secundario">Remover ícone</button>
+              </div>
+              <span class="ajuda">Imagem quadrada, de preferência 512×512 ou maior. PNG ou JPG, até 512 KB. Usada no navegador e no aplicativo instalado. Sem arquivo, mantém o desenho da marca.</span>
+            </div>
+          </div>
+        </div>
+
+        <section>
+          <h2 class="secao" style="margin-bottom:4px">Como está agora</h2>
+          <p class="apoio" style="font-size: 13px;margin-bottom:12px">O que o sistema está usando, o que ele mediu e o que ele ajustou sozinho.</p>
+          <div class="pilha">
+            <div class="cartao">
+              <div class="corpo">
+                <h3>De onde vem cada coisa</h3>
+                <div style="margin-top:8px">
+                  <div class="origem-linha"><span>Nome do sistema</span><span class="apoio">definido nesta tela</span></div>
+                  <div class="origem-linha"><span>Logo</span><span class="apoio">definido nesta tela</span></div>
+                  <div class="origem-linha"><span>Cor</span><span class="apoio">definido nesta tela</span></div>
+                </div>
+                <p class="fraco" style="font-size: 12px;margin-top:12px">O logo ainda é trocado no arquivo de instalação do servidor. Esta tela mostra de onde ele vem para que o valor não pareça ter sumido.</p>
+              </div>
+            </div>
+            <div class="cartao">
+              <div class="corpo">
+                <h3>O texto em cima dos botões</h3>
+                <p class="fraco" style="font-size: 12px;margin-top:4px">Quanto maior o número, mais fácil de ler. AA é o mínimo recomendado internacionalmente para texto.</p>
+                <ul class="contraste">
+                  <li><span class="apoio">No modo claro:</span><span class="mono">5,1:1</span><span class="passa">passa em AA</span></li>
+                  <li><span class="apoio">No modo escuro:</span><span class="mono">9,4:1</span><span class="passa">passa em AA</span></li>
+                </ul>
+                <h3 style="margin-top:20px">O que o sistema ajustou</h3>
+                <p class="apoio" style="font-size: 13px;margin-top:4px">Nada foi ajustado — a escala acima mostra onde a sua cor entra.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="rodape-form fim"><button class="btn primario">Salvar</button></div>
+
+        <div class="cartao">
+          <div class="corpo form">
+            <div>
+              <h2 style="font-size: 16px;font-weight: 600;margin-bottom:4px">Tema da plataforma</h2>
+              <p class="apoio" style="font-size: 13px">A paleta de superfícies, bordas e textos do login, do admin e das organizações que não escolheram tema. A cor de ação continua vindo da Marca.</p>
+            </div>
+            <p class="apoio" style="font-size: 13px">Nenhuma extensão instalada oferece um tema. Instale uma extensão com tema para poder escolher.</p>
+            <div class="rodape-form fim"><button class="btn secundario" disabled>Salvar tema</button></div>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="corpo form">
+            <div>
+              <h2 style="font-size: 16px;font-weight: 600;margin-bottom:4px">CSS personalizado</h2>
+              <p class="apoio" style="font-size: 13px">Ajustes visuais globais: afetam o login e todas as telas, em todas as organizações desta instalação.</p>
+            </div>
+            <div class="campo">
+              <label for="custom_css">Regras CSS</label>
+              <textarea id="custom_css" class="mono" rows="12" maxlength="16384" spellcheck="false" autocomplete="off"></textarea>
+              <span class="ajuda">Use seletores de classe e propriedades visuais (cores, bordas, sombras e tipografia). Sem seletores globais ou por ID, @rules, URLs, scripts, !important ou propriedades de layout e posicionamento. Até 16 KB. Deixe vazio e salve para remover.</span>
+            </div>
+            <details>
+              <summary>Ver exemplo</summary>
+              <pre class="exemplo">.text-muted-foreground {
+  color: #52645a;
+}
+
+.rounded-md {
+  border-radius: 12px;
+}</pre>
+            </details>
+            <div class="rodape-form fim"><button class="btn secundario">Salvar CSS</button></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell-admin.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

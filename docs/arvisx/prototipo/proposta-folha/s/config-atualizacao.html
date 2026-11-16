@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atualização do sistema</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="630">
+<meta name="rota" content="/app/settings/atualizacao">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+  .painel-up { max-width: 672px; display: grid; gap: 20px; }
+  .instalada { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 12px 14px; font-size: 13px; background: var(--painel); }
+  .instalada p + p { margin-top: 4px; }
+  .instalada .titulo { font-weight: 600; }
+  .instalada code { font-family: var(--mono); font-size: 12px; word-break: break-all; }
+  .linha-botao { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 24px; }
+  .linha-botao span { color: var(--apoio); font-size: 13px; flex: 1; min-width: 220px; }
+  .muda > p { font-weight: 600; font-size: 13px; margin-bottom: 8px; }
+  .muda pre { font-family: var(--sans); font-size: 13px; white-space: pre-wrap; color: var(--apoio); }
+  .muda details { margin-top: 12px; }
+  .muda summary { cursor: pointer; font-weight: 600; font-size: 13px; }
+  .muda details pre { margin-top: 8px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/app/settings" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações</div>
+          <h1>Versão <span class="mono">1.91.0</span> disponível</h1>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="painel-up">
+        <!-- InstalledVersion -->
+        <section class="instalada" aria-label="Versão instalada">
+          <p class="titulo">Versão instalada: <span class="mono">1.90.0</span></p>
+          <p>Última release oficial: <span class="mono">1.91.0</span></p>
+          <p>Revisão: <code>4f8a2c1d9b7e63a05c1f2e8d7b4a9c3e6f1d0b52</code></p>
+          <p>Última confirmação: <span class="mono">03/11/2026, 09:40:12</span></p>
+        </section>
+
+        <div class="cartao">
+          <div class="corpo">
+            <div class="linha-botao">
+              <button class="btn primario">Atualizar agora</button>
+              <span>O sistema sai do ar por cerca de 2 minutos e volta sozinho. Faço uma cópia de segurança dos seus dados antes.</span>
+            </div>
+
+            <div class="muda">
+              <p>O que muda</p>
+              <pre>Novidades
+• Configurações › Meta de vendas: defina quantas vendas a empresa quer ganhar no mês.
+• Desempenho mostra o realizado, o percentual e o quanto falta para a meta.
+
+Correções
+• Distribuição de atendimento: o destino padrão por número respeita a disponibilidade do atendente.
+• Notificações: o som do aviso volta a tocar depois de trocar de aba.</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

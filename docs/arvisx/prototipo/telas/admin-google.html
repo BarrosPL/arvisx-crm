@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Google Agenda</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="210">
+<meta name="rota" content="/admin/google">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .cartao .corpo > h2 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .cartao .corpo > p.desc { color: var(--apoio); font-size: 13px; margin-bottom: 14px; }
+  .cartao .corpo > h3 { font-size: 13.5px; font-weight: 700; }
+  .linha-botao { display: flex; gap: 8px; align-items: center; }
+  .linha-botao input { flex: 1; min-width: 0; }
+  .rodape-form { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .rodape-form.fim { justify-content: flex-end; }
+  .nota { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 12px; font-size: 12.5px; color: var(--apoio); }
+  .nota.ambar { background: var(--aviso-suave); border-color: #f3d7ac; color: #7d4d0d; }
+  .nota strong { color: var(--texto); }
+  .bloco-chave { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 14px 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .bloco-chave > div:first-child { flex: 1; min-width: 220px; display: grid; gap: 4px; }
+  .bloco-chave strong { font-size: 14px; }
+  .bloco-chave p { color: var(--apoio); font-size: 13px; }
+  .bloco-chave p b { color: var(--texto); font-weight: 600; }
+  .bloco-chave select { width: 200px; max-width: 100%; }
+</style>
+</head>
+<body data-rota="/admin/google">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin da plataforma</div>
+          <h1>Google Agenda desta instalação</h1>
+          <p>Com estas duas informações, quem atende consegue conectar a agenda pessoal do Google e ver os compromissos do CRM lá. Elas valem para a instalação inteira — cada pessoa conecta a conta dela depois, sozinha.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao">
+        <div class="corpo form">
+          <div class="campo">
+            <label for="redirect">Endereço de retorno</label>
+            <input type="text" id="redirect" class="mono" readonly value="https://crm.arvisx.com.br/api/v1/agenda/google/callback">
+            <span class="ajuda">Cole exatamente isto em “URIs de redirecionamento autorizados”, na tela de credenciais do Google Cloud.</span>
+          </div>
+          <div class="campo">
+            <label for="client-id">ID do cliente</label>
+            <input type="text" id="client-id" class="mono" value="482915730164-k3v9x1q7m2p8r5t0.apps.googleusercontent.com" placeholder="000000000000-xxxxxxxx.apps.googleusercontent.com">
+          </div>
+          <div class="campo">
+            <label for="client-secret">Chave secreta do cliente</label>
+            <input type="password" id="client-secret" placeholder="••••••••  (já cadastrada)">
+            <span class="ajuda">Já existe uma chave cadastrada. Deixe em branco para mantê-la, ou digite uma nova para substituir.</span>
+          </div>
+          <p class="nota ambar"><strong>Ao trocar uma credencial já em uso:</strong> quem já conectou a agenda vai precisar conectar de novo. O Google invalida as autorizações antigas quando o aplicativo muda — não há como evitar, e ninguém perde compromisso por isso.</p>
+          <div class="rodape-form">
+            <span class="fraco pequeno">Última alteração em <span class="mono">03/11/2026, 14:32</span>.</span>
+            <button class="btn primario">Salvar</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell-admin.js"></script>
+</body>
+</html>

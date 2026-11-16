@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guia de uso — Inbox</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="530">
+<meta name="rota" content="/app/ajuda/treinamento/inbox">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+  .guia-casca { display: flex; align-items: flex-start; gap: 24px; min-width: 0; }
+  .guia-menu { width: 288px; flex: none; position: sticky; top: 0; max-height: calc(100vh - 96px); overflow-y: auto; }
+  .guia-menu .abre { display: none; width: 100%; min-height: 44px; align-items: center; justify-content: space-between; padding: 0 12px; border: 1px solid var(--linha); border-radius: var(--r); background: var(--painel); font-weight: 600; font-size: 13px; }
+  .guia-menu nav { display: flex; flex-direction: column; gap: 20px; padding: 12px; border: 1px solid var(--linha); border-radius: var(--r); background: var(--painel); }
+  .guia-menu h2 { font: 600 11px/1 var(--mono); letter-spacing: 0; text-transform: none; color: var(--apoio); padding: 0 10px; margin-bottom: 6px; }
+  .guia-menu a { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; padding: 6px 10px; border-radius: var(--r-sm); font-size: 13px; }
+  .guia-menu a:hover { background: var(--painel-2); }
+  .guia-menu a > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .guia-menu a small { flex: none; font-size: 12px; color: var(--apoio); }
+  .guia-menu a[aria-current="page"] { background: var(--tinta-suave); color: var(--texto); font-weight: 600; }
+  .guia-corpo { flex: 1; min-width: 0; }
+  @media (max-width: 860px) {
+    .guia-casca { flex-direction: column; align-items: stretch; gap: 16px; }
+    .guia-menu { width: auto; position: static; max-height: none; overflow: visible; }
+    .guia-menu .abre { display: flex; }
+    .guia-menu nav { display: none; }
+  }
+  .guia-cab { display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; border-bottom: 1px solid var(--linha); margin-bottom: 32px; }
+  .guia-cab .sobre { font: 600 11px/1 var(--mono); letter-spacing: 0; text-transform: none; color: var(--ouro-escuro); }
+  .guia-cab h1 { font-family: var(--display); font-stretch: 112%; font-weight: 600; letter-spacing: -.03em; font-size: 24px; line-height: 1.1; color: var(--navy); }
+  .guia-cab > p { color: var(--apoio); max-width: 72ch; }
+  .bloco-passo { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
+  .bloco-passo + .bloco-passo { margin-top: 24px; }
+  .bloco-passo h3 { display: flex; align-items: baseline; gap: 8px; font-size: 16px; font-weight: 600; }
+  .bloco-passo h3 .n { flex: none; font-size: 13px; color: var(--ouro-escuro); }
+  .foto { position: relative; margin: 0; width: 100%; aspect-ratio: 1440 / 900; overflow: hidden; border: 1px solid var(--linha); border-radius: var(--r); background: var(--painel-2); }
+  .foto img { display: block; width: 100%; height: auto; }
+  .foto svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .selo { display: flex; align-items: center; justify-content: center; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--ouro); color: var(--navy); font: 600 12px/1 var(--mono); }
+  .foto .selo { position: absolute; transform: translate(-50%, -50%); width: 28px; height: 28px; font-size: 12px; box-shadow: 0 0 0 2px #fff; }
+  .destaques { display: grid; gap: 6px; font-size: 13px; }
+  .destaques li { display: flex; align-items: flex-start; gap: 8px; }
+  @media (max-width: 860px) { .bloco-passo { padding: 16px; } .foto .selo { width: 20px; height: 20px; font-size: 12px; } }
+  .indice { margin-top: 8px; columns: 2; column-gap: 24px; font-size: 13px; }
+  .indice li { break-inside: avoid; padding: 2px 0; }
+  .licao-cab { margin-bottom: 20px; }
+  .licao-cab .sobre { font: 600 11px/1 var(--mono); letter-spacing: 0; text-transform: none; color: var(--apoio); }
+  .licao-cab h2 { font-family: var(--display); font-stretch: 110%; font-weight: 600; letter-spacing: -.02em; font-size: 18px; margin-top: 6px; color: var(--navy); }
+  .licao-cab p { color: var(--apoio); margin-top: 4px; max-width: 72ch; }
+  .bloco-passo .texto { max-width: 72ch; white-space: pre-line; line-height: 1.6; }
+  .dica { max-width: 72ch; padding: 8px 12px; border-left: 4px solid var(--ouro); border-radius: var(--r-sm); background: var(--ouro-suave); color: var(--navy); }
+  .dica b { font-weight: 600; }
+  @media (max-width: 860px) { .indice { columns: 1; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/app/ajuda/treinamento" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="guia-casca">
+        <aside class="guia-menu">
+          <button type="button" class="abre" aria-expanded="false"><span>Módulos e histórias</span><span aria-hidden="true">▼</span></button>
+          <nav aria-label="Módulos do guia de uso">
+            <div><a href="#"><span>Início e busca</span></a></div>
+            <div>
+              <h2>Atendimento</h2>
+              <ul>
+                <li><a href="#" aria-current="page"><span>Inbox</span><small>9 lições</small></a></li>
+                <li><a href="#"><span>Radar</span><small>5 lições</small></a></li>
+                <li><a href="#"><span>Agenda</span><small>7 lições</small></a></li>
+                <li><a href="#"><span>Respostas rápidas</span><small>5 lições</small></a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>CRM</h2>
+              <ul>
+                <li><a href="#"><span>Prospecção</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Funis</span><small>7 lições</small></a></li>
+                <li><a href="#"><span>Campanhas</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Contatos</span><small>7 lições</small></a></li>
+                <li><a href="#"><span>Empresas</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Pessoas</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Tarefas</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Planos de tarefa</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Chamadas</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Produtos</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Importações</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Propostas do dia a dia</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Comandas</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Etapas do funil</span><small>4 lições</small></a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>Agente de IA</h2>
+              <ul>
+                <li><a href="#"><span>Agentes</span><small>7 lições</small></a></li>
+                <li><a href="#"><span>Follow-ups</span><small>7 lições</small></a></li>
+                <li><a href="#"><span>Fluxos de atendimento</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Roteadores</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Credenciais</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Provedores</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Conhecimento</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Memória</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Skills</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Casos</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Alertas</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Aviso no WhatsApp</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Propostas da IA</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Execuções</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Uso e orçamento</span><small>3 lições</small></a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>Canais</h2>
+              <ul>
+                <li><a href="#"><span>Conexões</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Webhooks</span><small>6 lições</small></a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>Análise</h2>
+              <ul>
+                <li><a href="#"><span>Desempenho</span><small>7 lições</small></a></li>
+                <li><a href="#"><span>Meta Ads</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Atividades</span><small>4 lições</small></a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>Configurações</h2>
+              <ul>
+                <li><a href="#"><span>Tipos de agendamento</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Aviso de agendamento</span><small>5 lições</small></a></li>
+                <li><a href="#"><span>Propostas</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Modelos de proposta</span><small>5 lições</small></a></li>
+                <li><a href="#"><span>Financeiro</span><small>5 lições</small></a></li>
+                <li><a href="#"><span>Meta de vendas</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Perfil</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Segurança</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Notificações</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>App no celular</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Equipe</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Distribuição de atendimento</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Automações</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Tags</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Recursos opcionais</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Organização</span><small>5 lições</small></a></li>
+                <li><a href="#"><span>Conversões</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Meta Ads (conexão)</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>LGPD</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>API Tokens</span><small>3 lições</small></a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>Histórias por nicho</h2>
+              <ul>
+                <li><a href="#"><span>Advocacia</span><small>3 histórias</small></a></li>
+                <li><a href="#"><span>Clínicas</span><small>3 histórias</small></a></li>
+                <li><a href="#"><span>Consórcio</span><small>3 histórias</small></a></li>
+                <li><a href="#"><span>Contabilidade</span><small>2 histórias</small></a></li>
+                <li><a href="#"><span>E-commerce</span><small>2 histórias</small></a></li>
+                <li><a href="#"><span>Escolas e cursos</span><small>3 histórias</small></a></li>
+                <li><a href="#"><span>Imobiliárias</span><small>3 histórias</small></a></li>
+                <li><a href="#"><span>Infoprodutos</span><small>3 histórias</small></a></li>
+                <li><a href="#"><span>Seguros</span><small>2 histórias</small></a></li>
+                <li><a href="#"><span>Oficinas e assistência técnica</span><small>2 histórias</small></a></li>
+              </ul>
+            </div>
+          </nav>
+        </aside>
+        <div class="guia-corpo">
+          <article>
+            <header class="guia-cab">
+              <p class="sobre">Guia de uso</p>
+              <h1>Inbox</h1>
+              <p>Onde você e a IA atendem os clientes do WhatsApp lado a lado: a fila de quem espera, a conversa, a ficha do cliente e os atalhos do dia a dia.</p>
+              <nav aria-label="Lições deste módulo">
+                <ol class="indice">
+                  <li><a href="#">1. Conhecendo a Inbox</a></li>
+                  <li><a href="#">2. Entendendo a lista: abas, cores e contadores</a></li>
+                  <li><a href="#">3. Achando a conversa certa</a></li>
+                  <li><a href="#">4. Lendo o histórico da conversa</a></li>
+                  <li><a href="#">5. Assumir um cliente e preparar a resposta</a></li>
+                  <li><a href="#">6. Recados para a equipe com a nota interna</a></li>
+                  <li><a href="#">7. Pausar o robô, passar adiante e encerrar</a></li>
+                  <li><a href="#">8. A ficha do cliente ao lado da conversa</a></li>
+                  <li><a href="#">9. Trabalhar mais rápido: atalhos e ações em lote</a></li>
+                </ol>
+              </nav>
+            </header>
+
+            <section>
+              <div class="licao-cab">
+                <p class="sobre">Lição 1 de 9</p>
+                <h2>Conhecendo a Inbox</h2>
+                <p>Reconhecer as três partes da Inbox (lista, conversa e ficha do cliente) e abrir a primeira conversa.</p>
+              </div>
+              <ol>
+                <li class="cartao bloco-passo">
+                  <h3><span class="n">Passo 1</span><span>As três partes da tela</span></h3>
+                  <p class="texto">A Inbox é onde você lê e responde os clientes. À esquerda fica a lista de conversas, no meio aparece a conversa que você abrir e à direita fica a ficha do cliente. Quando você entra pelo menu, ela abre na aba Fila, que mostra quem está esperando por uma pessoa. Ao lado ficam as abas Automático (conversas que o atendimento automático está cuidando) e Minhas (as que estão com você). Na linha de baixo, as abas Todas, Fechadas e Arquivadas mostram todas as conversas, as já encerradas e as guardadas fora da fila.</p>
+                  <p class="dica"><b>Dica: </b>No meio da tela aparece &quot;Ou navegue com J e K&quot;: as teclas &quot;j&quot; e &quot;k&quot; passam para a próxima conversa e para a anterior. Você aprende esses atalhos na última lição.</p>
+            <figure class="foto">
+              <img src="../../../../../public/ajuda-curso/licoes/capturas/inbox--conhecendo-a-tela--p1.webp" alt="As três partes da tela" width="1440" height="900" loading="lazy" decoding="async" style="width:100%;height:auto">
+              <svg viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
+                <defs><mask id="veu-1"><rect width="1440" height="900" fill="#fff"/><rect x="258" y="74" width="284" height="808" rx="8" fill="#000"/><rect x="530" y="74" width="596" height="808" rx="8" fill="#000"/><rect x="1114" y="74" width="308" height="808" rx="8" fill="#000"/><rect x="290" y="218" width="219" height="81" rx="8" fill="#000"/></mask></defs>
+                <rect width="1440" height="900" fill="rgba(15, 19, 26, 0.38)" mask="url(#veu-1)"/>
+                <rect x="258" y="74" width="284" height="808" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/><rect x="530" y="74" width="596" height="808" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/><rect x="1114" y="74" width="308" height="808" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/><rect x="290" y="218" width="219" height="81" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/>
+                
+              </svg>
+              <span class="selo" aria-hidden="true" style="left:15.972%;top:53.111%">1</span><span class="selo" aria-hidden="true" style="left:57.500%;top:5.111%">2</span><span class="selo" aria-hidden="true" style="left:88.056%;top:5.111%">3</span><span class="selo" aria-hidden="true" style="left:18.194%;top:28.722%">4</span>
+            </figure>
+            <ol class="destaques" aria-label="Destaques da foto">
+              <li><span class="selo" aria-hidden="true">1</span><span>Lista de conversas</span></li>
+              <li><span class="selo" aria-hidden="true">2</span><span>Aqui aparece a conversa aberta</span></li>
+              <li><span class="selo" aria-hidden="true">3</span><span>Aqui fica a ficha do cliente</span></li>
+              <li><span class="selo" aria-hidden="true">4</span><span>Abas da lista (abre na Fila)</span></li>
+            </ol>
+                </li>
+                <li class="cartao bloco-passo">
+                  <h3><span class="n">Passo 2</span><span>Começar uma conversa você mesmo</span></h3>
+                  <p class="texto">O botão &quot;Iniciar conversa&quot;, no alto da lista, serve para você mandar a primeira mensagem para um cliente, sem esperar que ele escreva. A conversa abre no seu nome e o atendimento automático não responde nela. A exceção é quando outro atendente já está cuidando daquele número: aí a conversa continua com ele. Para seguir, clique na conversa da Mariana Souza, a primeira da lista.</p>
+                  <p class="dica"><b>Dica: </b>Só quem é atendente ou tem cargo acima vê este botão.</p>
+            <figure class="foto">
+              <img src="../../../../../public/ajuda-curso/licoes/capturas/inbox--conhecendo-a-tela--p2.webp" alt="Começar uma conversa você mesmo" width="1440" height="900" loading="lazy" decoding="async" style="width:100%;height:auto">
+              <svg viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
+                <defs><mask id="veu-2"><rect width="1440" height="900" fill="#fff"/><rect x="270" y="86" width="259" height="48" rx="8" fill="#000"/></mask></defs>
+                <rect width="1440" height="900" fill="rgba(15, 19, 26, 0.38)" mask="url(#veu-2)"/>
+                <rect x="270" y="86" width="259" height="48" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/>
+                <line x1="150" y1="110" x2="240.8" y2="110" stroke="#d4af37" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/><polygon points="260,110 238.38926954353576,120.43917281866953 238.38926954353576,99.56082718133047" fill="#d4af37"/>
+              </svg>
+              <span class="selo" aria-hidden="true" style="left:10.417%;top:12.222%">1</span>
+            </figure>
+            <ol class="destaques" aria-label="Destaques da foto">
+              <li><span class="selo" aria-hidden="true">1</span><span>Falar primeiro com um cliente</span></li>
+            </ol>
+                </li>
+                <li class="cartao bloco-passo">
+                  <h3><span class="n">Passo 3</span><span>Abrindo uma conversa</span></h3>
+                  <p class="texto">Clique numa linha da lista para abrir a conversa no meio da tela. A linha aberta fica com o fundo destacado e uma barra colorida à esquerda. Um segundo e meio depois de abrir, o contador de mensagens não lidas some sozinho. Nesta conversa aparece o cartão &quot;Por que a IA passou para você&quot;: é o resumo que o atendimento automático deixa quando passa o cliente para uma pessoa. O botão &quot;Assumir e responder&quot; do cartão passa a conversa para você; isso fica para a lição sobre assumir um cliente.</p>
+            <figure class="foto">
+              <img src="../../../../../public/ajuda-curso/licoes/capturas/inbox--conhecendo-a-tela--p3.webp" alt="Abrindo uma conversa" width="1440" height="900" loading="lazy" decoding="async" style="width:100%;height:auto">
+              <svg viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
+                <defs><mask id="veu-3"><rect width="1440" height="900" fill="#fff"/><rect x="282" y="317" width="231" height="152.5" rx="8" fill="#000"/><rect x="587.40625" y="316.265625" width="481.1875" height="367.375" rx="8" fill="#000"/></mask></defs>
+                <rect width="1440" height="900" fill="rgba(15, 19, 26, 0.38)" mask="url(#veu-3)"/>
+                <rect x="282" y="317" width="231" height="152.5" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/><rect x="587.40625" y="316.265625" width="481.1875" height="367.375" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/>
+                
+              </svg>
+              <span class="selo" aria-hidden="true" style="left:17.639%;top:43.694%">1</span><span class="selo" aria-hidden="true" style="left:38.848%;top:55.550%">2</span>
+            </figure>
+            <ol class="destaques" aria-label="Destaques da foto">
+              <li><span class="selo" aria-hidden="true">1</span><span>Conversa aberta</span></li>
+              <li><span class="selo" aria-hidden="true">2</span><span>Resumo deixado pela IA</span></li>
+            </ol>
+                </li>
+                <li class="cartao bloco-passo">
+                  <h3><span class="n">Passo 4</span><span>O topo da conversa</span></h3>
+                  <p class="texto">No topo aparecem o nome do cliente, um selo que diz se o atendimento está aberto ou já terminou e quem está cuidando dele agora: uma pessoa, o atendimento automático ou ninguém (&quot;Sem responsável&quot;). Ao lado do nome aparece também o número por onde o cliente chegou (aqui, &quot;Recepção Bem Viver&quot;). Os botões logo abaixo, como Assumir e Fechar, valem para esta conversa. No canto direito, abaixo dos botões, o aviso &quot;Automático pausado&quot; diz que o atendimento automático não responde nesta conversa. &quot;Reservar serviço&quot; marca um horário na agenda e &quot;Marcar como pessoal&quot; tira o contato da Inbox; os outros botões aparecem nas próximas lições.</p>
+            <figure class="foto">
+              <img src="../../../../../public/ajuda-curso/licoes/capturas/inbox--conhecendo-a-tela--p4.webp" alt="O topo da conversa" width="1440" height="900" loading="lazy" decoding="async" style="width:100%;height:auto">
+              <svg viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
+                <defs><mask id="veu-4"><rect width="1440" height="900" fill="#fff"/><rect x="675.515625" y="88" width="58.421875" height="28" rx="8" fill="#000"/><rect x="727.9375" y="88" width="121.9375" height="28" rx="8" fill="#000"/><rect x="546" y="110" width="303.875" height="36" rx="8" fill="#000"/><rect x="924.484375" y="166" width="82.546875" height="44" rx="8" fill="#000"/><rect x="899.46875" y="206" width="76.859375" height="44" rx="8" fill="#000"/><rect x="985.015625" y="280" width="124.984375" height="28" rx="8" fill="#000"/></mask></defs>
+                <rect width="1440" height="900" fill="rgba(15, 19, 26, 0.38)" mask="url(#veu-4)"/>
+                <rect x="675.515625" y="88" width="58.421875" height="28" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/><rect x="727.9375" y="88" width="121.9375" height="28" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/><rect x="546" y="110" width="303.875" height="36" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/><rect x="924.484375" y="166" width="82.546875" height="44" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/><rect x="899.46875" y="206" width="76.859375" height="44" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/><rect x="985.015625" y="280" width="124.984375" height="28" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/>
+                
+              </svg>
+              <span class="selo" aria-hidden="true" style="left:44.966%;top:9.111%">1</span><span class="selo" aria-hidden="true" style="left:54.785%;top:6.667%">2</span><span class="selo" aria-hidden="true" style="left:35.972%;top:14.222%">3</span><span class="selo" aria-hidden="true" style="left:62.256%;top:17.778%">4</span><span class="selo" aria-hidden="true" style="left:60.519%;top:25.333%">5</span><span class="selo" aria-hidden="true" style="left:66.459%;top:32.667%">6</span>
+            </figure>
+            <ol class="destaques" aria-label="Destaques da foto">
+              <li><span class="selo" aria-hidden="true">1</span><span>Situação do atendimento</span></li>
+              <li><span class="selo" aria-hidden="true">2</span><span>Número por onde o cliente chegou</span></li>
+              <li><span class="selo" aria-hidden="true">3</span><span>Quem está cuidando agora</span></li>
+              <li><span class="selo" aria-hidden="true">4</span><span>Assumir: a conversa passa para você</span></li>
+              <li><span class="selo" aria-hidden="true">5</span><span>Fechar: encerra o atendimento</span></li>
+              <li><span class="selo" aria-hidden="true">6</span><span>Automático pausado</span></li>
+            </ol>
+                </li>
+                <li class="cartao bloco-passo">
+                  <h3><span class="n">Passo 5</span><span>A ficha do cliente</span></h3>
+                  <p class="texto">A coluna da direita é a ficha do cliente. No alto ficam o telefone e as etiquetas do cliente. Mais abaixo vêm as &quot;Tags da conversa&quot;, que valem só para este atendimento, e as &quot;Demandas abertas&quot; (o que ele pediu e ainda não foi resolvido). Rolando a ficha para baixo aparecem os &quot;Leads recentes&quot; (os negócios dele no funil) e os &quot;Pedidos recentes&quot;. Tudo sem você precisar sair da conversa. Os outros blocos, como &quot;Sobre a empresa&quot; e &quot;Tarefas desta demanda&quot;, ficam para a lição sobre a ficha. Em telas largas de computador ela fica à vista (dá para escondê-la no botão &quot;Recolher&quot;); no celular, ela abre pelo botão &quot;Ficha&quot;.</p>
+            <figure class="foto">
+              <img src="../../../../../public/ajuda-curso/licoes/capturas/inbox--conhecendo-a-tela--p5.webp" alt="A ficha do cliente" width="1440" height="900" loading="lazy" decoding="async" style="width:100%;height:auto">
+              <svg viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
+                <defs><mask id="veu-5"><rect width="1440" height="900" fill="#fff"/><rect x="1114" y="74" width="308" height="808" rx="8" fill="#000"/><rect x="1131" y="405" width="275" height="146" rx="8" fill="#000"/></mask></defs>
+                <rect width="1440" height="900" fill="rgba(15, 19, 26, 0.38)" mask="url(#veu-5)"/>
+                <rect x="1114" y="74" width="308" height="808" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/><rect x="1131" y="405" width="275" height="146" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/>
+                
+              </svg>
+              <span class="selo" aria-hidden="true" style="left:75.417%;top:53.111%">1</span><span class="selo" aria-hidden="true" style="left:76.597%;top:53.111%">2</span>
+            </figure>
+            <ol class="destaques" aria-label="Destaques da foto">
+              <li><span class="selo" aria-hidden="true">1</span><span>Ficha do cliente</span></li>
+              <li><span class="selo" aria-hidden="true">2</span><span>Demandas abertas</span></li>
+            </ol>
+                </li>
+                <li class="cartao bloco-passo">
+                  <h3><span class="n">Passo 6</span><span>Ajustar a largura da lista</span></h3>
+                  <p class="texto">Para deixar a lista de conversas mais larga ou mais estreita, arraste a divisória entre a lista e a conversa. Dar dois cliques nela volta as colunas à largura padrão, e o navegador guarda a largura que você escolheu.</p>
+                  <p class="dica"><b>Dica: </b>Com o foco na divisória, as setas ← e → do teclado também mudam a largura.</p>
+            <figure class="foto">
+              <img src="../../../../../public/ajuda-curso/licoes/capturas/inbox--conhecendo-a-tela--p6.webp" alt="Ajustar a largura da lista" width="1440" height="900" loading="lazy" decoding="async" style="width:100%;height:auto">
+              <svg viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
+                <defs><mask id="veu-6"><rect width="1440" height="900" fill="#fff"/><rect x="526" y="74" width="20" height="808" rx="8" fill="#000"/></mask></defs>
+                <rect width="1440" height="900" fill="rgba(15, 19, 26, 0.38)" mask="url(#veu-6)"/>
+                <rect x="526" y="74" width="20" height="808" rx="8" fill="none" stroke="#d4af37" stroke-width="3" vector-effect="non-scaling-stroke"/>
+                <line x1="406" y1="478" x2="496.8" y2="478" stroke="#d4af37" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/><polygon points="516,478 494.38926954353576,488.43917281866953 494.38926954353576,467.56082718133047" fill="#d4af37"/>
+              </svg>
+              <span class="selo" aria-hidden="true" style="left:28.194%;top:53.111%">1</span>
+            </figure>
+            <ol class="destaques" aria-label="Destaques da foto">
+              <li><span class="selo" aria-hidden="true">1</span><span>Arraste para ajustar</span></li>
+            </ol>
+                </li>
+              </ol>
+            </section>
+          </article>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

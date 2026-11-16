@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guia de uso</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="520">
+<meta name="rota" content="/app/ajuda/treinamento">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .guia-casca { display: flex; align-items: flex-start; gap: 24px; min-width: 0; }
+  .guia-menu { width: 288px; flex: none; position: sticky; top: 0; max-height: calc(100vh - 96px); overflow-y: auto; }
+  .guia-menu .abre { display: none; width: 100%; min-height: 44px; align-items: center; justify-content: space-between; padding: 0 12px; border: 1px solid var(--linha); border-radius: var(--r); background: var(--painel); font-weight: 600; font-size: 13px; }
+  .guia-menu nav { display: flex; flex-direction: column; gap: 20px; padding: 12px; border: 1px solid var(--linha); border-radius: var(--r); background: var(--painel); }
+  .guia-menu h2 { font: 600 11px/1 var(--mono); letter-spacing: 0; text-transform: none; color: var(--apoio); padding: 0 10px; margin-bottom: 6px; }
+  .guia-menu a { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; padding: 6px 10px; border-radius: var(--r-sm); font-size: 13px; }
+  .guia-menu a:hover { background: var(--painel-2); }
+  .guia-menu a > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .guia-menu a small { flex: none; font-size: 12px; color: var(--apoio); }
+  .guia-menu a[aria-current="page"] { background: var(--tinta-suave); color: var(--texto); font-weight: 600; }
+  .guia-corpo { flex: 1; min-width: 0; }
+  @media (max-width: 860px) {
+    .guia-casca { flex-direction: column; align-items: stretch; gap: 16px; }
+    .guia-menu { width: auto; position: static; max-height: none; overflow: visible; }
+    .guia-menu .abre { display: flex; }
+    .guia-menu nav { display: none; }
+  }
+  .heroi { padding: 32px; margin-bottom: 32px; }
+  .heroi .sobre { font: 600 11px/1 var(--mono); letter-spacing: 0; text-transform: none; color: var(--ouro); }
+  .heroi h1 { font-family: var(--display); font-stretch: 112%; font-weight: 600; letter-spacing: -.03em; font-size: 30px; line-height: 1.1; color: #fff; margin-top: 6px; }
+  .heroi > p { margin-top: 6px; max-width: 72ch; }
+  .heroi form { display: flex; gap: 8px; max-width: 576px; margin-top: 16px; }
+  .heroi form input { flex: 1; min-width: 0; height: 38px; padding: 0 12px; border-radius: var(--r-sm); border: 1px solid var(--linha-forte); background: #fff; color: var(--navy); }
+  .heroi form .btn { flex: none; }
+  .secao-guia { margin-bottom: 32px; }
+  .secao-guia > h2 { font: 600 11px/1 var(--mono); letter-spacing: 0; text-transform: none; color: var(--apoio); margin-bottom: 12px; }
+  .secao-guia > h2 + p { color: var(--apoio); margin: -6px 0 12px; }
+  .secao-guia .grade { gap: 12px; }
+  .mod { display: flex; flex-direction: column; gap: 6px; padding: 16px; height: 100%; }
+  .mod .linha { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .mod .linha strong { font-weight: 600; }
+  .mod .linha small { flex: none; font-size: 12px; color: var(--apoio); }
+  .mod > span:last-child { color: var(--apoio); font-size: 13px; }
+  .nicho { display: flex; flex-direction: column; gap: 8px; padding: 16px; }
+  .nicho > a { font-weight: 600; }
+  .nicho > span { color: var(--apoio); font-size: 13px; }
+  .nicho ul { display: grid; gap: 4px; font-size: 13px; }
+  @media (max-width: 1500px) { .secao-guia .grade.c3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 860px) { .heroi { padding: 24px; } .heroi h1 { font-size: 24px; } .secao-guia .grade.c3 { grid-template-columns: minmax(0, 1fr); } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/app/ajuda/treinamento" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="guia-casca">
+        <aside class="guia-menu">
+          <button type="button" class="abre" aria-expanded="false"><span>Módulos e histórias</span><span aria-hidden="true">▼</span></button>
+          <nav aria-label="Módulos do guia de uso">
+            <div><a href="#" aria-current="page"><span>Início e busca</span></a></div>
+            <div>
+              <h2>Atendimento</h2>
+              <ul>
+                <li><a href="#"><span>Inbox</span><small>9 lições</small></a></li>
+                <li><a href="#"><span>Radar</span><small>5 lições</small></a></li>
+                <li><a href="#"><span>Agenda</span><small>7 lições</small></a></li>
+                <li><a href="#"><span>Respostas rápidas</span><small>5 lições</small></a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>CRM</h2>
+              <ul>
+                <li><a href="#"><span>Prospecção</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Funis</span><small>7 lições</small></a></li>
+                <li><a href="#"><span>Campanhas</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Contatos</span><small>7 lições</small></a></li>
+                <li><a href="#"><span>Empresas</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Pessoas</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Tarefas</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Planos de tarefa</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Chamadas</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Produtos</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Importações</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Propostas do dia a dia</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Comandas</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Etapas do funil</span><small>4 lições</small></a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>Agente de IA</h2>
+              <ul>
+                <li><a href="#"><span>Agentes</span><small>7 lições</small></a></li>
+                <li><a href="#"><span>Follow-ups</span><small>7 lições</small></a></li>
+                <li><a href="#"><span>Fluxos de atendimento</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Roteadores</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Credenciais</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Provedores</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Conhecimento</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Memória</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Skills</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Casos</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Alertas</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Aviso no WhatsApp</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Propostas da IA</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Execuções</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Uso e orçamento</span><small>3 lições</small></a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>Canais</h2>
+              <ul>
+                <li><a href="#"><span>Conexões</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Webhooks</span><small>6 lições</small></a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>Análise</h2>
+              <ul>
+                <li><a href="#"><span>Desempenho</span><small>7 lições</small></a></li>
+                <li><a href="#"><span>Meta Ads</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Atividades</span><small>4 lições</small></a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>Configurações</h2>
+              <ul>
+                <li><a href="#"><span>Tipos de agendamento</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Aviso de agendamento</span><small>5 lições</small></a></li>
+                <li><a href="#"><span>Propostas</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Modelos de proposta</span><small>5 lições</small></a></li>
+                <li><a href="#"><span>Financeiro</span><small>5 lições</small></a></li>
+                <li><a href="#"><span>Meta de vendas</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Perfil</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Segurança</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Notificações</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>App no celular</span><small>2 lições</small></a></li>
+                <li><a href="#"><span>Equipe</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Distribuição de atendimento</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Automações</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>Tags</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Recursos opcionais</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>Organização</span><small>5 lições</small></a></li>
+                <li><a href="#"><span>Conversões</span><small>6 lições</small></a></li>
+                <li><a href="#"><span>Meta Ads (conexão)</span><small>3 lições</small></a></li>
+                <li><a href="#"><span>LGPD</span><small>4 lições</small></a></li>
+                <li><a href="#"><span>API Tokens</span><small>3 lições</small></a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>Histórias por nicho</h2>
+              <ul>
+                <li><a href="#"><span>Advocacia</span><small>3 histórias</small></a></li>
+                <li><a href="#"><span>Clínicas</span><small>3 histórias</small></a></li>
+                <li><a href="#"><span>Consórcio</span><small>3 histórias</small></a></li>
+                <li><a href="#"><span>Contabilidade</span><small>2 histórias</small></a></li>
+                <li><a href="#"><span>E-commerce</span><small>2 histórias</small></a></li>
+                <li><a href="#"><span>Escolas e cursos</span><small>3 histórias</small></a></li>
+                <li><a href="#"><span>Imobiliárias</span><small>3 histórias</small></a></li>
+                <li><a href="#"><span>Infoprodutos</span><small>3 histórias</small></a></li>
+                <li><a href="#"><span>Seguros</span><small>2 histórias</small></a></li>
+                <li><a href="#"><span>Oficinas e assistência técnica</span><small>2 histórias</small></a></li>
+              </ul>
+            </div>
+          </nav>
+        </aside>
+        <div class="guia-corpo">
+          <header class="cartao navy heroi">
+            <p class="sobre">Ajuda</p>
+            <h1>Guia de uso</h1>
+            <p class="apoio">Lições passo a passo com a foto de cada tela e os pontos para clicar destacados. Escolha um módulo ao lado, procure uma dúvida ou veja como outras empresas usam o CRM.</p>
+            <form role="search">
+              <input type="search" aria-label="Buscar no guia de uso" placeholder="Ex.: nota interna, agendamento, etiqueta">
+              <button type="button" class="btn primario">Buscar</button>
+            </form>
+          </header>
+
+          <section class="secao-guia">
+            <h2>Atendimento</h2>
+            <ul class="grade c3">
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Inbox</strong><small>9 lições</small></span><span>Onde você e a IA atendem os clientes do WhatsApp lado a lado: a fila de quem espera, a conversa, a ficha do cliente e os atalhos do dia a dia.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Radar</strong><small>5 lições</small></span><span>A lista dos clientes que esfriaram e ainda estão em aberto, para você agir antes de perder a venda.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Agenda</strong><small>7 lições</small></span><span>Onde ficam as consultas, sessões e reuniões da equipe: ver a semana, marcar, remarcar, cancelar e registrar quem veio.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Respostas rápidas</strong><small>5 lições</small></span><span>Textos, imagens e áudios prontos que você e a equipe usam na Inbox com um clique, para não digitar a mesma coisa toda vez.</span></a></li>
+            </ul>
+          </section>
+
+          <section class="secao-guia">
+            <h2>CRM</h2>
+            <ul class="grade c3">
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Prospecção</strong><small>4 lições</small></span><span>Onde você procura empresas no Google Maps, escolhe quais abordar e deixa um agente de IA começar a conversa com elas pelo WhatsApp, aos poucos, acompanhando quem responde.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Funis</strong><small>7 lições</small></span><span>Onde você acompanha cada negócio da empresa num quadro: cada cliente é um cartão que anda pelas etapas, do primeiro contato até ganhar ou perder.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Campanhas</strong><small>4 lições</small></span><span>Mande uma mensagem de WhatsApp para uma lista de contatos que você escolhe, no ritmo do número, e acompanhe quem recebeu e quem respondeu.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Contatos</strong><small>7 lições</small></span><span>A lista de todos os clientes da empresa: achar, cadastrar, corrigir, juntar repetidos e trazer contatos de planilha ou do celular.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Empresas</strong><small>2 lições</small></span><span>O cadastro das empresas para quem a clínica vende: razão social, CNPJ, endereço e as pessoas que decidem lá dentro, com os telefones de cada uma.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Pessoas</strong><small>2 lições</small></span><span>As pessoas que decidem dentro das empresas clientes: em que empresa trabalham, com que cargo, e por quais telefones se fala com elas.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Tarefas</strong><small>6 lições</small></span><span>A lista do que a equipe combinou de fazer, com prazo e responsável: anotar, concluir, filtrar e ver tudo num calendário.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Planos de tarefa</strong><small>4 lições</small></span><span>Sequências de tarefas que se repetem, montadas uma vez só: uma automação aplica o plano a cada negócio e ninguém esquece o próximo passo.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Chamadas</strong><small>2 lições</small></span><span>O histórico das ligações por telefone que a IA de voz fez e recebeu, com a conversa escrita de cada uma.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Produtos</strong><small>4 lições</small></span><span>A lista do que a empresa vende, com preço e estoque: é nela que o atendente de IA procura o valor quando um cliente pergunta quanto custa.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Importações</strong><small>2 lições</small></span><span>Traz de uma planilha, de uma vez, as empresas, as pessoas que decidem nelas e os telefones de cada uma, e mostra linha por linha o que entrou e o que não entrou.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Propostas do dia a dia</strong><small>3 lições</small></span><span>Onde a equipe cria, revisa e envia as propostas para os pacientes, confere os rascunhos que a IA preparou e registra se o paciente aceitou ou recusou.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Comandas</strong><small>3 lições</small></span><span>O balcão da clínica: cada comanda junta o que foi feito no atendimento, quanto o paciente paga e como pagou.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Etapas do funil</strong><small>4 lições</small></span><span>Onde você monta as colunas de cada funil, do primeiro contato até a venda ou a desistência, e decide os motivos de perda.</span></a></li>
+            </ul>
+          </section>
+
+          <section class="secao-guia">
+            <h2>Agente de IA</h2>
+            <ul class="grade c3">
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Agentes</strong><small>7 lições</small></span><span>Onde você monta os atendentes virtuais que respondem seus clientes no WhatsApp: as instruções, o que eles podem fazer, o material que consultam e a hora de entrar no ar.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Follow-ups</strong><small>7 lições</small></span><span>Mensagens de retorno que saem sozinhas para o paciente que parou de responder: os fluxos prontos, o construtor e a fila de quem está sendo acompanhado.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Fluxos de atendimento</strong><small>3 lições</small></span><span>Roteiros de perguntas que a IA faz durante a conversa, uma de cada vez, guardando cada resposta na ficha do cliente.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Roteadores</strong><small>4 lições</small></span><span>Quando um mesmo número de WhatsApp tem mais de um agente de IA, o roteador lê o que o cliente quer e entrega a conversa ao agente certo.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Credenciais</strong><small>4 lições</small></span><span>Onde você guarda a chave da sua conta de inteligência artificial, a que os agentes usam para pensar, e confere se ela está funcionando.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Provedores</strong><small>3 lições</small></span><span>Onde você vê qual inteligência artificial atende cada parte do sistema, troca o modelo de uma parte e liga o Jev, a IA das decisões rápidas.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Conhecimento</strong><small>4 lições</small></span><span>O material da sua empresa que o agente de IA lê antes de responder: perguntas frequentes, preparos, políticas. Aqui você ensina, confere e tira do ar.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Memória</strong><small>4 lições</small></span><span>As regras da casa e os aprendizados que todos os agentes de IA da empresa seguem em qualquer conversa: escrever, publicar, voltar a uma versão antiga e arquivar o que não vale mais.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Skills</strong><small>4 lições</small></span><span>Manuais curtos de como agir em situações específicas, que o agente de IA consulta quando o assunto aparece na conversa: instalar do catálogo, editar e manter atualizados.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Casos</strong><small>6 lições</small></span><span>Os pedidos que a IA não consegue resolver sozinha e deixa para a equipe decidir, enquanto continua falando com o cliente.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Alertas</strong><small>3 lições</small></span><span>A Central de avisos reúne o que a IA percebeu e precisa de uma pessoa da equipe: uma resposta que não chegou, um cliente que pediu para falar com gente, um gasto que passou do limite.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Aviso no WhatsApp</strong><small>3 lições</small></span><span>Toda vez que a IA trava e abre um caso para a equipe, um celular de plantão recebe na hora uma mensagem de WhatsApp com o resumo e o link do caso.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Propostas da IA</strong><small>2 lições</small></span><span>Os próximos passos que a IA sugere para cada negócio aberto, numa lista só, esperando alguém da equipe aprovar ou ignorar.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Execuções</strong><small>2 lições</small></span><span>Tudo o que a IA fez, uma linha por vez — e, quando algo falhou, o que o cliente viveu, o que fazer e a mensagem original do provedor.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Uso e orçamento</strong><small>3 lições</small></span><span>Quanto a inteligência artificial custou, quantas vezes trabalhou, quanto demorou e qual é o teto de gasto do mês.</span></a></li>
+            </ul>
+          </section>
+
+          <section class="secao-guia">
+            <h2>Canais</h2>
+            <ul class="grade c3">
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Conexões</strong><small>6 lições</small></span><span>Onde você liga e acompanha os números de WhatsApp e os outros canais da empresa: se cada um está funcionando, para quem a IA responde, pausas e proteção contra bloqueio.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Webhooks</strong><small>6 lições</small></span><span>Onde você liga os formulários do seu site ao funil, vê cada contato que chegou por eles e cria avisos automáticos para outros sistemas quando algo acontece no CRM.</span></a></li>
+            </ul>
+          </section>
+
+          <section class="secao-guia">
+            <h2>Análise</h2>
+            <ul class="grade c3">
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Desempenho</strong><small>7 lições</small></span><span>Os números do atendimento e das vendas dos últimos 30 dias: o que o resultado custou, por que se perdeu, quanto deve entrar e como cada pessoa da equipe está indo.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Meta Ads</strong><small>3 lições</small></span><span>Onde você acompanha quanto gastou e quanto custou cada resultado dos anúncios do Facebook e do Instagram, depois de ligar a sua conta de anúncios.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Atividades</strong><small>4 lições</small></span><span>O relatório do que aconteceu no CRM num período: quanto foi a equipe, quanto foram os agentes de IA, quem fez cada coisa e quais assuntos mais ocuparam o atendimento.</span></a></li>
+            </ul>
+          </section>
+
+          <section class="secao-guia">
+            <h2>Configurações</h2>
+            <ul class="grade c3">
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Tipos de agendamento</strong><small>6 lições</small></span><span>Onde você cadastra o que os clientes podem marcar: quanto dura, onde acontece, quem atende, o preço e o lembrete que vai pelo WhatsApp.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Aviso de agendamento</strong><small>5 lições</small></span><span>Receber no seu WhatsApp cada horário marcado, remarcado ou cancelado, e às 7h o resumo do dia, para nunca marcar duas pessoas no mesmo horário.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Propostas</strong><small>3 lições</small></span><span>Onde você liga as propostas comerciais da sua empresa e define o prazo de validade, as condições de pagamento e o aviso que a equipe recebe quando a IA prepara uma proposta.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Modelos de proposta</strong><small>5 lições</small></span><span>Onde você escolhe quais modelos de proposta a clínica usa, cria os seus e ajusta os textos que vão para o paciente.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Financeiro</strong><small>5 lições</small></span><span>Onde você diz onde o dinheiro da clínica fica, como o cliente paga, como cada entrada e saída é classificada e quais contas se repetem todo mês.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Meta de vendas</strong><small>2 lições</small></span><span>Dizer quantas vendas a clínica quer fechar no mês, para a tela de Desempenho mostrar quanto já foi feito e quanto falta.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Perfil</strong><small>3 lições</small></span><span>Onde você acha todas as Configurações e ajusta o que é só seu: o nome que a equipe vê, a foto, o idioma e o fuso horário.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Segurança</strong><small>3 lições</small></span><span>Onde você protege a sua conta com um código do celular, decide quem da equipe precisa fazer o mesmo e encerra o acesso em todos os aparelhos.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Notificações</strong><small>3 lições</small></span><span>Onde você escolhe sobre o que quer ser avisado, como o aviso aparece na tela e no celular, os lembretes de tarefa e os sons da equipe.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>App no celular</strong><small>2 lições</small></span><span>Como colocar o sistema na tela de início do celular, como um aplicativo, e onde ligar os avisos de mensagem nova depois de instalar.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Equipe</strong><small>6 lições</small></span><span>Quem trabalha no sistema, com qual papel, o que cada um vê no menu, como as conversas são divididas e o horário de cada atendente.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Distribuição de atendimento</strong><small>6 lições</small></span><span>Onde você decide quem da equipe recebe cada cliente novo, o que cada atendente enxerga e quando a IA volta a responder.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Automações</strong><small>3 lições</small></span><span>Um interruptor só, que decide se a IA pode escolher o caminho dentro das suas automações, para a empresa inteira.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Tags</strong><small>6 lições</small></span><span>Onde você arruma as etiquetas da empresa: vê onde cada uma é usada, dá cor, corrige o nome, junta as repetidas e tira as que não servem mais.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Recursos opcionais</strong><small>4 lições</small></span><span>Uma lista única de tudo o que se liga e desliga no sistema: o que cada recurso faz, quem decide, se está ligado e o botão que leva até a tela onde ele se ajusta.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Organização</strong><small>5 lições</small></span><span>Onde você cadastra os dados da sua empresa, decide por quanto tempo guardar fotos e áudios das conversas, ajusta o menu da equipe e, se precisar, apaga os dados de teste para recomeçar.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Conversões</strong><small>6 lições</small></span><span>Onde você liga a conta de anúncios para avisar à Meta quais clientes do anúncio viraram venda, confere o que chegou e marca a origem de quem vem pelo site.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>Meta Ads (conexão)</strong><small>3 lições</small></span><span>A página onde o administrador liga, troca ou desliga a conta de anúncios do Facebook e do Instagram, para o sistema poder ler os resultados das campanhas.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>LGPD</strong><small>4 lições</small></span><span>Onde chegam os pedidos dos clientes da loja virtual para receber uma cópia dos próprios dados ou apagá-los, com o prazo de cada um.</span></a></li>
+              <li><a href="#" class="cartao link mod"><span class="linha"><strong>API Tokens</strong><small>3 lições</small></span><span>Onde você cria as chaves que deixam outro sistema (uma agenda online, um prontuário, um assistente de IA) conversar com o seu CRM, escolhe o que cada chave pode fazer e desliga a que não usa mais.</span></a></li>
+            </ul>
+          </section>
+
+          <section class="secao-guia">
+            <h2>Histórias por nicho</h2>
+            <p>Como uma empresa fictícia de cada ramo atende do primeiro contato ao acompanhamento.</p>
+            <ul class="grade c3">
+              <li class="cartao nicho"><a href="#">Advocacia</a><span>Triagem administrativa, consulta e documentos sem aconselhamento jurídico automático.</span><ul><li><a href="#">Consulta jurídica com contexto administrativo</a></li><li><a href="#">Documentos para revisão com próximo passo</a></li><li><a href="#">Pergunta sobre andamento com resposta profissional</a></li></ul></li>
+              <li class="cartao nicho"><a href="#">Clínicas</a><span>Recepção, horários e continuidade do cuidado com decisões clínicas reservadas aos profissionais.</span><ul><li><a href="#">Da pergunta ao horário combinado</a></li><li><a href="#">Remarcar sem perder o compromisso</a></li><li><a href="#">Quando o preparo exige decisão profissional</a></li></ul></li>
+              <li class="cartao nicho"><a href="#">Consórcio</a><span>Intenção de compra, análise de informações e encaminhamento sem promessa de contemplação ou crédito.</span><ul><li><a href="#">Do objetivo à conversa com o consultor</a></li><li><a href="#">Pergunta sobre lance vira caso para análise</a></li><li><a href="#">Pendência cadastral com responsável</a></li></ul></li>
+              <li class="cartao nicho"><a href="#">Contabilidade</a><span>Documentos, conferências e atendimento de empresas com análise fiscal reservada aos profissionais.</span><ul><li><a href="#">Fechamento com pendência visível</a></li><li><a href="#">Nova empresa com conversa de enquadramento</a></li></ul></li>
+              <li class="cartao nicho"><a href="#">E-commerce</a><span>Pedidos, trocas e venda consultiva com leitura externa condicionada à integração disponível.</span><ul><li><a href="#">Troca de tamanho com conferência humana</a></li><li><a href="#">Escolher um kit sem perder o próximo passo</a></li></ul></li>
+              <li class="cartao nicho"><a href="#">Escolas e cursos</a><span>Visita, matrícula em análise e apoio ao aluno com atendimento administrativo organizado.</span><ul><li><a href="#">Conhecer a escola antes da matrícula</a></li><li><a href="#">Matrícula com pendências distintas de aprovação</a></li><li><a href="#">Mudança de turma com decisão da escola</a></li></ul></li>
+              <li class="cartao nicho"><a href="#">Imobiliárias</a><span>Preferências de imóvel, visita e acompanhamento documental sem prometer disponibilidade ou aprovação.</span><ul><li><a href="#">Da busca à visita acompanhada</a></li><li><a href="#">Locação com pendências organizadas</a></li><li><a href="#">Captação de imóvel com avaliação humana</a></li></ul></li>
+              <li class="cartao nicho"><a href="#">Infoprodutos</a><span>Acesso, adequação da oferta e suporte com passagem à equipe quando a base não resolve.</span><ul><li><a href="#">Acesso que precisa da equipe</a></li><li><a href="#">Escolher uma formação pelo objetivo</a></li><li><a href="#">Pedido de reembolso com análise humana</a></li></ul></li>
+              <li class="cartao nicho"><a href="#">Seguros</a><span>Cotação, renovação e sinistro com decisões de cobertura e aceitação atribuídas aos responsáveis.</span><ul><li><a href="#">Cotação que chega preparada ao corretor</a></li><li><a href="#">Aviso de sinistro sem promessa de cobertura</a></li></ul></li>
+              <li class="cartao nicho"><a href="#">Oficinas e assistência técnica</a><span>Recepção de equipamento, diagnóstico humano e continuidade de orçamento ou reparo.</span><ul><li><a href="#">Da descrição do defeito à avaliação técnica</a></li><li><a href="#">Orçamento depende de avaliação e aceite</a></li></ul></li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

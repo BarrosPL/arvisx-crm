@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Material do acervo</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="850">
+<meta name="rota" content="/app/ai/knowledge/sources/[id]">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .itens { display: grid; gap: 16px; }
+  .itens .cartao { padding: 16px 18px; }
+  .itens .rotulo { margin-bottom: 4px; }
+  .itens .pergunta { font-weight: 600; margin-bottom: 12px; }
+  .itens .resposta { font-size: 13.5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+</style>
+</head>
+<body data-rota="/app/ai">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <a href="#" class="volta"><i class="ph ph-arrow-left"></i>Voltar ao acervo</a>
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Agente de IA · O que o agente sabe</div>
+          <h1>Perguntas frequentes da clínica</h1>
+          <p>Perguntas e respostas</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <ul class="itens">
+        <li class="cartao"><span class="rotulo">Pergunta</span><p class="pergunta">Qual é o horário de atendimento da clínica?</p><span class="rotulo">Resposta</span><p class="resposta">De segunda a sexta, das 8h às 20h, e aos sábados das 8h às 13h. Não abrimos aos domingos e feriados.</p></li>
+        <li class="cartao"><span class="rotulo">Pergunta</span><p class="pergunta">Onde fica a Clínica Vitalis?</p><span class="rotulo">Resposta</span><p class="resposta">Rua das Acácias, 480, sala 12 — Vila Mariana, São Paulo. Fica a duas quadras do metrô e tem estacionamento conveniado no número 455.</p></li>
+        <li class="cartao"><span class="rotulo">Pergunta</span><p class="pergunta">A avaliação é paga?</p><span class="rotulo">Resposta</span><p class="resposta">Não. A primeira avaliação é gratuita e dura cerca de 30 minutos. O orçamento do tratamento sai depois dela.</p></li>
+        <li class="cartao"><span class="rotulo">Pergunta</span><p class="pergunta">Vocês atendem crianças?</p><span class="rotulo">Resposta</span><p class="resposta">Sim, a partir dos 3 anos, com odontopediatra às terças e quintas à tarde.</p></li>
+        <li class="cartao"><span class="rotulo">Pergunta</span><p class="pergunta">Quais formas de pagamento são aceitas?</p><span class="rotulo">Resposta</span><p class="resposta">Pix, cartão de débito e cartão de crédito em até 10 vezes sem juros. Não trabalhamos com cheque.</p></li>
+        <li class="cartao"><span class="rotulo">Pergunta</span><p class="pergunta">Como faço para remarcar uma consulta?</p><span class="rotulo">Resposta</span><p class="resposta">É só avisar por aqui com pelo menos 24 horas de antecedência.
+Com menos tempo que isso, a remarcação depende de encaixe na agenda do dentista.</p></li>
+        <li class="cartao"><span class="rotulo">Pergunta</span><p class="pergunta">Atendem urgência no mesmo dia?</p><span class="rotulo">Resposta</span><p class="resposta">Sim, casos de dor ou trauma têm encaixe no mesmo dia, dentro do horário de atendimento. Avise que é urgência logo na primeira mensagem.</p></li>
+        <li class="cartao"><span class="rotulo">Pergunta</span><p class="pergunta">Preciso levar algum documento na primeira consulta?</p><span class="rotulo">Resposta</span><p class="resposta">Um documento com foto e, se tiver, exames e radiografias recentes. Quem usa convênio leva também a carteirinha.</p></li>
+      </ul>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

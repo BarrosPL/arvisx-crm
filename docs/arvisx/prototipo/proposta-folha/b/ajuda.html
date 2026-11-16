@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ajuda</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="510">
+<meta name="rota" content="/app/ajuda">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .treino { display: flex; flex-direction: column; gap: 4px; padding: 16px; margin-bottom: 24px; border: 1px solid var(--ouro); border-radius: var(--r); background: var(--ouro-suave); color: var(--navy); }
+  .treino strong { font-size: 16px; font-weight: 600; }
+  .treino span { font-size: 13px; }
+  .bloco h2 { font: 600 11px/1 var(--mono); letter-spacing: 0; text-transform: none; color: var(--apoio); margin-bottom: 10px; }
+  .bloco .lista > li { padding: 0; }
+  .bloco .lista a { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; width: 100%; color: inherit; }
+  .bloco .lista a strong { font-size: 13px; font-weight: 600; }
+  .bloco .lista a span { font-size: 12px; color: var(--apoio); }
+  .blocos { gap: 24px; align-items: start; }
+  @media (max-width: 860px) { .blocos { grid-template-columns: minmax(0, 1fr); } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/app/ajuda" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Organização</div>
+          <h1>Ajuda</h1>
+          <p>O caminho para cada tarefa, e onde ir quando algo não sai como esperado.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <a href="#" class="treino">
+        <strong>Guia de uso</strong>
+        <span>Lições passo a passo com a foto de cada tela, histórias por nicho e busca.</span>
+      </a>
+
+      <div class="grade c2 blocos">
+        <section class="bloco">
+          <h2>Começar a usar</h2>
+          <ul class="cartao lista">
+            <li><a href="#"><strong>Abrir as conversas</strong><span>As conversas de todos os canais num lugar só, e quem está esperando você.</span></a></li>
+            <li><a href="#"><strong>Mover um negócio no funil</strong><span>Em que etapa cada oportunidade está e o que falta para fechar.</span></a></li>
+            <li><a href="#"><strong>Cadastrar quem fala com você</strong><span>O histórico da pessoa, as etiquetas e o consentimento dela.</span></a></li>
+            <li><a href="#"><strong>Conectar um canal</strong><span>Por onde as mensagens entram: WhatsApp, Instagram e os demais canais.</span></a></li>
+          </ul>
+        </section>
+        <section class="bloco">
+          <h2>Agente de IA</h2>
+          <ul class="cartao lista">
+            <li><a href="#"><strong>Criar ou ajustar um agente</strong><span>O que ele responde, quando passa para uma pessoa e com que informação decide.</span></a></li>
+            <li><a href="#"><strong>Ensinar o que ele deve saber</strong><span>Os documentos e páginas que alimentam as respostas dele.</span></a></li>
+            <li><a href="#"><strong>Ver onde ele não deu conta</strong><span>As conversas em que a IA pediu ajuda — é daí que sai a correção.</span></a></li>
+          </ul>
+        </section>
+        <section class="bloco">
+          <h2>Sua empresa</h2>
+          <ul class="cartao lista">
+            <li><a href="#"><strong>Chamar a equipe</strong><span>Quem trabalha aqui, com qual papel e quanta conversa cada um aguenta.</span></a></li>
+            <li><a href="#"><strong>Renomear as etapas e criar campos</strong><span>O vocabulário que a sua operação usa, no lugar do padrão.</span></a></li>
+          </ul>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

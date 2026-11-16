@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E-mail</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="230">
+<meta name="rota" content="/admin/email">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .cartao .corpo > h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .cartao .corpo > p.desc { color: var(--apoio); font-size: 13px; margin-bottom: 14px; }
+  .cartao .corpo > h3 { font-size: 13px; font-weight: 600; }
+  .linha-botao { display: flex; gap: 8px; align-items: center; }
+  .linha-botao input { flex: 1; min-width: 0; }
+  .rodape-form { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .rodape-form.fim { justify-content: flex-end; }
+  .nota { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 12px; font-size: 12px; color: var(--apoio); }
+  .nota.ambar { background: var(--aviso-suave); border-color: #f3d7ac; color: #7d4d0d; }
+  .nota strong { color: var(--texto); }
+  .bloco-chave { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 14px 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .bloco-chave > div:first-child { flex: 1; min-width: 220px; display: grid; gap: 4px; }
+  .bloco-chave strong { font-size: 14px; }
+  .bloco-chave p { color: var(--apoio); font-size: 13px; }
+  .bloco-chave p b { color: var(--texto); font-weight: 600; }
+  .bloco-chave select { width: 200px; max-width: 100%; }
+
+  .campo-inst { display: grid; gap: 8px; padding: 16px 0; border-top: 1px solid var(--linha); }
+  .campo-inst:first-child { border-top: 0; padding-top: 0; }
+  .campo-inst:last-child { padding-bottom: 0; }
+  .campo-inst .topo-campo { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .campo-inst .topo-campo label, .campo-inst .topo-campo .rot { font-size: 13px; font-weight: 600; }
+  .campo-inst p { font-size: 13px; color: var(--apoio); }
+  .campo-inst p.agora { font-size: 12px; color: var(--fraco); }
+  .campo-inst .linha-botao { flex-wrap: wrap; }
+  .campo-inst .linha-botao input { min-width: 160px; }
+  .campo-inst .porque { justify-self: start; font-size: 12px; font-weight: 600; color: var(--apoio); text-decoration: underline; text-underline-offset: 2px; padding: 4px 0; background: none; border: 0; cursor: pointer; text-align: left; }
+  .origem { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--apoio); }
+  .origem i { width: 6px; height: 6px; border-radius: 50%; background: var(--fraco); display: block; }
+  .origem.ausente { color: var(--aviso); } .origem.ausente i { background: var(--aviso); }
+  .origem.banco { color: var(--ok); } .origem.banco i { background: var(--ok); }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/admin/email" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin da plataforma</div>
+          <h1>Servidor de e-mail desta instalação</h1>
+          <p>Convite de equipe, entrega de dados de LGPD e aviso de prazo saem por aqui. Preencher esta tela é a alternativa a contratar um serviço externo de envio: o e-mail passa a sair pelo seu próprio servidor.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <div class="cartao">
+          <div class="corpo form">
+            <div class="campo">
+              <label for="smtp-host">Endereço do servidor</label>
+              <input type="text" id="smtp-host" class="mono" value="smtp.arvisx.com.br">
+              <span class="ajuda">Normalmente é a palavra smtp seguida do seu domínio. Só o endereço: sem smtp:// na frente e sem a porta no fim.</span>
+            </div>
+            <div class="campo">
+              <label for="smtp-port">Porta</label>
+              <input type="text" id="smtp-port" class="mono" inputmode="numeric" value="587" placeholder="587">
+            </div>
+            <div class="campo">
+              <label for="smtp-security">Segurança</label>
+              <select id="smtp-security">
+                <option value="starttls" selected>STARTTLS (normalmente a porta 587)</option>
+                <option value="tls">TLS/SSL (normalmente a porta 465)</option>
+                <option value="none">Sem criptografia</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label for="smtp-username">Usuário</label>
+              <input type="text" id="smtp-username" value="nao-responda@arvisx.com.br" placeholder="nao-responda@seudominio.com">
+            </div>
+            <div class="campo">
+              <label for="smtp-password">Senha</label>
+              <input type="password" id="smtp-password" placeholder="••••••••">
+              <span class="ajuda">Já existe uma senha gravada. Deixe em branco para mantê-la, ou digite uma nova para substituir.</span>
+            </div>
+            <div class="campo">
+              <label for="smtp-from-email">E-mail que aparece como remetente</label>
+              <input type="email" id="smtp-from-email" value="nao-responda@arvisx.com.br" placeholder="nao-responda@seudominio.com">
+            </div>
+            <div class="campo">
+              <label for="smtp-from-name">Nome que aparece como remetente</label>
+              <input type="text" id="smtp-from-name" value="ArvisX CRM" placeholder="Nome da sua empresa">
+            </div>
+            <div class="rodape-form">
+              <span class="fraco pequeno" style="flex:1;min-width:200px">Em uso: o e-mail está saindo por este servidor.</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn secundario">Testar conexão</button>
+                <button class="btn primario">Salvar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Serviço externo de envio</h2>
+            <p class="desc">A alternativa ao servidor próprio: um serviço que entrega o e-mail por você. Se as duas coisas estiverem configuradas, o servidor próprio tem preferência.</p>
+            <div>
+          <div class="campo-inst campo">
+            <div class="topo-campo"><label for="config-RESEND_API_KEY">Chave do serviço de e-mail</label><span class="origem ausente"><i></i>Não configurado</span></div>
+            <p>Sem ela o sistema não consegue enviar e-mail nenhum — nem convite para a equipe, nem recuperação de senha.</p>
+            <div class="linha-botao">
+              <input type="password" id="config-RESEND_API_KEY" autocomplete="off" placeholder="Escreva para configurar">
+              <button class="btn secundario" disabled>Salvar</button>
+            </div>
+          </div>
+          <div class="campo-inst campo">
+            <div class="topo-campo"><label for="config-RESEND_FROM_EMAIL">Endereço que aparece como remetente</label><span class="origem ausente"><i></i>Não configurado</span></div>
+            <p>O e-mail que seus clientes veem como remetente. Precisa ser de um domínio verificado no serviço de e-mail.</p>
+            <div class="linha-botao">
+              <input type="text" id="config-RESEND_FROM_EMAIL" autocomplete="off" placeholder="Escreva para configurar">
+              <button class="btn secundario" disabled>Salvar</button>
+            </div>
+          </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell-admin.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

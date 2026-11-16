@@ -35,7 +35,7 @@ export default async function ConnectWhatsappPage() {
     <div className="space-y-6">
       <header>
         <h2 className="text-2xl font-semibold tracking-tight">{traduzir(iaNoPlano ? "Dê um telefone a ele" : "Conecte o seu WhatsApp", idioma)}</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-[13px] text-muted-foreground">
           {traduzir(
             iaNoPlano
               ? "É por este número que ele vai atender seus clientes. Se você conecta pelo celular, tenha ele por perto."
@@ -44,7 +44,7 @@ export default async function ConnectWhatsappPage() {
           )}
         </p>
       </header>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-[13px] text-muted-foreground">
         {traduzir("Novos canais começam em modo de teste. Após concluir a configuração, abra Conexões para autorizar seus números de teste ou liberar o público.", idioma)}
       </p>
       <ConnectWhatsappClient

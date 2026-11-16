@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Distribuição de atendimento</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="620">
+<meta name="rota" content="/app/settings/atendimento">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .cartao .corpo > h2 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .cartao .corpo > p.desc { color: var(--apoio); font-size: 12.5px; margin-bottom: 14px; max-width: 72ch; }
+  .opcoes { display: grid; gap: 8px; }
+  .opcao { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid var(--linha-forte); border-radius: var(--r); cursor: pointer; }
+  .opcao.marcada { border-color: var(--ouro); background: var(--ouro-suave); }
+  .opcao input { width: 16px; height: 16px; margin-top: 3px; accent-color: var(--ouro); flex: none; }
+  .opcao strong { display: block; font-size: 13.5px; font-weight: 600; }
+  .opcao span span { display: block; color: var(--apoio); font-size: 12.5px; margin-top: 2px; }
+  .sub-form { border-top: 1px solid var(--linha); margin-top: 16px; padding-top: 16px; }
+  .curto { max-width: 320px; }
+  .caixa strong { display: block; font-size: 13.5px; font-weight: 600; }
+  .caixa .apoio { display: block; font-size: 12.5px; margin-top: 2px; }
+  .rodape-form { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  h2.secao { margin-top: 12px; margin-bottom: 4px; }
+  .intro { color: var(--apoio); font-size: 13px; max-width: 72ch; }
+  fieldset.numero { border: 1px solid var(--linha-forte); border-radius: var(--r); padding: 14px 16px 16px; display: grid; gap: 12px; background: var(--painel); min-width: 0; }
+  fieldset.numero legend { font-weight: 700; font-size: 13.5px; padding: 0 8px; }
+  .membros { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .membros .caixa { align-items: center; padding: 6px 8px; border-radius: var(--r-sm); font-size: 13.5px; }
+  .membros .caixa input { margin-top: 0; }
+  .botoes { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chave-topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .chave-topo label { font-weight: 600; font-size: 13.5px; display: block; margin-bottom: 4px; }
+  .chave-topo p { font-size: 12.5px; max-width: 72ch; }
+  .chave-topo p + p { margin-top: 4px; }
+  .linha-janela { display: flex; align-items: flex-end; gap: 8px; margin-top: 8px; }
+  .linha-janela input { width: 96px; }
+  @media (max-width: 860px) { .membros { grid-template-columns: 1fr; } .botoes .btn { white-space: normal; height: auto; min-height: 36px; padding: 8px 14px; } }
+</style>
+</head>
+<body data-rota="/app/settings">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua empresa</div>
+          <h1>Distribuição de atendimento</h1>
+          <p>Quem recebe cada cliente novo, e o que cada atendente enxerga. As duas decisões andam juntas: distribuir sem restringir deixa todo mundo vendo a carteira do colega; restringir sem distribuir deixa o funil de cada um vazio.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <!-- AtendimentoForm -->
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Quem recebe o cliente novo</h2>
+            <p class="desc">Vale para conversa que chega sem dono.</p>
+            <div class="opcoes">
+              <label class="opcao"><input type="radio" name="modo" aria-label="Cada um pega o que quiser"><span><strong>Cada um pega o que quiser</strong><span>Todo cliente novo cai numa fila aberta e o primeiro atendente que clicar assume. Simples, e é onde nasce a discussão de quem furou a fila.</span></span></label>
+              <label class="opcao marcada"><input type="radio" name="modo" checked aria-label="Rodízio automático entre os atendentes"><span><strong>Rodízio automático entre os atendentes</strong><span>Cliente 1 vai para o atendente A, cliente 2 para o B, e ao acabar a lista volta ao primeiro. Quem recebe é sempre quem está há mais tempo sem receber — entre os que estão disponíveis e dentro do horário. Ninguém escolhe, então não há fila furada.</span></span></label>
+              <label class="opcao"><input type="radio" name="modo" aria-label="Vai para quem tem menos conversas na mão"><span><strong>Vai para quem tem menos conversas na mão</strong><span>Cada cliente novo cai com quem está com MENOR número de conversas em aberto. Em caso de empate vale o rodízio — quem está há mais tempo sem receber leva. Entre os que estão disponíveis e dentro do horário, como nos outros modos. É o modo para time grande, onde deixar uma pessoa com tudo e outra parada custa caro.</span></span></label>
+            </div>
+            <div class="sub-form form c2">
+              <div class="campo"><label for="max_retries">Tentativas antes de desistir</label><input type="number" id="max_retries" class="mono" min="0" max="20" value="5"><span class="ajuda">Quando não há ninguém disponível, o sistema tenta de novo mais tarde. Ao estourar, a conversa fica na fila esperando alguém.</span></div>
+              <div class="campo"><label for="backoff_seconds">Espera entre tentativas (segundos)</label><input type="number" id="backoff_seconds" class="mono" min="1" max="3600" value="60"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="corpo">
+            <h2>O que cada atendente enxerga</h2>
+            <p class="desc">Restringe apenas quem tem o papel <strong>Atendente</strong>. Gerente e administrador continuam vendo a operação inteira.</p>
+            <div class="opcoes">
+              <label class="opcao"><input type="radio" name="visibilidade" aria-label="Todos veem tudo"><span><strong>Todos veem tudo</strong><span>Qualquer atendente abre a conversa e o negócio de qualquer colega.</span></span></label>
+              <label class="opcao marcada"><input type="radio" name="visibilidade" checked aria-label="Os seus, mais os que ainda não têm dono"><span><strong>Os seus, mais os que ainda não têm dono</strong><span>O atendente vê a própria carteira e a fila de quem chegou agora. Não vê o que já é de um colega.</span></span></label>
+              <label class="opcao"><input type="radio" name="visibilidade" aria-label="Só os seus"><span><strong>Só os seus</strong><span>O atendente vê apenas o que foi direcionado a ele — nem a fila. Combine com o rodízio: sem alguém distribuindo, ninguém recebe nada e as telas ficam vazias.</span></span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Quando a pessoa some, a IA volta?</h2>
+            <p class="desc">Quando alguém assume uma conversa, o agente de IA para de responder nela até ser devolvido. Se ninguém devolve, o cliente que escreve de novo fica sem resposta.</p>
+            <label class="caixa"><input type="checkbox" checked><span><strong>Devolver ao agente sozinho depois de um tempo sem resposta da equipe</strong><span class="apoio">O tempo conta a partir do último sinal de uma pessoa na conversa: assumir, responder pela tela ou pelo celular. Só devolve onde há agente publicado. Desligado, vale a regra de sempre: a IA só volta quando alguém clica em Devolver.</span></span></label>
+            <div class="sub-form">
+              <div class="campo curto"><label for="handoff_return_after_minutes">Minutos sem resposta da equipe</label><input type="number" id="handoff_return_after_minutes" class="mono" value="60"><span class="ajuda">De 5 minutos a 30 dias. Uma cotação com fornecedor leva dias — 5.000 minutos são três dias e meio. Sessenta minutos é a ordem de grandeza de um atendimento humano.</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Quando alguém responde pelo celular, a IA espera quanto tempo?</h2>
+            <p class="desc">Quando alguém da equipe responde o cliente direto pelo celular, fora do sistema, o agente de IA fica calado naquela conversa por este tempo. Cada nova resposta pelo celular recomeça a contagem.</p>
+            <div class="campo curto"><label for="manual_reply_silence_minutes">Minutos de silêncio da IA depois de uma resposta pelo celular</label><input type="number" id="manual_reply_silence_minutes" class="mono" value="60"><span class="ajuda">Entre 5 minutos e 24 horas. O padrão é 60. Quem atende o dia inteiro pelo celular costuma preferir um prazo curto, como 15, para a IA voltar a responder entre um atendimento e outro.</span></div>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Quando alguém responde, a conversa fica com essa pessoa?</h2>
+            <p class="desc">Desligado, vale a regra de sempre: responder pela tela cala a IA por alguns minutos, e a conversa encerrada que recebe mensagem nova volta para a fila.</p>
+            <label class="caixa"><input type="checkbox"><span><strong>A conversa fica com quem atendeu</strong><span class="apoio">Responder pelo Inbox numa conversa sem dono passa a assumi-la, e a IA fica calada até alguém devolver. Quando o cliente escreve numa conversa encerrada, ela volta direto para o último atendente, sem passar pela distribuição, se ele ainda faz parte da equipe.</span></span></label>
+          </div>
+        </div>
+
+        <div class="rodape-form"><button class="btn primario" disabled>Salvar</button></div>
+
+        <!-- ChannelRoutingForm -->
+        <section class="pilha" aria-labelledby="channel-routing-title">
+          <div>
+            <h2 class="secao" id="channel-routing-title">Responsáveis por número</h2>
+            <p class="intro">A capacidade e o horário de cada pessoa valem para todos os números. A distribuição automática respeita os responsáveis de cada canal.</p>
+          </div>
+
+          <fieldset class="numero">
+            <legend>Recepção</legend>
+            <p data-testid="channel-routing-state">Usa todos os atendentes elegíveis da organização.</p>
+            <div class="form c2">
+              <div class="campo"><label for="modo-1">Como este número distribui</label>
+                <select id="modo-1"><option selected>Usar o padrão da organização</option><option>Cada um pega o que quiser</option><option>Rodízio automático entre os atendentes</option><option>Vai para quem tem menos conversas na mão</option></select>
+                <span class="ajuda">Vale só para este número. Os números sem regra própria continuam com o que está definido para a organização.</span>
+              </div>
+              <div class="campo"><label for="destino-1">Atendente de destino padrão</label>
+                <select id="destino-1" disabled><option selected>Nenhum — distribuir pelo modo</option><option>Ana Souza</option><option>Marcos Lima</option><option>Renata Borges</option></select>
+                <span class="ajuda">Escolhendo uma pessoa, todo cliente novo deste número vai direto para ela, sem passar pela distribuição. Precisa estar disponível para receber.</span>
+              </div>
+            </div>
+            <div class="membros">
+              <label class="caixa"><input type="checkbox"><span>Ana Souza</span></label>
+              <label class="caixa"><input type="checkbox"><span>Marcos Lima</span></label>
+              <label class="caixa"><input type="checkbox"><span>Renata Borges</span></label>
+            </div>
+            <div class="botoes"><button class="btn navy">Salvar responsáveis</button><button class="btn secundario">Voltar ao padrão da organização</button></div>
+          </fieldset>
+
+          <fieldset class="numero">
+            <legend>Vendas</legend>
+            <p data-testid="channel-routing-state">Somente as pessoas selecionadas recebem este número.</p>
+            <div class="form c2">
+              <div class="campo"><label for="modo-2">Como este número distribui</label>
+                <select id="modo-2"><option>Usar o padrão da organização</option><option>Cada um pega o que quiser</option><option>Rodízio automático entre os atendentes</option><option selected>Vai para quem tem menos conversas na mão</option></select>
+                <span class="ajuda">Vale só para este número. Os números sem regra própria continuam com o que está definido para a organização.</span>
+              </div>
+              <div class="campo"><label for="destino-2">Atendente de destino padrão</label>
+                <select id="destino-2"><option selected>Nenhum — distribuir pelo modo</option><option>Ana Souza</option><option>Marcos Lima</option><option>Renata Borges</option></select>
+                <span class="ajuda">Escolhendo uma pessoa, todo cliente novo deste número vai direto para ela, sem passar pela distribuição. Precisa estar disponível para receber.</span>
+              </div>
+            </div>
+            <div class="membros">
+              <label class="caixa"><input type="checkbox"><span>Ana Souza</span></label>
+              <label class="caixa"><input type="checkbox" checked><span>Marcos Lima</span></label>
+              <label class="caixa"><input type="checkbox" checked><span>Renata Borges</span></label>
+            </div>
+            <div class="botoes"><button class="btn navy">Salvar responsáveis</button><button class="btn secundario">Voltar ao padrão da organização</button></div>
+          </fieldset>
+        </section>
+
+        <!-- AssinaturaForm -->
+        <div class="cartao">
+          <div class="corpo">
+            <h2>Quem fala aparece na mensagem?</h2>
+            <p class="desc">Ligado, a mensagem que vai ao cliente ganha o nome de quem fala em negrito, na linha de cima. O histórico do CRM guarda o texto como foi escrito. Campanhas, lembretes e integrações por token não assinam.</p>
+            <div class="pilha">
+              <label class="caixa"><input type="checkbox" checked><span><strong>Assinar as mensagens dos atendentes</strong><span class="apoio">Cada atendente aparece pelo próprio nome, com as iniciais em maiúscula.</span></span></label>
+              <label class="caixa"><input type="checkbox" checked><span><strong>Assinar as mensagens da IA</strong><span class="apoio">A IA aparece pelo nome abaixo, nunca pelo nome de um atendente.</span></span></label>
+              <div class="campo" style="max-width:384px"><label for="assinatura-nome-ia">Nome da IA</label><input type="text" id="assinatura-nome-ia" maxlength="120" value="Lia"><span class="ajuda">Sem asteriscos nem quebra de linha.</span></div>
+              <label class="caixa"><input type="checkbox"><span><strong>Assinar com o nome de cada agente</strong><span class="apoio">Ligado, cada mensagem da IA leva o nome do agente que a escreveu, como está no cadastro do agente. O Nome da IA acima fica para a mensagem sem agente.</span></span></label>
+            </div>
+          </div>
+        </div>
+        <div class="rodape-form"><button class="btn navy" disabled>Salvar assinatura</button></div>
+
+        <!-- NomeInformado -->
+        <div class="cartao">
+          <div class="corpo chave-topo">
+            <div>
+              <label for="nome_informado_no_atendimento">Preencher o nome que o cliente informa no atendimento</label>
+              <p class="apoio">Quando o assistente identifica o próprio nome informado por texto e usa a capacidade Anotar dado que o cliente informou, pode preencher o nome vazio da ficha. O apelido do WhatsApp fica separado. Nomes existentes e e-mail continuam exigindo revisão humana. Confira a ficha se o assistente interpretar a mensagem incorretamente.</p>
+              <p>Ligado para novas mensagens de atendimento.</p>
+            </div>
+            <span class="chave ligada" role="switch" aria-checked="true" id="nome_informado_no_atendimento"></span>
+          </div>
+        </div>
+
+        <!-- TelefoneDeFichaVazia -->
+        <div class="cartao">
+          <div class="corpo chave-topo">
+            <div>
+              <label for="telefone_de_ficha_vazia">Telefone informado pelo cliente entra sozinho na ficha sem número</label>
+              <p class="apoio">Quando o cliente diz o telefone numa conversa e a ficha do contato está SEM número, o número é gravado na hora, em formato internacional (E.164), sem esperar alguém confirmar — e aparece na linha do tempo do contato quando ele tem um negócio aberto. Nunca troca o número de quem já tem um: isso continua exigindo uma pessoa, como o e-mail, o nome e a data de nascimento. Vem desligada.</p>
+              <p>Desligado: todo telefone informado vira proposta, como o resto do dado ouvido na conversa.</p>
+            </div>
+            <span class="chave" role="switch" aria-checked="false" id="telefone_de_ficha_vazia"></span>
+          </div>
+        </div>
+
+        <!-- ClientePelaVenda -->
+        <div class="cartao">
+          <div class="corpo">
+            <div class="chave-topo">
+              <div>
+                <label for="cliente_pela_venda">Quem já comprou volta pelo funil de clientes</label>
+                <p class="apoio">Quando o contato já tem um negócio GANHO e nenhum aberto, a conversa nova dele nasce no funil marcado como de clientes, em vez do funil de entrada — que existe para medir quem é novo. Sem funil de clientes marcado, nada muda de destino: o negócio nasce no funil padrão, mas a linha do tempo passa a dizer que é recompra, com a data, o funil e o valor da venda anterior. Só negócio ganho conta; negócio perdido não. Vem desligada.</p>
+                <p>Ligado: quem já comprou não cai mais no funil de captação.</p>
+              </div>
+              <span class="chave ligada" role="switch" aria-checked="true" id="cliente_pela_venda"></span>
+            </div>
+            <div class="sub-form">
+              <div class="campo">
+                <label for="pos_venda_dias">Janela de pós-venda (dias)</label>
+                <span class="apoio pequeno" style="max-width:72ch">Dentro desta janela, a conversa de quem acabou de comprar não abre negócio nenhum — é o "chegou certinho?" dos primeiros dias. Zero desliga a janela e o negócio nasce sempre. Nada do que já existe é apagado ou fechado: a janela só decide se um card NOVO nasce.</span>
+                <div class="linha-janela"><input type="text" id="pos_venda_dias" class="mono" inputmode="numeric" value="7"><button class="btn secundario p" disabled>Salvar janela</button></div>
+                <span class="pequeno" style="margin-top:6px">Janela ativa: compras dos últimos <span class="mono">7</span> dias não abrem negócio novo.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

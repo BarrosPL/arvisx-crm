@@ -214,11 +214,11 @@ export function GuiaFlutuante({
           </Button>
         </div>
       ) : (
-        <div className="flex max-h-[min(40rem,calc(100dvh-8rem))] flex-col overflow-hidden rounded-lg border bg-surface shadow-lg">
-          <header className="border-b p-4">
+        <div className="flex max-h-[min(40rem,calc(100dvh-8rem))] flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg">
+          <header className="border-b border-border p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <p className="text-xs font-medium text-text-subtle">
                   {t("Guia de montagem")} · {resolvidas}/{missoes.length}
                 </p>
                 <h2 className="mt-1 text-base font-semibold tracking-tight">{t("Montando o seu CRM")}</h2>
@@ -232,21 +232,21 @@ export function GuiaFlutuante({
               </button>
             </div>
             <div
-              className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted"
+              className="mt-3 h-1.5 overflow-hidden rounded-full bg-border"
               role="progressbar"
               aria-valuemin={0}
               aria-valuemax={missoes.length}
               aria-valuenow={resolvidas}
             >
               <div
-                className="h-full rounded-full bg-[var(--color-cta)] transition-[width] duration-500"
+                className="h-full rounded-full bg-brand transition-[width] duration-500"
                 style={{ width: `${missoes.length ? (resolvidas / missoes.length) * 100 : 100}%` }}
               />
             </div>
           </header>
 
           <div className="space-y-4 overflow-y-auto p-4">
-            <ol className="space-y-1.5 text-sm">
+            <ol className="space-y-1.5 text-[13px]">
               {missoes.map((m) => (
                 <li key={m.segmento} className="flex items-center gap-2">
                   <span
@@ -254,10 +254,10 @@ export function GuiaFlutuante({
                     className={
                       "inline-block h-2 w-2 shrink-0 rounded-full " +
                       (m.estado === "feita"
-                        ? "bg-emerald-500"
+                        ? "bg-success"
                         : m.estado === "atual"
-                          ? "bg-[var(--color-cta)]"
-                          : "bg-muted-foreground/30")
+                          ? "bg-cta"
+                          : "bg-border-strong")
                     }
                   />
                   <span className={m.estado === "atual" ? "font-medium" : "text-muted-foreground"}>
@@ -269,9 +269,9 @@ export function GuiaFlutuante({
             </ol>
 
             {atual && textos ? (
-              <section className="space-y-3 rounded-md border bg-background p-4">
+              <section className="space-y-3 rounded-md border border-border bg-background p-4">
                 <div>
-                  <h3 className="text-sm font-semibold">{t(textos.titulo[variante])}</h3>
+                  <h3 className="text-[13px] font-semibold tracking-tight">{t(textos.titulo[variante])}</h3>
                   {/* Na tela do passo a explicação já está no quadro: aqui ela só repetiria. */}
                   {naTela && atual.segmento !== "testar" ? null : (
                     <p className="mt-1 text-xs text-muted-foreground">{t(textos.descricao[variante])}</p>
@@ -280,12 +280,12 @@ export function GuiaFlutuante({
                 {atual.segmento === "testar" ? (
                   ensaio
                 ) : naTela ? (
-                  <p className="border-l-2 border-[var(--color-cta)] pl-3 text-sm">
+                  <p className="border-l-2 border-brand pl-3 text-[13px]">
                     {t("Faça este passo no quadro em destaque, no topo desta tela.")}
                   </p>
                 ) : (
                   <>
-                    <p className="border-l-2 border-[var(--color-cta)] pl-3 text-sm">
+                    <p className="border-l-2 border-brand pl-3 text-[13px]">
                       {t("Este passo é feito na tela {tela}. Clique nela no menu, ou no botão abaixo.").replace(
                         "{tela}",
                         atual.menu,
@@ -300,10 +300,10 @@ export function GuiaFlutuante({
             ) : null}
 
             {!atual ? (
-              <section className="space-y-3 rounded-md border bg-background p-4 text-center">
+              <section className="space-y-3 rounded-md border border-border bg-background p-4 text-center">
                 <div>
                   <h3 className="text-lg font-semibold tracking-tight">{tituloDoFim}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{resumoDoFim}</p>
+                  <p className="mt-1 text-[13px] text-muted-foreground">{resumoDoFim}</p>
                   {!iaNoPlano ? (
                     <p className="mt-1 text-xs text-muted-foreground">
                       <a href="/app/settings/billing" className="underline underline-offset-2">

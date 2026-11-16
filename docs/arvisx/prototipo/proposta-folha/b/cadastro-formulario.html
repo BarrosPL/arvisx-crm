@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Criar conta · seus dados</title>
+<meta name="grupo" content="Entrada">
+<meta name="ordem" content="370">
+<meta name="rota" content="/signup">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<link rel="stylesheet" href="../base-login.css">
+<style>
+  .cab-centro { text-align: center; margin-bottom: 24px; }
+  .publico .formulario .cab-centro h2 { margin-bottom: 6px; }
+  .publico .formulario .cab-centro .apoio { margin-bottom: 0; }
+  .publico .formulario .rodape-form .forte { color: var(--texto); font-weight: 600; }
+  .forca { display: grid; gap: 8px; padding-top: 4px; font-size: 12px; }
+  .forca .linha-f { display: flex; justify-content: space-between; gap: 12px; }
+  .forca .linha-f span { color: var(--apoio); }
+  .forca .linha-f strong { font-weight: 600; }
+  .forca .barras { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .forca .barras span { height: 6px; border-radius: 4px; background: var(--painel-3); }
+  .forca ul { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; color: var(--apoio); }
+  .totp { display: flex; justify-content: center; gap: 8px; }
+  .totp .entrada { width: 40px; height: 48px; padding: 0; text-align: center; font: 500 18px/1 var(--mono); }
+  .plano-escolhido { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: var(--r-sm); border: 1px solid var(--linha); background: var(--painel-2); font-size: 13px; }
+  .plano-escolhido button { flex: none; font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+  .nota-centro { text-align: center; font-size: 12px; color: var(--apoio); }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/signup" data-raiz="../..">
+<div class="publico">
+  <section class="lado painel-a animada conversa-ia">
+    <img class="logo-topo" src="../../marca/arvisx-crm-oficial-escuro.png" alt="ARVISX CRM">
+    <div class="texto">
+      <p class="etiqueta">O CRM DA ARVISX</p>
+      <h1>O WhatsApp chega.<br>A <em>IA</em> atende e vende.</h1>
+      <p>Agentes de IA que atendem, qualificam e vendem no WhatsApp, dentro do CRM da sua empresa.</p>
+      <div class="fio"></div>
+    </div>
+    <ul class="provas">
+      <li><i class="ph-light ph-tray"></i>Inbox com a IA e a equipe lado a lado</li>
+      <li><i class="ph-light ph-kanban"></i>Funil, agenda e propostas no mesmo lugar</li>
+      <li><i class="ph-light ph-shield-check"></i>Seus dados no seu servidor, com LGPD</li>
+    </ul>
+    <div class="telefone" aria-hidden="true">
+      <div class="cabeca-tel">
+        <span class="avatar">M</span>
+        <div class="quem"><b>Marina Costa</b><span>Agente de IA atendendo</span></div>
+        <svg class="zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.5-4.5A8 8 0 1 1 8.5 18.5z"/></svg>
+      </div>
+      <div class="conversa">
+        <div class="msg lead"><div class="miolo-msg">Oi! Vi o anúncio de vocês. Como funciona e quanto custa?</div></div>
+        <div class="msg digitando"><div class="miolo-msg"><i></i><i></i><i></i></div></div>
+        <div class="msg ia"><div class="miolo-msg"><b>Agente de IA</b>Oi, Marina! Que bom que chegou. Me conta o que você precisa, que eu já te explico como funciona e te passo os valores?</div></div>
+        <div class="msg toast"><div class="miolo-msg"><i>&#10003;</i><span>Lead criado no funil <em>Vendas &middot; Primeiro contato</em></span></div></div>
+      </div>
+    </div>
+        <span class="ponto p1"></span><span class="ponto p2"></span><span class="ponto p3"></span><span class="ponto p4"></span><span class="ponto p5"></span>
+  </section>
+  <section class="formulario">
+    <div>
+      <div class="icone-app"><img src="../../marca/arvisx-simbolo-oficial.png" alt=""></div>
+      <h2 style="margin-bottom:6px">Criar conta</h2>
+      <p class="apoio">Comece a usar o ARVISX CRM em minutos</p>
+      <form class="form" novalidate>
+        <div class="campo"><label for="org_name">Nome da empresa</label><input id="org_name" type="text" autocomplete="organization" value="Clínica Vitalis"></div>
+        <div class="plano-escolhido">
+          <p><strong>Plano Standard</strong> · 7 dias de teste. Se gostar, a assinatura é <span class="mono">129,90 €</span> por mês.</p>
+          <button type="button">Trocar</button>
+        </div>
+        <div class="campo"><label for="email">Email</label><input id="email" type="email" autocomplete="email" value="ana.souza@clinicavitalis.com.br"></div>
+        <div class="campo">
+          <label for="password">Senha</label>
+          <div style="position:relative"><input id="password" type="password" autocomplete="new-password" style="padding-right:44px"><button type="button" aria-label="Mostrar senha" class="olho"><i class="ph-light ph-eye"></i></button></div>
+          <div class="forca">
+            <div class="linha-f"><span>Força da senha</span><strong>Muito fraca</strong></div>
+            <div class="barras" role="meter" aria-label="Força da senha"><span></span><span></span><span></span><span></span></div>
+            <ul>
+              <li><span aria-hidden="true">•</span> 8 ou mais caracteres</li>
+              <li><span aria-hidden="true">•</span> Uma letra</li>
+              <li><span aria-hidden="true">•</span> Um número</li>
+              <li><span aria-hidden="true">•</span> Um símbolo</li>
+            </ul>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="password_confirm">Confirmar senha</label>
+          <div style="position:relative"><input id="password_confirm" type="password" autocomplete="new-password" style="padding-right:44px"><button type="button" aria-label="Mostrar confirmação da senha" class="olho"><i class="ph-light ph-eye"></i></button></div>
+        </div>
+        <button type="submit" class="btn primario g bloco">Criar conta e testar o Standard</button>
+        <p class="nota-centro">Você testa por 7 dias. No fim, se gostar, faz a sua assinatura.</p>
+      </form>
+      <p class="rodape-form"><span class="apoio">Já tem conta?</span> <a href="#" class="forte">Entrar</a></p>
+    </div>
+  </section>
+</div>
+<script src="../folha.js"></script>
+</body>
+</html>

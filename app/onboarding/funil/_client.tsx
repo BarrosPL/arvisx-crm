@@ -93,17 +93,17 @@ export function QuadroClient({
         o primeiro cliente real.
       */}
       {!iaNoPlano ? (
-        <p className="rounded-md border p-3 text-sm" data-quadro-sem-ia>
+        <p className="rounded-md border p-3 text-[13px]" data-quadro-sem-ia>
           {t("Sugerimos este quadro a partir do que você contou sobre o negócio. Ajuste o que quiser.")}
         </p>
       ) : sugestao.origem === "ia" ? (
-        <p className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm">
+        <p className="rounded-md border border-success/30 bg-success-bg p-3 text-[13px]">
           {t(
             "Seu funcionário montou este quadro olhando o que você me contou sobre o negócio. Ajuste o que quiser.",
           )}
         </p>
       ) : (
-        <div className="space-y-2 rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm">
+        <div className="space-y-2 rounded-md border border-warning/30 bg-warning-bg p-3 text-[13px]">
           <p>
             {t("Não consegui pedir uma sugestão para o seu funcionário agora")}
             {sugestao.porque ? <> — {t(sugestao.porque)}</> : null}. {t("Comecei por um quadro pronto de")}{" "}
@@ -119,7 +119,7 @@ export function QuadroClient({
 
       <div className="space-y-3 rounded-lg border bg-background p-6">
         <div className="space-y-2">
-          <label className="block text-sm font-medium" htmlFor="nome_do_quadro">
+          <label className="block text-[13px] font-medium" htmlFor="nome_do_quadro">
             {t("Nome do quadro")}
           </label>
           <Input
@@ -200,7 +200,7 @@ export function QuadroClient({
 
       {/* O que a instalação trouxe, para a troca não parecer mágica. */}
       {atual && atual.colunas.length > 0 ? (
-        <details className="rounded-md border p-3 text-sm">
+        <details className="rounded-md border p-3 text-[13px]">
           <summary className="cursor-pointer text-muted-foreground">
             {t("O que veio na instalação")} ({atual.nome})
           </summary>
@@ -221,7 +221,7 @@ export function QuadroClient({
                 key={p.id}
                 type="button"
                 onClick={() => usarPacote(p.id)}
-                className="rounded-md border p-3 text-left text-sm hover:bg-muted"
+                className="rounded-md border p-3 text-left text-[13px] hover:bg-muted"
               >
                 <span className="font-medium">{t(p.comoSeApresenta)}</span>
                 <span className="mt-1 block text-xs text-muted-foreground">
@@ -234,7 +234,7 @@ export function QuadroClient({
           <button
             type="button"
             onClick={() => setTrocando(true)}
-            className="text-sm text-muted-foreground underline underline-offset-2"
+            className="text-[13px] text-muted-foreground underline underline-offset-2"
           >
             {t("Prefiro começar de um modelo pronto")}
           </button>
@@ -256,7 +256,7 @@ export function QuadroClient({
 
         <div className="flex flex-wrap items-center gap-3">
           {semNome ? (
-            <span className="text-xs text-amber-700 dark:text-amber-500">
+            <span className="text-xs text-warning">
               {t("Dê um nome à coluna em branco.")}
             </span>
           ) : null}

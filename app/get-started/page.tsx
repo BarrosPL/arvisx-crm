@@ -77,7 +77,7 @@ export default async function GetStartedPage() {
       <main className="bg-muted/40 flex min-h-screen items-center justify-center px-4 py-10">
         <div className="w-full max-w-md space-y-6 rounded-lg border bg-background p-6 shadow-sm">
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {marca.nome}
             </p>
             <h1 className="text-2xl font-semibold tracking-tight">

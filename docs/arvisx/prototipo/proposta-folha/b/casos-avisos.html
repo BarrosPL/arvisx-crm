@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aviso no WhatsApp</title>
+<meta name="grupo" content="Agente de IA">
+<meta name="ordem" content="830">
+<meta name="rota" content="/app/ai/cases/avisos">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .estado { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-radius: var(--r); border: 1px solid var(--linha); background: var(--painel-2); }
+  .estado > i { font-size: 18px; color: var(--apoio); flex: none; margin-top: 1px; }
+  .estado strong { display: block; font-size: 13px; }
+  .estado p { color: var(--apoio); font-size: 12px; margin-top: 3px; }
+  .estado p.forte { color: var(--texto); font-weight: 600; }
+  .campo.m input, .campo.m select { max-width: 384px; }
+  .campo.c input { max-width: 288px; }
+  .caixa-chave { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 1px solid var(--linha); border-radius: var(--r); }
+  .caixa-chave strong { display: block; font-size: 13px; }
+  .caixa-chave p { color: var(--apoio); font-size: 12px; margin-top: 3px; }
+  .linha-btn { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .linha-btn .ok-txt { display: inline-flex; align-items: center; gap: 5px; color: var(--apoio); font-size: 12px; }
+  .linha-btn .ok-txt i { font-size: 16px; }
+  .remover { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+  .entregas { border: 1px solid var(--linha); border-radius: var(--r); }
+  .entregas li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 12px 14px; border-bottom: 1px solid var(--linha); font-size: 12px; }
+  .entregas li:last-child { border-bottom: 0; }
+  .entregas .sit { font-weight: 600; }
+  .entregas .motivo { flex-basis: 100%; color: var(--apoio); }
+  .entregas a { display: inline-flex; align-items: center; gap: 4px; }
+  .laco { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--linha); }
+  .laco h3 { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+  .medida { border: 1px solid var(--linha); border-radius: var(--r); padding: 12px 14px; }
+  .medida .v { font-family: var(--display); font-weight: 600; font-size: 18px; letter-spacing: -.02em; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/app/ai/cases" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Agente de IA · Casos</div>
+          <h1>Aviso no WhatsApp</h1>
+          <p>Escolha um número da equipe para receber uma mensagem toda vez que o assistente travar e precisar de uma pessoa.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <!-- AlertasDoAviso -->
+        <div class="estado">
+          <i class="ph-light ph-warning"></i>
+          <div>
+            <strong>Este é o mesmo número que fala com seus clientes</strong>
+            <p>Os avisos vão contar no mesmo limite diário desse número. Funciona — mas um número só para avisos é mais seguro.</p>
+          </div>
+        </div>
+        <div class="estado">
+          <i class="ph-light ph-info"></i>
+          <div>
+            <strong>As respostas para este número são ignoradas de propósito</strong>
+            <p>Quem responder a esse número não vira atendimento, não vira contato e não chega ao CRM. É assim que o recurso funciona.</p>
+            <p class="forte"><span class="mono">3</span> mensagens já foram ignoradas · a última em <span class="mono">02/11 às 18:07</span></p>
+          </div>
+        </div>
+
+        <!-- FormularioDoAviso -->
+        <div class="cartao">
+          <div class="corpo form">
+            <div class="campo m">
+              <label for="conexao">Conexão que envia os avisos</label>
+              <select id="conexao"><option selected>Recepção Vitalis</option><option>Comercial</option></select>
+              <span class="ajuda">Aparecem aqui os números que mandam mensagem a qualquer hora e os números oficiais que já têm um modelo aprovado com uma variável.</span>
+            </div>
+
+            <div class="campo c">
+              <label for="telefone">Número que recebe os avisos</label>
+              <input id="telefone" type="tel" class="mono" value="+5511987650142" placeholder="+5511999998888">
+              <span class="ajuda">Comece pelo código do país. Um celular do Brasil fica assim: +55, DDD e o número.</span>
+            </div>
+
+            <div class="campo m">
+              <label for="destino-modo">Quem recebe os avisos</label>
+              <select id="destino-modo"><option selected>Sempre o número da empresa</option><option>Quem está com o atendimento</option></select>
+              <span class="ajuda">Todo aviso vai para o número acima, como sempre foi.</span>
+            </div>
+
+            <div class="caixa-chave">
+              <span class="chave" role="switch" aria-checked="false" aria-label="Responder casos por este WhatsApp"></span>
+              <div>
+                <strong>Responder casos por este WhatsApp</strong>
+                <p>Permite usar RESPONDER ou PERGUNTAR no número que recebe os avisos. Desligado por padrão.</p>
+              </div>
+            </div>
+
+            <div class="campo c">
+              <label for="rotulo">Como chamar esse número (opcional)</label>
+              <input id="rotulo" type="text" maxlength="60" placeholder="Plantão da Ana" value="Plantão da Ana">
+            </div>
+
+            <div class="caixa-chave">
+              <span class="chave ligada" role="switch" aria-checked="true" aria-label="Receber avisos no WhatsApp"></span>
+              <div>
+                <strong>Receber avisos no WhatsApp</strong>
+                <p>Os avisos podem sair fora do horário comercial e respeitam a conexão e os limites de envio do número.</p>
+              </div>
+            </div>
+
+            <div>
+              <div class="linha-btn">
+                <button class="btn primario">Salvar</button>
+                <button class="btn secundario"><i class="ph-light ph-paper-plane-tilt"></i>Enviar aviso de teste</button>
+                <span class="ok-txt"><i class="ph-light ph-check-circle"></i>Enviado para <span class="mono">••••0142</span></span>
+              </div>
+              <p class="apoio pequeno" style="margin-top:8px">O teste manda uma mensagem de verdade e conta no limite diário desse número. Salve antes de testar.</p>
+            </div>
+
+            <div class="remover">
+              <button class="btn secundario p">Remover destinatário</button>
+              <p class="apoio pequeno">Diferente de desligar os avisos: aqui o número sai da configuração e volta a entrar no Inbox.</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="apoio pequeno">O aviso sai quando o assistente abre o caso. Quando o cliente responde e o caso volta a esperar você, o aviso não se repete — acompanhe pela Central de alertas.</p>
+        <p class="apoio pequeno">Nas transferências para atendimento humano, há uma tentativa de aviso por episódio, sem resumo da conversa. Depois de retomar o atendimento automático, uma nova transferência pode gerar outro aviso. Consulte o resultado na Central de alertas; responda ao cliente pelo CRM.</p>
+
+        <!-- EntregasDoAviso -->
+        <div class="cartao">
+          <div class="corpo">
+            <h2 class="secao" style="font-size: 14px;margin-bottom:4px">Últimos avisos de casos</h2>
+            <p class="apoio pequeno" style="margin-bottom:12px">Esta lista registra avisos de casos. O resultado dos avisos de transferência para atendimento humano aparece no respectivo item da Central de alertas.</p>
+            <ul class="entregas">
+              <li><span class="mono fraco">03/11 às 09:42</span><span class="sit">Entregue</span><span class="mono apoio">••••0142</span><a href="#" class="link">Abrir o atendimento<i class="ph-light ph-arrow-square-out"></i></a></li>
+              <li><span class="mono fraco">02/11 às 17:15</span><span class="sit">Entregue</span><span class="mono apoio">••••0142</span><a href="#" class="link">Abrir o atendimento<i class="ph-light ph-arrow-square-out"></i></a></li>
+              <li><span class="mono fraco">02/11 às 11:03</span><span class="sit">Tentando enviar</span><span class="mono apoio">••••0142</span><a href="#" class="link">Abrir o atendimento<i class="ph-light ph-arrow-square-out"></i></a></li>
+              <li><span class="mono fraco">31/10 às 20:26</span><span class="sit">Não saiu</span><span class="mono apoio">••••0142</span><a href="#" class="link">Abrir o atendimento<i class="ph-light ph-arrow-square-out"></i></a><span class="motivo">O aviso ficou mais de 24 horas sem conseguir sair e foi encerrado.</span></li>
+              <li><span class="mono fraco">30/10 às 14:51</span><span class="sit">Entregue</span><span class="mono apoio">••••0142</span><a href="#" class="link">Abrir o atendimento<i class="ph-light ph-arrow-square-out"></i></a></li>
+            </ul>
+
+            <div class="laco">
+              <h3>O aviso está adiantando o atendimento?</h3>
+              <div class="grade c2" style="gap:8px">
+                <div class="medida">
+                  <p class="apoio pequeno">Casos em que o aviso chegou</p>
+                  <p class="v">12 min</p>
+                  <p class="fraco pequeno"><span class="mono">9/11</span> casos já tiveram uma ação da equipe</p>
+                </div>
+                <div class="medida">
+                  <p class="apoio pequeno">Casos sem aviso</p>
+                  <p class="v">47 min</p>
+                  <p class="fraco pequeno"><span class="mono">3/4</span> casos já tiveram uma ação da equipe</p>
+                </div>
+              </div>
+              <p class="fraco pequeno" style="margin-top:8px">Tempo típico entre o assistente travar e alguém da equipe agir, nos últimos 30 dias. Os dois grupos contam a partir do mesmo momento.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- AvisoDeTransferencia -->
+        <div class="cartao">
+          <div class="corpo">
+            <div class="caixa-chave" style="border:0;padding:0">
+              <span class="chave ligada" role="switch" aria-checked="true"></span>
+              <div>
+                <strong>Avisar também nas transferências para atendimento humano</strong>
+                <p>Cada transferência manda uma mensagem ao mesmo número e conta no limite diário dele. Desligue para receber só os avisos de casos.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

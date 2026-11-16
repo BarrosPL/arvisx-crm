@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agendamentos</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="720">
+<meta name="rota" content="/app/settings/tenant/agenda">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .pilha { display: grid; gap: 16px; }
+  .tipos { display: grid; gap: 8px; }
+  .tipo { padding: 12px 14px; }
+  .tipo.inativo { opacity: .6; }
+  .tipo .linha { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .tipo .nome { font-size: 13px; font-weight: 600; }
+  .tipo .meta { color: var(--apoio); font-size: 12px; }
+  .tipo .alerta { color: var(--aviso); font-size: 12px; text-decoration: underline; text-underline-offset: 2px; }
+  .tipo .botoes { margin-left: auto; display: flex; flex-wrap: wrap; gap: 4px; }
+  details.dobra { padding: 16px; }
+  details.dobra summary { cursor: pointer; font-weight: 600; }
+  @media (max-width: 860px) { .tipo .botoes { margin-left: 0; width: 100%; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/app/settings" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua empresa</div>
+          <h1>Agendamentos</h1>
+          <p>O que se pode marcar, quanto dura e quem atende. É isto que a tela de marcar e o agente de IA oferecem ao cliente.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <div><button class="btn primario p">Novo tipo de agendamento</button></div>
+
+        <ul class="tipos">
+          <li class="cartao tipo">
+            <div class="linha">
+              <span class="nome">Avaliação</span>
+              <span class="tag contorno">Consulta</span>
+              <span class="meta mono">30 min</span>
+              <span class="meta">Presencial</span>
+              <span class="meta">avisa o cliente <span class="mono">1440, 120</span> min antes · texto próprio</span>
+              <span class="botoes"><button class="btn secundario p">Configurar Avaliação</button><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Desativar</button></span>
+            </div>
+          </li>
+          <li class="cartao tipo">
+            <div class="linha">
+              <span class="nome">Limpeza</span>
+              <span class="tag contorno">Procedimento</span>
+              <span class="meta mono">45 min</span>
+              <span class="meta">Presencial</span>
+              <span class="meta">avisa o cliente <span class="mono">1440</span> min antes</span>
+              <span class="botoes"><button class="btn secundario p">Configurar Limpeza</button><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Desativar</button></span>
+            </div>
+          </li>
+          <li class="cartao tipo">
+            <div class="linha">
+              <span class="nome">Clareamento</span>
+              <span class="tag contorno">Procedimento</span>
+              <span class="meta mono">60 min</span>
+              <span class="meta">Presencial</span>
+              <span class="meta">Individual por profissional</span>
+              <span class="meta">avisa o cliente <span class="mono">1440, 60</span> min antes</span>
+              <span class="botoes"><button class="btn secundario p">Configurar Clareamento</button><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Desativar</button></span>
+            </div>
+          </li>
+          <li class="cartao tipo">
+            <div class="linha">
+              <span class="nome">Implante</span>
+              <span class="tag contorno">Procedimento</span>
+              <span class="meta mono">90 min</span>
+              <span class="meta">Presencial</span>
+              <a href="#" class="alerta">sem responsável — definir quem atende</a>
+              <span class="botoes"><button class="btn secundario p">Configurar Implante</button><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Desativar</button></span>
+            </div>
+          </li>
+          <li class="cartao tipo">
+            <div class="linha">
+              <span class="nome">Retorno por vídeo</span>
+              <span class="tag contorno">Retorno</span>
+              <span class="meta mono">15 min</span>
+              <span class="meta">Google Meet</span>
+              <span class="botoes"><button class="btn secundario p">Configurar Retorno por vídeo</button><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Desativar</button></span>
+            </div>
+          </li>
+          <li class="cartao tipo inativo">
+            <div class="linha">
+              <span class="nome">Orçamento por telefone</span>
+              <span class="tag contorno">Orçamento</span>
+              <span class="meta mono">20 min</span>
+              <span class="meta">Telefone</span>
+              <span class="meta fraco">desativado</span>
+              <span class="botoes"><button class="btn secundario p">Configurar Orçamento por telefone</button><button class="btn fantasma p">Editar</button><button class="btn fantasma p">Reativar</button></span>
+            </div>
+          </li>
+        </ul>
+
+        <details class="cartao dobra"><summary>Contas e calendários Google</summary></details>
+        <details class="cartao dobra"><summary>Regras gerais da agenda</summary></details>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

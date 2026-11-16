@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App no celular</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="610">
+<meta name="rota" content="/app/settings/aplicativo">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .caixa-app { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+  .caixa-app .link { display: inline-flex; align-items: center; min-height: 44px; }
+</style>
+</head>
+<body data-rota="/app/settings">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua conta</div>
+          <h1>App no celular</h1>
+          <p>Instale o sistema na tela de início do celular e receba os avisos.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <!-- estado "android-botao": o navegador ofereceu o pedido de instalação -->
+      <div class="cartao">
+        <div class="corpo caixa-app">
+          <p>Instale o app para abrir pelo ícone e receber os avisos.</p>
+          <button class="btn primario g">Instalar app</button>
+          <a href="#" class="link">Ligar os avisos em Notificações</a>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

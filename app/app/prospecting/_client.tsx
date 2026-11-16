@@ -692,7 +692,7 @@ export function ProspectingClient() {
     <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-4 md:p-8">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">CRM</p>
+          <p className="text-xs font-medium text-muted-foreground">CRM</p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight">{t("Prospecção")}</h1>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
             {t("Encontre empresas, aborde aos poucos e acompanhe quem avança na conversa.")}

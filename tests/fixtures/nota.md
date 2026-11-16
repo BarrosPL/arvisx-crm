@@ -15,3 +15,18 @@ markup — comparar sem normalizar mediria o contador, não a tela.
 A prova: com `grupos` vazio, o componente de hoje tem de produzir EXATAMENTE
 este HTML. Quando a lista plana mudar de propósito, a referência é regerada —
 o que o teste impede é a mudança SILENCIOSA.
+
+## Regerada no design "Folha"
+
+A lista plana mudou de propósito: o `Badge` base (`components/ui/badge.tsx`)
+trocou `py-0.5 ... font-semibold` por `py-px ... font-medium`. A referência
+`respostas-rapidas-lista-plana-antes-dos-grupos.html` foi atualizada só nessas
+duas classes das sete etiquetas; estrutura, ordem, textos e atributos seguem os
+de antes dos grupos.
+
+## Regerada no design "Folha suave" (16/11/2026)
+
+Os cantos mudaram de propósito: o `Badge` base passou de `rounded-md ... px-2`
+para `rounded-full ... px-2.5`, e o `Button` base de `rounded-md` para
+`rounded-full`. A referência foi atualizada só nessas classes das etiquetas e
+dos botões; estrutura, ordem, textos e atributos seguem os de antes dos grupos.

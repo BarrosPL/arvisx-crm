@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Designer de automação</title>
+<meta name="grupo" content="Canais">
+<meta name="ordem" content="810">
+<meta name="rota" content="/app/webhooks/automacoes/[id]">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .barra-pub { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 16px; background: var(--painel); border-bottom: 1px solid var(--linha); }
+  .barra-pub .esq { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+  .barra-pub .esq .entrada { height: 32px; width: 256px; max-width: 100%; font-weight: 600; }
+  .barra-pub .dir { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .barra-pub .liga-chave { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; }
+  .construtor { display: grid; grid-template-columns: 224px minmax(0, 1fr) 384px; flex: 1; min-height: 0; }
+  .paleta { border-right: 1px solid var(--linha); background: var(--painel); padding: 12px; overflow-y: auto; }
+  .paleta h2 { font: 600 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--apoio); margin: 0 4px 10px; }
+  .paleta h2 + button { margin-top: 0; }
+  .paleta h2.seg { margin-top: 18px; }
+  .paleta button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 36px; padding: 6px 8px; border-radius: var(--r-sm); font-weight: 600; font-size: 12.5px; line-height: 1.3; text-align: left; color: var(--texto); border: 1px solid var(--linha); background: var(--painel-2); margin-bottom: 6px; }
+  .paleta button:hover { border-color: var(--linha-forte); }
+  .paleta button[disabled] { opacity: .5; }
+  .paleta p { color: var(--apoio); font-size: 12px; padding: 8px 4px 0; }
+  .pt-no { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; flex: none; color: #fff; }
+  .pt-no.ouro { background: var(--ouro-suave); color: var(--ouro-escuro); }
+  .pt-no.ouro-solido { background: var(--ouro); color: var(--navy); }
+  .pt-no.sinal { background: var(--sinal-suave); color: var(--sinal); }
+  .pt-no.ok { background: var(--ok-suave); color: var(--ok); }
+  .pt-no.aviso { background: var(--aviso-suave); color: var(--aviso); }
+  .canvas { position: relative; background-color: var(--fundo); background-image: radial-gradient(var(--linha-forte) 1px, transparent 1px); background-size: 18px 18px; overflow: auto; padding: 32px 24px 80px; }
+  .trilha { display: flex; flex-direction: column; align-items: center; width: fit-content; margin: 0 auto; }
+  .trilha .liga { width: 2px; height: 34px; background: var(--linha-forte); position: relative; }
+  .trilha .liga::after { content: ""; position: absolute; left: -3px; bottom: 0; border: 4px solid transparent; border-top: 6px solid var(--linha-forte); }
+  .no { width: 224px; background: var(--painel); border: 1px solid var(--linha); border-left-width: 4px; border-radius: var(--r); box-shadow: var(--sombra); }
+  .no .dentro { display: flex; gap: 8px; align-items: flex-start; padding: 8px 12px; }
+  .no .txt { min-width: 0; flex: 1; }
+  .no .etapa { font: 500 10px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--apoio); }
+  .no .rotulo-no { font-weight: 600; font-size: 13.5px; line-height: 1.35; overflow-wrap: anywhere; }
+  .no .sub { color: var(--apoio); font-size: 12px; line-height: 1.35; margin-top: 1px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  .no .nota-no { border-top: 1px solid var(--linha); padding: 6px 12px; font-size: 12px; font-style: italic; color: var(--apoio); }
+  .no.ouro { border-left-color: var(--ouro); }
+  .no.ouro-solido { border-left-color: var(--ouro-escuro); }
+  .no.sinal { border-left-color: var(--sinal); }
+  .no.ok { border-left-color: var(--ok); }
+  .no.aviso { border-left-color: var(--aviso); }
+  .no.sel { box-shadow: 0 0 0 2px var(--painel), 0 0 0 4px var(--ouro), var(--sombra-alta); }
+  .controles { position: absolute; left: 16px; bottom: 16px; display: flex; flex-direction: column; background: var(--painel); border: 1px solid var(--linha); border-radius: var(--r-sm); box-shadow: var(--sombra); }
+  .controles button { width: 30px; height: 30px; display: grid; place-items: center; color: var(--apoio); border-bottom: 1px solid var(--linha); font-size: 14px; }
+  .controles button:last-child { border-bottom: 0; }
+  .add-no-cel { display: none; }
+  .painel-no { border-left: 1px solid var(--linha); background: var(--painel); overflow-y: auto; padding: 16px 16px 24px; }
+  .painel-no .cab-painel { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .painel-no .cab-painel .etapa { font: 500 11px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--apoio); }
+  .painel-no .cab-painel h2 { font-size: 15px; font-weight: 700; }
+  .painel-no .form { gap: 16px; }
+  .painel-no .fechar { display: none; }
+  @media (max-width: 1100px) {
+    .construtor { grid-template-columns: minmax(0, 1fr) 340px; }
+    .paleta { display: none; }
+    .add-no-cel { display: inline-flex; position: absolute; left: 16px; bottom: 16px; }
+    .controles { left: auto; right: 16px; }
+  }
+  @media (max-width: 860px) {
+    .construtor { grid-template-columns: 1fr; }
+    .canvas { padding: 24px 16px 72px; }
+    .painel-no { border-left: 0; border-top: 1px solid var(--linha); position: relative; padding-bottom: 96px; }
+    .painel-no .fechar { display: inline-flex; position: absolute; top: 10px; right: 10px; }
+    .barra-pub { padding: 10px 12px; }
+    .barra-pub .esq .entrada { flex: 1; width: auto; min-width: 0; }
+  }
+</style>
+</head>
+<body data-rota="/app/webhooks">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo cheia">
+      <!-- Barra do designer -->
+      <div class="barra-pub">
+        <div class="esq">
+          <a href="#" class="btn fantasma p icone" aria-label="Voltar para as automações"><i class="ph ph-caret-left"></i></a>
+          <input type="text" class="entrada" value="Boas-vindas — avaliação gratuita" placeholder="Boas-vindas a contato novo" maxlength="120" aria-label="Nome da automação">
+          <span class="tag ok">Ativa</span>
+        </div>
+        <div class="dir">
+          <button class="btn secundario p"><i class="ph ph-tree-structure"></i>Organizar</button>
+          <button class="btn primario p">Salvar alterações</button>
+          <label class="liga-chave"><span class="chave ligada" role="switch" aria-checked="true" aria-label="Pausar automação"></span>Ligada</label>
+        </div>
+      </div>
+
+      <div class="construtor">
+        <!-- Paleta -->
+        <aside class="paleta">
+          <h2>Filtro</h2>
+          <button disabled title="As condições ficam numa caixa só, e ela já está no desenho."><span class="pt-no aviso"><i class="ph ph-funnel"></i></span>Condições</button>
+          <h2 class="seg">Ações</h2>
+          <button><span class="pt-no sinal"><i class="ph ph-kanban"></i></span>Criar/mover lead</button>
+          <button><span class="pt-no ok"><i class="ph ph-paper-plane-tilt"></i></span>Mensagem no WhatsApp</button>
+          <button><span class="pt-no ok"><i class="ph ph-envelope-simple"></i></span>Enviar e-mail</button>
+          <button><span class="pt-no ouro-solido"><i class="ph ph-sparkle"></i></span>Mensagem pela IA</button>
+          <button><span class="pt-no ouro"><i class="ph ph-tag"></i></span>Adicionar tag</button>
+          <button><span class="pt-no sinal"><i class="ph ph-user-circle"></i></span>Atribuir atendente</button>
+          <button><span class="pt-no ouro"><i class="ph ph-webhooks-logo"></i></span>Avisar outro sistema</button>
+          <button><span class="pt-no ok"><i class="ph ph-flow-arrow"></i></span>Iniciar follow-up</button>
+          <button><span class="pt-no aviso"><i class="ph ph-bell"></i></span>Tarefa interna</button>
+          <button><span class="pt-no aviso"><i class="ph ph-list-checks"></i></span>Plano de tarefas</button>
+          <button><span class="pt-no sinal"><i class="ph ph-calendar-check"></i></span>Data do atendimento</button>
+          <button><span class="pt-no ok"><i class="ph ph-users-three"></i></span>Mensagem para a equipe</button>
+          <p>Clique para pôr logo depois da caixa selecionada. Arraste para soltar onde quiser e ligar à mão.</p>
+        </aside>
+
+        <!-- Canvas -->
+        <div class="canvas">
+          <div class="trilha">
+            <div class="no ouro sel"><div class="dentro"><span class="pt-no ouro"><i class="ph ph-play"></i></span><div class="txt"><div class="etapa">Quando</div><div class="rotulo-no">Gatilho</div><div class="sub">Quando entrar um contato novo (webhook) · Avaliação gratuita — Instagram</div></div></div></div>
+            <div class="liga"></div>
+            <div class="no aviso"><div class="dentro"><span class="pt-no aviso"><i class="ph ph-funnel"></i></span><div class="txt"><div class="etapa">Se</div><div class="rotulo-no">Condições</div><div class="sub">Origem (utm_source) é “instagram”</div></div></div><div class="nota-no">Se não atender, nada acontece.</div></div>
+            <div class="liga"></div>
+            <div class="no sinal"><div class="dentro"><span class="pt-no sinal"><i class="ph ph-kanban"></i></span><div class="txt"><div class="etapa">Então · Ação 1</div><div class="rotulo-no">Criar/mover lead no funil</div><div class="sub">Funil de clientes › Primeiro contato</div></div></div></div>
+            <div class="liga"></div>
+            <div class="no ouro"><div class="dentro"><span class="pt-no ouro"><i class="ph ph-tag"></i></span><div class="txt"><div class="etapa">Então · Ação 2</div><div class="rotulo-no">Adicionar tag</div><div class="sub">avaliação gratuita, instagram</div></div></div></div>
+            <div class="liga"></div>
+            <div class="no ouro-solido"><div class="dentro"><span class="pt-no ouro-solido"><i class="ph ph-sparkle"></i></span><div class="txt"><div class="etapa">Então · Ação 3</div><div class="rotulo-no">Mensagem escrita pela IA</div><div class="sub">Lia — AgendaPlus · Dê as boas-vindas e ofereça dois horários para a avaliação gratuita.</div></div></div></div>
+            <div class="liga"></div>
+            <div class="no sinal"><div class="dentro"><span class="pt-no sinal"><i class="ph ph-user-circle"></i></span><div class="txt"><div class="etapa">Então · Ação 4</div><div class="rotulo-no">Atribuir a um atendente</div><div class="sub">Rodízio: Marcos Lima, Renata Borges</div></div></div></div>
+            <div class="liga"></div>
+            <div class="no aviso"><div class="dentro"><span class="pt-no aviso"><i class="ph ph-bell"></i></span><div class="txt"><div class="etapa">Então · Ação 5</div><div class="rotulo-no">Criar tarefa interna (sem mensagem ao cliente)</div><div class="sub">Confirmar a avaliação por telefone · vence em 1 dia</div></div></div></div>
+          </div>
+          <button class="btn secundario p add-no-cel"><i class="ph ph-plus"></i>Adicionar caixa</button>
+          <div class="controles"><button aria-label="Aproximar"><i class="ph ph-plus"></i></button><button aria-label="Afastar"><i class="ph ph-minus"></i></button><button aria-label="Ajustar à tela"><i class="ph ph-arrows-out"></i></button><button aria-label="Travar"><i class="ph ph-lock"></i></button></div>
+        </div>
+
+        <!-- Painel da caixa selecionada (Gatilho) -->
+        <aside class="painel-no">
+          <button class="btn fantasma p icone fechar" aria-label="Fechar"><i class="ph ph-x"></i></button>
+          <div class="cab-painel"><span class="pt-no ouro"><i class="ph ph-play"></i></span><div><p class="etapa">Quando</p><h2>Gatilho</h2></div></div>
+          <div class="form">
+            <div class="campo">
+              <label>O que dispara a automação</label>
+              <select aria-label="O que dispara a automação">
+                <option selected>Quando entrar um contato novo (webhook)</option>
+                <option>Quando um lead mudar de etapa</option>
+                <option>Quando um negócio for ganho</option>
+                <option>Quando um negócio for perdido</option>
+                <option>Quando um lead encerrado for reaberto</option>
+                <option>Quando o responsável do lead mudar</option>
+                <option>Quando chegar mensagem no WhatsApp</option>
+                <option>Quando uma mensagem não for entregue</option>
+                <option>Quando um lead ganhar uma tag</option>
+                <option>Quando um contato ganhar uma tag</option>
+                <option>Quando um contato ganhar um telefone</option>
+                <option>Quando um horário for marcado</option>
+                <option>Quando um horário pendente for confirmado</option>
+                <option>Quando um horário for remarcado</option>
+                <option>Quando um horário for cancelado</option>
+                <option>Quando alguém comparecer ao compromisso</option>
+                <option>Quando alguém faltar ao compromisso</option>
+                <option>No aniversário de um contato</option>
+                <option>Quando faltarem N dias para uma data do funil</option>
+                <option>Quando ficar N dias sem mensagem</option>
+                <option>Quando um lead ficar N dias na mesma etapa</option>
+              </select>
+              <span class="ajuda">Trocar o gatilho limpa as condições, como no editor em lista: cada gatilho tem os seus campos.</span>
+            </div>
+            <div class="campo">
+              <label>Fonte do formulário</label>
+              <select aria-label="Fonte do formulário">
+                <option>Qualquer fonte</option>
+                <option>Landing page de Black Friday</option>
+                <option>Formulário do site — Implantes</option>
+                <option selected>Avaliação gratuita — Instagram</option>
+                <option>Clareamento — campanha de verão</option>
+                <option>Convênios corporativos</option>
+              </select>
+              <span class="ajuda">Escolha uma fonte para limitar esta automação a um formulário. Qualquer fonte mantém o comportamento geral.</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

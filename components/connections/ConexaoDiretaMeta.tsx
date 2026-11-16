@@ -336,7 +336,7 @@ export function ConexaoDiretaMeta({ emHomologacao = false }: { emHomologacao?: b
             <div key={c.id} className="flex flex-col gap-3 rounded-md border p-3" data-testid="conexao-direta">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                  <p className="text-xs font-medium text-muted-foreground">
                     {t(ROTULO_DA_REDE[c.rede])}
                   </p>
                   <p className="truncate font-semibold">{nomeDaConexao(c)}</p>

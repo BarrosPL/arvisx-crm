@@ -149,7 +149,7 @@ export default async function AccountSuspendedPage({
           <div aria-hidden className="relative mx-auto h-px w-24 bg-border after:absolute after:top-[-3px] after:left-[calc(50%-3.5px)] after:h-[7px] after:w-[7px] after:rounded-full after:bg-cta" />
           {motivo ? (
             <div className="rounded-md border border-border bg-muted/40 px-4 py-3 text-left">
-              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              <p className="text-xs font-medium text-muted-foreground">
                 {t("Motivo da suspensão")}
               </p>
               {/* Dado digitado por quem suspendeu: sem t(), como texto puro. */}

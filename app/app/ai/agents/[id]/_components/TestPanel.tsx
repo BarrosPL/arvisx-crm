@@ -236,7 +236,7 @@ export function TestPanel({ agent, draft, published, readOnly, channelSessions }
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="flex flex-col gap-4">
         <div>
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <p className="text-xs font-medium text-muted-foreground">
             {t("Versão alvo")}
           </p>
           <div className="flex items-center gap-2 text-sm">
@@ -299,7 +299,7 @@ export function TestPanel({ agent, draft, published, readOnly, channelSessions }
       </div>
 
       <div className="flex flex-col gap-3">
-        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        <p className="text-xs font-medium text-muted-foreground">
           {t("Resultado")}
         </p>
 
@@ -400,7 +400,7 @@ export function TestPanel({ agent, draft, published, readOnly, channelSessions }
 function Cell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="rounded-md border border-border/60 px-2 py-1">
-      <p className="text-[10px] tracking-wide text-muted-foreground uppercase">{label}</p>
+      <p className="text-[11px] text-muted-foreground">{label}</p>
       <p className="font-mono">{children}</p>
     </div>
   );

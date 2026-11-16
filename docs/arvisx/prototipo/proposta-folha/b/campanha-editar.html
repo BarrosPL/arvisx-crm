@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editar campanha</title>
+<meta name="grupo" content="CRM">
+<meta name="ordem" content="940">
+<meta name="rota" content="/app/campaigns/[id]/edit">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+.cartao { margin-bottom: 16px; }
+  fieldset { border: 0; display: grid; gap: 10px; }
+  fieldset legend { font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+  .radio { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+  .radio input { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--navy); }
+  .nota { color: var(--apoio); font-size: 12px; line-height: 1.5; }
+  .vars { display: grid; gap: 6px; font-size: 12px; color: var(--apoio); margin-top: 10px; }
+  .vars code { font-family: var(--mono); font-size: 12px; padding: 2px 6px; border-radius: 4px; background: var(--ouro-suave); color: var(--ouro-escuro); border: 1px solid color-mix(in srgb, var(--ouro) 38%, var(--painel)); cursor: pointer; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/app/campaigns" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+<div class="cabecalho">
+        <div>
+          <div class="eyebrow">CRM · Campanhas</div>
+          <h1>Editar campanha</h1>
+          <p>Enquanto é rascunho, tudo muda. Depois de preparada, só o ritmo.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="cartao">
+        <div class="cab"><h2>Informações</h2></div>
+        <div class="corpo form">
+          <div class="campo"><label for="e-nome">Nome da campanha</label><input id="e-nome" type="text" value="Aviso de feriado — clínica fechada dia 15"></div>
+          <div class="campo"><label for="e-canal">Enviar pelo número</label><select id="e-canal"><option selected>Recepção — +55 11 98800-1010</option><option>Comercial — +55 11 97700-2020</option></select></div>
+          <fieldset>
+            <legend>Base legal do envio</legend>
+            <label class="radio"><input type="radio" name="e-base-legal" checked><span>Consentimento — estas pessoas pediram para receber</span></label>
+            <label class="radio"><input type="radio" name="e-base-legal"><span>Interesse legítimo — com avaliação (LIA) registrada</span></label>
+          </fieldset>
+        </div>
+      </div>
+
+      <div class="cartao">
+        <div class="cab"><h2>Público</h2></div>
+        <div class="corpo">
+          <div class="form c2">
+            <div class="campo"><label for="e-com-tags">Com alguma destas etiquetas</label><input id="e-com-tags" type="text" placeholder="separe por vírgula" value="cliente, em-tratamento"></div>
+            <div class="campo"><label for="e-sem-tags">Sem nenhuma destas etiquetas</label><input id="e-sem-tags" type="text" placeholder="separe por vírgula"></div>
+            <div class="campo"><label for="e-silencio">Sem falar com a gente há (dias)</label><input id="e-silencio" type="number" class="mono"></div>
+            <div class="campo"><label for="e-limite">Máximo de contatos nesta campanha</label><input id="e-limite" type="number" class="mono" value="300"></div>
+          </div>
+          <div style="margin-top:16px"><button class="btn secundario">Ver quantas pessoas</button></div>
+        </div>
+      </div>
+
+      <div class="cartao">
+        <div class="cab"><h2>Quem responder</h2></div>
+        <div class="corpo">
+          <p class="nota" style="margin-bottom:14px">Em branco, tudo segue como hoje: o card nasce no funil do número e quem atende é o agente publicado nele.</p>
+          <div class="form c2">
+            <div class="campo"><label for="e-funil">Vira card no funil</label><select id="e-funil"><option selected>Funil do número (padrão)</option><option>CRM Vivo — Clínica</option></select></div>
+            <div class="campo"><label for="e-etapa">Na etapa</label><select id="e-etapa" disabled><option selected>Primeira etapa do funil</option></select></div>
+            <div class="campo largo"><label for="e-agente">Quem atende a resposta</label><select id="e-agente"><option selected>Agente publicado no número (padrão)</option><option>Lia — AgendaPlus</option><option>Bot Padrão E2E</option></select></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cartao">
+        <div class="cab"><h2>Mensagem</h2></div>
+        <div class="corpo">
+          <div class="campo"><textarea rows="6" aria-label="Texto da mensagem">{{saudacao}}, {{primeiro_nome|"tudo bem"}}! Passando para avisar que a Clínica Vitalis não abre no domingo, dia 15 de novembro. Voltamos a atender na segunda, dia 16, a partir das 8h. Se precisar remarcar um horário, é só responder por aqui.</textarea></div>
+          <div class="vars">
+            <span><code>{{nome}}</code> — Nome do contato, como está no cadastro</span>
+            <span><code>{{primeiro_nome}}</code> — Só a primeira palavra do nome</span>
+            <span><code>{{saudacao}}</code> — Bom dia / Boa tarde / Boa noite, na hora do envio</span>
+          </div>
+          <p class="nota" style="margin-top:10px">Para não depender do dado, ponha um texto de reserva: {{primeiro_nome|"aluno"}}.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <button class="btn secundario">Cancelar</button>
+        <button class="btn primario">Salvar alterações</button>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

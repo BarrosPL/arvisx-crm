@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Platform Admins</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="180">
+<meta name="rota" content="/admin/platform-admins">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .aviso-faixa { margin-bottom: 24px; }
+  .aviso-faixa p { line-height: 1.55; }
+  .aviso-faixa code { font: 500 12px/1 var(--mono); padding: 1px 5px; border-radius: 5px; background: rgba(46, 124, 214, .14); }
+  .aviso-faixa .runbook { display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; color: inherit; }
+  .tabela .usuario strong { display: block; }
+  .tabela .usuario span { color: var(--apoio); font-size: 12px; }
+  .tabela tr.revogado td { opacity: .6; }
+  .tabela .motivo { font-size: 12px; max-width: 220px; }
+  .tabela .motivo .longo { text-decoration: underline dotted; cursor: help; }
+</style>
+</head>
+<body data-rota="/admin/platform-admins">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin da plataforma</div>
+          <h1>Platform Admins</h1>
+          <p>Administradores com acesso privilegiado à plataforma</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="aviso-faixa info" role="note">
+        <i class="ph ph-info"></i>
+        <div>
+          <strong>Gerenciamento de Platform Admins é restrito ao DBA</strong>
+          <p>Conforme Spec 01 §3.4 T-04: adição, remoção ou alteração de <code>platform_admins</code> é feita exclusivamente via SQL pelo DBA, com nota explicativa em <code>api_audit_log</code>. Esta página é informativa e read-only — nenhum botão de modificação está disponível por design.</p>
+          <a href="#" class="runbook">Ver runbook →</a>
+        </div>
+      </div>
+
+      <div class="cartao">
+        <table class="tabela rolavel">
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>Concedido em</th>
+              <th>Concedido por</th>
+              <th>Scope</th>
+              <th>MFA</th>
+              <th>Status</th>
+              <th>Motivo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="usuario"><strong>ana.souza@clinicavitalis.com.br</strong><span>Ana Souza</span></td>
+              <td class="apoio pequeno">há 3 meses</td>
+              <td class="apoio pequeno">—</td>
+              <td><span class="tag contorno mono">platform</span></td>
+              <td><span class="tag">Não</span></td>
+              <td><span class="tag ok">Ativo</span></td>
+              <td class="motivo">Dono da instalação (bootstrap)</td>
+            </tr>
+            <tr>
+              <td class="usuario"><strong>marcos.lima@clinicavitalis.com.br</strong><span>Marcos Lima</span></td>
+              <td class="apoio pequeno">há cerca de 1 mês</td>
+              <td class="apoio pequeno">ana.souza@clinicavitalis</td>
+              <td><span class="tag contorno mono">platform</span></td>
+              <td><span class="tag navy">Sim</span></td>
+              <td><span class="tag ok">Ativo</span></td>
+              <td class="motivo"><span class="longo" title="Suporte de segundo nível às organizações durante a virada de novembro">Suporte de segundo nível às organizações …</span></td>
+            </tr>
+            <tr class="revogado">
+              <td class="usuario"><strong>renata.borges@clinicavitalis.com.br</strong><span>Renata Borges</span></td>
+              <td class="apoio pequeno">há 2 meses</td>
+              <td class="apoio pequeno">ana.souza@clinicavitalis</td>
+              <td><span class="tag contorno mono">platform</span></td>
+              <td><span class="tag">Não</span></td>
+              <td><span class="tag erro">Revogado</span></td>
+              <td class="motivo">Cobertura de férias</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell-admin.js"></script>
+</body>
+</html>

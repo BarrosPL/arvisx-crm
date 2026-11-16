@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meta Ads</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="670">
+<meta name="rota" content="/app/settings/meta-ads">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  .pilha { display: grid; gap: 20px; }
+  .botoes { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+</style>
+</head>
+<body data-rota="/app/settings">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua empresa</div>
+          <h1>Meta Ads</h1>
+          <p>Conecte um token de acesso para o sistema ler o desempenho das suas campanhas e mostrá-lo em Análise › Meta Ads. É uma conexão só de leitura: nada é criado, pausado ou alterado na sua conta de anúncios.</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <div class="aviso-faixa info"><i class="ph ph-info"></i><div>O token precisa da permissão ads_read. Gere-o no Meta for Developers, na sua conta de aplicativo, e cole abaixo — ele fica guardado criptografado e nunca é mostrado de volta.</div></div>
+
+        <form class="cartao">
+          <div class="corpo form">
+            <div class="campo">
+              <label for="access_token">Token de acesso</label>
+              <input type="password" id="access_token" autocomplete="off" placeholder="Guardado — preencha só para trocar">
+              <span class="ajuda">Já existe um token guardado. Deixe em branco para mantê-lo, ou cole um novo para substituir.</span>
+            </div>
+            <div class="campo">
+              <label for="default_account_id">Conta padrão (opcional)</label>
+              <input type="text" id="default_account_id" class="mono" placeholder="act_123456789012345" value="act_274019663085512">
+              <span class="ajuda">A conta que a tela de Meta Ads abre por padrão. Em branco, ela abre a primeira conta ativa que o token alcançar.</span>
+            </div>
+            <div class="botoes">
+              <button type="submit" class="btn primario">Salvar</button>
+              <button type="button" class="btn secundario">Desconectar</button>
+            </div>
+            <p class="fraco pequeno">Desconectar apaga o token guardado. A tela de Meta Ads volta a pedir uma conexão, e nenhum dado histórico é perdido — nada é armazenado aqui.</p>
+          </div>
+        </form>
+
+        <p class="apoio">Para trocar apenas a conta padrão, deixe o campo do token em branco — o token guardado é mantido.</p>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solicitação LGPD</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="910">
+<meta name="rota" content="/app/lgpd/requests/[id]">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+.titulo-linha { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .titulo-linha h1 { font-family: var(--mono); font-stretch: normal; letter-spacing: 0; }
+  .acoes-linha { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .sla-cab { display: flex; justify-content: space-between; gap: 12px; font: 500 12px/1 var(--mono); color: var(--apoio); margin-bottom: 8px; }
+  .timeline { margin-top: 18px; }
+  .timeline > li:last-child { padding-bottom: 0; }
+  .linha-det { display: flex; justify-content: space-between; gap: 16px; font-size: 13.5px; padding: 5px 0; }
+  .linha-det .r { color: var(--apoio); flex: none; }
+  .linha-det .v { text-align: right; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .linha-det .v.mono { font-size: 12px; }
+  .acao { font-family: var(--mono); font-weight: 600; font-size: 13px; overflow-wrap: anywhere; }
+</style>
+</head>
+<body data-rota="/app/settings">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo media">
+<a href="#" class="volta"><i class="ph ph-caret-left"></i>Solicitações</a>
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Dados e acesso</div>
+          <div class="titulo-linha"><h1>#b19e5f44</h1><span class="tag sinal">Recebido</span><span class="tag contorno">Anonimização cliente</span></div>
+          <p>Recebido em <span class="mono">01/11/2026</span> às <span class="mono">09:42</span> · Vence em <span class="mono">16/11/2026</span></p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="acoes-linha">
+        <button class="btn secundario p"><i class="ph ph-eye"></i>Pré-visualizar dados</button>
+        <button class="btn primario p"><i class="ph ph-check-circle"></i>Aprovar anonimização</button>
+      </div>
+
+      <div class="grade c2">
+        <div class="cartao">
+          <div class="cab"><h2>Linha do tempo SLA</h2></div>
+          <div class="corpo">
+            <div class="sla-cab"><span>D+2 (hoje)</span><span>13d restantes</span></div>
+            <div class="barra ok" role="progressbar" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100"><span style="width:15%"></span></div>
+            <ol class="timeline">
+              <li class="ok"><div class="oque">D+0 — Recebido</div><div class="quando">01 de nov 2026</div></li>
+              <li><div class="oque apoio">D+10 — Processamento</div><div class="quando">11 de nov 2026</div></li>
+              <li><div class="oque apoio">D+15 — Anonimização concluída</div><div class="quando">16 de nov 2026</div></li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="cab"><h2>Detalhes</h2></div>
+          <div class="corpo">
+            <div class="linha-det"><span class="r">ID completo</span><span class="v mono">b19e5f44-7c2a-4e91-a3d6-0f8b5c1e9d27</span></div>
+            <div class="linha-det"><span class="r">Tipo</span><span class="v">Anonimização cliente</span></div>
+            <div class="linha-det"><span class="r">Status</span><span class="v">Recebido</span></div>
+            <div class="linha-det"><span class="r">Origem</span><span class="v">manual</span></div>
+            <div class="linha-det"><span class="r">Escopo</span><span class="v">contact</span></div>
+            <div class="linha-det"><span class="r">Tentativas</span><span class="v mono">0</span></div>
+            <div class="linha-det"><span class="r">Contact ID</span><span class="v mono">c02d77e9-51b4-4f0a-9e63-8a2d4c7b1f05</span></div>
+          </div>
+        </div>
+
+        <div class="cartao" style="grid-column:1/-1">
+          <div class="cab"><h2>Trilha de auditoria (<span class="mono">1</span>)</h2></div>
+          <div class="corpo">
+            <ol class="timeline" style="margin-top:0">
+              <li><div class="acao">lgpd.redact_received</div><div class="quando">01/11/2026 09:42:07 <span class="fraco">por 7a3c91e2…</span></div></li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../shell.js"></script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uso &amp; Custo</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="190">
+<meta name="rota" content="/admin/usage">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+  select.filtro { appearance: auto; padding-right: 8px; }
+  .graficos { margin-bottom: 24px; }
+  .graficos .largo { grid-column: 1 / -1; }
+  .cx { padding: 16px; min-width: 0; }
+  .cx h3 { font-size: 13px; font-weight: 600; color: var(--apoio); margin-bottom: 16px; }
+  .grafico { display: flex; gap: 8px; }
+  .grafico .eixo-y { display: flex; flex-direction: column; justify-content: space-between; height: 180px; text-align: right; font-size: 12px; color: var(--apoio); white-space: nowrap; }
+  .grafico .area { flex: 1; min-width: 0; }
+  .grafico svg { display: block; width: 100%; height: 180px; }
+  .grafico .eixo-x { display: flex; justify-content: space-between; margin-top: 6px; font-size: 12px; color: var(--apoio); }
+  .barra-secao { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .barra-secao h2 { font-size: 13px; font-weight: 600; color: var(--apoio); margin: 0; }
+  .tabela .tenant strong { display: block; margin-bottom: 3px; }
+  .tabela td.custo { font-weight: 600; }
+  .tabela td.custo .sub { font-weight: 400; font-family: var(--sans); }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/admin/usage" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin da plataforma</div>
+          <h1>Uso &amp; Custo</h1>
+          <p>Consumo de mensagens, conversas e AI por tenant</p>
+        </div>
+        <div class="acoes">
+          <select class="filtro" aria-label="Período">
+            <option>Últimos 7 dias</option>
+            <option selected>Últimos 30 dias</option>
+            <option>Últimos 90 dias</option>
+          </select>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="grade c2 graficos">
+        <div class="cartao cx">
+          <h3>Mensagens / dia</h3>
+          <div class="grafico">
+            <div class="eixo-y mono"><span>2.000</span><span>1.500</span><span>1.000</span><span>500</span><span>0</span></div>
+            <div class="area">
+              <svg viewBox="0 0 600 180" preserveAspectRatio="none" role="img" aria-label="Mensagens / dia">
+                <defs><linearGradient id="colorMsg" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stop-color="var(--ouro)" stop-opacity=".25"/><stop offset="95%" stop-color="var(--ouro)" stop-opacity="0"/></linearGradient></defs>
+                <line x1="0" x2="600" y1="0.0" y2="0.0" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="45.0" y2="45.0" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="90.0" y2="90.0" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="135.0" y2="135.0" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="180.0" y2="180.0" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+                <path d="M0.0 125.9 L20.7 53.3 L41.4 40.9 L62.1 47.1 L82.8 33.2 L103.4 44.0 L124.1 99.6 L144.8 129.0 L165.5 56.4 L186.2 36.3 L206.9 30.1 L227.6 40.9 L248.3 37.8 L269.0 95.0 L289.7 124.4 L310.3 48.6 L331.0 31.6 L351.7 25.4 L372.4 34.7 L393.1 40.9 L413.8 90.4 L434.5 121.3 L455.2 44.0 L475.9 28.5 L496.6 33.2 L517.2 27.0 L537.9 36.3 L558.6 87.3 L579.3 118.2 L600.0 40.9 L600 180 L0 180 Z" fill="url(#colorMsg)"/>
+                <path d="M0.0 125.9 L20.7 53.3 L41.4 40.9 L62.1 47.1 L82.8 33.2 L103.4 44.0 L124.1 99.6 L144.8 129.0 L165.5 56.4 L186.2 36.3 L206.9 30.1 L227.6 40.9 L248.3 37.8 L269.0 95.0 L289.7 124.4 L310.3 48.6 L331.0 31.6 L351.7 25.4 L372.4 34.7 L393.1 40.9 L413.8 90.4 L434.5 121.3 L455.2 44.0 L475.9 28.5 L496.6 33.2 L517.2 27.0 L537.9 36.3 L558.6 87.3 L579.3 118.2 L600.0 40.9" fill="none" stroke="var(--ouro)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+              </svg>
+              <div class="eixo-x mono"><span>04/10</span><span>11/10</span><span>18/10</span><span>25/10</span><span>02/11</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="cartao cx">
+          <h3>Custo AI / dia (US$)</h3>
+          <div class="grafico">
+            <div class="eixo-y mono"><span>US$ 8,00</span><span>US$ 6,00</span><span>US$ 4,00</span><span>US$ 2,00</span><span>US$ 0,00</span></div>
+            <div class="area">
+              <svg viewBox="0 0 600 180" preserveAspectRatio="none" role="img" aria-label="Custo AI / dia (US$)">
+                <defs><linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stop-color="var(--ok)" stop-opacity=".25"/><stop offset="95%" stop-color="var(--ok)" stop-opacity="0"/></linearGradient></defs>
+                <line x1="0" x2="600" y1="0.0" y2="0.0" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="45.0" y2="45.0" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="90.0" y2="90.0" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="135.0" y2="135.0" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="180.0" y2="180.0" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+                <path d="M0.0 130.0 L20.7 62.9 L41.4 51.5 L62.1 57.2 L82.8 44.3 L103.4 54.3 L124.1 105.7 L144.8 132.9 L165.5 65.8 L186.2 47.2 L206.9 41.5 L227.6 51.5 L248.3 48.6 L269.0 101.5 L289.7 128.6 L310.3 58.6 L331.0 42.9 L351.7 37.2 L372.4 45.8 L393.1 51.5 L413.8 97.2 L434.5 125.7 L455.2 54.3 L475.9 40.1 L496.6 44.3 L517.2 38.6 L537.9 47.2 L558.6 94.3 L579.3 122.9 L600.0 51.5 L600 180 L0 180 Z" fill="url(#colorCost)"/>
+                <path d="M0.0 130.0 L20.7 62.9 L41.4 51.5 L62.1 57.2 L82.8 44.3 L103.4 54.3 L124.1 105.7 L144.8 132.9 L165.5 65.8 L186.2 47.2 L206.9 41.5 L227.6 51.5 L248.3 48.6 L269.0 101.5 L289.7 128.6 L310.3 58.6 L331.0 42.9 L351.7 37.2 L372.4 45.8 L393.1 51.5 L413.8 97.2 L434.5 125.7 L455.2 54.3 L475.9 40.1 L496.6 44.3 L517.2 38.6 L537.9 47.2 L558.6 94.3 L579.3 122.9 L600.0 51.5" fill="none" stroke="var(--ok)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+              </svg>
+              <div class="eixo-x mono"><span>04/10</span><span>11/10</span><span>18/10</span><span>25/10</span><span>02/11</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="cartao cx largo">
+          <h3>AI Tokens / dia</h3>
+          <div class="grafico">
+            <div class="eixo-y mono"><span>2.0M</span><span>1.5M</span><span>1.0M</span><span>500k</span><span>0</span></div>
+            <div class="area">
+              <svg viewBox="0 0 600 180" preserveAspectRatio="none" role="img" aria-label="AI Tokens / dia">
+                <defs><linearGradient id="colorTokens" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stop-color="#7c3aed" stop-opacity=".25"/><stop offset="95%" stop-color="#7c3aed" stop-opacity="0"/></linearGradient></defs>
+                <line x1="0" x2="600" y1="0.0" y2="0.0" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="45.0" y2="45.0" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="90.0" y2="90.0" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="135.0" y2="135.0" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><line x1="0" x2="600" y1="180.0" y2="180.0" stroke="var(--linha)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+                <path d="M0.0 127.1 L20.7 56.0 L41.4 43.9 L62.1 50.0 L82.8 36.4 L103.4 46.9 L124.1 101.4 L144.8 130.1 L165.5 59.0 L186.2 39.4 L206.9 33.3 L227.6 43.9 L248.3 40.9 L269.0 96.8 L289.7 125.6 L310.3 51.5 L331.0 34.8 L351.7 28.8 L372.4 37.9 L393.1 43.9 L413.8 92.3 L434.5 122.5 L455.2 46.9 L475.9 31.8 L496.6 36.4 L517.2 30.3 L537.9 39.4 L558.6 89.3 L579.3 119.5 L600.0 43.9 L600 180 L0 180 Z" fill="url(#colorTokens)"/>
+                <path d="M0.0 127.1 L20.7 56.0 L41.4 43.9 L62.1 50.0 L82.8 36.4 L103.4 46.9 L124.1 101.4 L144.8 130.1 L165.5 59.0 L186.2 39.4 L206.9 33.3 L227.6 43.9 L248.3 40.9 L269.0 96.8 L289.7 125.6 L310.3 51.5 L331.0 34.8 L351.7 28.8 L372.4 37.9 L393.1 43.9 L413.8 92.3 L434.5 122.5 L455.2 46.9 L475.9 31.8 L496.6 36.4 L517.2 30.3 L537.9 39.4 L558.6 89.3 L579.3 119.5 L600.0 43.9" fill="none" stroke="#7c3aed" stroke-width="2" vector-effect="non-scaling-stroke"/>
+              </svg>
+              <div class="eixo-x mono"><span>04/10</span><span>11/10</span><span>18/10</span><span>25/10</span><span>02/11</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="barra-secao">
+        <h2>Uso por tenant</h2>
+        <button class="btn secundario p">Exportar CSV</button>
+      </div>
+      <div class="cartao">
+        <table class="tabela rolavel">
+          <thead>
+            <tr>
+              <th>Tenant</th>
+              <th>Agente</th>
+              <th class="num">Mensagens</th>
+              <th class="num">Conversas</th>
+              <th class="num">Invoc. AI</th>
+              <th class="num">Tokens</th>
+              <th class="num">Custo AI</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="tenant"><strong>Sorriso &amp; Cia</strong><span class="tag mono">sorriso-cia</span></td>
+              <td>Bot Padrão E2E</td>
+              <td class="num">21.406</td>
+              <td class="num">1.137</td>
+              <td class="num">9.862</td>
+              <td class="num">19.240.775</td>
+              <td class="num custo">US$ 84,12</td>
+            </tr>
+            <tr>
+              <td class="tenant"><strong>Clínica Vitalis</strong><span class="tag mono">clinica-vitalis</span></td>
+              <td>Lia — AgendaPlus</td>
+              <td class="num">18.932</td>
+              <td class="num">842</td>
+              <td class="num">6.417</td>
+              <td class="num">12.584.310</td>
+              <td class="num custo">US$ 41,00<span class="sub">12 chamadas sem preço</span></td>
+            </tr>
+            <tr>
+              <td class="tenant"><strong>Bella Pele</strong><span class="tag mono">bella-pele</span></td>
+              <td>Lia — AgendaPlus</td>
+              <td class="num">3.218</td>
+              <td class="num">164</td>
+              <td class="num">1.093</td>
+              <td class="num">2.016.448</td>
+              <td class="num custo">US$ 7,35</td>
+            </tr>
+            <tr>
+              <td class="tenant"><strong>Odonto Sul</strong><span class="tag mono">odonto-sul</span></td>
+              <td><span class="apoio">Nenhum agente publicado</span></td>
+              <td class="num">0</td>
+              <td class="num">0</td>
+              <td class="num">0</td>
+              <td class="num">0</td>
+              <td class="num custo">US$ 0,00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell-admin.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

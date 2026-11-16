@@ -57,7 +57,7 @@ export function InterfaceEditor({
             if (!items.length) return null;
             return (
               <fieldset key={group.id} className="space-y-2">
-                <legend className="mb-2 text-xs font-medium text-muted-foreground uppercase">
+                <legend className="mb-2 text-xs font-medium text-muted-foreground">
                   {t(group.label)}
                 </legend>
                 {items.map((d) => (

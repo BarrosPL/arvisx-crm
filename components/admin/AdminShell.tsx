@@ -99,13 +99,36 @@ export function AdminShell({
               <AdminSidebar userEmail={userEmail} variant="mobile" modulosLigados={modulosLigados} />
             </SheetContent>
           </Sheet>
-          <div className="flex min-w-0 flex-1 flex-col">
+          {/*
+            Design "Folha": de `md` para cima esta coluna é a FOLHA — uma
+            superfície branca só, recuada 8px, com fio fino e cantos de 14px. O
+            menu fica solto sobre a névoa (`bg-background`) ao lado. As classes
+            `folha`/`folha-topo` moram no fim de `app/globals.css`.
+
+            Duas diferenças para `app/app/_components/AppShell.tsx`, as duas de
+            propósito:
+            - não há `min-h-[calc(100dvh-…-var(--folha-vao))]` aqui: a coluna já
+              se estica pelo `flex-1` da linha, abaixo das tarjas, e o recuo da
+              folha sai dessa altura sozinho. Tela do admin que venha a se medir
+              por `100dvh` desconta `var(--folha-vao,0px)`, como a Inbox do app.
+            - entre `md` e `lg` o menu fixo não está no DOM (vira gaveta), e a
+              folha encostaria na borda esquerda: `md:max-lg:ml-2!` devolve o
+              recuo. O `!` é necessário — `.folha` fica fora de `@layer` e
+              venceria o utilitário comum.
+          */}
+          <div className="folha flex min-w-0 flex-1 flex-col bg-surface md:max-lg:ml-2!">
             {/* Barra do topo do painel. Nasceu só para carregar o hambúrguer
                 abaixo de `lg`, onde a sidebar fixa não está mais no DOM; agora
                 carrega também a BUSCA (⌘K), que é o que o painel não tinha e o
                 app do tenant já tinha. Ela existe nos dois tamanhos: no desktop
-                a busca fica à direita e o hambúrguer some. */}
-            <header className="flex h-14 items-center gap-2 border-b bg-background px-3">
+                a busca fica à direita e o hambúrguer some.
+
+                `folha-topo` dá os cantos de cima da folha. Aqui a barra NÃO é
+                `sticky` (rola com a página, como sempre rolou): por isso
+                `relative` — as máscaras de canto da classe são absolutas — e
+                `top-0!`, que anula o `top` que a classe define para o topo
+                grudado do app e que, em `relative`, empurraria a barra 8px. */}
+            <header className="folha-topo relative top-0! flex h-14 items-center gap-2 border-b bg-surface px-3 md:px-5">
               <Button
                 type="button"
                 variant="ghost"

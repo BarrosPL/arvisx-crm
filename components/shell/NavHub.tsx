@@ -102,7 +102,7 @@ export function NavHub({
         >
           <h2
             id={`hub-${group}-${slug(section)}`}
-            className="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+            className="text-xs font-medium text-muted-foreground"
           >
             {traduzir(section, locale)}
           </h2>
@@ -111,10 +111,10 @@ export function NavHub({
               const Icon = item.icon;
               return (
                 <Link key={item.href} href={item.href} className="block">
-                  <Card className="flex h-full gap-3.5 p-4 transition-[border-color,transform,box-shadow] hover:-translate-y-px hover:border-cta hover:shadow-lg">
+                  <Card className="flex h-full flex-col gap-3 p-4 transition-[border-color,transform,box-shadow] hover:-translate-y-px hover:border-border-strong hover:shadow-lg">
                     <span
                       aria-hidden
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cta/40 bg-cta-leve text-cta-forte"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-elevated text-text"
                     >
                       <Icon size={19} weight="regular" />
                     </span>
@@ -138,7 +138,7 @@ export function NavHub({
             <div>
               <h2
                 id="hub-crm-orientacoes-instaladas"
-                className="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+                className="text-xs font-medium text-muted-foreground"
               >
                 {traduzir("Orientações instaladas", locale)}
               </h2>
@@ -202,7 +202,7 @@ export function NavHub({
                           className="mt-0.5 shrink-0 text-accent"
                         />
                         <div className="min-w-0">
-                          <p className="truncate text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                          <p className="truncate text-[11px] font-medium text-muted-foreground">
                             {localize(guide.manifest.display.title, locale).text}
                           </p>
                           <h3 className="mt-0.5 text-sm font-semibold">

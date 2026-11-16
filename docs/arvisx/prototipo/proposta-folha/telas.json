@@ -1,0 +1,1250 @@
+[
+  {
+    "id": "login-a-conversa",
+    "titulo": "Entrar",
+    "grupo": "Entrada",
+    "ordem": 14,
+    "rota": "/login",
+    "principal": -1
+  },
+  {
+    "id": "onboarding-welcome",
+    "titulo": "Seu negócio",
+    "grupo": "Entrada",
+    "ordem": 20,
+    "rota": "/onboarding/welcome",
+    "principal": -1
+  },
+  {
+    "id": "login-continuar",
+    "titulo": "Confirmar acesso",
+    "grupo": "Entrada",
+    "ordem": 310,
+    "rota": "/login/continuar",
+    "principal": -1
+  },
+  {
+    "id": "login-esqueci",
+    "titulo": "Recuperar senha",
+    "grupo": "Entrada",
+    "ordem": 320,
+    "rota": "/login/forgot",
+    "principal": -1
+  },
+  {
+    "id": "login-mfa",
+    "titulo": "Verificação em duas etapas",
+    "grupo": "Entrada",
+    "ordem": 330,
+    "rota": "/login/mfa",
+    "principal": -1
+  },
+  {
+    "id": "login-recuperacao",
+    "titulo": "Recuperar acesso",
+    "grupo": "Entrada",
+    "ordem": 340,
+    "rota": "/login/recovery",
+    "principal": -1
+  },
+  {
+    "id": "login-nova-senha",
+    "titulo": "Nova senha",
+    "grupo": "Entrada",
+    "ordem": 350,
+    "rota": "/login/reset",
+    "principal": -1
+  },
+  {
+    "id": "cadastro-planos",
+    "titulo": "Criar conta · plano",
+    "grupo": "Entrada",
+    "ordem": 360,
+    "rota": "/signup",
+    "principal": -1
+  },
+  {
+    "id": "cadastro-formulario",
+    "titulo": "Criar conta · seus dados",
+    "grupo": "Entrada",
+    "ordem": 370,
+    "rota": "/signup",
+    "principal": -1
+  },
+  {
+    "id": "convite-aceitar",
+    "titulo": "Você foi convidado",
+    "grupo": "Entrada",
+    "ordem": 380,
+    "rota": "/team/accept-invite/[token]",
+    "principal": -1
+  },
+  {
+    "id": "comecar",
+    "titulo": "Configure sua organização",
+    "grupo": "Entrada",
+    "ordem": 390,
+    "rota": "/get-started",
+    "principal": -1
+  },
+  {
+    "id": "conta-suspensa",
+    "titulo": "Conta suspensa",
+    "grupo": "Entrada",
+    "ordem": 400,
+    "rota": "/account-suspended",
+    "principal": -1
+  },
+  {
+    "id": "acesso-revogado",
+    "titulo": "Acesso revogado",
+    "grupo": "Entrada",
+    "ordem": 410,
+    "rota": "/acesso-revogado",
+    "principal": -1
+  },
+  {
+    "id": "suporte-encerrado",
+    "titulo": "Encerre o acompanhamento para continuar",
+    "grupo": "Entrada",
+    "ordem": 420,
+    "rota": "/support-ended",
+    "principal": -1
+  },
+  {
+    "id": "fora-do-plano",
+    "titulo": "Isso não está no seu plano",
+    "grupo": "Entrada",
+    "ordem": 430,
+    "rota": "/app/fora-do-plano",
+    "principal": -1
+  },
+  {
+    "id": "erro-403",
+    "titulo": "403 — Sem permissão",
+    "grupo": "Entrada",
+    "ordem": 440,
+    "rota": "/403",
+    "principal": -1
+  },
+  {
+    "id": "erro-500",
+    "titulo": "500 — Erro interno",
+    "grupo": "Entrada",
+    "ordem": 450,
+    "rota": "/500",
+    "principal": -1
+  },
+  {
+    "id": "onboarding-guiado",
+    "titulo": "Guia de montagem",
+    "grupo": "Entrada",
+    "ordem": 450,
+    "rota": "/app/connections",
+    "principal": -1
+  },
+  {
+    "id": "erro-503",
+    "titulo": "503 — Em manutenção",
+    "grupo": "Entrada",
+    "ordem": 460,
+    "rota": "/503",
+    "principal": -1
+  },
+  {
+    "id": "legal-privacidade",
+    "titulo": "Política de Privacidade",
+    "grupo": "Entrada",
+    "ordem": 470,
+    "rota": "/legal/privacy",
+    "principal": -1
+  },
+  {
+    "id": "legal-termos",
+    "titulo": "Termos de Uso",
+    "grupo": "Entrada",
+    "ordem": 480,
+    "rota": "/legal/terms",
+    "principal": -1
+  },
+  {
+    "id": "vitrine-agenda",
+    "titulo": "Kit visual da Agenda",
+    "grupo": "Entrada",
+    "ordem": 490,
+    "rota": "/vitrine-agenda",
+    "principal": -1
+  },
+  {
+    "id": "inbox",
+    "titulo": "Inbox",
+    "grupo": "Atendimento",
+    "ordem": 10,
+    "rota": "/app/inbox",
+    "principal": 0
+  },
+  {
+    "id": "radar",
+    "titulo": "Radar",
+    "grupo": "Atendimento",
+    "ordem": 20,
+    "rota": "/app/radar",
+    "principal": -1
+  },
+  {
+    "id": "agenda",
+    "titulo": "Agenda",
+    "grupo": "Atendimento",
+    "ordem": 30,
+    "rota": "/app/agenda",
+    "principal": 4
+  },
+  {
+    "id": "respostas-rapidas",
+    "titulo": "Respostas rápidas",
+    "grupo": "Atendimento",
+    "ordem": 40,
+    "rota": "/app/templates",
+    "principal": -1
+  },
+  {
+    "id": "agenda-avisos",
+    "titulo": "Aviso de agendamento",
+    "grupo": "Atendimento",
+    "ordem": 810,
+    "rota": "/app/agenda/avisos",
+    "principal": -1
+  },
+  {
+    "id": "crm-hub",
+    "titulo": "CRM (ver tudo)",
+    "grupo": "CRM",
+    "ordem": 5,
+    "rota": "/app/crm",
+    "principal": 12
+  },
+  {
+    "id": "funis",
+    "titulo": "Funis",
+    "grupo": "CRM",
+    "ordem": 10,
+    "rota": "/app/kanban",
+    "principal": -1
+  },
+  {
+    "id": "funil-quadro",
+    "titulo": "Quadro do funil",
+    "grupo": "CRM",
+    "ordem": 20,
+    "rota": "/app/kanban",
+    "principal": 1
+  },
+  {
+    "id": "negocio-dossie",
+    "titulo": "Ficha do negócio (dossiê)",
+    "grupo": "CRM",
+    "ordem": 21,
+    "rota": "/app/kanban",
+    "principal": -1
+  },
+  {
+    "id": "contatos",
+    "titulo": "Contatos",
+    "grupo": "CRM",
+    "ordem": 40,
+    "rota": "/app/contacts",
+    "principal": 2
+  },
+  {
+    "id": "contato-ficha",
+    "titulo": "Ficha do contato",
+    "grupo": "CRM",
+    "ordem": 41,
+    "rota": "/app/contacts",
+    "principal": 3
+  },
+  {
+    "id": "tarefas",
+    "titulo": "Tarefas",
+    "grupo": "CRM",
+    "ordem": 50,
+    "rota": "/app/tasks",
+    "principal": 5
+  },
+  {
+    "id": "planos-de-tarefa",
+    "titulo": "Planos de tarefa",
+    "grupo": "CRM",
+    "ordem": 51,
+    "rota": "/app/tasks/planos",
+    "principal": -1
+  },
+  {
+    "id": "campanhas",
+    "titulo": "Campanhas",
+    "grupo": "CRM",
+    "ordem": 60,
+    "rota": "/app/campaigns",
+    "principal": -1
+  },
+  {
+    "id": "campanha-nova",
+    "titulo": "Nova campanha",
+    "grupo": "CRM",
+    "ordem": 61,
+    "rota": "/app/campaigns",
+    "principal": -1
+  },
+  {
+    "id": "prospeccao",
+    "titulo": "Prospecção",
+    "grupo": "CRM",
+    "ordem": 70,
+    "rota": "/app/prospecting",
+    "principal": -1
+  },
+  {
+    "id": "produtos",
+    "titulo": "Produtos",
+    "grupo": "CRM",
+    "ordem": 80,
+    "rota": "/app/products",
+    "principal": -1
+  },
+  {
+    "id": "propostas",
+    "titulo": "Propostas",
+    "grupo": "CRM",
+    "ordem": 90,
+    "rota": "/app/proposals",
+    "principal": -1
+  },
+  {
+    "id": "proposta-detalhe",
+    "titulo": "Editor de proposta",
+    "grupo": "CRM",
+    "ordem": 91,
+    "rota": "/app/proposals",
+    "principal": -1
+  },
+  {
+    "id": "empresas",
+    "titulo": "Empresas",
+    "grupo": "CRM",
+    "ordem": 100,
+    "rota": "/app/companies",
+    "principal": -1
+  },
+  {
+    "id": "pessoas",
+    "titulo": "Pessoas",
+    "grupo": "CRM",
+    "ordem": 101,
+    "rota": "/app/people",
+    "principal": -1
+  },
+  {
+    "id": "comandas",
+    "titulo": "Comandas",
+    "grupo": "CRM",
+    "ordem": 110,
+    "rota": "/app/comandas",
+    "principal": -1
+  },
+  {
+    "id": "importacoes",
+    "titulo": "Importações",
+    "grupo": "CRM",
+    "ordem": 111,
+    "rota": "/app/imports",
+    "principal": -1
+  },
+  {
+    "id": "chamadas",
+    "titulo": "Chamadas",
+    "grupo": "CRM",
+    "ordem": 910,
+    "rota": "/app/calls",
+    "principal": -1
+  },
+  {
+    "id": "cold-call",
+    "titulo": "Cold Call",
+    "grupo": "CRM",
+    "ordem": 920,
+    "rota": "/app/cold-call",
+    "principal": -1
+  },
+  {
+    "id": "campanha-detalhe",
+    "titulo": "Campanha",
+    "grupo": "CRM",
+    "ordem": 930,
+    "rota": "/app/campaigns/[id]",
+    "principal": -1
+  },
+  {
+    "id": "campanha-editar",
+    "titulo": "Editar campanha",
+    "grupo": "CRM",
+    "ordem": 940,
+    "rota": "/app/campaigns/[id]/edit",
+    "principal": -1
+  },
+  {
+    "id": "campanhas-configuracao",
+    "titulo": "Configuração de campanhas",
+    "grupo": "CRM",
+    "ordem": 950,
+    "rota": "/app/campaigns/settings",
+    "principal": -1
+  },
+  {
+    "id": "empresa-ficha",
+    "titulo": "Ficha da empresa",
+    "grupo": "CRM",
+    "ordem": 960,
+    "rota": "/app/companies/[id]",
+    "principal": -1
+  },
+  {
+    "id": "pessoa-ficha",
+    "titulo": "Ficha da pessoa",
+    "grupo": "CRM",
+    "ordem": 970,
+    "rota": "/app/people/[id]",
+    "principal": -1
+  },
+  {
+    "id": "importacao-detalhe",
+    "titulo": "Detalhe da importação",
+    "grupo": "CRM",
+    "ordem": 980,
+    "rota": "/app/imports/[id]",
+    "principal": -1
+  },
+  {
+    "id": "proposta-nova",
+    "titulo": "Nova Proposta",
+    "grupo": "CRM",
+    "ordem": 990,
+    "rota": "/app/proposals/novo",
+    "principal": -1
+  },
+  {
+    "id": "ia-hub",
+    "titulo": "Agente de IA (ver tudo)",
+    "grupo": "Agente de IA",
+    "ordem": 5,
+    "rota": "/app/ai",
+    "principal": -1
+  },
+  {
+    "id": "agentes",
+    "titulo": "Agentes de IA",
+    "grupo": "Agente de IA",
+    "ordem": 10,
+    "rota": "/app/ai/agents",
+    "principal": 6
+  },
+  {
+    "id": "agente-editor",
+    "titulo": "Editor do agente",
+    "grupo": "Agente de IA",
+    "ordem": 11,
+    "rota": "/app/ai/agents",
+    "principal": 7
+  },
+  {
+    "id": "followups",
+    "titulo": "Follow-ups",
+    "grupo": "Agente de IA",
+    "ordem": 20,
+    "rota": "/app/ai/followups",
+    "principal": 8
+  },
+  {
+    "id": "followup-editor",
+    "titulo": "Construtor de follow-up",
+    "grupo": "Agente de IA",
+    "ordem": 21,
+    "rota": "/app/ai/followups",
+    "principal": -1
+  },
+  {
+    "id": "fluxos-de-atendimento",
+    "titulo": "Fluxos de atendimento",
+    "grupo": "Agente de IA",
+    "ordem": 30,
+    "rota": "/app/ai/atendimento",
+    "principal": -1
+  },
+  {
+    "id": "roteadores",
+    "titulo": "Roteadores",
+    "grupo": "Agente de IA",
+    "ordem": 40,
+    "rota": "/app/ai/routers",
+    "principal": -1
+  },
+  {
+    "id": "credenciais",
+    "titulo": "Chaves de acesso à IA",
+    "grupo": "Agente de IA",
+    "ordem": 50,
+    "rota": "/app/ai/credentials",
+    "principal": -1
+  },
+  {
+    "id": "provedores",
+    "titulo": "Provedores de IA",
+    "grupo": "Agente de IA",
+    "ordem": 51,
+    "rota": "/app/ai/providers",
+    "principal": -1
+  },
+  {
+    "id": "conhecimento",
+    "titulo": "O que o agente sabe",
+    "grupo": "Agente de IA",
+    "ordem": 60,
+    "rota": "/app/ai/knowledge/sources",
+    "principal": -1
+  },
+  {
+    "id": "memoria",
+    "titulo": "Memória da IA",
+    "grupo": "Agente de IA",
+    "ordem": 61,
+    "rota": "/app/ai/memory",
+    "principal": -1
+  },
+  {
+    "id": "skills",
+    "titulo": "Skills da IA",
+    "grupo": "Agente de IA",
+    "ordem": 62,
+    "rota": "/app/ai/skills",
+    "principal": -1
+  },
+  {
+    "id": "casos",
+    "titulo": "Casos",
+    "grupo": "Agente de IA",
+    "ordem": 70,
+    "rota": "/app/ai/cases",
+    "principal": 9
+  },
+  {
+    "id": "alertas",
+    "titulo": "Central de avisos",
+    "grupo": "Agente de IA",
+    "ordem": 71,
+    "rota": "/app/ai/inbox",
+    "principal": -1
+  },
+  {
+    "id": "ia-propostas",
+    "titulo": "Propostas (IA)",
+    "grupo": "Agente de IA",
+    "ordem": 72,
+    "rota": "/app/ai/proposals",
+    "principal": -1
+  },
+  {
+    "id": "execucoes",
+    "titulo": "Execuções de IA",
+    "grupo": "Agente de IA",
+    "ordem": 73,
+    "rota": "/app/ai/runs",
+    "principal": -1
+  },
+  {
+    "id": "uso-e-orcamento",
+    "titulo": "Uso de IA",
+    "grupo": "Agente de IA",
+    "ordem": 74,
+    "rota": "/app/ai/usage",
+    "principal": -1
+  },
+  {
+    "id": "agente-novo",
+    "titulo": "Novo agente",
+    "grupo": "Agente de IA",
+    "ordem": 810,
+    "rota": "/app/ai/agents/new",
+    "principal": -1
+  },
+  {
+    "id": "fluxo-de-atendimento-editor",
+    "titulo": "Editor do fluxo de atendimento",
+    "grupo": "Agente de IA",
+    "ordem": 820,
+    "rota": "/app/ai/atendimento/[id]",
+    "principal": -1
+  },
+  {
+    "id": "casos-avisos",
+    "titulo": "Aviso no WhatsApp",
+    "grupo": "Agente de IA",
+    "ordem": 830,
+    "rota": "/app/ai/cases/avisos",
+    "principal": -1
+  },
+  {
+    "id": "followup-inscricao",
+    "titulo": "Dossiê do follow-up",
+    "grupo": "Agente de IA",
+    "ordem": 840,
+    "rota": "/app/ai/followups/enrollments/[id]",
+    "principal": -1
+  },
+  {
+    "id": "conhecimento-material",
+    "titulo": "Material do acervo",
+    "grupo": "Agente de IA",
+    "ordem": 850,
+    "rota": "/app/ai/knowledge/sources/[id]",
+    "principal": -1
+  },
+  {
+    "id": "roteador-editor",
+    "titulo": "Editor do roteador",
+    "grupo": "Agente de IA",
+    "ordem": 860,
+    "rota": "/app/ai/routers/[id]",
+    "principal": -1
+  },
+  {
+    "id": "conexoes",
+    "titulo": "Conexões",
+    "grupo": "Canais",
+    "ordem": 10,
+    "rota": "/app/connections",
+    "principal": 10
+  },
+  {
+    "id": "nuvemshop",
+    "titulo": "Nuvemshop",
+    "grupo": "Canais",
+    "ordem": 20,
+    "rota": "/app/integrations/nuvemshop",
+    "principal": -1
+  },
+  {
+    "id": "webhooks",
+    "titulo": "Webhooks",
+    "grupo": "Canais",
+    "ordem": 30,
+    "rota": "/app/webhooks",
+    "principal": -1
+  },
+  {
+    "id": "webhook-automacao",
+    "titulo": "Designer de automação",
+    "grupo": "Canais",
+    "ordem": 810,
+    "rota": "/app/webhooks/automacoes/[id]",
+    "principal": -1
+  },
+  {
+    "id": "analise-hub",
+    "titulo": "Análise (ver tudo)",
+    "grupo": "Análise",
+    "ordem": 5,
+    "rota": "/app/analise",
+    "principal": -1
+  },
+  {
+    "id": "desempenho",
+    "titulo": "Desempenho",
+    "grupo": "Análise",
+    "ordem": 10,
+    "rota": "/app/metrics",
+    "principal": 11
+  },
+  {
+    "id": "atividades",
+    "titulo": "Atividades",
+    "grupo": "Análise",
+    "ordem": 20,
+    "rota": "/app/activities",
+    "principal": -1
+  },
+  {
+    "id": "meta-ads",
+    "titulo": "Meta Ads",
+    "grupo": "Análise",
+    "ordem": 30,
+    "rota": "/app/ads/meta",
+    "principal": -1
+  },
+  {
+    "id": "faturamento",
+    "titulo": "Faturamento",
+    "grupo": "Análise",
+    "ordem": 40,
+    "rota": "/app/faturamento",
+    "principal": -1
+  },
+  {
+    "id": "honorarios",
+    "titulo": "Honorários",
+    "grupo": "Análise",
+    "ordem": 50,
+    "rota": "/app/honorarios",
+    "principal": -1
+  },
+  {
+    "id": "evolucao-da-ia",
+    "titulo": "Evolução da IA",
+    "grupo": "Análise",
+    "ordem": 60,
+    "rota": "/app/ai/evolution",
+    "principal": -1
+  },
+  {
+    "id": "audit-log",
+    "titulo": "Audit Log",
+    "grupo": "Análise",
+    "ordem": 70,
+    "rota": "/app/audit",
+    "principal": -1
+  },
+  {
+    "id": "configuracoes",
+    "titulo": "Configurações",
+    "grupo": "Organização",
+    "ordem": 5,
+    "rota": "/app/settings",
+    "principal": 13
+  },
+  {
+    "id": "perfil",
+    "titulo": "Perfil",
+    "grupo": "Organização",
+    "ordem": 10,
+    "rota": "/app/settings/profile",
+    "principal": -1
+  },
+  {
+    "id": "seguranca",
+    "titulo": "Segurança",
+    "grupo": "Organização",
+    "ordem": 11,
+    "rota": "/app/settings/security",
+    "principal": -1
+  },
+  {
+    "id": "notificacoes",
+    "titulo": "Notificações",
+    "grupo": "Organização",
+    "ordem": 12,
+    "rota": "/app/settings/notifications",
+    "principal": -1
+  },
+  {
+    "id": "equipe",
+    "titulo": "Equipe",
+    "grupo": "Organização",
+    "ordem": 20,
+    "rota": "/app/team",
+    "principal": -1
+  },
+  {
+    "id": "equipe-convite",
+    "titulo": "Convidar membros",
+    "grupo": "Organização",
+    "ordem": 21,
+    "rota": "/app/team",
+    "principal": -1
+  },
+  {
+    "id": "organizacao",
+    "titulo": "Organização",
+    "grupo": "Organização",
+    "ordem": 30,
+    "rota": "/app/settings/tenant",
+    "principal": -1
+  },
+  {
+    "id": "marca",
+    "titulo": "Marca",
+    "grupo": "Organização",
+    "ordem": 31,
+    "rota": "/app/settings/marca",
+    "principal": -1
+  },
+  {
+    "id": "tags",
+    "titulo": "Tags",
+    "grupo": "Organização",
+    "ordem": 32,
+    "rota": "/app/settings/tags",
+    "principal": -1
+  },
+  {
+    "id": "plano-e-cobranca",
+    "titulo": "Plano e cobrança",
+    "grupo": "Organização",
+    "ordem": 33,
+    "rota": "/app/settings/billing",
+    "principal": 14
+  },
+  {
+    "id": "recursos-opcionais",
+    "titulo": "Recursos opcionais",
+    "grupo": "Organização",
+    "ordem": 34,
+    "rota": "/app/settings/recursos",
+    "principal": -1
+  },
+  {
+    "id": "lgpd",
+    "titulo": "Solicitações LGPD",
+    "grupo": "Organização",
+    "ordem": 40,
+    "rota": "/app/lgpd/requests",
+    "principal": -1
+  },
+  {
+    "id": "api-tokens",
+    "titulo": "API Tokens",
+    "grupo": "Organização",
+    "ordem": 41,
+    "rota": "/app/settings/api-tokens",
+    "principal": -1
+  },
+  {
+    "id": "extensoes",
+    "titulo": "Extensões",
+    "grupo": "Organização",
+    "ordem": 50,
+    "rota": "/app/extensions",
+    "principal": -1
+  },
+  {
+    "id": "ajuda",
+    "titulo": "Ajuda",
+    "grupo": "Organização",
+    "ordem": 510,
+    "rota": "/app/ajuda",
+    "principal": -1
+  },
+  {
+    "id": "guia-de-uso",
+    "titulo": "Guia de uso",
+    "grupo": "Organização",
+    "ordem": 520,
+    "rota": "/app/ajuda/treinamento",
+    "principal": -1
+  },
+  {
+    "id": "guia-de-uso-modulo",
+    "titulo": "Guia de uso — Inbox",
+    "grupo": "Organização",
+    "ordem": 530,
+    "rota": "/app/ajuda/treinamento/inbox",
+    "principal": -1
+  },
+  {
+    "id": "guia-de-uso-historia",
+    "titulo": "Guia de uso — Clínicas",
+    "grupo": "Organização",
+    "ordem": 540,
+    "rota": "/app/ajuda/treinamento/historias/clinicas",
+    "principal": -1
+  },
+  {
+    "id": "config-aplicativo",
+    "titulo": "App no celular",
+    "grupo": "Organização",
+    "ordem": 610,
+    "rota": "/app/settings/aplicativo",
+    "principal": -1
+  },
+  {
+    "id": "config-atendimento",
+    "titulo": "Distribuição de atendimento",
+    "grupo": "Organização",
+    "ordem": 620,
+    "rota": "/app/settings/atendimento",
+    "principal": -1
+  },
+  {
+    "id": "config-atualizacao",
+    "titulo": "Atualização do sistema",
+    "grupo": "Organização",
+    "ordem": 630,
+    "rota": "/app/settings/atualizacao",
+    "principal": -1
+  },
+  {
+    "id": "config-automacoes",
+    "titulo": "Automações",
+    "grupo": "Organização",
+    "ordem": 640,
+    "rota": "/app/settings/automacoes",
+    "principal": -1
+  },
+  {
+    "id": "config-conversoes",
+    "titulo": "Conversões",
+    "grupo": "Organização",
+    "ordem": 660,
+    "rota": "/app/settings/conversoes",
+    "principal": -1
+  },
+  {
+    "id": "config-meta-ads",
+    "titulo": "Meta Ads",
+    "grupo": "Organização",
+    "ordem": 670,
+    "rota": "/app/settings/meta-ads",
+    "principal": -1
+  },
+  {
+    "id": "config-metas",
+    "titulo": "Meta de vendas",
+    "grupo": "Organização",
+    "ordem": 680,
+    "rota": "/app/settings/metas",
+    "principal": -1
+  },
+  {
+    "id": "config-servidor-mcp-externo",
+    "titulo": "Servidor MCP externo",
+    "grupo": "Organização",
+    "ordem": 690,
+    "rota": "/app/settings/servidor-mcp-externo",
+    "principal": -1
+  },
+  {
+    "id": "config-agendamentos",
+    "titulo": "Agendamentos",
+    "grupo": "Organização",
+    "ordem": 720,
+    "rota": "/app/settings/tenant/agenda",
+    "principal": -1
+  },
+  {
+    "id": "config-financeiro",
+    "titulo": "Financeiro",
+    "grupo": "Organização",
+    "ordem": 730,
+    "rota": "/app/settings/tenant/financeiro",
+    "principal": -1
+  },
+  {
+    "id": "config-etapas-do-funil",
+    "titulo": "Etapas do funil",
+    "grupo": "Organização",
+    "ordem": 740,
+    "rota": "/app/settings/tenant/pipelines",
+    "principal": -1
+  },
+  {
+    "id": "config-propostas",
+    "titulo": "Propostas",
+    "grupo": "Organização",
+    "ordem": 750,
+    "rota": "/app/settings/tenant/proposals",
+    "principal": -1
+  },
+  {
+    "id": "config-modelos-de-proposta",
+    "titulo": "Modelos de proposta",
+    "grupo": "Organização",
+    "ordem": 760,
+    "rota": "/app/settings/tenant/proposals/modelos",
+    "principal": -1
+  },
+  {
+    "id": "config-modelo-de-proposta-editor",
+    "titulo": "Modelo de proposta",
+    "grupo": "Organização",
+    "ordem": 770,
+    "rota": "/app/settings/tenant/proposals/modelos/[slug]",
+    "principal": -1
+  },
+  {
+    "id": "config-trunk-sip",
+    "titulo": "Trunk SIP",
+    "grupo": "Organização",
+    "ordem": 790,
+    "rota": "/app/settings/voip-trunk",
+    "principal": -1
+  },
+  {
+    "id": "dados-externos",
+    "titulo": "Dados externos",
+    "grupo": "Organização",
+    "ordem": 810,
+    "rota": "/app/integracao-dados",
+    "principal": -1
+  },
+  {
+    "id": "dados-externos-detalhe",
+    "titulo": "Dados externos — conexão",
+    "grupo": "Organização",
+    "ordem": 820,
+    "rota": "/app/integracao-dados/[id]",
+    "principal": -1
+  },
+  {
+    "id": "extensao-detalhe",
+    "titulo": "Guia da extensão",
+    "grupo": "Organização",
+    "ordem": 830,
+    "rota": "/app/extensions/[id]",
+    "principal": -1
+  },
+  {
+    "id": "lgpd-solicitacao",
+    "titulo": "Solicitação LGPD",
+    "grupo": "Organização",
+    "ordem": 910,
+    "rota": "/app/lgpd/requests/[id]",
+    "principal": -1
+  },
+  {
+    "id": "admin-dashboard",
+    "titulo": "Dashboard",
+    "grupo": "Admin da plataforma",
+    "ordem": 10,
+    "rota": "/admin/dashboard",
+    "principal": -1
+  },
+  {
+    "id": "admin-inbox",
+    "titulo": "Inbox",
+    "grupo": "Admin da plataforma",
+    "ordem": 20,
+    "rota": "/admin/inbox",
+    "principal": -1
+  },
+  {
+    "id": "admin-inbox-conversa",
+    "titulo": "Inbox · conversa",
+    "grupo": "Admin da plataforma",
+    "ordem": 30,
+    "rota": "/admin/inbox/[conversationId]",
+    "principal": -1
+  },
+  {
+    "id": "admin-incidents",
+    "titulo": "Incidentes",
+    "grupo": "Admin da plataforma",
+    "ordem": 40,
+    "rota": "/admin/incidents",
+    "principal": -1
+  },
+  {
+    "id": "admin-incident-detalhe",
+    "titulo": "Detalhe do Incidente",
+    "grupo": "Admin da plataforma",
+    "ordem": 50,
+    "rota": "/admin/incidents/[id]",
+    "principal": -1
+  },
+  {
+    "id": "admin-audit",
+    "titulo": "Audit Log",
+    "grupo": "Admin da plataforma",
+    "ordem": 60,
+    "rota": "/admin/audit",
+    "principal": -1
+  },
+  {
+    "id": "admin-audit-entrada",
+    "titulo": "Audit Entry",
+    "grupo": "Admin da plataforma",
+    "ordem": 70,
+    "rota": "/admin/audit/[entryId]",
+    "principal": -1
+  },
+  {
+    "id": "admin-lgpd",
+    "titulo": "LGPD",
+    "grupo": "Admin da plataforma",
+    "ordem": 80,
+    "rota": "/admin/lgpd",
+    "principal": -1
+  },
+  {
+    "id": "admin-lgpd-solicitacao",
+    "titulo": "Solicitação LGPD",
+    "grupo": "Admin da plataforma",
+    "ordem": 90,
+    "rota": "/admin/lgpd/requests/[id]",
+    "principal": -1
+  },
+  {
+    "id": "admin-forbidden",
+    "titulo": "Acesso negado",
+    "grupo": "Admin da plataforma",
+    "ordem": 100,
+    "rota": "/admin/forbidden",
+    "principal": -1
+  },
+  {
+    "id": "admin-tenants",
+    "titulo": "Tenants",
+    "grupo": "Admin da plataforma",
+    "ordem": 110,
+    "rota": "/admin/tenants",
+    "principal": -1
+  },
+  {
+    "id": "admin-tenant-novo",
+    "titulo": "Nova organização",
+    "grupo": "Admin da plataforma",
+    "ordem": 120,
+    "rota": "/admin/tenants/new",
+    "principal": -1
+  },
+  {
+    "id": "admin-tenant-detalhe",
+    "titulo": "Clínica Vitalis",
+    "grupo": "Admin da plataforma",
+    "ordem": 130,
+    "rota": "/admin/tenants/[id]",
+    "principal": -1
+  },
+  {
+    "id": "admin-tenant-agente",
+    "titulo": "Clínica Vitalis · Agente",
+    "grupo": "Admin da plataforma",
+    "ordem": 140,
+    "rota": "/admin/tenants/[id]/agent",
+    "principal": -1
+  },
+  {
+    "id": "admin-tenant-saude",
+    "titulo": "Clínica Vitalis · Saúde",
+    "grupo": "Admin da plataforma",
+    "ordem": 150,
+    "rota": "/admin/tenants/[id]/health",
+    "principal": -1
+  },
+  {
+    "id": "admin-users",
+    "titulo": "Usuários",
+    "grupo": "Admin da plataforma",
+    "ordem": 160,
+    "rota": "/admin/users",
+    "principal": -1
+  },
+  {
+    "id": "admin-user-detalhe",
+    "titulo": "Ana Souza",
+    "grupo": "Admin da plataforma",
+    "ordem": 170,
+    "rota": "/admin/users/[id]",
+    "principal": -1
+  },
+  {
+    "id": "admin-platform-admins",
+    "titulo": "Platform Admins",
+    "grupo": "Admin da plataforma",
+    "ordem": 180,
+    "rota": "/admin/platform-admins",
+    "principal": -1
+  },
+  {
+    "id": "admin-usage",
+    "titulo": "Uso &amp; Custo",
+    "grupo": "Admin da plataforma",
+    "ordem": 190,
+    "rota": "/admin/usage",
+    "principal": -1
+  },
+  {
+    "id": "admin-google",
+    "titulo": "Google Agenda",
+    "grupo": "Admin da plataforma",
+    "ordem": 210,
+    "rota": "/admin/google",
+    "principal": -1
+  },
+  {
+    "id": "admin-meta",
+    "titulo": "API Oficial (Meta)",
+    "grupo": "Admin da plataforma",
+    "ordem": 220,
+    "rota": "/admin/meta",
+    "principal": -1
+  },
+  {
+    "id": "admin-email",
+    "titulo": "E-mail",
+    "grupo": "Admin da plataforma",
+    "ordem": 230,
+    "rota": "/admin/email",
+    "principal": -1
+  },
+  {
+    "id": "admin-destinos-internos",
+    "titulo": "Destinos internos",
+    "grupo": "Admin da plataforma",
+    "ordem": 240,
+    "rota": "/admin/destinos-internos",
+    "principal": -1
+  },
+  {
+    "id": "admin-marca",
+    "titulo": "Marca",
+    "grupo": "Admin da plataforma",
+    "ordem": 250,
+    "rota": "/admin/marca",
+    "principal": -1
+  },
+  {
+    "id": "admin-cadastro",
+    "titulo": "Cadastro",
+    "grupo": "Admin da plataforma",
+    "ordem": 260,
+    "rota": "/admin/cadastro",
+    "principal": -1
+  },
+  {
+    "id": "admin-configuracao",
+    "titulo": "Credenciais",
+    "grupo": "Admin da plataforma",
+    "ordem": 270,
+    "rota": "/admin/configuracao",
+    "principal": -1
+  },
+  {
+    "id": "admin-sistema",
+    "titulo": "Recursos opcionais",
+    "grupo": "Admin da plataforma",
+    "ordem": 280,
+    "rota": "/admin/sistema",
+    "principal": -1
+  },
+  {
+    "id": "admin-extensoes",
+    "titulo": "Extensões",
+    "grupo": "Admin da plataforma",
+    "ordem": 290,
+    "rota": "/admin/extensoes",
+    "principal": -1
+  },
+  {
+    "id": "admin-modulos",
+    "titulo": "Módulos",
+    "grupo": "Admin da plataforma",
+    "ordem": 300,
+    "rota": "/admin/modulos",
+    "principal": -1
+  },
+  {
+    "id": "admin-cobranca",
+    "titulo": "Cobrança",
+    "grupo": "Admin da plataforma",
+    "ordem": 310,
+    "rota": "/admin/cobranca",
+    "principal": -1
+  }
+]

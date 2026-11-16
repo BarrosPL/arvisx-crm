@@ -21,21 +21,25 @@ import { useT } from "@/hooks/i18n/useT";
  *
  * A versão anterior usava `bg-amber-100 border-amber-300 text-amber-900`, cru
  * do Tailwind e portanto FIXO: a tarja não acompanhava claro e escuro, e num
- * tema escuro ela virava uma faixa clara gritando no topo. Os tokens de
- * `warning` são os mesmos que o `Badge variant="warning"` usa, e existem nos
- * dois temas com contraste aferido.
+ * tema escuro ela virava uma faixa clara gritando no topo. Depois ela usou os
+ * tokens de `warning`, os mesmos do `Badge variant="warning"`.
  *
- * O `--color-warning-bg` é translúcido (12% em claro, 18% em escuro), e esta
- * tarja é `sticky` — conteúdo rolando por baixo apareceria através dela. Por
- * isso são DOIS elementos: o de fora dá o fundo opaco da página, o de dentro
- * dá o tom de aviso por cima. Sem `backdrop-blur`, que é anti-pattern nº 5.
+ * No design "Folha" (11/2026) a tarja é a TINTA escura do produto
+ * (`accent-600`, a mesma nos dois temas) com texto branco: âmbar passou a
+ * querer dizer só aviso, e o modo plataforma não é um aviso, é um lugar.
+ *
+ * Continuam DOIS elementos, como no tempo do `--color-warning-bg` translúcido:
+ * o de fora dá o fundo opaco da página, o de dentro dá a cor da tarja. Hoje a
+ * tinta é opaca e um só bastaria; o de fora fica para a tarja seguir tampando o
+ * que rola por baixo se a cor voltar a ser translúcida. Sem `backdrop-blur`,
+ * que é anti-pattern nº 5.
  */
 export function PlatformModeBanner() {
   const t = useT();
   return (
     <div role="region" aria-label={t("Modo Plataforma")} className="sticky top-0 z-40 w-full bg-bg">
-      <div className="flex h-10 w-full items-center justify-between border-b border-warning/35 bg-warning-bg px-4 text-warning-fg">
-        <div className="flex items-center gap-2 text-sm">
+      <div className="flex h-10 w-full items-center justify-between bg-accent-600 px-4 text-white">
+        <div className="flex items-center gap-2 text-xs">
           <Buildings size={18} weight="fill" aria-hidden />
           <span className="font-semibold tracking-tight">{t("MODO PLATAFORMA")}</span>
           <span className="hidden opacity-80 sm:inline">{t("— operação cross-tenant")}</span>
@@ -44,7 +48,7 @@ export function PlatformModeBanner() {
           {/* 40px de tarja não comportam os 44px de alvo de toque do `size="icon"`.
               O mesmo já valia para o link ao lado, que é `text-xs`: quem opera o
               modo plataforma está num desktop, com cursor. */}
-          <ThemeToggle className="h-7 w-7 text-warning-fg lg:h-7 lg:w-7" />
+          <ThemeToggle className="h-7 w-7 text-white hover:bg-white/10 hover:text-white lg:h-7 lg:w-7" />
           <Link
             href="/app"
             className="rounded-md px-2 py-1 text-xs font-medium underline-offset-2 hover:underline"

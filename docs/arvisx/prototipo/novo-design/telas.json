@@ -1,0 +1,450 @@
+[
+  {
+    "id": "inbox",
+    "titulo": "Inbox",
+    "grupo": "Atendimento",
+    "ordem": 10,
+    "principal": 0
+  },
+  {
+    "id": "funil-quadro",
+    "titulo": "Quadro do funil",
+    "grupo": "CRM",
+    "ordem": 20,
+    "principal": 1
+  },
+  {
+    "id": "contatos",
+    "titulo": "Contatos",
+    "grupo": "CRM",
+    "ordem": 40,
+    "principal": 2
+  },
+  {
+    "id": "contato-ficha",
+    "titulo": "Ficha do contato",
+    "grupo": "CRM",
+    "ordem": 41,
+    "principal": 3
+  },
+  {
+    "id": "agenda",
+    "titulo": "Agenda",
+    "grupo": "Atendimento",
+    "ordem": 30,
+    "principal": 4
+  },
+  {
+    "id": "tarefas",
+    "titulo": "Tarefas",
+    "grupo": "CRM",
+    "ordem": 50,
+    "principal": 5
+  },
+  {
+    "id": "agentes",
+    "titulo": "Agentes de IA",
+    "grupo": "Agente de IA",
+    "ordem": 10,
+    "principal": 6
+  },
+  {
+    "id": "agente-editor",
+    "titulo": "Editor do agente",
+    "grupo": "Agente de IA",
+    "ordem": 11,
+    "principal": 7
+  },
+  {
+    "id": "followups",
+    "titulo": "Follow-ups",
+    "grupo": "Agente de IA",
+    "ordem": 20,
+    "principal": 8
+  },
+  {
+    "id": "casos",
+    "titulo": "Casos",
+    "grupo": "Agente de IA",
+    "ordem": 70,
+    "principal": 9
+  },
+  {
+    "id": "conexoes",
+    "titulo": "Conexões",
+    "grupo": "Canais",
+    "ordem": 10,
+    "principal": 10
+  },
+  {
+    "id": "desempenho",
+    "titulo": "Desempenho",
+    "grupo": "Análise",
+    "ordem": 10,
+    "principal": 11
+  },
+  {
+    "id": "crm-hub",
+    "titulo": "CRM (ver tudo)",
+    "grupo": "CRM",
+    "ordem": 5,
+    "principal": 12
+  },
+  {
+    "id": "configuracoes",
+    "titulo": "Configurações",
+    "grupo": "Organização",
+    "ordem": 5,
+    "principal": 13
+  },
+  {
+    "id": "plano-e-cobranca",
+    "titulo": "Plano e cobrança",
+    "grupo": "Organização",
+    "ordem": 33,
+    "principal": 14
+  },
+  {
+    "id": "ia-hub",
+    "titulo": "Agente de IA (ver tudo)",
+    "grupo": "Agente de IA",
+    "ordem": 5,
+    "principal": -1
+  },
+  {
+    "id": "followup-editor",
+    "titulo": "Construtor de follow-up",
+    "grupo": "Agente de IA",
+    "ordem": 21,
+    "principal": -1
+  },
+  {
+    "id": "fluxos-de-atendimento",
+    "titulo": "Fluxos de atendimento",
+    "grupo": "Agente de IA",
+    "ordem": 30,
+    "principal": -1
+  },
+  {
+    "id": "roteadores",
+    "titulo": "Roteadores",
+    "grupo": "Agente de IA",
+    "ordem": 40,
+    "principal": -1
+  },
+  {
+    "id": "credenciais",
+    "titulo": "Chaves de acesso à IA",
+    "grupo": "Agente de IA",
+    "ordem": 50,
+    "principal": -1
+  },
+  {
+    "id": "provedores",
+    "titulo": "Provedores de IA",
+    "grupo": "Agente de IA",
+    "ordem": 51,
+    "principal": -1
+  },
+  {
+    "id": "conhecimento",
+    "titulo": "O que o agente sabe",
+    "grupo": "Agente de IA",
+    "ordem": 60,
+    "principal": -1
+  },
+  {
+    "id": "memoria",
+    "titulo": "Memória da IA",
+    "grupo": "Agente de IA",
+    "ordem": 61,
+    "principal": -1
+  },
+  {
+    "id": "skills",
+    "titulo": "Skills da IA",
+    "grupo": "Agente de IA",
+    "ordem": 62,
+    "principal": -1
+  },
+  {
+    "id": "alertas",
+    "titulo": "Central de avisos",
+    "grupo": "Agente de IA",
+    "ordem": 71,
+    "principal": -1
+  },
+  {
+    "id": "ia-propostas",
+    "titulo": "Propostas (IA)",
+    "grupo": "Agente de IA",
+    "ordem": 72,
+    "principal": -1
+  },
+  {
+    "id": "execucoes",
+    "titulo": "Execuções de IA",
+    "grupo": "Agente de IA",
+    "ordem": 73,
+    "principal": -1
+  },
+  {
+    "id": "uso-e-orcamento",
+    "titulo": "Uso de IA",
+    "grupo": "Agente de IA",
+    "ordem": 74,
+    "principal": -1
+  },
+  {
+    "id": "analise-hub",
+    "titulo": "Análise (ver tudo)",
+    "grupo": "Análise",
+    "ordem": 5,
+    "principal": -1
+  },
+  {
+    "id": "atividades",
+    "titulo": "Atividades",
+    "grupo": "Análise",
+    "ordem": 20,
+    "principal": -1
+  },
+  {
+    "id": "meta-ads",
+    "titulo": "Meta Ads",
+    "grupo": "Análise",
+    "ordem": 30,
+    "principal": -1
+  },
+  {
+    "id": "faturamento",
+    "titulo": "Faturamento",
+    "grupo": "Análise",
+    "ordem": 40,
+    "principal": -1
+  },
+  {
+    "id": "honorarios",
+    "titulo": "Honorários",
+    "grupo": "Análise",
+    "ordem": 50,
+    "principal": -1
+  },
+  {
+    "id": "evolucao-da-ia",
+    "titulo": "Evolução da IA",
+    "grupo": "Análise",
+    "ordem": 60,
+    "principal": -1
+  },
+  {
+    "id": "audit-log",
+    "titulo": "Audit Log",
+    "grupo": "Análise",
+    "ordem": 70,
+    "principal": -1
+  },
+  {
+    "id": "radar",
+    "titulo": "Radar",
+    "grupo": "Atendimento",
+    "ordem": 20,
+    "principal": -1
+  },
+  {
+    "id": "respostas-rapidas",
+    "titulo": "Respostas rápidas",
+    "grupo": "Atendimento",
+    "ordem": 40,
+    "principal": -1
+  },
+  {
+    "id": "nuvemshop",
+    "titulo": "Nuvemshop",
+    "grupo": "Canais",
+    "ordem": 20,
+    "principal": -1
+  },
+  {
+    "id": "webhooks",
+    "titulo": "Webhooks",
+    "grupo": "Canais",
+    "ordem": 30,
+    "principal": -1
+  },
+  {
+    "id": "funis",
+    "titulo": "Funis",
+    "grupo": "CRM",
+    "ordem": 10,
+    "principal": -1
+  },
+  {
+    "id": "negocio-dossie",
+    "titulo": "Ficha do negócio (dossiê)",
+    "grupo": "CRM",
+    "ordem": 21,
+    "principal": -1
+  },
+  {
+    "id": "planos-de-tarefa",
+    "titulo": "Planos de tarefa",
+    "grupo": "CRM",
+    "ordem": 51,
+    "principal": -1
+  },
+  {
+    "id": "campanhas",
+    "titulo": "Campanhas",
+    "grupo": "CRM",
+    "ordem": 60,
+    "principal": -1
+  },
+  {
+    "id": "campanha-nova",
+    "titulo": "Nova campanha",
+    "grupo": "CRM",
+    "ordem": 61,
+    "principal": -1
+  },
+  {
+    "id": "prospeccao",
+    "titulo": "Prospecção",
+    "grupo": "CRM",
+    "ordem": 70,
+    "principal": -1
+  },
+  {
+    "id": "produtos",
+    "titulo": "Produtos",
+    "grupo": "CRM",
+    "ordem": 80,
+    "principal": -1
+  },
+  {
+    "id": "propostas",
+    "titulo": "Propostas",
+    "grupo": "CRM",
+    "ordem": 90,
+    "principal": -1
+  },
+  {
+    "id": "proposta-detalhe",
+    "titulo": "Editor de proposta",
+    "grupo": "CRM",
+    "ordem": 91,
+    "principal": -1
+  },
+  {
+    "id": "empresas",
+    "titulo": "Empresas",
+    "grupo": "CRM",
+    "ordem": 100,
+    "principal": -1
+  },
+  {
+    "id": "pessoas",
+    "titulo": "Pessoas",
+    "grupo": "CRM",
+    "ordem": 101,
+    "principal": -1
+  },
+  {
+    "id": "comandas",
+    "titulo": "Comandas",
+    "grupo": "CRM",
+    "ordem": 110,
+    "principal": -1
+  },
+  {
+    "id": "importacoes",
+    "titulo": "Importações",
+    "grupo": "CRM",
+    "ordem": 111,
+    "principal": -1
+  },
+  {
+    "id": "perfil",
+    "titulo": "Perfil",
+    "grupo": "Organização",
+    "ordem": 10,
+    "principal": -1
+  },
+  {
+    "id": "seguranca",
+    "titulo": "Segurança",
+    "grupo": "Organização",
+    "ordem": 11,
+    "principal": -1
+  },
+  {
+    "id": "notificacoes",
+    "titulo": "Notificações",
+    "grupo": "Organização",
+    "ordem": 12,
+    "principal": -1
+  },
+  {
+    "id": "equipe",
+    "titulo": "Equipe",
+    "grupo": "Organização",
+    "ordem": 20,
+    "principal": -1
+  },
+  {
+    "id": "equipe-convite",
+    "titulo": "Convidar membros",
+    "grupo": "Organização",
+    "ordem": 21,
+    "principal": -1
+  },
+  {
+    "id": "organizacao",
+    "titulo": "Organização",
+    "grupo": "Organização",
+    "ordem": 30,
+    "principal": -1
+  },
+  {
+    "id": "marca",
+    "titulo": "Marca",
+    "grupo": "Organização",
+    "ordem": 31,
+    "principal": -1
+  },
+  {
+    "id": "tags",
+    "titulo": "Tags",
+    "grupo": "Organização",
+    "ordem": 32,
+    "principal": -1
+  },
+  {
+    "id": "recursos-opcionais",
+    "titulo": "Recursos opcionais",
+    "grupo": "Organização",
+    "ordem": 34,
+    "principal": -1
+  },
+  {
+    "id": "lgpd",
+    "titulo": "Solicitações LGPD",
+    "grupo": "Organização",
+    "ordem": 40,
+    "principal": -1
+  },
+  {
+    "id": "api-tokens",
+    "titulo": "API Tokens",
+    "grupo": "Organização",
+    "ordem": 41,
+    "principal": -1
+  },
+  {
+    "id": "extensoes",
+    "titulo": "Extensões",
+    "grupo": "Organização",
+    "ordem": 50,
+    "principal": -1
+  }
+]

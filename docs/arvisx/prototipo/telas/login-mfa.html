@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verificação em duas etapas</title>
+<meta name="grupo" content="Entrada">
+<meta name="ordem" content="330">
+<meta name="rota" content="/login/mfa">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../login-opcoes.css">
+<style>
+  .cab-centro { text-align: center; margin-bottom: 24px; }
+  .publico .formulario .cab-centro h2 { margin-bottom: 6px; }
+  .publico .formulario .cab-centro .apoio { margin-bottom: 0; }
+  .publico .formulario .rodape-form .forte { color: var(--texto); font-weight: 600; }
+  .forca { display: grid; gap: 8px; padding-top: 4px; font-size: 12px; }
+  .forca .linha-f { display: flex; justify-content: space-between; gap: 12px; }
+  .forca .linha-f span { color: var(--apoio); }
+  .forca .linha-f strong { font-weight: 600; }
+  .forca .barras { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .forca .barras span { height: 6px; border-radius: 3px; background: var(--painel-3); }
+  .forca ul { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; color: var(--apoio); }
+  .totp { display: flex; justify-content: center; gap: 8px; }
+  .totp .entrada { width: 40px; height: 48px; padding: 0; text-align: center; font: 500 18px/1 var(--mono); }
+  .plano-escolhido { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: var(--r-sm); border: 1px solid var(--linha); background: var(--painel-2); font-size: 13.5px; }
+  .plano-escolhido button { flex: none; font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+  .nota-centro { text-align: center; font-size: 12px; color: var(--apoio); }
+</style>
+</head>
+<body data-rota="/login/mfa">
+<div class="publico">
+  <section class="lado painel-a animada conversa-ia">
+    <img class="logo-topo" src="../marca/arvisx-crm-oficial-escuro.png" alt="ARVISX CRM">
+    <div class="texto">
+      <p class="etiqueta">O CRM DA ARVISX</p>
+      <h1>O WhatsApp chega.<br>A <em>IA</em> atende e vende.</h1>
+      <p>Agentes de IA que atendem, qualificam e vendem no WhatsApp, dentro do CRM da sua empresa.</p>
+      <div class="fio"></div>
+    </div>
+    <ul class="provas">
+      <li><i class="ph ph-tray"></i>Inbox com a IA e a equipe lado a lado</li>
+      <li><i class="ph ph-kanban"></i>Funil, agenda e propostas no mesmo lugar</li>
+      <li><i class="ph ph-shield-check"></i>Seus dados no seu servidor, com LGPD</li>
+    </ul>
+    <div class="telefone" aria-hidden="true">
+      <div class="cabeca-tel">
+        <span class="avatar">M</span>
+        <div class="quem"><b>Marina Costa</b><span>Agente de IA atendendo</span></div>
+        <svg class="zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.5-4.5A8 8 0 1 1 8.5 18.5z"/></svg>
+      </div>
+      <div class="conversa">
+        <div class="msg lead"><div class="miolo-msg">Oi! Vi o anúncio de vocês. Como funciona e quanto custa?</div></div>
+        <div class="msg digitando"><div class="miolo-msg"><i></i><i></i><i></i></div></div>
+        <div class="msg ia"><div class="miolo-msg"><b>Agente de IA</b>Oi, Marina! Que bom que chegou. Me conta o que você precisa, que eu já te explico como funciona e te passo os valores?</div></div>
+        <div class="msg toast"><div class="miolo-msg"><i>&#10003;</i><span>Lead criado no funil <em>Vendas &middot; Primeiro contato</em></span></div></div>
+      </div>
+    </div>
+        <span class="ponto p1"></span><span class="ponto p2"></span><span class="ponto p3"></span><span class="ponto p4"></span><span class="ponto p5"></span>
+  </section>
+  <section class="formulario">
+    <div>
+      <div class="cab-centro">
+        <h2>Verificação em duas etapas</h2>
+        <p class="apoio">Digite o código de 6 dígitos do seu autenticador.</p>
+      </div>
+      <form class="form" novalidate style="gap:24px">
+        <div class="totp" role="group" aria-label="Código de 6 dígitos">
+          <input class="entrada" type="text" inputmode="numeric" maxlength="1" aria-label="Dígito 1">
+          <input class="entrada" type="text" inputmode="numeric" maxlength="1" aria-label="Dígito 2">
+          <input class="entrada" type="text" inputmode="numeric" maxlength="1" aria-label="Dígito 3">
+          <input class="entrada" type="text" inputmode="numeric" maxlength="1" aria-label="Dígito 4">
+          <input class="entrada" type="text" inputmode="numeric" maxlength="1" aria-label="Dígito 5">
+          <input class="entrada" type="text" inputmode="numeric" maxlength="1" aria-label="Dígito 6">
+        </div>
+        <label class="caixa"><input type="checkbox"><span>Confiar neste dispositivo por 30 dias</span></label>
+        <button type="submit" class="btn primario g bloco" disabled>Verificar</button>
+      </form>
+      <p class="rodape-form"><a href="#">Perdi acesso ao autenticador</a></p>
+    </div>
+  </section>
+</div>
+</body>
+</html>

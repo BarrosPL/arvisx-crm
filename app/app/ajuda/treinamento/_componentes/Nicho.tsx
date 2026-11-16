@@ -34,7 +34,7 @@ export function ConteudoDoNicho({
   return (
     <article className="flex flex-col gap-10">
       <header className="flex flex-col gap-2 border-b pb-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-cta-forte)]">
+        <p className="text-xs font-semibold text-[var(--color-cta-forte)]">
           Histórias por nicho
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">{nicho.titulo}</h1>

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modelos de proposta</title>
+<meta name="grupo" content="Organização">
+<meta name="ordem" content="760">
+<meta name="rota" content="/app/settings/tenant/proposals/modelos">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+  .pilha { display: grid; gap: 24px; }
+  .importar .corpo { display: grid; gap: 8px; }
+  .importar h2 { font-size: 14px; font-weight: 600; }
+  .importar p { color: var(--apoio); font-size: 13px; }
+  .importar input[type="file"] { max-width: 100%; font-size: 13px; }
+  .novo { display: flex; align-items: flex-end; gap: 8px; }
+  .novo .campo { flex: 1; min-width: 0; }
+  .modelos > li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; border-bottom: 1px solid var(--linha); }
+  .modelos > li:last-child { border-bottom: 0; }
+  .modelos .nome { font-weight: 600; font-size: 13px; }
+  .modelos .sub { color: var(--apoio); font-size: 12px; }
+  .modelos .botoes { display: flex; flex-wrap: wrap; gap: 8px; }
+  @media (max-width: 860px) { .novo { flex-direction: column; align-items: stretch; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/app/settings" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo estreita">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Configurações · Sua empresa</div>
+          <h1>Modelos de proposta</h1>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="pilha">
+        <section class="cartao importar">
+          <div class="corpo">
+            <h2>Criar a partir da proposta que a empresa já usa</h2>
+            <p>Envie um PDF, .md ou .txt de até 5 MB. A IA divide em seções, troca por campos o que muda de um cliente e de um projeto para outro, e você revisa antes de salvar.</p>
+            <input type="file" accept=".pdf,.md,.txt,application/pdf,text/plain,text/markdown" aria-label="Arquivo da proposta">
+          </div>
+        </section>
+
+        <section class="novo">
+          <div class="campo"><label for="novo-modelo">Novo modelo em branco</label><input type="text" id="novo-modelo" placeholder="Ex.: Locação por temporada"></div>
+          <button class="btn primario" disabled>Criar</button>
+        </section>
+
+        <ul class="cartao modelos">
+          <li>
+            <div><div class="nome">Site institucional</div><div class="sub">Da plataforma · <span class="mono">18</span> seções</div><div class="sub">Desligado — não aparece para a IA nem no seletor</div></div>
+            <div class="botoes"><button class="btn secundario p">Usar</button><button class="btn secundario p">Personalizar</button></div>
+          </li>
+          <li>
+            <div><div class="nome">Landing page</div><div class="sub">Da plataforma · <span class="mono">18</span> seções</div><div class="sub">Desligado — não aparece para a IA nem no seletor</div></div>
+            <div class="botoes"><button class="btn secundario p">Usar</button><button class="btn secundario p">Personalizar</button></div>
+          </li>
+          <li>
+            <div><div class="nome">E-commerce</div><div class="sub">Da plataforma · <span class="mono">21</span> seções</div></div>
+            <div class="botoes"><button class="btn secundario p">Não usar</button><button class="btn secundario p">Personalizar</button></div>
+          </li>
+          <li>
+            <div><div class="nome">Catálogo imobiliário</div><div class="sub">Da plataforma · <span class="mono">21</span> seções</div><div class="sub">Desligado — não aparece para a IA nem no seletor</div></div>
+            <div class="botoes"><button class="btn secundario p">Usar</button><button class="btn secundario p">Personalizar</button></div>
+          </li>
+          <li>
+            <div><div class="nome">Site profissional</div><div class="sub">Da plataforma · <span class="mono">21</span> seções</div></div>
+            <div class="botoes"><button class="btn secundario p">Não usar</button><button class="btn secundario p">Personalizar</button></div>
+          </li>
+          <li>
+            <div><div class="nome">Sistema web</div><div class="sub">Da plataforma · <span class="mono">20</span> seções</div></div>
+            <div class="botoes"><button class="btn secundario p">Não usar</button><button class="btn secundario p">Personalizar</button></div>
+          </li>
+          <li>
+            <div><div class="nome">Automação</div><div class="sub">Da plataforma · <span class="mono">20</span> seções</div></div>
+            <div class="botoes"><button class="btn secundario p">Não usar</button><button class="btn secundario p">Personalizar</button></div>
+          </li>
+          <li>
+            <div><div class="nome">Projeto personalizado</div><div class="sub">Personalizado · <span class="mono">12</span> seções</div></div>
+            <div class="botoes"><button class="btn secundario p">Não usar</button><button class="btn secundario p">Editar</button><button class="btn fantasma p">Voltar ao modelo da plataforma</button></div>
+          </li>
+          <li>
+            <div><div class="nome">Plano de tratamento odontológico</div><div class="sub">Da empresa · <span class="mono">5</span> seções</div></div>
+            <div class="botoes"><button class="btn secundario p">Editar</button><button class="btn fantasma p">Remover</button></div>
+          </li>
+          <li>
+            <div><div class="nome">Clareamento dental</div><div class="sub">Da empresa · <span class="mono">4</span> seções</div></div>
+            <div class="botoes"><button class="btn secundario p">Editar</button><button class="btn fantasma p">Remover</button></div>
+          </li>
+        </ul>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

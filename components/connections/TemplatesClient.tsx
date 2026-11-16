@@ -44,7 +44,7 @@ function Preview({ preview }: { preview: TemplatePreview }) {
   const partes = preview.text.split(/(\{\{\w+\}\})/g);
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-xs uppercase tracking-wide text-muted-foreground">
+      <span className="text-xs text-muted-foreground">
         {t(preview.onde)}
       </span>
       <p className="whitespace-pre-wrap text-sm leading-relaxed">
@@ -102,7 +102,7 @@ function LinkDaMidia({ tpl, slot }: { tpl: TemplateView; slot: TemplateSlotView 
 
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-xs uppercase tracking-wide text-muted-foreground">
+      <label htmlFor={id} className="text-xs text-muted-foreground">
         {t(slot.onde)} · {slot.expects}
       </label>
       <div className="flex gap-2">
@@ -350,7 +350,7 @@ export function TemplatesClient() {
                         />
                       ) : (
                         <div key={`m:${s.onde}:${i}`} className="flex flex-col gap-0.5">
-                          <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                          <span className="text-xs text-muted-foreground">
                             {t(s.onde)} · {s.expects}
                           </span>
                           <span className="text-sm text-muted-foreground">

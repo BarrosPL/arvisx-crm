@@ -26,7 +26,7 @@ export function AdminSidePanel({ data }: Props) {
     <aside className="flex h-full w-[320px] shrink-0 flex-col gap-6 overflow-y-auto border-l border-border bg-muted/20 px-4 py-4">
       {/* ── Contact info ── */}
       <section>
-        <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <h3 className="mb-2 text-[11px] font-semibold text-muted-foreground">
           Contato
         </h3>
         {contact ? (
@@ -60,7 +60,7 @@ export function AdminSidePanel({ data }: Props) {
 
       {/* ── Tenant info ── */}
       <section>
-        <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <h3 className="mb-2 text-[11px] font-semibold text-muted-foreground">
           Tenant
         </h3>
         {organization ? (

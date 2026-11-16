@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audit Log</title>
+<meta name="grupo" content="Admin da plataforma">
+<meta name="ordem" content="60">
+<meta name="rota" content="/admin/audit">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base-suave.css">
+<style>
+  .filtros .entrada { height: 34px; font-size: 13px; max-width: 100%; }
+  .filtros .entrada.ator { width: 240px; }
+  .filtros .entrada.data { width: 200px; }
+  .tabela td { font-size: 12px; white-space: nowrap; }
+  .tabela td.quando, .tabela td.recurso { color: var(--apoio); }
+  .tabela td.m { font-family: var(--mono); font-size: 12px; }
+  .tabela .tag.mono { font-size: 11px; height: 20px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+<link rel="stylesheet" href="../suave.css">
+</head>
+<body data-rota="/admin/audit" data-raiz="../..">
+<div class="casca">
+  <aside class="lateral"></aside>
+  <div class="principal">
+    <header class="topo"></header>
+    <main class="conteudo">
+      <div class="cabecalho">
+        <div>
+          <div class="eyebrow">Admin Plataforma</div>
+          <h1>Audit Log</h1>
+          <p><span class="mono">8</span> eventos</p>
+        </div>
+      </div>
+      <div class="fio"></div>
+
+      <div class="filtros">
+        <button class="filtro" aria-label="Tenants">Tenants<i class="ph-light ph-caret-down"></i></button>
+        <button class="filtro" aria-label="Actions">Actions<i class="ph-light ph-caret-down"></i></button>
+        <input class="entrada ator" type="text" placeholder="Actor (user ID)" aria-label="Filtrar por actor user ID">
+        <input class="entrada data" type="datetime-local" aria-label="Data de início">
+        <input class="entrada data" type="datetime-local" aria-label="Data de fim">
+      </div>
+
+      <div class="cartao">
+        <table class="tabela rolavel">
+          <thead>
+            <tr>
+              <th>Quando</th>
+              <th>Action</th>
+              <th>Tenant</th>
+              <th>Actor</th>
+              <th>Recurso</th>
+              <th><span class="sr">Ver</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="quando">há 18 minutos</td>
+              <td class="m">platform_admin.incident_viewed</td>
+              <td><span class="tag mono">odonto-sul</span></td>
+              <td class="m">7c9e6679-7425-40de-944b-e07fc1f90ae7</td>
+              <td class="recurso">incident <span class="mono">b81d4f2a…</span></td>
+              <td><a href="#" class="link">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="quando">há 42 minutos</td>
+              <td class="m">platform_admin.impersonate_started</td>
+              <td><span class="tag mono">clinica-vitalis</span></td>
+              <td class="m">7c9e6679-7425-40de-944b-e07fc1f90ae7</td>
+              <td class="recurso">organization <span class="mono">3f2a9c1e…</span></td>
+              <td><a href="#" class="link">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="quando">há cerca de 1 hora</td>
+              <td class="m">lgpd.sla_alarm_triggered</td>
+              <td><span class="tag mono">bella-pele</span></td>
+              <td class="m">—</td>
+              <td class="recurso">lgpd_request <span class="mono">e4c7a920…</span></td>
+              <td><a href="#" class="link">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="quando">há cerca de 2 horas</td>
+              <td class="m">lgpd.consent_changed</td>
+              <td><span class="tag mono">clinica-vitalis</span></td>
+              <td class="m">2b1f8d34-5a6c-4e0b-9d71-c38a4f6e1b92</td>
+              <td class="recurso">contact <span class="mono">9a40c6d1…</span></td>
+              <td><a href="#" class="link">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="quando">há cerca de 3 horas</td>
+              <td class="m">platform_admin.incidents_listed</td>
+              <td><span class="fraco">—</span></td>
+              <td class="m">7c9e6679-7425-40de-944b-e07fc1f90ae7</td>
+              <td class="recurso">—</td>
+              <td><a href="#" class="link">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="quando">há cerca de 5 horas</td>
+              <td class="m">lgpd.data_request_received</td>
+              <td><span class="tag mono">sorriso-cia</span></td>
+              <td class="m">d5e0a713-88c2-4b1f-a6f4-0e9b72c3d581</td>
+              <td class="recurso">lgpd_request <span class="mono">a1b2c3d4…</span></td>
+              <td><a href="#" class="link">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="quando">há 1 dia</td>
+              <td class="m">incident.resolved</td>
+              <td><span class="tag mono">sorriso-cia</span></td>
+              <td class="m">7c9e6679-7425-40de-944b-e07fc1f90ae7</td>
+              <td class="recurso">incident <span class="mono">5d0e3b77…</span></td>
+              <td><a href="#" class="link">Ver</a></td>
+            </tr>
+            <tr>
+              <td class="quando">há 1 dia</td>
+              <td class="m">platform_admin.impersonate_ended</td>
+              <td><span class="tag mono">clinica-vitalis</span></td>
+              <td class="m">7c9e6679-7425-40de-944b-e07fc1f90ae7</td>
+              <td class="recurso">organization <span class="mono">3f2a9c1e…</span></td>
+              <td><a href="#" class="link">Ver</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../../shell-admin.js"></script>
+<script src="../folha.js"></script>
+</body>
+</html>

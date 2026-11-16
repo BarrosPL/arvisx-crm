@@ -140,7 +140,7 @@ export function SecaoDoDossie({
       data-recolhida={recolhida ? "sim" : "nao"}
       className={cn("border-b border-border py-3", className)}
     >
-      <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-text-muted">
+      <h3 className="mb-2 text-xs font-medium text-text-muted">
         <button
           type="button"
           onClick={() => aoAlternar(id)}

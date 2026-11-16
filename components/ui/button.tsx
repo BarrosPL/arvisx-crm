@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 const buttonVariants = cva(
   [
     "inline-flex items-center justify-center gap-2 whitespace-nowrap",
-    "rounded-md font-semibold",
+    "rounded-full font-semibold",
     // `transform` SAIU da lista, e `translate` não entrou no lugar.
     //
     // O recuo do toque é `active:translate-y-px`, lá embaixo. No Tailwind 4 essa
@@ -41,17 +41,18 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // ArvisX: a ação principal é OURO (`--color-cta`), que numa instalação com
-        // cor própria vira o accent calculado (ver `cssDaMarca`).
+        // ArvisX, design "Folha": a ação principal é a TINTA escura (`--color-cta`),
+        // que numa instalação com cor própria vira o accent calculado (ver
+        // `cssDaMarca`). O ouro (`--color-brand`) fica só onde há agente de IA.
         primary: "bg-cta text-cta-foreground hover:bg-cta-hover shadow-xs",
         default: "bg-cta text-cta-foreground hover:bg-cta-hover shadow-xs",
         secondary:
-          "bg-surface text-text border border-border-strong hover:bg-surface-elevated hover:border-accent",
+          "bg-surface text-text border border-border-strong shadow-xs hover:bg-surface-elevated hover:border-accent-300",
         outline:
-          "bg-transparent text-text border border-border-strong hover:bg-surface-elevated hover:border-accent",
+          "bg-transparent text-text border border-border-strong hover:bg-surface-elevated hover:border-accent-300",
         ghost: "bg-transparent text-text-muted hover:bg-surface-elevated hover:text-text",
         destructive: "bg-error text-white hover:brightness-95 shadow-xs",
-        link: "bg-transparent text-accent underline underline-offset-4 decoration-cta decoration-1 hover:decoration-2 h-auto p-0",
+        link: "bg-transparent text-text underline underline-offset-4 decoration-border-strong decoration-1 hover:text-accent hover:decoration-accent h-auto p-0",
       },
       // Alturas de toque: abaixo de `lg` (mesmo corte que o resto da casca
       // usa pra decidir "é celular/tablet, é mouse") toda variante bate os
@@ -60,10 +61,10 @@ const buttonVariants = cva(
       // globalmente pro app inteiro em telas grandes infla a densidade sem
       // necessidade nenhuma. `lg` já nascia com 44px e não precisou mudar.
       size: {
-        sm: "h-11 px-3 text-xs lg:h-8",
-        default: "h-11 px-4 text-sm lg:h-9",
-        md: "h-11 px-4 text-sm lg:h-9",
-        lg: "h-11 px-6 text-sm",
+        sm: "h-11 px-2.5 text-xs lg:h-[30px]",
+        default: "h-11 px-3.5 text-[13px] lg:h-9",
+        md: "h-11 px-3.5 text-[13px] lg:h-9",
+        lg: "h-11 px-[18px] text-sm",
         icon: "h-11 w-11 lg:h-9 lg:w-9",
       },
     },

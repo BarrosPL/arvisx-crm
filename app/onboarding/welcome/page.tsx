@@ -31,7 +31,7 @@ export default async function WelcomePage() {
         <h2 className="text-2xl font-semibold tracking-tight">
           {traduzir("Boas-vindas ao", idioma)} {marca.nome}
         </h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-[13px] text-muted-foreground">
           {traduzir(
             iaNoPlano
               ? "Vamos montar quem vai atender seus clientes — e onde ele vai trabalhar."

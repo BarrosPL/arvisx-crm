@@ -53,7 +53,7 @@ export function InicioDoTreinamento({
         />
         <div className="relative flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-brand)]">
+            <p className="text-xs font-semibold text-[var(--color-brand)]">
               Ajuda
             </p>
             <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Guia de uso</h1>
@@ -107,7 +107,7 @@ export function InicioDoTreinamento({
                   data-testid="resultado-da-busca"
                 >
                   <span className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-md bg-[var(--color-cta-leve)] px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-cta-forte)]">
+                    <span className="rounded-md bg-[var(--color-cta-leve)] px-1.5 py-0.5 text-[11px] font-semibold text-[var(--color-cta-forte)]">
                       {TIPO[r.tipo]}
                     </span>
                     <span className="text-sm font-medium">{r.titulo}</span>
@@ -125,7 +125,7 @@ export function InicioDoTreinamento({
         <>
           {grupos.map((g) => (
             <section key={g.grupo} className="flex flex-col gap-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              <h2 className="text-sm font-semibold text-muted-foreground">
                 {g.grupo}
               </h2>
               <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -151,7 +151,7 @@ export function InicioDoTreinamento({
 
           <section aria-labelledby="titulo-historias" className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
-              <h2 id="titulo-historias" className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              <h2 id="titulo-historias" className="text-sm font-semibold text-muted-foreground">
                 Histórias por nicho
               </h2>
               <p className="text-sm text-muted-foreground">

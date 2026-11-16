@@ -73,7 +73,7 @@ export async function BlocoDoGuia({ segmento }: { segmento: SegmentoComBloco }) 
           idioma,
         )}
       >
-        <p className="text-sm text-muted-foreground">
+        <p className="text-[13px] text-muted-foreground">
           {traduzir(
             "Novos canais começam em modo de teste. Após concluir a configuração, abra Conexões para autorizar seus números de teste ou liberar o público.",
             idioma,
@@ -153,7 +153,7 @@ export async function BlocoDoGuia({ segmento }: { segmento: SegmentoComBloco }) 
       )}
     >
       {!emailReady ? (
-        <div className="rounded-md border border-amber-300/60 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/40 dark:text-amber-100">
+        <div className="rounded-md border border-warning/30 bg-warning-bg p-4 text-[13px] text-warning-fg">
           <p className="font-medium">{traduzir("Esta instalação ainda não envia e-mail.", idioma)}</p>
           <p className="mt-1">
             {traduzir(
@@ -189,14 +189,14 @@ function Moldura({
     <section
       data-bloco-do-guia
       aria-label={traduzir("Guia de montagem", idioma)}
-      className="space-y-4 rounded-lg border-2 border-[var(--color-cta)] bg-surface p-4 shadow-sm sm:p-6"
+      className="space-y-4 rounded-lg border-2 border-brand bg-surface p-4 shadow-xs sm:p-6"
     >
       <header>
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        <p className="text-xs font-medium text-text-subtle">
           {traduzir("Guia de montagem", idioma)}
         </p>
-        <h2 className="mt-1 text-xl font-semibold tracking-tight">{titulo}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{descricao}</p>
+        <h2 className="mt-1 text-lg font-semibold tracking-tight">{titulo}</h2>
+        <p className="mt-1 text-[13px] text-muted-foreground">{descricao}</p>
       </header>
       {children}
     </section>

@@ -32,80 +32,81 @@
 
 :root {
   /* Surfaces (light) */
-  --color-bg: #f7f6f2;
+  --color-bg: #eef2f1;
   --color-surface: #ffffff;
-  --color-surface-elevated: #f1efe9;
-  --color-overlay: rgba(15, 19, 26, 0.45);
+  --color-surface-elevated: #f5f8f7;
+  --color-overlay: rgba(14, 32, 35, 0.45);
 
   /* Text (light) */
-  --color-text: #0f131a;
-  --color-text-muted: #5b6372;
-  --color-text-subtle: #8a91a0;
+  --color-text: #0e2023;
+  --color-text-muted: #485a5e;
+  --color-text-subtle: #5c6d70;
 
   /* Borders (light) */
-  --color-border: #e4e1d8;
-  --color-border-strong: #cfcbbf;
+  --color-border: #e3e9e7;
+  --color-border-strong: #d0d9d6;
 
   /* Accent — Sage (11 stops) */
-  --color-accent-50: #f2f5f9;
-  --color-accent-100: #dfe5ed;
-  --color-accent-200: #bbc6d6;
-  --color-accent-300: #8e9eb7;
-  --color-accent-400: #657999;
-  --color-accent-500: #455a7a;
-  --color-accent-600: #283a55;
-  --color-accent-700: #243247;
-  --color-accent-800: #222c3d;
-  --color-accent-900: #202835;
-  --color-accent-950: #171d25;
+  --color-accent-50: #f1f6f7;
+  --color-accent-100: #dbe6e9;
+  --color-accent-200: #b3c9cd;
+  --color-accent-300: #80a2a9;
+  --color-accent-400: #517e87;
+  --color-accent-500: #2d5f68;
+  --color-accent-600: #0f3d45;
+  --color-accent-700: #14353b;
+  --color-accent-800: #162e33;
+  --color-accent-900: #172a2e;
+  --color-accent-950: #131f21;
   --color-accent: var(--color-accent-600);
   --color-accent-fg: #ffffff;
   --color-accent-soft: var(--color-accent-100);
   --color-accent-hover: var(--color-accent-700);
 
-  /* ArvisX — ação principal (ouro) e casca escura. `--color-cta*` é o que o botão
+  /* ArvisX, design "Folha" — ação principal (a tinta escura; o ouro é `--color-brand`,
+     só onde há agente de IA) e o menu solto sobre a névoa. `--color-cta*` é o que o botão
      primário pinta; numa instalação com cor própria, `cssDaMarca` sobrescreve os
      três com o accent calculado, para a marca do revendedor valer no botão também. */
   --color-brand: #d4af37;
-  --color-cta: #d4af37;
-  --color-cta-fg: #0f131a;
-  --color-cta-hover: #c7a32c;
-  --color-cta-leve: #fbf5e2;
-  --color-cta-forte: #a8871f;
-  --color-sidebar: #0f131a;
-  --color-sidebar-fg: #d8dce3;
-  --color-sidebar-muted: #6c7586;
-  --color-sidebar-border: #283a55;
-  --color-sidebar-hover: #151b26;
-  --color-sidebar-active: rgba(212, 175, 55, 0.1);
-  --color-sidebar-active-fg: #f1d47c;
+  --color-cta: #0f3d45;
+  --color-cta-fg: #ffffff;
+  --color-cta-hover: #1c5963;
+  --color-cta-leve: #e7ecec;
+  --color-cta-forte: #0f3d45;
+  --color-sidebar: #eef2f1;
+  --color-sidebar-fg: #3b4a4c;
+  --color-sidebar-muted: #5c6d70;
+  --color-sidebar-border: #e3e9e7;
+  --color-sidebar-hover: #e1e7e7;
+  --color-sidebar-active: #ffffff;
+  --color-sidebar-active-fg: #0e2023;
 
   /* Neutrals — greige (11 stops, light) */
-  --color-neutral-50: #f7f6f2;
-  --color-neutral-100: #f1efe9;
-  --color-neutral-200: #e4e1d8;
-  --color-neutral-300: #cfcbbf;
-  --color-neutral-400: #a8a69d;
-  --color-neutral-500: #8a91a0;
-  --color-neutral-600: #5b6372;
-  --color-neutral-700: #3f4653;
-  --color-neutral-800: #262c37;
-  --color-neutral-900: #0f131a;
-  --color-neutral-950: #07090d;
+  --color-neutral-50: #f5f8f7;
+  --color-neutral-100: #e8eeec;
+  --color-neutral-200: #dce4e1;
+  --color-neutral-300: #c4cfcc;
+  --color-neutral-400: #9aa8a8;
+  --color-neutral-500: #76878a;
+  --color-neutral-600: #5c6d70;
+  --color-neutral-700: #485a5e;
+  --color-neutral-800: #2a3b3e;
+  --color-neutral-900: #0e2023;
+  --color-neutral-950: #071113;
 
   /* States (light) */
-  --color-success: #2e8b57;
-  --color-success-bg: rgba(46, 139, 87, 0.12);
-  --color-success-fg: #1f6b41;
-  --color-warning: #c9811b;
-  --color-warning-bg: rgba(201, 129, 27, 0.12);
-  --color-warning-fg: #7d4d0d;
-  --color-error: #c93c3c;
-  --color-error-bg: rgba(201, 60, 60, 0.12);
-  --color-error-fg: #8c2626;
-  --color-info: #2f7fd6;
-  --color-info-bg: rgba(47, 127, 214, 0.12);
-  --color-info-fg: #1f4f85;
+  --color-success: #1b7650;
+  --color-success-bg: rgba(27, 118, 80, 0.12);
+  --color-success-fg: #14593c;
+  --color-warning: #9a5e0c;
+  --color-warning-bg: rgba(154, 94, 12, 0.12);
+  --color-warning-fg: #6f4409;
+  --color-error: #b42f2f;
+  --color-error-bg: rgba(180, 47, 47, 0.1);
+  --color-error-fg: #8a2222;
+  --color-info: #2860c0;
+  --color-info-bg: rgba(40, 96, 192, 0.1);
+  --color-info-fg: #1d4790;
 
   /* Spacing (4-base) */
   --space-0: 0px;
@@ -125,18 +126,20 @@
 
   /* Radius */
   --radius-none: 0px;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  /* Folha suave (16/11/2026): cantos maiores em tudo; o que se clica (botão,
+     etiqueta, item do menu) vai além e usa a pílula (`rounded-full`). */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
   --radius-full: 9999px;
 
   /* Shadows — desaturated, neutral-based */
-  --shadow-xs: 0 1px 2px 0 rgba(15, 19, 26, 0.04);
-  --shadow-sm: 0 1px 2px 0 rgba(15, 19, 26, 0.05), 0 1px 1px 0 rgba(15, 19, 26, 0.03);
-  --shadow-md: 0 4px 12px -2px rgba(15, 19, 26, 0.06), 0 2px 4px -1px rgba(15, 19, 26, 0.04);
-  --shadow-lg: 0 12px 32px -6px rgba(15, 19, 26, 0.1), 0 4px 12px -2px rgba(15, 19, 26, 0.06);
-  --shadow-xl: 0 24px 48px -12px rgba(15, 19, 26, 0.16), 0 8px 16px -4px rgba(15, 19, 26, 0.08);
+  --shadow-xs: 0 1px 2px 0 rgba(15, 61, 69, 0.04), 0 4px 12px -6px rgba(15, 61, 69, 0.08);
+  --shadow-sm: 0 1px 2px 0 rgba(15, 61, 69, 0.05), 0 6px 16px -8px rgba(15, 61, 69, 0.12);
+  --shadow-md: 0 4px 12px -4px rgba(15, 61, 69, 0.1), 0 1px 2px 0 rgba(15, 61, 69, 0.05);
+  --shadow-lg: 0 12px 28px -16px rgba(15, 61, 69, 0.24), 0 1px 2px 0 rgba(15, 61, 69, 0.06);
+  --shadow-xl: 0 24px 48px -16px rgba(15, 61, 69, 0.28), 0 4px 12px -4px rgba(15, 61, 69, 0.1);
 
   /* Density — Aerada */
   --density-row: 56px;
@@ -280,64 +283,65 @@
    (lib/branding/css.ts), que só ganha consumidor com a tela de marca.
    ───────────────────────────────────────────────────────────────────────── */
 [data-theme="light"] {
-  --color-bg: #f7f6f2;
+  --color-bg: #eef2f1;
   --color-surface: #ffffff;
-  --color-surface-elevated: #f1efe9;
-  --color-overlay: rgba(15, 19, 26, 0.45);
-  --color-text: #0f131a;
-  --color-text-muted: #5b6372;
-  --color-text-subtle: #8a91a0;
-  --color-border: #e4e1d8;
-  --color-border-strong: #cfcbbf;
+  --color-surface-elevated: #f5f8f7;
+  --color-overlay: rgba(14, 32, 35, 0.45);
+  --color-text: #0e2023;
+  --color-text-muted: #485a5e;
+  --color-text-subtle: #5c6d70;
+  --color-border: #e3e9e7;
+  --color-border-strong: #d0d9d6;
   --color-accent: var(--color-accent-600);
   --color-accent-fg: #ffffff;
   --color-accent-soft: var(--color-accent-100);
   --color-accent-hover: var(--color-accent-700);
 
-  /* ArvisX — ação principal (ouro) e casca escura. `--color-cta*` é o que o botão
+  /* ArvisX, design "Folha" — ação principal (a tinta escura; o ouro é `--color-brand`,
+     só onde há agente de IA) e o menu solto sobre a névoa. `--color-cta*` é o que o botão
      primário pinta; numa instalação com cor própria, `cssDaMarca` sobrescreve os
      três com o accent calculado, para a marca do revendedor valer no botão também. */
   --color-brand: #d4af37;
-  --color-cta: #d4af37;
-  --color-cta-fg: #0f131a;
-  --color-cta-hover: #c7a32c;
-  --color-cta-leve: #fbf5e2;
-  --color-cta-forte: #a8871f;
-  --color-sidebar: #0f131a;
-  --color-sidebar-fg: #d8dce3;
-  --color-sidebar-muted: #6c7586;
-  --color-sidebar-border: #283a55;
-  --color-sidebar-hover: #151b26;
-  --color-sidebar-active: rgba(212, 175, 55, 0.1);
-  --color-sidebar-active-fg: #f1d47c;
-  --color-neutral-50: #f7f6f2;
-  --color-neutral-100: #f1efe9;
-  --color-neutral-200: #e4e1d8;
-  --color-neutral-300: #cfcbbf;
-  --color-neutral-400: #a8a69d;
-  --color-neutral-500: #8a91a0;
-  --color-neutral-600: #5b6372;
-  --color-neutral-700: #3f4653;
-  --color-neutral-800: #262c37;
-  --color-neutral-900: #0f131a;
-  --color-neutral-950: #07090d;
-  --color-success: #2e8b57;
-  --color-success-bg: rgba(46, 139, 87, 0.12);
-  --color-success-fg: #1f6b41;
-  --color-warning: #c9811b;
-  --color-warning-bg: rgba(201, 129, 27, 0.12);
-  --color-warning-fg: #7d4d0d;
-  --color-error: #c93c3c;
-  --color-error-bg: rgba(201, 60, 60, 0.12);
-  --color-error-fg: #8c2626;
-  --color-info: #2f7fd6;
-  --color-info-bg: rgba(47, 127, 214, 0.12);
-  --color-info-fg: #1f4f85;
-  --shadow-xs: 0 1px 2px 0 rgba(15, 19, 26, 0.04);
-  --shadow-sm: 0 1px 2px 0 rgba(15, 19, 26, 0.05), 0 1px 1px 0 rgba(15, 19, 26, 0.03);
-  --shadow-md: 0 4px 12px -2px rgba(15, 19, 26, 0.06), 0 2px 4px -1px rgba(15, 19, 26, 0.04);
-  --shadow-lg: 0 12px 32px -6px rgba(15, 19, 26, 0.1), 0 4px 12px -2px rgba(15, 19, 26, 0.06);
-  --shadow-xl: 0 24px 48px -12px rgba(15, 19, 26, 0.16), 0 8px 16px -4px rgba(15, 19, 26, 0.08);
+  --color-cta: #0f3d45;
+  --color-cta-fg: #ffffff;
+  --color-cta-hover: #1c5963;
+  --color-cta-leve: #e7ecec;
+  --color-cta-forte: #0f3d45;
+  --color-sidebar: #eef2f1;
+  --color-sidebar-fg: #3b4a4c;
+  --color-sidebar-muted: #5c6d70;
+  --color-sidebar-border: #e3e9e7;
+  --color-sidebar-hover: #e1e7e7;
+  --color-sidebar-active: #ffffff;
+  --color-sidebar-active-fg: #0e2023;
+  --color-neutral-50: #f5f8f7;
+  --color-neutral-100: #e8eeec;
+  --color-neutral-200: #dce4e1;
+  --color-neutral-300: #c4cfcc;
+  --color-neutral-400: #9aa8a8;
+  --color-neutral-500: #76878a;
+  --color-neutral-600: #5c6d70;
+  --color-neutral-700: #485a5e;
+  --color-neutral-800: #2a3b3e;
+  --color-neutral-900: #0e2023;
+  --color-neutral-950: #071113;
+  --color-success: #1b7650;
+  --color-success-bg: rgba(27, 118, 80, 0.12);
+  --color-success-fg: #14593c;
+  --color-warning: #9a5e0c;
+  --color-warning-bg: rgba(154, 94, 12, 0.12);
+  --color-warning-fg: #6f4409;
+  --color-error: #b42f2f;
+  --color-error-bg: rgba(180, 47, 47, 0.1);
+  --color-error-fg: #8a2222;
+  --color-info: #2860c0;
+  --color-info-bg: rgba(40, 96, 192, 0.1);
+  --color-info-fg: #1d4790;
+  --shadow-xs: 0 1px 2px 0 rgba(15, 61, 69, 0.04), 0 4px 12px -6px rgba(15, 61, 69, 0.08);
+  --shadow-sm: 0 1px 2px 0 rgba(15, 61, 69, 0.05), 0 6px 16px -8px rgba(15, 61, 69, 0.12);
+  --shadow-md: 0 4px 12px -4px rgba(15, 61, 69, 0.1), 0 1px 2px 0 rgba(15, 61, 69, 0.05);
+  --shadow-lg: 0 12px 28px -16px rgba(15, 61, 69, 0.24), 0 1px 2px 0 rgba(15, 61, 69, 0.06);
+  --shadow-xl: 0 24px 48px -16px rgba(15, 61, 69, 0.28), 0 4px 12px -4px rgba(15, 61, 69, 0.1);
   --background: var(--color-bg);
   --foreground: var(--color-text);
   --card: var(--color-surface);
@@ -375,63 +379,63 @@
 
 [data-theme="dark"] {
   /* Surfaces (dark — drawn) */
-  --color-bg: #0b0f15;
-  --color-surface: #10151e;
-  --color-surface-elevated: #151b26;
+  --color-bg: #070f11;
+  --color-surface: #0a1517;
+  --color-surface-elevated: #0f1c1e;
   --color-overlay: rgba(0, 0, 0, 0.55);
 
   /* Text (dark) */
-  --color-text: #eef0f3;
-  --color-text-muted: #6c7586;
-  --color-text-subtle: #4a5261;
+  --color-text: #e9f0ef;
+  --color-text-muted: #8a9da0;
+  --color-text-subtle: #5b6b6e;
 
   /* Borders (dark) */
-  --color-border: #1d2531;
-  --color-border-strong: #283a55;
+  --color-border: #17282c;
+  --color-border-strong: #2a474d;
 
   /* Accent stays same hex stops; default shifts up for dark contrast */
-  --color-accent-50: #f2f5f9;
-  --color-accent-100: #dfe5ed;
-  --color-accent-200: #bbc6d6;
-  --color-accent-300: #8e9eb7;
-  --color-accent-400: #657999;
-  --color-accent-500: #455a7a;
-  --color-accent-600: #283a55;
-  --color-accent-700: #243247;
-  --color-accent-800: #222c3d;
-  --color-accent-900: #202835;
-  --color-accent-950: #171d25;
+  --color-accent-50: #f1f6f7;
+  --color-accent-100: #dbe6e9;
+  --color-accent-200: #b3c9cd;
+  --color-accent-300: #80a2a9;
+  --color-accent-400: #517e87;
+  --color-accent-500: #2d5f68;
+  --color-accent-600: #0f3d45;
+  --color-accent-700: #14353b;
+  --color-accent-800: #162e33;
+  --color-accent-900: #172a2e;
+  --color-accent-950: #131f21;
   --color-accent: var(--color-accent-400);
-  --color-accent-fg: #0b0f15;
-  --color-accent-soft: rgba(101, 121, 153, 0.16);
+  --color-accent-fg: #070f11;
+  --color-accent-soft: rgba(81, 126, 135, 0.16);
   --color-accent-hover: var(--color-accent-300);
 
   --color-brand: #d4af37;
-  --color-cta: #d4af37;
-  --color-cta-fg: #0f131a;
-  --color-cta-hover: #e0bc45;
-  --color-cta-leve: rgba(212, 175, 55, 0.14);
-  --color-cta-forte: #e0bc45;
-  --color-sidebar: #0b0f15;
-  --color-sidebar-fg: #d8dce3;
-  --color-sidebar-muted: #6c7586;
-  --color-sidebar-border: #1d2531;
-  --color-sidebar-hover: #151b26;
-  --color-sidebar-active: rgba(212, 175, 55, 0.12);
-  --color-sidebar-active-fg: #f1d47c;
+  --color-cta: #80a2a9;
+  --color-cta-fg: #070f11;
+  --color-cta-hover: #b3c9cd;
+  --color-cta-leve: rgba(128, 162, 169, 0.16);
+  --color-cta-forte: #b3c9cd;
+  --color-sidebar: #070f11;
+  --color-sidebar-fg: #c9d4d3;
+  --color-sidebar-muted: #8a9da0;
+  --color-sidebar-border: #1b2d31;
+  --color-sidebar-hover: #0c181a;
+  --color-sidebar-active: #0f1c1e;
+  --color-sidebar-active-fg: #e9f0ef;
 
   /* Neutrals — greige (11 stops, dark) */
-  --color-neutral-50: #eef0f3;
-  --color-neutral-100: #d8dce3;
-  --color-neutral-200: #a2abb9;
-  --color-neutral-300: #6c7586;
-  --color-neutral-400: #4a5261;
-  --color-neutral-500: #283a55;
-  --color-neutral-600: #1d2531;
-  --color-neutral-700: #151b26;
-  --color-neutral-800: #10151e;
-  --color-neutral-900: #0b0f15;
-  --color-neutral-950: #07090d;
+  --color-neutral-50: #e9f0ef;
+  --color-neutral-100: #c9d4d3;
+  --color-neutral-200: #9fb0b1;
+  --color-neutral-300: #8a9da0;
+  --color-neutral-400: #5b6b6e;
+  --color-neutral-500: #2a474d;
+  --color-neutral-600: #1b2d31;
+  --color-neutral-700: #0f1c1e;
+  --color-neutral-800: #0a1517;
+  --color-neutral-900: #070f11;
+  --color-neutral-950: #050b0c;
 
   /* States (dark) */
   --color-success: #4fa877;
@@ -607,8 +611,8 @@
 
   /* Tipografia */
   --font-sans:
-    var(--font-manrope), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-display: var(--font-archivo), var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+    var(--font-hanken), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Espaçamento. Os valores são px LITERAIS (`--space-6` = 24px), não rem — e
@@ -845,7 +849,7 @@
     background-color: var(--color-bg);
     color: var(--color-text);
     font-family:
-      var(--font-manrope),
+      var(--font-hanken),
       ui-sans-serif,
       system-ui,
       -apple-system,
@@ -863,13 +867,12 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* ArvisX: o título de página fala na Archivo expandida (o letreiro largo do
-     logo). Só a família e a largura vêm daqui; peso e tamanho continuam nas
-     classes de cada tela (`text-2xl font-semibold`), que vencem a base. */
+  /* ArvisX, design "Folha": o título de página fala na mesma Hanken Grotesk do
+     texto, só mais fechada. Peso e tamanho continuam nas classes de cada tela
+     (`text-2xl font-semibold`), que vencem a base. */
   h1 {
-    font-family: var(--font-archivo), var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
-    font-stretch: 112%;
-    letter-spacing: -0.03em;
+    font-family: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.032em;
   }
 
   code,
@@ -1613,4 +1616,90 @@
 
 @media (prefers-reduced-motion: reduce) {
   .cc-ondas-ativa .cc-onda { animation: none; }
+}
+
+/* ---- Design "Folha" · a casca ---------------------------------------------
+   O menu fica solto sobre a névoa (`--color-bg`) e todo o trabalho acontece
+   numa única FOLHA branca, recuada 8px da borda da janela, com fio fino e
+   cantos de 24px. Vale para a casca do app e a do admin (classes `folha` e
+   `folha-topo`); no celular a folha ocupa a tela inteira e nada disto se aplica.
+
+   `--folha-vao` é o que a folha tira da ALTURA da janela (8 + 8 de recuo, 1 + 1
+   de fio). Tela que se dimensiona por `100dvh` (Inbox, quadro do funil, Casos)
+   desconta esta variável — sem o desconto ela mede 18px a mais que a folha e a
+   página ganha uma rolagem que não leva a lugar nenhum.
+
+   Fora de `@layer` de propósito: a posição do topo precisa vencer o utilitário
+   `top-[…]` que o cabeçalho já carrega para o celular. */
+html {
+  --folha-vao: 0px;
+  /* a névoa, guardada com outro nome: dentro da folha `--color-bg` passa a ser
+     o branco (regra logo abaixo), e o topo ainda precisa da cor de fora para
+     tampar o recuo */
+  --folha-nevoa: var(--color-bg);
+}
+/* Dentro da folha o "fundo da página" É a folha. As telas foram escritas quando
+   o fundo era o creme e os cartões o branco (`bg-background` por baixo,
+   `bg-surface` por cima); na Folha as duas coisas são a mesma superfície e quem
+   separa é o fio fino. Trocar o token aqui acerta de uma vez todo
+   `bg-background`, `ring-offset-background` e `from-background` de dentro da
+   folha, em qualquer largura e nos dois temas, sem tocar tela por tela. O que
+   é pintado FORA da folha (menu, login, páginas públicas e tudo que o Radix
+   leva por portal para o `<body>`) continua vendo a névoa. */
+.folha {
+  --color-bg: var(--color-surface);
+}
+@media (width >= 48rem) {
+  html {
+    --folha-vao: 18px;
+  }
+  .folha {
+    margin: 8px 8px 8px 0;
+    border: 1px solid var(--color-border);
+    border-radius: 24px;
+    box-shadow: var(--shadow-xs);
+  }
+  .folha-topo {
+    top: calc(var(--faixas-de-cima, 0px) + 8px);
+    border-radius: 23px 23px 0 0;
+    /* o fio de cima acompanha o topo quando a página rola, e a faixa de 10px
+       tampa o que passaria no recuo entre a folha e a janela */
+    box-shadow:
+      0 -1px 0 0 var(--color-border),
+      0 -10px 0 0 var(--folha-nevoa);
+  }
+  /* os dois cantos de cima continuam redondos quando a página rola por baixo */
+  .folha-topo::before,
+  .folha-topo::after {
+    content: "";
+    position: absolute;
+    top: -10px;
+    width: 24px;
+    height: 34px;
+    pointer-events: none;
+    background:
+      linear-gradient(var(--folha-nevoa), var(--folha-nevoa)) top / 100% 9px no-repeat,
+      radial-gradient(circle at var(--folha-cx) 100%, transparent 23.4px, var(--folha-nevoa) 24px)
+        bottom / 100% 24px no-repeat;
+  }
+  .folha-topo::before {
+    left: -1px;
+    --folha-cx: 100%;
+  }
+  .folha-topo::after {
+    right: -1px;
+    --folha-cx: 0%;
+  }
+}
+
+/* O título de página na folha: 30px, como no desenho. As telas escrevem
+   `text-2xl` (24px) no `<h1>`; de `lg` para cima a folha sobe um degrau da
+   régua (24 → 30) aqui, num lugar só, em vez de tela por tela. O `:where()`
+   mantém a regra restrita a quem já usa o tamanho de título de página — `<h1>`
+   de painel lateral (`text-xl`, `text-sm`) fica como está. */
+@media (width >= 64rem) {
+  .folha main h1:where(.text-2xl) {
+    font-size: 30px;
+    line-height: 1.1;
+  }
 }

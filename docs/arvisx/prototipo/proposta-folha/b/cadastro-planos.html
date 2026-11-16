@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Criar conta · plano</title>
+<meta name="grupo" content="Entrada">
+<meta name="ordem" content="360">
+<meta name="rota" content="/signup">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+  .escolha { max-width: 1024px; margin: 0 auto; padding: 40px 24px; }
+  .escolha .icone-app { width: 64px; height: 64px; border-radius: 18px; background: var(--painel); border: 1px solid var(--linha); display: grid; place-items: center; box-shadow: var(--sombra); }
+  .escolha .icone-app img { width: 44px; height: auto; }
+  .escolha .etapas { margin-top: 24px; text-align: center; font: 600 12px/1 var(--mono); letter-spacing: 0; text-transform: none; color: var(--apoio); }
+  .escolha .etapas b { color: var(--texto); font-weight: 600; }
+  .escolha .etapas i { display: inline-block; width: 28px; height: 1px; background: var(--linha-forte); vertical-align: middle; margin: 0 8px; }
+  .escolha .cab { max-width: 672px; margin: 20px auto 0; text-align: center; }
+  .escolha .cab h1 { font-family: var(--display); font-stretch: 112%; font-weight: 600; letter-spacing: -.03em; font-size: 30px; line-height: 1.1; color: var(--navy); }
+  .escolha .cab p { color: var(--apoio); margin-top: 8px; font-size: 16px; }
+  .escolha .grade { margin-top: 32px; align-items: stretch; }
+  .plano { position: relative; display: flex; flex-direction: column; gap: 12px; padding: 20px; border-width: 2px; }
+  .plano.recomendado { border-color: var(--ouro); box-shadow: var(--sombra-alta); }
+  .plano .selo { position: absolute; top: -12px; left: 16px; height: 22px; padding: 0 10px; border-radius: 11px; background: var(--ouro); color: var(--navy); font: 600 12px/22px var(--sans); letter-spacing: 0; text-transform: none; }
+  .plano h2 { font-family: var(--display); font-stretch: 110%; font-weight: 600; letter-spacing: -.02em; font-size: 18px; }
+  .plano .curta { margin-top: 4px; font-weight: 600; }
+  .plano .quem { margin-top: 4px; color: var(--apoio); }
+  .plano .preco { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; padding: 12px 0; border-top: 1px solid var(--linha); border-bottom: 1px solid var(--linha); }
+  .plano .preco strong { font: 600 24px/1.2 var(--mono); letter-spacing: -.02em; }
+  .plano .preco span { color: var(--apoio); }
+  .plano .tem { display: grid; gap: 6px; }
+  .plano .tem li { display: flex; align-items: flex-start; gap: 8px; }
+  .plano .tem i { font-size: 16px; margin-top: 2px; flex: none; color: var(--ok); }
+  .plano .tem li.nao, .plano .tem li.nao i { color: var(--apoio); }
+  .plano .pe-plano { margin-top: auto; padding-top: 8px; }
+  .plano .btn { white-space: normal; height: auto; min-height: 36px; padding-top: 8px; padding-bottom: 8px; }
+  .escolha .comparar { margin-top: 16px; color: var(--apoio); text-decoration: underline; text-underline-offset: 4px; }
+  .escolha .ja-tem { margin-top: 32px; text-align: center; color: var(--apoio); }
+  .escolha .ja-tem a { color: var(--texto); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+  @media (max-width: 860px) { .escolha { padding: 32px 16px; } .escolha .cab h1 { font-size: 24px; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" href="../folha.css">
+<link rel="stylesheet" href="../paleta-b.css">
+</head>
+<body data-rota="/signup" data-raiz="../..">
+<div class="escolha">
+  <div class="icone-app"><img src="../../marca/arvisx-simbolo-oficial.png" alt=""></div>
+  <p class="etapas"><b>1 · Plano</b><i aria-hidden="true"></i>2 · Seus dados</p>
+  <div class="cab">
+    <h1>Qual plano se encaixa no seu caso?</h1>
+    <p>Escolha o que melhor se encaixa no seu caso e teste por 7 dias. No fim do teste, se gostar, você faz a sua assinatura.</p>
+  </div>
+
+  <ul class="grade c3">
+    <li class="cartao plano">
+      <div>
+        <h2>Essencial</h2>
+        <p class="curta">Atender e organizar.</p>
+        <p class="quem">Quem está começando ou atende com equipe pequena e quer sair do WhatsApp solto.</p>
+      </div>
+      <p class="preco"><strong>59,90 €</strong><span>/ mês · 7 dias de teste</span></p>
+      <ul class="tem">
+        <li><i class="ph-light ph-check"></i><span>Conversas de todos os canais num lugar só</span></li>
+        <li><i class="ph-light ph-check"></i><span>Agenda</span></li>
+        <li><i class="ph-light ph-check"></i><span>Funis de vendas</span></li>
+        <li><i class="ph-light ph-check"></i><span>Contatos e tarefas</span></li>
+        <li><i class="ph-light ph-check"></i><span>Respostas rápidas</span></li>
+        <li><i class="ph-light ph-check"></i><span>Até 3 canais e 5 pessoas</span></li>
+        <li class="nao"><i class="ph-light ph-x"></i><span>Não tem agentes de IA</span></li>
+      </ul>
+      <div class="pe-plano"><button type="button" class="btn secundario bloco">Testar o Essencial por 7 dias</button></div>
+    </li>
+    <li class="cartao plano recomendado">
+      <span class="selo">Recomendado</span>
+      <div>
+        <h2>Standard</h2>
+        <p class="curta">Atender e automatizar com IA.</p>
+        <p class="quem">Equipe que já atende bem e perde tempo respondendo o que se repete.</p>
+      </div>
+      <p class="preco"><strong>129,90 €</strong><span>/ mês · 7 dias de teste</span></p>
+      <ul class="tem">
+        <li><i class="ph-light ph-check"></i><span>Tudo do Essencial</span></li>
+        <li><i class="ph-light ph-check"></i><span>Agentes de IA que respondem e fazem follow-up</span></li>
+        <li><i class="ph-light ph-check"></i><span>Base de conhecimento e fluxos de atendimento</span></li>
+        <li><i class="ph-light ph-check"></i><span>Casos, alertas e controle de uso da IA</span></li>
+        <li><i class="ph-light ph-check"></i><span>Cadastro de empresas e pessoas, e importação de planilhas</span></li>
+        <li><i class="ph-light ph-check"></i><span>Distribuição de atendimento</span></li>
+        <li><i class="ph-light ph-check"></i><span>Até 6 canais e 10 pessoas</span></li>
+        <li><i class="ph-light ph-check"></i><span>A IA usa a credencial que você conecta</span></li>
+      </ul>
+      <div class="pe-plano"><button type="button" class="btn primario bloco">Testar o Standard por 7 dias</button></div>
+    </li>
+    <li class="cartao plano">
+      <div>
+        <h2>Premium</h2>
+        <p class="curta">Operar a empresa inteira.</p>
+        <p class="quem">Empresa que vende, acompanha números e tem equipe e canais crescendo.</p>
+      </div>
+      <p class="preco"><strong>199,90 €</strong><span>/ mês · 7 dias de teste</span></p>
+      <ul class="tem">
+        <li><i class="ph-light ph-check"></i><span>Tudo do Standard</span></li>
+        <li><i class="ph-light ph-check"></i><span>Propostas, produtos e comandas</span></li>
+        <li><i class="ph-light ph-check"></i><span>Campanhas, prospecção e Cold Call</span></li>
+        <li><i class="ph-light ph-check"></i><span>Desempenho, faturamento e honorários</span></li>
+        <li><i class="ph-light ph-check"></i><span>Meta Ads e conversões</span></li>
+        <li><i class="ph-light ph-check"></i><span>Configuração avançada de IA: roteamento entre agentes, memória e ações próprias</span></li>
+        <li><i class="ph-light ph-check"></i><span>Integrações (API, webhooks, Nuvemshop) e marca própria</span></li>
+        <li><i class="ph-light ph-check"></i><span>Canais e pessoas ilimitados</span></li>
+      </ul>
+      <div class="pe-plano"><button type="button" class="btn secundario bloco">Testar o Premium por 7 dias</button></div>
+    </li>
+  </ul>
+
+  <button type="button" class="comparar" aria-expanded="false">Comparar os planos</button>
+
+  <p class="ja-tem">Já tem conta? <a href="#">Entrar</a></p>
+</div>
+<script src="../folha.js"></script>
+</body>
+</html>

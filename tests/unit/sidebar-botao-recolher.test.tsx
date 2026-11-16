@@ -60,12 +60,16 @@ function comoPapel(role: ActiveOrg["role"]) {
   authRef.activeOrg = { orgId: "org-1", name: "Org", role };
 }
 
+// Design "Folha": a linha da logo passou de `h-14` para `h-16` e o rodapé perdeu
+// o `border-t` (menu solto, sem traços). A garantia é a mesma — ONDE o botão
+// vive —, só mudou o gancho: a linha da logo é `.h-16` e o rodapé é o bloco
+// logo depois do menu.
 function linhaDaLogo(): Element | null {
-  return document.querySelector(".h-14");
+  return document.querySelector(".h-16");
 }
 
 function rodape(): Element | null {
-  return document.querySelector(".border-t");
+  return document.querySelector("nav + div");
 }
 
 afterEach(cleanup);
