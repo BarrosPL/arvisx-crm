@@ -85,7 +85,9 @@ services:
   waha:
     image: ${WAHA_IMAGE:-devlikeapro/waha:latest-2026.7.2}
     restart: unless-stopped
-    mem_limit: 1280m
+    # Teto via env (WAHA_MEM_LIMIT), como no docker-compose.prod.yml: em 17/11 o
+    # WAHA encostou em 1.280 MB com 13 sessões e o envio passou a estourar 15 s.
+    mem_limit: ${WAHA_MEM_LIMIT:-1280m}
     environment:
       WAHA_API_KEY: "sha512:${WAHA_API_KEY_SHA512}"
       WHATSAPP_HOOK_URL: http://app:3000/api/v1/webhooks/waha
