@@ -76,20 +76,27 @@ export async function agentesDaEquipeForaDoPlano(
   agentIds: readonly string[],
 ): Promise<Set<string>> {
   if (agentIds.length === 0) return new Set();
-  const { data, error } = await admin
-    .from("ai_agents")
-    .select("id, config")
-    .eq("organization_id", orgId)
-    .in("id", [...agentIds]);
-  if (error) return new Set();
-  const daEquipe = (data ?? [])
-    .filter((a) => {
-      const config = a.config as Record<string, unknown> | null;
-      return config !== null && typeof config === "object" && CHAVE_DE_CONFIG in config;
-    })
-    .map((a) => String(a.id));
-  if (daEquipe.length === 0) return new Set();
-  return (await planoLiberaAEquipePronta(admin, orgId)) ? new Set() : new Set(daEquipe);
+  // ⚠️ O `try` cobre a leitura que LANÇA, não só a que devolve `error`: este
+  // filtro roda dentro do portão de follow-up de TODA empresa, e uma exceção
+  // aqui derrubaria o follow-up de quem nem tem equipe pronta.
+  try {
+    const { data, error } = await admin
+      .from("ai_agents")
+      .select("id, config")
+      .eq("organization_id", orgId)
+      .in("id", [...agentIds]);
+    if (error) return new Set();
+    const daEquipe = (data ?? [])
+      .filter((a) => {
+        const config = a.config as Record<string, unknown> | null;
+        return config !== null && typeof config === "object" && CHAVE_DE_CONFIG in config;
+      })
+      .map((a) => String(a.id));
+    if (daEquipe.length === 0) return new Set();
+    return (await planoLiberaAEquipePronta(admin, orgId)) ? new Set() : new Set(daEquipe);
+  } catch {
+    return new Set();
+  }
 }
 
 /**
@@ -102,13 +109,18 @@ export async function reguaDaEquipeForaDoPlano(
   orgId: string,
   pointerId: string,
 ): Promise<boolean> {
-  const { data, error } = await admin
-    .from("equipe_pronta_perfis")
-    .select("instalacao")
-    .eq("organization_id", orgId)
-    .maybeSingle();
-  if (error || !data) return false;
-  const instalacao = data.instalacao as { followup_flow_pointer_id?: unknown } | null;
-  if (instalacao?.followup_flow_pointer_id !== pointerId) return false;
-  return !(await planoLiberaAEquipePronta(admin, orgId));
+  // Leitura que lança = nada é adiado (a mesma régua da função acima).
+  try {
+    const { data, error } = await admin
+      .from("equipe_pronta_perfis")
+      .select("instalacao")
+      .eq("organization_id", orgId)
+      .maybeSingle();
+    if (error || !data) return false;
+    const instalacao = data.instalacao as { followup_flow_pointer_id?: unknown } | null;
+    if (instalacao?.followup_flow_pointer_id !== pointerId) return false;
+    return !(await planoLiberaAEquipePronta(admin, orgId));
+  } catch {
+    return false;
+  }
 }

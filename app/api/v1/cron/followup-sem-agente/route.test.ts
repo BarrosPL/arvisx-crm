@@ -86,6 +86,14 @@ function admin(opts: {
         };
         return { select: () => c };
       }
+      if (tabela === "ai_agents") {
+        // A leitura da marca da equipe pronta (9808): aqui o agente é do cliente.
+        return {
+          select: () => ({
+            eq: () => ({ in: async () => ({ data: [{ id: AGENTE, config: {} }], error: null }) }),
+          }),
+        };
+      }
       // agent_inbox_items
       let refAtual: string | null = null;
       const consulta: Record<string, unknown> = {

@@ -234,6 +234,18 @@ describe("o motor: follow-up", () => {
     expect(fora.size).toBe(0);
   });
 
+  it("leitura que LANÇA também é falha de leitura: ninguém sai, nada é adiado", async () => {
+    // O filtro roda no portão de follow-up de toda empresa: uma exceção aqui
+    // não pode derrubar o follow-up de quem nem tem equipe pronta.
+    const queLanca = {
+      from() {
+        throw new Error("conexão caiu");
+      },
+    } as never;
+    expect((await agentesDaEquipeForaDoPlano(queLanca, "org", ["da-equipe"])).size).toBe(0);
+    expect(await reguaDaEquipeForaDoPlano(queLanca, "org", "regua")).toBe(false);
+  });
+
   it("⭐ a régua da equipe pronta é adiada fora do Premium; outro fluxo da mesma empresa não", async () => {
     const instalacao = { followup_flow_pointer_id: "regua-da-equipe" };
     const standard = admin({ instalacao, plano: PLANO_STANDARD });

@@ -86,6 +86,7 @@ function makeDb(
           const pointer = tables.followup_flow_pointers?.find((p) => p.id === row.pointer_id);
           return (pointer?.surface ?? "followup") === v;
         }
+        if (k.endsWith("::in")) return (v as unknown[]).includes(row[k.slice(0, -4)]);
         return row[k] === v;
       });
     }
@@ -142,6 +143,10 @@ function makeDb(
       },
       eq(col: string, val: unknown) {
         filters.push([col, val]);
+        return b;
+      },
+      in(col: string, vals: unknown[]) {
+        filters.push([`${col}::in`, vals]);
         return b;
       },
       order(col: string, opts?: { ascending?: boolean }) {
