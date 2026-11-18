@@ -11,9 +11,11 @@ equipe instalada, com o modo (ensaio ou ativo), o que falta para ativar com o
 link que resolve cada pendência, e a situação de cada agente.
 
 A equipe é instalada em ensaio: só os telefones de teste falam com ela. Ativar
-abre para todos os contatos e só fica disponível com tudo pronto; pausar volta
-ao ensaio. Agente que a empresa alterou por conta própria aparece como "editado
-à mão", e instalar por cima pede confirmação.
+abre para todos os contatos e só fica disponível com tudo pronto. Pausar para
+só os quatro agentes da equipe, sem mexer no acesso da IA do número, e Retomar
+os religa. Agente que a empresa alterou por conta própria aparece como "editado
+à mão", e instalar por cima pede confirmação; o mesmo vale para o WhatsApp que
+já tem um roteador com agentes da empresa.
 
 Quem tem o Premium encontra o atalho no fim do onboarding e em IA › Agentes.
 No Essencial e no Standard a tela mostra em que plano a equipe está. Quem sai

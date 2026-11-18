@@ -184,11 +184,15 @@ Instalar, ativar e pausar são de `admin`.
   primeira instalação o bloco "Esta empresa" ainda não cita agenda, funil nem
   base: é o instalador que os cria.
 - **Painel** de quem instalou: modo (ensaio ou ativo), Ativar (só com o
-  checklist inteiro pronto), Pausar (volta ao ensaio), o checklist com o link
+  checklist inteiro pronto), Pausar (para só os quatro agentes; o texto ao
+  lado do botão diz isso) e Retomar, o checklist com o link
   que resolve cada pendência, e um cartão por agente: publicado ou não, versão
   do papel, "editado à mão", atualização disponível com a nota do que mudou.
-- Instalar por cima de agente editado à mão abre uma confirmação com a lista;
-  só "Substituir e instalar" manda `forcar: true`.
+- Instalar por cima de agente editado à mão, ou num WhatsApp que já tem
+  roteador com agentes do cliente, abre UMA confirmação com as duas listas;
+  só "Substituir e instalar" manda `forcar: true`. Quando há roteador e a
+  equipe está em ensaio, a confirmação avisa que o ensaio vale para o número
+  inteiro.
 
 Atalhos, só para quem tem a tela no plano (`equipeProntaNoPlanoDaOrg`; falha
 de leitura = sem atalho): o primeiro card do tour no fim do onboarding e um

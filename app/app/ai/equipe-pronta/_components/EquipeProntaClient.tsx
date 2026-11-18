@@ -39,6 +39,26 @@ export interface AgenteEditado {
   papel: string;
 }
 
+/** O roteador que já atende o canal, como o instalador o devolve no 409. */
+export interface RoteadorNoCanal {
+  id: string;
+  nome: string;
+  de_fora: boolean;
+  fallback: { agent_id: string; nome: string } | null;
+  membros: { agent_id: string; nome: string; intencao: string }[];
+}
+
+/** O que instalar por cima substitui: pede uma confirmação só, com tudo. */
+interface Conflito {
+  agentes: AgenteEditado[];
+  roteador: RoteadorNoCanal | null;
+}
+
+const CODIGOS_DE_CONFIRMACAO = new Set([
+  "equipe_pronta_agentes_editados_a_mao",
+  "equipe_pronta_canal_com_roteador",
+]);
+
 export function EquipeProntaClient({
   estadoInicial,
   opcoes,
@@ -54,8 +74,11 @@ export function EquipeProntaClient({
   const [vista, setVista] = useState<Vista>(estadoInicial.estado === "instalado" ? "painel" : "questionario");
   const [passo, setPasso] = useState<PassoId>(primeiroPassoPendente(estadoInicial.faltam) ?? "negocio");
   const [ocupado, setOcupado] = useState(false);
-  /** Agentes que o cliente editou fora daqui: instalar por cima pede confirmação. */
-  const [editados, setEditados] = useState<AgenteEditado[] | null>(null);
+  /**
+   * O que é do cliente e instalar por cima muda: agentes editados fora daqui
+   * e o roteador que já atende o canal. Pede confirmação antes de `forcar`.
+   */
+  const [conflito, setConflito] = useState<Conflito | null>(null);
 
   async function reler(): Promise<EstadoDaEquipe> {
     const { data } = await apiClient.get<{ data: EstadoDaEquipe }>("/api/v1/ai/equipe-pronta");
@@ -85,13 +108,16 @@ export function EquipeProntaClient({
     setOcupado(true);
     try {
       await apiClient.post("/api/v1/ai/equipe-pronta/instalar", { forcar });
-      setEditados(null);
+      setConflito(null);
       await reler();
       setVista("painel");
     } catch (e) {
-      if (e instanceof ApiError && e.code === "equipe_pronta_agentes_editados_a_mao") {
-        const lista = (e.details as { agentes?: AgenteEditado[] } | undefined)?.agentes;
-        setEditados(Array.isArray(lista) ? lista : []);
+      if (e instanceof ApiError && CODIGOS_DE_CONFIRMACAO.has(e.code)) {
+        const d = (e.details ?? {}) as { agentes?: AgenteEditado[]; roteador?: RoteadorNoCanal };
+        setConflito({
+          agentes: Array.isArray(d.agentes) ? d.agentes : [],
+          roteador: d.roteador && typeof d.roteador === "object" ? d.roteador : null,
+        });
       } else {
         showApiError(e);
         // O instalador pede uma escolha que mora no último passo.
@@ -105,7 +131,7 @@ export function EquipeProntaClient({
     }
   }
 
-  async function mudarModo(acao: "ativar" | "pausar") {
+  async function mudarModo(acao: "ativar" | "pausar" | "retomar") {
     setOcupado(true);
     try {
       await apiClient.post(`/api/v1/ai/equipe-pronta/${acao}`, {});
@@ -118,28 +144,63 @@ export function EquipeProntaClient({
     }
   }
 
-  const confirmacao = editados ? (
+  const roteador = conflito?.roteador ?? null;
+  const confirmacao = conflito ? (
     <div
       className="max-w-2xl space-y-3 rounded-md border border-destructive/40 bg-destructive/5 p-4"
       role="alertdialog"
-      aria-label={t("Substituir alterações feitas à mão")}
+      aria-label={t("Confirmar o que a instalação substitui")}
       data-testid="ep-confirmar-forcar"
     >
-      <p className="text-sm font-medium">
-        {t("Há agentes que foram alterados fora da equipe pronta. Instalar de novo substitui essas alterações.")}
-      </p>
-      {editados.length > 0 ? (
-        <ul className="list-disc pl-5 text-sm">
-          {editados.map((a) => (
-            <li key={a.papel}>{t(estado.agentes.find((x) => x.papel === a.papel)?.nome ?? a.papel)}</li>
-          ))}
-        </ul>
+      {conflito.agentes.length > 0 ? (
+        <div className="space-y-2" data-testid="ep-conflito-agentes">
+          <p className="text-sm font-medium">
+            {t("Há agentes que foram alterados fora da equipe pronta. Instalar de novo substitui essas alterações.")}
+          </p>
+          <ul className="list-disc pl-5 text-sm">
+            {conflito.agentes.map((a) => (
+              <li key={a.papel}>{t(estado.agentes.find((x) => x.papel === a.papel)?.nome ?? a.papel)}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {roteador ? (
+        <div className="space-y-2" data-testid="ep-conflito-roteador">
+          <p className="text-sm font-medium">
+            {t("Este WhatsApp já tem um roteador com agentes que não são da equipe pronta:")}{" "}
+            <span data-testid="ep-conflito-roteador-nome">{roteador.nome}</span>
+          </p>
+          <ul className="list-disc pl-5 text-sm">
+            {roteador.fallback ? (
+              <li data-testid="ep-conflito-fallback">
+                {t("Hoje, quem recebe as conversas que ninguém pegou:")} {roteador.fallback.nome}
+              </li>
+            ) : null}
+            {roteador.membros.map((m) => (
+              <li key={m.agent_id}>
+                {m.nome} ({m.intencao})
+              </li>
+            ))}
+          </ul>
+          <p className="text-sm">
+            {t(
+              "Se você instalar, as conversas que ninguém pegou passam a ir para o Atendimento da equipe pronta. Os agentes que você colocou no roteador continuam nele.",
+            )}
+          </p>
+          {estado.modo === "ensaio" ? (
+            <p className="text-sm" data-testid="ep-conflito-ensaio">
+              {t(
+                "A equipe é instalada em ensaio, e o ensaio vale para o número inteiro: até você ativar, a IA deste WhatsApp só responde aos telefones de teste, inclusive os agentes que já atendem por ele.",
+              )}
+            </p>
+          ) : null}
+        </div>
       ) : null}
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="destructive" disabled={ocupado} onClick={() => instalar(true)} data-testid="ep-forcar">
           {t("Substituir e instalar")}
         </Button>
-        <Button type="button" variant="outline" disabled={ocupado} onClick={() => setEditados(null)}>
+        <Button type="button" variant="outline" disabled={ocupado} onClick={() => setConflito(null)}>
           {t("Manter como está")}
         </Button>
       </div>
@@ -156,6 +217,7 @@ export function EquipeProntaClient({
           ocupado={ocupado}
           aoAtivar={() => mudarModo("ativar")}
           aoPausar={() => mudarModo("pausar")}
+          aoRetomar={() => mudarModo("retomar")}
           aoInstalar={() => instalar(false)}
           aoEditar={() => {
             setPasso("negocio");

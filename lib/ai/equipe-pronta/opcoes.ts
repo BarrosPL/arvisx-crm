@@ -10,6 +10,7 @@
 import type pg from "pg";
 
 import { PROVIDERS_DE_MENSAGEM } from "@/lib/channels/capabilities";
+import { nomeDoCanal } from "@/lib/channels/estado";
 
 export interface OpcoesDaInstalacao {
   canais: { id: string; nome: string; conectado: boolean }[];
@@ -22,7 +23,10 @@ type ComQuery = Pick<pg.Pool, "query">;
 export async function lerOpcoesDaInstalacao(pool: ComQuery, orgId: string): Promise<OpcoesDaInstalacao> {
   const [canais, funis, etapas, tipos] = await Promise.all([
     pool.query(
-      `select id, coalesce(nullif(display_name, ''), phone_number, waha_session_name, provider) as nome, status
+      // O nome é o de `nomeDoCanal`, o mesmo de Conexões: apelido, depois o
+      // número. O identificador da sessão no provedor não é nome de nada e
+      // não sai da camada de canais.
+      `select id, display_name, phone_number, status
          from channel_sessions
         where organization_id=$1 and archived_at is null and provider = any($2::text[])
         order by created_at`,
@@ -46,7 +50,7 @@ export async function lerOpcoesDaInstalacao(pool: ComQuery, orgId: string): Prom
   return {
     canais: canais.rows.map((c) => ({
       id: String(c.id),
-      nome: String(c.nome),
+      nome: nomeDoCanal({ display_name: c.display_name, phone_number: c.phone_number }),
       conectado: c.status === "WORKING",
     })),
     funis: funis.rows.map((f) => ({
