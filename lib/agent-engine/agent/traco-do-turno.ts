@@ -103,6 +103,29 @@ export const MARCA_DE_CORTE = "…[cortado]";
 /** Chaves de provedor que o `scrubMessage` não conhece (ele cobre as de cobrança). */
 const CHAVE_DE_PROVEDOR = /\b(?:sk-|AIza|github_pat_|gh[pousr]_)[\w-]{8,}/g;
 
+/** JWT: três blocos base64url, e o primeiro é sempre `{"` codificado (`eyJ`). */
+const JWT = /\beyJ[\w-]{8,}\.[\w-]{4,}\.[\w-]+/g;
+
+/** `Bearer <credencial>` — o que vem depois é segredo, seja qual for a forma. */
+const BEARER = /\b(Bearer\s+)[\w.~+/=-]{8,}/gi;
+
+/**
+ * Credencial em parâmetro de URL (`?token=…`, `&signature=…`): link assinado
+ * de arquivo é o caso comum, e quem tem o link tem o arquivo.
+ */
+const SEGREDO_NA_URL =
+  /([?&](?:token|access_token|signature|sig|x-amz-signature|api_key|apikey)=)[^&\s"'#\\]+/gi;
+
+/**
+ * Carimbo de tempo em MILISSEGUNDOS: 13 dígitos começando em 1 (de 2001 a
+ * 2033), sem dígito colado. O padrão de CPF do `scrubMessage` pega os 11
+ * primeiros e devolvia `[CPF]00` — o horário, que é o que se lê numa
+ * investigação, sumia. Telefone não tem esta forma: o DDI 1 tem 11 dígitos, e
+ * o brasileiro de 13 começa em 55. O grupo de captura faz o `split` devolver o
+ * carimbo nas posições ímpares.
+ */
+const CARIMBO_EM_MS = /(?<![\d.+-])(1\d{12})(?!\d)/;
+
 /**
  * A higiene do único texto livre do traço que o LEITOR devolve.
  *
@@ -112,7 +135,19 @@ const CHAVE_DE_PROVEDOR = /\b(?:sk-|AIza|github_pat_|gh[pousr]_)[\w-]{8,}/g;
  * nome não tem formato, e prometer isso seria mentir.
  */
 export function higienizarTextoDoTraco(texto: string): string {
-  return scrubMessage(texto.replace(CHAVE_DE_PROVEDOR, "[CHAVE]"));
+  const semCredencial = texto
+    // JWT antes de tudo: os três blocos dele têm dígito e ponto, e a cadeia de
+    // telefone/CPF comeria pedaço e deixaria o resto passar.
+    .replace(JWT, "[CHAVE]")
+    .replace(BEARER, "$1[CHAVE]")
+    .replace(SEGREDO_NA_URL, "$1[CHAVE]")
+    .replace(CHAVE_DE_PROVEDOR, "[CHAVE]");
+  // O carimbo de tempo em milissegundos sai do texto ANTES do `scrubMessage`
+  // e volta intacto (posições ímpares do `split`): é horário, não documento.
+  return semCredencial
+    .split(CARIMBO_EM_MS)
+    .map((trecho, i) => (i % 2 === 1 ? trecho : scrubMessage(trecho)))
+    .join("");
 }
 
 /**
@@ -293,9 +328,40 @@ function ehRecusaDeNegocio(result: unknown): boolean {
   if (typeof result !== "object" || result === null || Array.isArray(result)) return false;
   const r = result as Record<string, unknown>;
   if (r.ok === true) return false;
+  // Erro técnico vestido de recusa não é recusa: a ferramenta QUEBROU.
+  if (ehFalhaTecnica(result)) return false;
   if (r.ok === false) return typeof r.codigo === "string" && r.error === undefined;
   if (typeof r.motivo !== "string" || r.motivo.trim() === "") return false;
   return typeof r.mensagem === "string" || Object.values(r).some((v) => v === false);
+}
+
+/**
+ * Códigos que têm a FORMA de recusa (`motivo`/`codigo`) e são erro técnico: a
+ * ferramenta não disse "não", ela não conseguiu responder.
+ */
+const CODIGOS_DE_FALHA_TECNICA: ReadonlySet<string> = new Set(["internal_error", "erro_interno"]);
+
+/**
+ * A marca que as ferramentas põem no retorno quando o que capturaram foi erro
+ * de servidor (5xx) e não limite de negócio — `semDerrubarOTurno`, em
+ * `lib/mcp/tools/agendamento.ts`. O código de um 5xx pode ser qualquer um; a
+ * marca é o que não depende de lista.
+ */
+export const MARCA_DE_FALHA_TECNICA = "falha_tecnica";
+
+/**
+ * A FALHA TÉCNICA com cara de recusa: o retorno tem `motivo`/`codigo`, mas o
+ * que aconteceu foi erro interno. No traço isso é `falhou` — contar como
+ * `recusado` esconderia defeito atrás de "a ferramenta disse não".
+ *
+ * `ok: true` explícito nunca é falha.
+ */
+function ehFalhaTecnica(result: unknown): boolean {
+  if (typeof result !== "object" || result === null || Array.isArray(result)) return false;
+  const r = result as Record<string, unknown>;
+  if (r.ok === true) return false;
+  if (r[MARCA_DE_FALHA_TECNICA] === true) return true;
+  return [r.motivo, r.codigo].some((c) => typeof c === "string" && CODIGOS_DE_FALHA_TECNICA.has(c));
 }
 
 /** O código da recusa — é ele que diz POR QUE a ferramenta disse não. */
@@ -368,7 +434,7 @@ export function envolverFerramentasComTraco(
           ? "bloqueada"
           : ehRecusaDeNegocio(resultado)
             ? "recusado"
-            : ehResultadoDeFalha(resultado)
+            : ehResultadoDeFalha(resultado) || ehFalhaTecnica(resultado)
               ? "falhou"
               : "ok";
         coletor.registrar({
@@ -379,7 +445,10 @@ export function envolverFerramentasComTraco(
               ? null
               : estado === "recusado"
                 ? motivoDaRecusa(resultado)
-                : mensagemDoResultado(resultado),
+                : // Falha técnica com forma de recusa não traz `error`: o que
+                  // há para ler é o código.
+                  (mensagemDoResultado(resultado) ??
+                  (ehFalhaTecnica(resultado) ? motivoDaRecusa(resultado) : null)),
           duracao_ms: agora() - inicio,
           // O RETORNO, resumido — em todo estado. É o que faltava para provar a
           // causa de uma recusa sem reproduzir o turno.

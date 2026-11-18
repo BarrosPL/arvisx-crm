@@ -738,8 +738,14 @@ async function semDerrubarOTurno<T>(
     return await fn();
   } catch (e) {
     if (!(e instanceof ApiError)) throw e; // infra sobe: não é limite de negócio.
+    // Erro de SERVIDOR (5xx, ou o código genérico de erro interno) não é a
+    // agenda dizendo "não": é a agenda quebrada. O modelo ouve o mesmo ensino,
+    // mas o retorno leva a marca que o traço do turno lê para registrar
+    // `falhou` em vez de `recusado` (`MARCA_DE_FALHA_TECNICA`).
+    const tecnica = e.status >= 500 || e.code === "internal_error" || e.code === "erro_interno";
     return {
       [chave]: false,
+      ...(tecnica ? { falha_tecnica: true } : {}),
       motivo: e.code,
       mensagem:
         ENSINO_POR_CODIGO[e.code] ??

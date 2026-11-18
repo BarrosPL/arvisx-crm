@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { McpContext } from "@/lib/mcp/types";
 import type { ToolSet } from "@/lib/agent-engine/edge/llm/run-model-call";
+import { ApiError } from "@/lib/api/types";
 
 /**
  * A RECUSA DE TIPO DE AGENDA ENSINA O QUE EXISTE — e o traço do turno a mostra.
@@ -193,10 +194,12 @@ function contexto(supabase: SupabaseClient): McpContext {
   };
 }
 
+// Cada tipo leva o MESMO `tem_horarios` de `crm_list_event_types`: a recusa
+// não pode mandar o modelo para o tipo de fábrica, que não tem horário.
 const TIPOS_VALIDOS = [
-  { slug: "primeira-conversa", nome: "Primeira conversa" },
-  { slug: "reuniao", nome: "Reunião" },
-  { slug: "turma-aberta", nome: "Turma aberta" },
+  { slug: "primeira-conversa", nome: "Primeira conversa", tem_horarios: true },
+  { slug: "reuniao", nome: "Reunião", tem_horarios: false },
+  { slug: "turma-aberta", nome: "Turma aberta", tem_horarios: true },
 ];
 
 beforeEach(() => {
@@ -303,10 +306,15 @@ describe("a recusa `tipo_desconhecido` devolve `tipos_validos`", () => {
 
     await crmFindFreeSlots.handler({ event_type_slug: "nao-existe" }, contexto(cliente));
 
-    const lista = consultas.at(-1)!;
-    expect(lista.tabela).toBe("calendar_event_types");
+    // A última leitura de tipos é a da lista; depois dela vêm as duas do
+    // `tem_horarios` (jornada e agenda de serviço).
+    const lista = consultas.filter((c) => c.tabela === "calendar_event_types").at(-1)!;
     expect(lista.filtros).toContainEqual(["eq", "organization_id", ORG]);
     expect(lista.filtros).toContainEqual(["eq", "is_active", true]);
+    // Toda consulta filtra a organização: o client é service role.
+    for (const c of consultas) {
+      expect(c.filtros).toContainEqual(["eq", "organization_id", ORG]);
+    }
   });
 });
 
@@ -365,6 +373,55 @@ describe("`event_type_id` como alternativa ao slug", () => {
 
 describe("o traço do turno mostra a recusa e o que ela devolveu", () => {
   type Executavel = { execute: (input: unknown, options: unknown) => Promise<unknown> };
+
+  async function marcarComErro(erro: unknown) {
+    vi.mocked(handlers.marcarAgendamentoHandler).mockRejectedValueOnce(erro);
+    const { cliente } = bancoDoEnsaio();
+    const ctx = contexto(cliente);
+    const tools = {
+      crm_book_appointment: {
+        description: "teste",
+        parameters: {},
+        execute: (input: unknown) => crmBookAppointment.handler(input as never, ctx),
+      },
+    } as unknown as ToolSet;
+    const coletor = criarColetorDeFerramentas();
+    const envolvidas = envolverFerramentasComTraco(tools, coletor);
+    const devolvido = (await (envolvidas.crm_book_appointment as Executavel).execute(
+      { event_type_slug: "primeira-conversa", starts_at: "2026-11-21T12:30:00.000Z", contact_id: CONTATO },
+      {},
+    )) as Record<string, unknown>;
+    return { devolvido, chamada: coletor.listar()[0]! };
+  }
+
+  it("⭐ erro de SERVIDOR na marcação (5xx) é `falhou`, não `recusado` — e o turno não cai", async () => {
+    const { devolvido, chamada } = await marcarComErro(
+      new ApiError(503, "agenda_provedor_fora", undefined, "req-1", "provedor fora do ar"),
+    );
+
+    // O modelo continua ouvindo o que fazer, sem exceção.
+    expect(devolvido.marcado).toBe(false);
+    expect(typeof devolvido.mensagem).toBe("string");
+    expect(chamada.estado).toBe("falhou");
+    expect(chamada.erro).toBe("agenda_provedor_fora");
+  });
+
+  it("`internal_error` também é `falhou`, qualquer que seja o status", async () => {
+    const { chamada } = await marcarComErro(new ApiError(400, "internal_error", undefined, "req-1"));
+
+    expect(chamada.estado).toBe("falhou");
+    expect(chamada.erro).toBe("internal_error");
+  });
+
+  it("limite de negócio (409) continua `recusado`", async () => {
+    const { devolvido, chamada } = await marcarComErro(
+      new ApiError(409, "agenda_horario_indisponivel", undefined, "req-1"),
+    );
+
+    expect(devolvido).not.toHaveProperty("falha_tecnica");
+    expect(chamada.estado).toBe("recusado");
+    expect(chamada.erro).toBe("agenda_horario_indisponivel");
+  });
 
   it("⭐ o ensaio: slug errado → `recusado`, com `tipos_validos` legível no resultado", async () => {
     const { cliente } = bancoDoEnsaio();

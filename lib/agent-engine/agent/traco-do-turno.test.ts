@@ -8,6 +8,7 @@ import {
   LIMITE_DO_RESULTADO,
   MARCA_DE_CORTE,
   resumirResultado,
+  higienizarTextoDoTraco,
   type EntradaDoTraco,
 } from "./traco-do-turno";
 import type { ToolSet } from "../edge/llm/run-model-call";
@@ -412,6 +413,87 @@ describe("recusa de negócio e resultado no traço", () => {
     });
 
     expect(chamada.estado).toBe("bloqueada");
+  });
+
+  /**
+   * ERRO TÉCNICO COM CARA DE RECUSA. `semDerrubarOTurno` (agendamento) devolve
+   * `{ marcado: false, motivo, mensagem }` também quando o que houve foi erro
+   * de servidor. Contado como `recusado`, um defeito da agenda se escondia
+   * atrás de "a ferramenta disse não".
+   */
+  it.each([
+    [
+      "`motivo: internal_error`",
+      { marcado: false, motivo: "internal_error", mensagem: "não consegui completar agora" },
+      "internal_error",
+    ],
+    [
+      "`motivo: erro_interno` na consulta",
+      { horarios: [], motivo: "erro_interno", mensagem: "avise que alguém confirma" },
+      "erro_interno",
+    ],
+    ["`ok: false` + `codigo: erro_interno`", { ok: false, codigo: "erro_interno" }, "erro_interno"],
+    [
+      "5xx com código próprio, marcado por quem capturou",
+      { marcado: false, falha_tecnica: true, motivo: "agenda_google_fora", mensagem: "avise" },
+      "agenda_google_fora",
+    ],
+  ])("erro técnico não é recusa: %s vira `falhou`", async (_nome, retorno, codigo) => {
+    const { devolvido, chamada } = await registrar(retorno);
+
+    expect(devolvido).toBe(retorno);
+    expect(chamada.estado).toBe("falhou");
+    // Não há `error` nesse formato: o que se lê é o código.
+    expect(chamada.erro).toBe(codigo);
+    expect(chamada.resultado).toBe(JSON.stringify(retorno));
+  });
+
+  it("a marca de falha técnica não vira falha quando a ferramenta diz `ok: true`", async () => {
+    const { chamada } = await registrar({ ok: true, falha_tecnica: true, motivo: "erro_interno" });
+
+    expect(chamada.estado).toBe("ok");
+  });
+
+  it("JWT, Bearer e segredo em URL não ficam no resumo", async () => {
+    const jwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzaW50ZXRpY28ifQ.c2ludGV0aWNvLW51bmNhLXVzYWRv";
+    const { chamada } = await registrar({
+      ok: true,
+      sessao: jwt,
+      cabecalho: "Bearer segredo-sintetico-0000",
+      arquivo: "https://exemplo.test/f/a.pdf?token=tok-sintetico-1&v=2&signature=assin-sintetica-2",
+    });
+
+    expect(chamada.resultado).not.toContain("eyJhbGciOiJIUzI1NiJ9");
+    expect(chamada.resultado).not.toContain("c2ludGV0aWNv");
+    expect(chamada.resultado).not.toContain("segredo-sintetico");
+    expect(chamada.resultado).not.toContain("tok-sintetico");
+    expect(chamada.resultado).not.toContain("assin-sintetica");
+    // O que não é segredo fica: o caminho do arquivo e o parâmetro comum.
+    expect(chamada.resultado).toContain("https://exemplo.test/f/a.pdf?token=[CHAVE]&v=2&signature=[CHAVE]");
+    expect(chamada.resultado).toContain("Bearer [CHAVE]");
+  });
+
+  it("carimbo de tempo em milissegundos fica inteiro; CPF e telefone continuam saindo", async () => {
+    const { chamada } = await registrar({
+      ok: true,
+      criado_em_ms: 1763480000123,
+      texto: "em 1763480000123 ligou",
+      cpf: "52998224725",
+      telefone: "5511999032010",
+    });
+
+    expect(chamada.resultado).toContain('"criado_em_ms":1763480000123');
+    expect(chamada.resultado).toContain("em 1763480000123 ligou");
+    expect(chamada.resultado).not.toContain("[CPF]00");
+    expect(chamada.resultado).not.toContain("52998224725");
+    expect(chamada.resultado).not.toContain("999032010");
+  });
+
+  it("a higiene é idempotente: o leitor a reaplica sobre o que já está gravado", () => {
+    const cru = '{"ts":1763480000123,"url":"https://x.test/a?token=abc12345","tel":"+55 11 99903-2010"}';
+    const uma = higienizarTextoDoTraco(cru);
+
+    expect(higienizarTextoDoTraco(uma)).toBe(uma);
   });
 
   it.each([
