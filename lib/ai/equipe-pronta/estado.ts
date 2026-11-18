@@ -28,6 +28,7 @@ import {
   lerPerfil,
   type AgenteExaminado,
 } from "./instalar";
+import { renderizarAgente } from "./renderizar";
 import { PASSOS_DA_EQUIPE, type PapelId } from "./tipos";
 
 /** O slug do modelo genérico em `lib/propostas/modelos/catalogo-base.ts`. */
@@ -57,7 +58,13 @@ export interface AgenteNoEstado extends AgenteExaminado {
   nome: string;
   descricao: string;
   versao_do_papel: number;
-  /** O texto que o renderizador geraria agora — a tela de revisão o mostra. */
+  /**
+   * O texto que o renderizador geraria AGORA para este agente — é o que a tela
+   * de revisão mostra antes de instalar. `null` enquanto o questionário não
+   * tem o mínimo. Antes da primeira instalação o bloco "Esta empresa" ainda não
+   * traz agenda, funil nem base: eles são criados pelo instalador.
+   */
+  texto_gerado: string | null;
   atualizacao_disponivel: { de: number; para: number; notas: string } | null;
 }
 
@@ -307,15 +314,14 @@ export async function lerEstadoDaEquipe(
       versao_do_papel_instalada: instalacao.agentes[p.id]?.versao_do_papel ?? null,
     }));
     const checklist: ItemDoChecklist[] = [];
+    const textos = new Map<PapelId, string>();
 
     if (lido.ok) {
-      exame = await examinarAgentes(
-        db,
-        orgId,
-        lido.perfil,
-        instalacao,
-        await contextoDoQueExiste(db, orgId, instalacao),
-      );
+      const contexto = await contextoDoQueExiste(db, orgId, instalacao);
+      exame = await examinarAgentes(db, orgId, lido.perfil, instalacao, contexto);
+      for (const papel of PAPEIS) {
+        textos.set(papel.id, renderizarAgente(papel, lido.perfil, contexto).system_prompt);
+      }
       const itens = await Promise.all([
         itemDaCredencial(db, orgId, portas),
         itemDaBase(db, orgId, instalacao, portas),
@@ -337,6 +343,7 @@ export async function lerEstadoDaEquipe(
         nome: papel.nomePadrao,
         descricao: papel.descricao,
         versao_do_papel: papel.versao,
+        texto_gerado: textos.get(papel.id) ?? null,
         atualizacao_disponivel:
           instalada !== null && instalada < papel.versao
             ? { de: instalada, para: papel.versao, notas: papel.notasDaVersao }

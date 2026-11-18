@@ -130,6 +130,7 @@ import { IDS_DE_PROVEDOR } from "@/lib/ai/pontos/provedores";
 import {
   MENSAGEM_IA_FORA_DO_PLANO,
   contextoDoOnboarding,
+  equipeProntaNoPlanoDaOrg,
   iaNoPlanoDaOrg,
 } from "@/lib/onboarding/contexto";
 import { oQueMaisExiste } from "@/lib/onboarding/o-que-mais-existe";
@@ -186,6 +187,32 @@ describe("a leitura do plano vira o contexto do onboarding", () => {
     expect(segmentos).not.toContain("setup-ai");
     expect(segmentos).not.toContain("testar");
     expect(segmentos).toEqual(expect.arrayContaining(["welcome", "connect-whatsapp", "funil", "invite-team"]));
+  });
+});
+
+describe("o atalho da Equipe de IA pronta segue o plano", () => {
+  it("⭐ plano que libera a tela (completa, ou empresa isenta) = mostra; lista sem a tela = não mostra", async () => {
+    cena.leitura = { tipo: "plano", interface: { preset: "completa" } };
+    expect(await equipeProntaNoPlanoDaOrg(ORG)).toBe(true);
+    cena.leitura = ISENTA;
+    expect(await equipeProntaNoPlanoDaOrg(ORG)).toBe(true);
+
+    cena.leitura = ESSENCIAL;
+    expect(await equipeProntaNoPlanoDaOrg(ORG)).toBe(false);
+    cena.leitura = {
+      tipo: "plano",
+      interface: { preset: "simplificada", destinos: ["/app/inbox", "/app/ai/agents"] },
+    };
+    expect(await equipeProntaNoPlanoDaOrg(ORG)).toBe(false);
+  });
+
+  it("⭐ leitura em FALHA, ou que lança = NÃO mostra (o oposto do roteiro de IA, de propósito)", async () => {
+    // Um atalho a menos não tira nada de ninguém; um atalho a mais leva quem
+    // não tem o plano a uma tela fechada.
+    cena.leitura = FALHA;
+    expect(await equipeProntaNoPlanoDaOrg(ORG)).toBe(false);
+    cena.leituraLanca = true;
+    expect(await equipeProntaNoPlanoDaOrg(ORG)).toBe(false);
   });
 });
 

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { loadOnboardingState } from "@/app/actions/onboarding/_shared";
 import { resumoDoOnboarding } from "@/lib/onboarding/passos";
 import { createClient } from "@/lib/supabase/server";
-import { contextoDoOnboarding } from "@/lib/onboarding/contexto";
+import { contextoDoOnboarding, equipeProntaNoPlanoDaOrg } from "@/lib/onboarding/contexto";
 import { oQueMaisExiste } from "@/lib/onboarding/o-que-mais-existe";
 import { DoneClient } from "./_client";
 
@@ -40,7 +40,10 @@ export default async function DonePage() {
   return (
     <DoneClient
       itens={itens}
-      pecas={oQueMaisExiste({ iaNoPlano: contexto.iaNoPlano })}
+      pecas={oQueMaisExiste({
+        iaNoPlano: contexto.iaNoPlano,
+        equipeProntaNoPlano: await equipeProntaNoPlanoDaOrg(activeOrg.orgId),
+      })}
       noAr={noAr}
       iaNoPlano={contexto.iaNoPlano}
     />

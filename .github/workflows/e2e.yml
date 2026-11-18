@@ -799,6 +799,11 @@ jobs:
       # global não a alcança no meio.
       # MEDIDA no run 37483721555 (SHA bdc8f2ae9, 06/10/2026): 1,2 min de caso;
       # SUITE_SEGUNDOS da parte 1 = 853.
+      # `equipe-pronta` [P0] (ArvisX, 9808) fica ao lado de `cobranca-asaas`: as
+      # duas ligam `MODULO_COBRANCA` na instalação e o devolvem no fim, e por
+      # isso não podem rodar em partes paralelas. Não usa dublê nem serviço
+      # externo: planos, empresas e canal vêm pelo service role. PREVISÃO, não
+      # medida: ~2 min.
       SPECS_PARTE_1: >-
         banco-externo-receitas.spec.ts
         conversoes-reprocessamento.spec.ts
@@ -823,6 +828,7 @@ jobs:
         notificacoes-diz-o-que-falta.spec.ts
         notificacoes-tela-bloqueada.spec.ts
         cobranca-asaas.spec.ts
+        equipe-pronta.spec.ts
         relogio-http-cron-externo.spec.ts
         j20-elegibilidade-respondi.spec.ts j20-elegibilidade-followup.spec.ts
         j20-elegibilidade-atendimento-manual.spec.ts

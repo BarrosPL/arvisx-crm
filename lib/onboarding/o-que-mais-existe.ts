@@ -210,10 +210,38 @@ export interface PecaDoSistema {
   comoFunciona: string[];
 }
 
-export function oQueMaisExiste(opcoes: { iaNoPlano?: boolean } = {}): PecaDoSistema[] {
+/**
+ * A Equipe de IA pronta (ArvisX, 9808): o atalho de quem tem o plano que a
+ * libera. Vai na FRENTE do tour: para essa empresa é o caminho mais curto até
+ * ter atendimento, e os outros cards explicam peças que a equipe já usa.
+ *
+ * Cada passo é o que a tela `/app/ai/equipe-pronta` faz de verdade: o
+ * questionário salva a cada passo, o instalador publica os quatro agentes em
+ * ensaio (`fn_configurar_pre_go_live_canal`), e ativar exige o checklist pronto.
+ */
+const PECA_DA_EQUIPE_PRONTA: (typeof CURADORIA)[number] = {
+  href: "/app/ai/equipe-pronta",
+  comoChamar: "A equipe pronta",
+  porQue: "Quatro agentes já escritos: você responde sobre o seu negócio e eles saem instalados.",
+  comoFunciona: [
+    "Você responde um questionário curto sobre a empresa",
+    "A instalação cria os quatro agentes, a base de conhecimento e o retorno a quem sumiu",
+    "A equipe começa em ensaio: só os telefones de teste falam com ela",
+    "Com tudo pronto, você ativa para todos os contatos",
+  ],
+};
+
+export function oQueMaisExiste(
+  opcoes: { iaNoPlano?: boolean; equipeProntaNoPlano?: boolean } = {},
+): PecaDoSistema[] {
   const porHref = new Map(NAV_DESTINATIONS.map((d) => [d.href as string, d]));
   // `iaNoPlano` ausente = o tour de sempre (quem tem IA não muda).
-  const curadoria = opcoes.iaNoPlano === false ? CURADORIA_SEM_IA : CURADORIA;
+  const base = opcoes.iaNoPlano === false ? CURADORIA_SEM_IA : CURADORIA;
+  // Só para quem tem a tela no plano, e nunca para quem não tem IA nenhuma.
+  const curadoria =
+    opcoes.equipeProntaNoPlano === true && opcoes.iaNoPlano !== false
+      ? [PECA_DA_EQUIPE_PRONTA, ...base]
+      : base;
   return curadoria.flatMap((c) => {
     const d = porHref.get(c.href);
     // Destino que saiu do registro não vira card órfão apontando para o vazio.

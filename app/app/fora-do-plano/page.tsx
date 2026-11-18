@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { roleAtLeast } from "@/lib/auth/types";
+import { DESTINO_DA_EQUIPE_PRONTA } from "@/lib/ai/equipe-pronta/constantes";
 import { destinoDaPagina } from "@/lib/cobranca/rotas-do-plano";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { NAV_CATALOG } from "@/lib/navigation/catalogo";
@@ -43,6 +44,13 @@ export default async function ForaDoPlanoPage() {
             : t("Esta tela não faz parte do plano da sua empresa.")}{" "}
           {t("Nada foi apagado: o que já existe continua guardado e volta quando o plano incluir esta tela.")}
         </p>
+        {destino === DESTINO_DA_EQUIPE_PRONTA ? (
+          <p className="text-sm" data-testid="fora-do-plano-equipe-pronta">
+            {t(
+              "A Equipe de IA pronta está no plano Premium: SDR, Agendamento, Proposta e Recuperador de vendas — você responde o questionário e ativa.",
+            )}
+          </p>
+        ) : null}
         {administra ? (
           <div className="flex flex-wrap gap-2">
             <Button asChild>

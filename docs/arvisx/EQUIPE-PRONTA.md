@@ -191,9 +191,46 @@ Nunca é automático.
   destino padrão passa a ser o agente de Atendimento e a continuidade é ligada.
   Os outros membros do roteador não são mexidos.
 
+## A tela
+
+`/app/ai/equipe-pronta` (`app/app/ai/equipe-pronta/`), para `manager` ou acima.
+Instalar, ativar e pausar são de `admin`.
+
+- **Questionário em seis passos** (`lib/ai/equipe-pronta/questionario.ts`):
+  negócio, atendente, como vende, perguntas e regras, recuperação e respostas,
+  onde instalar. "Salvar e continuar" grava o rascunho do passo (os blocos
+  dele, e só eles). Quem sai no meio volta no primeiro passo que falta.
+- **Revisão**: o texto que cada agente vai receber (`texto_gerado` no estado,
+  feito pelo mesmo renderizador do instalador) e o botão Instalar. Antes da
+  primeira instalação o bloco "Esta empresa" ainda não cita agenda, funil nem
+  base: é o instalador que os cria.
+- **Painel** de quem instalou: modo (ensaio ou ativo), Ativar (só com o
+  checklist inteiro pronto), Pausar (para só os quatro agentes; o texto ao
+  lado do botão diz isso) e Retomar, o checklist com o link
+  que resolve cada pendência, e um cartão por agente: publicado ou não, versão
+  do papel, "editado à mão", atualização disponível com a nota do que mudou.
+- Instalar por cima de agente editado à mão, ou num WhatsApp que já tem
+  roteador com agentes do cliente, abre UMA confirmação com as duas listas;
+  só "Substituir e instalar" manda `forcar: true`. Quando o WhatsApp já
+  atende clientes (409 `canal_em_producao`), a mesma confirmação diz, em
+  linguagem simples, que durante o ensaio a IA só responde os números de
+  teste, e mostra os agentes que atendem por ele e quantas conversas a IA
+  respondeu nos últimos 7 dias; sem nada a substituir, o botão é "Instalar
+  mesmo assim".
+
+Atalhos, só para quem tem a tela no plano (`equipeProntaNoPlanoDaOrg`; falha
+de leitura = sem atalho): o primeiro card do tour no fim do onboarding e um
+link em IA › Agentes. Fora do plano a tela é `/app/fora-do-plano`, que diz em
+que plano a equipe está; e IA › Agentes avisa quando os agentes da equipe
+estão pausados pelo plano (a mesma pergunta que o motor faz,
+`agentesDaEquipeForaDoPlano`).
+
+Jornada pela tela: `tests/e2e/equipe-pronta.spec.ts`.
+
 ## O que falta
 
-- A tela com o questionário em passos, a revisão do texto de cada agente, o
-  checklist com links e os botões de instalar, ativar e pausar.
-- O atalho no onboarding e na lista de agentes.
-- Os textos de plano que citam agentes.
+- O texto do checklist e as notas de versão dos papéis saem do servidor em
+  português: em espanhol, a moldura da tela é traduzida e essas frases não.
+- Os textos dos planos em `cobranca_planos` (banco) não foram alterados: o
+  texto novo do Premium está em `docs/arvisx/PLANOS.md`, para colar em
+  /admin/cobranca.
