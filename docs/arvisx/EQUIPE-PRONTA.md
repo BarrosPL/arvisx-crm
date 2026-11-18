@@ -68,9 +68,30 @@ Atendimento, os quatro membros entram, e os membros que o cliente pôs ficam
 como estão. O que foi aceito fica guardado (`instalacao.roteador_confirmado`):
 instalar de novo só pergunta outra vez se o roteador mudou.
 
-Quando há também agente editado à mão, o 409 é
-`equipe_pronta_agentes_editados_a_mao` e traz as duas listas (`agentes` e
-`roteador`), para a tela confirmar tudo de uma vez.
+### Canal que já atende clientes
+
+O ensaio é o pré-lançamento do canal e vale para o número inteiro. Por isso,
+quando a instalação vai pôr o canal em ensaio e ele está aberto, ela lê
+(`canalEmProducao`):
+
+- os agentes publicados direto nesse canal
+  (`ai_agent_versions.channel_session_id`) que não são da equipe pronta, não
+  estão pausados nem arquivados;
+- quantas conversas do canal tiveram resposta da IA nos últimos 7 dias.
+
+Com qualquer um dos dois, a resposta é 409 `equipe_pronta_canal_em_producao`,
+com `details.canal` (`{ agentes, conversas_recentes }`), e nada é gravado.
+Canal que já está em pré-lançamento não pergunta, nem a equipe que já foi
+ativada (instalar de novo não fecha o canal).
+
+### Uma recusa só
+
+As três recusas (`agentes_editados_a_mao`, `canal_com_roteador`,
+`canal_em_producao`) saem juntas: o código é o do primeiro motivo, nessa
+ordem, e `details` traz `agentes`, `roteador` e `canal`, cada um quando
+existe. `forcar: true` vale para as três. A decisão é
+`recusaAntesDeInstalar`, pura, medida em
+`lib/ai/equipe-pronta/instalar.test.ts`.
 
 O modelo de proposta é o `proposta_comercial` do catálogo base
 (`lib/propostas/modelos/catalogo-base.ts`), que vale para toda empresa sem
