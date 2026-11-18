@@ -38,8 +38,8 @@ import { allTools } from "@/lib/mcp/tools";
 const BASE = "linha de base, medida quando a cerca nasceu (2026-10-31)";
 
 const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
-  "crm_list_event_types": { tokens: 204, motivo: BASE },
-  "crm_find_free_slots": { tokens: 859, motivo: BASE },
+  "crm_list_event_types": { tokens: 227, motivo: "+23 de `tem_horarios`: sem a frase, o modelo escolhe um tipo de agenda sem horário publicado, ouve recusa e chama humano (ensaio de 17/11/2026)" },
+  "crm_find_free_slots": { tokens: 930, motivo: "+71: aceita `event_type_id` ao lado do slug (campo sem `.uuid()`, para não pagar o pattern) e ensina a repetir a chamada com `tipos_validos` na recusa de tipo desconhecido" },
   "crm_list_appointments": { tokens: 1478, motivo: BASE },
   "crm_search_contacts": { tokens: 135, motivo: BASE },
   "crm_get_contact": { tokens: 188, motivo: BASE },
@@ -85,7 +85,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "crm_list_available_attendants": { tokens: 179, motivo: BASE },
   "crm_list_human_cases": { tokens: 149, motivo: BASE },
   "crm_get_human_case": { tokens: 208, motivo: BASE },
-  "crm_find_and_book_appointment": { tokens: 1028, motivo: BASE },
+  "crm_find_and_book_appointment": { tokens: 1115, motivo: "+87: aceita `event_type_id` ao lado do slug (campo sem `.uuid()`) e ensina a repetir a chamada com `tipos_validos` — a recusa de tipo desconhecido fazia o agente chamar humano (ensaio de 17/11/2026)" },
   "crm_book_appointment": { tokens: 1203, motivo: BASE },
   "crm_reschedule_appointment": { tokens: 572, motivo: BASE },
   "crm_cancel_appointment": { tokens: 275, motivo: BASE },
@@ -133,7 +133,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "schedule_followup (com negócio)": { tokens: 314, motivo: BASE },
 };
 
-const TETO_TOTAL = 29952;
+const TETO_TOTAL = 30133;
 
 const VARIANTE = "schedule_followup (com negócio)";
 

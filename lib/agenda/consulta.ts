@@ -174,7 +174,45 @@ export type ResultadoDaConsulta =
       motivoParaOperador: string;
       /** Sem nome de campo, e diz o que fazer. Plateia: o modelo, e por tabela o cliente. */
       motivoParaCliente: string;
+      /**
+       * Só em `tipo_desconhecido`: os tipos ATIVOS da organização, para quem
+       * chamou corrigir sozinho. Ausente quando a leitura deles falhou — a
+       * recusa segue valendo, só não traz a lista.
+       */
+      tiposValidos?: TipoValido[];
     };
+
+/** O mínimo de um tipo para o modelo escolher de novo: o handle e o nome. */
+export interface TipoValido {
+  slug: string;
+  nome: string;
+}
+
+/**
+ * Os tipos ATIVOS da organização, no formato que uma recusa devolve.
+ *
+ * Existe porque `tipo_desconhecido` sem a lista é instrução impossível de
+ * cumprir: "use um dos tipos que a organização oferece" não diz quais são, e o
+ * modelo, sem ter para onde ir, chama humano. Medido em ensaio: o slug errado
+ * foi recusado em 38 ms e a conversa parou ali.
+ *
+ * Erro de leitura devolve `null`, nunca lista vazia: lista vazia afirmaria "a
+ * organização não atende nada".
+ */
+export async function tiposValidosDaOrg(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<TipoValido[] | null> {
+  const { data, error } = await supabase
+    .from("calendar_event_types")
+    .select("slug, name")
+    // Service role bypassa a RLS: este filtro é a única proteção no caminho MCP.
+    .eq("organization_id", organizationId)
+    .eq("is_active", true)
+    .order("name");
+  if (error) return null;
+  return (data ?? []).map((t) => ({ slug: String(t.slug), nome: String(t.name) }));
+}
 
 /**
  * Um dia em milissegundos — a margem de cada lado com que os dias locais são
@@ -196,6 +234,33 @@ const MINUTO = 60_000;
 
 const NAO_OFERECA =
   "Não ofereça horários e não diga que está sem vaga — avise que alguém da equipe confirma o horário.";
+
+/**
+ * O que o modelo ouve quando pede um tipo que não existe — a MESMA frase nas
+ * ferramentas de consulta e na de marcação, porque as duas recusam pela mesma
+ * razão e o conserto é o mesmo.
+ *
+ * Com a lista na mão, a instrução é corrigir e repetir a chamada; perguntar à
+ * pessoa só quando nenhum tipo serve. Sem lista (a leitura falhou ou a
+ * organização não tem tipo ativo), vale a instrução antiga.
+ */
+export function mensagemDeTipoDesconhecido(
+  pedido: string,
+  tiposValidos: readonly TipoValido[] | null,
+): string {
+  const abertura = `Não existe atendimento chamado "${pedido}".`;
+  if (tiposValidos === null || tiposValidos.length === 0) {
+    return (
+      `${abertura} ` +
+      "Pergunte à pessoa que tipo de atendimento ela quer e use um dos tipos que a organização oferece."
+    );
+  }
+  return (
+    `${abertura} Os tipos que existem estão em \`tipos_validos\`: repita a chamada com o ` +
+    "`slug` de um deles, sem chamar ninguém da equipe por causa disto. Só pergunte à pessoa " +
+    "se nenhum deles for o que ela quer."
+  );
+}
 
 export async function horariosLivresDaOrg(
   supabase: SupabaseClient,
@@ -220,15 +285,18 @@ export async function horariosLivresDaOrg(
     };
   }
   if (!tipo) {
+    const tiposValidos = await tiposValidosDaOrg(supabase, organizationId);
     return {
       ok: false,
       codigo: "tipo_desconhecido",
       motivoParaOperador: "Tipo de agendamento não encontrado.",
       // Devolve o que foi pedido: sem isso o modelo não sabe QUAL nome errou, e
       // a recusa que não ensina faz ele tentar de novo igual.
-      motivoParaCliente:
-        `Não existe atendimento chamado "${params.eventTypeSlug ?? params.eventTypeId ?? ""}". ` +
-        "Pergunte à pessoa que tipo de atendimento ela quer e use um dos tipos que a organização oferece.",
+      motivoParaCliente: mensagemDeTipoDesconhecido(
+        params.eventTypeSlug ?? params.eventTypeId ?? "",
+        tiposValidos,
+      ),
+      ...(tiposValidos !== null ? { tiposValidos } : {}),
     };
   }
   if (!tipo.is_active) {
@@ -1238,4 +1306,71 @@ export async function listaTiposDeAtendimento(
         revision: Number(t.service_revision), publication_mode: String(t.service_publication_mode) } } : {}),
     })),
   };
+}
+
+/**
+ * Quais tipos têm HORÁRIO CONFIGURADO — a pergunta "dá para marcar neste tipo?"
+ * respondida sem calcular horário nenhum.
+ *
+ * ⚠️ NÃO é "tem vaga". É "alguém publicou quando atende": a jornada do
+ * responsável padrão tem ao menos uma janela, ou (tipo de serviço) a agenda do
+ * serviço tem ao menos um horário. Vaga é pergunta de `horariosLivresDaOrg`,
+ * que custa uma coleta inteira por tipo; esta custa DUAS consultas para a lista
+ * toda, qualquer que seja o tamanho dela.
+ *
+ * Existe por um defeito medido em ensaio: a organização tinha tipos de fábrica
+ * sem horário nenhum ao lado do tipo de verdade, o modelo escolheu um dos
+ * vazios, ouviu recusa e chamou humano. Com este sinal na lista, o vazio deixa
+ * de ser uma escolha razoável.
+ *
+ * Erro de leitura devolve `null` para o tipo afetado — "não sei" —, nunca
+ * `false`: `false` faria o modelo descartar um tipo que funciona.
+ */
+export async function tiposComHorarios(
+  supabase: SupabaseClient,
+  organizationId: string,
+  tipos: readonly Pick<TipoDeAtendimento, "id" | "donoPadraoId" | "servico">[],
+): Promise<Map<string, boolean | null>> {
+  const resultado = new Map<string, boolean | null>();
+  const deServico = tipos.filter((t) => t.servico !== undefined);
+  const deJornada = tipos.filter((t) => t.servico === undefined);
+  const donos = [...new Set(deJornada.map((t) => t.donoPadraoId).filter((d): d is string => d !== null))];
+
+  const [jornadas, agendasDeServico] = await Promise.all([
+    donos.length === 0
+      ? Promise.resolve({ data: [] as { user_id: string; schedule: unknown }[], error: null })
+      : supabase
+          .from("attendant_availability")
+          .select("user_id, schedule")
+          .eq("organization_id", organizationId)
+          .in("user_id", donos),
+    deServico.length === 0
+      ? Promise.resolve({ data: [] as { event_type_id: string }[], error: null })
+      : supabase
+          .from("calendar_service_schedule")
+          .select("event_type_id")
+          .eq("organization_id", organizationId)
+          .in(
+            "event_type_id",
+            deServico.map((t) => t.id),
+          ),
+  ]);
+
+  const donosComJanela = new Set<string>();
+  for (const linha of jornadas.data ?? []) {
+    // A MESMA leitura da coleta de horários: jornada ilegível não publica nada.
+    const leitura = lerJornadaDoBanco(linha.schedule);
+    if (leitura.ok && leitura.publicouHorarios) donosComJanela.add(String(linha.user_id));
+  }
+  for (const t of deJornada) {
+    // Sem responsável não há jornada: é `false` com certeza, não "não sei".
+    if (t.donoPadraoId === null) resultado.set(t.id, false);
+    else resultado.set(t.id, jornadas.error ? null : donosComJanela.has(t.donoPadraoId));
+  }
+
+  const servicosComHorario = new Set((agendasDeServico.data ?? []).map((l) => String(l.event_type_id)));
+  for (const t of deServico) {
+    resultado.set(t.id, agendasDeServico.error ? null : servicosComHorario.has(t.id));
+  }
+  return resultado;
 }

@@ -15,7 +15,7 @@
  *     `llm_calls` do job, skills de `skill_activations` do job) — não se copia
  *     nem se duplica escrita;
  *   * o que NÃO existia é COLETADO no turno: cada chamada de ferramenta, com
- *     nome, estado, erro e duração;
+ *     nome, estado, erro, duração e um RESUMO do que ela devolveu;
  *   * o que a organização tem ligado (fontes de conhecimento, com versão e
  *     hash) é fotografado junto.
  *
@@ -40,16 +40,36 @@ import type pg from "pg";
 import type { ToolSet } from "../edge/llm/run-model-call";
 import type { Logger } from "../obs/logger";
 import type { TurnAgentResolution } from "./resolve-turn-agent";
+import { scrubMessage } from "@/lib/sentry/scrub";
 
-/** Como a chamada de uma ferramenta terminou, do ponto de vista de quem lê o traço. */
-export type EstadoDaFerramenta = "ok" | "falhou" | "bloqueada";
+/**
+ * Como a chamada de uma ferramenta terminou, do ponto de vista de quem lê o traço.
+ *
+ * `recusado` é a RECUSA DE NEGÓCIO: a ferramenta rodou, não quebrou, e disse
+ * não (`marcado: false`, `permitido: false`, `ok: false` com `codigo`, lista
+ * vazia com `motivo`). Antes ela saía como `ok` — a ferramenta de fato não
+ * falhou —, e o traço de um turno que NÃO marcou a consulta era idêntico ao de
+ * um que marcou. Medido em ensaio: slug de agenda errado, recusa em 38 ms, o
+ * agente chamou humano, e a linha dizia `estado: "ok"` sem o retorno.
+ */
+export type EstadoDaFerramenta = "ok" | "recusado" | "falhou" | "bloqueada";
 
 export interface FerramentaNoTraco {
   nome: string;
   estado: EstadoDaFerramenta;
-  /** Mensagem do erro, truncada. `null` quando a chamada deu certo. */
+  /**
+   * Em `falhou`/`bloqueada`, a mensagem do erro, truncada. Em `recusado`, o
+   * CÓDIGO da recusa (`motivo`/`codigo`). `null` quando a chamada deu certo.
+   */
   erro: string | null;
   duracao_ms: number;
+  /**
+   * O que a ferramenta DEVOLVEU, em JSON resumido (teto `LIMITE_DO_RESULTADO`,
+   * corte avisado por `MARCA_DE_CORTE`). `null` quando não houve retorno (a
+   * chamada lançou) ou ele não é serializável. Ausente nas linhas gravadas
+   * antes deste campo existir.
+   */
+  resultado?: string | null;
   /**
    * O modelo marcou este `send_message` como a última ação do turno (knob
    * AGENT_STOP_AFTER_FINAL_SEND ≠ off). Ausente quando não marcou: a linha fica
@@ -68,6 +88,66 @@ export const LIMITE_DE_FERRAMENTAS = 50;
 
 /** Teto da mensagem de erro guardada. Stack trace inteiro não cabe e não ajuda. */
 export const LIMITE_DO_ERRO = 300;
+
+/**
+ * Teto do resumo do resultado, JÁ CONTANDO a marca de corte. 50 chamadas × 600
+ * caracteres é o pior caso da linha: cabe num jsonb sem virar o histórico da
+ * conversa, e é o bastante para ler o motivo de uma recusa e a lista que veio
+ * com ela.
+ */
+export const LIMITE_DO_RESULTADO = 600;
+
+/** O fim de um resumo cortado. Sem ela, JSON cortado parece JSON quebrado. */
+export const MARCA_DE_CORTE = "…[cortado]";
+
+/** Chaves de provedor que o `scrubMessage` não conhece (ele cobre as de cobrança). */
+const CHAVE_DE_PROVEDOR = /\b(?:sk-|AIza|github_pat_|gh[pousr]_)[\w-]{8,}/g;
+
+/**
+ * A higiene do único texto livre do traço que o LEITOR devolve.
+ *
+ * Uma função, dois chamadores: a gravação (`resumirResultado`) e a leitura
+ * (`recibo-do-traco.ts`, que a reaplica porque não confia no que já está no
+ * banco). Tira e-mail, telefone, documento e chave; NÃO tira nome de pessoa —
+ * nome não tem formato, e prometer isso seria mentir.
+ */
+export function higienizarTextoDoTraco(texto: string): string {
+  return scrubMessage(texto.replace(CHAVE_DE_PROVEDOR, "[CHAVE]"));
+}
+
+/**
+ * O resumo do que a ferramenta devolveu, para o traço.
+ *
+ * ⚠️ Higienizado ANTES de cortar: o resultado de uma ferramenta pode carregar
+ * telefone, e-mail e documento do contato (`crm_get_contact`), e o traço não é
+ * lugar para uma segunda cópia disso. Passa pelo mesmo `scrubMessage` da
+ * telemetria — ids, slugs, códigos e horários sobrevivem, que é o que se lê
+ * numa investigação. Cortar primeiro poderia partir um e-mail ao meio e deixar
+ * a metade passar.
+ *
+ * NUNCA lança: resultado circular ou com `BigInt` vira `null`, e o turno segue.
+ */
+export function resumirResultado(
+  resultado: unknown,
+  limite: number = LIMITE_DO_RESULTADO,
+): string | null {
+  if (resultado === undefined) return null;
+  try {
+    const texto: unknown = typeof resultado === "string" ? resultado : JSON.stringify(resultado);
+    if (typeof texto !== "string") return null;
+    const limpo = higienizarTextoDoTraco(texto);
+    if (limpo.length <= limite) return limpo;
+    return limpo.slice(0, Math.max(0, limite - MARCA_DE_CORTE.length)) + MARCA_DE_CORTE;
+  } catch {
+    return null;
+  }
+}
+
+/** Um resumo que já vem pronto (do coletor) só é re-cortado, nunca re-higienizado. */
+function resultadoNoTeto(resultado: string | null): string | null {
+  if (resultado === null || resultado.length <= LIMITE_DO_RESULTADO) return resultado;
+  return resultado.slice(0, LIMITE_DO_RESULTADO - MARCA_DE_CORTE.length) + MARCA_DE_CORTE;
+}
 
 /** O que se sabe do turno no momento de fechar a linha. */
 export type StatusDoTurno = "completed" | "failed" | "aborted";
@@ -175,6 +255,9 @@ export function criarColetorDeFerramentas(opcoes: OpcoesDoColetor = {}): Coletor
         estado: chamada.estado,
         erro: chamada.erro === null ? null : chamada.erro.slice(0, limiteDoErro),
         duracao_ms: Math.max(0, Math.round(chamada.duracao_ms)),
+        ...(chamada.resultado !== undefined
+          ? { resultado: resultadoNoTeto(chamada.resultado) }
+          : {}),
         ...(chamada.encerra_turno === true ? { encerra_turno: true } : {}),
       });
     },
@@ -190,6 +273,36 @@ export function criarColetorDeFerramentas(opcoes: OpcoesDoColetor = {}): Coletor
 /** Convenção do repo: toda tool do run devolve `{ ok: boolean, ... }`. */
 function ehResultadoDeFalha(result: unknown): boolean {
   return typeof result === "object" && result !== null && (result as { ok?: unknown }).ok === false;
+}
+
+/**
+ * A RECUSA DE NEGÓCIO: a ferramenta rodou e disse NÃO — não é falha dela.
+ *
+ * Duas formas existem no repo, e as duas contam:
+ *
+ *   1. `{ ok: false, codigo }` — o envelope de recusa nomeada (sem `error`,
+ *      que é o envelope de FALHA e segue sendo `falhou`);
+ *   2. o retorno das ferramentas MCP, que não usam `ok`: `motivo` em texto, ao
+ *      lado de uma bandeira `false` no topo (`marcado`, `permitido`,
+ *      `registrado`…) ou de uma `mensagem` para o modelo — é o formato de
+ *      `{ horarios: [], motivo, mensagem }` e de `{ marcado: false, motivo }`.
+ *
+ * `ok: true` explícito nunca é recusa: quem diz que deu certo, deu certo.
+ */
+function ehRecusaDeNegocio(result: unknown): boolean {
+  if (typeof result !== "object" || result === null || Array.isArray(result)) return false;
+  const r = result as Record<string, unknown>;
+  if (r.ok === true) return false;
+  if (r.ok === false) return typeof r.codigo === "string" && r.error === undefined;
+  if (typeof r.motivo !== "string" || r.motivo.trim() === "") return false;
+  return typeof r.mensagem === "string" || Object.values(r).some((v) => v === false);
+}
+
+/** O código da recusa — é ele que diz POR QUE a ferramenta disse não. */
+function motivoDaRecusa(result: unknown): string | null {
+  const r = result as { motivo?: unknown; codigo?: unknown };
+  if (typeof r.motivo === "string" && r.motivo.trim() !== "") return r.motivo;
+  return typeof r.codigo === "string" ? r.codigo : null;
 }
 
 /**
@@ -248,18 +361,32 @@ export function envolverFerramentasComTraco(
           : {};
       try {
         const resultado = await execute(input, options);
+        // A ordem importa: o bloqueio do breaker também é `ok: false`, e a
+        // recusa nomeada (`ok: false` + `codigo`) também — cada um tem de ser
+        // reconhecido antes de cair em "falhou".
         const estado: EstadoDaFerramenta = ehBloqueioDoBreaker(resultado)
           ? "bloqueada"
-          : ehResultadoDeFalha(resultado)
-            ? "falhou"
-            : "ok";
+          : ehRecusaDeNegocio(resultado)
+            ? "recusado"
+            : ehResultadoDeFalha(resultado)
+              ? "falhou"
+              : "ok";
         coletor.registrar({
           nome,
           estado,
-          erro: estado === "ok" ? null : mensagemDoResultado(resultado),
+          erro:
+            estado === "ok"
+              ? null
+              : estado === "recusado"
+                ? motivoDaRecusa(resultado)
+                : mensagemDoResultado(resultado),
           duracao_ms: agora() - inicio,
+          // O RETORNO, resumido — em todo estado. É o que faltava para provar a
+          // causa de uma recusa sem reproduzir o turno.
+          resultado: resumirResultado(resultado),
           ...marca,
         });
+        // O MESMO valor que a ferramenta devolveu: o resumo é uma cópia em texto.
         return resultado;
       } catch (erro) {
         coletor.registrar({
@@ -267,6 +394,8 @@ export function envolverFerramentasComTraco(
           estado: "falhou",
           erro: erro instanceof Error ? erro.message : String(erro),
           duracao_ms: agora() - inicio,
+          // Não houve retorno: a chamada lançou. O que há para ler está em `erro`.
+          resultado: null,
           ...marca,
         });
         // Relança o MESMO erro: observar não pode engolir a falha do turno.
@@ -322,6 +451,7 @@ export function montarTracoDoTurno(entrada: EntradaDoTraco): TracoDoTurno {
       estado: f.estado,
       erro: f.erro === null ? null : f.erro.slice(0, limiteDoErro),
       duracao_ms: Math.max(0, Math.round(f.duracao_ms)),
+      ...(f.resultado !== undefined ? { resultado: resultadoNoTeto(f.resultado) } : {}),
       ...(f.encerra_turno === true ? { encerra_turno: true as const } : {}),
     })),
     ferramentas_truncadas:

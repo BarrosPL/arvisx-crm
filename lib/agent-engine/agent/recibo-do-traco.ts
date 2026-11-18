@@ -2,6 +2,11 @@ import type { Database, Json } from "@/lib/database.types";
 import { ApiErrorCodes } from "@/lib/api/errors";
 import { VALID_TOOL_IDS } from "@/lib/mcp/tools/catalog";
 import { scrubMessage } from "@/lib/sentry/scrub";
+import {
+  LIMITE_DO_RESULTADO,
+  MARCA_DE_CORTE,
+  higienizarTextoDoTraco,
+} from "@/lib/agent-engine/agent/traco-do-turno";
 
 export const LIMITE_MAXIMO = 200;
 
@@ -65,7 +70,7 @@ const FERRAMENTAS = new Set([
   "provide_case_update",
   "send_template",
 ]);
-const ESTADOS = new Set(["ok", "falhou", "bloqueada"]);
+const ESTADOS = new Set(["ok", "recusado", "falhou", "bloqueada"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function registros(valor: Json): Registro[] {
@@ -98,6 +103,39 @@ function identificador(valor: unknown): string | null {
   if (typeof valor !== "string" || !/^[a-z0-9][a-z0-9._:/-]{0,149}$/i.test(valor)) return null;
   if (/^(?:sk-|AIza|apikey_|github_pat_|gh[pousr]_)/i.test(valor)) return null;
   return scrubMessage(valor) === valor ? valor : null;
+}
+
+/**
+ * O `erro` de uma ferramenta, conforme o estado dela.
+ *
+ * Em `recusado` o campo guarda o CÓDIGO da recusa (`tipo_desconhecido`,
+ * `agenda_horario_indisponivel`…), que é a resposta de "por que a ferramenta
+ * disse não". Esses códigos não estão no catálogo de erros de API, e passá-los
+ * por `codigo()` trocaria todos por `internal_error` — o leitor apagaria
+ * justamente o que o estado novo existe para mostrar. Passam pela régua de
+ * IDENTIFICADOR (formato fechado, sem prosa, PII nem chave); o que não couber
+ * nela cai no caminho antigo.
+ */
+function erroDaFerramenta(estado: unknown, erro: unknown): string | null {
+  if (estado === "recusado") {
+    const motivo = identificador(erro);
+    if (motivo !== null) return motivo;
+  }
+  return codigo(erro);
+}
+
+/**
+ * O resumo do que a ferramenta devolveu — o ÚNICO texto livre que este leitor
+ * entrega, e por isso re-higienizado e re-cortado aqui: a gravação já faz as
+ * duas coisas, mas o leitor não confia no que está no banco (a mesma regra dos
+ * outros campos). Não-texto vira `null`.
+ */
+function resultado(valor: unknown): string | null {
+  if (typeof valor !== "string" || valor === "") return null;
+  const limpo = higienizarTextoDoTraco(valor);
+  return limpo.length <= LIMITE_DO_RESULTADO
+    ? limpo
+    : limpo.slice(0, LIMITE_DO_RESULTADO - MARCA_DE_CORTE.length) + MARCA_DE_CORTE;
 }
 
 /** Projeta cada campo: nem o objeto da linha nem seus JSONs são espalhados. */
@@ -135,8 +173,9 @@ export function reciboDoTraco(linha: LinhaDoTraco) {
         typeof ferramenta.estado === "string" && ESTADOS.has(ferramenta.estado)
           ? ferramenta.estado
           : null,
-      erro: codigo(ferramenta.erro),
+      erro: erroDaFerramenta(ferramenta.estado, ferramenta.erro),
       duracao_ms: numero(ferramenta.duracao_ms),
+      resultado: resultado(ferramenta.resultado),
     })),
     ferramentas_truncadas: linha.ferramentas_truncadas,
     kb_sources: registros(linha.kb_sources).map((fonte) => ({

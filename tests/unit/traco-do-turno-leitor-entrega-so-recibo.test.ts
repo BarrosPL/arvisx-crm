@@ -100,8 +100,14 @@ describe("o leitor entrega recibos e não o texto livre guardado no legado", () 
       tokens_out: 5,
     });
     expect(traco.ferramentas).toEqual([
-      { nome: "crm_get_contact", estado: "falhou", erro: "internal_error", duracao_ms: 12 },
-      { nome: null, estado: null, erro: "internal_error", duracao_ms: null },
+      {
+        nome: "crm_get_contact",
+        estado: "falhou",
+        erro: "internal_error",
+        duracao_ms: 12,
+        resultado: null,
+      },
+      { nome: null, estado: null, erro: "internal_error", duracao_ms: null, resultado: null },
     ]);
     expect(traco.skills).toEqual([{ versao_id: ID }]);
     expect(traco.kb_sources).toEqual([{ id: ID, versao: ID, hash: "a".repeat(64), ligada: true }]);
