@@ -2373,6 +2373,19 @@ export const DICIONARIO: Traducoes = {
   "Tudo que define quem atende por você — e como acompanhar o que ele faz.": {
     es: "Todo lo que define quién atiende por ti, y cómo dar seguimiento a lo que hace.",
   },
+  "Equipe pronta": { es: "Equipo listo" },
+  "Não foi possível ler o estado da equipe agora. Recarregue em instantes.": { es: "No fue posible leer el estado del equipo ahora. Recarga en unos instantes." },
+  "A equipe ainda não foi instalada nesta empresa.": { es: "El equipo aún no fue instalado en esta empresa." },
+  "A equipe está instalada e ativa: atende todos os contatos do canal.": { es: "El equipo está instalado y activo: atiende a todos los contactos del canal." },
+  "A equipe está instalada em ensaio: só os telefones de teste falam com ela.": { es: "El equipo está instalado en ensayo: solo los teléfonos de prueba hablan con él." },
+  "Recebe quem chega, entende o que a pessoa quer, tira dúvidas e encaminha.": { es: "Recibe a quien llega, entiende lo que la persona quiere, resuelve dudas y la encamina." },
+  "Consulta a agenda de verdade, oferece opções, marca, remarca e desmarca.": { es: "Consulta la agenda real, ofrece opciones, agenda, reagenda y cancela." },
+  "Entende o que a pessoa quer e prepara a proposta para a equipe aprovar.": { es: "Entiende lo que la persona quiere y prepara la propuesta para que el equipo la apruebe." },
+  "Recuperação de vendas": { es: "Recuperación de ventas" },
+  "Retoma quem parou de responder ou recebeu proposta e não fechou.": { es: "Retoma a quien dejó de responder o recibió una propuesta y no cerró." },
+  "Quatro agentes prontos: você responde um questionário sobre o seu negócio, instala, testa e ativa.": {
+    es: "Cuatro agentes listos: respondes un cuestionario sobre tu negocio, instalas, pruebas y activas.",
+  },
   "Quem atende por você: instruções, modelo, ferramentas e publicação.": {
     es: "Quién atiende por ti: instrucciones, modelo, herramientas y publicación.",
   },

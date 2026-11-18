@@ -40,8 +40,4 @@ export function papelPorId(id: string): PapelDaEquipe | undefined {
   return PAPEIS.find((p) => p.id === id);
 }
 
-/** O destino na navegação e nas travas de plano. Um literal só, importado. */
-export const DESTINO_DA_EQUIPE_PRONTA = "/app/ai/equipe-pronta";
-
-/** A chave em `ai_agents.config` que marca um agente como instalado pela equipe pronta. */
-export const CHAVE_DE_CONFIG = "equipe_pronta";
+export { CHAVE_DE_CONFIG, DESTINO_DA_EQUIPE_PRONTA } from "./constantes";

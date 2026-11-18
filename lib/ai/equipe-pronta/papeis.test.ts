@@ -78,11 +78,6 @@ const MOEDA = /R\$|US\$|€|\$\s?\d|\b(?:BRL|EUR|USD)\b|\b\d+(?:[.,]\d+)?\s?(?:r
 const HORA =
   /\b\d{1,2}\s?h(?:\d{2})?\b|\b\d{1,2}:\d{2}\b|\b\d{1,2}\s?horas?\b|(?:^|\s)às\s+\d{1,2}\b/i;
 
-const TEXTOS: [string, string][] = [
-  ...PAPEIS.map((p): [string, string] => [`papel ${p.id}`, p.prompt]),
-  ["regras comuns", REGRAS_COMUNS],
-];
-
 /** Tudo o que o papel escreve e que chega a um modelo: texto, intenção e exemplos. */
 const TUDO_DO_PAPEL: [string, string][] = PAPEIS.map((p) => [
   `papel ${p.id}`,

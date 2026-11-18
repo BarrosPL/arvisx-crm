@@ -20,6 +20,7 @@
  * se >1 agente publicado habilita o mesmo pointer.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { agentesDaEquipeForaDoPlano } from "@/lib/cobranca/equipe-pronta-no-plano";
 
 /**
  * OS GATILHOS QUE MORREM SEM AGENTE — a lista, com o produtor de cada um ao lado.
@@ -180,6 +181,12 @@ export function createSupabaseFollowupGateDb(admin: SupabaseClient): FollowupGat
         }
         if (set.size > 0) byAgent.set(row.agent_id, set);
       }
+      // Agente da Equipe de IA pronta numa empresa cujo plano não a libera não
+      // arma follow-up (ArvisX, 9808). Sai DAQUI, da única leitura de "quem tem
+      // follow-up ligado": todo chamador do portão passa a concordar sem saber
+      // da regra. Nada é desligado no agente — voltar ao plano volta a armar.
+      const fora = await agentesDaEquipeForaDoPlano(admin, orgId, [...byAgent.keys()]);
+      for (const agentId of fora) byAgent.delete(agentId);
       return [...byAgent].map(([agentId, ids]) => ({ agentId, pointerIds: [...ids] }));
     },
   };

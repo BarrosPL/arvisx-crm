@@ -148,6 +148,8 @@ export const ROTAS_DE_API: Readonly<Record<string, Classe>> = {
     // O editor do agente escolhe a credencial; Conhecimento e Provedores mostram qual está em uso.
     leituras: { "/api/v1/ai/credentials": ["/app/ai/agents", "/app/ai/knowledge/sources", "/app/ai/providers"] },
   },
+  // Equipe de IA pronta: perfil, instalar, ativar e pausar. Só a tela dela usa.
+  "/api/v1/ai/equipe-pronta": "/app/ai/equipe-pronta",
   "/api/v1/ai/evolution": "/app/ai/evolution",
   "/api/v1/ai/followup-flows": LIVRE, // Inbox (inscrever contato num fluxo)
   "/api/v1/ai/followups": LIVRE, // Inbox (fila de follow-up do contato)

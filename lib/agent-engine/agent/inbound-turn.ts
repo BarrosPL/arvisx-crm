@@ -1,5 +1,6 @@
 import { contemAssuntoComercialRestrito, comercialExigeHumano } from '@/lib/escalacao/assunto-comercial';
 import { motorPodeResponderPeloPlano } from '@/lib/cobranca/plano-no-motor';
+import { agenteDaEquipeProntaPodeAgir } from '@/lib/cobranca/equipe-pronta-no-plano';
 import { prospectingConversationContext } from "@/lib/prospecting/context";
 import { setExecutionAgentOperation } from '@/lib/atendimento/fronteira-server';
 import { TIPOS_DE_CASO, TIPOS_DE_CASO_PARA_A_IA } from "@/lib/ai/case-copy";
@@ -3379,6 +3380,26 @@ async function executarTurnoDoAgente(
     runLog.info('turno pulado — nenhum agente publicado neste número atende ao público deste contato (#3722)', {
       kind: liveJob().kind,
       conversation_id: input.conversationId,
+    });
+    return;
+  }
+
+  // EQUIPE DE IA PRONTA FORA DO PLANO (ArvisX, migration 9808): o agente que
+  // este turno resolveu foi instalado pela equipe pronta, e o plano da empresa
+  // não libera mais a tela dela. SILÊNCIO, como o guarda de público acima: sem
+  // modelo, sem caso e sem aviso — a mensagem fica na caixa de entrada, para as
+  // pessoas. Nada é apagado; voltar ao plano faz o agente voltar a responder.
+  // Vale em todo turno (resposta, follow-up, caso). Agente que não é da equipe
+  // pronta passa direto; falha de leitura também (ver o cabeçalho do módulo).
+  if (
+    !preview &&
+    routed.config &&
+    !(await agenteDaEquipeProntaPodeAgir(pool, tenantId, routed.config.agentId))
+  ) {
+    runLog.info('turno pulado — agente da Equipe de IA pronta e o plano da empresa não a inclui', {
+      kind: liveJob().kind,
+      conversation_id: input.conversationId,
+      agent_id: routed.config.agentId,
     });
     return;
   }

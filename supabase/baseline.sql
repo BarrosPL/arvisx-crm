@@ -69619,6 +69619,71 @@ comment on function public.fn_aplicar_trava_de_org_suspensa() is
 
 notify pgrst, 'reload schema';
 
+-- ---- Equipe de IA pronta: o perfil do negócio (migration 9808) ----
+-- Espelho idempotente da 9808 (o porquê está no cabeçalho da migration): a
+-- tabela `equipe_pronta_perfis`, uma linha por organização, com as respostas
+-- do questionário, o estado, o modo e o que a instalação criou. RLS: membros
+-- leem; manager e admin escrevem. Nenhuma função nasce aqui (o gatilho usa
+-- `fn_set_updated_at`), e a trava de empresa suspensa (9806) alcança a tabela
+-- pela chamada do último bloco do arquivo.
+create table if not exists public.equipe_pronta_perfis (
+  organization_id uuid primary key references public.organizations(id) on delete cascade,
+  respostas jsonb not null default '{}'::jsonb,
+  estado text not null default 'rascunho' check (estado in ('rascunho', 'instalado')),
+  modo text not null default 'ensaio' check (modo in ('ensaio', 'ativo')),
+  instalado_em timestamptz,
+  instalacao jsonb not null default '{}'::jsonb,
+  updated_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+comment on table public.equipe_pronta_perfis is
+  'Equipe de IA pronta (Premium): o perfil do negócio de cada organização. respostas = questionário (validado no app, lib/schemas/equipe-pronta.ts); estado = rascunho|instalado; modo = ensaio|ativo; instalacao = ids criados, versão de cada papel e hash dos campos de cada agente. Uma linha por organização. Migration 9808.';
+
+drop trigger if exists trg_equipe_pronta_perfis_updated_at on public.equipe_pronta_perfis;
+create trigger trg_equipe_pronta_perfis_updated_at
+  before update on public.equipe_pronta_perfis
+  for each row execute function public.fn_set_updated_at();
+
+alter table public.equipe_pronta_perfis enable row level security;
+
+drop policy if exists tenant_isolation_equipe_pronta_perfis_select on public.equipe_pronta_perfis;
+create policy tenant_isolation_equipe_pronta_perfis_select on public.equipe_pronta_perfis
+  for select using (
+    (organization_id in (select public.fn_user_org_ids())) or (select public.fn_is_platform_admin())
+  );
+
+drop policy if exists tenant_isolation_equipe_pronta_perfis_insert on public.equipe_pronta_perfis;
+create policy tenant_isolation_equipe_pronta_perfis_insert on public.equipe_pronta_perfis
+  for insert with check (
+    (select public.fn_is_platform_admin_full())
+    or ((organization_id in (select public.fn_user_org_ids()))
+        and public.fn_role_at_least(organization_id, 'manager'))
+  );
+
+drop policy if exists tenant_isolation_equipe_pronta_perfis_update on public.equipe_pronta_perfis;
+create policy tenant_isolation_equipe_pronta_perfis_update on public.equipe_pronta_perfis
+  for update using (
+    (select public.fn_is_platform_admin_full())
+    or ((organization_id in (select public.fn_user_org_ids()))
+        and public.fn_role_at_least(organization_id, 'manager'))
+  )
+  with check (
+    (select public.fn_is_platform_admin_full())
+    or ((organization_id in (select public.fn_user_org_ids()))
+        and public.fn_role_at_least(organization_id, 'manager'))
+  );
+
+-- `ALTER DEFAULT PRIVILEGES … GRANT ALL ON TABLES TO anon` do baseline alcança
+-- toda tabela criada depois dele. Sem este revoke, as respostas da empresa
+-- ficariam legíveis pela anon key, que vai para o browser.
+revoke all on public.equipe_pronta_perfis from anon, authenticated;
+grant select, insert, update on public.equipe_pronta_perfis to authenticated;
+grant all on public.equipe_pronta_perfis to service_role;
+
+notify pgrst, 'reload schema';
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria

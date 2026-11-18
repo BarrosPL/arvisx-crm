@@ -584,6 +584,23 @@ export const NAV_CATALOG = [
     sidebar: true,
   },
   {
+    // Equipe de IA pronta (ArvisX, migration 9808): SDR, Agendamento, Proposta e
+    // Recuperador de vendas, instalados a partir de um questionário. É do plano
+    // que libera esta tela — o Premium, que é o perfil "completa" sem lista; o
+    // Essencial e o Standard usam lista explícita e não a recebem
+    // (`tests/helpers/distribuicao-dos-planos.ts`).
+    //
+    // SEM `sidebar`: o menu lateral de IA é fixo em três portas; esta mora no
+    // hub de IA, na busca e no atalho da lista de agentes.
+    href: "/app/ai/equipe-pronta",
+    label: "Equipe pronta",
+    description: "Quatro agentes prontos: você responde um questionário sobre o seu negócio, instala, testa e ativa.",
+    icon: "UsersThree",
+    group: "ia",
+    section: "Montar o agente",
+    minRole: "manager",
+  },
+  {
     href: "/app/ai/followups",
     label: "Follow-ups",
     description: "Como o agente retoma uma conversa que esfriou, para nenhuma morrer no silêncio.",

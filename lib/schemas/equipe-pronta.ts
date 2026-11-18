@@ -110,9 +110,15 @@ const humanoSchema = z.object({
   palavras: listaCurta(12, 60).default([]),
 });
 
-/** 9 — recuperação. Padrões da decisão P-04: 2 toques, lead frio em 30 dias. */
+/**
+ * 9 — recuperação. Padrões da decisão P-04: 2 toques, lead frio em 30 dias.
+ *
+ * `dias_para_esfriar` vai até 6: o gatilho de silêncio do motor de follow-up só
+ * alcança silêncio de até 7 dias (`triggerConfigSchema`), e o limiar precisa
+ * ficar abaixo do teto para sobrar janela.
+ */
 const recuperacaoSchema = z.object({
-  dias_para_esfriar: z.number().int().min(1).max(60).default(3),
+  dias_para_esfriar: z.number().int().min(1).max(6).default(3),
   toques_maximos: z.number().int().min(1).max(4).default(2),
   intervalo_dias: z.number().int().min(1).max(30).default(2),
   limite_lead_frio_dias: z.number().int().min(7).max(365).default(30),
@@ -160,21 +166,6 @@ const ondeSchema = z.object({
     .default([]),
 });
 
-const blocos = {
-  negocio: negocioSchema,
-  atendente: atendenteSchema,
-  oferta: ofertaSchema,
-  primeiro_passo: primeiroPassoSchema,
-  qualificacao: qualificacaoSchema,
-  proposta: propostaSchema,
-  regras: regrasSchema,
-  humano: humanoSchema,
-  recuperacao: recuperacaoSchema,
-  faq: faqSchema,
-  ligacoes: ligacoesSchema,
-  onde: ondeSchema,
-};
-
 /** Os onze blocos do questionário, na ordem da tela. `onde` fica de fora. */
 export const BLOCOS_DO_QUESTIONARIO = [
   "negocio",
@@ -188,7 +179,7 @@ export const BLOCOS_DO_QUESTIONARIO = [
   "recuperacao",
   "faq",
   "ligacoes",
-] as const satisfies readonly (keyof typeof blocos)[];
+] as const;
 
 /** Os três que não têm padrão: sem eles não há o que instalar. */
 export const BLOCOS_OBRIGATORIOS = [

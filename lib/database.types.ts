@@ -8036,6 +8036,51 @@ export type Database = {
           },
         ];
       };
+      equipe_pronta_perfis: {
+        Row: {
+          created_at: string;
+          estado: string;
+          instalacao: NonNullable<Json>;
+          instalado_em: string | null;
+          modo: string;
+          organization_id: string;
+          respostas: NonNullable<Json>;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          estado?: string;
+          instalacao?: NonNullable<Json>;
+          instalado_em?: string | null;
+          modo?: string;
+          organization_id: string;
+          respostas?: NonNullable<Json>;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          estado?: string;
+          instalacao?: NonNullable<Json>;
+          instalado_em?: string | null;
+          modo?: string;
+          organization_id?: string;
+          respostas?: NonNullable<Json>;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "equipe_pronta_perfis_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       entregas_de_aviso_de_agendamento: {
         Row: {
           appointment_id: string | null;
