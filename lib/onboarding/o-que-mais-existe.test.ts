@@ -86,3 +86,35 @@ describe("o tutorial de cada peça", () => {
     expect(sujos).toEqual([]);
   });
 });
+
+describe("o atalho da Equipe de IA pronta", () => {
+  const HREF = "/app/ai/equipe-pronta";
+
+  it("⭐ só aparece para quem tem a tela no plano, e vem na frente do tour", () => {
+    expect(PECAS.map((p) => p.href)).not.toContain(HREF);
+    expect(oQueMaisExiste({ iaNoPlano: true }).map((p) => p.href)).not.toContain(HREF);
+
+    const comEquipe = oQueMaisExiste({ iaNoPlano: true, equipeProntaNoPlano: true });
+    expect(comEquipe[0]?.href).toBe(HREF);
+    // O resto do tour é o mesmo, na mesma ordem.
+    expect(comEquipe.slice(1).map((p) => p.href)).toEqual(PECAS.map((p) => p.href));
+  });
+
+  it("nunca aparece para quem não tem IA no plano", () => {
+    const semIa = oQueMaisExiste({ iaNoPlano: false, equipeProntaNoPlano: true });
+    expect(semIa.map((p) => p.href)).not.toContain(HREF);
+  });
+
+  it("segue as regras de toda peça: descrição do registro, passos inteiros, sem nome técnico", () => {
+    const peca = oQueMaisExiste({ equipeProntaNoPlano: true })[0]!;
+    const destino = NAV_DESTINATIONS.find((d) => d.href === HREF);
+    expect(destino, "a tela precisa estar no registro de navegação").toBeTruthy();
+    expect(peca.label).toBe(destino!.label);
+    expect(peca.descricao).toBe(destino!.description);
+    expect(peca.porQue.trim().length).toBeGreaterThan(30);
+    expect(peca.comoFunciona.length).toBeGreaterThanOrEqual(3);
+    expect(peca.comoFunciona.length).toBeLessThanOrEqual(6);
+    for (const passo of peca.comoFunciona) expect(passo.trim().length).toBeGreaterThan(20);
+    expect(peca.comoFunciona.join(" ")).not.toMatch(/\b(enrollment|webhook|endpoint|trigger|payload|jsonb|prompt|token)\b/i);
+  });
+});

@@ -74,7 +74,7 @@ No Premium basta deixar o perfil **Completa** sem personalizar: todas as telas.
 
 - O Essencial é o que se precisa para atender e acompanhar clientes. LGPD fica aqui por obrigação legal.
 - O Standard entrega a ferramenta de agentes de IA (agentes, conhecimento, follow-up, fluxo, casos, controle de custo), que o próprio cliente configura, mais o cadastro B2B e a importação de dados. O código não limita a quantidade de agentes.
-- O Premium reúne o que faz a empresa crescer e se controlar: vender em escala, prospectar, medir, integrar e a IA avançada (vários agentes com roteamento, memória e ações próprias). Os Agentes Arvisx (serviço à parte) são vendidos para qualquer plano; o que cada agente precisa das telas do CRM é visto na reunião.
+- O Premium reúne o que faz a empresa crescer e se controlar: vender em escala, prospectar, medir, integrar e a IA avançada (a Equipe de IA pronta, mais vários agentes com roteamento, memória e ações próprias). A Equipe de IA pronta são quatro agentes já escritos que o próprio cliente instala respondendo um questionário (`docs/arvisx/EQUIPE-PRONTA.md`); não é o serviço Agentes Arvisx, em que a Arvisx faz o agente sob medida. Os Agentes Arvisx (serviço à parte) são vendidos para qualquer plano; o que cada agente precisa das telas do CRM é visto na reunião.
 - Se uma tela do Standard fizer falta de verdade para o cliente, o dono ajusta a lista pelo /admin/cobranca.
 
 ## Textos de cada plano (para colar em /admin/cobranca)
@@ -130,6 +130,7 @@ marque "Inclui os 4 agentes de IA feitos sob medida" em nenhum dos três planos.
   - Campanhas, prospecção e Cold Call
   - Desempenho, faturamento e honorários
   - Meta Ads e conversões
+  - Equipe de IA pronta: SDR, Agendamento, Proposta e Recuperador de vendas — você responde o questionário e ativa
   - Configuração avançada de IA: roteamento entre agentes, memória e ações próprias
   - Integrações (API, webhooks, Nuvemshop) e marca própria
   - Canais e pessoas ilimitados

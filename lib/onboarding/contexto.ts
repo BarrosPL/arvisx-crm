@@ -17,7 +17,8 @@
  * Nada aqui lança.
  */
 import { leituraDoPlanoDaOrg } from "@/lib/cobranca/leitura-do-plano";
-import { planoIncluiIaParaOMotor } from "@/lib/cobranca/telas-do-plano";
+import { DESTINO_DA_EQUIPE_PRONTA } from "@/lib/ai/equipe-pronta/constantes";
+import { planoIncluiIaParaOMotor, planoLibera } from "@/lib/cobranca/telas-do-plano";
 import { env } from "@/lib/env";
 import type { ContextoDoPasso } from "./passos";
 
@@ -30,6 +31,23 @@ export async function iaNoPlanoDaOrg(orgId: string): Promise<boolean> {
     return planoIncluiIaParaOMotor(await leituraDoPlanoDaOrg(orgId));
   } catch {
     return true;
+  }
+}
+
+/**
+ * O plano desta empresa libera a tela da Equipe de IA pronta?
+ *
+ * ⚠️ Decisão de falha OPOSTA à de `iaNoPlanoDaOrg`, e de propósito: aqui a
+ * resposta só decide se um ATALHO aparece. Leitura que falhou ou lançou = não
+ * mostra. Um atalho a menos não tira nada de ninguém (a tela segue no menu de
+ * quem a tem); um atalho a mais leva quem não tem o plano a uma tela fechada.
+ */
+export async function equipeProntaNoPlanoDaOrg(orgId: string): Promise<boolean> {
+  try {
+    const leitura = await leituraDoPlanoDaOrg(orgId);
+    return leitura.tipo !== "falha" && planoLibera(leitura, DESTINO_DA_EQUIPE_PRONTA);
+  } catch {
+    return false;
   }
 }
 
