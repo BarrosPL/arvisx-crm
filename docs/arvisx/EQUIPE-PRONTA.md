@@ -44,12 +44,33 @@ duplica nada.
    escolhidas.
 5. **Régua de follow-up** "Equipe pronta · Recuperação de vendas", com
    mensagens geradas (não texto fixo).
-6. **Os quatro agentes**, marcados em `ai_agents.config.equipe_pronta` com
+6. **Canal em ensaio**: só os telefones de teste do questionário falam com a
+   IA. Vem ANTES do roteador e da publicação: num canal que já atende clientes,
+   a equipe nova não pode ficar na frente deles sem o ensaio existir. Se o
+   ensaio falhar, a instalação para aqui, sem ligar o roteador e sem publicar
+   (`equipe_pronta_ensaio_nao_configurado`). Só acontece enquanto a equipe não
+   foi ativada.
+7. **Os quatro agentes**, marcados em `ai_agents.config.equipe_pronta` com
    `{ papel, versao, hash }`.
-7. **Roteador do canal** com os quatro membros e o Atendimento como destino
+8. **Roteador do canal** com os quatro membros e o Atendimento como destino
    padrão.
-8. **Publicação** dos agentes.
-9. **Canal em ensaio**: só os telefones de teste do questionário falam com a IA.
+9. **Publicação** dos agentes.
+
+### Canal que já tem roteador
+
+Antes de qualquer escrita a instalação lê o roteador ativo do canal. Se ele não
+foi criado nem adotado pela equipe pronta, se o destino padrão dele é um agente
+que não é da equipe, ou se tem membros que não são da equipe, a resposta é 409
+`equipe_pronta_canal_com_roteador`, com `details.roteador`
+(`{ id, nome, de_fora, fallback, membros }`), e nada é gravado. Com
+`forcar: true` a instalação adota o roteador: o destino padrão passa a ser o
+Atendimento, os quatro membros entram, e os membros que o cliente pôs ficam
+como estão. O que foi aceito fica guardado (`instalacao.roteador_confirmado`):
+instalar de novo só pergunta outra vez se o roteador mudou.
+
+Quando há também agente editado à mão, o 409 é
+`equipe_pronta_agentes_editados_a_mao` e traz as duas listas (`agentes` e
+`roteador`), para a tela confirmar tudo de uma vez.
 
 O modelo de proposta é o `proposta_comercial` do catálogo base
 (`lib/propostas/modelos/catalogo-base.ts`), que vale para toda empresa sem
@@ -80,7 +101,16 @@ Instalar de novo, depois de resolver, publica.
 
 - `POST /api/v1/ai/equipe-pronta/ativar`: abre o canal para todos. Só com o
   checklist inteiro verde; a conferência é refeita no servidor.
-- `POST /api/v1/ai/equipe-pronta/pausar`: volta ao ensaio.
+- `POST /api/v1/ai/equipe-pronta/pausar`: para os quatro agentes da equipe
+  (`paused_at`), e só eles. O acesso da IA no canal não muda, e outros agentes
+  do mesmo número seguem atendendo. O modo (ensaio ou ativo) também não muda.
+- `POST /api/v1/ai/equipe-pronta/retomar`: religa os agentes que a pausa parou
+  (a lista fica em `instalacao.pausa`). Quem o cliente tinha pausado à mão
+  antes continua pausado. Ativar uma equipe pausada também a religa.
+
+Decisão da revisão do PR #8: a primeira versão de Pausar punha o canal inteiro
+em pré-lançamento, o que calava todo outro agente do mesmo número. Foi
+escolhida a pausa só dos quatro agentes.
 
 O ensaio usa o acesso da IA do canal que já existia (modo pré-lançamento com
 telefones de teste). Esse acesso é por telefone; não há etiqueta de teste.

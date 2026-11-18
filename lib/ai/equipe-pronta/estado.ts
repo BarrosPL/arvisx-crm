@@ -65,6 +65,12 @@ export interface EstadoDaEquipe {
   respostas: unknown;
   estado: "rascunho" | "instalado";
   modo: "ensaio" | "ativo";
+  /**
+   * A equipe foi pausada pela tela: os quatro agentes estão parados, e o
+   * acesso da IA no canal ficou como estava (outros agentes do mesmo número
+   * seguem atendendo). Independe do modo.
+   */
+  pausada: boolean;
   instalado_em: string | null;
   /** O questionário já dá para instalar? */
   perfil_completo: boolean;
@@ -286,6 +292,8 @@ export async function lerEstadoDaEquipe(
       proposal_template_id: null,
       tipos_de_agenda_desativados: [],
       agentes: {},
+      roteador_confirmado: null,
+      pausa: null,
     };
     const estado = linha?.estado === "instalado" ? "instalado" : "rascunho";
 
@@ -340,6 +348,7 @@ export async function lerEstadoDaEquipe(
       respostas,
       estado,
       modo: linha?.modo === "ativo" ? "ativo" : "ensaio",
+      pausada: estado === "instalado" && instalacao.pausa !== null,
       instalado_em: linha?.instalado_em ?? null,
       perfil_completo: lido.ok,
       faltam: lido.ok ? [] : lido.faltam,

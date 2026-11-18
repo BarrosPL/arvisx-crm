@@ -8,6 +8,7 @@ vi.mock("@/lib/audit", () => ({ audit: vi.fn().mockResolvedValue(undefined) }));
 
 import { PAPEIS } from "@/lib/ai/equipe-pronta";
 import { lerEstadoDaEquipe, type PortasDoEstado } from "@/lib/ai/equipe-pronta/estado";
+import { pausarEquipePronta, retomarEquipePronta } from "@/lib/ai/equipe-pronta/modo";
 import {
   EquipeProntaError,
   NOME_DA_FONTE,
@@ -564,5 +565,243 @@ describe("isolamento e trava de plano", () => {
       [org],
     );
     expect(await agenteDaEquipeProntaPodeAgir(pool, org, String(comum.rows[0].id))).toBe(true);
+  });
+});
+
+/**
+ * O ENSAIO VEM ANTES DO ROTEADOR E DA PUBLICAÇÃO (revisão do PR #8).
+ *
+ * Num canal aberto, com clientes, ligar o roteador e publicar primeiro poria a
+ * equipe nova na frente de todos eles — e, se o ensaio falhasse depois, o
+ * canal ficaria aberto com ela.
+ */
+describe("o ensaio vem antes de ligar a equipe", () => {
+  it("⭐ na hora em que o roteador e a publicação acontecem, o canal JÁ está em ensaio", async () => {
+    const { org, canal, ctx } = await novaOrganizacao();
+    const base = portas(zero());
+    const naPublicacao: unknown[] = [];
+    const r = await instalarEquipePronta(
+      pool,
+      {
+        ...base,
+        async publicarAgente(args) {
+          const meta = await pool.query("select metadata->>'ai_gate' as gate from channel_sessions where id=$1", [
+            canal,
+          ]);
+          naPublicacao.push(meta.rows[0].gate);
+          return base.publicarAgente(args);
+        },
+      },
+      ctx,
+    );
+
+    expect(r.agentes.every((a) => a.publicado)).toBe(true);
+    expect(naPublicacao).toEqual(["allowlist", "allowlist", "allowlist", "allowlist"]);
+    expect(org).toBeTruthy();
+  });
+
+  it("⭐ ensaio que falha: aborta SEM roteador, sem agente e sem publicar — e instalar de novo retoma", async () => {
+    const { org, ctx } = await novaOrganizacao();
+    const contagem = zero();
+    const erro = await instalarEquipePronta(
+      pool,
+      {
+        ...portas(contagem),
+        async porCanalEmEnsaio() {
+          throw new EquipeProntaError("ensaio_nao_configurado", "não deu", 500);
+        },
+      },
+      ctx,
+    ).catch((e) => e);
+
+    expect(erro).toMatchObject({ codigo: "ensaio_nao_configurado" });
+    expect(contagem.publicacoes).toBe(0);
+    const depois = await retrato(org);
+    expect(depois.roteadores).toBe(0);
+    expect(depois.membros).toBe(0);
+    expect(depois.agentes).toBe(0);
+    expect((await lerPerfil(pool, org))?.estado).toBe("rascunho");
+
+    // Resolvido o ensaio, a mesma instalação termina.
+    const r = await instalarEquipePronta(pool, portas(zero()), ctx);
+    expect(r.agentes.every((a) => a.publicado)).toBe(true);
+  });
+});
+
+/** CANAL QUE JÁ TEM ROTEADOR DO CLIENTE (revisão do PR #8). */
+describe("canal que já tem roteador", () => {
+  async function comRoteadorDoCliente() {
+    const o = await novaOrganizacao();
+    const agente = await pool.query(
+      "insert into ai_agents (organization_id, name, system_prompt, operation_mode) values ($1, 'Agente do cliente', 'x', 'automatic') returning id",
+      [o.org],
+    );
+    const agenteId = String(agente.rows[0].id);
+    const roteador = await pool.query(
+      `insert into ai_routers (organization_id, name, channel_session_id, fallback_agent_id, config, created_by)
+       values ($1, 'Roteador do cliente', $2, $3, '{"sticky":false}'::jsonb, $4) returning id`,
+      [o.org, o.canal, agenteId, GOV_ADMIN],
+    );
+    return { ...o, agenteId, roteadorId: String(roteador.rows[0].id) };
+  }
+
+  it("⭐ sem `forcar`: 409 com o roteador e o destino padrão dele, e NADA é gravado", async () => {
+    const { org, canal, ctx, agenteId, roteadorId } = await comRoteadorDoCliente();
+    const antes = await retrato(org);
+    const contagem = zero();
+
+    const erro = await instalarEquipePronta(pool, portas(contagem), ctx).catch((e) => e);
+
+    expect(erro).toBeInstanceOf(EquipeProntaError);
+    expect(erro).toMatchObject({ codigo: "canal_com_roteador", status: 409 });
+    expect((erro as EquipeProntaError).detalhes).toEqual({
+      roteador: {
+        id: roteadorId,
+        nome: "Roteador do cliente",
+        de_fora: true,
+        fallback: { agent_id: agenteId, nome: "Agente do cliente" },
+        membros: [],
+      },
+    });
+    expect(await retrato(org)).toEqual(antes);
+    expect(contagem).toEqual(zero());
+    // O destino padrão do cliente continua sendo o agente dele, e o canal não mudou.
+    const r = await pool.query("select fallback_agent_id, config from ai_routers where id=$1", [roteadorId]);
+    expect(String(r.rows[0].fallback_agent_id)).toBe(agenteId);
+    expect(r.rows[0].config.sticky).toBe(false);
+    const meta = await pool.query("select metadata->>'ai_gate' as gate from channel_sessions where id=$1", [canal]);
+    expect(meta.rows[0].gate).not.toBe("allowlist");
+  });
+
+  it("com `forcar`: adota o roteador, e instalar de novo NÃO pergunta outra vez", async () => {
+    const { org, ctx, roteadorId } = await comRoteadorDoCliente();
+
+    const r = await instalarEquipePronta(pool, portas(zero()), ctx, { forcar: true });
+
+    expect(r.instalacao.router_id).toBe(roteadorId);
+    const sdr = r.agentes.find((a) => a.papel === "sdr")!;
+    const roteador = await pool.query("select fallback_agent_id from ai_routers where id=$1", [roteadorId]);
+    expect(String(roteador.rows[0].fallback_agent_id)).toBe(sdr.agent_id);
+    expect((await retrato(org)).roteadores).toBe(1);
+
+    // Nada de alheio sobrou no roteador: a segunda instalação passa sem `forcar`.
+    const antes = await retrato(org);
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+    expect(await retrato(org)).toEqual(antes);
+  });
+
+  it("membro do cliente no roteador da equipe: pergunta uma vez; aceito, fica; mudou, pergunta de novo", async () => {
+    const { org, ctx } = await novaOrganizacao();
+    const primeira = await instalarEquipePronta(pool, portas(zero()), ctx);
+    const novoMembro = async (nome: string) => {
+      const a = await pool.query(
+        "insert into ai_agents (organization_id, name, system_prompt, operation_mode) values ($1, $2, 'x', 'automatic') returning id",
+        [org, nome],
+      );
+      await pool.query(
+        `insert into ai_router_members (organization_id, router_id, agent_id, intent_name, intent_description, examples)
+         values ($1, $2, $3, $4, 'Assunto do cliente', '{}')`,
+        [org, primeira.instalacao.router_id, a.rows[0].id, nome],
+      );
+      return String(a.rows[0].id);
+    };
+    const financeiro = await novoMembro("Financeiro");
+
+    const erro = await instalarEquipePronta(pool, portas(zero()), ctx).catch((e) => e);
+    expect(erro).toMatchObject({ codigo: "canal_com_roteador", status: 409 });
+    expect((erro as EquipeProntaError).detalhes).toMatchObject({
+      roteador: { de_fora: false, fallback: null, membros: [{ agent_id: financeiro, nome: "Financeiro" }] },
+    });
+
+    // Aceito: o membro do cliente continua no roteador.
+    await instalarEquipePronta(pool, portas(zero()), ctx, { forcar: true });
+    const membros = await pool.query("select agent_id from ai_router_members where router_id=$1", [
+      primeira.instalacao.router_id,
+    ]);
+    expect(membros.rows.map((m) => String(m.agent_id))).toContain(financeiro);
+    expect(membros.rows).toHaveLength(PAPEIS.length + 1);
+
+    // Sem mudança no roteador, não pergunta de novo.
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+
+    // Entrou outro membro alheio: pergunta de novo.
+    await novoMembro("Suporte");
+    const outra = await instalarEquipePronta(pool, portas(zero()), ctx).catch((e) => e);
+    expect(outra).toMatchObject({ codigo: "canal_com_roteador" });
+  });
+});
+
+/** PAUSAR É DOS QUATRO AGENTES, NÃO DO CANAL (revisão do PR #8). */
+describe("pausar e retomar", () => {
+  const pausados = async (org: string) =>
+    (
+      await pool.query(
+        "select config->'equipe_pronta'->>'papel' as papel from ai_agents where organization_id=$1 and paused_at is not null order by 1",
+        [org],
+      )
+    ).rows.map((r) => r.papel);
+
+  it("⭐ pausar para os quatro agentes e NÃO toca o acesso da IA no canal nem o modo", async () => {
+    const { org, canal, ctx } = await novaOrganizacao();
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+    // Canal aberto, como depois de ativar: é o caso em que pausar o canal calaria os outros agentes.
+    await pool.query("select fn_configurar_pre_go_live_canal($1,$2,'open',$3::text[])", [org, canal, []]);
+    await pool.query("update equipe_pronta_perfis set modo='ativo' where organization_id=$1", [org]);
+    const outro = await pool.query(
+      "insert into ai_agents (organization_id, name, system_prompt, operation_mode) values ($1, 'Agente do cliente', 'x', 'automatic') returning id",
+      [org],
+    );
+    const canalAntes = await pool.query("select metadata from channel_sessions where id=$1", [canal]);
+
+    const r = await pausarEquipePronta(pool, ctx);
+
+    expect(r).toMatchObject({ pausada: true, modo: "ativo" });
+    expect(r.agentes_pausados).toHaveLength(PAPEIS.length);
+    expect(await pausados(org)).toEqual([...PAPEIS.map((p) => p.id)].sort());
+    const canalDepois = await pool.query("select metadata from channel_sessions where id=$1", [canal]);
+    expect(canalDepois.rows[0].metadata).toEqual(canalAntes.rows[0].metadata);
+    const cliente = await pool.query("select paused_at from ai_agents where id=$1", [outro.rows[0].id]);
+    expect(cliente.rows[0].paused_at).toBeNull();
+    expect((await lerPerfil(pool, org))?.modo).toBe("ativo");
+    const estado = await lerEstadoDaEquipe(pool, portasDoEstado, org);
+    expect(estado).toMatchObject({ pausada: true, modo: "ativo" });
+  });
+
+  it("retomar religa só o que a pausa parou: quem o cliente pausou à mão continua pausado", async () => {
+    const { org, ctx } = await novaOrganizacao();
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+    await pool.query(
+      "update ai_agents set paused_at=now() where organization_id=$1 and config->'equipe_pronta'->>'papel'='proposta'",
+      [org],
+    );
+
+    const pausa = await pausarEquipePronta(pool, ctx);
+    expect(pausa.agentes_pausados).toHaveLength(PAPEIS.length - 1);
+    // Pausar duas vezes não perde a lista da primeira.
+    expect((await pausarEquipePronta(pool, ctx)).agentes_pausados).toEqual(pausa.agentes_pausados);
+
+    const r = await retomarEquipePronta(pool, ctx);
+
+    expect(r).toMatchObject({ pausada: false, modo: "ensaio" });
+    expect(r.agentes_religados).toHaveLength(PAPEIS.length - 1);
+    expect(await pausados(org)).toEqual(["proposta"]);
+    expect((await lerEstadoDaEquipe(pool, portasDoEstado, org)).pausada).toBe(false);
+  });
+
+  it("instalar de novo não desfaz a pausa", async () => {
+    const { org, ctx } = await novaOrganizacao();
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+    await pausarEquipePronta(pool, ctx);
+
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+
+    expect(await pausados(org)).toHaveLength(PAPEIS.length);
+    expect((await lerEstadoDaEquipe(pool, portasDoEstado, org)).pausada).toBe(true);
+  });
+
+  it("sem equipe instalada: recusa", async () => {
+    const { ctx } = await novaOrganizacao();
+    await expect(pausarEquipePronta(pool, ctx)).rejects.toMatchObject({ codigo: "nao_instalada", status: 409 });
+    await expect(retomarEquipePronta(pool, ctx)).rejects.toMatchObject({ codigo: "nao_instalada", status: 409 });
   });
 });

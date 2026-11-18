@@ -842,6 +842,70 @@ async function passoDosAgentes(
   return preparados;
 }
 
+/** O que há de ALHEIO no roteador que já atende o canal. */
+export interface RoteadorDoCanal {
+  id: string;
+  nome: string;
+  /** O roteador não é o que a equipe pronta criou ou adotou. */
+  de_fora: boolean;
+  /** O agente que hoje recebe o que ninguém pegou, quando não é da equipe. */
+  fallback_de_fora: { agent_id: string; nome: string } | null;
+  /** Agentes que o cliente pôs no roteador e não são da equipe. */
+  membros_de_fora: { agent_id: string; nome: string; intencao: string }[];
+}
+
+/** O roteador ATIVO do canal, lido contra os agentes da equipe. `null` = não há. */
+async function roteadorDoCanal(
+  db: pg.PoolClient,
+  orgId: string,
+  canalId: string,
+  instalacao: Pick<InstalacaoDaEquipe, "router_id" | "agentes">,
+): Promise<RoteadorDoCanal | null> {
+  const daEquipe = Object.values(instalacao.agentes).map((a) => a.agent_id);
+  const { rows } = await db.query(
+    `select r.id, r.name, r.fallback_agent_id, a.name as fallback_nome
+       from ai_routers r
+       left join ai_agents a on a.organization_id = r.organization_id and a.id = r.fallback_agent_id
+      where r.organization_id=$1 and r.channel_session_id=$2 and r.is_active`,
+    [orgId, canalId],
+  );
+  const r = rows[0];
+  if (!r) return null;
+  const membros = await db.query(
+    `select m.agent_id, m.intent_name, a.name
+       from ai_router_members m
+       left join ai_agents a on a.organization_id = m.organization_id and a.id = m.agent_id
+      where m.organization_id=$1 and m.router_id=$2 and not (m.agent_id = any($3::uuid[]))
+      order by m.agent_id`,
+    [orgId, r.id, daEquipe],
+  );
+  const fallback = r.fallback_agent_id === null ? null : String(r.fallback_agent_id);
+  return {
+    id: String(r.id),
+    nome: String(r.name ?? ""),
+    de_fora: instalacao.router_id !== String(r.id),
+    fallback_de_fora:
+      fallback !== null && !daEquipe.includes(fallback)
+        ? { agent_id: fallback, nome: String(r.fallback_nome ?? "") }
+        : null,
+    membros_de_fora: membros.rows.map((m) => ({
+      agent_id: String(m.agent_id),
+      nome: String(m.name ?? ""),
+      intencao: String(m.intent_name ?? ""),
+    })),
+  };
+}
+
+/** Tem algo do cliente neste roteador que a instalação tocaria ou passaria a dividir? */
+function temAlgoDeFora(r: RoteadorDoCanal): boolean {
+  return r.de_fora || r.fallback_de_fora !== null || r.membros_de_fora.length > 0;
+}
+
+/** O que a pessoa confirmou: o roteador, o fallback alheio e os membros alheios. */
+function assinaturaDoRoteador(r: RoteadorDoCanal): string {
+  return hash([r.id, r.fallback_de_fora?.agent_id ?? null, r.membros_de_fora.map((m) => m.agent_id).sort()]);
+}
+
 async function passoDoRoteador(
   db: pg.PoolClient,
   ctx: ContextoDeQuemChama,
@@ -860,6 +924,10 @@ async function passoDoRoteador(
     // O roteador que já atende o canal é reaproveitado. O fallback passa a ser
     // o SDR e a continuidade fica ligada: sem ela, cada mensagem reclassifica e
     // a conversa pula de agente no meio.
+    //
+    // ⚠️ Só se chega aqui com roteador alheio depois da confirmação: quem
+    // recusa sem ela é `instalarEquipePronta`, antes de qualquer escrita
+    // (`canal_com_roteador`).
     await db.query(
       `update ai_routers set fallback_agent_id=$3, config = config || '{"sticky":true}'::jsonb
         where organization_id=$1 and id=$2 and (fallback_agent_id is distinct from $3 or coalesce(config->>'sticky','true') = 'false')`,
@@ -948,7 +1016,30 @@ export async function instalarEquipePronta(
     const perfil = lido.data;
     const instalacao = linha.instalacao;
 
-    // ── 0. edição à mão, antes de qualquer escrita ──────────────────────────
+    const canalId = await resolverCanal(db, ctx.orgId, perfil.onde.channel_session_id);
+
+    // ── 0. o que a instalação substituiria, antes de qualquer escrita ───────
+    // Duas coisas do cliente que instalar por cima muda: agente alterado à mão
+    // e o roteador que já atende o canal. As duas saem na MESMA recusa, para a
+    // confirmação da tela mostrar tudo de uma vez — `forcar` vale para as duas.
+    const roteadorAntes = canalId ? await roteadorDoCanal(db, ctx.orgId, canalId, instalacao) : null;
+    const roteadorEmConflito =
+      roteadorAntes !== null &&
+      temAlgoDeFora(roteadorAntes) &&
+      assinaturaDoRoteador(roteadorAntes) !== instalacao.roteador_confirmado
+        ? roteadorAntes
+        : null;
+    const detalheDoRoteador = roteadorEmConflito
+      ? {
+          roteador: {
+            id: roteadorEmConflito.id,
+            nome: roteadorEmConflito.nome,
+            de_fora: roteadorEmConflito.de_fora,
+            fallback: roteadorEmConflito.fallback_de_fora,
+            membros: roteadorEmConflito.membros_de_fora,
+          },
+        }
+      : {};
     if (opcoes.forcar !== true) {
       const exame = await examinarAgentes(
         db,
@@ -963,12 +1054,19 @@ export async function instalarEquipePronta(
           "agentes_editados_a_mao",
           "Há agentes que foram alterados fora da equipe pronta. Instalar de novo substitui essas alterações.",
           409,
-          { agentes: editados.map((a) => ({ papel: a.papel, agent_id: a.agent_id })) },
+          { agentes: editados.map((a) => ({ papel: a.papel, agent_id: a.agent_id })), ...detalheDoRoteador },
+        );
+      }
+      if (roteadorEmConflito) {
+        throw new EquipeProntaError(
+          "canal_com_roteador",
+          "Este WhatsApp já tem um roteador com agentes que não são da equipe pronta. Instalar passa a entrada das conversas para a equipe.",
+          409,
+          detalheDoRoteador,
         );
       }
     }
 
-    const canalId = await resolverCanal(db, ctx.orgId, perfil.onde.channel_session_id);
     const funilEscolhido = await resolverFunil(db, ctx.orgId, perfil.onde.pipeline_id);
     const criados: string[] = [];
 
@@ -996,11 +1094,34 @@ export async function instalarEquipePronta(
       reguaDeFollowupId: reguaId,
     };
 
-    // ── 6 e 7. agentes e roteador, juntos ──────────────────────────────────
+    // ── 6. ensaio, ANTES do roteador e da publicação ───────────────────────
+    // Num canal que já atende clientes, ligar o roteador e publicar primeiro
+    // poria a equipe nova na frente de todos eles antes do ensaio existir — e,
+    // se o ensaio falhasse depois, o canal ficaria aberto com ela. Aqui a
+    // falha LANÇA: nada é ligado nem publicado, e instalar de novo retoma.
+    // Só enquanto a equipe não foi ativada: instalar de novo com ela ativa não
+    // fecha o canal.
+    if (canalId && linha.modo === "ensaio") {
+      await portas.porCanalEmEnsaio(ctx.orgId, canalId, perfil.onde.telefones_de_teste);
+    }
+
+    // ── 7. agentes e roteador, juntos ──────────────────────────────────────
     await db.query("begin");
     emTransacao = true;
     const preparados = await passoDosAgentes(db, portas, ctx, perfil, instalacao, contexto, canalId, criados);
     const routerId = canalId ? await passoDoRoteador(db, ctx, canalId, preparados, criados) : null;
+    // O que ficou de alheio no roteador DEPOIS desta instalação é o que a
+    // pessoa aceitou: enquanto não mudar, instalar de novo não pergunta outra vez.
+    const agentesDaRodada = Object.fromEntries(
+      preparados.map((p) => [
+        p.papel.id,
+        { agent_id: p.agentId, version_id: p.versionId, versao_do_papel: p.papel.versao, hash: p.hash },
+      ]),
+    );
+    const roteadorDepois =
+      canalId && routerId
+        ? await roteadorDoCanal(db, ctx.orgId, canalId, { router_id: routerId, agentes: agentesDaRodada })
+        : null;
 
     // O que foi criado fica gravado ANTES de publicar: se a publicação falhar
     // no meio, a próxima instalação reencontra tudo pelo id.
@@ -1013,12 +1134,11 @@ export async function instalarEquipePronta(
       followup_flow_pointer_id: reguaId,
       proposal_template_id: null,
       tipos_de_agenda_desativados: desativados,
-      agentes: Object.fromEntries(
-        preparados.map((p) => [
-          p.papel.id,
-          { agent_id: p.agentId, version_id: p.versionId, versao_do_papel: p.papel.versao, hash: p.hash },
-        ]),
-      ),
+      agentes: agentesDaRodada,
+      roteador_confirmado:
+        roteadorDepois !== null && temAlgoDeFora(roteadorDepois) ? assinaturaDoRoteador(roteadorDepois) : null,
+      // A pausa é da tela, não da instalação: instalar de novo não a desfaz.
+      pausa: instalacao.pausa,
     };
     await db.query(
       `update equipe_pronta_perfis
@@ -1041,8 +1161,9 @@ export async function instalarEquipePronta(
       }
       if (publicado) {
         // Sai da pausa de nascimento. Quem o cliente pausou à mão depois de
-        // publicado não é religado aqui: só o que nasceu nesta rodada.
-        if (p.acao === "criado") {
+        // publicado não é religado aqui: só o que nasceu nesta rodada — e nem
+        // ele, se a equipe está pausada pela tela.
+        if (p.acao === "criado" && instalacao.pausa === null) {
           await db.query(
             "update ai_agents set paused_at=null where organization_id=$1 and id=$2 and published_version_id is not null",
             [ctx.orgId, p.agentId],
@@ -1059,10 +1180,6 @@ export async function instalarEquipePronta(
       });
     }
 
-    // ── 9. ensaio — só enquanto a equipe não foi ativada ───────────────────
-    if (canalId && linha.modo === "ensaio") {
-      await portas.porCanalEmEnsaio(ctx.orgId, canalId, perfil.onde.telefones_de_teste);
-    }
 
     return { instalacao: novaInstalacao, agentes, criados };
   } catch (e) {
