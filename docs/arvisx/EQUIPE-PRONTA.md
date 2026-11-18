@@ -211,9 +211,12 @@ Instalar, ativar e pausar são de `admin`.
   do papel, "editado à mão", atualização disponível com a nota do que mudou.
 - Instalar por cima de agente editado à mão, ou num WhatsApp que já tem
   roteador com agentes do cliente, abre UMA confirmação com as duas listas;
-  só "Substituir e instalar" manda `forcar: true`. Quando há roteador e a
-  equipe está em ensaio, a confirmação avisa que o ensaio vale para o número
-  inteiro.
+  só "Substituir e instalar" manda `forcar: true`. Quando o WhatsApp já
+  atende clientes (409 `canal_em_producao`), a mesma confirmação diz, em
+  linguagem simples, que durante o ensaio a IA só responde os números de
+  teste, e mostra os agentes que atendem por ele e quantas conversas a IA
+  respondeu nos últimos 7 dias; sem nada a substituir, o botão é "Instalar
+  mesmo assim".
 
 Atalhos, só para quem tem a tela no plano (`equipeProntaNoPlanoDaOrg`; falha
 de leitura = sem atalho): o primeiro card do tour no fim do onboarding e um

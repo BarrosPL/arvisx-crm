@@ -48,15 +48,23 @@ export interface RoteadorNoCanal {
   membros: { agent_id: string; nome: string; intencao: string }[];
 }
 
-/** O que instalar por cima substitui: pede uma confirmação só, com tudo. */
+/** O WhatsApp que já atende clientes, como o instalador o devolve no 409. */
+export interface CanalEmProducao {
+  agentes: { agent_id: string; nome: string }[];
+  conversas_recentes: number;
+}
+
+/** O que instalar muda no que é do cliente: pede uma confirmação só, com tudo. */
 interface Conflito {
   agentes: AgenteEditado[];
   roteador: RoteadorNoCanal | null;
+  canal: CanalEmProducao | null;
 }
 
 const CODIGOS_DE_CONFIRMACAO = new Set([
   "equipe_pronta_agentes_editados_a_mao",
   "equipe_pronta_canal_com_roteador",
+  "equipe_pronta_canal_em_producao",
 ]);
 
 export function EquipeProntaClient({
@@ -113,10 +121,15 @@ export function EquipeProntaClient({
       setVista("painel");
     } catch (e) {
       if (e instanceof ApiError && CODIGOS_DE_CONFIRMACAO.has(e.code)) {
-        const d = (e.details ?? {}) as { agentes?: AgenteEditado[]; roteador?: RoteadorNoCanal };
+        const d = (e.details ?? {}) as {
+          agentes?: AgenteEditado[];
+          roteador?: RoteadorNoCanal;
+          canal?: CanalEmProducao;
+        };
         setConflito({
           agentes: Array.isArray(d.agentes) ? d.agentes : [],
           roteador: d.roteador && typeof d.roteador === "object" ? d.roteador : null,
+          canal: d.canal && typeof d.canal === "object" ? d.canal : null,
         });
       } else {
         showApiError(e);
@@ -145,6 +158,9 @@ export function EquipeProntaClient({
   }
 
   const roteador = conflito?.roteador ?? null;
+  const canal = conflito?.canal ?? null;
+  /** Nada é substituído: a instalação só fecha o número para o ensaio. */
+  const soOCanal = conflito !== null && conflito.agentes.length === 0 && roteador === null;
   const confirmacao = conflito ? (
     <div
       className="max-w-2xl space-y-3 rounded-md border border-destructive/40 bg-destructive/5 p-4"
@@ -187,7 +203,7 @@ export function EquipeProntaClient({
               "Se você instalar, as conversas que ninguém pegou passam a ir para o Atendimento da equipe pronta. Os agentes que você colocou no roteador continuam nele.",
             )}
           </p>
-          {estado.modo === "ensaio" ? (
+          {estado.modo === "ensaio" && canal === null ? (
             <p className="text-sm" data-testid="ep-conflito-ensaio">
               {t(
                 "A equipe é instalada em ensaio, e o ensaio vale para o número inteiro: até você ativar, a IA deste WhatsApp só responde aos telefones de teste, inclusive os agentes que já atendem por ele.",
@@ -196,9 +212,30 @@ export function EquipeProntaClient({
           ) : null}
         </div>
       ) : null}
+      {canal ? (
+        <div className="space-y-2" data-testid="ep-conflito-canal">
+          <p className="text-sm font-medium">
+            {t(
+              "Este WhatsApp já atende clientes. Durante o ensaio, a IA só responde os números de teste. Recomendamos instalar em outro número ou ativar logo depois de testar.",
+            )}
+          </p>
+          <ul className="list-disc pl-5 text-sm">
+            {canal.agentes.map((a) => (
+              <li key={a.agent_id} data-testid="ep-conflito-canal-agente">
+                {t("Agente que atende por este número hoje:")} {a.nome}
+              </li>
+            ))}
+            {canal.conversas_recentes > 0 ? (
+              <li data-testid="ep-conflito-canal-conversas">
+                {t("Conversas que a IA respondeu por este número nos últimos 7 dias:")} {canal.conversas_recentes}
+              </li>
+            ) : null}
+          </ul>
+        </div>
+      ) : null}
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="destructive" disabled={ocupado} onClick={() => instalar(true)} data-testid="ep-forcar">
-          {t("Substituir e instalar")}
+          {soOCanal ? t("Instalar mesmo assim") : t("Substituir e instalar")}
         </Button>
         <Button type="button" variant="outline" disabled={ocupado} onClick={() => setConflito(null)}>
           {t("Manter como está")}
