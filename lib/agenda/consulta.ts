@@ -182,10 +182,17 @@ export type ResultadoDaConsulta =
       tiposValidos?: TipoValido[];
     };
 
-/** O mínimo de um tipo para o modelo escolher de novo: o handle e o nome. */
+/**
+ * O mínimo de um tipo para o modelo escolher de novo: o handle, o nome e se
+ * alguém publicou horário para ele (o mesmo `tem_horarios` de
+ * `crm_list_event_types`; `null` = a leitura falhou, não dá para afirmar).
+ * Sem o sinal, a recusa mandava o modelo trocar um slug errado por um tipo
+ * vazio, que recusa de novo.
+ */
 export interface TipoValido {
   slug: string;
   nome: string;
+  tem_horarios: boolean | null;
 }
 
 /**
@@ -205,13 +212,34 @@ export async function tiposValidosDaOrg(
 ): Promise<TipoValido[] | null> {
   const { data, error } = await supabase
     .from("calendar_event_types")
-    .select("slug, name")
+    .select("id, slug, name, default_owner_user_id, service_enabled")
     // Service role bypassa a RLS: este filtro é a única proteção no caminho MCP.
     .eq("organization_id", organizationId)
     .eq("is_active", true)
     .order("name");
   if (error) return null;
-  return (data ?? []).map((t) => ({ slug: String(t.slug), nome: String(t.name) }));
+  const tipos = (data ?? []) as {
+    id: string;
+    slug: string;
+    name: string;
+    default_owner_user_id: string | null;
+    service_enabled: boolean | null;
+  }[];
+  // Duas consultas para a lista inteira; erro nelas vira `null` por tipo.
+  const comHorarios = await tiposComHorarios(
+    supabase,
+    organizationId,
+    tipos.map((t) => ({
+      id: String(t.id),
+      donoPadraoId: t.default_owner_user_id ?? null,
+      ...(t.service_enabled ? { servico: {} } : {}),
+    })),
+  );
+  return tipos.map((t) => ({
+    slug: String(t.slug),
+    nome: String(t.name),
+    tem_horarios: comHorarios.get(String(t.id)) ?? null,
+  }));
 }
 
 /**
@@ -257,8 +285,9 @@ export function mensagemDeTipoDesconhecido(
   }
   return (
     `${abertura} Os tipos que existem estão em \`tipos_validos\`: repita a chamada com o ` +
-    "`slug` de um deles, sem chamar ninguém da equipe por causa disto. Só pergunte à pessoa " +
-    "se nenhum deles for o que ela quer."
+    "`slug` de um deles, sem chamar ninguém da equipe por causa disto. Prefira os que têm " +
+    "`tem_horarios: true`; em tipo com `tem_horarios: false` ninguém publicou horário. Só " +
+    "pergunte à pessoa se nenhum deles for o que ela quer."
   );
 }
 
@@ -1329,7 +1358,7 @@ export async function listaTiposDeAtendimento(
 export async function tiposComHorarios(
   supabase: SupabaseClient,
   organizationId: string,
-  tipos: readonly Pick<TipoDeAtendimento, "id" | "donoPadraoId" | "servico">[],
+  tipos: readonly { id: string; donoPadraoId: string | null; servico?: unknown }[],
 ): Promise<Map<string, boolean | null>> {
   const resultado = new Map<string, boolean | null>();
   const deServico = tipos.filter((t) => t.servico !== undefined);
