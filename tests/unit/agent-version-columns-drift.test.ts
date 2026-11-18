@@ -233,7 +233,7 @@ function arquivosQueGravamVersao(): string[] {
 /**
  * A ÚNICA lista à mão que sobrou — e ela justifica por que aquele INSERT não é
  * cobrado chave a chave. Escrita por extenso com o motivo de cada arquivo: uma
- * allowlist sem motivo é a próxima cerca velha. Se um destes dois deixar de ser
+ * allowlist sem motivo é a próxima cerca velha. Se um destes deixar de ser
  * descoberto, o teste de descoberta reprová.
  */
 const INSERTS_FORA_DA_COBRANCA: Record<string, string> = {
@@ -245,6 +245,11 @@ const INSERTS_FORA_DA_COBRANCA: Record<string, string> = {
     "Grava em SQL puro, com as colunas tiradas de Object.entries(v) — v é o output de " +
     "agentMcpCreateSchema, que é strict e não partial: as chaves de versionShapeSchema " +
     "entram por construção e nenhum objeto literal é escrito à mão aqui.",
+  "lib/ai/equipe-pronta/instalar.ts":
+    "novaVersaoDoAgente grava em SQL puro, com as colunas tiradas de Object.entries do output de " +
+    "versionCreateSchema.parse — e o que entra no parse é a versão vigente lida por " +
+    "Object.keys(versionCreateSchema.shape) (COLUNAS_DA_VERSAO), com os campos da equipe pronta " +
+    "por cima: chave nova do schema é copiada da vigente por construção, sem lista à mão.",
 };
 
 /**
