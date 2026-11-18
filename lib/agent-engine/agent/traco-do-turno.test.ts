@@ -5,6 +5,10 @@ import {
   montarTracoDoTurno,
   LIMITE_DE_FERRAMENTAS,
   LIMITE_DO_ERRO,
+  LIMITE_DO_RESULTADO,
+  MARCA_DE_CORTE,
+  resumirResultado,
+  higienizarTextoDoTraco,
   type EntradaDoTraco,
 } from "./traco-do-turno";
 import type { ToolSet } from "../edge/llm/run-model-call";
@@ -76,7 +80,13 @@ describe("envolverFerramentasComTraco", () => {
 
     expect(devolvido).toBe(resultado);
     expect(coletor.listar()).toEqual([
-      { nome: "get_lead_context", estado: "ok", erro: null, duracao_ms: 5 },
+      {
+        nome: "get_lead_context",
+        estado: "ok",
+        erro: null,
+        duracao_ms: 5,
+        resultado: '{"ok":true,"dados":42}',
+      },
     ]);
   });
 
@@ -272,7 +282,14 @@ describe("marca encerra_turno no traço", () => {
     await (envolvidas.send_message as Executavel).execute({ body: "oi", encerra_turno: true }, {});
 
     expect(coletor.listar()).toEqual([
-      { nome: "send_message", estado: "ok", erro: null, duracao_ms: 5, encerra_turno: true },
+      {
+        nome: "send_message",
+        estado: "ok",
+        erro: null,
+        duracao_ms: 5,
+        resultado: '{"ok":true,"status":"enviada"}',
+        encerra_turno: true,
+      },
     ]);
   });
 
@@ -333,5 +350,285 @@ describe("marca encerra_turno no traço", () => {
       { nome: "send_message", estado: "ok", erro: null, duracao_ms: 3, encerra_turno: true },
       { nome: "update_lead_state", estado: "ok", erro: null, duracao_ms: 4 },
     ]);
+  });
+});
+
+/**
+ * A RECUSA DE NEGÓCIO e o RESULTADO no traço.
+ *
+ * Medido em ensaio (17/11/2026): a ferramenta de agenda recusou um tipo que não
+ * existia, o agente chamou humano, e a linha do turno dizia `estado: "ok"` sem o
+ * retorno — não deu para provar a causa. Duas coisas mudam: a recusa tem estado
+ * próprio, e o que a ferramenta devolveu fica guardado, resumido.
+ */
+describe("recusa de negócio e resultado no traço", () => {
+  type Executavel = { execute: (input: unknown, options: unknown) => unknown };
+
+  async function registrar(retorno: unknown) {
+    const tools = { crm_x: ferramenta(() => retorno) } as unknown as ToolSet;
+    const coletor = criarColetorDeFerramentas();
+    const envolvidas = envolverFerramentasComTraco(tools, coletor, relogioDeMentira());
+    const devolvido = await (envolvidas.crm_x as Executavel).execute({}, {});
+    return { devolvido, chamada: coletor.listar()[0]! };
+  }
+
+  it.each([
+    [
+      "marcação recusada",
+      { marcado: false, motivo: "tipo_desconhecido", mensagem: "não existe" },
+      "tipo_desconhecido",
+    ],
+    [
+      "consulta recusada (lista vazia com motivo)",
+      { horarios: [], motivo: "sem_responsavel", mensagem: "avise" },
+      "sem_responsavel",
+    ],
+    ["escopo recusado", { permitido: false, motivo: "fora_da_conversa" }, "fora_da_conversa"],
+    [
+      "recusa nomeada com `ok: false` + `codigo`",
+      { ok: false, codigo: "agenda_horario_indisponivel" },
+      "agenda_horario_indisponivel",
+    ],
+  ])("%s vira `recusado`, com o código em `erro`", async (_nome, retorno, codigo) => {
+    const { devolvido, chamada } = await registrar(retorno);
+
+    // O traço observa: o modelo recebe exatamente o que a ferramenta devolveu.
+    expect(devolvido).toBe(retorno);
+    expect(chamada.estado).toBe("recusado");
+    expect(chamada.erro).toBe(codigo);
+    expect(chamada.resultado).toBe(JSON.stringify(retorno));
+  });
+
+  it("falha continua sendo falha: `ok: false` com `error` não é recusa", async () => {
+    const { chamada } = await registrar({ ok: false, error: { code: "x", message: "sem canal" } });
+
+    expect(chamada.estado).toBe("falhou");
+    expect(chamada.erro).toBe("sem canal");
+  });
+
+  it("o bloqueio do breaker continua `bloqueada`, mesmo sendo `ok: false`", async () => {
+    const { chamada } = await registrar({
+      ok: false,
+      error: { code: "circuit_breaker_same_tool", message: "desativada neste turno" },
+    });
+
+    expect(chamada.estado).toBe("bloqueada");
+  });
+
+  /**
+   * ERRO TÉCNICO COM CARA DE RECUSA. `semDerrubarOTurno` (agendamento) devolve
+   * `{ marcado: false, motivo, mensagem }` também quando o que houve foi erro
+   * de servidor. Contado como `recusado`, um defeito da agenda se escondia
+   * atrás de "a ferramenta disse não".
+   */
+  it.each([
+    [
+      "`motivo: internal_error`",
+      { marcado: false, motivo: "internal_error", mensagem: "não consegui completar agora" },
+      "internal_error",
+    ],
+    [
+      "`motivo: erro_interno` na consulta",
+      { horarios: [], motivo: "erro_interno", mensagem: "avise que alguém confirma" },
+      "erro_interno",
+    ],
+    ["`ok: false` + `codigo: erro_interno`", { ok: false, codigo: "erro_interno" }, "erro_interno"],
+    [
+      "5xx com código próprio, marcado por quem capturou",
+      { marcado: false, falha_tecnica: true, motivo: "agenda_google_fora", mensagem: "avise" },
+      "agenda_google_fora",
+    ],
+  ])("erro técnico não é recusa: %s vira `falhou`", async (_nome, retorno, codigo) => {
+    const { devolvido, chamada } = await registrar(retorno);
+
+    expect(devolvido).toBe(retorno);
+    expect(chamada.estado).toBe("falhou");
+    // Não há `error` nesse formato: o que se lê é o código.
+    expect(chamada.erro).toBe(codigo);
+    expect(chamada.resultado).toBe(JSON.stringify(retorno));
+  });
+
+  it("a marca de falha técnica não vira falha quando a ferramenta diz `ok: true`", async () => {
+    const { chamada } = await registrar({ ok: true, falha_tecnica: true, motivo: "erro_interno" });
+
+    expect(chamada.estado).toBe("ok");
+  });
+
+  it("JWT, Bearer e segredo em URL não ficam no resumo", async () => {
+    const jwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzaW50ZXRpY28ifQ.c2ludGV0aWNvLW51bmNhLXVzYWRv";
+    const { chamada } = await registrar({
+      ok: true,
+      sessao: jwt,
+      cabecalho: "Bearer segredo-sintetico-0000",
+      arquivo: "https://exemplo.test/f/a.pdf?token=tok-sintetico-1&v=2&signature=assin-sintetica-2",
+    });
+
+    expect(chamada.resultado).not.toContain("eyJhbGciOiJIUzI1NiJ9");
+    expect(chamada.resultado).not.toContain("c2ludGV0aWNv");
+    expect(chamada.resultado).not.toContain("segredo-sintetico");
+    expect(chamada.resultado).not.toContain("tok-sintetico");
+    expect(chamada.resultado).not.toContain("assin-sintetica");
+    // O que não é segredo fica: o caminho do arquivo e o parâmetro comum.
+    expect(chamada.resultado).toContain("https://exemplo.test/f/a.pdf?token=[CHAVE]&v=2&signature=[CHAVE]");
+    expect(chamada.resultado).toContain("Bearer [CHAVE]");
+  });
+
+  it("carimbo de tempo em milissegundos fica inteiro; CPF e telefone continuam saindo", async () => {
+    const { chamada } = await registrar({
+      ok: true,
+      criado_em_ms: 1763480000123,
+      texto: "em 1763480000123 ligou",
+      cpf: "52998224725",
+      telefone: "5511999032010",
+    });
+
+    expect(chamada.resultado).toContain('"criado_em_ms":1763480000123');
+    expect(chamada.resultado).toContain("em 1763480000123 ligou");
+    expect(chamada.resultado).not.toContain("[CPF]00");
+    expect(chamada.resultado).not.toContain("52998224725");
+    expect(chamada.resultado).not.toContain("999032010");
+  });
+
+  it("a higiene é idempotente: o leitor a reaplica sobre o que já está gravado", () => {
+    const cru = '{"ts":1763480000123,"url":"https://x.test/a?token=abc12345","tel":"+55 11 99903-2010"}';
+    const uma = higienizarTextoDoTraco(cru);
+
+    expect(higienizarTextoDoTraco(uma)).toBe(uma);
+  });
+
+  it.each([
+    [
+      "sucesso que carrega `motivo` sem mensagem nem bandeira",
+      { compromisso: { id: "a1" }, motivo: "remarcado_pelo_cliente" },
+    ],
+    [
+      "`ok: true` com `motivo` e `mensagem`",
+      { ok: true, motivo: "ja_estava", mensagem: "já estava assim" },
+    ],
+    ["sucesso com bandeira falsa, sem `motivo`", { marcado: true, aguarda_confirmacao: false }],
+    ["lista vazia sem `motivo`", { horarios: [] }],
+  ])("não confunde sucesso com recusa: %s", async (_nome, retorno) => {
+    const { chamada } = await registrar(retorno);
+
+    expect(chamada.estado).toBe("ok");
+    expect(chamada.erro).toBeNull();
+  });
+
+  it("o resultado é cortado em 600 caracteres, com a marca de corte no fim", async () => {
+    const { devolvido, chamada } = await registrar({ ok: true, texto: "a".repeat(2000) });
+
+    expect(LIMITE_DO_RESULTADO).toBe(600);
+    expect(chamada.resultado).toHaveLength(LIMITE_DO_RESULTADO);
+    expect(chamada.resultado!.endsWith(MARCA_DE_CORTE)).toBe(true);
+    // O corte é só no traço: o modelo recebe o resultado inteiro.
+    expect((devolvido as { texto: string }).texto).toHaveLength(2000);
+  });
+
+  it("resultado curto não leva marca de corte", async () => {
+    const { chamada } = await registrar({ ok: true });
+
+    expect(chamada.resultado).toBe('{"ok":true}');
+  });
+
+  it("telefone, e-mail e chave não ficam no resumo; ids e slugs ficam", async () => {
+    const { chamada } = await registrar({
+      ok: true,
+      contato: {
+        id: "11111111-1111-4111-8111-111111111111",
+        email: "pessoa@example.test",
+        telefone: "+55 11 99903-2010",
+      },
+      slug: "primeira-conversa",
+      chave: "sk-sintetica-nunca-usada-0000",
+    });
+
+    expect(chamada.resultado).not.toContain("pessoa@example.test");
+    expect(chamada.resultado).not.toContain("99903-2010");
+    expect(chamada.resultado).not.toContain("sk-sintetica");
+    expect(chamada.resultado).toContain("11111111-1111-4111-8111-111111111111");
+    expect(chamada.resultado).toContain("primeira-conversa");
+  });
+
+  it("resultado que não serializa vira `null` — e o turno segue com o valor original", async () => {
+    const circular: Record<string, unknown> = { ok: true };
+    circular.eu = circular;
+
+    const { devolvido, chamada } = await registrar(circular);
+
+    expect(devolvido).toBe(circular);
+    expect(chamada.estado).toBe("ok");
+    expect(chamada.resultado).toBeNull();
+  });
+
+  it("chamada que lança não tem resultado: o que há para ler está em `erro`", async () => {
+    const tools = {
+      crm_x: ferramenta(() => {
+        throw new Error("banco fora");
+      }),
+    } as unknown as ToolSet;
+    const coletor = criarColetorDeFerramentas();
+    const envolvidas = envolverFerramentasComTraco(tools, coletor, relogioDeMentira());
+
+    await expect((envolvidas.crm_x as Executavel).execute({}, {})).rejects.toThrow("banco fora");
+    expect(coletor.listar()[0]).toMatchObject({
+      estado: "falhou",
+      erro: "banco fora",
+      resultado: null,
+    });
+  });
+
+  it("resumirResultado: `undefined` é ausência de retorno, texto passa como texto", () => {
+    expect(resumirResultado(undefined)).toBeNull();
+    expect(resumirResultado("feito")).toBe("feito");
+    expect(resumirResultado(null)).toBe("null");
+  });
+
+  it("montarTracoDoTurno leva o resultado à linha e não o inventa em linha antiga", () => {
+    const linha = montarTracoDoTurno({
+      organizationId: "org-1",
+      jobId: "job-1",
+      previewRunId: null,
+      conversationId: "conv-1",
+      contactId: "lead-1",
+      agentId: null,
+      agentVersionId: null,
+      isDryRun: false,
+      status: "completed",
+      abortReason: null,
+      errorCode: null,
+      errorMessage: null,
+      provider: null,
+      model: null,
+      messagesSent: 0,
+      historicoMensagens: null,
+      knowledgeSourceIds: [],
+      ferramentas: [
+        {
+          nome: "crm_x",
+          estado: "recusado",
+          erro: "tipo_desconhecido",
+          duracao_ms: 38,
+          resultado: '{"marcado":false}',
+        },
+        { nome: "send_message", estado: "ok", erro: null, duracao_ms: 4 },
+        {
+          nome: "crm_y",
+          estado: "ok",
+          erro: null,
+          duracao_ms: 4,
+          resultado: "b".repeat(LIMITE_DO_RESULTADO + 80),
+        },
+      ],
+    });
+
+    expect(linha.ferramentas[0]).toEqual({
+      nome: "crm_x",
+      estado: "recusado",
+      erro: "tipo_desconhecido",
+      duracao_ms: 38,
+      resultado: '{"marcado":false}',
+    });
+    expect(linha.ferramentas[1]).not.toHaveProperty("resultado");
+    expect(linha.ferramentas[2]!.resultado).toHaveLength(LIMITE_DO_RESULTADO);
   });
 });

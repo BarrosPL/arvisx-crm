@@ -40,9 +40,28 @@ O leitor não seleciona `error_message`. Projeta campos individualmente; não es
 
 Erros são códigos canônicos ou nomes técnicos conhecidos de exceções; valores desconhecidos tornam-se `internal_error`. Motivos de aborto são um conjunto fechado; os demais ficam nulos. Erros de consulta e exceções inesperadas retornam `fail` genérico, sem ecoar mensagens do banco.
 
-`ferramentas` devolve apenas nome reconhecido do catálogo/nativo, estado conhecido, código técnico de erro e duração numérica. Nomes/estados desconhecidos ficam nulos. Não devolve argumentos, texto livre de erro ou chaves extras. `skills` devolve somente `versao_id`; `kb_sources`, somente IDs/versão, hash hexadecimal e o indicador `ligada`.
+`ferramentas` devolve nome reconhecido do catálogo/nativo, estado conhecido, código técnico de erro, duração numérica e `resultado`. Nomes/estados desconhecidos ficam nulos. Não devolve argumentos, texto livre de erro ou chaves extras. `skills` devolve somente `versao_id`; `kb_sources`, somente IDs/versão, hash hexadecimal e o indicador `ligada`.
 
 A gravação legada pode conter mensagens livres e não foi reescrita nesta entrega. Esta projeção protege o novo leitor; não anuncia higienização retroativa, mudança de RLS ou nova cascata LGPD.
+
+### Estado e resultado de cada ferramenta
+
+| `estado`    | Significado                                                                                              | `erro`                                    |
+| ----------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| `ok`        | A ferramenta rodou e atendeu                                                                             | `null`                                    |
+| `recusado`  | A ferramenta rodou e disse não: recusa de negócio (`marcado: false`, `permitido: false`, `ok: false` com `codigo`, lista vazia com `motivo`) | O código da recusa (ex.: `tipo_desconhecido`) |
+| `falhou`    | A ferramenta quebrou ou lançou                                                                           | Código técnico; desconhecido vira `internal_error` |
+| `bloqueada` | O próprio turno interrompeu a chamada (circuit breaker)                                                  | Código técnico                            |
+
+`recusado` existe porque a recusa de negócio saía como `ok`: a ferramenta de fato não falhou, e o traço de um turno que não marcou o horário era igual ao de um que marcou. A classificação é de `envolverFerramentasComTraco` (`lib/agent-engine/agent/traco-do-turno.ts`) e não muda o que o modelo recebe.
+
+Em `recusado`, `erro` passa pela régua de identificador (formato fechado, sem prosa, dado pessoal ou chave), e não pelo catálogo de erros de API: os códigos de recusa não estão nesse catálogo, e seriam todos trocados por `internal_error`.
+
+`resultado` é o resumo em JSON do que a ferramenta devolveu, com teto de 600 caracteres (`LIMITE_DO_RESULTADO`) e a marca `…[cortado]` no fim quando houve corte. É `null` quando a chamada lançou, quando o retorno não é serializável e nas linhas gravadas antes de o campo existir.
+
+É o único texto livre que este leitor devolve, e a exceção é deliberada: sem ele não dá para provar a causa de uma recusa. A higiene é aplicada duas vezes, na gravação e de novo na leitura (`higienizarTextoDoTraco`): e-mail, telefone, documento e chaves são trocados por marcador. **Nome de pessoa não é removido** (nome não tem formato); o resultado de uma ferramenta que lê a ficha do contato pode trazer o nome dele, que quem tem papel `manager` nesta organização já vê na conversa. Ids, slugs, códigos e horários são preservados.
+
+Estados gravados antes desta mudança não são reclassificados: uma recusa antiga continua `ok` no banco.
 
 ## Verificação
 

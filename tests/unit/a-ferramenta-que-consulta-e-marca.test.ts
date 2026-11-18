@@ -114,6 +114,48 @@ describe("crm_find_and_book_appointment", () => {
     expect(String(r.quando)).toMatch(HORA_14);
   });
 
+  it("tipo por ID: consulta e marca no MESMO tipo, sem traduzir por slug", async () => {
+    // O agente que recebeu o tipo CONFIGURADO (com o id junto) não deriva slug de
+    // nome nenhum. A consulta acabou de achar esse id dentro da organização, então
+    // a marcação sai nele — sem a ida a mais de id → slug → id.
+    const TIPO = "44444444-4444-4444-8444-444444444444";
+
+    const r = (await crmFindAndBookAppointment.handler(
+      { event_type_id: TIPO, dia: "2026-09-01", horario: "14:00", contact_id: CONTATO },
+      ctx,
+    )) as Record<string, unknown>;
+
+    expect(r.marcado).toBe(true);
+    const params = vi.mocked(horariosLivresDaOrg).mock.calls[0]![2];
+    expect(params.eventTypeId).toBe(TIPO);
+    expect(params.eventTypeSlug).toBeUndefined();
+
+    expect(idDoTipoPorSlug).not.toHaveBeenCalled();
+    const [, meta, corpo] = vi.mocked(handlers.marcarAgendamentoHandler).mock.calls[0]!;
+    expect((meta as { organization_id: string }).organization_id).toBe("org-1");
+    expect((corpo as { event_type_id: string }).event_type_id).toBe(TIPO);
+    expect((corpo as { starts_at: string }).starts_at).toBe("2026-09-01T17:00:00.000Z");
+  });
+
+  it("tipo por ID: a recusa da marcação também volta como resposta, nunca exceção", async () => {
+    vi.mocked(handlers.marcarAgendamentoHandler).mockRejectedValue(
+      new ApiError(409, "agenda_horario_indisponivel", undefined, "req-1", "slot tomado"),
+    );
+
+    const r = (await crmFindAndBookAppointment.handler(
+      {
+        event_type_id: "44444444-4444-4444-8444-444444444444",
+        dia: "2026-09-01",
+        horario: "14:00",
+        contact_id: CONTATO,
+      },
+      ctx,
+    )) as Record<string, unknown>;
+
+    expect(r.marcado).toBe(false);
+    expect(r.motivo).toBe("agenda_horario_indisponivel");
+  });
+
   it("horário pedido fora da lista: NADA é marcado e a resposta traz os horários do dia", async () => {
     const r = (await crmFindAndBookAppointment.handler(
       { event_type_slug: "consulta", dia: "2026-09-01", horario: "16:00", contact_id: CONTATO },

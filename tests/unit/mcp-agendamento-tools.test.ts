@@ -31,7 +31,15 @@ vi.mock("@/app/api/v1/agenda/agendamentos/_handler", () => ({
 
 vi.mock("@/lib/agenda/consulta", async (original) => {
   const real = await original<typeof AgendaConsulta>();
-  return { ...real, horariosLivresDaOrg: vi.fn(), listaAgendamentos: vi.fn(), idDoTipoPorSlug: vi.fn() };
+  return {
+    ...real,
+    horariosLivresDaOrg: vi.fn(),
+    listaAgendamentos: vi.fn(),
+    idDoTipoPorSlug: vi.fn(),
+    // A lista que acompanha a recusa de tipo desconhecido vem do banco; aqui o
+    // dublê do client não tem `from`, e `null` é o desfecho de "não consegui ler".
+    tiposValidosDaOrg: vi.fn(async () => null),
+  };
 });
 
 const { horariosLivresDaOrg, listaAgendamentos, idDoTipoPorSlug } = await import("@/lib/agenda/consulta");

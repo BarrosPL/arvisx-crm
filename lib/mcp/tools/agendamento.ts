@@ -25,6 +25,9 @@ import {
   listaAgendamentos,
   listaTiposDeAtendimento,
   MAXIMO_DE_DIAS,
+  mensagemDeTipoDesconhecido,
+  tiposComHorarios,
+  tiposValidosDaOrg,
 } from "@/lib/agenda/consulta";
 import { rotuloDoLocal } from "@/lib/agenda/locais";
 import { diaLocalISO } from "@/lib/agenda/fuso";
@@ -113,6 +116,8 @@ export const crmListEventTypes: McpToolDefinition<typeof tiposShape> = {
     "atendimento pode se chamar outra coisa — é você que faz a ponte, olhando esta lista. " +
     "Lista vazia significa que ninguém cadastrou o que a organização atende: não invente atendimento, " +
     "avise que alguém da equipe confirma. " +
+    "`tem_horarios: false` = ninguém publicou horário para aquele atendimento: não ofereça nem " +
+    "marque nele. " +
     "`precisa_confirmacao: true` muda o que você diz depois de marcar — o horário fica reservado " +
     "AGUARDANDO a pessoa confirmar, não confirmado.",
   inputSchema: tiposShape,
@@ -124,6 +129,8 @@ export const crmListEventTypes: McpToolDefinition<typeof tiposShape> = {
     if (!r.ok) {
       return { tipos: [], motivo: r.codigo, mensagem: r.motivoParaCliente };
     }
+    // Duas consultas para a lista inteira, nunca uma coleta de horários por tipo.
+    const comHorarios = await tiposComHorarios(ctx.supabase, ctx.organizationId, r.tipos);
     return {
       tipos: r.tipos.map((t) => ({
         // O SLUG vem primeiro, e o `id` NÃO vem: o slug existe para dar à IA um
@@ -137,17 +144,107 @@ export const crmListEventTypes: McpToolDefinition<typeof tiposShape> = {
         // recebe. `rotuloDoLocal` é o MESMO tradutor que a tela usa.
         onde: rotuloDoLocal(t.localKind, t.localDetalhes) ?? null,
         precisa_confirmacao: t.precisaConfirmacao,
+        // Há horário PUBLICADO para este atendimento (jornada do responsável ou
+        // agenda do serviço). `null` = a leitura falhou e não dá para afirmar.
+        // Não é "tem vaga": vaga é pergunta de `crm_find_free_slots`.
+        tem_horarios: comHorarios.get(t.id) ?? null,
         ...(t.servico ? { servico: t.servico } : {}),
       })),
     };
   },
 };
 
-const horariosLivresShape = {
+/**
+ * O TIPO, por slug OU por id — um dos dois, nas ferramentas que OLHAM a agenda.
+ *
+ * O slug continua sendo o caminho do modelo que escolhe o atendimento na
+ * conversa (`crm_list_event_types` só publica slug, de propósito). O id existe
+ * para o agente que já recebeu o tipo CONFIGURADO, com o id junto: citar o tipo
+ * pelo NOME no texto do agente fez o modelo derivar um slug que não existia, e
+ * um uuid copiado não tem como ser "derivado".
+ *
+ * Os dois são opcionais no schema porque `inputSchema` é um shape, sem regra
+ * entre campos; quem cobra "um dos dois" é `tipoPedido`, e a falta volta como
+ * recusa de negócio com a lista do que existe — nunca como erro de validação
+ * que mata a chamada sem ensinar nada.
+ *
+ * ⚠️ `event_type_id` NÃO é `.uuid()` no schema, e é de propósito, por duas
+ * razões medidas: o `pattern` que o zod gera para uuid pesa ~100 tokens em TODO
+ * passo de TODO turno (`tests/unit/peso-das-ferramentas.test.ts`), e um id mal
+ * formado recusado pelo schema volta como erro de protocolo, que não ensina. A
+ * forma é conferida em `tipoPedido`, e o que não é uuid recebe a MESMA recusa
+ * de tipo desconhecido, com a lista do que existe.
+ */
+const tipoDoAtendimentoShape = {
   event_type_slug: z
     .string()
     .min(1)
-    .describe("o identificador legível do tipo de atendimento (ex.: 'consulta-inicial')"),
+    .optional()
+    .describe(
+      "o identificador legível do tipo de atendimento (ex.: 'consulta-inicial'). Informe este OU `event_type_id`.",
+    ),
+  event_type_id: z
+    .string()
+    .min(1)
+    .optional()
+    .describe("o id do tipo, quando veio pronto nas suas instruções. Copie; nunca invente."),
+};
+
+const FORMA_DE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+type TipoPedido =
+  | { eventTypeSlug: string }
+  | { eventTypeId: string }
+  /** Veio um id que nem tem forma de id: recusa, sem ir ao banco. */
+  | { idInvalido: string };
+
+/** O que foi pedido, já no formato da coleta. `null` = nenhum dos dois veio. */
+function tipoPedido(input: {
+  event_type_slug?: string | undefined;
+  event_type_id?: string | undefined;
+}): TipoPedido | null {
+  // O id vence quando os dois vêm: é o handle que não se deriva de um nome.
+  if (input.event_type_id !== undefined) {
+    const id = input.event_type_id.trim();
+    if (FORMA_DE_UUID.test(id)) return { eventTypeId: id };
+    // Id torto ao lado de um slug: o slug ainda pode estar certo.
+    if (input.event_type_slug === undefined) return { idInvalido: input.event_type_id };
+  }
+  if (input.event_type_slug !== undefined) return { eventTypeSlug: input.event_type_slug };
+  return null;
+}
+
+/**
+ * A recusa de quem não disse o tipo, ou mandou um id que não é id — com a
+ * lista, para a próxima chamada acertar. NADA vai ao banco além da lista.
+ */
+async function recusaSemTipo(
+  ctx: McpContext,
+  tipo: { idInvalido: string } | null,
+): Promise<Record<string, unknown>> {
+  const tiposValidos = await tiposValidosDaOrg(ctx.supabase, ctx.organizationId);
+  const haLista = tiposValidos !== null && tiposValidos.length > 0;
+  return {
+    horarios: [],
+    motivo: "tipo_desconhecido",
+    mensagem:
+      tipo !== null
+        ? mensagemDeTipoDesconhecido(tipo.idInvalido, tiposValidos)
+        : haLista
+          ? "Faltou dizer o tipo de atendimento. Repita a chamada com `event_type_slug` de um dos " +
+            "`tipos_validos`."
+          : "Faltou dizer o tipo de atendimento, e não encontrei nenhum cadastrado. Avise que alguém da equipe confirma.",
+    ...(tiposValidos !== null ? { tipos_validos: tiposValidos } : {}),
+  };
+}
+
+/** `tipos_validos` da recusa da coleta, no nome que o modelo lê. */
+function tiposValidosDaRecusa(consulta: { tiposValidos?: unknown }): Record<string, unknown> {
+  return consulta.tiposValidos !== undefined ? { tipos_validos: consulta.tiposValidos } : {};
+}
+
+const horariosLivresShape = {
+  ...tipoDoAtendimentoShape,
   /**
    * ⚠️ O MODELO NÃO SABE QUE DIA É HOJE — medido neste repo, num turno real: pedido
    * "daqui a três dias", ele mandou a data do treino dele. Por isso o caminho
@@ -292,6 +389,8 @@ export const crmFindFreeSlots: McpToolDefinition<typeof horariosLivresShape> = {
   description:
     "Mostra os horários livres de um tipo de atendimento, já considerando a jornada de trabalho " +
     "do atendente, folgas, o que ele já tem marcado e a agenda externa dele. " +
+    "Se vier `motivo: tipo_desconhecido`, repita a chamada com um dos `tipos_validos` da resposta " +
+    "— não chame a equipe por isso. " +
     "Use ANTES de oferecer horário ao cliente: oferecer um horário que não existe e depois voltar " +
     "atrás é pior do que demorar um instante a mais para responder. " +
     "Cada horário vem em dois formatos: `inicio` é o instante que você COPIA para `starts_at` de " +
@@ -358,8 +457,11 @@ export const crmFindFreeSlots: McpToolDefinition<typeof horariosLivresShape> = {
       );
     }
 
+    const tipo = tipoPedido(input);
+    if (tipo === null || "idInvalido" in tipo) return recusaSemTipo(ctx, tipo);
+
     const consulta = await horariosLivresDaOrg(ctx.supabase, ctx.organizationId, {
-      eventTypeSlug: input.event_type_slug,
+      ...tipo,
       ownerUserId: input.owner_user_id ?? null,
       de,
       ate,
@@ -375,6 +477,8 @@ export const crmFindFreeSlots: McpToolDefinition<typeof horariosLivresShape> = {
         // A face do CLIENTE, nunca a do operador: `motivoParaOperador` nomeia
         // campo e pessoa, e o modelo repassa o que recebe (DECISÃO 20).
         mensagem: consulta.motivoParaCliente,
+        // Em `tipo_desconhecido`, o que existe — para o modelo corrigir sozinho.
+        ...tiposValidosDaRecusa(consulta),
       };
     }
 
@@ -634,8 +738,14 @@ async function semDerrubarOTurno<T>(
     return await fn();
   } catch (e) {
     if (!(e instanceof ApiError)) throw e; // infra sobe: não é limite de negócio.
+    // Erro de SERVIDOR (5xx, ou o código genérico de erro interno) não é a
+    // agenda dizendo "não": é a agenda quebrada. O modelo ouve o mesmo ensino,
+    // mas o retorno leva a marca que o traço do turno lê para registrar
+    // `falhou` em vez de `recusado` (`MARCA_DE_FALHA_TECNICA`).
+    const tecnica = e.status >= 500 || e.code === "internal_error" || e.code === "erro_interno";
     return {
       [chave]: false,
+      ...(tecnica ? { falha_tecnica: true } : {}),
       motivo: e.code,
       mensagem:
         ENSINO_POR_CODIGO[e.code] ??
@@ -753,92 +863,115 @@ export const crmBookAppointment: McpToolDefinition<typeof marcarShape> = {
     semDerrubarOTurno("marcado", async () => {
       const tipo = await idDoTipoPorSlug(ctx.supabase, ctx.organizationId, input.event_type_slug);
       if (!tipo) {
+        // A MESMA recusa da consulta, com a mesma lista: o conserto é o mesmo
+        // (trocar o slug por um que existe), e não é caso de chamar humano.
+        const tiposValidos = await tiposValidosDaOrg(ctx.supabase, ctx.organizationId);
         return {
           marcado: false,
           motivo: "tipo_desconhecido",
-          mensagem: `não existe atendimento chamado "${input.event_type_slug}". Pergunte que tipo de atendimento a pessoa quer.`,
+          mensagem: `NADA foi marcado. ${mensagemDeTipoDesconhecido(input.event_type_slug, tiposValidos)}`,
+          ...(tiposValidos !== null ? { tipos_validos: tiposValidos } : {}),
         };
       }
-      if (input.guest_email !== undefined && !(await convidadoEhDaEquipe(ctx, input.guest_email))) {
-        return {
-          marcado: false,
-          motivo: "convidado_fora_da_equipe",
-          mensagem:
-            "NADA foi marcado: o convite só pode incluir e-mail de alguém da equipe desta empresa. " +
-            "Marque de novo SEM `guest_email` e, se a pessoa quer outro participante, diga que a " +
-            "equipe inclui no convite.",
-        };
-      }
-      const r = await marcarAgendamentoHandler(
-        ctx.supabase,
-        {
-          organization_id: ctx.organizationId,
-          actor: ctx.actor,
-          requestId: ctx.requestId,
-          meetingBooking: ctx.meetingBooking,
-          ...(ctx.idempotencyKey !== undefined ? { idempotencyKey: ctx.idempotencyKey } : {}),
-          ...(ctx.sourceJobId !== undefined ? { sourceJobId: ctx.sourceJobId } : {}),
-        },
-        {
-          event_type_id: tipo.id,
-          starts_at: input.starts_at,
-          contact_id: input.contact_id,
-          ...(input.owner_user_id ? { owner_user_id: input.owner_user_id } : {}),
-          ...(input.title ? { title: input.title } : {}),
-          ...(input.notes ? { notes: input.notes } : {}),
-          ...(input.description ? { description: input.description } : {}),
-          ...(input.location_details !== undefined
-            ? { location_details: input.location_details }
-            : {}),
-          ...(input.guest_email !== undefined ? { guest_email: input.guest_email } : {}),
-          ...(input.participant_name !== undefined ? { participant_name: input.participant_name } : {}),
-          ...(input.participants !== undefined ? { participants: input.participants } : {}),
-          ...(input.expected_service_revision !== undefined ? { expected_service_revision: input.expected_service_revision } : {}),
-        },
-      );
-      /**
-       * ⚠️ MARCADO NÃO É CONFIRMADO, e o modelo precisa ouvir isso em voz alta.
-       *
-       * Um tipo com `requires_confirmation` nasce `pending`: o horário fica
-       * RESERVADO (some da lista de livres, e outra marcação no mesmo horário é
-       * recusada), mas alguém da equipe ainda precisa dizer sim. É o arranjo de
-       * quem quer que uma pessoa aprove cada atendimento.
-       *
-       * Até aqui, a única pista disso era `status: "pending"` enterrado dentro
-       * de `compromisso` — enquanto a descrição desta tool diz "o cliente conta
-       * com ele" e o bloco de sistema da agenda manda o modelo dizer que está
-       * confirmado depois de marcar. O produto ENSINAVA o modelo a afirmar
-       * "está marcado!" num compromisso que ainda podia ser recusado, e o
-       * cliente ouviria uma confirmação que ninguém deu.
-       *
-       * Os dois "pending" deste retorno são coisas diferentes e coincidem no
-       * nome: `status` é o do compromisso, `meeting_state` é o do link do Meet.
-       * Por isso as mensagens são separadas e nomeadas.
-       */
-      const aguardaConfirmacao = r.status === "pending";
-      const avisos = [
-        aguardaConfirmacao
-          ? (r.service_booking_mode && r.service_booking_mode !== "individual" ? "A pessoa ficou RESERVADA neste serviço — mas " : "O horário ficou RESERVADO para esta pessoa, e ninguém mais consegue pegá-lo — mas ") +
-            "ainda NÃO está confirmado: alguém da equipe precisa aprovar. Não diga que está " +
-            "confirmado, marcado ou garantido. Diga que o horário foi separado e que a equipe " +
-            "confirma."
-          : null,
-        r.meeting_state === "pending"
-          ? "O link ainda está sendo criado. Não invente um link nem afirme que ele já foi enviado."
-          : null,
-      ].filter(Boolean);
-      if (r.service_occurrence_id) avisos.push("A reserva CRM e a publicação Google são estados separados. Use o estado google_publication do recibo; não afirme publicação ou comunicação que ainda não foi comprovada.");
-
-      return {
-        marcado: r.service_occurrence_id ? r.status === "pending" || r.status === "confirmed" : true,
-        compromisso: compromissoComHorarioLocal(r),
-        // Campo próprio, além da mensagem: um booleano no topo é o que o modelo
-        // enxerga sem precisar interpretar prosa.
-        aguarda_confirmacao: aguardaConfirmacao,
-        ...(avisos.length > 0 ? { mensagem: avisos.join(" ") } : {}),
-      };
+      return marcarNoTipo(ctx, tipo.id, input);
     }),
 };
+
+/**
+ * A marcação depois de o TIPO estar resolvido — o corpo de `crm_book_appointment`.
+ *
+ * Separado do handler porque a ferramenta que consulta e marca numa chamada só
+ * pode chegar aqui com o tipo já resolvido por ID (a consulta acabou de achá-lo,
+ * dentro da organização): traduzir id → slug → id de novo seria uma consulta a
+ * mais só para voltar ao mesmo lugar, e abriria um caminho em que a oferta sai
+ * de um tipo e a marcação de outro.
+ *
+ * ⚠️ Lança `ApiError`: quem chama envolve em `semDerrubarOTurno`.
+ */
+async function marcarNoTipo(
+  ctx: McpContext,
+  tipoId: string,
+  input: Omit<z.infer<z.ZodObject<typeof marcarShape>>, "event_type_slug">,
+): Promise<Record<string, unknown>> {
+  if (input.guest_email !== undefined && !(await convidadoEhDaEquipe(ctx, input.guest_email))) {
+    return {
+      marcado: false,
+      motivo: "convidado_fora_da_equipe",
+      mensagem:
+        "NADA foi marcado: o convite só pode incluir e-mail de alguém da equipe desta empresa. " +
+        "Marque de novo SEM `guest_email` e, se a pessoa quer outro participante, diga que a " +
+        "equipe inclui no convite.",
+    };
+  }
+  const r = await marcarAgendamentoHandler(
+    ctx.supabase,
+    {
+      organization_id: ctx.organizationId,
+      actor: ctx.actor,
+      requestId: ctx.requestId,
+      meetingBooking: ctx.meetingBooking,
+      ...(ctx.idempotencyKey !== undefined ? { idempotencyKey: ctx.idempotencyKey } : {}),
+      ...(ctx.sourceJobId !== undefined ? { sourceJobId: ctx.sourceJobId } : {}),
+    },
+    {
+      event_type_id: tipoId,
+      starts_at: input.starts_at,
+      contact_id: input.contact_id,
+      ...(input.owner_user_id ? { owner_user_id: input.owner_user_id } : {}),
+      ...(input.title ? { title: input.title } : {}),
+      ...(input.notes ? { notes: input.notes } : {}),
+      ...(input.description ? { description: input.description } : {}),
+      ...(input.location_details !== undefined
+        ? { location_details: input.location_details }
+        : {}),
+      ...(input.guest_email !== undefined ? { guest_email: input.guest_email } : {}),
+      ...(input.participant_name !== undefined ? { participant_name: input.participant_name } : {}),
+      ...(input.participants !== undefined ? { participants: input.participants } : {}),
+      ...(input.expected_service_revision !== undefined ? { expected_service_revision: input.expected_service_revision } : {}),
+    },
+  );
+  /**
+   * ⚠️ MARCADO NÃO É CONFIRMADO, e o modelo precisa ouvir isso em voz alta.
+   *
+   * Um tipo com `requires_confirmation` nasce `pending`: o horário fica
+   * RESERVADO (some da lista de livres, e outra marcação no mesmo horário é
+   * recusada), mas alguém da equipe ainda precisa dizer sim. É o arranjo de
+   * quem quer que uma pessoa aprove cada atendimento.
+   *
+   * Até aqui, a única pista disso era `status: "pending"` enterrado dentro
+   * de `compromisso` — enquanto a descrição desta tool diz "o cliente conta
+   * com ele" e o bloco de sistema da agenda manda o modelo dizer que está
+   * confirmado depois de marcar. O produto ENSINAVA o modelo a afirmar
+   * "está marcado!" num compromisso que ainda podia ser recusado, e o
+   * cliente ouviria uma confirmação que ninguém deu.
+   *
+   * Os dois "pending" deste retorno são coisas diferentes e coincidem no
+   * nome: `status` é o do compromisso, `meeting_state` é o do link do Meet.
+   * Por isso as mensagens são separadas e nomeadas.
+   */
+  const aguardaConfirmacao = r.status === "pending";
+  const avisos = [
+    aguardaConfirmacao
+      ? (r.service_booking_mode && r.service_booking_mode !== "individual" ? "A pessoa ficou RESERVADA neste serviço — mas " : "O horário ficou RESERVADO para esta pessoa, e ninguém mais consegue pegá-lo — mas ") +
+        "ainda NÃO está confirmado: alguém da equipe precisa aprovar. Não diga que está " +
+        "confirmado, marcado ou garantido. Diga que o horário foi separado e que a equipe " +
+        "confirma."
+      : null,
+    r.meeting_state === "pending"
+      ? "O link ainda está sendo criado. Não invente um link nem afirme que ele já foi enviado."
+      : null,
+  ].filter(Boolean);
+  if (r.service_occurrence_id) avisos.push("A reserva CRM e a publicação Google são estados separados. Use o estado google_publication do recibo; não afirme publicação ou comunicação que ainda não foi comprovada.");
+
+  return {
+    marcado: r.service_occurrence_id ? r.status === "pending" || r.status === "confirmed" : true,
+    compromisso: compromissoComHorarioLocal(r),
+    // Campo próprio, além da mensagem: um booleano no topo é o que o modelo
+    // enxerga sem precisar interpretar prosa.
+    aguarda_confirmacao: aguardaConfirmacao,
+    ...(avisos.length > 0 ? { mensagem: avisos.join(" ") } : {}),
+  };
+}
 
 /**
  * O caminho de MARCAÇÃO de quem já TEM a hora na mão — usado pela ferramenta que
@@ -850,11 +983,16 @@ export const crmBookAppointment: McpToolDefinition<typeof marcarShape> = {
  * `aguarda_confirmacao` e a mesma recusa de negócio. Uma segunda implementação
  * aqui divergiria da primeira na primeira mudança, e o sintoma seria o mesmo
  * horário marcar de um jeito numa ferramenta e de outro na outra.
+ *
+ * Com o tipo por ID, entra direto em `marcarNoTipo` — o corpo desse mesmo
+ * handler, depois de resolvido o tipo. Só chega aqui por id quem acabou de
+ * CONSULTAR por esse id: a coleta já o achou dentro da organização, então a
+ * marcação sai no MESMO tipo que ofereceu o horário.
  */
 async function marcarHorario(
   ctx: McpContext,
   args: {
-    eventTypeSlug: string;
+    tipo: { eventTypeSlug: string } | { eventTypeId: string };
     startsAt: string;
     contactId: string;
     ownerUserId?: string;
@@ -866,25 +1004,26 @@ async function marcarHorario(
     serviceRevision?: number;
   },
 ): Promise<unknown> {
-  return crmBookAppointment.handler(
-    {
-      event_type_slug: args.eventTypeSlug,
-      starts_at: args.startsAt,
-      contact_id: args.contactId,
-      ...(args.ownerUserId !== undefined ? { owner_user_id: args.ownerUserId } : {}),
-      ...(args.title !== undefined ? { title: args.title } : {}),
-      ...(args.notes !== undefined ? { notes: args.notes } : {}),
-      ...(args.guestEmail !== undefined ? { guest_email: args.guestEmail } : {}),
-      ...(args.participants !== undefined ? { participants: args.participants } : {}),
-      ...(args.participantName !== undefined ? { participant_name: args.participantName } : {}),
-      ...(args.serviceRevision !== undefined ? { expected_service_revision: args.serviceRevision } : {}),
-    },
-    ctx,
-  );
+  const corpo = {
+    starts_at: args.startsAt,
+    contact_id: args.contactId,
+    ...(args.ownerUserId !== undefined ? { owner_user_id: args.ownerUserId } : {}),
+    ...(args.title !== undefined ? { title: args.title } : {}),
+    ...(args.notes !== undefined ? { notes: args.notes } : {}),
+    ...(args.guestEmail !== undefined ? { guest_email: args.guestEmail } : {}),
+    ...(args.participants !== undefined ? { participants: args.participants } : {}),
+    ...(args.participantName !== undefined ? { participant_name: args.participantName } : {}),
+    ...(args.serviceRevision !== undefined ? { expected_service_revision: args.serviceRevision } : {}),
+  };
+  if ("eventTypeId" in args.tipo) {
+    const tipoId = args.tipo.eventTypeId;
+    return semDerrubarOTurno("marcado", () => marcarNoTipo(ctx, tipoId, corpo));
+  }
+  return crmBookAppointment.handler({ event_type_slug: args.tipo.eventTypeSlug, ...corpo }, ctx);
 }
 
 const consultarEMarcarShape = {
-  event_type_slug: z.string().min(1).describe("o identificador legível do tipo de atendimento"),
+  ...tipoDoAtendimentoShape,
   participant_name: marcarShape.participant_name,
   participants: marcarShape.participants,
   dia: z
@@ -938,6 +1077,8 @@ export const crmFindAndBookAppointment: McpToolDefinition<typeof consultarEMarca
     "JÁ disse o dia E a hora (\"quinta às 14h\", \"amanhã de manhã às 9\") e esse par ainda não " +
     "foi checado: aqui consulta e marcação são uma decisão só, e é o caminho preferido — " +
     "encerrar o turno com o horário apenas consultado deixa o cliente sem agendamento. " +
+    "Se vier `motivo: tipo_desconhecido`, NADA foi marcado: repita a chamada com um dos " +
+    "`tipos_validos` da resposta — não chame a equipe por isso. " +
     "⚠️ NÃO é para REMARCAR: se a cliente JÁ tem um compromisso marcado e pede outro dia ou " +
     "hora, isso é `crm_reschedule_appointment` — aqui nasce um SEGUNDO compromisso e o antigo " +
     "fica no lugar, com dois avisos contraditórios. Localize o id do compromisso com " +
@@ -960,8 +1101,13 @@ export const crmFindAndBookAppointment: McpToolDefinition<typeof consultarEMarca
     const agora = new Date();
     const { de, ate } = faixaAmplaDoDia(input.dia);
 
+    const tipo = tipoPedido(input);
+    if (tipo === null || "idInvalido" in tipo) {
+      return { ...(await recusaSemTipo(ctx, tipo)), marcado: false };
+    }
+
     const consulta = await horariosLivresDaOrg(ctx.supabase, ctx.organizationId, {
-      eventTypeSlug: input.event_type_slug,
+      ...tipo,
       ownerUserId: input.owner_user_id ?? null,
       de,
       ate,
@@ -978,6 +1124,8 @@ export const crmFindAndBookAppointment: McpToolDefinition<typeof consultarEMarca
         motivo: consulta.codigo,
         // A face do CLIENTE, nunca a do operador (DECISÃO 20).
         mensagem: consulta.motivoParaCliente,
+        // Em `tipo_desconhecido`, o que existe — para o modelo corrigir sozinho.
+        ...tiposValidosDaRecusa(consulta),
       };
     }
 
@@ -1008,7 +1156,8 @@ export const crmFindAndBookAppointment: McpToolDefinition<typeof consultarEMarca
     }
 
     const resultado = await marcarHorario(ctx, {
-      eventTypeSlug: input.event_type_slug,
+      // O MESMO tipo que acabou de ser consultado — por id, se foi por id.
+      tipo,
       // O instante vem do SLOT, não do que o modelo escreveu: é o horário que a
       // agenda confirmou como livre.
       startsAt: achado.inicio.toISOString(),

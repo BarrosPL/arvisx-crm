@@ -39,6 +39,9 @@ vi.mock("@/lib/agenda/consulta", async (original) => {
   return {
     ...real,
     listaTiposDeAtendimento: vi.fn(),
+    // Leitura de banco à parte (duas consultas para a lista toda): este arquivo
+    // mede a camada da TOOL, e o dublê do client não tem `from`.
+    tiposComHorarios: vi.fn(async () => new Map<string, boolean | null>()),
     horariosLivresDaOrg: vi.fn(),
     listaAgendamentos: vi.fn(),
     idDoTipoPorSlug: vi.fn(),
