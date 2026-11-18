@@ -1,8 +1,9 @@
 /**
- * POST /api/v1/ai/equipe-pronta/pausar — volta ao ensaio.
+ * POST /api/v1/ai/equipe-pronta/pausar — para os quatro agentes da equipe.
  *
- * O canal volta a atender só os telefones de teste do questionário. Nada é
- * apagado: agentes, roteador, base e respostas ficam como estão.
+ * Só eles: o acesso da IA no canal não muda, e outros agentes do mesmo número
+ * seguem atendendo. Nada é apagado: agentes, roteador, base e respostas ficam
+ * como estão. Desfaz-se em `POST .../retomar`.
  */
 import { randomUUID } from "node:crypto";
 
@@ -12,7 +13,6 @@ import { ok } from "@/lib/api/wrappers";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
 import { requireSupportWrite } from "@/lib/impersonate/support";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { respostaDeErro } from "../_erro";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +26,7 @@ export async function POST(): Promise<Response> {
   if (!authz.ok) return authz.response;
 
   try {
-    const resultado = await pausarEquipePronta(getRequestPool(), createAdminClient(), {
+    const resultado = await pausarEquipePronta(getRequestPool(), {
       orgId: authz.org.orgId,
       userId: authz.user.id,
     });
@@ -38,7 +38,7 @@ export async function POST(): Promise<Response> {
       resourceType: "equipe_pronta_perfis",
       resourceId: authz.org.orgId,
       requestId,
-      metadata: { channel_session_id: resultado.channel_session_id },
+      metadata: { modo: resultado.modo, agentes_pausados: resultado.agentes_pausados },
     });
 
     return ok(resultado, { requestId });

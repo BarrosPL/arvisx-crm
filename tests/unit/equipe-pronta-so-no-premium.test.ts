@@ -79,9 +79,10 @@ describe("a API", () => {
     "/api/v1/ai/equipe-pronta/instalar",
     "/api/v1/ai/equipe-pronta/ativar",
     "/api/v1/ai/equipe-pronta/pausar",
+    "/api/v1/ai/equipe-pronta/retomar",
   ];
 
-  it("as quatro rotas são da tela da equipe pronta", () => {
+  it("as cinco rotas são da tela da equipe pronta", () => {
     for (const rota of ROTAS) expect(destinoDaRotaDeApi(rota)).toBe(DESTINO_DA_EQUIPE_PRONTA);
   });
 

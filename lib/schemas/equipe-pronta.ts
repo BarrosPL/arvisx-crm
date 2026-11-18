@@ -277,5 +277,19 @@ export const instalacaoSchema = z.object({
     z.enum(["sdr", "agendamento", "proposta", "recuperador"]),
     agenteInstaladoSchema,
   ),
+  /**
+   * A assinatura do que havia de ALHEIO no roteador do canal quando a pessoa
+   * confirmou instalar por cima (`forcar`). Enquanto o roteador seguir igual,
+   * instalar de novo não pergunta outra vez; mudou, pergunta.
+   */
+  roteador_confirmado: z.string().nullable().default(null),
+  /**
+   * A pausa da equipe: quando, e QUAIS agentes ela pausou. Retomar religa só
+   * esses — quem o cliente pausou à mão antes continua pausado.
+   */
+  pausa: z
+    .object({ em: z.string(), agentes: z.array(z.string().uuid()) })
+    .nullable()
+    .default(null),
 });
 export type InstalacaoDaEquipe = z.infer<typeof instalacaoSchema>;

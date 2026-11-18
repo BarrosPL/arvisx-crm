@@ -18,6 +18,7 @@ const instalar = vi.hoisted(() => vi.fn());
 const lerEstado = vi.hoisted(() => vi.fn());
 const ativar = vi.hoisted(() => vi.fn());
 const pausar = vi.hoisted(() => vi.fn());
+const retomar = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/auth/require-role", () => ({ requireRole }));
 vi.mock("@/lib/impersonate/support", () => ({ requireSupportWrite: vi.fn(async () => null) }));
@@ -27,7 +28,11 @@ vi.mock("@/lib/agent-engine/db/request-pool", () => ({ getRequestPool: () => ({ 
 vi.mock("@/lib/ai/equipe-pronta/portas", () => ({ portasDeProducao: () => ({}) }));
 vi.mock("@/lib/ai/equipe-pronta/portas-do-estado", () => ({ portasDoEstadoDeProducao: () => ({}) }));
 vi.mock("@/lib/ai/equipe-pronta/estado", () => ({ lerEstadoDaEquipe: lerEstado }));
-vi.mock("@/lib/ai/equipe-pronta/modo", () => ({ ativarEquipePronta: ativar, pausarEquipePronta: pausar }));
+vi.mock("@/lib/ai/equipe-pronta/modo", () => ({
+  ativarEquipePronta: ativar,
+  pausarEquipePronta: pausar,
+  retomarEquipePronta: retomar,
+}));
 vi.mock("@/lib/ai/equipe-pronta/instalar", async (original) => {
   const real = await original<typeof Instalar>();
   return { ...real, instalarEquipePronta: instalar };
@@ -38,6 +43,7 @@ const perfil = await import("./route");
 const rotaDeInstalar = await import("./instalar/route");
 const rotaDeAtivar = await import("./ativar/route");
 const rotaDePausar = await import("./pausar/route");
+const rotaDeRetomar = await import("./retomar/route");
 
 const ORG = "11111111-1111-4111-8111-111111111111";
 const USER = "22222222-2222-4222-8222-222222222222";
@@ -64,20 +70,29 @@ beforeEach(() => {
 });
 
 describe("quem pode chamar", () => {
-  it("ler e salvar o perfil: manager; instalar, ativar e pausar: admin", async () => {
+  it("ler e salvar o perfil: manager; instalar, ativar, pausar e retomar: admin", async () => {
     lerEstado.mockResolvedValue({});
     consulta.mockResolvedValue({ rows: [{ respostas: {}, estado: "rascunho", modo: "ensaio" }] });
     instalar.mockResolvedValue({ instalacao: {}, agentes: [], criados: [] });
     ativar.mockResolvedValue({ modo: "ativo", channel_session_id: "c" });
-    pausar.mockResolvedValue({ modo: "ensaio", channel_session_id: "c" });
+    pausar.mockResolvedValue({ pausada: true, modo: "ensaio", agentes_pausados: [] });
+    retomar.mockResolvedValue({ pausada: false, modo: "ensaio", agentes_religados: [] });
 
     await perfil.GET();
     await perfil.PUT(pedido({ respostas: {} }, "PUT"));
     await rotaDeInstalar.POST(pedido({}));
     await rotaDeAtivar.POST();
     await rotaDePausar.POST();
+    await rotaDeRetomar.POST();
 
-    expect(requireRole.mock.calls.map((c) => c[0])).toEqual(["manager", "manager", "admin", "admin", "admin"]);
+    expect(requireRole.mock.calls.map((c) => c[0])).toEqual([
+      "manager",
+      "manager",
+      "admin",
+      "admin",
+      "admin",
+      "admin",
+    ]);
   });
 
   it("a recusa do guarda (papel ou plano) sai como veio, e nada roda", async () => {
@@ -218,19 +233,47 @@ describe("POST ativar e pausar", () => {
     expect(audit).not.toHaveBeenCalled();
   });
 
-  it("ativar e pausar auditam a troca, com o canal", async () => {
+  it("ativar, pausar e retomar auditam o que mudou", async () => {
     ativar.mockResolvedValue({ modo: "ativo", channel_session_id: "c1" });
-    pausar.mockResolvedValue({ modo: "ensaio", channel_session_id: "c1" });
+    pausar.mockResolvedValue({ pausada: true, modo: "ativo", agentes_pausados: ["a1", "a2"] });
+    retomar.mockResolvedValue({ pausada: false, modo: "ativo", agentes_religados: ["a1", "a2"] });
 
     expect((await rotaDeAtivar.POST()).status).toBe(200);
     expect((await rotaDePausar.POST()).status).toBe(200);
+    expect((await rotaDeRetomar.POST()).status).toBe(200);
 
     expect(audit.mock.calls.map((c) => (c as unknown as [{ action: string; metadata: unknown }])[0])).toEqual([
       expect.objectContaining({ action: "ai.equipe_pronta_ativada", metadata: { channel_session_id: "c1" } }),
-      expect.objectContaining({ action: "ai.equipe_pronta_pausada", metadata: { channel_session_id: "c1" } }),
+      // A pausa é dos AGENTES: o canal não aparece porque não é tocado.
+      expect.objectContaining({
+        action: "ai.equipe_pronta_pausada",
+        metadata: { modo: "ativo", agentes_pausados: ["a1", "a2"] },
+      }),
+      expect.objectContaining({
+        action: "ai.equipe_pronta_retomada",
+        metadata: { modo: "ativo", agentes_religados: ["a1", "a2"] },
+      }),
     ]);
     expect(ativar.mock.calls[0]![3]).toEqual({ orgId: ORG, userId: USER });
-    expect(pausar.mock.calls[0]![2]).toEqual({ orgId: ORG, userId: USER });
+    expect(pausar.mock.calls[0]![1]).toEqual({ orgId: ORG, userId: USER });
+    expect(retomar.mock.calls[0]![1]).toEqual({ orgId: ORG, userId: USER });
+  });
+
+  it("⭐ instalar num canal que já tem roteador: 409 com a lista, sem auditar", async () => {
+    instalar.mockRejectedValue(
+      new EquipeProntaError("canal_com_roteador", "Este WhatsApp já tem um roteador.", 409, {
+        roteador: { id: "r1", nome: "Atendimento", de_fora: true, fallback: null, membros: [] },
+      }),
+    );
+
+    const r = await rotaDeInstalar.POST(pedido({}));
+
+    expect(r.status).toBe(409);
+    expect((await corpoDe(r)).error).toMatchObject({
+      code: "equipe_pronta_canal_com_roteador",
+      details: { roteador: { id: "r1", nome: "Atendimento" } },
+    });
+    expect(audit).not.toHaveBeenCalled();
   });
 });
 

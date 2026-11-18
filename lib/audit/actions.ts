@@ -420,6 +420,7 @@ export const AUDIT_ACTIONS = [
   "ai.equipe_pronta_instalada",
   "ai.equipe_pronta_ativada",
   "ai.equipe_pronta_pausada",
+  "ai.equipe_pronta_retomada",
   "ai.router_created",
   "ai.router_updated",
   "ai.router_deleted",

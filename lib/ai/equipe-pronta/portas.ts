@@ -79,17 +79,19 @@ export function portasDeProducao(admin: SupabaseClient): PortasDoInstalador {
     },
 
     async porCanalEmEnsaio(orgId, canalId, telefones) {
-      const { error } = await admin.rpc("fn_configurar_pre_go_live_canal", {
+      const { data, error } = await admin.rpc("fn_configurar_pre_go_live_canal", {
         p_org: orgId,
         p_canal: canalId,
         p_modo: "pre_go_live",
         p_numeros: telefones,
       });
-      if (error) {
+      // `data !== 1`: a função não achou o canal. Sem ensaio confirmado, o
+      // instalador para ANTES de ligar o roteador e de publicar.
+      if (error || data !== 1) {
         throw new EquipeProntaError(
           "ensaio_nao_configurado",
-          "A equipe foi instalada, mas não foi possível pôr o canal em ensaio. Confira o acesso da IA em Conexões.",
-          500,
+          "Não foi possível pôr o canal em ensaio, e por isso nenhum agente foi publicado. Confira o acesso da IA em Conexões e instale de novo.",
+          error ? 500 : 409,
         );
       }
     },
