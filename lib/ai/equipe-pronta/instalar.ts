@@ -55,7 +55,7 @@ import {
   type PerfilDoNegocio,
 } from "@/lib/schemas/equipe-pronta";
 import { CHAVE_DE_CONFIG, PAPEIS, PAPEL_DE_ENTRADA } from "./index";
-import { NOME_DA_REGUA, gatilhoDaRegua, grafoDaRegua, hashDaRegua } from "./regua";
+import { NOME_DA_REGUA, gatilhoDaRegua, grafoDaRegua } from "./regua";
 import { hashDosCampos, renderizarAgente, situacaoDoAgente, type SituacaoDoAgente } from "./renderizar";
 import {
   PASSOS_DA_EQUIPE,
@@ -133,6 +133,28 @@ interface ContextoDeQuemChama {
 }
 
 const hash = (valor: unknown) => createHash("sha256").update(JSON.stringify(valor)).digest("hex");
+
+/**
+ * O mesmo valor com as chaves de todo objeto em ordem alfabética.
+ *
+ * ⚠️ O `jsonb` do Postgres NÃO conserva a ordem das chaves: o que foi gravado
+ * como `{ nodes, edges }` volta como `{ edges, nodes }`. Comparar o que está no
+ * banco com o que seria gravado por `JSON.stringify` direto acusa diferença
+ * onde não há nenhuma — medido no teste de banco: a régua era republicada a
+ * cada instalação, uma versão nova por vez.
+ */
+export function emOrdem(valor: unknown): unknown {
+  if (Array.isArray(valor)) return valor.map(emOrdem);
+  if (valor !== null && typeof valor === "object") {
+    return Object.fromEntries(
+      Object.entries(valor as Record<string, unknown>)
+        .filter(([, v]) => v !== undefined)
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(([k, v]) => [k, emOrdem(v)]),
+    );
+  }
+  return valor;
+}
 
 /** O slug sai do nome, como em `app/api/v1/agenda/tipos/route.ts`. */
 function slugDe(nome: string): string {
@@ -632,7 +654,8 @@ async function passoDaRegua(
 ): Promise<string> {
   const grafo = grafoDaRegua(perfil);
   const gatilho: TriggerConfig = gatilhoDaRegua(perfil);
-  const assinatura = hashDaRegua(perfil);
+  // Em ordem de chave: é contra o que o `jsonb` devolve que isto é comparado.
+  const assinatura = hash(emOrdem({ grafo, gatilho }));
 
   const { rows } = await db.query(
     `select id, active_version_id, trigger_config, draft_graph from followup_flow_pointers
@@ -645,7 +668,7 @@ async function passoDaRegua(
   let precisaPublicar: boolean;
   if (rows[0]) {
     pointerId = String(rows[0].id);
-    const atual = hash({ grafo: rows[0].draft_graph, gatilho: rows[0].trigger_config });
+    const atual = hash(emOrdem({ grafo: rows[0].draft_graph, gatilho: rows[0].trigger_config }));
     const mudou = atual !== assinatura;
     if (mudou) {
       await db.query(

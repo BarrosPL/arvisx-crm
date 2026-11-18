@@ -68,25 +68,33 @@ describe("9808 — leitura do perfil da equipe pronta", () => {
 
 describe("9808 — escrita do perfil da equipe pronta", () => {
   it("⭐ manager grava o perfil da própria organização", () => {
-    comoUsuario(
-      GERENTE_A,
-      `update ${T} set respostas = '{"negocio":{"nome":"Empresa A editada"}}'::jsonb where organization_id = '${ORG_A}'`,
+    sql(
+      comoUsuario(
+        GERENTE_A,
+        `update ${T} set respostas = '{"negocio":{"nome":"Empresa A editada"}}'::jsonb where organization_id = '${ORG_A}'`,
+      ),
     );
     expect(nomeEm(ORG_A)).toBe("Empresa A editada");
   });
 
   it("⭐ agent lê mas NÃO grava: o update não alcança linha nenhuma", () => {
-    comoUsuario(
-      AGENTE_A,
-      `update ${T} set respostas = '{"negocio":{"nome":"pelo agent"}}'::jsonb where organization_id = '${ORG_A}'`,
+    // A RLS não dá erro num UPDATE que não alcança linha: ele passa, com zero
+    // linhas. Por isso a prova é o valor que ficou, não a ausência de erro.
+    sql(
+      comoUsuario(
+        AGENTE_A,
+        `update ${T} set respostas = '{"negocio":{"nome":"pelo agent"}}'::jsonb where organization_id = '${ORG_A}'`,
+      ),
     );
     expect(nomeEm(ORG_A)).toBe("Empresa A editada");
   });
 
   it("⭐ manager de A não grava o perfil de B, nem por update nem por insert", () => {
-    comoUsuario(
-      GERENTE_A,
-      `update ${T} set respostas = '{"negocio":{"nome":"invadido"}}'::jsonb where organization_id = '${ORG_B}'`,
+    sql(
+      comoUsuario(
+        GERENTE_A,
+        `update ${T} set respostas = '{"negocio":{"nome":"invadido"}}'::jsonb where organization_id = '${ORG_B}'`,
+      ),
     );
     expect(nomeEm(ORG_B)).toBe("Empresa B");
 

@@ -291,26 +291,34 @@ describe("atualização de papel", () => {
   it("versão nova do papel no código aparece como atualização disponível, com a nota — e nada é aplicado sozinho", async () => {
     const { org, ctx } = await novaOrganizacao();
     await instalarEquipePronta(pool, portas(zero()), ctx);
-    // Como se a instalação tivesse sido feita com uma versão ANTERIOR do papel.
-    await pool.query(
-      "update equipe_pronta_perfis set instalacao = jsonb_set(instalacao, '{agentes,sdr,versao_do_papel}', '0') where organization_id=$1",
-      [org],
-    );
     const antes = await retrato(org);
 
-    const estado = await lerEstadoDaEquipe(pool, portasDoEstado, org);
+    // A plataforma publica uma versão nova do papel: sobe `versao` no código.
+    const sdr = PAPEIS.find((p) => p.id === "sdr")! as { versao: number; notasDaVersao: string };
+    const original = { versao: sdr.versao, notas: sdr.notasDaVersao };
+    sdr.versao = original.versao + 1;
+    sdr.notasDaVersao = "Passa a perguntar o nome antes de qualificar.";
+    try {
+      const estado = await lerEstadoDaEquipe(pool, portasDoEstado, org);
+      expect(estado.atualizacao_disponivel).toEqual([
+        {
+          papel: "sdr",
+          de: original.versao,
+          para: original.versao + 1,
+          notas: "Passa a perguntar o nome antes de qualificar.",
+        },
+      ]);
+      expect(estado.agentes.find((a) => a.papel === "agendamento")?.atualizacao_disponivel).toBeNull();
+      // Ler o estado não muda nada: aplicar é pelo instalador, por decisão de quem usa.
+      expect(await retrato(org)).toEqual(antes);
 
-    const sdr = PAPEIS.find((p) => p.id === "sdr")!;
-    expect(estado.atualizacao_disponivel).toEqual([
-      { papel: "sdr", de: 0, para: sdr.versao, notas: sdr.notasDaVersao },
-    ]);
-    expect(estado.agentes.find((a) => a.papel === "agendamento")?.atualizacao_disponivel).toBeNull();
-    // Ler o estado não muda nada: aplicar é pelo instalador, por decisão de quem usa.
-    expect(await retrato(org)).toEqual(antes);
-
-    // Instalar de novo grava a versão atual do papel, e a atualização some.
-    await instalarEquipePronta(pool, portas(zero()), ctx);
-    expect((await lerEstadoDaEquipe(pool, portasDoEstado, org)).atualizacao_disponivel).toEqual([]);
+      // Instalar de novo grava a versão atual do papel, e a atualização some.
+      await instalarEquipePronta(pool, portas(zero()), ctx);
+      expect((await lerEstadoDaEquipe(pool, portasDoEstado, org)).atualizacao_disponivel).toEqual([]);
+    } finally {
+      sdr.versao = original.versao;
+      sdr.notasDaVersao = original.notas;
+    }
   });
 });
 
@@ -385,18 +393,46 @@ describe("instalar de novo", () => {
 });
 
 describe("agente editado à mão", () => {
-  async function editarOSdr(org: string): Promise<string> {
-    const sdr = await pool.query(
-      "select id, published_version_id from ai_agents where organization_id=$1 and config->'equipe_pronta'->>'papel'='sdr'",
-      [org],
+  /**
+   * O cliente abre o editor do agente, muda algo e publica.
+   *
+   * ⚠️ Versão publicada é IMUTÁVEL no banco ("mudança de conteúdo = versão
+   * draft nova"): o caminho real de uma edição é uma versão nova, publicada
+   * pela função de produção. É esse caminho que o teste percorre.
+   */
+  async function publicarVersaoDoCliente(
+    org: string,
+    papel: string,
+    mudanca: { prompt?: string; token_budget?: number },
+  ): Promise<string> {
+    const agente = await pool.query(
+      "select id, published_version_id from ai_agents where organization_id=$1 and config->'equipe_pronta'->>'papel'=$2",
+      [org, papel],
     );
-    // O cliente abriu o editor e mudou o texto da versão publicada.
-    await pool.query(
-      "update ai_agent_versions set system_prompt = system_prompt || E'\\nSempre ofereça um brinde.' where organization_id=$1 and id=$2",
-      [org, sdr.rows[0].published_version_id],
+    const nova = await pool.query(
+      `insert into ai_agent_versions
+         (organization_id, agent_id, version_number, status, created_by, system_prompt, provider, model,
+          credential_id, channel_session_id, tool_ids, handoff_keywords, followup, pipeline_ids,
+          knowledge_source_ids, proposal_ai_draft_enabled, token_budget)
+       select organization_id, agent_id, version_number + 1, 'draft', created_by,
+              system_prompt || $3, provider, model,
+              credential_id, channel_session_id, tool_ids, handoff_keywords, followup, pipeline_ids,
+              knowledge_source_ids, proposal_ai_draft_enabled, coalesce($4, token_budget)
+         from ai_agent_versions where organization_id=$1 and id=$2
+       returning id`,
+      [org, agente.rows[0].published_version_id, mudanca.prompt ?? "", mudanca.token_budget ?? null],
     );
-    return String(sdr.rows[0].id);
+    await pool.query("select * from fn_publish_ai_agent_version($1,$2,$3,$4)", [
+      org,
+      agente.rows[0].id,
+      nova.rows[0].id,
+      true,
+    ]);
+    return String(agente.rows[0].id);
   }
+
+  const editarOSdr = (org: string) =>
+    publicarVersaoDoCliente(org, "sdr", { prompt: "\nSempre ofereça um brinde." });
 
   it("⭐ sem `forcar`: recusa com a lista, e NADA é gravado", async () => {
     const { org, ctx } = await novaOrganizacao();
@@ -450,10 +486,21 @@ describe("agente editado à mão", () => {
   it("trocar o MODELO do agente não é editar à mão", async () => {
     const { org, ctx } = await novaOrganizacao();
     await instalarEquipePronta(pool, portas(zero()), ctx);
-    await pool.query("update ai_agent_versions set token_budget = 77777, max_steps = 7 where organization_id=$1", [org]);
+    // Uma versão nova publicada pelo cliente, que só muda o orçamento de tokens.
+    await publicarVersaoDoCliente(org, "sdr", { token_budget: 77777 });
+    const antes = await retrato(org);
 
     const r = await instalarEquipePronta(pool, portas(zero()), ctx);
+
     expect(r.agentes.every((a) => a.acao === "sem_mudanca")).toBe(true);
+    expect(await retrato(org)).toEqual(antes);
+    // A escolha do cliente continua publicada.
+    const sdr = await pool.query(
+      `select v.token_budget from ai_agents a join ai_agent_versions v on v.id = a.published_version_id
+        where a.organization_id=$1 and a.config->'equipe_pronta'->>'papel'='sdr'`,
+      [org],
+    );
+    expect(sdr.rows[0].token_budget).toBe(77777);
   });
 });
 
