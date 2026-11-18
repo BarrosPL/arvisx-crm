@@ -414,6 +414,13 @@ export const AUDIT_ACTIONS = [
   "ai.skill_saved",
   // Rollback para uma versão anterior (Fase 5): move o ponteiro sem criar versão.
   "ai.skill_restored",
+  // Equipe de IA pronta (Premium): o questionário salvo, a instalação (cria ou
+  // atualiza agentes, roteador, base, agenda e régua) e a troca ensaio ↔ ativo.
+  "ai.equipe_pronta_perfil_salvo",
+  "ai.equipe_pronta_instalada",
+  "ai.equipe_pronta_ativada",
+  "ai.equipe_pronta_pausada",
+  "ai.equipe_pronta_retomada",
   "ai.router_created",
   "ai.router_updated",
   "ai.router_deleted",

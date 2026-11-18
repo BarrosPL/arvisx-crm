@@ -169,6 +169,11 @@ const SITES: { arquivo: string; fronteira: string; papel?: "gerador" | "validado
   { arquivo: "lib/lgpd/emitir-atestado.ts", fronteira: "storage.chave-de-objeto" },
   { arquivo: "workers/media-persist-worker.ts", fronteira: "storage.chave-de-objeto" },
   { arquivo: "lib/ai/skills/install.ts", fronteira: "storage.chave-de-objeto" },
+  // Equipe de IA pronta (9808): o texto da base de conhecimento vira um `.md`
+  // no bucket dos documentos. A chave é `{org}/{randomUUID()}.md` — a org vem
+  // da sessão já validada, o resto é gerado aqui, e o sufixo é fixo. Nada do
+  // que o cliente digitou no questionário entra na chave: o texto é o CONTEÚDO.
+  { arquivo: "lib/ai/equipe-pronta/portas.ts", fronteira: "storage.chave-de-objeto" },
   // Herança de arquivos do pacote no save textual (#2047): a chave é montada
   // com os MESMOS pedaços do install — org (uuid do JWT), name (vem da
   // skill_version já instalada, não do payload) e versionId (uuid do INSERT) —

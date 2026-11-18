@@ -36,11 +36,11 @@ function leituraDe(plano: NomeDoPlano): LeituraDoPlano {
 const SELETOR = permitidos(false, "admin").filter((d) => !essencial(d, "admin"));
 
 describe("a distribuição bate com o seletor de telas", () => {
-  it("12 + 19 + 32 = 63, o tamanho do seletor", () => {
+  it("12 + 19 + 33 = 64, o tamanho do seletor", () => {
     expect(ESSENCIAL).toHaveLength(12);
     expect(STANDARD_A_MAIS).toHaveLength(19);
-    expect(PREMIUM_A_MAIS).toHaveLength(32);
-    expect(SELETOR).toHaveLength(63);
+    expect(PREMIUM_A_MAIS).toHaveLength(33);
+    expect(SELETOR).toHaveLength(64);
   });
 
   it("nenhuma tela em dois degraus", () => {

@@ -72,20 +72,20 @@ describe("os blocos de benefício cobrem o seletor", () => {
       prospectar: [4, 0],
       medir: [9, 0],
       integrar: [7, 0],
-      ia_avancada: [5, 0],
+      ia_avancada: [6, 0],
     });
   });
 
-  it("Premium → Standard: saem as 32 telas de vender, prospectar, medir, integrar e IA avançada", () => {
+  it("Premium → Standard: saem as 33 telas de vender, prospectar, medir, integrar e IA avançada", () => {
     const m = entraESai(plano("Premium").telas, plano("Standard").telas);
     expect(Object.fromEntries(m.map((b) => [b.bloco, [b.entram.length, b.saem.length]]))).toEqual({
       vender: [0, 8],
       prospectar: [0, 4],
       medir: [0, 8],
       integrar: [0, 7],
-      ia_avancada: [0, 5],
+      ia_avancada: [0, 6],
     });
-    expect(m.reduce((n, b) => n + b.saem.length, 0)).toBe(32);
+    expect(m.reduce((n, b) => n + b.saem.length, 0)).toBe(33);
   });
 
   it("o destaque 'Mais completo' é o Premium (o Equipe Completa é serviço, não degrau)", () => {
@@ -154,7 +154,7 @@ describe("o comparativo na tela", () => {
     );
     const mudanca = screen.getByRole("region", { name: "De Premium para Standard" });
     expect(within(mudanca).getByText(/−70,00\s€ por mês/)).toBeTruthy();
-    expect(mudanca.querySelectorAll("[data-saem] li")).toHaveLength(32);
+    expect(mudanca.querySelectorAll("[data-saem] li")).toHaveLength(33);
     expect(mudanca.querySelectorAll("[data-entram] li")).toHaveLength(0);
     const ia = within(mudanca).getAllByRole("row").find((l) => l.getAttribute("data-bloco") === "ia_avancada")!;
     expect(within(ia).getByText("Skills")).toBeTruthy();

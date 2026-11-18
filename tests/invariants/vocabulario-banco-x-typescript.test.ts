@@ -422,6 +422,20 @@ const PARES: Array<{
     simbolo: "STATUS_DA_ENTREGA_DE_AGENDAMENTO",
   },
   {
+    tabela: "equipe_pronta_perfis",
+    coluna: "estado",
+    // Migration 9808: o perfil ainda é rascunho, ou a equipe já foi instalada.
+    arquivo: "lib/schemas/equipe-pronta.ts",
+    simbolo: "ESTADOS_DA_EQUIPE",
+  },
+  {
+    tabela: "equipe_pronta_perfis",
+    coluna: "modo",
+    // Migration 9808: só os telefones de teste, ou todo mundo.
+    arquivo: "lib/schemas/equipe-pronta.ts",
+    simbolo: "MODOS_DA_EQUIPE",
+  },
+  {
     tabela: "entregas_de_aviso_de_agendamento",
     coluna: "tipo",
     // Migration 0707: aviso de um evento, ou o resumo das 7h.

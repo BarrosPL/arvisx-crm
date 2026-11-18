@@ -24,6 +24,10 @@ import { idsDoContatoEGemeos } from "@/lib/channels/contato-por-telefone";
 import { portaDaAplicacao } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { lerTelasDoPlano, planoIncluiIaParaOMotor } from "@/lib/cobranca/telas-do-plano";
+import {
+  ERRO_DA_EQUIPE_FORA_DO_PLANO,
+  reguaDaEquipeForaDoPlano,
+} from "@/lib/cobranca/equipe-pronta-no-plano";
 
 import { flowGraphSchema, type FlowGraph, type FlowNode, type ReplySaveTo } from "./graph-schema";
 import { TETO_DE_PASSOS_DO_MOTOR } from "./custo-no-motor";
@@ -213,6 +217,11 @@ export interface AdminClient {
    * segue (a régua do motor).
    */
   planoIncluiIa?(orgId: string): Promise<boolean>;
+  /**
+   * Este fluxo é a régua da Equipe de IA pronta de uma empresa cujo plano não a
+   * libera? (ArvisX, 9808.) Ausente = a pergunta não é feita.
+   */
+  fluxoDaEquipeForaDoPlano?(orgId: string, pointerId: string): Promise<boolean>;
   loadFlowPointerName(orgId: string, pointerId: string): Promise<string | null>;
   insertDeadInboxItem(item: { organization_id: string; title: string; body: string; ref_id: string }): Promise<void>;
   /**
@@ -1321,6 +1330,26 @@ export async function runFollowupTick(deps: TickDeps, opts?: { limit?: number })
         continue;
       }
     }
+    // Régua da Equipe de IA pronta com o plano rebaixado: ADIA, como acima, em
+    // vez de mandar a retomada. A inscrição não é cancelada — voltar ao plano a
+    // retoma de onde parou. Falha de leitura = segue.
+    if (deps.db.fluxoDaEquipeForaDoPlano) {
+      const fora = await deps.db
+        .fluxoDaEquipeForaDoPlano(enrollment.organization_id, enrollment.pointer_id)
+        .catch(() => false);
+      if (fora) {
+        try {
+          await deps.db.updateEnrollment(enrollment.id, enrollment.organization_id, {
+            next_eval_at: new Date(deps.clock().getTime() + ADIAMENTO_FORA_DO_PLANO_MS).toISOString(),
+            claimed_until: null,
+            last_error: ERRO_DA_EQUIPE_FORA_DO_PLANO,
+          });
+        } catch {
+          // O lease expira e um tique futuro tenta de novo.
+        }
+        continue;
+      }
+    }
     try {
       await processEnrollment(deps, enrollment, summary);
     } catch (err) {
@@ -1376,6 +1405,9 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
     },
     async planoIncluiIa(orgId) {
       return planoIncluiIaParaOMotor(await lerTelasDoPlano(admin, orgId));
+    },
+    async fluxoDaEquipeForaDoPlano(orgId, pointerId) {
+      return reguaDaEquipeForaDoPlano(admin, orgId, pointerId);
     },
     async claimDueEnrollments(limit, leaseSeconds) {
       const { data, error } = await admin.rpc("fn_claim_due_followup_enrollments", {

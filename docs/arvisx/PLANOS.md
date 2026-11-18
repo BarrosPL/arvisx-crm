@@ -29,7 +29,7 @@ dele, nunca pela Arvisx). Empresas que já existem ficam em Premium sem cobranç
 | Preço mensal | €59,90 | €129,90 | €199,90 |
 | Máximo de números conectados | 3 | 6 | vazio (ilimitado) |
 | Máximo de pessoas | 5 | 10 | vazio (ilimitado) |
-| Telas | 12 | 31 | 63 (todas) |
+| Telas | 12 | 31 | 64 (todas) |
 | Inclui agentes Arvisx (campo do plano) | não | não | não |
 
 Nenhum plano ofertado marca "Inclui os agentes de IA feitos sob medida": os
@@ -43,7 +43,7 @@ Perfil, Segurança, Notificações, App no celular, Equipe, Plano e cobrança, A
 e Guia de uso valem em todo plano e não aparecem no seletor.
 
 As listas estão escritas à mão em `tests/helpers/distribuicao-dos-planos.ts`; a conferência automática é `tests/unit/planos-distribuicao-das-telas.test.ts`
-(12 + 19 + 32 = 63; tela nova no catálogo sem degrau reprova o teste).
+(12 + 19 + 33 = 64; tela nova no catálogo sem degrau reprova o teste).
 
 ### Essencial — 12 telas (atender e organizar)
 
@@ -60,11 +60,11 @@ As listas estão escritas à mão em `tests/helpers/distribuicao-dos-planos.ts`;
 - Análise: Atividades.
 - Organização: Distribuição de atendimento, Recursos opcionais, Automações.
 
-### Premium — mais 32 telas (total 63, tudo)
+### Premium — mais 33 telas (total 64, tudo)
 
 - Vender: Propostas, Produtos, Comandas, Campanhas (CRM); Propostas, Modelos de proposta, Financeiro, Meta de vendas (Organização).
 - Prospectar: Prospecção, Cold Call, Chamadas (CRM); Trunk SIP (Organização).
-- IA avançada (Agente de IA): Roteadores, Memória, Skills, Propostas, Execuções.
+- IA avançada (Agente de IA): Equipe pronta, Roteadores, Memória, Skills, Propostas, Execuções.
 - Medir e gerir: Desempenho, Faturamento, Honorários, Meta Ads, Evolução da IA, Audit Log (Análise); Conversões, Meta Ads (Organização).
 - Integrar e controlar: Webhooks, Nuvemshop (Canais); API Tokens, Servidor MCP externo, Extensões, Dados externos, Marca (Organização).
 

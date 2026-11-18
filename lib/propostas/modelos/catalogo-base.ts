@@ -13,6 +13,11 @@ import type { ModeloBase } from "./tipos";
  * `template.json` de origem. `titleEs`/`bodyEs` ficam `null`: a
  * arquitetura bilíngue já existe (i18n pronta desde a M0/M2), o conteúdo em
  * espanhol é onda futura (spec §9 — decisão do dono, conteúdo depois).
+ *
+ * O nono, `proposta_comercial`, é o modelo GENÉRICO: os oito acima são todos de
+ * agência de site, e uma empresa de outro ramo não tinha modelo que servisse.
+ * Ele não cita ramo nenhum, usa só variáveis que os outros já usam, e é o
+ * modelo da Equipe de IA pronta (`lib/ai/equipe-pronta/`).
  */
 export const MODELOS_BASE: Readonly<Record<string, ModeloBase>> = Object.freeze(
 {
@@ -1666,6 +1671,94 @@ export const MODELOS_BASE: Readonly<Record<string, ModeloBase>> = Object.freeze(
       "excluded",
       "responsibilities",
       "support",
+      "terms",
+      "approval"
+    ]
+  },
+  "proposta_comercial": {
+    "slug": "proposta_comercial",
+    "version": 1,
+    "sections": [
+      {
+        "id": "summary",
+        "title": "Resumo da proposta",
+        "titleEs": null,
+        "body": "Esta proposta apresenta {{project.name}} para {{client.company_or_name}}.",
+        "bodyEs": null,
+        "required": true,
+        "conditional": false
+      },
+      {
+        "id": "objectives",
+        "title": "Objetivo",
+        "titleEs": null,
+        "body": "O objetivo desta proposta é {{project.objective}}.",
+        "bodyEs": null,
+        "required": false,
+        "conditional": true
+      },
+      {
+        "id": "included",
+        "title": "O que está incluído",
+        "titleEs": null,
+        "body": "{{included.list}}",
+        "bodyEs": null,
+        "required": true,
+        "conditional": false
+      },
+      {
+        "id": "excluded",
+        "title": "O que não está incluído",
+        "titleEs": null,
+        "body": "{{excluded.list}}",
+        "bodyEs": null,
+        "required": false,
+        "conditional": true
+      },
+      {
+        "id": "schedule",
+        "title": "Prazo",
+        "titleEs": null,
+        "body": "O prazo estimado é de {{schedule.estimated_days}} dias úteis, contados a partir da aprovação e do recebimento das informações necessárias.",
+        "bodyEs": null,
+        "required": false,
+        "conditional": true
+      },
+      {
+        "id": "investment",
+        "title": "Investimento",
+        "titleEs": null,
+        "body": "O investimento total é de {{investment.total_formatted}}. As condições de pagamento estão na seção comercial.",
+        "bodyEs": null,
+        "required": true,
+        "conditional": false
+      },
+      {
+        "id": "terms",
+        "title": "Condições comerciais",
+        "titleEs": null,
+        "body": "A proposta possui validade de {{commercial_terms.validity_days}} dias. Alterações posteriores no que foi combinado poderão revisar prazo e investimento.",
+        "bodyEs": null,
+        "required": true,
+        "conditional": false
+      },
+      {
+        "id": "approval",
+        "title": "Aprovação",
+        "titleEs": null,
+        "body": "Ao aprovar esta proposta, o cliente declara concordância com o que está incluído, o investimento e as condições. Cliente: {{client.name}} | Empresa: {{client.company}} | Data: {{approval.date}} | Assinatura: ____________________",
+        "bodyEs": null,
+        "required": true,
+        "conditional": false
+      }
+    ],
+    "sectionOrder": [
+      "summary",
+      "objectives",
+      "included",
+      "excluded",
+      "schedule",
+      "investment",
       "terms",
       "approval"
     ]

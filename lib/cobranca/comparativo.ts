@@ -105,6 +105,7 @@ export const BLOCO_DA_TELA: Readonly<Partial<Record<NavDestinationId, BlocoId>>>
   "/app/integracao-dados": "integrar",
   "/app/settings/marca": "integrar",
   // IA avançada
+  "/app/ai/equipe-pronta": "ia_avancada",
   "/app/ai/routers": "ia_avancada",
   "/app/ai/memory": "ia_avancada",
   "/app/ai/skills": "ia_avancada",

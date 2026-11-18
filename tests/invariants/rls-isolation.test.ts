@@ -635,6 +635,15 @@ beforeAll(() => {
                where uo.organization_id = v_org limit 1));
         end if;
 
+        -- migration 9808: o perfil do negocio da Equipe de IA pronta. Uma
+        -- linha por organizacao (a chave primaria e organization_id). A leitura
+        -- e org-scoped sem gate de papel, entao o agent semeado e controle
+        -- positivo legitimo; a escrita exige manager e tem prova propria em
+        -- tests/invariants/equipe-pronta-perfis.test.ts.
+        insert into public.equipe_pronta_perfis (organization_id, respostas)
+        values (v_org, '{"negocio":{"nome":"Invariante"}}'::jsonb)
+        on conflict (organization_id) do nothing;
+
         -- migration 0692 (#2041): o historico do rodizio da acao assign_owner.
         -- Semeado pelo ESCRITOR de producao (a funcao), com uma regra cuja fila
         -- e o usuario semeado (agent, elegivel). A leitura e org-scoped sem gate
@@ -876,6 +885,11 @@ export const TABLES = [
   // escrevendo — mesmo eixo separado de `catalog_products` e
   // `external_db_connections`.
   "crm_metas",
+  // migration 9808 — o perfil do negócio da Equipe de IA pronta: as respostas
+  // do questionário de uma empresa (o que ela faz, como atende, regras
+  // comerciais). Leitura por organização, sem gate de papel; a escrita exige
+  // `manager` e é medida em `tests/invariants/equipe-pronta-perfis.test.ts`.
+  "equipe_pronta_perfis",
   // migration 9043 — o segundo telefone da ficha (Spec 31 B1). Leitura por
   // organização; a escrita exige `agent`, o papel semeado aqui.
   "contact_phones",

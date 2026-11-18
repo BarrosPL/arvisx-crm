@@ -44,7 +44,7 @@ export const STANDARD_A_MAIS = [
   "/app/settings/automacoes", // Organização › Automações
 ] as const;
 
-/** PREMIUM — mais 32: vender, prospectar, medir, integrar e IA avançada (total 63). */
+/** PREMIUM — mais 33: vender, prospectar, medir, integrar e IA avançada (total 64). */
 export const PREMIUM_A_MAIS = [
   // Vender
   "/app/proposals", // CRM › Propostas
@@ -61,6 +61,7 @@ export const PREMIUM_A_MAIS = [
   "/app/calls", // CRM › Chamadas
   "/app/settings/voip-trunk", // Organização › Trunk SIP
   // IA avançada
+  "/app/ai/equipe-pronta", // Agente de IA › Equipe pronta (os 4 agentes prontos)
   "/app/ai/routers", // Agente de IA › Roteadores
   "/app/ai/memory", // Agente de IA › Memória
   "/app/ai/skills", // Agente de IA › Skills
