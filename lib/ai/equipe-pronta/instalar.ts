@@ -906,6 +906,131 @@ function assinaturaDoRoteador(r: RoteadorDoCanal): string {
   return hash([r.id, r.fallback_de_fora?.agent_id ?? null, r.membros_de_fora.map((m) => m.agent_id).sort()]);
 }
 
+/** O canal que JÁ ATENDE clientes — o que o ensaio interromperia. */
+export interface CanalEmProducao {
+  /** Agentes publicados direto neste canal que não são da equipe pronta. */
+  agentes: { agent_id: string; nome: string }[];
+  /** Conversas deste canal com resposta da IA nos últimos 7 dias. */
+  conversas_recentes: number;
+}
+
+export const DIAS_DE_CONVERSA_RECENTE = 7;
+
+/**
+ * O canal está ABERTO e em uso pela IA?
+ *
+ * O ensaio é o pré-lançamento do canal, e ele vale para o número inteiro: um
+ * agente publicado direto no canal (`ai_agent_versions.channel_session_id`,
+ * sem roteador nenhum) para de atender clientes no instante em que a equipe é
+ * instalada. O roteador alheio já tinha a própria recusa; este caso não tinha
+ * aviso nenhum.
+ *
+ * `null` = não há o que avisar: o canal já está em pré-lançamento (a lista de
+ * teste só é trocada), ou está aberto e a IA não atende ninguém por ele.
+ */
+async function canalEmProducao(
+  db: pg.PoolClient,
+  orgId: string,
+  canalId: string,
+  instalacao: Pick<InstalacaoDaEquipe, "agentes">,
+): Promise<CanalEmProducao | null> {
+  const canal = await db.query(
+    "select metadata->>'ai_gate' as gate from channel_sessions where organization_id=$1 and id=$2",
+    [orgId, canalId],
+  );
+  if (canal.rows[0]?.gate === "allowlist") return null;
+
+  const daEquipe = Object.values(instalacao.agentes).map((a) => a.agent_id);
+  const [agentes, conversas] = await Promise.all([
+    db.query(
+      `select a.id, a.name
+         from ai_agents a
+         join ai_agent_versions v on v.organization_id = a.organization_id and v.id = a.published_version_id
+        where a.organization_id=$1 and v.channel_session_id=$2
+          and a.archived_at is null and a.paused_at is null
+          and not (a.id = any($3::uuid[]))
+          and not (a.config ? $4)
+        order by a.name, a.id`,
+      [orgId, canalId, daEquipe, CHAVE_DE_CONFIG],
+    ),
+    db.query(
+      `select count(distinct conversation_id)::int as n
+         from messages
+        where organization_id=$1 and channel_session_id=$2
+          and direction='outbound' and sent_via='ai'
+          and sent_at > now() - make_interval(days => $3)`,
+      [orgId, canalId, DIAS_DE_CONVERSA_RECENTE],
+    ),
+  ]);
+  const achado: CanalEmProducao = {
+    agentes: agentes.rows.map((a) => ({ agent_id: String(a.id), nome: String(a.name ?? "") })),
+    conversas_recentes: Number(conversas.rows[0]?.n ?? 0),
+  };
+  return canalEstaEmProducao(achado) ? achado : null;
+}
+
+/** Tem agente próprio no canal, ou a IA respondeu alguém por ele há pouco. */
+export function canalEstaEmProducao(c: CanalEmProducao): boolean {
+  return c.agentes.length > 0 || c.conversas_recentes > 0;
+}
+
+/**
+ * A RECUSA de antes da instalação — pura, para ser medida sem banco.
+ *
+ * Uma recusa só, com tudo o que a pessoa precisa confirmar: `details` leva
+ * `agentes`, `roteador` e `canal`, cada um quando existe. O código é o do
+ * primeiro que existe, nesta ordem. Com `forcar`, não há recusa.
+ */
+export function recusaAntesDeInstalar(c: {
+  forcar: boolean;
+  editados: { papel: string; agent_id: string | null }[];
+  roteador: RoteadorDoCanal | null;
+  canal: CanalEmProducao | null;
+}): EquipeProntaError | null {
+  if (c.forcar) return null;
+  const canal = c.canal !== null && canalEstaEmProducao(c.canal) ? c.canal : null;
+  const detalhes = {
+    ...(c.editados.length > 0 ? { agentes: c.editados } : {}),
+    ...(c.roteador
+      ? {
+          roteador: {
+            id: c.roteador.id,
+            nome: c.roteador.nome,
+            de_fora: c.roteador.de_fora,
+            fallback: c.roteador.fallback_de_fora,
+            membros: c.roteador.membros_de_fora,
+          },
+        }
+      : {}),
+    ...(canal ? { canal } : {}),
+  };
+  if (c.editados.length > 0) {
+    return new EquipeProntaError(
+      "agentes_editados_a_mao",
+      "Há agentes que foram alterados fora da equipe pronta. Instalar de novo substitui essas alterações.",
+      409,
+      detalhes,
+    );
+  }
+  if (c.roteador) {
+    return new EquipeProntaError(
+      "canal_com_roteador",
+      "Este WhatsApp já tem um roteador com agentes que não são da equipe pronta. Instalar passa a entrada das conversas para a equipe.",
+      409,
+      detalhes,
+    );
+  }
+  if (canal) {
+    return new EquipeProntaError(
+      "canal_em_producao",
+      "Este WhatsApp já atende clientes. Durante o ensaio, a IA só responde os números de teste. Recomendamos instalar em outro número ou ativar logo depois de testar.",
+      409,
+      detalhes,
+    );
+  }
+  return null;
+}
+
 async function passoDoRoteador(
   db: pg.PoolClient,
   ctx: ContextoDeQuemChama,
@@ -1018,10 +1143,11 @@ export async function instalarEquipePronta(
 
     const canalId = await resolverCanal(db, ctx.orgId, perfil.onde.channel_session_id);
 
-    // ── 0. o que a instalação substituiria, antes de qualquer escrita ───────
-    // Duas coisas do cliente que instalar por cima muda: agente alterado à mão
-    // e o roteador que já atende o canal. As duas saem na MESMA recusa, para a
-    // confirmação da tela mostrar tudo de uma vez — `forcar` vale para as duas.
+    // ── 0. o que a instalação muda no que é do cliente, antes de qualquer escrita ──
+    // Três coisas: agente alterado à mão, o roteador que já atende o canal, e
+    // o canal que já atende clientes (o ensaio fecha o número inteiro). As
+    // três saem na MESMA recusa, para a confirmação da tela mostrar tudo de
+    // uma vez — `forcar` vale para as três.
     const roteadorAntes = canalId ? await roteadorDoCanal(db, ctx.orgId, canalId, instalacao) : null;
     const roteadorEmConflito =
       roteadorAntes !== null &&
@@ -1029,17 +1155,6 @@ export async function instalarEquipePronta(
       assinaturaDoRoteador(roteadorAntes) !== instalacao.roteador_confirmado
         ? roteadorAntes
         : null;
-    const detalheDoRoteador = roteadorEmConflito
-      ? {
-          roteador: {
-            id: roteadorEmConflito.id,
-            nome: roteadorEmConflito.nome,
-            de_fora: roteadorEmConflito.de_fora,
-            fallback: roteadorEmConflito.fallback_de_fora,
-            membros: roteadorEmConflito.membros_de_fora,
-          },
-        }
-      : {};
     if (opcoes.forcar !== true) {
       const exame = await examinarAgentes(
         db,
@@ -1048,23 +1163,17 @@ export async function instalarEquipePronta(
         instalacao,
         await contextoDoQueExiste(db, ctx.orgId, instalacao),
       );
-      const editados = exame.filter((a) => a.situacao === "editado_a_mao");
-      if (editados.length > 0) {
-        throw new EquipeProntaError(
-          "agentes_editados_a_mao",
-          "Há agentes que foram alterados fora da equipe pronta. Instalar de novo substitui essas alterações.",
-          409,
-          { agentes: editados.map((a) => ({ papel: a.papel, agent_id: a.agent_id })), ...detalheDoRoteador },
-        );
-      }
-      if (roteadorEmConflito) {
-        throw new EquipeProntaError(
-          "canal_com_roteador",
-          "Este WhatsApp já tem um roteador com agentes que não são da equipe pronta. Instalar passa a entrada das conversas para a equipe.",
-          409,
-          detalheDoRoteador,
-        );
-      }
+      const recusa = recusaAntesDeInstalar({
+        forcar: false,
+        editados: exame
+          .filter((a) => a.situacao === "editado_a_mao")
+          .map((a) => ({ papel: a.papel, agent_id: a.agent_id })),
+        roteador: roteadorEmConflito,
+        // Só quando esta instalação vai pôr o canal em ensaio: com a equipe
+        // já ativa, instalar de novo não fecha o canal.
+        canal: canalId && linha.modo === "ensaio" ? await canalEmProducao(db, ctx.orgId, canalId, instalacao) : null,
+      });
+      if (recusa) throw recusa;
     }
 
     const funilEscolhido = await resolverFunil(db, ctx.orgId, perfil.onde.pipeline_id);

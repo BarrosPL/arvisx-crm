@@ -11,6 +11,7 @@ import { capacidadesPadraoDoOnboarding } from "@/lib/ai/agents/capacidades-padra
 import { CONFERENCIAS_DE_SAIDA } from "@/lib/ai/guardrails/lista-de-conferencia";
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { roleAtLeast } from "@/lib/auth/types";
+import { DEFAULT_CHANNEL_PROVIDER, getAdapter } from "@/lib/channels";
 import { fontesDoAppDaMeta } from "@/lib/channels/meta/app";
 import { metaPodeReceber } from "@/lib/channels/meta/webhook";
 import { nomeCurtoDaSessao } from "@/lib/channels/nome-da-sessao";
@@ -23,7 +24,6 @@ import { TOOL_CATALOG } from "@/lib/mcp/tools/catalog";
 import { contextoDoOnboarding } from "@/lib/onboarding/contexto";
 import { boasVindasFeitas, missaoAtual, onboardingGuiadoLigado } from "@/lib/onboarding/guia";
 import { createClient } from "@/lib/supabase/server";
-import { getWahaClient } from "@/lib/waha/client";
 
 /** As missões que são feitas num quadro no topo de uma tela do CRM. */
 export type SegmentoComBloco = "connect-whatsapp" | "setup-ai" | "funil" | "invite-team";
@@ -80,7 +80,10 @@ export async function BlocoDoGuia({ segmento }: { segmento: SegmentoComBloco }) 
           )}
         </p>
         <ConnectWhatsappClient
-          wahaConfigured={getWahaClient() !== null}
+          // Pergunta ao ADAPTER do canal padrão se o transporte está configurado,
+          // em vez de nomear o provedor: é a mesma leitura do ambiente, por trás
+          // da fronteira de canal (doutrina restrição-de-canal, invariante 1).
+          wahaConfigured={getAdapter(DEFAULT_CHANNEL_PROVIDER).isConfigured()}
           sessionName={nomeCurtoDaSessao(activeOrg.orgId)}
           oficialPodeReceber={oficialPodeReceber}
           telefoneExemplo={perfilDoPais(activeOrg.country).telefoneExemplo}

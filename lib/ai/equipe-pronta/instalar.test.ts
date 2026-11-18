@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { perfilSchema } from "@/lib/schemas/equipe-pronta";
-import { memoriaComOBloco, resumoDoNegocio, textoDaBase } from "./instalar";
+import {
+  canalEstaEmProducao,
+  EquipeProntaError,
+  memoriaComOBloco,
+  recusaAntesDeInstalar,
+  resumoDoNegocio,
+  textoDaBase,
+} from "./instalar";
 
 /**
  * AS PARTES PURAS DO INSTALADOR.
@@ -83,5 +90,82 @@ describe("o texto da base de conhecimento", () => {
   it("com um só dos dois, traz só ele", () => {
     const texto = textoDaBase(perfil({ faq: { texto: "Só perguntas." } }));
     expect(texto).toBe("## Perguntas frequentes e políticas\n\nSó perguntas.");
+  });
+});
+
+/**
+ * CANAL EM PRODUÇÃO (revisão do PR #8, rodada 3).
+ *
+ * O ensaio fecha o número inteiro. Um agente publicado direto no canal, sem
+ * roteador, parava de atender clientes sem aviso nenhum. A leitura do canal é
+ * provada no banco (`tests/invariants/equipe-pronta-instalar.test.ts`); aqui
+ * fica a decisão.
+ */
+describe("a recusa de antes de instalar", () => {
+  const nada = { forcar: false, editados: [], roteador: null, canal: null };
+  const agenteProprio = { agentes: [{ agent_id: "a1", nome: "Agente do cliente" }], conversas_recentes: 0 };
+  const roteador = {
+    id: "r1",
+    nome: "Roteador do cliente",
+    de_fora: true,
+    fallback_de_fora: { agent_id: "a1", nome: "Agente do cliente" },
+    membros_de_fora: [],
+  };
+
+  it("⭐ canal aberto com agente próprio: 409 canal_em_producao, com os agentes e a contagem", () => {
+    const recusa = recusaAntesDeInstalar({ ...nada, canal: agenteProprio });
+
+    expect(recusa).toBeInstanceOf(EquipeProntaError);
+    expect(recusa).toMatchObject({ codigo: "canal_em_producao", status: 409 });
+    expect(recusa!.detalhes).toEqual({ canal: agenteProprio });
+    // A frase é a que a tela mostra: diz o que acontece e o que fazer.
+    expect(recusa!.message).toContain("Este WhatsApp já atende clientes.");
+    expect(recusa!.message).toContain("a IA só responde os números de teste");
+  });
+
+  it("sem agente próprio, mas com conversa recente respondida pela IA: também recusa", () => {
+    const canal = { agentes: [], conversas_recentes: 3 };
+
+    expect(recusaAntesDeInstalar({ ...nada, canal })).toMatchObject({
+      codigo: "canal_em_producao",
+      detalhes: { canal },
+    });
+  });
+
+  it("⭐ com `forcar`: instala — nenhuma das três recusas", () => {
+    expect(
+      recusaAntesDeInstalar({
+        forcar: true,
+        editados: [{ papel: "sdr", agent_id: "s1" }],
+        roteador,
+        canal: agenteProprio,
+      }),
+    ).toBeNull();
+  });
+
+  it("⭐ canal novo: instala sem perguntar", () => {
+    expect(recusaAntesDeInstalar(nada)).toBeNull();
+    // Canal aberto em que a IA não atende ninguém também é canal novo.
+    expect(recusaAntesDeInstalar({ ...nada, canal: { agentes: [], conversas_recentes: 0 } })).toBeNull();
+    expect(canalEstaEmProducao({ agentes: [], conversas_recentes: 0 })).toBe(false);
+  });
+
+  it("as três listas saem na MESMA recusa, e o código é o do primeiro motivo", () => {
+    const editados = [{ papel: "sdr", agent_id: "s1" }];
+
+    const tudo = recusaAntesDeInstalar({ forcar: false, editados, roteador, canal: agenteProprio });
+    expect(tudo).toMatchObject({ codigo: "agentes_editados_a_mao", status: 409 });
+    expect(Object.keys(tudo!.detalhes!).sort()).toEqual(["agentes", "canal", "roteador"]);
+    expect(tudo!.detalhes).toMatchObject({ agentes: editados, roteador: { id: "r1" }, canal: agenteProprio });
+
+    const semEditados = recusaAntesDeInstalar({ ...nada, roteador, canal: agenteProprio });
+    expect(semEditados).toMatchObject({ codigo: "canal_com_roteador" });
+    expect(Object.keys(semEditados!.detalhes!).sort()).toEqual(["canal", "roteador"]);
+  });
+
+  it("recusa que não tem a ver com o canal não leva a chave `canal`", () => {
+    const recusa = recusaAntesDeInstalar({ ...nada, editados: [{ papel: "sdr", agent_id: "s1" }] });
+
+    expect(recusa!.detalhes).toEqual({ agentes: [{ papel: "sdr", agent_id: "s1" }] });
   });
 });

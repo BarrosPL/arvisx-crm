@@ -805,3 +805,96 @@ describe("pausar e retomar", () => {
     await expect(retomarEquipePronta(pool, ctx)).rejects.toMatchObject({ codigo: "nao_instalada", status: 409 });
   });
 });
+
+/**
+ * CANAL QUE JÁ ATENDE CLIENTES, SEM ROTEADOR (revisão do PR #8, rodada 3).
+ *
+ * O agente do cliente está publicado direto no canal. Instalar em ensaio
+ * fecharia o número inteiro e ele pararia de atender, sem aviso.
+ */
+describe("canal em produção", () => {
+  /** Um agente do cliente publicado DIRETO no canal, sem roteador. */
+  async function comAgenteNoCanal() {
+    const o = await novaOrganizacao();
+    const agente = await pool.query(
+      "insert into ai_agents (organization_id, name, system_prompt, operation_mode) values ($1, 'Agente do cliente', 'x', 'automatic') returning id",
+      [o.org],
+    );
+    const agenteId = String(agente.rows[0].id);
+    const modelo = await pool.query(
+      "select model_id from ai_models where provider='openai' and deprecated_at is null and supports_tools order by is_default_for_provider desc, model_id limit 1",
+    );
+    const versao = await pool.query(
+      `insert into ai_agent_versions
+         (organization_id, agent_id, version_number, status, created_by, system_prompt, provider, model, channel_session_id)
+       values ($1, $2, 1, 'draft', $3, 'x', 'openai', $4, $5) returning id`,
+      [o.org, agenteId, GOV_ADMIN, modelo.rows[0].model_id, o.canal],
+    );
+    // O ponteiro direto: o que a leitura do canal olha é a versão publicada.
+    await pool.query("update ai_agents set published_version_id=$2 where id=$1", [agenteId, versao.rows[0].id]);
+    return { ...o, agenteId };
+  }
+
+  const gate = async (canal: string) =>
+    (await pool.query("select metadata->>'ai_gate' as gate from channel_sessions where id=$1", [canal])).rows[0].gate;
+
+  it("⭐ canal aberto com agente próprio: 409 com o agente e a contagem, e NADA é gravado", async () => {
+    const { org, canal, ctx, agenteId } = await comAgenteNoCanal();
+    const antes = await retrato(org);
+    const contagem = zero();
+
+    const erro = await instalarEquipePronta(pool, portas(contagem), ctx).catch((e) => e);
+
+    expect(erro).toBeInstanceOf(EquipeProntaError);
+    expect(erro).toMatchObject({ codigo: "canal_em_producao", status: 409 });
+    expect((erro as EquipeProntaError).detalhes).toEqual({
+      canal: { agentes: [{ agent_id: agenteId, nome: "Agente do cliente" }], conversas_recentes: 0 },
+    });
+    expect(await retrato(org)).toEqual(antes);
+    expect(contagem).toEqual(zero());
+    // O número continua aberto: o agente do cliente segue atendendo.
+    expect(await gate(canal)).not.toBe("allowlist");
+  });
+
+  it("⭐ com `forcar`: instala e põe o canal em ensaio; instalar de novo não pergunta outra vez", async () => {
+    const { org, canal, ctx } = await comAgenteNoCanal();
+
+    const r = await instalarEquipePronta(pool, portas(zero()), ctx, { forcar: true });
+
+    expect(r.agentes.every((a) => a.publicado)).toBe(true);
+    expect(await gate(canal)).toBe("allowlist");
+    // O canal já está em ensaio: não há mais o que avisar.
+    const antes = await retrato(org);
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+    expect(await retrato(org)).toEqual(antes);
+  });
+
+  it("⭐ canal novo: instala sem perguntar", async () => {
+    const { canal, ctx } = await novaOrganizacao();
+
+    const r = await instalarEquipePronta(pool, portas(zero()), ctx);
+
+    expect(r.agentes.every((a) => a.publicado)).toBe(true);
+    expect(await gate(canal)).toBe("allowlist");
+  });
+
+  it("agente pausado ou arquivado no canal não conta como produção", async () => {
+    const { ctx, agenteId } = await comAgenteNoCanal();
+    await pool.query("update ai_agents set paused_at=now() where id=$1", [agenteId]);
+
+    const r = await instalarEquipePronta(pool, portas(zero()), ctx);
+
+    expect(r.agentes.every((a) => a.publicado)).toBe(true);
+  });
+
+  it("equipe já ATIVA: instalar de novo não fecha o canal, então não pergunta", async () => {
+    const { org, canal, ctx } = await comAgenteNoCanal();
+    await instalarEquipePronta(pool, portas(zero()), ctx, { forcar: true });
+    await pool.query("select fn_configurar_pre_go_live_canal($1,$2,'open',$3::text[])", [org, canal, []]);
+    await pool.query("update equipe_pronta_perfis set modo='ativo' where organization_id=$1", [org]);
+
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+
+    expect(await gate(canal)).not.toBe("allowlist");
+  });
+});
