@@ -48,7 +48,8 @@ duplica nada.
    da empresa. O mapeamento fica em `instalacao.etapas` (ver "Etapas da
    equipe").
 5. **Régua de follow-up** "Equipe pronta · Recuperação de vendas", com
-   mensagens geradas (não texto fixo).
+   mensagens geradas (não texto fixo), e os fluxos e a regra dos gatilhos (ver
+   "Gatilhos").
 6. **Canal em ensaio**: só os telefones de teste do questionário falam com a
    IA. Vem ANTES do roteador e da publicação: num canal que já atende clientes,
    a equipe nova não pode ficar na frente deles sem o ensaio existir. Se o
@@ -205,9 +206,8 @@ ela sai é o modo da empresa, `proposta.envio_de_proposta` no perfil
 
 A aprovação são duas colunas de `crm_proposals` (migration 9814),
 `aprovada_em` e `aprovada_na_revisao`, e só vale enquanto a revisão aprovada
-for a atual: editar o rascunho a invalida. Só o servidor grava as duas. **A tela
-ainda não tem o botão de aprovar** (ver "O que falta"): até ele existir, no
-modo padrão toda tentativa de envio responde `precisa_aprovacao`.
+for a atual: editar o rascunho a invalida. Só o servidor grava as duas, pela
+rota do botão "Aprovar e deixar o agente enviar" (ver "Gatilhos").
 
 O envio é a mesma função da rota da tela (`lib/propostas/enviar-proposta.ts`).
 Antes dela, a ferramenta recusa quando: o canal está em ensaio e o número não é
@@ -225,6 +225,68 @@ ferramentas por agente. Para ver a de hoje:
 ```bash
 grep -c '"crm_' lib/ai/equipe-pronta/papeis/{sdr,agendamento,proposta,recuperador}.ts
 ```
+
+## Gatilhos: a equipe age sem o cliente escrever
+
+`lib/ai/equipe-pronta/gatilhos/`. Nenhum motor novo: cada gatilho liga um evento
+que já existia a um papel, pelo mecanismo que o produto já roda.
+
+| Evento | Papel | O que acontece | Como |
+|---|---|---|---|
+| Lembrete da agenda enviado | Agendamento | A resposta da pessoa chega a ele, que confirma ou remarca | O cron do lembrete fixa o agente da conversa (`lembrete.ts`), pela mesma aderência de `passar_para_colega` |
+| Falta registrada (`appointment.outcome_confirmed`) | Recuperação | Retoma e oferece novo horário | Fluxo de follow-up "Equipe pronta · Faltou ao compromisso", gatilho `appointment_no_show` |
+| Proposta aprovada pela tela | Propostas | Envia e move para proposta enviada | `POST /api/v1/proposals/[id]/approve` (`proposta-aprovada.ts`) |
+| `lead.stage_stale` na etapa de proposta enviada | Recuperação | Retoma a proposta | Regra de automação "Equipe pronta · Proposta sem resposta" (ação `start_message_flow`) e o fluxo de follow-up de mesmo nome |
+| `lead.won` | uma pessoa | Tarefa "Dar seguimento ao negócio ganho" | Consumidor do evento (`negocio-ganho.handler.ts`), com `criarTarefa` |
+
+Os dois fluxos e a regra são criados pela instalação (`passoDosGatilhos`) e
+guardados em `instalacao.gatilhos`. O de falta só existe se a empresa agenda; o
+de proposta parada, se a empresa usa proposta. Os dias da proposta parada vêm de
+`recuperacao.dias_proposta_parada` no perfil (padrão 5; só muda no banco).
+
+Os dois fluxos são a mesma escada da régua de silêncio: no máximo
+`toques_maximos` mensagens geradas, com `intervalo_dias` entre elas.
+
+### As travas
+
+| Trava | Proposta aprovada, lembrete | Fluxos de follow-up (falta, proposta parada) | Tarefa do ganho |
+|---|---|---|---|
+| Ensaio (só números de teste) | `travas.ts` | o motor (a varredura e a porta de saída) | só negócio de número de teste |
+| Pessoa que assumiu a conversa | `travas.ts` | `handoff_policy: pause` e a pessoa no comando | não se aplica |
+| Janela e horário do canal | `enviarProposta` recusa; o turno de resposta confere | o passo é adiado até a janela abrir | não se aplica |
+| Opt-out | `travas.ts` | a inscrição é cancelada | não se aplica |
+| Pausa da equipe | `travas.ts` | a inscrição é adiada (`trava-do-fluxo.ts`) | não cria |
+| Plano | `travas.ts` | a inscrição é adiada (`reguaDaEquipeForaDoPlano`) | não cria |
+
+`travas.ts` é a mesma função que `crm_send_proposal` usa. A tarefa do ganho é
+interna (ninguém fala com o cliente), por isso só as travas da equipe valem
+para ela.
+
+### Limite de retomadas
+
+O papel da Recuperação promete no máximo `toques_maximos` retomadas. Cada fluxo
+é uma escada desse tamanho, e o motor só deixa uma inscrição viva por contato.
+Para duas escadas não rodarem em sequência, a inscrição que acabou de nascer
+num fluxo da equipe é encerrada, sem mandar nada, quando a equipe já mandou
+alguma retomada a esse contato depois da última mensagem dele
+(`trava-do-fluxo.ts`). Vale para os três fluxos, a régua de silêncio inclusive.
+Quando a pessoa responde, a conta zera.
+
+### Aprovar a proposta pela tela
+
+O botão "Aprovar e deixar o agente enviar" aparece no rascunho, para gestor,
+quando a empresa tem o agente de Propostas instalado. A rota grava a aprovação
+(as duas colunas da 9814), e o agente envia na mesma chamada. Quando uma trava
+segura o envio, a aprovação fica gravada e a tela diz o motivo; o agente envia
+no próximo turno da conversa, ou a pessoa envia pelo botão de sempre. Proposta
+que fica na fila do canal não move o negócio.
+
+### Pedido de desconto
+
+O agente de Propostas abre um caso para a equipe (`open_human_case`, a
+ferramenta de casos do motor, ligada na versão por `cases_enabled`). O caso
+aparece na Central; o agente continua a conversa e a resposta da equipe volta a
+ele (`case_reply_turn`). Só Propostas tem casos ligados.
 
 ## Ensaio e ativação
 
@@ -337,13 +399,13 @@ Jornada pela tela: `tests/e2e/equipe-pronta.spec.ts`.
 
 ## O que falta
 
-- **Aprovar a proposta pela tela.** As colunas de aprovação existem e a
-  ferramenta de envio já as lê, mas ninguém as grava ainda: falta o botão
-  "Aprovar e deixar o agente enviar" e a rota que confere o papel.
 - **Escolher `envio_de_proposta` pela tela.** O campo existe no perfil e tem
   padrão (`apos_aprovacao`); o questionário ainda não o pergunta.
-- **Gatilhos.** Resposta ao lembrete da agenda, falta ao compromisso, proposta
-  aprovada e proposta parada ainda não acordam o papel certo sozinhos.
+- **Escolher os dias da proposta parada pela tela.** `recuperacao.dias_proposta_parada`
+  tem padrão (5) e só muda no banco.
+- **Proposta aprovada fora do horário de envio.** O agente não envia sozinho
+  quando a janela abre: envia no próximo turno da conversa, ou quando a pessoa
+  aprova de novo.
 - **Desfazer pela tela.** A auditoria guarda o valor anterior do que o agente
   gravou no contato; não há um botão que o restaure.
 
