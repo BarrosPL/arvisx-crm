@@ -898,3 +898,89 @@ describe("canal em produção", () => {
     expect(await gate(canal)).not.toBe("allowlist");
   });
 });
+
+/**
+ * A PAUSA DE NASCIMENTO (correção A6, bug real na conta de teste em 19/11/2026).
+ *
+ * O agente nasce pausado e sai da pausa quando é publicado. Antes, só saía se
+ * tivesse sido CRIADO na mesma rodada: instalar com o WhatsApp desconectado
+ * criava os quatro pausados e em rascunho; conectar e instalar de novo
+ * publicava os quatro, o checklist ficava todo verde, e eles continuavam
+ * pausados, sem responder ninguém.
+ */
+describe("a pausa de nascimento sai na rodada em que o agente é publicado", () => {
+  const pausados = async (org: string) =>
+    (
+      await pool.query(
+        "select config->'equipe_pronta'->>'papel' as papel from ai_agents where organization_id=$1 and paused_at is not null order by 1",
+        [org],
+      )
+    ).rows.map((r) => r.papel);
+
+  it("⭐ instalar offline → conectar → reinstalar: os quatro publicados e SEM pausa", async () => {
+    const { org, canal, ctx } = await novaOrganizacao();
+    await pool.query("update channel_sessions set status='STOPPED' where id=$1", [canal]);
+
+    const offline = await instalarEquipePronta(pool, portas(zero()), ctx);
+    expect(offline.agentes.every((a) => !a.publicado)).toBe(true);
+    // Em rascunho, a pausa de nascimento continua: nada responde ainda.
+    expect(await pausados(org)).toHaveLength(PAPEIS.length);
+
+    await pool.query("update channel_sessions set status='WORKING' where id=$1", [canal]);
+    const conectado = await instalarEquipePronta(pool, portas(zero()), ctx);
+
+    expect(conectado.agentes.every((a) => a.publicado)).toBe(true);
+    // Reaproveitados, não criados: era aqui que a pausa ficava para trás.
+    expect(conectado.agentes.every((a) => a.acao !== "criado")).toBe(true);
+    expect(await pausados(org)).toEqual([]);
+    const estado = await lerEstadoDaEquipe(pool, portasDoEstado, org);
+    expect(estado.checklist.find((i) => i.id === "agentes_publicados")?.ok).toBe(true);
+  });
+
+  it("⭐ pausa feita pelo cliente num agente já publicado continua intocada", async () => {
+    const { org, ctx } = await novaOrganizacao();
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+    // O cliente pausa o agente de Propostas à mão, bem depois de ele nascer.
+    await pool.query(
+      `update ai_agents set paused_at = created_at + interval '2 hours'
+        where organization_id=$1 and config->'equipe_pronta'->>'papel'='proposta'`,
+      [org],
+    );
+
+    // Reinstalar, inclusive com uma resposta mudada (gera versão nova e publica de novo).
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+    await pool.query(
+      "update equipe_pronta_perfis set respostas = jsonb_set(respostas, '{atendente,nome}', '\"Bia\"') where organization_id=$1",
+      [org],
+    );
+    const r = await instalarEquipePronta(pool, portas(zero()), ctx);
+
+    expect(r.agentes.every((a) => a.publicado)).toBe(true);
+    expect(await pausados(org)).toEqual(["proposta"]);
+  });
+
+  it("quem já ficou preso (publicado, com a pausa com que nasceu) é solto ao reinstalar", async () => {
+    const { org, ctx } = await novaOrganizacao();
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+    // O estado que o defeito deixava: publicado, e ainda com a pausa de nascimento.
+    await pool.query("update ai_agents set paused_at = created_at where organization_id=$1", [org]);
+    expect(await pausados(org)).toHaveLength(PAPEIS.length);
+
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+
+    expect(await pausados(org)).toEqual([]);
+  });
+
+  it("a equipe pausada pela tela não é religada pela reinstalação, nem na primeira publicação", async () => {
+    const { org, canal, ctx } = await novaOrganizacao();
+    await pool.query("update channel_sessions set status='STOPPED' where id=$1", [canal]);
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+    await pausarEquipePronta(pool, ctx);
+    await pool.query("update channel_sessions set status='WORKING' where id=$1", [canal]);
+
+    const r = await instalarEquipePronta(pool, portas(zero()), ctx);
+
+    expect(r.agentes.every((a) => a.publicado)).toBe(true);
+    expect(await pausados(org)).toHaveLength(PAPEIS.length);
+  });
+});

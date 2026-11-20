@@ -72,6 +72,13 @@ export const NOME_DO_ROTEADOR = "Equipe pronta";
 /** Os tipos que `fn_semear_tipos_de_agendamento` cria em toda organização nova. */
 export const SLUGS_DE_FABRICA = ["consulta", "reuniao", "atendimento"] as const;
 
+/**
+ * Até quantos segundos depois de o agente nascer a pausa dele ainda é a de
+ * NASCIMENTO. O agente nasce pausado na mesma escrita que o cria; a folga
+ * cobre a diferença de relógio entre o aplicativo e o banco.
+ */
+export const TOLERANCIA_DA_PAUSA_DE_NASCIMENTO_S = 300;
+
 const INICIO_DA_MEMORIA = "<!-- equipe-pronta:inicio -->";
 const FIM_DA_MEMORIA = "<!-- equipe-pronta:fim -->";
 
@@ -741,6 +748,11 @@ interface AgentePreparado {
   acao: AgenteNoResultado["acao"];
   /** A versão a publicar; `null` = a vigente já está publicada e em dia. */
   aPublicar: string | null;
+  /**
+   * O agente NUNCA tinha sido publicado quando esta rodada começou. É o que
+   * diz que a pausa dele é a de nascimento, e não uma pausa do cliente.
+   */
+  nuncaPublicado: boolean;
 }
 
 async function passoDosAgentes(
@@ -800,6 +812,7 @@ async function passoDosAgentes(
         hash: gerado,
         acao: "criado",
         aPublicar: String(version.id),
+        nuncaPublicado: true,
       });
       criados.push(`agente_${papel.id}`);
       continue;
@@ -820,6 +833,7 @@ async function passoDosAgentes(
         acao: "sem_mudanca",
         // Em dia mas nunca publicado (a publicação foi recusada da outra vez).
         aPublicar: agente.published_version_id === String(vigente.id) ? null : String(vigente.id),
+        nuncaPublicado: agente.published_version_id === null,
       });
       continue;
     }
@@ -837,6 +851,7 @@ async function passoDosAgentes(
       hash: gerado,
       acao: "atualizado",
       aPublicar: versionId,
+      nuncaPublicado: agente.published_version_id === null,
     });
   }
   return preparados;
@@ -1268,16 +1283,25 @@ export async function instalarEquipePronta(
         publicado = r.ok;
         if (!r.ok) motivo = r.code;
       }
-      if (publicado) {
-        // Sai da pausa de nascimento. Quem o cliente pausou à mão depois de
-        // publicado não é religado aqui: só o que nasceu nesta rodada — e nem
-        // ele, se a equipe está pausada pela tela.
-        if (p.acao === "criado" && instalacao.pausa === null) {
-          await db.query(
-            "update ai_agents set paused_at=null where organization_id=$1 and id=$2 and published_version_id is not null",
-            [ctx.orgId, p.agentId],
-          );
-        }
+      if (publicado && instalacao.pausa === null) {
+        // SAI DA PAUSA DE NASCIMENTO, na rodada em que é publicado — tenha sido
+        // criado agora ou reaproveitado de uma instalação que não conseguiu
+        // publicar (WhatsApp desconectado, sem chave de IA). Antes, só o agente
+        // CRIADO na rodada saía da pausa: instalar offline, conectar e instalar
+        // de novo publicava os quatro e os deixava pausados, sem responder
+        // ninguém, com o checklist todo verde.
+        //
+        // Pausa de nascimento é a de quem nunca tinha sido publicado quando a
+        // rodada começou, OU a que tem a hora do nascimento do agente (é o que
+        // conserta quem já ficou preso: publicado, e ainda com a pausa com que
+        // nasceu). A pausa que o cliente fez depois, num agente publicado, não
+        // é tocada. Nem a equipe pausada pela tela (`instalacao.pausa`).
+        await db.query(
+          `update ai_agents set paused_at=null
+            where organization_id=$1 and id=$2 and published_version_id is not null and paused_at is not null
+              and ($3::boolean or paused_at <= created_at + make_interval(secs => $4))`,
+          [ctx.orgId, p.agentId, p.nuncaPublicado, TOLERANCIA_DA_PAUSA_DE_NASCIMENTO_S],
+        );
       }
       agentes.push({
         papel: p.papel.id,
