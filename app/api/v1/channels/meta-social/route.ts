@@ -8,6 +8,11 @@
  *   POST { acao: "concluir", estado, erro }  → a recusa, com a frase certa
  *   POST { acao: "conectar", selecao, page_id, redes } → grava as sessões e assina a página
  *   POST { acao: "desconectar", channel_session_id }    → desassina, apaga o token, arquiva
+ *   POST { acao: "comentarios_modo", channel_session_id, modo } → liga, desliga ou põe em
+ *        registro os comentários de UMA conexão do Instagram (off | registrar | real)
+ *
+ * O GET diz, por conexão, em que pé estão os comentários: o modo, se a conexão
+ * tem as permissões de comentários e se dá para usá-los.
  *
  * Como as rotas irmãs, não sabe com quem fala: o fluxo mora em
  * `lib/channels/meta-social/`. Aqui ficam as guardas — papel de admin da
@@ -27,11 +32,13 @@ import { requireRole } from "@/lib/auth/require-role";
 import { mfaEmDivida } from "@/lib/auth/server";
 import { emitirEstadoDaVolta, verificarEstadoDaVolta } from "@/lib/channels/estado-da-volta";
 import { appDaConexaoDireta, oQueFaltaNoApp } from "@/lib/channels/meta-social/app";
+import { MODOS_DE_COMENTARIOS } from "@/lib/channels/meta-social/comentarios";
 import { ErroDaGraph } from "@/lib/channels/meta-social/graph";
 import {
   CAMINHO_DA_VOLTA,
   ESCOPOS_DO_INSTAGRAM,
   ESCOPOS_OBRIGATORIOS,
+  escoposConcedidos,
   idDoUsuarioNoApp,
   paginasDoUsuario,
   permissoesNegadas,
@@ -43,7 +50,9 @@ import {
   ErroDaConexaoDireta,
   conectarPagina,
   conexoesDiretas,
+  definirModoDeComentarios,
   desconectarSessao,
+  estadoDosComentarios,
 } from "@/lib/channels/meta-social/store";
 import { traduzirLimiteDoPlano } from "@/lib/cobranca/limites";
 import { env } from "@/lib/env";
@@ -83,6 +92,13 @@ const corpoSchema = z.discriminatedUnion("acao", [
     })
     .strict(),
   z.object({ acao: z.literal("desconectar"), channel_session_id: z.string().uuid() }).strict(),
+  z
+    .object({
+      acao: z.literal("comentarios_modo"),
+      channel_session_id: z.string().uuid(),
+      modo: z.enum(MODOS_DE_COMENTARIOS),
+    })
+    .strict(),
 ]);
 
 /** Para onde a Meta devolve o navegador: precisa ser EXATAMENTE o cadastrado no app. */
@@ -121,6 +137,8 @@ export async function GET(): Promise<NextResponse> {
         display_name: c.displayName,
         status: c.status,
         metadata: { disabled: c.metadata.disabled ?? null },
+        // Só o Instagram tem comentários; no Messenger a chave nem aparece.
+        ...(c.rede === "instagram" ? { comentarios: estadoDosComentarios(c) } : {}),
       })),
     },
     { requestId, headers },
@@ -169,6 +187,25 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         metadata: { canal: "rede_social", porta: "direta", desassinada: r.desassinada, avisos: r.avisos },
       });
       return ok({ desconectada: true, desassinada: r.desassinada }, { requestId, headers });
+    }
+
+    if (corpo.acao === "comentarios_modo") {
+      // Não depende do app da Meta estar configurado: desligar tem de
+      // funcionar sempre. A conexão é procurada DENTRO da organização da
+      // sessão — o id de uma conexão alheia não acha nada (404).
+      const r = await definirModoDeComentarios(admin, orgId, corpo.channel_session_id, corpo.modo);
+      if (r.anterior !== r.atual) {
+        void audit({
+          action: "channel.comentarios_modo_alterado",
+          actorUserId: userId,
+          organizationId: orgId,
+          resourceType: "channel_session",
+          resourceId: corpo.channel_session_id,
+          requestId,
+          metadata: { canal: "rede_social", porta: "direta", de: r.anterior, para: r.atual },
+        });
+      }
+      return ok({ modo: r.atual, alterado: r.anterior !== r.atual }, { requestId, headers });
     }
 
     const falta = oQueFaltaNoApp(app);
@@ -259,6 +296,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         headers,
       });
     }
+    // O que a pessoa concedeu neste login fica gravado na conexão — é por ali
+    // que ela sabe dizer se tem as permissões de comentários. Não saber não
+    // impede conectar: as mensagens não dependem disso.
+    const concedidos = await escoposConcedidos(aberta.tokenDoUsuario, app.appSecret).catch(() => null);
     const gravadas = await conectarPagina(admin, {
       organizationId: orgId,
       pagina,
@@ -266,6 +307,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       appSecret: app.appSecret,
       metaUserId: aberta.metaUserId,
       conectadoPor: userId,
+      escoposConcedidos: concedidos,
     });
     for (const g of gravadas) {
       void audit({

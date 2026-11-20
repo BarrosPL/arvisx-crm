@@ -26,6 +26,13 @@
  * nem sempre o manda), o eco entra e a chave `(organization_id, external_id)`
  * resolve — o id do eco é o mesmo `mid` que o envio gravou. Eco de OUTRO app ou
  * do celular entra como saída de humano e pausa a IA, como no canal por parceiro.
+ *
+ * ─── Comentário não é mensagem ──────────────────────────────────────────────
+ *
+ * O comentário em publicação do Instagram NÃO passa pela ingestão social: ele
+ * não cria contato, conversa nem negócio. Vai para `./comentarios.ts`, que
+ * obedece ao modo do canal (desligado por padrão), grava em `social_comments`
+ * e avisa os sistemas de fora. A sessão é achada do mesmo jeito, pela conta.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -34,6 +41,7 @@ import { logger } from "@/lib/logger";
 import { socialMessageId } from "../social/catalog";
 import type { SocialMessage } from "../social/parser";
 import { ingestZernioInbound } from "../zernio/ingest";
+import { registrarComentario } from "./comentarios";
 import { perfilDoParticipante } from "./perfil";
 import { sessaoPelaConta, tokenDaSessao, type SessaoDireta } from "./store";
 import type { EventoDireto } from "./webhook";
@@ -108,7 +116,7 @@ export function paraMensagemSocial(
 }
 
 function statusSocial(
-  evento: EventoDireto,
+  evento: Extract<EventoDireto, { tipo: "entrega" | "leitura" }>,
   mid: string,
   status: "delivered" | "read",
 ): SocialMessage {
@@ -180,6 +188,10 @@ export async function processarEventosDiretos(
       continue;
     }
     try {
+      if (evento.tipo === "comentario") {
+        desfechos.push(await registrarComentario(db, sessao, evento));
+        continue;
+      }
       if (evento.tipo === "mensagem") {
         if (evento.eco && ctx.appId && evento.appId === ctx.appId) {
           desfechos.push("eco_do_proprio_envio");
