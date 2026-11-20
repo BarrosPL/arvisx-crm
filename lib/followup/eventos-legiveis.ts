@@ -515,6 +515,15 @@ export function descreveEvento(
         detalhe: "tenta de novo a cada hora, por até 7 dias",
         ...motor,
       };
+    case "cancelled_by_touch_limit":
+      // Fluxo da Equipe de IA pronta: a inscrição nasceu e foi encerrada sem
+      // mandar nada, porque a equipe já tinha retomado este contato depois da
+      // última mensagem dele (`lib/ai/equipe-pronta/gatilhos/trava-do-fluxo.ts`).
+      return {
+        titulo: "Encerrado sem enviar: o limite de retomadas deste contato já foi usado",
+        detalhe: "a equipe de IA já tinha retomado este contato depois da última mensagem dele",
+        ...motor,
+      };
     case "gave_up_taken_slot":
       // A espera pela vaga estourou o limite: o retorno foi cancelado, e o
       // cancelamento saiu na Central com aviso. A trilha repete a mesma

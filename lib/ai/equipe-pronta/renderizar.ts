@@ -190,7 +190,13 @@ export function renderizarAgente(
   perfil: PerfilDoNegocio,
   contexto: ContextoDaInstalacao,
 ): CamposDoAgente {
-  const usaRegua = papel.usaReguaDeFollowup && contexto.reguaDeFollowupId !== null;
+  // A régua de silêncio e os fluxos dos gatilhos: quem os arma é o mesmo papel.
+  const fluxos = papel.usaReguaDeFollowup
+    ? [
+        ...(contexto.reguaDeFollowupId !== null ? [contexto.reguaDeFollowupId] : []),
+        ...(contexto.fluxosDeGatilho ?? []),
+      ]
+    : [];
   return {
     system_prompt: [papel.prompt, REGRAS_COMUNS, blocoEstaEmpresa(perfil, contexto)].join("\n\n"),
     tool_ids: [...papel.toolIds],
@@ -199,8 +205,8 @@ export function renderizarAgente(
       TETO_DE_PALAVRAS,
     ),
     followup: {
-      enabled: usaRegua,
-      flow_pointer_ids: usaRegua ? [contexto.reguaDeFollowupId as string] : [],
+      enabled: fluxos.length > 0,
+      flow_pointer_ids: fluxos,
     },
     pipeline_ids: contexto.funil ? [contexto.funil.id] : [],
     knowledge_source_ids: [...contexto.knowledgeSourceIds],
@@ -208,6 +214,7 @@ export function renderizarAgente(
     // decidido por `envio_de_proposta`, na ferramenta de envio. Com a empresa
     // dizendo que não usa proposta, a capacidade sai de todos os papéis.
     proposal_ai_draft_enabled: perfil.proposta.usa,
+    cases_enabled: papel.abreCasoParaAEquipe === true,
   };
 }
 
@@ -229,6 +236,7 @@ export function camposCanonicos(campos: {
   pipeline_ids?: unknown;
   knowledge_source_ids?: unknown;
   proposal_ai_draft_enabled?: unknown;
+  cases_enabled?: unknown;
 }): CamposDoAgente {
   const textos = (v: unknown): string[] =>
     Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
@@ -244,6 +252,7 @@ export function camposCanonicos(campos: {
     pipeline_ids: textos(campos.pipeline_ids).sort(),
     knowledge_source_ids: textos(campos.knowledge_source_ids).sort(),
     proposal_ai_draft_enabled: campos.proposal_ai_draft_enabled !== false,
+    cases_enabled: campos.cases_enabled === true,
   };
 }
 
@@ -264,6 +273,11 @@ export function hashDosCampos(campos: Parameters<typeof camposCanonicos>[0]): st
     pipeline_ids: c.pipeline_ids,
     knowledge_source_ids: c.knowledge_source_ids,
     proposal_ai_draft_enabled: c.proposal_ai_draft_enabled,
+    // ⚠️ Só entra quando LIGADO. O campo é mais novo que o hash guardado nas
+    // instalações anteriores: com ele sempre presente, a versão publicada de
+    // quem instalou antes deixaria de bater com o hash guardado, e todo agente
+    // apareceria como "editado à mão" sem ninguém ter tocado nele.
+    ...(c.cases_enabled ? { cases_enabled: true } : {}),
   };
   return createHash("sha256").update(JSON.stringify(ordenado)).digest("hex");
 }

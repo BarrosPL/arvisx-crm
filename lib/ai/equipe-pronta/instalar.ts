@@ -68,6 +68,16 @@ import {
   type MapaDeEtapas,
 } from "./etapas";
 import { CHAVE_DE_CONFIG, PAPEIS, PAPEL_DE_ENTRADA } from "./index";
+import {
+  NOME_DA_REGRA_DE_PROPOSTA_PARADA,
+  NOME_DO_FLUXO_DE_FALTA,
+  NOME_DO_FLUXO_DE_PROPOSTA_PARADA,
+  gatilhoDoFluxoDeFalta,
+  gatilhoDoFluxoDePropostaParada,
+  grafoDoFluxoDeFalta,
+  grafoDoFluxoDePropostaParada,
+  regraDePropostaParada,
+} from "./gatilhos/fluxos";
 import { NOME_DA_REGUA, gatilhoDaRegua, grafoDaRegua } from "./regua";
 import { hashDosCampos, renderizarAgente, situacaoDoAgente, type SituacaoDoAgente } from "./renderizar";
 import {
@@ -549,6 +559,7 @@ export async function contextoDoQueExiste(
     funil,
     knowledgeSourceIds: instalacao.knowledge_source_id ? [instalacao.knowledge_source_id] : [],
     reguaDeFollowupId: instalacao.followup_flow_pointer_id,
+    fluxosDeGatilho: fluxosDeGatilhoDe(instalacao.gatilhos),
   };
 }
 
@@ -841,6 +852,13 @@ async function passoDoFunil(
   return { funil: { ...funil, etapas: etapasComNome(mapa, etapas) }, etapas: mapa, criadas };
 }
 
+/** Os fluxos dos gatilhos que existem, na ordem fixa em que entram no agente. */
+function fluxosDeGatilhoDe(gatilhos: InstalacaoDaEquipe["gatilhos"]): string[] {
+  return [gatilhos.fluxo_de_falta_id, gatilhos.fluxo_de_proposta_parada_id].filter(
+    (id): id is string => id !== null,
+  );
+}
+
 async function passoDaRegua(
   db: pg.PoolClient,
   portas: PortasDoInstalador,
@@ -849,8 +867,128 @@ async function passoDaRegua(
   instalacao: InstalacaoDaEquipe,
   criados: string[],
 ): Promise<string> {
-  const grafo = grafoDaRegua(perfil);
-  const gatilho: TriggerConfig = gatilhoDaRegua(perfil);
+  return passoDoFluxo(db, portas, ctx, criados, {
+    nome: NOME_DA_REGUA,
+    idGuardado: instalacao.followup_flow_pointer_id,
+    grafo: grafoDaRegua(perfil),
+    gatilho: gatilhoDaRegua(perfil),
+    marca: "regua_de_followup",
+  });
+}
+
+/**
+ * OS GATILHOS (`gatilhos/fluxos.ts`): os dois fluxos que acordam a Recuperação
+ * sem o cliente escrever, e a regra de automação que arma o segundo.
+ *
+ *   • faltou ao compromisso: só se a empresa agenda;
+ *   • proposta parada: só se a empresa usa proposta e a etapa de proposta
+ *     enviada existe no funil da equipe.
+ *
+ * O que deixou de se aplicar não é apagado: o fluxo sai da lista do agente (e
+ * sem agente que o arme ele não inscreve ninguém) e a regra é desligada.
+ * Rodar de novo não duplica nada: fluxo e regra são reencontrados pelo id
+ * guardado ou pelo nome.
+ */
+async function passoDosGatilhos(
+  db: pg.PoolClient,
+  portas: PortasDoInstalador,
+  ctx: ContextoDeQuemChama,
+  perfil: PerfilDoNegocio,
+  instalacao: InstalacaoDaEquipe,
+  alvo: { agenda: boolean; pipelineId: string | null; etapaDePropostaEnviadaId: string | null },
+  criados: string[],
+): Promise<InstalacaoDaEquipe["gatilhos"]> {
+  const fluxoDeFalta = alvo.agenda
+    ? await passoDoFluxo(db, portas, ctx, criados, {
+        nome: NOME_DO_FLUXO_DE_FALTA,
+        idGuardado: instalacao.gatilhos.fluxo_de_falta_id,
+        grafo: grafoDoFluxoDeFalta(perfil),
+        gatilho: gatilhoDoFluxoDeFalta(),
+        marca: "fluxo_de_falta",
+      })
+    : null;
+
+  const usaPropostaParada =
+    perfil.proposta.usa && alvo.pipelineId !== null && alvo.etapaDePropostaEnviadaId !== null;
+  const fluxoDeProposta = usaPropostaParada
+    ? await passoDoFluxo(db, portas, ctx, criados, {
+        nome: NOME_DO_FLUXO_DE_PROPOSTA_PARADA,
+        idGuardado: instalacao.gatilhos.fluxo_de_proposta_parada_id,
+        grafo: grafoDoFluxoDePropostaParada(perfil),
+        gatilho: gatilhoDoFluxoDePropostaParada(),
+        marca: "fluxo_de_proposta_parada",
+      })
+    : null;
+
+  const { rows } = await db.query(
+    `select id, trigger_config, actions from automation_rules
+      where organization_id=$1 and (id = $2::uuid or (name = $3 and trigger_event = $4))
+      order by (id = $2::uuid) desc, created_at asc
+      limit 1`,
+    [ctx.orgId, instalacao.gatilhos.regra_de_proposta_parada_id, NOME_DA_REGRA_DE_PROPOSTA_PARADA, "lead.stage_stale"],
+  );
+  let regraId: string | null = rows[0] ? String(rows[0].id) : null;
+  if (usaPropostaParada && fluxoDeProposta) {
+    const regra = regraDePropostaParada(perfil, {
+      pipelineId: alvo.pipelineId as string,
+      etapaDePropostaEnviadaId: alvo.etapaDePropostaEnviadaId as string,
+      fluxoId: fluxoDeProposta,
+    });
+    if (rows[0]) {
+      const atual = hash(emOrdem({ gatilho: rows[0].trigger_config, acoes: rows[0].actions }));
+      const nova = hash(emOrdem({ gatilho: regra.trigger_config, acoes: regra.actions }));
+      // Só o que a instalação decide. Ligada ou desligada é escolha de quem
+      // usa: a regra que o cliente desligou continua desligada.
+      if (atual !== nova) {
+        await db.query(
+          `update automation_rules set trigger_config=$3::jsonb, actions=$4::jsonb, updated_at=now()
+            where organization_id=$1 and id=$2`,
+          [ctx.orgId, regraId, JSON.stringify(regra.trigger_config), JSON.stringify(regra.actions)],
+        );
+      }
+    } else {
+      const nova = await db.query(
+        `insert into automation_rules
+           (organization_id, name, trigger_event, trigger_config, conditions, actions, is_active, created_by_user_id)
+         values ($1, $2, $3, $4::jsonb, '[]'::jsonb, $5::jsonb, true, $6)
+         returning id`,
+        [
+          ctx.orgId,
+          regra.name,
+          regra.trigger_event,
+          JSON.stringify(regra.trigger_config),
+          JSON.stringify(regra.actions),
+          ctx.userId,
+        ],
+      );
+      regraId = String(nova.rows[0].id);
+      criados.push("regra_de_proposta_parada");
+    }
+  } else if (regraId !== null) {
+    // A empresa deixou de usar proposta (ou a etapa sumiu): a regra para.
+    await db.query(
+      "update automation_rules set is_active=false, updated_at=now() where organization_id=$1 and id=$2 and is_active",
+      [ctx.orgId, regraId],
+    );
+    regraId = null;
+  }
+
+  return {
+    fluxo_de_falta_id: fluxoDeFalta,
+    fluxo_de_proposta_parada_id: fluxoDeProposta,
+    regra_de_proposta_parada_id: regraId,
+  };
+}
+
+/** Cria ou atualiza UM fluxo de follow-up da equipe e o publica quando mudou. */
+async function passoDoFluxo(
+  db: pg.PoolClient,
+  portas: PortasDoInstalador,
+  ctx: ContextoDeQuemChama,
+  criados: string[],
+  fluxo: { nome: string; idGuardado: string | null; grafo: FlowGraph; gatilho: TriggerConfig; marca: string },
+): Promise<string> {
+  const { grafo, gatilho } = fluxo;
   // Em ordem de chave: é contra o que o `jsonb` devolve que isto é comparado.
   const assinatura = hash(emOrdem({ grafo, gatilho }));
 
@@ -859,7 +997,7 @@ async function passoDaRegua(
       where organization_id=$1 and (id = $2::uuid or name = $3)
       order by (id = $2::uuid) desc
       limit 1`,
-    [ctx.orgId, instalacao.followup_flow_pointer_id, NOME_DA_REGUA],
+    [ctx.orgId, fluxo.idGuardado, fluxo.nome],
   );
   let pointerId: string;
   let precisaPublicar: boolean;
@@ -879,11 +1017,11 @@ async function passoDaRegua(
       `insert into followup_flow_pointers (organization_id, name, draft_graph, trigger_config, handoff_policy)
        values ($1, $2, $3::jsonb, $4::jsonb, 'pause')
        returning id`,
-      [ctx.orgId, NOME_DA_REGUA, JSON.stringify(grafo), JSON.stringify(gatilho)],
+      [ctx.orgId, fluxo.nome, JSON.stringify(grafo), JSON.stringify(gatilho)],
     );
     pointerId = String(novo.rows[0].id);
     precisaPublicar = true;
-    criados.push("regua_de_followup");
+    criados.push(fluxo.marca);
   }
   if (precisaPublicar) {
     await portas.publicarRegua({ orgId: ctx.orgId, pointerId, grafo, userId: ctx.userId });
@@ -1422,12 +1560,28 @@ export async function instalarEquipePronta(
     // A régua é publicada por função do banco, que precisa enxergar o ponteiro:
     // o ponteiro é gravado e confirmado antes da publicação.
     const reguaId = await passoDaRegua(db, portas, ctx, perfil, instalacao, criados);
+    // Os gatilhos: os dois fluxos que acordam a Recuperação sem o cliente
+    // escrever, e a regra de automação da proposta parada.
+    const gatilhos = await passoDosGatilhos(
+      db,
+      portas,
+      ctx,
+      perfil,
+      instalacao,
+      {
+        agenda: agenda !== null,
+        pipelineId: funil?.id ?? null,
+        etapaDePropostaEnviadaId: doFunil.etapas.proposta_enviada ?? null,
+      },
+      criados,
+    );
 
     const contexto: ContextoDaInstalacao = {
       agenda,
       funil,
       knowledgeSourceIds: fonteId ? [fonteId] : [],
       reguaDeFollowupId: reguaId,
+      fluxosDeGatilho: fluxosDeGatilhoDe(gatilhos),
     };
 
     // ── 6. ensaio, ANTES do roteador e da publicação ───────────────────────
@@ -1473,6 +1627,7 @@ export async function instalarEquipePronta(
       etapas_criadas: doFunil.criadas,
       tipos_de_agenda_desativados: desativados,
       agentes: agentesDaRodada,
+      gatilhos,
       roteador_confirmado:
         roteadorDepois !== null && temAlgoDeFora(roteadorDepois) ? assinaturaDoRoteador(roteadorDepois) : null,
       // A pausa é da tela, não da instalação: instalar de novo não a desfaz.

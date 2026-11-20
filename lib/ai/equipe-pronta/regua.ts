@@ -22,6 +22,7 @@ import type { TriggerConfig } from "@/lib/followup/api-schemas";
 import type { FlowEdge, FlowGraph, FlowNode } from "@/lib/followup/graph-schema";
 import { rotuloDaEspera } from "@/lib/followup/modelos/escada";
 import type { PerfilDoNegocio } from "@/lib/schemas/equipe-pronta";
+import { NO_DE_INICIO_DA_ESCADA } from "./constantes";
 
 /** `followup_flow_pointers` tem `unique (organization_id, name)`: é por ele que se reencontra. */
 export const NOME_DA_REGUA = "Equipe pronta · Recuperação de vendas";
@@ -78,6 +79,22 @@ export function gatilhoDaRegua(perfil: PerfilDoNegocio): TriggerConfig {
  * `lib/followup/modelos/escada.ts`, porque aparecem no dossiê da inscrição.
  */
 export function grafoDaRegua(perfil: PerfilDoNegocio): FlowGraph {
+  return escadaDeRetomada(perfil, {
+    primeiroToque: DICA_DO_PRIMEIRO_TOQUE,
+    toquesSeguintes: DICA_DOS_TOQUES_SEGUINTES,
+  });
+}
+
+/**
+ * A ESCADA — a mesma para a régua de silêncio e para os fluxos dos gatilhos
+ * (`gatilhos/fluxos.ts`): `toques_maximos` mensagens geradas, com
+ * `intervalo_dias` entre elas. Só as dicas ao modelo mudam de um fluxo para o
+ * outro; o limite de toques é o mesmo por construção.
+ */
+export function escadaDeRetomada(
+  perfil: PerfilDoNegocio,
+  dicas: { primeiroToque: string; toquesSeguintes: string },
+): FlowGraph {
   const { toques_maximos: toques, intervalo_dias: intervalo } = perfil.recuperacao;
   const esperaMs = intervalo * DIA_MS;
   const nodes: FlowNode[] = [];
@@ -85,7 +102,7 @@ export function grafoDaRegua(perfil: PerfilDoNegocio): FlowGraph {
   let coluna = 0;
   const x = () => COLUNA * coluna++;
 
-  const INICIO = "inicio";
+  const INICIO = NO_DE_INICIO_DA_ESCADA;
   const FIM_VOLTOU = "fim-voltou";
   const FIM_RESPONDEU = "fim-respondeu";
   const FIM_ESGOTOU = "fim-esgotou";
@@ -117,7 +134,7 @@ export function grafoDaRegua(perfil: PerfilDoNegocio): FlowGraph {
       position: { x: x(), y: 0 },
       config: {
         mode: "ai_message",
-        prompt_hint: n === 1 ? DICA_DO_PRIMEIRO_TOQUE : DICA_DOS_TOQUES_SEGUINTES,
+        prompt_hint: n === 1 ? dicas.primeiroToque : dicas.toquesSeguintes,
       },
     });
     if (anterior) edges.push(aresta(anterior, msg));

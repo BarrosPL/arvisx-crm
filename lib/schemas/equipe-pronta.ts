@@ -139,6 +139,15 @@ const recuperacaoSchema = z.object({
   toques_maximos: z.number().int().min(1).max(4).default(2),
   intervalo_dias: z.number().int().min(1).max(30).default(2),
   limite_lead_frio_dias: z.number().int().min(7).max(365).default(30),
+  /**
+   * Quantos dias o negócio fica na etapa de proposta enviada, sem andar, até a
+   * Recuperação retomar a proposta (gatilho `lead.stage_stale`). Tem padrão e
+   * só muda no banco: o questionário não o pergunta. O padrão fica DEPOIS do
+   * retorno que o próprio envio da proposta agenda (3 dias, nos padrões de
+   * proposta da organização): primeiro quem enviou pergunta, depois a
+   * Recuperação retoma.
+   */
+  dias_proposta_parada: z.number().int().min(1).max(60).default(5),
 });
 
 /** 10 — perguntas frequentes e políticas. Vira a fonte de conhecimento. */
@@ -312,6 +321,20 @@ export const instalacaoSchema = z.object({
     z.enum(["sdr", "agendamento", "proposta", "recuperador"]),
     agenteInstaladoSchema,
   ),
+  /**
+   * O que os GATILHOS da equipe criaram (`lib/ai/equipe-pronta/gatilhos/`): os
+   * dois fluxos de follow-up que acordam a Recuperação sem o cliente escrever
+   * (faltou ao compromisso, proposta parada) e a regra de automação que arma o
+   * segundo. Nulo = não foi criado (a empresa não agenda, ou não usa proposta,
+   * ou a instalação é anterior aos gatilhos).
+   */
+  gatilhos: z
+    .object({
+      fluxo_de_falta_id: z.string().uuid().nullable().default(null),
+      fluxo_de_proposta_parada_id: z.string().uuid().nullable().default(null),
+      regra_de_proposta_parada_id: z.string().uuid().nullable().default(null),
+    })
+    .prefault({}),
   /**
    * A assinatura do que havia de ALHEIO no roteador do canal quando a pessoa
    * confirmou instalar por cima (`forcar`). Enquanto o roteador seguir igual,

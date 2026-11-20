@@ -48,6 +48,7 @@ import { followupSaidaDaEtapaHandler } from "@/lib/followup/saida-da-etapa.handl
 import { avisoDeEtapaHandler } from "@/lib/leads/aviso-de-etapa.handler";
 import { avisoAoDonoDaCarteira } from "@/lib/carteira/aviso-ao-dono";
 import { comandaDoGanhoHandler } from "@/lib/financeiro/comanda-do-ganho.handler";
+import { seguimentoDoGanhoHandler } from "@/lib/ai/equipe-pronta/gatilhos/negocio-ganho.handler";
 import { webPushInboundHandler } from "@/lib/notifications/push.handler";
 import { avisoDePropostaNoWhatsAppHandler } from "@/lib/propostas/aviso-no-whatsapp.handler";
 import { aiHandoffFromSentimentHandler } from "@/workers/ai-handoff-from-sentiment.handler";
@@ -103,6 +104,9 @@ const PULA: EventHandler[] = [
   conversaoDeNascimentoMetaHandler,
   conversaoDeCliqueMetaHandler,
   pinoReintentoHandler,
+  // Equipe de IA pronta: a tarefa "dar seguimento" do negócio ganho. É escrita
+  // interna, mas a equipe não age com a empresa parada (mesma régua do plano).
+  seguimentoDoGanhoHandler,
 ];
 
 const PREFIXO_DE_TESTE = "teste-org-parada";
