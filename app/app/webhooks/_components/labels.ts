@@ -70,6 +70,16 @@ export const TRIGGER_LABELS: Record<TriggerEvent, string> = {
   // funil) ficam embaixo, na configuração da regra.
   "lead.silent_for": "Quando ficar N dias sem mensagem",
   "lead.stage_stale": "Quando um lead ficar N dias na mesma etapa",
+  // A superfície de agente: o que um sistema de fora escuta sobre o negócio.
+  // A frase diz o FATO, como as irmãs. Trocar o responsável e perder o negócio
+  // já tinham gatilho ("Quando o responsável do lead mudar", "Quando um negócio
+  // for perdido") e seguem com ele.
+  "lead.tag_removed": "Quando um lead perder uma tag",
+  "lead.field_changed": "Quando um campo do negócio for alterado",
+  "lead.note_added": "Quando alguém escrever uma nota no negócio",
+  "lead.task_created": "Quando uma tarefa for criada no negócio",
+  "lead.attachment_added": "Quando um documento for anexado ao negócio",
+  "task.completed": "Quando uma tarefa for concluída",
 };
 
 export const ACTION_LABELS: Record<ActionType, string> = {

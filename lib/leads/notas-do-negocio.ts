@@ -45,6 +45,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Actor } from "@/lib/api/handlers/types";
+import { EVENTO_NOTA_ADICIONADA, emitirEventoDaSuperficie } from "@/lib/automation/eventos-de-saida";
 import { buildLeadActivityRow } from "@/lib/leads/activity-emitter";
 import { decodeCursor, encodeCursor } from "@/lib/leads/timeline-query";
 
@@ -180,7 +181,47 @@ export async function registrarNotaDoNegocio(entrada: {
     .single();
   if (error || !data) return { ok: false, erro: error?.message ?? "a nota não foi gravada" };
 
-  return { ok: true, nota: paraNota(data as LinhaDaNota), repetida: false };
+  const nota = paraNota(data as LinhaDaNota);
+  // O evento para sistemas de fora. Leva o ID da nota, não o texto: quem
+  // entrega o texto inteiro é o webhook, lendo a linha na hora de enviar
+  // (`lib/automation/detalhe-do-evento.ts`). A nota repetida (mesma chave de
+  // idempotência) voltou acima e não emite de novo.
+  await emitirEventoDaSuperficie(supabase, {
+    tipo: EVENTO_NOTA_ADICIONADA,
+    organizationId,
+    entidadeId: lead.id,
+    payload: {
+      lead_id: lead.id,
+      note_id: nota.id,
+      ...(lead.contact_id ? { contact_id: lead.contact_id } : {}),
+      ...(destinatario ? { recipient: destinatario } : {}),
+    },
+    ator: { author_kind: autor.tipo, author_id: autor.id },
+  });
+
+  return { ok: true, nota, repetida: false };
+}
+
+/**
+ * UMA nota do negócio, pelo id. É o que a entrega do webhook de
+ * `lead.note_added` lê para levar o texto inteiro. `null` quando a nota não
+ * existe naquele negócio daquela organização.
+ */
+export async function lerNotaDoNegocio(
+  supabase: SupabaseClient,
+  organizationId: string,
+  leadId: string,
+  notaId: string,
+): Promise<NotaDoNegocio | null> {
+  const { data } = await supabase
+    .from("crm_lead_activities")
+    .select(COLUNAS)
+    .eq("organization_id", organizationId)
+    .eq("lead_id", leadId)
+    .eq("id", notaId)
+    .eq("type", "note")
+    .maybeSingle();
+  return data ? paraNota(data as LinhaDaNota) : null;
 }
 
 export interface FiltrosDasNotas {
