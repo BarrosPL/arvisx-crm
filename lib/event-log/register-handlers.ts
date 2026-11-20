@@ -33,6 +33,7 @@ import { conversaoDeVendaHandler } from "@/lib/conversoes/envio.handler";
 import { avisoDeEtapaHandler } from "@/lib/leads/aviso-de-etapa.handler";
 import { avisoAoDonoDaCarteira } from "@/lib/carteira/aviso-ao-dono";
 import { comandaDoGanhoHandler } from "@/lib/financeiro/comanda-do-ganho.handler";
+import { seguimentoDoGanhoHandler } from "@/lib/ai/equipe-pronta/gatilhos/negocio-ganho.handler";
 import { avisoDeCasoAoSuporteHandler } from "@/lib/escalacao/aviso-ao-suporte.handler";
 import { avisoDeHandoffHandler } from "@/lib/escalacao/aviso-de-handoff.handler";
 import { avisoDePropostaNoWhatsAppHandler } from "@/lib/propostas/aviso-no-whatsapp.handler";
@@ -89,6 +90,10 @@ export function ensureHandlersRegistered(): void {
   // do negócio ganho (#1477). Antes de todo consumidor que sai por rede de
   // terceiro, pelo mesmo critério dos vizinhos de cima.
   registerHandler(comandaDoGanhoHandler);
+  // Equipe de IA pronta: a tarefa "dar seguimento" do negócio ganho. Escrita
+  // curta no banco (uma tarefa), idempotente pelo tipo da tarefa no negócio; ao
+  // lado do outro consumidor de `lead.won` que só escreve.
+  registerHandler(seguimentoDoGanhoHandler);
   registerHandler(followupGatilhoPresencaHandler);
   registerHandler(mediaPersistHandler);
   registerHandler(mediaDeriveHandler);
