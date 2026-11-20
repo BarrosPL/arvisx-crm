@@ -76,6 +76,15 @@ const DIVIDA_LGPD_CONHECIDA: Record<string, string> = {
     "estão aqui, as duas também já cobertas por trigger. Sai no dia em que " +
     "`tabelasNaCascata()` passar a derivar do catálogo também os triggers de " +
     "`contacts`, ou no dia em que a função ganhar o passo.",
+  social_comments:
+    "Migration 9812 (comentários do Instagram). O texto do comentário e o nome de usuário de " +
+    "quem comentou são dado da pessoa (este instrumento a alcança por `ad_title`, o título do " +
+    "anúncio, que não é dela). ⚠️ ELA JÁ ESTÁ PROTEGIDA: o trigger " +
+    "`trg_redigir_comentarios_ao_anonimizar` troca o texto, apaga autor e motivo e redige as " +
+    "respostas na transição `is_anonymized false → true`, e " +
+    "`tests/invariants/social-comments-resposta.test.ts` prova o efeito pelo comportamento. A " +
+    "entrada existe pela mesma razão de crm_tasks: ESTE instrumento lê UMA função e não enxerga " +
+    "trigger. Sai no dia em que `tabelasNaCascata()` derivar também os triggers de `contacts`.",
   webhook_lead_captures:
     "captured_name, captured_email e captured_phone — o payload cru de captação. " +
     "A própria migration 0174 escreveu que 'o cascade de anonimização precisa alcançar esta tabela' " +

@@ -267,6 +267,11 @@ const DECISOES: Record<string, Decisao> = {
     caminho: "gatilho",
     razao: "9095: fn_mcp_contato_anonimizado_revoga_acessos APAGA os pedidos de autorização pendentes na virada — link de acesso de contato anonimizado não tem mais destinatário.",
   },
+  social_comments: {
+    decidida: "redigir",
+    caminho: "gatilho",
+    razao: "9812 (comentários do Instagram): text é o que a pessoa escreveu na publicação e author_username/author_id são quem ela é na rede. A LINHA fica (publicação, hora e estado são registro de operação), mas a virada de is_anonymized troca o texto por '(anonimizado)', apaga autor e motivo do ignorar e redige o texto das duas respostas, pelo gatilho fn_redigir_comentarios_ao_anonimizar — nos comentários ligados ao contato e nos outros do mesmo autor.",
+  },
   crm_tasks: {
     decidida: "redigir",
     caminho: "gatilho",

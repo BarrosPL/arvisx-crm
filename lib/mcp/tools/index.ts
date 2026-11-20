@@ -52,6 +52,14 @@ import {
   crmGetOrgMemory,
   crmSaveOrgMemory,
 } from "./evolucao";
+import {
+  crmCreateContactFromComment,
+  crmGetComment,
+  crmIgnoreComment,
+  crmListComments,
+  crmPrivateReplyComment,
+  crmReplyComment,
+} from "./comentarios";
 import { crmListContactOrders, crmSearchProducts } from "./comercio";
 import { crmGetHonorariosContrato, crmListHonorariosParcelas } from "./honorarios";
 import { crmDescribeExternalData, crmQueryExternalData } from "./dados-externos";
@@ -133,6 +141,9 @@ export const allTools: ReadonlyArray<McpToolDefinition> = [
   crmConsultarReceita,
   crmListPrivacyRequests,
   crmGetProspectingSiteAudit,
+  // read — comentários das publicações (migration 9812)
+  crmListComments,
+  crmGetComment,
   // read — organizar a operação (W4)
   crmListStages,
   crmListTags,
@@ -165,6 +176,12 @@ export const allTools: ReadonlyArray<McpToolDefinition> = [
   crmSendWhatsappMessage,
   crmStartConversationAndSend,
   crmCreateConversationDraft,
+  // write — comentários das publicações (migration 9812). As duas de resposta
+  // falam com a pessoa: críticas, marcadas uma a uma, nunca por pacote.
+  crmReplyComment,
+  crmPrivateReplyComment,
+  crmIgnoreComment,
+  crmCreateContactFromComment,
   crmAssignConversation,
   crmManageTags,
   // #3881 — a triagem da IA escolhe a FILA da conversa (módulo `setores`).

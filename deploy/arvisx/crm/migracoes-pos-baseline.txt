@@ -65,3 +65,4 @@
 20261111180000_9807_modo_fiscal_e_managed_payments.sql
 20261118120000_9808_equipe_pronta_perfis.sql
 20261120150000_9810_comentarios_do_instagram.sql
+20261120171200_9812_comentarios_resposta_e_contato.sql
