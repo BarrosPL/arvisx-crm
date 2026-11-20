@@ -28,6 +28,10 @@ type Predicado = (linha: Linha) => boolean;
 /** `payload @> filtro`, como o Postgres compara jsonb. */
 function contem(valor: unknown, filtro: unknown): boolean {
   if (filtro === null || typeof filtro !== "object") return valor === filtro;
+  // Array contém array quando cada elemento pedido aparece em algum lugar.
+  if (Array.isArray(filtro)) {
+    return Array.isArray(valor) && filtro.every((f) => valor.some((v) => contem(v, f)));
+  }
   if (valor === null || typeof valor !== "object") return false;
   return Object.entries(filtro as Linha).every(([k, v]) => contem((valor as Linha)[k], v));
 }
@@ -49,13 +53,48 @@ function dividirNoTopo(texto: string): string[] {
   return partes;
 }
 
+/**
+ * Os elementos de um literal de array do Postgres (`{"a","b c"}`), como o
+ * operando de `cs` chega: entre aspas, com `"` e `\` escapados por barra.
+ */
+function elementosDoArray(literal: string): string[] {
+  const miolo = literal.trim().replace(/^\{|\}$/g, "");
+  const elementos: string[] = [];
+  let atual = "";
+  let entreAspas = false;
+  for (let i = 0; i < miolo.length; i++) {
+    const ch = miolo[i]!;
+    if (ch === "\\" && i + 1 < miolo.length) {
+      atual += miolo[++i];
+    } else if (ch === '"') {
+      entreAspas = !entreAspas;
+    } else if (ch === "," && !entreAspas) {
+      elementos.push(atual);
+      atual = "";
+    } else atual += ch;
+  }
+  if (atual !== "" || miolo !== "") elementos.push(atual);
+  return elementos;
+}
+
+/** O valor de um operando do `or=` que veio entre aspas: tira as aspas e o escape. */
+function semAspasDoOr(bruto: string): string {
+  if (!(bruto.startsWith('"') && bruto.endsWith('"'))) return bruto;
+  return bruto.slice(1, -1).replace(/\\(.)/g, "$1");
+}
+
+/** `coluna @> literal`, para coluna `text[]`. */
+function contemOArray(valor: unknown, literal: string): boolean {
+  return Array.isArray(valor) && elementosDoArray(literal).every((e) => valor.includes(e));
+}
+
 /** Uma condição do `.or(...)`: `col.eq.x`, `col.gt.x`, `col.lt.x`, `col.in.(a,b)`, `and(...)`. */
 function condicao(texto: string): Predicado {
   if (texto.startsWith("and(") && texto.endsWith(")")) {
     const todas = dividirNoTopo(texto.slice(4, -1)).map(condicao);
     return (l) => todas.every((p) => p(l));
   }
-  const m = /^([a-z_]+)\.(eq|gt|lt|in|is)\.(.*)$/s.exec(texto);
+  const m = /^([a-z_]+)\.(eq|gt|lt|in|is|cs)\.(.*)$/s.exec(texto);
   if (!m) throw new Error(`banco em memória: condição não entendida em or(): ${texto}`);
   const [, coluna, op, bruto] = m as unknown as [string, string, string, string];
   switch (op) {
@@ -67,6 +106,8 @@ function condicao(texto: string): Predicado {
       return (l) => String(l[coluna]) < bruto;
     case "is":
       return (l) => (bruto === "null" ? l[coluna] === null || l[coluna] === undefined : false);
+    case "cs":
+      return (l) => contemOArray(l[coluna], semAspasDoOr(bruto));
     default: {
       const valores = bruto.replace(/^\(|\)$/g, "").split(",");
       return (l) => valores.includes(String(l[coluna]));
@@ -218,6 +259,23 @@ export function bancoEmMemoria(
       },
       contains: (coluna: string, filtro: unknown) => {
         predicados.push((l) => contem(l[coluna], filtro));
+        return cadeia;
+      },
+      // `.filter(col, "cs", '{"a"}')` e `.not(col, "cs" | "in", …)`: só os
+      // operadores que os handlers usam. Outro operador lança, para o teste não
+      // ficar verde porque um filtro foi ignorado.
+      filter: (coluna: string, op: string, valor: string) => {
+        if (op !== "cs") throw new Error(`banco em memória: filter(${op}) não previsto`);
+        predicados.push((l) => contemOArray(l[coluna], valor));
+        return cadeia;
+      },
+      not: (coluna: string, op: string, valor: string) => {
+        if (op === "cs") predicados.push((l) => !contemOArray(l[coluna], valor));
+        else if (op === "in") {
+          // Como no Postgres: `not (null in (...))` é nulo, e a linha não passa.
+          const fora = valor.replace(/^\(|\)$/g, "").split(",");
+          predicados.push((l) => l[coluna] != null && !fora.includes(String(l[coluna])));
+        } else throw new Error(`banco em memória: not(${op}) não previsto`);
         return cadeia;
       },
       or: (texto: string) => {

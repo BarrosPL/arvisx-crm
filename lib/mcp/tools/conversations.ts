@@ -6,6 +6,7 @@
  * - `crm_get_conversation_history` -> listMessagesHandler (carrega historico)
  */
 import { z } from "zod";
+import { autoresDoHistorico, canalDaConversa } from "@/lib/mcp/autoria-do-historico";
 import { projetarDerivadoNoHistorico } from "@/lib/mcp/media-derived-read";
 
 import {
@@ -330,6 +331,7 @@ export const crmGetConversationHistory: McpToolDefinition<typeof historyInputSha
   name: "crm_get_conversation_history",
   description:
     "Carrega historico de mensagens de uma conversa. Use para dar contexto ao agente sem inflar o system prompt." +
+    " Cada mensagem traz `author` (cliente, ia, equipe ou sistema, com nome) e `channel`." +
     " Em conversa de atendimento, devolve apenas o histórico da conversa do contato desta conversa.",
   inputSchema: historyInputShape,
   category: "read",
@@ -365,8 +367,11 @@ export const crmGetConversationHistory: McpToolDefinition<typeof historyInputSha
     // respostas — não existe, é de outra organização, é de outro cliente —
     // ficam byte a byte iguais. `ApiError` que não seja `404` sobe: infra não
     // é limite de negócio (mesma regra de `lib/mcp/tools/agendamento.ts`).
+    // O canal é da conversa, e vai repetido em cada mensagem para quem lê uma
+    // linha só. No turno ele já vem da conferência abaixo.
+    let canal: string | null | undefined;
     if (ctx.contatoDoTurno) {
-      let conv: { contact_id: string | null } | null = null;
+      let conv: { contact_id: string | null; channel?: string | null } | null = null;
       try {
         conv = await getConversationHandler(
           ctx.supabase,
@@ -390,6 +395,7 @@ export const crmGetConversationHistory: McpToolDefinition<typeof historyInputSha
             "conversa não é seu para ler; siga a conversa com quem está falando.",
         };
       }
+      canal = conv.channel ?? null;
     }
     let result: Awaited<ReturnType<typeof listMessagesHandler>>;
     try {
@@ -413,10 +419,18 @@ export const crmGetConversationHistory: McpToolDefinition<typeof historyInputSha
     const media = await resolverMidiasDoHistorico(result.messages, {
       comLink: !ctx.contatoDoTurno,
     });
+    // Quem escreveu cada uma (cliente, IA, equipe ou sistema), lido da própria
+    // linha como o balão da caixa de entrada lê. Ver `autoria-do-historico.ts`.
+    const autores = await autoresDoHistorico(ctx, result.messages);
+    if (canal === undefined) {
+      canal = result.messages.length > 0 ? await canalDaConversa(ctx, input.conversation_id) : null;
+    }
     return {
       messages: result.messages.map((m) => ({
         id: m.id,
         direction: m.direction,
+        author: autores.get(m.id) ?? null,
+        channel: canal,
         type: m.type,
         body: m.body,
         media_url: m.media_url,
