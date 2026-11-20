@@ -98,6 +98,24 @@ export const ALVO_DE_FUNIL: Record<string, AlvoDeFunil> = {
   // das ferramentas de agenda, logo abaixo, descreve.
   crm_enroll_followup_flow: "funil_vem_do_contato",
 
+  // ---- acompanhamento do negócio (superfície de agente, PR 1) ----
+  // Nota, anexo e próxima ação penduram coisa no CARD de um negócio, como
+  // `crm_propose_reactivation`: escrever no funil de outro time é ocupar a
+  // atenção de quem cuida dele. Recebem `lead_id` obrigatório, então o alvo
+  // resolve de verdade.
+  crm_add_lead_note: "funil_vem_do_lead",
+  crm_attach_to_lead: "funil_vem_do_lead",
+  crm_set_next_action: "funil_vem_do_lead",
+  // A tarefa pode nascer presa a um negócio (`lead_id` opcional, como o
+  // retorno): com ele, vale o funil; avulsa ou só do contato, não há funil.
+  crm_create_task: "funil_vem_do_lead",
+  // Concluir e editar operam por `task_id` e nunca recebem `lead_id`:
+  // classificá-las `funil_vem_do_lead` seria o teatro que o bloco da agenda,
+  // logo abaixo, descreve. Quem as limita no turno é o dono `tarefa` de
+  // `ESCOPO_DAS_ESCRITAS` (só a tarefa do cliente da conversa).
+  crm_complete_task: "sem_funil",
+  crm_update_task: "sem_funil",
+
   // ---- agenda: DECLARADAS `sem_funil`, e a declaração é o ponto ----
   //
   // As três operam por `contact_id` (marcar) ou `appointment_id` (remarcar e

@@ -1478,6 +1478,17 @@ export const AUDIT_ACTIONS = [
   // 9096), na organização NOVA, com o id do molde e as contagens no metadata;
   // quem lê é Painel › Empresas › [empresa] ("IA copiada do molde").
   "ai.molde_de_ia_aplicado",
+  // Superfície de agente (PR 1): a anotação que um agente — externo, por token
+  // de API, ou nativo — deixa na linha do tempo do negócio
+  // (`crm_add_lead_note`). metadata leva o tamanho do texto e se há
+  // destinatário, nunca o texto: a nota fala do cliente e mora em
+  // `crm_lead_activities`. `resource_id` = o negócio.
+  "lead.note_added",
+  // A próxima ação que um agente PROPÔS para o negócio por MCP
+  // (`crm_set_next_action`). A decisão humana sobre ela já tem linha na
+  // timeline (`next_action_approved`/`next_action_dismissed`); faltava quem
+  // propôs. metadata leva a identidade da proposta (`seq`), nunca o texto.
+  "lead.next_action_proposed",
 ] as const;
 
 /** Um código de auditoria. Derivado de `AUDIT_ACTIONS` — não redigite a lista. */
