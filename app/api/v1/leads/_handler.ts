@@ -13,7 +13,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { ApiError } from "@/lib/api/types";
 import type { Actor, HandlerCtx } from "@/lib/api/handlers/types";
 import { audit } from "@/lib/audit";
+import { normalizarTag } from "@/lib/contacts/tag-normalizada";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { arrayDeUmValorParaOr } from "@/lib/inbox/marcador-da-conversa";
 import { resolveOwnerPatch, type OwnerPatch, type OwnerPatchInput } from "@/lib/leads/owner-patch";
 import { emitLeadActivity, stageChangeReason } from "@/lib/leads/activity-emitter";
 import { listaLegivel } from "@/lib/leads/activity-vocabulary";
@@ -351,6 +353,24 @@ export interface ListLeadsQuery {
   lost_reason_category?: string;
   /** Só os negócios deste contato — o escopo do turno do agente, no WHERE, antes do limite. */
   contact_id?: string;
+  /** ISO-8601: criados a partir deste instante (`created_at >=`). */
+  created_since?: string;
+  /**
+   * ISO-8601: entraram na etapa ATUAL a partir deste instante
+   * (`stage_changed_at >=`, carimbado por trigger). O negócio recém-criado
+   * conta: ele entrou na primeira etapa ao nascer.
+   */
+  moved_since?: string;
+  /**
+   * ISO-8601: sem movimento desde este instante — a última atividade
+   * (`last_activity_at`) é anterior a ele, ou o negócio nunca teve atividade e
+   * foi criado antes dele.
+   */
+  last_activity_before?: string;
+  /** Só os que TÊM esta tag: grafia exata ou a forma em minúsculas. */
+  tag?: string;
+  /** Só os que NÃO têm esta tag, em nenhuma das duas grafias. */
+  sem_tag?: string;
   limit?: number;
   cursor?: string | null;
 }
@@ -359,6 +379,27 @@ export interface ListLeadsResult {
   leads: Array<Record<string, unknown>>;
   cursor: string | null;
   has_more: boolean;
+}
+
+/** O instante em UTC com `Z`. Quem chama já conferiu o formato. */
+function instanteUtc(iso: string): string {
+  const t = new Date(iso);
+  return Number.isNaN(t.getTime()) ? iso : t.toISOString();
+}
+
+/**
+ * `{"tag"}` — o literal de array do Postgres para `cs` (contém). A tag vai
+ * entre aspas, com `"` e `\` escapados: marcador é texto livre e aceita
+ * vírgula e chave, que sem as aspas virariam separador de elemento.
+ */
+function arrayDeUmaTag(tag: string): string {
+  return `{"${tag.replace(/[\\"]/g, (c) => `\\${c}`)}"}`;
+}
+
+/** A tag como foi pedida e, se diferente, na forma normalizada (minúsculas, 40 caracteres). */
+function formasDaTag(tag: string): string[] {
+  const pedida = tag.trim();
+  return [...new Set([pedida, normalizarTag(pedida)])].filter((t) => t !== "");
 }
 
 interface LeadCursor {
@@ -405,6 +446,32 @@ export async function listLeadsHandler(
   if (q.status) query = query.eq("status", q.status);
   if (q.owner_user_id) query = query.eq("owner_user_id", q.owner_user_id);
   if (q.contact_id) query = query.eq("contact_id", q.contact_id);
+  // Filtros de tempo e de tag (AJ-2). Todos entram NO WHERE, antes do limite:
+  // cursor e `has_more` descrevem o conjunto filtrado. Os instantes vão numa
+  // forma só (UTC com `Z`).
+  if (q.created_since) query = query.gte("created_at", instanteUtc(q.created_since));
+  if (q.moved_since) query = query.gte("stage_changed_at", instanteUtc(q.moved_since));
+  if (q.last_activity_before) {
+    const antes = instanteUtc(q.last_activity_before);
+    // Negócio que NUNCA teve atividade também está sem movimento: sem o segundo
+    // lado, o `<` descartaria o nulo e a lista de "parados" perderia justamente
+    // os que ninguém tocou.
+    query = query.or(
+      `last_activity_at.lt.${antes},and(last_activity_at.is.null,created_at.lt.${antes})`,
+    );
+  }
+  // A tag do negócio é gravada como veio pela tela e em minúsculas pelo
+  // `crm_manage_tags`: o filtro casa as duas grafias (`formasDaTag`).
+  if (q.tag) {
+    const formas = formasDaTag(q.tag);
+    query =
+      formas.length === 1
+        ? query.filter("tags", "cs", arrayDeUmaTag(formas[0]!))
+        : query.or(formas.map((f) => `tags.cs.${arrayDeUmValorParaOr(f)}`).join(","));
+  }
+  if (q.sem_tag) {
+    for (const forma of formasDaTag(q.sem_tag)) query = query.not("tags", "cs", arrayDeUmaTag(forma));
+  }
   // Negócio de pessoal não é listado (spec 21, etapa 12 — leitura exclui):
   // a MESMA primitiva de ids da lista do inbox (`conversations/_handler.ts`),
   // antes do limite, para cursor e `has_more` descreverem o conjunto visível.
