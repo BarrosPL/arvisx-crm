@@ -7391,6 +7391,8 @@ export type Database = {
       crm_proposals: {
         Row: {
           ano: number | null;
+          aprovada_em: string | null;
+          aprovada_na_revisao: number | null;
           briefing_json: Json | null;
           condicoes: string | null;
           contact_id: string | null;
@@ -7435,6 +7437,8 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           ano?: number | null;
+          aprovada_em?: string | null;
+          aprovada_na_revisao?: number | null;
           briefing_json?: Json | null;
           condicoes?: string | null;
           contact_id?: string | null;
@@ -7478,6 +7482,8 @@ export type Database = {
         };
         Update: {
           ano?: number | null;
+          aprovada_em?: string | null;
+          aprovada_na_revisao?: number | null;
           briefing_json?: Json | null;
           condicoes?: string | null;
           contact_id?: string | null;

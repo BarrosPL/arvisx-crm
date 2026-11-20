@@ -103,6 +103,50 @@ describe("rascunho: agent edita, só o servidor envia, só manager descarta", ()
   });
 });
 
+/**
+ * A APROVAÇÃO PARA O AGENTE ENVIAR (migration 9814).
+ *
+ * `aprovada_em` e `aprovada_na_revisao` são o que a ferramenta `crm_send_proposal`
+ * lê no modo `apos_aprovacao`. Enviar pela tela exige `manager`; se a sessão de
+ * um atendente pudesse gravar as duas colunas pelo PostgREST, ele aprovaria o
+ * próprio rascunho e o agente de IA enviaria por ele.
+ */
+describe("aprovação da proposta: só o servidor grava (9814)", () => {
+  it("as duas colunas existem, nascem nulas e andam juntas", () => {
+    expect(
+      sql(`select count(*) from information_schema.columns
+            where table_schema='public' and table_name='crm_proposals'
+              and column_name in ('aprovada_em','aprovada_na_revisao') and is_nullable='YES';`),
+    ).toBe("2");
+    expect(sql(`select aprovada_em is null and aprovada_na_revisao is null from public.crm_proposals where id = '${RASCUNHO}';`)).toBe("t");
+    // Meia aprovação não entra, nem pelo servidor.
+    expect(() => sql(`update public.crm_proposals set aprovada_em = now() where id = '${RASCUNHO}';`)).toThrow();
+  });
+
+  it("⭐ nenhuma sessão aprova: nem agent, nem manager, nem ao criar", () => {
+    const aprovar = `update public.crm_proposals set aprovada_em = now(), aprovada_na_revisao = revision where id = '${RASCUNHO}'`;
+    expect(como(GOV_AGENT_A, aprovar)).toBe("negado");
+    expect(como(GOV_MANAGER, aprovar)).toBe("negado");
+    expect(
+      como(
+        GOV_AGENT_A,
+        `insert into public.crm_proposals (organization_id, titulo, aprovada_em, aprovada_na_revisao) values ('${GOV_ORG}', 'x', now(), 1)`,
+      ),
+    ).toBe("negado");
+    expect(sql(`select aprovada_em is null from public.crm_proposals where id = '${RASCUNHO}';`)).toBe("t");
+  });
+
+  it("o servidor aprova, e a sessão não desfaz nem troca a aprovação ao editar o rascunho", () => {
+    sql(`update public.crm_proposals set aprovada_em = now(), aprovada_na_revisao = revision where id = '${RASCUNHO}';`);
+    expect(como(GOV_AGENT_A, `update public.crm_proposals set aprovada_na_revisao = 99 where id = '${RASCUNHO}'`)).toBe("negado");
+    expect(como(GOV_AGENT_A, `update public.crm_proposals set aprovada_em = null, aprovada_na_revisao = null where id = '${RASCUNHO}'`)).toBe("negado");
+    // Editar o conteúdo continua permitido: quem invalida a aprovação é a revisão que sobe.
+    expect(como(GOV_AGENT_A, `update public.crm_proposals set titulo = 'editado de novo', revision = revision + 1 where id = '${RASCUNHO}'`)).toBe(1);
+    expect(sql(`select aprovada_na_revisao = revision from public.crm_proposals where id = '${RASCUNHO}';`)).toBe("f");
+    sql(`update public.crm_proposals set aprovada_em = null, aprovada_na_revisao = null where id = '${RASCUNHO}';`);
+  });
+});
+
 describe("criar: só rascunho, sem nada do envio", () => {
   it("⭐ agent não cria proposta já enviada nem com arquivo apontado", () => {
     expect(

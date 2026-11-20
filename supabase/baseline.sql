@@ -69684,6 +69684,87 @@ grant all on public.equipe_pronta_perfis to service_role;
 
 notify pgrst, 'reload schema';
 
+-- ---- aprovação da proposta para o agente enviar (migration 9814) ----
+-- Espelho idempotente da 9814 (o porquê está no cabeçalho da migration): duas
+-- colunas opcionais em `crm_proposals` — `aprovada_em` e `aprovada_na_revisao`,
+-- sempre juntas. Nascem nulas e o CHECK aceita o par nulo: nenhuma linha
+-- existente muda e não há o que corrigir antes de criar a constraint. A função
+-- do gatilho de transição (0464) é recriada com as duas colunas na lista do que
+-- só o servidor grava; por criar função, este bloco fica ANTES da VARREDURA anon.
+alter table public.crm_proposals
+  add column if not exists aprovada_em timestamptz;
+
+alter table public.crm_proposals
+  add column if not exists aprovada_na_revisao bigint;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+     where conname = 'crm_proposals_aprovacao_inteira'
+       and conrelid = 'public.crm_proposals'::regclass
+  ) then
+    alter table public.crm_proposals
+      add constraint crm_proposals_aprovacao_inteira
+      check ((aprovada_em is null) = (aprovada_na_revisao is null));
+  end if;
+end
+$$;
+
+comment on column public.crm_proposals.aprovada_em is
+  'Quando a equipe aprovou este rascunho para o agente enviar. Nulo = não aprovada. Só o servidor grava. Migration 9814.';
+comment on column public.crm_proposals.aprovada_na_revisao is
+  'A revisão (coluna revision) que a equipe aprovou. A aprovação só vale enquanto for igual à revisão atual: editar o rascunho a invalida. Migration 9814.';
+
+-- A sessão não aprova: a aprovação entra na lista do que só o servidor escreve.
+-- Corpo igual ao da 0464, com as duas colunas acrescentadas a `v_envio`.
+create or replace function public.fn_crm_proposals_transicao_da_sessao()
+returns trigger language plpgsql set search_path = public, pg_temp as $$
+declare
+  -- o que só o ENVIO escreve (numeração, arquivo, mensagem, retorno) e a
+  -- aprovação da equipe (9814), que só o servidor grava
+  v_envio constant text[] := array['numero', 'ano', 'versao', 'substitui_id', 'sent_at',
+    'sent_by_user_id', 'pdf_path', 'message_id', 'retorno_id', 'template_snapshot', 'rendered_snapshot',
+    'aprovada_em', 'aprovada_na_revisao'];
+  -- o que decidir e descartar mudam
+  v_decisao constant text[] := array['status', 'decided_at', 'decided_by_user_id',
+    'decision_reason', 'updated_at'];
+  v_new jsonb := to_jsonb(new);
+  v_old jsonb;
+begin
+  if current_user not in ('authenticated', 'anon') then
+    return new;
+  end if;
+  if tg_op = 'INSERT' then
+    if exists (select 1 from unnest(v_envio) k where k <> 'versao' and v_new -> k <> 'null'::jsonb)
+       or coalesce(v_new ->> 'versao', '1') <> '1' then
+      raise exception 'proposta_envio_e_do_servidor' using errcode = '42501';
+    end if;
+    return new;
+  end if;
+  v_old := to_jsonb(old);
+  if old.status = 'rascunho' and new.status = 'rascunho' then
+    -- editar o rascunho: o conteúdo muda, o que é do envio não
+    if exists (select 1 from unnest(v_envio) k where v_new -> k is distinct from v_old -> k) then
+      raise exception 'proposta_envio_e_do_servidor' using errcode = '42501';
+    end if;
+  elsif (old.status = 'enviada' and new.status in ('aceita', 'recusada'))
+     or (old.status = 'rascunho' and new.status = 'cancelada'
+         and public.fn_role_at_least(new.organization_id, 'manager')) then
+    -- decidir (agent) ou descartar (manager): só a decisão muda
+    if (v_new - v_decisao) is distinct from (v_old - v_decisao) then
+      raise exception 'proposta_transicao_negada' using errcode = '42501';
+    end if;
+  else
+    raise exception 'proposta_transicao_negada' using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+revoke execute on function public.fn_crm_proposals_transicao_da_sessao() from public, anon;
+
+notify pgrst, 'reload schema';
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria

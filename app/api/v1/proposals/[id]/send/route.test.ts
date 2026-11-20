@@ -971,7 +971,11 @@ describe("P1 — o documento chega ao cliente", () => {
   // recorrer a ele, porque o arquivo que ele produz não tem as seções do
   // modelo, e a proposta nem podia chegar lá (é recusada antes).
   it("o envio não importa mais o gerador legado de PDF", () => {
-    const fonte = readFileSync("app/api/v1/proposals/[id]/send/route.ts", "utf8");
+    // A regra do envio saiu da rota para `lib/propostas/enviar-proposta.ts`
+    // (a ferramenta dos agentes usa a mesma): as duas fontes são lidas.
+    const fonte =
+      readFileSync("app/api/v1/proposals/[id]/send/route.ts", "utf8") +
+      readFileSync("lib/propostas/enviar-proposta.ts", "utf8");
     expect(fonte).not.toMatch(/propostas\/pdf"/);
     expect(fonte).not.toMatch(/renderPropostaPdf\(/);
   });
@@ -979,8 +983,10 @@ describe("P1 — o documento chega ao cliente", () => {
   // C2: a prévia e o envio montam o PDF pela MESMA função. Duas cópias
   // divergem, e a divergência é invisível na tela.
   it("o PDF do envio sai da função compartilhada com a prévia", () => {
-    const fonte = readFileSync("app/api/v1/proposals/[id]/send/route.ts", "utf8");
+    const fonte = readFileSync("lib/propostas/enviar-proposta.ts", "utf8");
     expect(fonte).toMatch(/montarPdfDaProposta/);
+    // E a rota não monta PDF nenhum por conta própria: chama a função do envio.
+    expect(readFileSync("app/api/v1/proposals/[id]/send/route.ts", "utf8")).toMatch(/enviarProposta\(/);
   });
 
   it("sem modelo confirmado: o PDF legado não é gerado — o cliente nunca recebe o arquivo sem as seções do modelo (C1)", async () => {

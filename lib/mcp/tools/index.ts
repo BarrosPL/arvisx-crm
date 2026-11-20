@@ -97,6 +97,8 @@ import {
 } from "./retencao";
 import { crmDraftProposal, crmPrepararProposta } from "./propostas";
 import { crmGetProposal } from "./consulta-de-proposta";
+import { crmSendProposal } from "./envio-de-proposta";
+import { crmUpdateContact } from "./atualizar-contato";
 import { crmCompleteTask, crmCreateTask, crmListTasks, crmUpdateTask } from "./tarefas";
 import { crmAddLeadNote, crmListLeadNotes } from "./notas-do-negocio";
 import { crmAttachToLead, crmListLeadAttachments } from "./anexos-do-negocio";
@@ -115,6 +117,8 @@ export const allTools: ReadonlyArray<McpToolDefinition> = [
   crmSearchContacts,
   crmGetContact,
   crmProposeContactField,
+  // write — grava direto no cadastro (Equipe pronta v2)
+  crmUpdateContact,
   crmListConversations,
   crmGetConversation,
   crmGetConversationHistory,
@@ -196,6 +200,8 @@ export const allTools: ReadonlyArray<McpToolDefinition> = [
   crmCloseHumanCase,
   crmResumeAiAttendance,
   crmDraftProposal,
+  // write — envia a proposta ao cliente (Equipe pronta v2); fala com o cliente
+  crmSendProposal,
   // write — acompanhamento do negócio (superfície de agente, PR 1)
   crmCreateTask,
   crmCompleteTask,

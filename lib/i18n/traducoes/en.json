@@ -9767,5 +9767,18 @@
   "Quando alguém escrever uma nota no negócio": "When someone writes a note on the deal",
   "Quando uma tarefa for criada no negócio": "When a task is created on the deal",
   "Quando um documento for anexado ao negócio": "When a document is attached to the deal",
-  "Quando uma tarefa for concluída": "When a task is completed"
+  "Quando uma tarefa for concluída": "When a task is completed",
+  "Gravar dado no cadastro do contato": "Save data to the contact record",
+  "Grava direto no cadastro o que a pessoa informou na conversa: nome, e-mail, outro telefone, documento, endereço, data de nascimento e campos personalizados. O valor anterior fica registrado, e o documento nunca é mostrado.": "Saves straight to the contact record what the person said in the conversation: name, email, another phone, ID document, address, date of birth and custom fields. The previous value is kept on record, and the document is never shown.",
+  "Enviar proposta ao cliente": "Send proposal to the customer",
+  "Envia ao cliente, na conversa, a proposta que estava em rascunho. Só sai a proposta que a sua equipe aprovou ou, se a empresa permitir, a que tem só itens do catálogo, com o preço do catálogo e sem desconto.": "Sends the customer, in the conversation, the proposal that was a draft. Only a proposal your team approved goes out or, if the company allows it, one with catalog items only, at catalog price and with no discount.",
+  "Passagem entre colegas": "Handoff between colleagues",
+  "Os agentes deste roteador passam a vez um para o outro": "The agents of this router hand the conversation over to each other",
+  "Quando o assunto muda, o agente passa a conversa para o colega certo, com o motivo e um resumo. O cliente não é avisado da troca.": "When the subject changes, the agent hands the conversation to the right colleague, with the reason and a summary. The customer is not told about the switch.",
+  "Proposta não encontrada.": "Proposal not found.",
+  "Esta proposta não pode ser enviada neste estado.": "This proposal cannot be sent in its current status.",
+  "A proposta não tem itens.": "The proposal has no items.",
+  "Nenhuma conversa com este contato para enviar.": "There is no conversation with this contact to send to.",
+  "Fora do horário de envio configurado. Tente novamente mais tarde.": "Outside the configured sending hours. Try again later.",
+  "Limite diário de mensagens desta conexão foi atingido.": "This connection's daily message limit has been reached."
 }

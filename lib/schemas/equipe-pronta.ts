@@ -77,10 +77,25 @@ const qualificacaoSchema = z.object({
   perguntas: listaCurta(5, 200).default([]),
 });
 
+/**
+ * COMO A PROPOSTA SAI PARA O CLIENTE (decisão do dono, Equipe pronta v2).
+ *
+ *   • `apos_aprovacao` — o padrão: a equipe aprova o rascunho e o agente envia;
+ *   • `direto`         — o agente envia sozinho quando TODOS os itens são do
+ *                        catálogo, com o preço do catálogo e sem desconto.
+ *                        Qualquer desconto ou condição fora disso volta a pedir
+ *                        aprovação.
+ *
+ * Quem lê é a ferramenta `crm_send_proposal` (`lib/propostas/envio-pelo-agente.ts`).
+ */
+export const MODOS_DE_ENVIO_DE_PROPOSTA = ["apos_aprovacao", "direto"] as const;
+export type ModoDeEnvioDeProposta = (typeof MODOS_DE_ENVIO_DE_PROPOSTA)[number];
+
 /** 6 — proposta. O modelo é o genérico "Proposta comercial" do catálogo base. */
 const propostaSchema = z.object({
   usa: z.boolean().default(true),
   validade_dias: z.number().int().min(1).max(180).default(7),
+  envio_de_proposta: z.enum(MODOS_DE_ENVIO_DE_PROPOSTA).default("apos_aprovacao"),
 });
 
 /** 7 — regras comerciais. */

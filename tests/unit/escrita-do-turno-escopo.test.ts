@@ -45,6 +45,9 @@ const TAREFA_SO_DO_NEGOCIO_DO_TURNO = "eeeeeeee-3333-4333-8333-333333333333";
 const TAREFA_SO_DO_NEGOCIO_DE_B = "eeeeeeee-4444-4444-8444-444444444444";
 const MENSAGEM_DO_TURNO = "ffffffff-1111-4111-8111-111111111111";
 const MENSAGEM_DE_B = "ffffffff-2222-4222-8222-222222222222";
+// Equipe pronta v2: a proposta que `crm_send_proposal` envia ao cliente.
+const PROPOSTA_DO_TURNO = "abababab-1111-4111-8111-111111111111";
+const PROPOSTA_DE_B = "abababab-2222-4222-8222-222222222222";
 
 type Linha = Record<string, unknown>;
 
@@ -74,6 +77,10 @@ const TABELAS: Record<string, Linha[]> = {
   messages: [
     { id: MENSAGEM_DE_B, organization_id: ORG, contact_id: DE_B },
     { id: MENSAGEM_DO_TURNO, organization_id: ORG, contact_id: DO_TURNO },
+  ],
+  crm_proposals: [
+    { id: PROPOSTA_DE_B, organization_id: ORG, contact_id: DE_B },
+    { id: PROPOSTA_DO_TURNO, organization_id: ORG, contact_id: DO_TURNO },
   ],
   crm_leads: [
     { id: NEGOCIO_DE_B, organization_id: ORG, contact_id: DE_B, pipeline_id: FUNIL, status: "open", last_activity_at: "2020-01-01T00:00:00Z", created_at: "2020-01-01T00:00:00Z" },
@@ -134,7 +141,7 @@ afterEach(() => vi.restoreAllMocks());
 
 /** Ferramenta → como montar os args com um alvo, e os alvos do turno e de B. */
 const CASOS: Array<{ nome: string; args: (alvo: string) => Linha; doTurno: string; deB: string }> = [
-  ...["crm_book_appointment", "crm_find_and_book_appointment", "crm_propose_contact_field", "crm_schedule_followup", "crm_create_task"].map(
+  ...["crm_book_appointment", "crm_find_and_book_appointment", "crm_propose_contact_field", "crm_update_contact", "crm_schedule_followup", "crm_create_task"].map(
     (nome) => ({ nome, args: (a: string) => ({ contact_id: a }), doTurno: DO_TURNO, deB: DE_B }),
   ),
   { nome: "crm_enroll_followup_flow", args: (a) => ({ contact_id: a, flow_id: FUNIL }), doTurno: DO_TURNO, deB: DE_B },
@@ -173,6 +180,8 @@ const CASOS: Array<{ nome: string; args: (alvo: string) => Linha; doTurno: strin
     deB: TAREFA_SO_DO_NEGOCIO_DE_B,
   })),
   { nome: "crm_attach_to_lead", args: (a) => ({ lead_id: NEGOCIO_DO_TURNO, message_id: a }), doTurno: MENSAGEM_DO_TURNO, deB: MENSAGEM_DE_B },
+  // Fala com o cliente: a proposta enviada tem de ser a do cliente da conversa.
+  { nome: "crm_send_proposal", args: (a) => ({ proposal_id: a }), doTurno: PROPOSTA_DO_TURNO, deB: PROPOSTA_DE_B },
   { nome: "crm_manage_tags", args: (a) => ({ target_kind: "contact", target_id: a }), doTurno: DO_TURNO, deB: DE_B },
   { nome: "crm_manage_tags", args: (a) => ({ target_kind: "conversation", target_id: a }), doTurno: CONVERSA_DO_TURNO, deB: CONVERSA_DE_B },
   { nome: "crm_manage_tags", args: (a) => ({ target_kind: "lead", target_id: a }), doTurno: NEGOCIO_DO_TURNO, deB: NEGOCIO_DE_B },

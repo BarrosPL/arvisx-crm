@@ -88,12 +88,16 @@ describe("a ponte do turno respeita `apenasHumano`", () => {
     });
     // Controle positivo: se o filtro derrubasse tudo, o teste acima passaria
     // vacuamente e o agente ficaria sem ferramenta nenhuma. A folga conta as
-    // exclusões deliberadas que este teste monta: o handoff (toggle desligado
-    // aqui), o rascunho e o preparo da proposta (fora pela chave da versão e
-    // pela capacidade, as duas desligadas aqui), e as de módulo opcional, que
-    // nenhum módulo ligado aqui oferece.
+    // exclusões deliberadas que este teste monta, uma a uma:
+    //   1. o handoff (toggle desligado aqui);
+    //   2 e 3. o rascunho e o preparo da proposta (fora pela chave da versão e
+    //      pela capacidade `propostas`, as duas desligadas aqui);
+    //   4 e 5. a consulta e o envio de proposta (`crm_get_proposal` e
+    //      `crm_send_proposal`, fora pela mesma capacidade);
+    // e as de módulo opcional, que nenhum módulo ligado aqui oferece. São cinco
+    // de fora: sobram `total - 5`, que é maior que `total - 6`.
     expect(Object.keys(montadas).length).toBeGreaterThan(
-      allTools.length - apenasHumano.length - semModulo - 4,
+      allTools.length - apenasHumano.length - semModulo - 6,
     );
     expect(montadas).toHaveProperty("crm_search_contacts");
   });
