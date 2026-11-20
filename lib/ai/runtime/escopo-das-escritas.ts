@@ -46,6 +46,10 @@ export type DonoDoCampo =
   | "alvo_de_tag"
   /** `lead_id`: quem guarda é `negocioDaEscritaDoTurno`, em `tools.ts`. */
   | "negocio"
+  /** `crm_tasks`: a tarefa é do contato (`contact_id`) ou de um negócio dele (`lead_id`). */
+  | "tarefa"
+  /** `messages.contact_id`: a mensagem que trouxe o arquivo é da conversa deste contato. */
+  | "mensagem"
   /** Não é registro de cliente: funil, etapa, usuário, fluxo. */
   | "configuracao";
 
@@ -113,6 +117,18 @@ export const ESCOPO_DAS_ESCRITAS: Readonly<Record<string, Readonly<Record<string
   crm_schedule_followup: { lead_id: "negocio", contact_id: "contato" },
   crm_cancel_followup: { followup_id: "retorno" },
   crm_enroll_followup_flow: { contact_id: "contato", flow_id: "configuracao" },
+
+  // ---- acompanhamento do negócio (superfície de agente, PR 1) ----
+  // Tarefa, nota, anexo e próxima ação: tudo o que o agente escreve em volta de
+  // um negócio durante uma conversa é do cliente DESSA conversa. `assigned_to`
+  // (o responsável) não tem sufixo de id e é configuração da equipe — quem o
+  // confere é `conferirResponsavel`, no serviço de tarefas.
+  crm_create_task: { lead_id: "negocio", contact_id: "contato" },
+  crm_complete_task: { task_id: "tarefa" },
+  crm_update_task: { task_id: "tarefa" },
+  crm_add_lead_note: { lead_id: "negocio" },
+  crm_attach_to_lead: { lead_id: "negocio", message_id: "mensagem" },
+  crm_set_next_action: { lead_id: "negocio" },
 
   // ---- sem registro de cliente ----
   crm_save_org_memory: {},
@@ -193,6 +209,32 @@ async function campoEhDoContato(
         .maybeSingle();
       if (caso.error) throw new Error(caso.error.message);
       return caso.data !== null;
+    }
+    case "mensagem":
+      return existeDoContato(supabase, "messages", organizationId, contato, id);
+    case "tarefa": {
+      // Duas consultas sempre, exista a tarefa ou não: a da tarefa e a do
+      // negócio dela — a resposta não distingue "não existe" de "é de outro
+      // cliente" nem pelo número de consultas.
+      const tarefa = await supabase
+        .from("crm_tasks")
+        .select("id, contact_id, lead_id")
+        .eq("organization_id", organizationId)
+        .eq("id", id)
+        .maybeSingle();
+      if (tarefa.error) throw new Error(tarefa.error.message);
+      const linha = tarefa.data as { contact_id: string | null; lead_id: string | null } | null;
+      // Sem negócio (ou sem tarefa), a segunda consulta mira o próprio id da
+      // tarefa: não casa com negócio nenhum, e mantém a contagem.
+      const doNegocio = await existeDoContato(
+        supabase,
+        "crm_leads",
+        organizationId,
+        contato,
+        linha?.lead_id ?? id,
+      );
+      if (!linha) return false;
+      return linha.contact_id?.toLowerCase() === contato.toLowerCase() || doNegocio;
     }
     case "alvo_de_tag":
       switch (args.target_kind) {

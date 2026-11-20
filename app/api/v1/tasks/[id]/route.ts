@@ -14,7 +14,6 @@ import { requireSupportWrite } from "@/lib/impersonate/support";
  */
 import { randomUUID } from "node:crypto";
 import { type NextRequest } from "next/server";
-import { z } from "zod";
 
 import { ok, fail } from "@/lib/api/wrappers";
 import { audit } from "@/lib/audit";
@@ -22,32 +21,12 @@ import { requireRole } from "@/lib/auth/require-role";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { portaDaAplicacao } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
-import { registraAtividadeDaTarefa } from "@/lib/tarefas/atividade";
-import { conferirDemanda } from "@/lib/tarefas/demanda";
-import { conferirResponsavel } from "@/lib/tarefas/responsavel";
-import { PRIORIDADES_DA_TAREFA, SITUACOES_DA_TAREFA, type Tarefa } from "@/lib/tarefas/tipos";
+import { edicaoDaTarefaSchema, editarTarefa } from "@/lib/tarefas/servico";
 
 export const dynamic = "force-dynamic";
 
-const COLUNAS =
-  "id, organization_id, title, description, due_date, priority, status, lead_id, contact_id, demanda_id, assigned_to, created_by, created_at, updated_at, lead:crm_leads(id, title)";
-
-const edicaoSchema = z
-  .object({
-    title: z.string().trim().min(1).max(255).optional(),
-    description: z.string().max(5000).nullable().optional(),
-    due_date: z.string().datetime({ offset: true }).nullable().optional(),
-    priority: z.enum(PRIORIDADES_DA_TAREFA).optional(),
-    status: z.enum(SITUACOES_DA_TAREFA).optional(),
-    lead_id: z.string().uuid().nullable().optional(),
-    contact_id: z.string().uuid().nullable().optional(),
-    /** Vincular (`<uuid>`) e desvincular (`null`) a demanda do atendimento (#2818). */
-    demanda_id: z.string().uuid().nullable().optional(),
-    assigned_to: z.string().uuid().nullable().optional(),
-  })
-  // PATCH vazio gravaria só o `updated_at` e devolveria 200: a tela diria
-  // "salvo" sobre uma edição que não existiu.
-  .refine((v) => Object.keys(v).length > 0, { message: "Nada para alterar." });
+/** A forma e a regra da edição moram em `lib/tarefas/servico.ts` (a ferramenta do agente usa as mesmas). */
+const edicaoSchema = edicaoDaTarefaSchema;
 
 interface Contexto {
   params: Promise<{ id: string }>;
@@ -72,103 +51,40 @@ export async function PATCH(req: NextRequest, ctx: Contexto): Promise<Response> 
     });
   }
 
-  if (parsed.data.assigned_to) {
-    // A chave estrangeira de `assigned_to` é só para `auth.users`: sem esta conferência, um id de
-    // outra organização (ou de quem saiu da equipe) gravaria sem erro. A régua
-    // e o porquê do filtro de organização estão em `lib/tarefas/responsavel.ts`
-    // (SQL direto na porta de `lib/db` — o pool NÃO passa por RLS).
-    const veredito = await conferirResponsavel(
-      portaDaAplicacao(),
-      authz.org.orgId,
-      parsed.data.assigned_to,
-    );
-    if (veredito === "falha_na_consulta") {
-      return fail("internal_error", t("Erro ao salvar a tarefa."), 500, { requestId });
-    }
-    if (veredito === "fora_da_equipe") {
-      return fail("validation_failed", t("O responsável escolhido não faz parte da equipe."), 422, {
-        requestId,
-      });
-    }
-  }
-
   const supabase = await createClient();
 
-  if (parsed.data.demanda_id) {
-    // A chave estrangeira não passa pela RLS: sem esta conferência, a demanda
-    // de outra organização gravaria sem erro. A régua está em `lib/tarefas/demanda.ts`.
-    const veredito = await conferirDemanda(
-      portaDaAplicacao(),
-      authz.org.orgId,
-      parsed.data.demanda_id,
-    );
-    if (veredito === "falha_na_consulta") {
-      return fail("internal_error", t("Erro ao salvar a tarefa."), 500, { requestId });
-    }
-    if (veredito === "fora_da_organizacao") {
-      return fail("validation_failed", t("O negócio, o contato ou a demanda vinculada não existe."), 422, {
-        requestId,
-      });
-    }
-    if (veredito === "encerrada") {
-      return fail("state_conflict", t("Esta demanda já foi encerrada. Crie a tarefa numa demanda em andamento."), 409, {
-        requestId,
-      });
-    }
-  }
-
-  // A situação ANTES da edição decide se esta é a vez em que a tarefa fechou.
-  // Sem ler antes, marcar "concluída" duas vezes emitiria duas linhas na
-  // timeline do negócio — e a segunda seria mentira.
-  const { data: antes } = await supabase
-    .from("crm_tasks")
-    .select("status")
-    .eq("id", id)
-    .eq("organization_id", authz.org.orgId)
-    .maybeSingle();
-
-  const { data, error } = await supabase
-    .from("crm_tasks")
-    .update(parsed.data)
-    .eq("id", id)
-    .eq("organization_id", authz.org.orgId)
-    .select(COLUNAS)
-    .single();
-
-  if (error) {
-    if (error.code === "PGRST116") {
-      return fail("not_found", t("Tarefa não encontrada."), 404, { requestId });
-    }
-    if (error.code === "23503") {
-      return fail("validation_failed", t("O negócio, o contato ou a demanda vinculada não existe."), 422, {
-        requestId,
-      });
-    }
-    return fail("internal_error", t("Erro ao salvar a tarefa."), 500, { requestId });
-  }
-
-  const tarefa = data as unknown as Tarefa;
-
-  await audit({
+  const desfecho = await editarTarefa({
+    supabase,
+    db: portaDaAplicacao(),
     organizationId: authz.org.orgId,
-    actorUserId: authz.user.id,
-    action: "crm_task.updated",
-    resourceType: "crm_tasks",
-    resourceId: tarefa.id,
-    requestId,
-    metadata: { campos: Object.keys(parsed.data) },
+    id,
+    mudancas: parsed.data,
+    ator: { type: "user", id: authz.user.id },
+    auditoria: { actorUserId: authz.user.id, requestId },
   });
 
-  const fechouAgora =
-    tarefa.status === "done" && (antes as { status?: string } | null)?.status !== "done";
-  if (fechouAgora) {
-    await registraAtividadeDaTarefa(portaDaAplicacao(), {
-      organizationId: authz.org.orgId,
-      tarefa,
-      tipo: "task_completed",
-      actor: { type: "user", id: authz.user.id },
-    });
+  if (!desfecho.ok) {
+    switch (desfecho.recusa) {
+      case "responsavel_fora_da_equipe":
+        return fail("validation_failed", t("O responsável escolhido não faz parte da equipe."), 422, {
+          requestId,
+        });
+      case "vinculo_inexistente":
+        return fail("validation_failed", t("O negócio, o contato ou a demanda vinculada não existe."), 422, {
+          requestId,
+        });
+      case "demanda_encerrada":
+        return fail("state_conflict", t("Esta demanda já foi encerrada. Crie a tarefa numa demanda em andamento."), 409, {
+          requestId,
+        });
+      case "nao_encontrada":
+        return fail("not_found", t("Tarefa não encontrada."), 404, { requestId });
+      default:
+        return fail("internal_error", t("Erro ao salvar a tarefa."), 500, { requestId });
+    }
   }
+
+  const tarefa = desfecho.tarefa;
 
   return ok({ task: tarefa }, { requestId });
 }

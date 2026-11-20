@@ -37,6 +37,9 @@ import { allTools } from "@/lib/mcp/tools";
 
 const BASE = "linha de base, medida quando a cerca nasceu (2026-10-31)";
 
+const SUPERFICIE_DE_AGENTE =
+  "capacidade nova (superfície de agente, PR 1): o agente externo e o nativo passam a registrar tarefa, nota, anexo e próxima ação por MCP; datas e responsável vão como texto e são conferidos no handler, para não pagar a expressão regular do zod";
+
 const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "crm_list_event_types": { tokens: 227, motivo: "+23 de `tem_horarios`: sem a frase, o modelo escolhe um tipo de agenda sem horário publicado, ouve recusa e chama humano (ensaio de 17/11/2026)" },
   "crm_find_free_slots": { tokens: 930, motivo: "+71: aceita `event_type_id` ao lado do slug (campo sem `.uuid()`, para não pagar o pattern) e ensina a repetir a chamada com `tipos_validos` na recusa de tipo desconhecido" },
@@ -118,6 +121,15 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "crm_resume_ai_attendance": { tokens: 228, motivo: BASE },
   "crm_draft_proposal": { tokens: 1059, motivo: BASE },
   "crm_request_human_handoff": { tokens: 583, motivo: BASE },
+  "crm_list_tasks": { tokens: 431, motivo: SUPERFICIE_DE_AGENTE },
+  "crm_create_task": { tokens: 441, motivo: SUPERFICIE_DE_AGENTE },
+  "crm_complete_task": { tokens: 206, motivo: SUPERFICIE_DE_AGENTE },
+  "crm_update_task": { tokens: 240, motivo: SUPERFICIE_DE_AGENTE },
+  "crm_list_lead_notes": { tokens: 325, motivo: SUPERFICIE_DE_AGENTE },
+  "crm_add_lead_note": { tokens: 247, motivo: SUPERFICIE_DE_AGENTE },
+  "crm_list_lead_attachments": { tokens: 194, motivo: SUPERFICIE_DE_AGENTE },
+  "crm_attach_to_lead": { tokens: 428, motivo: SUPERFICIE_DE_AGENTE },
+  "crm_set_next_action": { tokens: 233, motivo: SUPERFICIE_DE_AGENTE },
   "get_lead_context": { tokens: 46, motivo: BASE },
   "send_message": { tokens: 137, motivo: BASE },
   "update_lead_state": { tokens: 240, motivo: BASE },
@@ -133,7 +145,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "schedule_followup (com negócio)": { tokens: 314, motivo: BASE },
 };
 
-const TETO_TOTAL = 30133;
+const TETO_TOTAL = 32878;
 
 const VARIANTE = "schedule_followup (com negócio)";
 

@@ -78,6 +78,14 @@ export interface Tarefa {
   created_at: string;
   updated_at: string;
   /**
+   * O TIPO da tarefa, em texto livre (migration 9809). Sem vocabulário no
+   * código: cada operação chama os seus tipos do seu jeito. Só vem quando a
+   * consulta pede a coluna (`COLUNAS_DA_TAREFA_COM_DESFECHO`).
+   */
+  kind?: string | null;
+  /** O que foi feito, escrito por quem concluiu (migration 9809). Mesma ressalva de `kind`. */
+  result?: string | null;
+  /**
    * Derivado (não é coluna): o negócio de `lead_id`, embutido pela rota para a
    * lista de Tarefas dizer DE QUEM é a tarefa sem uma consulta por linha. Nulo
    * quando a tarefa é avulsa — ou quando o negócio não está mais visível.

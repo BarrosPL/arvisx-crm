@@ -376,9 +376,16 @@ describe("fiação — o card do quadro lê o anexo que a rota anexou", () => {
   });
 
   it("CONTROLE — a listagem de anexos continua servindo a mídia pela MESMA porta", () => {
+    // A montagem do link saiu da rota para o módulo que a rota e a ferramenta do
+    // agente compartilham (`lib/leads/anexos-do-negocio.ts`); a rota continua
+    // devolvendo a lista por ele.
     const rota = fonte("app/api/v1/leads/[id]/attachments/route.ts");
+    expect(rota, "a rota deixou de serializar o anexo pelo módulo compartilhado").toMatch(
+      /serializarAnexo\(r, leadId\)/,
+    );
+    const regra = fonte("lib/leads/anexos-do-negocio.ts");
 
-    expect(rota, "a listagem deixou de apontar para a rota de mídia").toMatch(
+    expect(regra, "a listagem deixou de apontar para a rota de mídia").toMatch(
       /url:\s*`\/api\/v1\/leads\/\$\{leadId\}\/attachments\/\$\{row\.id\}\/media`/,
     );
     // O caminho que o card monta é o MESMO — se um mudar sozinho, o link do card
