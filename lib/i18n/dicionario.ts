@@ -17830,6 +17830,8 @@ export const DICIONARIO: Traducoes = {
   "Quando uma tarefa for criada no negócio": { es: "Cuando se cree una tarea en el negocio" },
   "Quando um documento for anexado ao negócio": { es: "Cuando se adjunte un documento al negocio" },
   "Quando uma tarefa for concluída": { es: "Cuando se complete una tarea" },
+  "Quando o atendimento automático for pausado numa conversa": { es: "Cuando la atención automática se pause en una conversación" },
+  "Quando o atendimento automático voltar numa conversa": { es: "Cuando la atención automática vuelva en una conversación" },
   "Criar tarefa interna (sem mensagem ao cliente)": { es: "Crear tarea interna (sin mensaje al cliente)" },
   "A tarefa não foi criada: o evento que disparou a regra não trouxe um lead nem um contato para pendurar nela.": {
     es: "La tarea no se creó: el evento que disparó la regla no trajo un lead ni un contacto donde colgarla.",

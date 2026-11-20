@@ -449,3 +449,86 @@ describe("crm_get_lead / crm_list_leads — governança + shape", () => {
     expect(keys).not.toContain("owner_phone");
   });
 });
+
+/**
+ * Superfície de agente, parte 3: `crm_get_conversation` diz se a IA está
+ * pausada, por quê, desde quando e por quem. A regra é `estadoDaIaNaConversa`
+ * (`lib/inbox/estado-da-ia.ts`, com os testes dela); aqui se prova que a
+ * ferramenta a entrega, com os fatos que a conversa já devolve.
+ */
+describe("crm_get_conversation — a IA está pausada? por quê, desde quando, por quem", () => {
+  const ler = async (row: Record<string, unknown>, resolver?: Resolver) =>
+    (
+      (await crmGetConversation.handler(
+        { conversation_id: String(row.id) },
+        makeCtx(resolver ?? convResolver(row)),
+      )) as { ai: Record<string, unknown> }
+    ).ai;
+
+  it("uma pessoa assumiu: paused, human_assigned, desde `assigned_at`, por quem (id e nome)", async () => {
+    const desde = new Date(now - 15 * 60_000).toISOString();
+    const ai = await ler(
+      convRow({
+        id: CONV_OLD,
+        status: "claimed",
+        assigned_to_user_id: USER_A,
+        assignee_kind: "user",
+        assigned_at: desde,
+        bot_silenced_until: "infinity",
+        last_handoff_reason: "Automático pausado pelo atendente",
+      }),
+    );
+    expect(ai).toEqual({
+      paused: true,
+      human_in_command: true,
+      reason: "human_assigned",
+      since: desde,
+      until: null,
+      resumes_automatically: false,
+      detail: "Automático pausado pelo atendente",
+      by: { user_id: USER_A, name: "Alice" },
+    });
+  });
+
+  it("quem assumiu não é da organização do token: o id sai, o nome não", async () => {
+    const ai = await ler(
+      convRow({ id: CONV_OLD, status: "claimed", assigned_to_user_id: USER_FORA, assignee_kind: "user", bot_silenced_until: "infinity" }),
+    );
+    expect(ai.by).toEqual({ user_id: USER_FORA, name: null });
+  });
+
+  it("IA atendendo: não está pausada, e ninguém assumiu", async () => {
+    const ai = await ler(convRow({ id: CONV_NEW, status: "ai_handling", assignee_kind: "ai" }));
+    expect(ai).toMatchObject({ paused: false, human_in_command: false, reason: null, since: null, by: null });
+  });
+
+  it("uma pessoa respondeu sem assumir: pausada com prazo, e volta sozinha", async () => {
+    const ate = new Date(Date.now() + 4 * 60_000).toISOString();
+    const ai = await ler(convRow({ id: CONV_NEW, status: "ai_handling", assignee_kind: "ai", bot_silenced_until: ate }));
+    expect(ai).toMatchObject({ paused: true, reason: "human_replied", until: ate, resumes_automatically: true, by: null });
+  });
+
+  it("pausada sem dono (o agente passou o caso): não volta sozinha", async () => {
+    const ai = await ler(convRow({ id: CONV_MID, status: "pending", bot_silenced_until: "infinity" }));
+    expect(ai).toMatchObject({ paused: true, human_in_command: false, reason: "handed_to_team", resumes_automatically: false });
+  });
+
+  it("contato marcado como sempre atendimento humano: lido do contato, com o filtro de organização", async () => {
+    const row = convRow({ id: CONV_NEW, status: "ai_handling", assignee_kind: "ai" });
+    const base = convResolver(row);
+    const ai = await ler(row, (q) => (q.table === "contacts" ? { data: { ai_opt_out: true }, error: null } : base(q)));
+    expect(ai).toMatchObject({ paused: true, reason: "contact_always_human" });
+  });
+
+  it("o campo novo é aditivo: o formato antigo da resposta segue igual", async () => {
+    const row = convRow({ id: CONV_NEW, status: "ai_handling", assignee_kind: "ai" });
+    const res = (await crmGetConversation.handler({ conversation_id: CONV_NEW }, makeCtx(convResolver(row)))) as Record<string, unknown>;
+    expect(Object.keys(res).sort()).toEqual(
+      [
+        "ai", "assigned_at", "assigned_to_user_id", "assigned_to_user_name", "assignee_kind", "channel",
+        "channel_session_id", "contact_id", "created_at", "group_chat_id", "id", "is_group", "last_inbound_at",
+        "last_message_at", "last_message_preview", "last_outbound_at", "queue_position", "status", "tags",
+      ].sort(),
+    );
+  });
+});

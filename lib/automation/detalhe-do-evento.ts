@@ -21,10 +21,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
+  EVENTO_IA_PAUSADA,
+  EVENTO_IA_RETOMADA,
   EVENTO_NOTA_ADICIONADA,
   EVENTO_TAREFA_CONCLUIDA,
   EVENTO_TAREFA_CRIADA,
 } from "@/lib/automation/eventos-de-saida";
+import { estadoDaIaNaConversa } from "@/lib/inbox/estado-da-ia";
 import { lerNotaDoNegocio } from "@/lib/leads/notas-do-negocio";
 import { logger } from "@/lib/logger";
 import { nomesDosAtendentesCom } from "@/lib/users/nome-do-atendente";
@@ -135,9 +138,71 @@ async function tarefaDoEvento(
   };
 }
 
+const COLUNAS_DA_CONVERSA =
+  "id, contact_id, channel_session_id, status, assigned_to_user_id, assignee_kind, assigned_at, bot_silenced_until, last_handoff_at, last_handoff_reason, last_outbound_at, is_group, contacts:contact_id(force_human, ai_opt_out, is_blocked)";
+
 /**
- * As chaves a acrescentar em `data` na entrega: `message`, `note` ou `task`,
- * conforme o evento. Vazio para os eventos que não têm detalhe a buscar.
+ * A conversa de `conversation.ai_paused` / `conversation.ai_resumed`, com o
+ * estado da IA como ele está AGORA (`estadoDaIaNaConversa`, a mesma regra de
+ * `crm_get_conversation`). Lido da linha atual porque o motivo escrito
+ * (`last_handoff_reason`) é texto livre e não mora no `event_log`.
+ *
+ * Quem assumiu é identidade da equipe: `ai.by` só sai com o opt-in
+ * `include_owner` da regra, a mesma régua do responsável do negócio.
+ */
+async function conversaDoEvento(
+  admin: SupabaseClient,
+  organizationId: string,
+  payload: Record<string, unknown>,
+  incluirResponsavel: boolean,
+): Promise<Record<string, unknown> | undefined> {
+  const id = texto(payload.conversation_id);
+  if (!id) return undefined;
+  const { data } = await admin
+    .from("conversations")
+    .select(COLUNAS_DA_CONVERSA)
+    .eq("id", id)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (!data) return undefined;
+  const linha = data as unknown as Record<string, unknown> & {
+    contacts?: { force_human?: boolean | null; ai_opt_out?: boolean | null; is_blocked?: boolean | null } | null;
+  };
+  const textoOuNulo = (v: unknown) => (typeof v === "string" ? v : null);
+  const { by_user_id, ...estado } = estadoDaIaNaConversa({
+    status: textoOuNulo(linha.status) ?? "",
+    assigned_to_user_id: textoOuNulo(linha.assigned_to_user_id),
+    assignee_kind: textoOuNulo(linha.assignee_kind),
+    assigned_at: textoOuNulo(linha.assigned_at),
+    bot_silenced_until: textoOuNulo(linha.bot_silenced_until),
+    last_handoff_at: textoOuNulo(linha.last_handoff_at),
+    last_handoff_reason: textoOuNulo(linha.last_handoff_reason),
+    last_outbound_at: textoOuNulo(linha.last_outbound_at),
+    is_group: linha.is_group === true,
+    force_human: linha.contacts?.force_human ?? false,
+    ai_opt_out: linha.contacts?.ai_opt_out ?? false,
+    is_blocked: linha.contacts?.is_blocked ?? false,
+  });
+  let quem: Record<string, unknown> | undefined;
+  if (incluirResponsavel && by_user_id) {
+    const nome = (await nomesDosAtendentesCom(admin, organizationId, [by_user_id])).get(by_user_id);
+    quem = { id: by_user_id, ...(typeof nome === "string" && nome ? { name: nome } : {}) };
+  }
+  return {
+    conversation: {
+      id: linha.id,
+      contact_id: linha.contact_id ?? null,
+      channel_session_id: linha.channel_session_id ?? null,
+      status: linha.status ?? null,
+      ai: { ...estado, ...(quem ? { by: quem } : {}) },
+    },
+  };
+}
+
+/**
+ * As chaves a acrescentar em `data` na entrega: `message`, `note`, `task` ou
+ * `conversation`, conforme o evento. Vazio para os eventos que não têm detalhe
+ * a buscar.
  */
 export async function detalheDoEvento(
   admin: SupabaseClient,
@@ -152,6 +217,9 @@ export async function detalheDoEvento(
     }
     if (evento.event_type === EVENTO_NOTA_ADICIONADA) {
       return (await notaDoEvento(admin, organizationId, payload)) ?? {};
+    }
+    if (evento.event_type === EVENTO_IA_PAUSADA || evento.event_type === EVENTO_IA_RETOMADA) {
+      return (await conversaDoEvento(admin, organizationId, payload, opcoes.incluirResponsavel)) ?? {};
     }
     if (evento.event_type === EVENTO_TAREFA_CRIADA || evento.event_type === EVENTO_TAREFA_CONCLUIDA) {
       return (await tarefaDoEvento(admin, organizationId, payload, opcoes.incluirResponsavel)) ?? {};
