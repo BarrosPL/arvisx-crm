@@ -64,3 +64,4 @@
 20261111130000_9806_org_suspensa_nao_grava_pelo_banco.sql
 20261111180000_9807_modo_fiscal_e_managed_payments.sql
 20261118120000_9808_equipe_pronta_perfis.sql
+20261120120000_9809_tarefa_tipo_e_resultado.sql

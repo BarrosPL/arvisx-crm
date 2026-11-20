@@ -7673,9 +7673,11 @@ export type Database = {
           description: string | null;
           due_date: string | null;
           id: string;
+          kind: string | null;
           lead_id: string | null;
           organization_id: string;
           priority: string;
+          result: string | null;
           source_kind: string | null;
           status: string;
           title: string;
@@ -7691,9 +7693,11 @@ export type Database = {
           description?: string | null;
           due_date?: string | null;
           id?: string;
+          kind?: string | null;
           lead_id?: string | null;
           organization_id: string;
           priority?: string;
+          result?: string | null;
           source_kind?: string | null;
           status?: string;
           title: string;
@@ -7708,9 +7712,11 @@ export type Database = {
           description?: string | null;
           due_date?: string | null;
           id?: string;
+          kind?: string | null;
           lead_id?: string | null;
           organization_id?: string;
           priority?: string;
+          result?: string | null;
           source_kind?: string | null;
           status?: string;
           title?: string;
