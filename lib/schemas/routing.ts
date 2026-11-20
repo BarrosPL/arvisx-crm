@@ -11,6 +11,7 @@ import { z } from "zod";
 
 import { VISIBILITY_MODES as MODOS_DE_VISIBILIDADE } from "@/lib/auth/types";
 import { PRAZO_MAX_MINUTOS, PRAZO_MAX_MINUTOS_DEVOLUCAO, PRAZO_MIN_MINUTOS } from "@/lib/escalacao/devolucao-automatica";
+import { CHAVE_DO_FILTRO_DE_ENTRADA, filtroDeEntradaSchema } from "@/lib/agent-engine/guardrails/filtro-de-entrada";
 import { fusoValido } from "@/lib/tempo/fusos";
 
 const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -71,6 +72,25 @@ export const routingConfigSchema = z.object({
     .nullable()
     .default(null),
   /**
+   * Quantos minutos a IA fica calada numa conversa depois que alguém da equipe
+   * responde pela TELA (o Inbox) sem assumir a conversa. `null` = o padrão de
+   * 5 min, o que valia quando o prazo era fixo no código. Cada nova resposta
+   * renova o prazo. Quem lê é `lerPrazoDoSilencioDaTelaMinutos`, logo abaixo,
+   * que trata ausente/fora da faixa como 5; quem aplica é o envio
+   * (`app/api/v1/messages/_handler.ts`).
+   *
+   * É o irmão de `manual_reply_silence_minutes` (resposta pelo celular). Quem
+   * quer que a resposta ASSUMA a conversa, e a IA só volte por comando, liga
+   * `conversation_stays_with_attendant`.
+   */
+  screen_reply_silence_minutes: z
+    .number()
+    .int()
+    .min(PRAZO_MIN_MINUTOS)
+    .max(PRAZO_MAX_MINUTOS)
+    .nullable()
+    .default(null),
+  /**
    * Prazo, em minutos, para DEVOLVER AO RODÍZIO a conversa que o rodízio
    * entregou e ninguém respondeu (issue #2985, fatia 1). `null` = desligado — o
    * padrão, para quem já instalou não ver o comportamento mudar. Ligado, o cron
@@ -119,6 +139,25 @@ export function conversaFicaComQuemAtendeu(settings: unknown): boolean {
   const routing = (settings as Record<string, unknown>).routing;
   if (!routing || typeof routing !== "object") return false;
   return (routing as Record<string, unknown>).conversation_stays_with_attendant === true;
+}
+
+/** O silêncio da IA depois de uma resposta pela tela, quando a empresa não ajustou nada. */
+export const PRAZO_PADRAO_DO_SILENCIO_DA_TELA_MINUTOS = 5;
+
+/**
+ * Lê `settings.routing.screen_reply_silence_minutes` sem nunca lançar.
+ *
+ * Ausente, nulo, não-número ou fora da faixa (5 min a 24 h) é o padrão de 5.
+ * Defensivo porque `settings` é jsonb livre: um valor estragado não pode virar
+ * `NaN` em `bot_silenced_until`, que deixaria a IA falando por cima da pessoa.
+ * A mesma régua de `lerPrazoDoSilencioManualMinutos`.
+ */
+export function lerPrazoDoSilencioDaTelaMinutos(settings: unknown): number {
+  const routing = (settings as { routing?: unknown } | null)?.routing;
+  const valor = (routing as { screen_reply_silence_minutes?: unknown } | null)?.screen_reply_silence_minutes;
+  if (typeof valor !== "number" || !Number.isFinite(valor)) return PRAZO_PADRAO_DO_SILENCIO_DA_TELA_MINUTOS;
+  if (valor < PRAZO_MIN_MINUTOS || valor > PRAZO_MAX_MINUTOS) return PRAZO_PADRAO_DO_SILENCIO_DA_TELA_MINUTOS;
+  return Math.floor(valor);
 }
 
 /**
@@ -173,6 +212,22 @@ export const atendimentoConfigPatchSchema = routingConfigSchema.extend({
     .nullable()
     .optional(),
   /**
+   * O filtro de entrada da IA (`lib/agent-engine/guardrails/filtro-de-entrada.ts`):
+   * as listas da empresa para ofensa, spam e fora de escopo, e o que fazer com
+   * cada uma. Mora em `settings.ai_entry_filter`, irmão de `settings.routing`.
+   * Opcional: omitido preserva o que já valia. Quando vem, SUBSTITUI o filtro
+   * inteiro (as listas são enviadas completas, não mescladas termo a termo).
+   */
+  entry_filter: filtroDeEntradaSchema.optional(),
+  /** Opcional pela mesma razão: cliente antigo não volta o prazo para 5 por omissão. */
+  screen_reply_silence_minutes: z
+    .number()
+    .int()
+    .min(PRAZO_MIN_MINUTOS)
+    .max(PRAZO_MAX_MINUTOS)
+    .nullable()
+    .optional(),
+  /**
    * Opcional pela mesma razão: cliente antigo que só conhece o modo de
    * roteamento não pode LIGAR a devolução ao rodízio por omissão. Omitido
    * preserva o que já valia (o padrão é `null`, desligado).
@@ -195,7 +250,8 @@ export type AtendimentoConfigPatch = z.infer<typeof atendimentoConfigPatchSchema
  * Merge não-destrutivo em DOIS níveis: preserva as demais chaves de `settings`
  * (o provedor de IA mora nele) e, para o que veio OMITIDO do corpo —
  * `visibility_mode`, `handoff_return_after_minutes`, `conversation_stays_with_attendant`,
- * `manual_reply_silence_minutes` e `unanswered_return_minutes` —, preserva o que já
+ * `manual_reply_silence_minutes`, `screen_reply_silence_minutes` e
+ * `unanswered_return_minutes` —, preserva o que já
  * valia. Um cliente antigo, que só conhece o modo de roteamento, não pode
  * desligar a restrição de visibilidade nem a devolução automática por omissão.
  */
@@ -208,7 +264,9 @@ export function mesclarSettingsDeAtendimento(
     handoff_return_after_minutes,
     conversation_stays_with_attendant,
     manual_reply_silence_minutes,
+    screen_reply_silence_minutes,
     unanswered_return_minutes,
+    entry_filter,
     ...routingInput
   } = input;
   const routingAtual = routingConfigSchema
@@ -226,6 +284,10 @@ export function mesclarSettingsDeAtendimento(
       manual_reply_silence_minutes !== undefined
         ? manual_reply_silence_minutes
         : routingAtual.manual_reply_silence_minutes,
+    screen_reply_silence_minutes:
+      screen_reply_silence_minutes !== undefined
+        ? screen_reply_silence_minutes
+        : routingAtual.screen_reply_silence_minutes,
     unanswered_return_minutes:
       unanswered_return_minutes !== undefined
         ? unanswered_return_minutes
@@ -233,6 +295,7 @@ export function mesclarSettingsDeAtendimento(
   };
   const settings: Record<string, unknown> = { ...atual, routing };
   if (visibility_mode !== undefined) settings.visibility_mode = visibility_mode;
+  if (entry_filter !== undefined) settings[CHAVE_DO_FILTRO_DE_ENTRADA] = entry_filter;
   return { settings, routing };
 }
 

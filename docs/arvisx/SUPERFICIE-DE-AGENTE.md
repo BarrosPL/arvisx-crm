@@ -13,8 +13,9 @@ servem a tela. Um token de API não entra nelas. A regra é uma só: ela foi ext
 chamada pelos dois lados (`lib/tarefas/servico.ts`, `lib/leads/anexos-do-negocio.ts`,
 `lib/leads/proposta-de-proxima-acao.ts`).
 
-Este documento cobre a parte 1 (tarefas, notas, anexos e próxima ação) e a parte 2 (eventos para sistemas externos,
-consulta de proposta, fechar e atribuir, passagem entre colegas). A convivência entre humano e IA vem na parte 3.
+Este documento cobre a parte 1 (tarefas, notas, anexos e próxima ação), a parte 2 (eventos para sistemas externos,
+consulta de proposta, fechar e atribuir, passagem entre colegas) e a parte 3 (convivência entre pessoa e IA, e o
+filtro de entrada).
 
 ## Regras que valem para todas
 
@@ -205,3 +206,135 @@ com roteador passa a vez a outro agente do mesmo roteador.
 
 Os papéis da Equipe de IA pronta ainda não usam a passagem nem as ferramentas novas: a liberação vem numa entrega
 própria.
+
+## Convivência entre pessoa e IA
+
+Quando uma pessoa da equipe assume ou responde uma conversa, a IA não responde por cima. Isto já valia para o agente
+nativo antes desta entrega. O que a parte 3 acrescenta é o agente **externo** ficar sabendo, e um prazo que faltava
+ser da empresa.
+
+### O que já existia
+
+| O quê | Onde |
+|---|---|
+| Assumir a conversa pausa a IA sem prazo | `fn_conversation_assign` grava `bot_silenced_until = 'infinity'` |
+| Pausar pela tela, sem trocar o dono | `POST /api/v1/conversations/[id]/pause-ai` |
+| Responder pela tela pausa por um prazo curto, renovado a cada resposta | `app/api/v1/messages/_handler.ts` |
+| Responder pelo celular pausa por um prazo da empresa (padrão 60 min) | `lib/escalacao/atendimento-manual.ts`, `routing.manual_reply_silence_minutes` |
+| "A conversa fica com quem atendeu": responder pela tela assume a conversa | `routing.conversation_stays_with_attendant` |
+| O motor não responde conversa pausada nem conversa com dono humano | `lib/ai/elegibilidade/gate.ts`, lido no drain e no começo de todo turno |
+| Assumir no meio de um turno interrompe o turno | gatilho `trg_interromper_turnos_ao_assumir` |
+| A IA só volta por comando: "Devolver ao automático" ou `#on` pelo celular | `lib/escalacao/retomada.ts` |
+| Ou depois de um prazo da empresa sem sinal de pessoa (padrão: nunca) | `routing.handoff_return_after_minutes`, cron `handoff-devolucao` |
+
+Os prazos ficam em Configurações › Atendimento. O padrão do produto é conservador: depois que alguém assume, a IA não
+volta sozinha.
+
+### O que esta entrega acrescenta
+
+- **O estado por MCP.** `crm_get_conversation` devolve o bloco `ai`.
+- **Dois eventos** para o agente externo obedecer: `conversation.ai_paused` e `conversation.ai_resumed`.
+- **O prazo da resposta pela tela passa a ser da empresa** (`routing.screen_reply_silence_minutes`). Era fixo em
+  5 minutos no código. O padrão continua 5; a faixa é de 5 minutos a 24 horas.
+- **A trava vale para o colega.** Na passagem entre colegas, se uma pessoa assume entre o turno de quem passou a vez e
+  a resposta do colega, o colega não responde.
+
+### O bloco `ai` de `crm_get_conversation`
+
+| Campo | O que diz |
+|---|---|
+| `paused` | A IA não responde esta conversa agora, por causa de uma pessoa ou de uma trava. |
+| `human_in_command` | Uma pessoa é a dona da conversa. |
+| `reason` | Por quê (lista abaixo). `null` quando não está pausada. |
+| `since` | Desde quando. `null` quando o banco não guardou a hora. |
+| `by` | Quem assumiu: `user_id` e `name`. Só em `human_assigned`. |
+| `until` | Quando a pausa acaba sozinha. `null` = não tem prazo. |
+| `resumes_automatically` | `true` = volta sozinha em `until`. `false` = só por comando, ou pelo prazo de devolução da empresa. |
+| `detail` | O motivo escrito na conversa, quando há. |
+
+`reason`:
+
+| Valor | Quando |
+|---|---|
+| `human_assigned` | uma pessoa assumiu a conversa |
+| `human_replied` | uma pessoa respondeu sem assumir; a pausa tem prazo |
+| `human_replied_outside_crm` | uma pessoa respondeu pelo celular e a pausa não tem prazo |
+| `handed_to_team` | pausada sem dono: o agente passou o caso para a equipe |
+| `contact_locked` | a passagem para humano travou o contato inteiro e ninguém assumiu ainda |
+| `contact_always_human` | o contato é marcado como sempre atendimento humano |
+| `contact_opted_out` | o contato pediu para não receber mensagens |
+
+Um agente externo que vai responder um cliente lê `ai.paused` antes. Com `true`, não responde.
+
+Conversa de grupo e conversa encerrada vêm com `paused: false`: ali a IA não atende por outra razão, e devolver ao
+automático não mudaria nada.
+
+### Os eventos `conversation.ai_paused` e `conversation.ai_resumed`
+
+São gatilhos de automação como os outros: uma regra com a ação "Avisar outro sistema (webhook)". O corpo está em
+[`docs/integracao/webhooks-de-saida.md`](../integracao/webhooks-de-saida.md).
+
+- **Nascem no banco**, de um gatilho em `conversations` (migration 9811), e não na aplicação. A pausa tem mais de uma
+  dúzia de caminhos (assumir, pausar, responder, o agente passar o caso, o rodízio entregar), e um deles é o próprio
+  banco. O gatilho olha o estado da linha, então vale para todos.
+- **`ai_paused` sai de novo quando o prazo ou o dono muda**, com `renewed: true`. Cada resposta de uma pessoa renova o
+  prazo, e o prazo anterior deixa de valer.
+- **Pausa com prazo que vence não gera `ai_resumed`**: ninguém escreve na conversa quando o tempo passa. O
+  `paused_until` do último `ai_paused` é a hora da volta. `ai_resumed` sai quando alguém devolve a conversa.
+- **O evento reflete a conversa.** As travas do contato (`contact_locked`, `contact_always_human`,
+  `contact_opted_out`) aparecem no bloco `ai`, lido na hora da entrega, e não geram evento próprio.
+- **Regra destes gatilhos não pode atribuir responsável nem definir setor**: a troca de dono gravaria outro
+  `ai_paused`, e duas regras se realimentariam.
+
+## Filtro de entrada
+
+Ofensa, spam e assunto claramente fora do que a empresa atende podem ser tratados por regra, antes de qualquer modelo.
+A mensagem barrada não gasta token: nem o roteador, que escolhe o agente, é consultado.
+
+- **As listas são da empresa.** O produto não traz palavra nenhuma. Sem lista configurada, o filtro não existe.
+- **Três categorias**, só para organizar as listas e nomear o bloqueio: `offense`, `spam` e `out_of_scope`.
+- **Cada categoria escolhe a ação**: `reply` envia uma resposta curta escrita pela empresa; `silence` não envia nada.
+  Nos dois casos, `tag` grava um marcador na conversa.
+- **A resposta curta passa pelas mesmas travas de todo envio** (opt-out, LGPD, janela de envio, ritmo do número) e
+  não se repete: se a última mensagem que saiu na conversa já é esse texto, o filtro fica em silêncio.
+- **Só barra quando todas as mensagens pendentes do cliente casam uma regra.** Uma mensagem legítima no meio basta
+  para o agente responder. Mensagem sem texto (áudio, imagem) nunca é barrada.
+- **Pedido de pessoa e pedido para parar passam direto**, mesmo com um termo da lista: quem os trata são as regras
+  fixas do produto, que chamam a equipe.
+- **Conversa assumida por uma pessoa nem chega ao filtro.**
+- **A conversa não muda de dono nem de estado.** A mensagem continua na caixa de entrada.
+- **Fica no traço do turno** (`agent_turn_traces`): `abort_reason = filtro_de_entrada` e uma entrada
+  `filtro_de_entrada` com a categoria, a ação, se a resposta saiu, o marcador e o termo da lista que casou. A fala do
+  cliente não entra no traço.
+
+Como casa: sem acento e sem diferença de maiúsculas. `match: "contains"` (o padrão) casa o termo como palavra ou
+expressão inteira dentro da mensagem: o termo "sala" não casa "salada". `match: "whole_message"` exige que a mensagem
+inteira seja o termo.
+
+### Como configurar
+
+Ainda não há tela. A configuração mora em `organizations.settings.ai_entry_filter` e é lida e gravada pela rota de
+atendimento, com sessão de gerente ou administrador:
+
+```
+PATCH /api/v1/settings/routing
+{
+  "mode": "manual",
+  "entry_filter": {
+    "enabled": true,
+    "rules": {
+      "offense":      { "terms": ["..."], "action": "reply", "reply": "Vamos manter o respeito.", "tag": "ofensa" },
+      "spam":         { "terms": ["..."], "action": "silence", "tag": "spam" },
+      "out_of_scope": { "terms": ["..."], "match": "whole_message", "action": "silence" }
+    }
+  }
+}
+```
+
+- `mode` é obrigatório na rota (é o modo de distribuição que já vale; `GET` na mesma rota o devolve).
+- `entry_filter` omitido preserva o filtro que já valia. Quando vem, substitui o filtro inteiro.
+- Tetos: 200 termos por categoria, 2 a 80 caracteres por termo, 500 caracteres na resposta, 40 no marcador.
+- O prazo da resposta pela tela vai na mesma rota: `"screen_reply_silence_minutes": 30` (`null` volta ao padrão de 5).
+
+O filtro vale para todo agente nativo da empresa, automático ou assistido, e só para mensagem recebida. Agente externo
+não passa por ele: quem decide o que o agente externo responde é o sistema dele.

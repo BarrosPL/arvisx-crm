@@ -76,6 +76,10 @@ import { nomesDosAtendentes } from "@/lib/users/nome-do-atendente";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { enderecoDaUltimaRecebida } from "@/lib/channels/endereco-da-ultima-recebida";
 import type { Message } from "@/lib/types/messaging";
+import {
+  lerPrazoDoSilencioDaTelaMinutos,
+  PRAZO_PADRAO_DO_SILENCIO_DA_TELA_MINUTOS,
+} from "@/lib/schemas/routing";
 
 type SB = SupabaseClient;
 
@@ -426,16 +430,38 @@ export function previewFrom(input: {
  * (lib/agent-engine/agent/human-handoff.ts) só olhava `force_human`/`bot_silenced_until`,
  * e nenhum envio manual tocava nenhum dos dois.
  */
-const HUMAN_REPLY_SILENCE_MS = 5 * 60 * 1000;
+const HUMAN_REPLY_SILENCE_MS = PRAZO_PADRAO_DO_SILENCIO_DA_TELA_MINUTOS * 60 * 1000;
+
+/**
+ * A janela da EMPRESA (`settings.routing.screen_reply_silence_minutes`), em ms.
+ * O padrão são os 5 min de sempre, e falha ao ler `settings` também é o padrão:
+ * a pausa nunca deixa de acontecer por causa do ajuste.
+ */
+async function janelaDoSilencioDaTelaMs(supabase: SB, organizationId: string): Promise<number> {
+  try {
+    const { data } = await supabase
+      .from("organizations")
+      .select("settings")
+      .eq("id", organizationId)
+      .maybeSingle();
+    return lerPrazoDoSilencioDaTelaMinutos((data as { settings?: unknown } | null)?.settings) * 60 * 1000;
+  } catch {
+    return HUMAN_REPLY_SILENCE_MS;
+  }
+}
 
 /**
  * Postgres 'infinity' (handoff permanente — regex/tool/orquestrador) chega do PostgREST
  * como o literal texto "infinity", que `new Date(...)` não parseia. Nunca encurtar isso
  * para uma janela de 5min: se já está travado pra sempre, este helper não mexe.
  */
-function extendBotSilence(current: string | null, now: string): string | undefined {
+function extendBotSilence(
+  current: string | null,
+  now: string,
+  janelaMs: number = HUMAN_REPLY_SILENCE_MS,
+): string | undefined {
   if (current === "infinity") return undefined;
-  const candidate = new Date(new Date(now).getTime() + HUMAN_REPLY_SILENCE_MS);
+  const candidate = new Date(new Date(now).getTime() + janelaMs);
   if (current && new Date(current) >= candidate) return undefined;
   return candidate.toISOString();
 }
@@ -1585,7 +1611,11 @@ export async function sendMessageHandler(
   // mesma janela, mesma régua de quem lê `bot_silenced_until`; quem NÃO traz
   // `onBehalfOf` (automação, integração pura, agente) continua de fora.
   if (ctx.actor.type === "user" || ctx.onBehalfOf) {
-    const silenceUntil = extendBotSilence(c.bot_silenced_until, now);
+    const silenceUntil = extendBotSilence(
+      c.bot_silenced_until,
+      now,
+      await janelaDoSilencioDaTelaMs(supabase, ctx.organization_id),
+    );
     if (silenceUntil) conversationUpdate.bot_silenced_until = silenceUntil;
   }
 

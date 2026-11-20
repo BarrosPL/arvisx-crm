@@ -36,6 +36,9 @@ function rodada(passagem: { aceita: PassagemAceita | null; mensagensEnviadas: nu
   };
 }
 
+/** A porta de "uma pessoa assumiu?" respondendo não: o caso comum. */
+const ninguemAssumiu = async () => false;
+
 function colega(overrides: Partial<PublishedAgentConfig> = {}): PublishedAgentConfig {
   return { agentId: 'agente-horarios', versionId: 'v1', ...overrides } as PublishedAgentConfig;
 }
@@ -44,7 +47,7 @@ describe('continuarComOColega', () => {
   it('sem passagem no turno, nada roda', async () => {
     const rodar = vi.fn();
     const carregarColega = vi.fn();
-    await continuarComOColega(deps, job, {} as never, { workerId: 'w' }, rodada({ aceita: null, mensagensEnviadas: 0 }), { rodar, carregarColega });
+    await continuarComOColega(deps, job, {} as never, { workerId: 'w' }, rodada({ aceita: null, mensagensEnviadas: 0 }), { rodar, carregarColega, humanoAssumiu: ninguemAssumiu });
     expect(rodar).not.toHaveBeenCalled();
     expect(carregarColega).not.toHaveBeenCalled();
   });
@@ -54,7 +57,7 @@ describe('continuarComOColega', () => {
     const carregarColega = vi.fn(async () => colega());
     const r = rodada({ aceita, mensagensEnviadas: 0 });
     const pool = {} as never;
-    await continuarComOColega(deps, job, pool, { workerId: 'w' }, r, { rodar, carregarColega });
+    await continuarComOColega(deps, job, pool, { workerId: 'w' }, r, { rodar, carregarColega, humanoAssumiu: ninguemAssumiu });
 
     // A versão publicada do colega é lida na organização do JOB.
     expect(carregarColega).toHaveBeenCalledWith(pool, 'org-1', 'agente-horarios');
@@ -85,6 +88,7 @@ describe('continuarComOColega', () => {
     await continuarComOColega(deps, job, {} as never, { workerId: 'w' }, rodada({ aceita, mensagensEnviadas: 0 }), {
       rodar,
       carregarColega: vi.fn(async () => colega()),
+      humanoAssumiu: ninguemAssumiu,
     });
     const entrada = rodar.mock.calls[0]![4] as AgentTurnInput;
     expect(entrada.passagemParaColega).toBeUndefined();
@@ -93,7 +97,7 @@ describe('continuarComOColega', () => {
   it('quem passou a vez já tinha falado com o cliente: o colega só assume na próxima mensagem', async () => {
     const rodar = vi.fn();
     const carregarColega = vi.fn();
-    await continuarComOColega(deps, job, {} as never, { workerId: 'w' }, rodada({ aceita, mensagensEnviadas: 1 }), { rodar, carregarColega });
+    await continuarComOColega(deps, job, {} as never, { workerId: 'w' }, rodada({ aceita, mensagensEnviadas: 1 }), { rodar, carregarColega, humanoAssumiu: ninguemAssumiu });
     expect(rodar).not.toHaveBeenCalled();
     expect(carregarColega).not.toHaveBeenCalled();
   });
@@ -107,8 +111,26 @@ describe('continuarComOColega', () => {
     await continuarComOColega(deps, job, {} as never, { workerId: 'w' }, rodada({ aceita, mensagensEnviadas: 0 }), {
       rodar,
       carregarColega: vi.fn(async () => config),
+      humanoAssumiu: ninguemAssumiu,
     });
     expect(rodar).not.toHaveBeenCalled();
+  });
+
+  it('uma pessoa assumiu a conversa entre a passagem e a resposta: o colega NÃO responde', async () => {
+    const rodar = vi.fn();
+    const carregarColega = vi.fn(async () => colega());
+    const humanoAssumiu = vi.fn(async () => true);
+    const pool = {} as never;
+    await continuarComOColega(deps, job, pool, { workerId: 'w' }, rodada({ aceita, mensagensEnviadas: 0 }), {
+      rodar,
+      carregarColega,
+      humanoAssumiu,
+    });
+    // A trava é consultada para a conversa da rodada, na organização do job.
+    expect(humanoAssumiu).toHaveBeenCalledWith(pool, deps, job, 'conversa-1');
+    expect(rodar, 'o colega respondeu por cima da pessoa que assumiu').not.toHaveBeenCalled();
+    // Nem a versão publicada do colega é carregada: a decisão sai antes.
+    expect(carregarColega).not.toHaveBeenCalled();
   });
 
   it('falha do turno do colega propaga: a fila re-tenta o job, e o colega já está fixado', async () => {
@@ -117,6 +139,7 @@ describe('continuarComOColega', () => {
       continuarComOColega(deps, job, {} as never, { workerId: 'w' }, rodada({ aceita, mensagensEnviadas: 0 }), {
         rodar,
         carregarColega: vi.fn(async () => colega()),
+        humanoAssumiu: ninguemAssumiu,
       }),
     ).rejects.toThrow('modelo fora do ar');
   });

@@ -79,10 +79,15 @@ const RPC_PADRAO = {
  * uma vez só. Aqui ficam só os dados por caso: a linha da conversa com o
  * silêncio sob teste e o snapshot que cada `rpc` devolve.
  */
-function dubleDo(botSilencedUntil: string | null, snapshot?: () => Record<string, unknown>) {
+function dubleDo(
+  botSilencedUntil: string | null,
+  snapshot?: () => Record<string, unknown>,
+  organizacao?: Record<string, unknown>,
+) {
   const { supabase, capturas } = criarDubleDoHandler({
     conversation: conversationRow(botSilencedUntil),
     rpcData: snapshot ?? RPC_PADRAO,
+    ...(organizacao ? { organizacao } : {}),
   });
   return { supabase, patches: capturas.patches.conversations! };
 }
@@ -165,6 +170,59 @@ describe('sendMessageHandler — silêncio da IA de 5min após resposta manual h
     expect(convPatch.bot_silenced_until, 'não renovou a janela com a nova mensagem').toBeDefined();
     const silencedUntil = new Date(convPatch.bot_silenced_until as string).getTime();
     expect(silencedUntil).toBeGreaterThanOrEqual(before + 5 * 60 * 1000 - 1000);
+  });
+});
+
+describe('sendMessageHandler — a janela do silêncio é da EMPRESA (settings.routing.screen_reply_silence_minutes)', () => {
+  const comJanela = (minutos: unknown) => ({ status: 'active', settings: { routing: { screen_reply_silence_minutes: minutos } } });
+
+  it('empresa que ajustou para 30 min: a resposta pela tela cala a IA por ~30 min', async () => {
+    wahaConfigured();
+    const ctx: HandlerCtx = { organization_id: ORG, actor: { type: 'user', id: USER }, requestId: 'req-j1' };
+    const { supabase, patches } = dubleDo(null, undefined, comJanela(30));
+
+    const before = Date.now();
+    await sendMessageHandler(supabase, ctx, input);
+    const after = Date.now();
+
+    const silencedUntil = new Date(patches[patches.length - 1]!.bot_silenced_until as string).getTime();
+    expect(silencedUntil).toBeGreaterThanOrEqual(before + 30 * 60 * 1000 - 1000);
+    expect(silencedUntil).toBeLessThanOrEqual(after + 30 * 60 * 1000 + 1000);
+  });
+
+  it('com a janela da empresa, um silêncio de 10 min em vigor é ESTENDIDO (com o padrão de 5 não seria)', async () => {
+    wahaConfigured();
+    const ctx: HandlerCtx = { organization_id: ORG, actor: { type: 'user', id: USER }, requestId: 'req-j2' };
+    const dezMin = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const { supabase, patches } = dubleDo(dezMin, undefined, comJanela(30));
+
+    const before = Date.now();
+    await sendMessageHandler(supabase, ctx, input);
+
+    const silencedUntil = new Date(patches[patches.length - 1]!.bot_silenced_until as string).getTime();
+    expect(silencedUntil).toBeGreaterThanOrEqual(before + 30 * 60 * 1000 - 1000);
+  });
+
+  it.each([[null], ['30'], [2], [100_000], [Number.NaN]])('valor ausente ou fora da faixa (%s) vale o padrão de 5 min', async (valor) => {
+    wahaConfigured();
+    const ctx: HandlerCtx = { organization_id: ORG, actor: { type: 'user', id: USER }, requestId: 'req-j3' };
+    const { supabase, patches } = dubleDo(null, undefined, comJanela(valor));
+
+    const before = Date.now();
+    await sendMessageHandler(supabase, ctx, input);
+    const after = Date.now();
+
+    const silencedUntil = new Date(patches[patches.length - 1]!.bot_silenced_until as string).getTime();
+    expect(silencedUntil).toBeGreaterThanOrEqual(before + 5 * 60 * 1000 - 1000);
+    expect(silencedUntil).toBeLessThanOrEqual(after + 5 * 60 * 1000 + 1000);
+  });
+
+  it('a janela da empresa nunca encurta o handoff permanente', async () => {
+    wahaConfigured();
+    const ctx: HandlerCtx = { organization_id: ORG, actor: { type: 'user', id: USER }, requestId: 'req-j4' };
+    const { supabase, patches } = dubleDo('infinity', undefined, comJanela(30));
+    await sendMessageHandler(supabase, ctx, input);
+    expect(patches[patches.length - 1]!.bot_silenced_until).toBeUndefined();
   });
 });
 
