@@ -100,6 +100,7 @@ import { crmCompleteTask, crmCreateTask, crmListTasks, crmUpdateTask } from "./t
 import { crmAddLeadNote, crmListLeadNotes } from "./notas-do-negocio";
 import { crmAttachToLead, crmListLeadAttachments } from "./anexos-do-negocio";
 import { crmSetNextAction } from "./proxima-acao";
+import { crmCloseConversation } from "./fechar-conversa";
 
 // Cast via `unknown` porque McpToolDefinition<TInput> nao e covariante
 // em TInput (handler usa TInput em posicao contravariante). Coletar
@@ -200,6 +201,8 @@ export const allTools: ReadonlyArray<McpToolDefinition> = [
   crmAddLeadNote,
   crmAttachToLead,
   crmSetNextAction,
+  // write — fechar a conversa sem falar com o cliente (ajustes, AJ-1)
+  crmCloseConversation,
   // handoff (special)
   crmRequestHumanHandoff,
 ] as unknown as ReadonlyArray<McpToolDefinition>;

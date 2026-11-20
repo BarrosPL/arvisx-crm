@@ -113,6 +113,25 @@ export const TOOLS_RETENCAO = declararTools([
     pacotes: ["reter"],
   },
   {
+    name: "crm_close_conversation",
+    category: "write",
+    rotulo: "Fechar conversa sem resposta",
+    explicacao:
+      "Fecha a conversa em que o cliente parou de responder, para ela sair da caixa de entrada. Nada é enviado ao cliente, e a conversa reabre sozinha se ele escrever de novo.",
+    oQueToca: "Atendimento",
+    // `atencao`, não `critico`: nada sai para o cliente e o gesto se desfaz
+    // sozinho — a próxima mensagem dele reabre a conversa, e a equipe a reabre
+    // pela tela. O `critico` deste arquivo (`crm_close_demand`) encerra o
+    // NEGÓCIO, que sai do quadro; aqui só a conversa sai da fila.
+    risco: "atencao",
+    // "reter", e a razão é dupla. O uso é o desta jornada: quem acompanha quem
+    // esfriou é quem sabe que a conversa parou e pode sair da caixa de entrada.
+    // E o pacote de operação ("organizar") não tem folga: com as críticas ele
+    // já exige 26 das 27 vagas por agente, e "atender" é o maior depois dele
+    // (`tests/unit/pacote-reserva-vaga-da-critica.test.ts`).
+    pacotes: ["reter"],
+  },
+  {
     // Fica em "reter" e não em "evoluir" de propósito: o pacote "Aprender e
     // evoluir" já cabe no teto só com as 27 vagas que tem, e uma capacidade a
     // mais nele tiraria todas as jornadas da lista de "cabem depois do agente

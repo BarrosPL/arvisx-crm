@@ -143,6 +143,10 @@ const ESCRITA_QUE_E_TRABALHO_DE_ATENDENTE: ReadonlyArray<string> = [
   "crm_add_lead_note",
   "crm_attach_to_lead",
   "crm_set_next_action",
+  // Ajustes (AJ-1): `app/api/v1/conversations/[id]/close/` — POST exige `agent`.
+  // Fechar conversa é o gesto de quem atende; a ferramenta usa a MESMA regra
+  // da rota (`lib/inbox/fechar-conversa.ts`) e não envia nada ao cliente.
+  "crm_close_conversation",
 ];
 
 function alcancavelPeloAgente(requiresRole: Role): boolean {
