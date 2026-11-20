@@ -122,7 +122,7 @@ da caixa de entrada. O uso previsto: o agente falou por último e o cliente não
   o estado anterior e o `reason`.
 - Se o atendimento mudou entre a leitura e o fechamento, a recusa é `conversa_mudou`: leia de novo e decida.
 - A regra é a da rota `POST /api/v1/conversations/[id]/close` (`lib/inbox/fechar-conversa.ts`, chamada pelos dois
-  lados).
+  lados, e também pelo `PATCH /api/v1/conversations/[id]` com `status: "closed"` e pelo marcar contato como pessoal).
 - Aparece no pacote "Não perder o cliente". "Organizar a operação" não tinha vaga: com as ferramentas que só a
   pessoa liga, ele já exige 26 das 27 vagas por agente.
 

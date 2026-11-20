@@ -12,6 +12,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { emitLeadActivity } from "@/lib/leads/activity-emitter";
 import { registraFalhaDeAtividade } from "@/lib/leads/activity-write-failure";
 import { resolveActiveLeadForContact, type LeadCandidate } from "@/lib/leads/active-lead";
+import {
+  auditarFechamentoDeConversa,
+  fecharConversa,
+  SEM_TRAVA_DE_REVISAO,
+} from "@/lib/inbox/fechar-conversa";
 
 export const dynamic = "force-dynamic";
 
@@ -367,7 +372,11 @@ export async function POST(_req: NextRequest, ctx: Context): Promise<Response> {
     .eq("organization_id", orgId)
     .eq("contact_id", id)
     .in("status", ["open", "pending", "claimed", "ai_handling"]);
-  for (const conv of (abertas ?? []) as Array<{ id: string; assigned_to_user_id: string | null }>) {
+  for (const conv of (abertas ?? []) as Array<{
+    id: string;
+    status: string;
+    assigned_to_user_id: string | null;
+  }>) {
     const { data: solta, error: soltaErro } = await admin.rpc("fn_conversation_assign", {
       p_organization_id: orgId,
       p_conversation_id: conv.id,
@@ -381,12 +390,22 @@ export async function POST(_req: NextRequest, ctx: Context): Promise<Response> {
       });
     }
     if (!solta || (solta as unknown[]).length === 0) continue; // a conversa sumiu entre a leitura e a escrita.
-    const { error: fechaErro } = await admin.rpc("fn_service_status", {
-      p_org: orgId,
-      p_conversation: conv.id,
-      p_status: "closed",
+    // O fechamento é o da regra compartilhada (`lib/inbox/fechar-conversa.ts`),
+    // com as duas coisas que são só deste caminho: SEM trava de revisão (quem
+    // marca não viu a conversa, e o soltar da linha de cima já mexeu nela) e
+    // auditoria ADIADA, para o `conversation.released` continuar saindo antes
+    // do `conversation.closed` — e nenhum dos dois quando o fechar falha.
+    const conversaDoContato = { id: conv.id, organization_id: orgId, status: conv.status };
+    const atorDoFechamento = { actorUserId: authz.user.id, metadata: { via: "contato_pessoal" } };
+    const fechamento = await fecharConversa({
+      admin,
+      conversa: conversaDoContato,
+      revisaoEsperada: SEM_TRAVA_DE_REVISAO,
+      requestId,
+      ator: atorDoFechamento,
+      auditoria: "adiada",
     });
-    if (fechaErro) {
+    if (!fechamento.ok) {
       return fail("internal_error", t("Não foi possível marcar o contato como pessoal."), 500, {
         requestId,
       });
@@ -400,14 +419,10 @@ export async function POST(_req: NextRequest, ctx: Context): Promise<Response> {
       requestId,
       metadata: { via: "contato_pessoal" },
     });
-    await audit({
-      action: "conversation.closed",
-      actorUserId: authz.user.id,
-      organizationId: orgId,
-      resourceType: "conversation",
-      resourceId: conv.id,
+    await auditarFechamentoDeConversa({
+      conversa: conversaDoContato,
       requestId,
-      metadata: { via: "contato_pessoal" },
+      ator: atorDoFechamento,
     });
     efeitos.conversas_fechadas += 1;
   }
