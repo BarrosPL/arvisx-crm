@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Actor } from "@/lib/api/handlers/types";
+import { autorExternoDoAtor } from "@/lib/api/handlers/token-do-ator";
 import type { ActivityType } from "@/lib/leads/activity-vocabulary";
 
 /** Os cinco atores que `crm_lead_activities.actor_kind` aceita (migration 0071). */
@@ -92,6 +93,15 @@ export function buildLeadActivityRow(input: EmitLeadActivityInput): LeadActivity
   // agente estava envolvido. Mesma regra do backfill da 0071.
   const actorKind: ActivityActorKind = kind === "ai" && !temLastro ? "system" : kind;
 
+  // QUEM AGIU, quando foi um sistema de fora por token de API. As colunas de
+  // ator não têm onde guardá-lo (`performed_by_user_id` e `actor_agent_id` têm
+  // chave estrangeira para pessoa e para agente do CRM), então a linha continua
+  // `system` para a tela e o token vai em `payload.autor`, no formato que a nota
+  // do negócio já grava. Só o id: o nome é lido do cadastro por quem lê
+  // (`lib/leads/eventos-do-negocio.ts`). Quem já mandou `autor` (a nota) vence.
+  const payload = input.payload ?? {};
+  const autorExterno = payload.autor === undefined ? autorExternoDoAtor(input.actor) : null;
+
   return {
     organization_id: input.organizationId,
     lead_id: input.leadId,
@@ -104,7 +114,7 @@ export function buildLeadActivityRow(input: EmitLeadActivityInput): LeadActivity
     performed_by_user_id: userId,
     reason: input.reason,
     evidence: temLastro ? (input.evidence ?? null) : null,
-    payload: input.payload ?? {},
+    payload: autorExterno ? { ...payload, autor: autorExterno } : payload,
   };
 }
 

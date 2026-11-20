@@ -331,7 +331,8 @@ export const crmGetConversationHistory: McpToolDefinition<typeof historyInputSha
   name: "crm_get_conversation_history",
   description:
     "Carrega historico de mensagens de uma conversa. Use para dar contexto ao agente sem inflar o system prompt." +
-    " Cada mensagem traz `author` (cliente, ia, equipe ou sistema, com nome) e `channel`." +
+    " Cada mensagem traz `author` (cliente, ia, agente, equipe ou sistema, com nome) e `channel`." +
+    " `agente` é envio por token de API; `is_self`: foi este token." +
     " Em conversa de atendimento, devolve apenas o histórico da conversa do contato desta conversa.",
   inputSchema: historyInputShape,
   category: "read",
@@ -419,7 +420,7 @@ export const crmGetConversationHistory: McpToolDefinition<typeof historyInputSha
     const media = await resolverMidiasDoHistorico(result.messages, {
       comLink: !ctx.contatoDoTurno,
     });
-    // Quem escreveu cada uma (cliente, IA, equipe ou sistema), lido da própria
+    // Quem escreveu cada uma (cliente, IA, agente por token, equipe ou sistema), lido da própria
     // linha como o balão da caixa de entrada lê. Ver `autoria-do-historico.ts`.
     const autores = await autoresDoHistorico(ctx, result.messages);
     if (canal === undefined) {
