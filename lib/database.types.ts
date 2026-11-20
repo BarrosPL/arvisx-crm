@@ -13526,6 +13526,88 @@ export type Database = {
           },
         ];
       };
+      social_comments: {
+        Row: {
+          ad_id: string | null;
+          ad_title: string | null;
+          ao_vivo: boolean;
+          author_id: string | null;
+          author_username: string | null;
+          channel_session_id: string;
+          comment_id: string;
+          commented_at: string;
+          created_at: string;
+          estado: string;
+          id: string;
+          media_id: string | null;
+          media_product_type: string | null;
+          organization_id: string;
+          parent_comment_id: string | null;
+          private_reply: Json | null;
+          public_reply: Json | null;
+          text: string | null;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          ad_id?: string | null;
+          ad_title?: string | null;
+          ao_vivo?: boolean;
+          author_id?: string | null;
+          author_username?: string | null;
+          channel_session_id: string;
+          comment_id: string;
+          commented_at: string;
+          created_at?: string;
+          estado?: string;
+          id?: string;
+          media_id?: string | null;
+          media_product_type?: string | null;
+          organization_id: string;
+          parent_comment_id?: string | null;
+          private_reply?: Json | null;
+          public_reply?: Json | null;
+          text?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          ad_id?: string | null;
+          ad_title?: string | null;
+          ao_vivo?: boolean;
+          author_id?: string | null;
+          author_username?: string | null;
+          channel_session_id?: string;
+          comment_id?: string;
+          commented_at?: string;
+          created_at?: string;
+          estado?: string;
+          id?: string;
+          media_id?: string | null;
+          media_product_type?: string | null;
+          organization_id?: string;
+          parent_comment_id?: string | null;
+          private_reply?: Json | null;
+          public_reply?: Json | null;
+          text?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "social_comments_channel_session_id_fkey";
+            columns: ["channel_session_id"];
+            isOneToOne: false;
+            referencedRelation: "channel_sessions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "social_comments_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       storage_redaction_queue: {
         Row: {
           attempts: number;
