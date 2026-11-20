@@ -26,7 +26,10 @@ import { lerEquipeInstalada, travaDaEquipe, travasDeFalarComOCliente } from "./t
 
 const entrada = { organizationId: ORG, agentId: AGENTES.proposta, contactId: CONTATO, conversationId: CONVERSA };
 
-async function codigo(banco: ReturnType<typeof bancoPadrao>, mudancas: Partial<typeof entrada> = {}) {
+async function codigo(
+  banco: ReturnType<typeof bancoPadrao>,
+  mudancas: { agentId?: string | null; contactId?: string | null } = {},
+) {
   const { cliente } = dublarSupabase(banco);
   const r = await travasDeFalarComOCliente(cliente, { ...entrada, ...mudancas });
   return r.trava?.codigo ?? null;
@@ -129,7 +132,7 @@ describe("travasDeFalarComOCliente", () => {
   });
 
   it("sem canal: sem contato, sem conversa, ou com o canal desconectado", async () => {
-    expect(await codigo(bancoPadrao(), { contactId: null as never })).toBe("sem_canal");
+    expect(await codigo(bancoPadrao(), { contactId: null })).toBe("sem_canal");
     expect(await codigo(bancoPadrao({ conversations: [] }))).toBe("sem_canal");
     const desconectado = bancoPadrao();
     desconectado.channel_sessions![0]!.status = "STOPPED";

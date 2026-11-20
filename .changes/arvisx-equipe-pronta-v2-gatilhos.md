@@ -5,17 +5,17 @@ titulo: Equipe de IA pronta age sem o cliente escrever, e a proposta ganha o bot
 ---
 
 A Equipe de IA pronta (plano Premium) passa a agir em cinco momentos em que o
-cliente não escreveu nada. Quem já tem a equipe instalada precisa **instalar de
-novo** (IA › Equipe pronta) para os gatilhos serem criados.
+cliente não escreveu nada. Quem já tem a equipe instalada precisa
+**instalar de novo** (IA › Equipe pronta) para os gatilhos serem criados.
 
 - **Resposta ao lembrete da agenda** — a resposta da pessoa ao lembrete vai
   para o agente de Agendamento, que confirma ou remarca.
 - **Faltou ao compromisso** — a falta registrada inscreve a pessoa numa
   sequência do agente de Recuperação, que retoma e oferece um novo horário. O
   fluxo aparece em Follow-ups como "Equipe pronta · Faltou ao compromisso".
-- **Proposta aprovada** — a tela da proposta ganha o botão **Aprovar e deixar o
-  agente enviar** (para gestor). Aprovou, o agente de Propostas envia na hora e
-  o negócio vai para a etapa de proposta enviada. Editar o rascunho desfaz a
+- **Proposta aprovada** — a tela da proposta ganha, para gestor, o botão
+  **Aprovar e deixar o agente enviar**. Aprovou, o agente de Propostas envia na
+  hora e o negócio vai para a etapa de proposta enviada. Editar o rascunho desfaz a
   aprovação.
 - **Proposta parada** — o negócio que fica alguns dias na etapa de proposta
   enviada (5 por padrão) é retomado pelo agente de Recuperação. Aparece como a
