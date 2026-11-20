@@ -50,6 +50,9 @@ Código: `lib/channels/meta-social/` (login, webhook, envio, sessões, exclusão
      `messaging_postbacks`.
    - Objeto **Instagram** — mesma URL e token; assine `messages`,
      `messaging_postbacks`, `messaging_seen` e, se aparecer, `message_echoes`.
+     Para os **comentários** (desligados por padrão em toda conexão), assine
+     também `comments` e `live_comments` — ver
+     [`docs/integracao/comentarios-do-instagram.md`](../integracao/comentarios-do-instagram.md).
    - A assinatura por PÁGINA (`subscribed_apps`) é feita pelo CRM quando a
      empresa conecta; o dono não faz nada por página.
 4. **Login do Facebook**: cole a URI de redirecionamento exata (com `https`,
@@ -69,7 +72,13 @@ Código: `lib/channels/meta-social/` (login, webhook, envio, sessões, exclusão
 | `instagram_basic` | ler a conta profissional do Instagram ligada à página |
 | `instagram_manage_messages` | receber e responder as mensagens diretas do Instagram |
 | `business_management` | ver as páginas que a empresa administra pelo Gerenciador de Negócios |
+| `instagram_manage_comments` (opcional para conectar) | receber os comentários das publicações do Instagram; nas próximas entregas, responder |
+| `pages_read_engagement` (opcional para conectar) | exigida pela Meta, junto da anterior, para o webhook de comentários |
 | (opcional) **Human Agent** | responder até 7 dias depois da última mensagem do cliente; só depois de aprovada, ligar `META_HUMAN_AGENT_TAG=on` no `.env` |
+
+As duas de comentários são pedidas no login, mas quem não as concede conecta e
+atende mensagens do mesmo jeito: só os comentários ficam indisponíveis naquela
+conexão. Conexão feita antes delas continua funcionando sem reautorizar.
 
 Texto de uso (para cada permissão): "O Arvisx CRM é uma central de atendimento.
 A empresa cliente conecta a própria página e o Instagram profissional; as
