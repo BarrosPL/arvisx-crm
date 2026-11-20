@@ -3,10 +3,11 @@
 > **Para quem é:** quem administra a instalação (o passo no painel da Meta), quem
 > liga os comentários numa empresa e quem mantém o sistema de fora que recebe o
 > aviso `comment.received`.
-> **O que cobre:** as duas primeiras das três entregas — o comentário chega, é
-> guardado e um sistema externo é avisado (seções 1 a 8); e pode ser lido e
-> respondido pela API e pelo MCP (seções 9 a 14). A tela de comentários vem na
-> terceira entrega.
+> **O que cobre:** as três entregas — o comentário chega, é guardado e um
+> sistema externo é avisado (seções 1 a 8); pode ser lido e respondido pela API
+> e pelo MCP (seções 9 a 14); e a equipe vê o estado em Conexões, reautoriza e
+> responde pela tela de Comentários (seção 15).
+> **Mapa:** `docs/architecture/comentarios-do-instagram.architecture.json`.
 > **Fonte da verdade no código:** `lib/channels/meta-social/webhook.ts` (leitura),
 > `lib/channels/meta-social/comentarios.ts` (modo, gravação e aviso),
 > `lib/channels/meta-social/store.ts` (estado da conexão e troca de modo),
@@ -84,8 +85,8 @@ devolve, em cada conexão do Instagram:
 ```
 
 - `escopo_concedido`: a conexão tem as duas permissões. `false` também para
-  conexão feita antes desta versão — para liberar, a pessoa conecta de novo
-  (o botão "Reautorizar para comentários" vem com a tela);
+  conexão feita antes desta versão — para liberar, a pessoa usa o botão
+  "Reautorizar para comentários" do cartão do Instagram (seção 15);
 - `disponivel`: é do Instagram **e** tem as permissões.
 
 ## 4. O modo por conexão
@@ -105,8 +106,9 @@ POST /api/v1/channels/meta-social
 { "acao": "comentarios_modo", "channel_session_id": "<id da conexão>", "modo": "registrar" }
 ```
 
-Conectar de novo ou reautorizar **não muda o modo**. Enquanto não há tela, a
-troca é por esta chamada; a tela vem na terceira entrega.
+Conectar de novo ou reautorizar **não muda o modo**. Na tela, a troca fica no
+cartão do Instagram em Conexões › Facebook / Instagram (seção 15); a chamada
+acima é a mesma que o cartão faz.
 
 ## 5. O que é guardado
 
@@ -393,3 +395,85 @@ Lido em 20/11/2026.
 
 Em transmissão ao vivo o CRM não tem como saber se a transmissão ainda está no
 ar: a resposta privada é tentada, e a Meta recusa se ela já terminou.
+
+---
+
+## 15. A tela: Conexões, reautorização e Comentários
+
+### No cartão do Instagram (Conexões › Facebook / Instagram)
+
+Quem vê: administrador da empresa (a aba Conexões é dele).
+
+- **Estado dos comentários:** Desligado (`off`), Registrando (`registrar`) ou
+  Ativo (`real`), com uma frase dizendo o que cada um faz.
+- **Modo dos comentários:** o seletor troca o modo. Ir para Ativo pede
+  confirmação, porque a partir dali toda resposta é publicada de verdade.
+- **Aviso de permissão:** aparece quando `escopo_concedido` é `false`, junto do
+  botão **Reautorizar para comentários**.
+- **Ver comentários:** abre a tela de Comentários já filtrada por aquela conexão.
+
+O cartão do Messenger não tem nada disto: comentários só existem no Instagram.
+
+### Reautorizar para comentários
+
+É o mesmo login do Facebook, refeito (**CONFIRMADO** por teste):
+
+1. o botão leva à Meta, que pergunta de novo o que foi negado
+   (`auth_type=rerequest`);
+2. na volta, a página daquela conexão já vem marcada, só com as redes que a
+   empresa já tinha naquela página — reautorizar o Instagram não cria uma
+   conexão do Messenger de carona;
+3. ao confirmar, a conexão existente é **atualizada**: token novo e a lista de
+   permissões concedidas regravada. Ela não é apagada, as conversas ficam, e o
+   **modo dos comentários não muda**.
+
+Se a pessoa desmarcar de novo a permissão de comentários na Meta, a conexão
+continua atendendo mensagens e o aviso continua no cartão. Se a página da
+conexão não vier entre as autorizadas, a tela diz isso em vez de oferecer
+outra página.
+
+### A tela de Comentários
+
+Onde fica: `/app/inbox/comentarios`. **Não tem item de menu.** Chega-se por:
+
+- o atalho **Comentários do Instagram** no Inbox, acima dos filtros. Aparece
+  para gerente e administrador, e só quando a empresa tem a conexão direta com
+  a Meta;
+- o botão **Ver comentários** do cartão do Instagram.
+
+Quem pode usar: gerente e administrador — o mesmo papel das rotas (seção 9).
+Como a tela mora dentro do Inbox, ela acompanha o plano do Inbox.
+
+O que mostra, do mais recente: a conexão, quem comentou, o texto inteiro, a
+publicação (tipo e id), o anúncio quando há, o estado e as duas respostas.
+Filtros: conexão, estado e "só desta publicação".
+
+| Na tela | O que quer dizer |
+|---|---|
+| selo **Simulada** | a conexão estava em Registrando: a resposta ficou anotada e nada foi publicado |
+| selo **Publicada** | a rede confirmou a resposta |
+| selo **Incerta** | a rede não confirmou; a resposta pode ter saído. A tela não repete sozinha: só com "Conferi, enviar de novo", que avisa do risco de duplicar |
+| **Oculto (simulado)** | a ocultação foi só anotada (modo Registrando) |
+| estado **Sem ação** | alguém marcou em Ignorar; o motivo aparece embaixo |
+
+Os botões **Responder**, **Responder em privado**, **Ocultar** e **Ignorar**
+chamam as rotas da seção 10; a tela não tem regra própria. Quando o servidor
+recusa, a tela mostra a frase dele, em português ou em espanhol conforme o
+idioma da pessoa (um sistema externo, por token, recebe em português e decide
+pelo `code`). "Responder em privado" fica desligado depois dos 7 dias.
+
+**Limite conhecido:** a tela não abre a publicação no Instagram. A notificação
+da Meta traz só o id da publicação, e o endereço dela (`permalink`) não é
+guardado. O filtro "só desta publicação" junta os comentários da mesma
+publicação.
+
+### Como foi provado
+
+- Componentes: `components/connections/ConexaoDiretaMeta.test.tsx`,
+  `components/comentarios/ComentariosClient.test.tsx`,
+  `components/inbox/AtalhoDosComentarios.test.tsx`.
+- Idioma das recusas: `app/api/v1/social-comments/recusa-traduzida.test.ts`.
+- Pela tela, com a Graph simulada: `tests/e2e/comentarios-do-instagram.spec.ts`
+  (modo de registro, e modo real contra uma porta local que não responde, que
+  deixa a resposta incerta). **A CONFIRMAR:** a resposta aceita pela Meta nunca
+  foi exercitada pela tela; depende de conta real e do Acesso avançado.
