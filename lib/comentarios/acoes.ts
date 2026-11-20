@@ -65,6 +65,7 @@ import {
   lerRespostaPrivada,
   lerRespostaPublica,
   type AutorDaAcao,
+  type Comentario,
   type FiltrosDaLista,
   type Ocultacao,
   type RespostaPrivada,
@@ -114,33 +115,13 @@ interface Linha {
   updated_at: string;
 }
 
-/** O comentário como a API e o MCP o devolvem. */
-export interface Comentario {
-  id: string;
-  /** O id do comentário na rede. */
-  comment_id: string;
-  channel_session_id: string;
-  parent_comment_id: string | null;
-  media_id: string | null;
-  media_product_type: string | null;
-  ad_id: string | null;
-  ad_title: string | null;
-  ao_vivo: boolean;
-  author: { id: string | null; username: string | null };
-  /** O texto inteiro, sem corte. */
-  text: string | null;
-  commented_at: string;
-  /** Até quando a resposta privada é aceita pela rede. */
-  private_reply_deadline: string;
-  estado: EstadoDoComentario;
-  public_reply: RespostaPublica | null;
-  private_reply: RespostaPrivada | null;
-  hidden: Ocultacao | null;
-  ignore_reason: string | null;
-  contact_id: string | null;
-  created_at: string;
-  updated_at: string;
-}
+/**
+ * O comentário como a API e o MCP o devolvem. A forma mora em `./schemas`, o
+ * módulo que a tela já importa: pegá-la DESTE arquivo punha as ações de
+ * servidor inteiras (845 arquivos) no grafo de imports da tela, por um tipo.
+ * Sai daqui também para quem já a pegava deste arquivo.
+ */
+export type { Comentario };
 
 function apresentar(l: Linha): Comentario {
   return {

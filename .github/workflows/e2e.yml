@@ -1555,8 +1555,19 @@ jobs:
       # reprova se a spec e os passos ficarem em partes diferentes.
       # O relógio publicado em cada run separa preparo, suíte e total da parte.
       # Toda admissão exige medir a composição; teto de caso não é duração medida.
+      #
+      # `comentarios-do-instagram` mora AQUI por causa do ambiente, não do
+      # relógio: o caso de modo real dela depende de a Graph do canal
+      # (`META_GRAPH_BASE_URL`) apontar para a porta que recusa — o desvio que o
+      # passo "Isolar Graph e assinatura WAHA da parte causal" põe só nesta
+      # parte — e RECUSA rodar fora dele, para nunca falar com a Meta de verdade.
+      # Não posta no webhook do WAHA. ⚠️ Entrou SEM duração medida (a máquina de
+      # quem a escreveu não sobe a suíte): três casos, um login cada, teto de
+      # 120 s por caso. A primeira execução no CI é a medida; se a parte passar
+      # do orçamento, o que se move é a spec JUNTO com o passo de isolamento.
       SPECS_PARTE_8: >-
         meta-lead-submitted-causal.spec.ts
+        comentarios-do-instagram.spec.ts
         atendimento-conjunto.spec.ts
         autonomia-assistida.spec.ts
         encerramento-atendimento.spec.ts
