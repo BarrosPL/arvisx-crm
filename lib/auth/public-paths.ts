@@ -211,6 +211,18 @@ export const PUBLIC_PATHS: RegExp[] = [
   /^\/api\/v1\/ai\/routers\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
   /^\/api\/v1\/ai\/routers\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/members$/i,
   /^\/api\/v1\/ai\/routers\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/test$/i,
+  // COMENTÁRIOS DO INSTAGRAM SERVER-TO-SERVER (migration 9812). Mesma dualidade
+  // das linhas acima: sessão de gerente OU Bearer `dsk_…` tratado como gerente,
+  // resolvidos por `lib/api/auth-dual.ts` DENTRO de cada rota
+  // (`app/api/v1/social-comments/_borda.ts`), com a organização saindo da linha
+  // do token e nunca do caminho. Quem responde comentário por aqui é um agente
+  // externo, sem navegador.
+  //
+  // O id é FORMA DE UUID e as ações são os cinco nomes exatos, com âncora `$`:
+  // nenhum sub-caminho futuro nasce público de carona.
+  /^\/api\/v1\/social-comments$/,
+  /^\/api\/v1\/social-comments\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+  /^\/api\/v1\/social-comments\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/(reply|private-reply|hide|ignore|criar-contato)$/i,
   /^\/_next\//,
   /^\/favicon\.ico$/,
   // O ícone da aba (`app/icon.tsx`), que o `<head>` de TODA página pede —
