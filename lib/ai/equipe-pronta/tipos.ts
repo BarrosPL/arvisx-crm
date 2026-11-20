@@ -58,6 +58,13 @@ export interface PapelDaEquipe {
   toolIds: readonly string[];
   /** `true` = o agente leva a régua de follow-up da equipe (só o Recuperador). */
   usaReguaDeFollowup: boolean;
+  /**
+   * `true` = o agente abre CASO para a equipe (`open_human_case`, ferramenta do
+   * motor ligada por `cases_enabled` na versão): pede uma decisão, continua a
+   * conversa, e a resposta da equipe volta a ele. Só Propostas, para o pedido
+   * de desconto. Ausente = não abre.
+   */
+  abreCasoParaAEquipe?: boolean;
   /** Palavras que passam a conversa para uma pessoa, somadas às da empresa. */
   handoffKeywordsPadrao: readonly string[];
   intencao: IntencaoDoPapel;
@@ -97,6 +104,11 @@ export interface ContextoDaInstalacao {
   knowledgeSourceIds: readonly string[];
   /** O ponteiro do fluxo de follow-up do Recuperador. */
   reguaDeFollowupId: string | null;
+  /**
+   * Os fluxos dos gatilhos (faltou ao compromisso, proposta parada), que o
+   * Recuperador também arma (`gatilhos/fluxos.ts`). Ausente = nenhum.
+   */
+  fluxosDeGatilho?: readonly string[];
 }
 
 /** Os campos da versão do agente que a equipe pronta decide. */
@@ -108,4 +120,6 @@ export interface CamposDoAgente {
   pipeline_ids: string[];
   knowledge_source_ids: string[];
   proposal_ai_draft_enabled: boolean;
+  /** Liga as ferramentas de caso do motor (`open_human_case`). */
+  cases_enabled: boolean;
 }

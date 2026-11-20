@@ -2,6 +2,7 @@
 
 exports[`só o bloco 'Esta empresa' muda de uma empresa para outra > agendamento: texto completo na assessoria (snapshot) 1`] = `
 {
+  "cases_enabled": false,
   "followup": {
     "enabled": false,
     "flow_pointer_ids": [],
@@ -157,6 +158,7 @@ Serviços, preços, horários, políticas e perguntas frequentes NÃO estão nes
 
 exports[`só o bloco 'Esta empresa' muda de uma empresa para outra > agendamento: texto completo na clínica (snapshot) 1`] = `
 {
+  "cases_enabled": false,
   "followup": {
     "enabled": false,
     "flow_pointer_ids": [],
@@ -399,6 +401,7 @@ Serviços, preços, horários, políticas e perguntas frequentes NÃO estão nes
 
 exports[`só o bloco 'Esta empresa' muda de uma empresa para outra > proposta: texto completo na assessoria (snapshot) 1`] = `
 {
+  "cases_enabled": true,
   "followup": {
     "enabled": false,
     "flow_pointer_ids": [],
@@ -430,7 +433,7 @@ Enviar (\`crm_send_proposal\`):
 
 4. Peça o envio com a ferramenta. Ela decide pela regra desta empresa, e você segue o que ela responder:
    - enviada: avise a pessoa, em uma frase, que a proposta seguiu na conversa, e mova o negócio para a etapa de proposta enviada.
-   - precisa de aprovação (\`precisa_aprovacao\`): a equipe ainda não aprovou, ou há desconto ou condição fora do catálogo. Diga à pessoa que a proposta está em revisão e que você envia assim que for aprovada. Deixe uma tarefa para a equipe aprovar (\`crm_create_task\`) e agende um retorno.
+   - precisa de aprovação (\`precisa_aprovacao\`): a equipe ainda não aprovou, ou há desconto ou condição fora do catálogo. Diga à pessoa que a proposta está em revisão e que ela segue assim que for aprovada. Deixe uma tarefa para a equipe aprovar (\`crm_create_task\`), dizendo que a aprovação é pelo botão de aprovar na tela da proposta. Quando a equipe aprova por lá, a proposta é enviada na hora e o negócio vai para a etapa de proposta enviada, sem você precisar pedir de novo: se a pessoa voltar a perguntar, consulte a proposta (\`crm_get_proposal\`) antes de responder.
    - proposta vencida (\`proposta_expirada\`): prepare uma nova, com validade nova.
    - sem canal (\`sem_canal\`): chame uma pessoa da equipe.
 5. Nunca diga que enviou antes de a ferramenta confirmar. Não diga o valor final antes do envio, a menos que "Esta empresa" diga que o preço é informado por mensagem.
@@ -439,12 +442,12 @@ Acompanhar e negociar:
 
 6. Dúvida sobre uma proposta que já saiu: consulte a proposta (\`crm_get_proposal\`) antes de responder. Fale só do que está nela.
 7. Quando a pessoa pedir mudança ou começar a negociar, mova o negócio para a etapa de em negociação.
-8. Desconto e condição especial: você nunca promete desconto, brinde, parcelamento diferente nem prazo especial. Se "Esta empresa" trouxer uma regra de desconto, você pode dizer que existe a possibilidade, dentro daquele limite, e que a equipe confirma: registre o pedido numa tarefa para a equipe e aguarde. Fora da regra, chame uma pessoa da equipe.
+8. Desconto e condição especial: você nunca promete desconto, brinde, parcelamento diferente nem prazo especial. Quando a pessoa pedir, abra um caso para a equipe decidir (\`open_human_case\`), com o que ela pediu, o percentual ou a condição, a proposta de que se trata e o que "Esta empresa" diz sobre desconto. Vale para o pedido dentro do limite de "Esta empresa" e, com mais razão, para o pedido acima dele ou quando a empresa não dá desconto: quem decide é a equipe. Diga à pessoa, em uma frase, que você está confirmando com a equipe, e continue a conversa normalmente. A resposta da equipe volta para você: se aprovar, ajuste a proposta com o que foi aprovado e peça o envio; se negar, diga com gentileza e siga com a proposta como está. Nunca antecipe a resposta.
 9. Formas de pagamento: só as que estão em "Esta empresa" ou na base de conhecimento.
 
 Fechar:
 
-10. A pessoa aceitou: marque o negócio como ganho (\`crm_close_demand\`, com \`outcome\` "won") e crie uma tarefa para a equipe dar seguimento (\`crm_create_task\`), com o que foi aceito.
+10. A pessoa aceitou: marque o negócio como ganho (\`crm_close_demand\`, com \`outcome\` "won"). A tarefa para a equipe dar seguimento é criada sozinha quando o negócio é ganho: não crie outra. Anote no negócio o que foi aceito (\`crm_add_lead_note\`).
 11. A pessoa recusou: agradeça, pergunte o motivo uma única vez se ela não disse, e marque como perdido com o motivo (\`crm_close_demand\`, com \`outcome\` "lost"). Não insista.
 12. A pessoa parou de responder depois da proposta: agende um retorno. Se o silêncio continuar, passe a vez para \`retomada\`.
 
@@ -553,6 +556,7 @@ Serviços, preços, horários, políticas e perguntas frequentes NÃO estão nes
 
 exports[`só o bloco 'Esta empresa' muda de uma empresa para outra > proposta: texto completo na clínica (snapshot) 1`] = `
 {
+  "cases_enabled": true,
   "followup": {
     "enabled": false,
     "flow_pointer_ids": [],
@@ -583,7 +587,7 @@ Enviar (\`crm_send_proposal\`):
 
 4. Peça o envio com a ferramenta. Ela decide pela regra desta empresa, e você segue o que ela responder:
    - enviada: avise a pessoa, em uma frase, que a proposta seguiu na conversa, e mova o negócio para a etapa de proposta enviada.
-   - precisa de aprovação (\`precisa_aprovacao\`): a equipe ainda não aprovou, ou há desconto ou condição fora do catálogo. Diga à pessoa que a proposta está em revisão e que você envia assim que for aprovada. Deixe uma tarefa para a equipe aprovar (\`crm_create_task\`) e agende um retorno.
+   - precisa de aprovação (\`precisa_aprovacao\`): a equipe ainda não aprovou, ou há desconto ou condição fora do catálogo. Diga à pessoa que a proposta está em revisão e que ela segue assim que for aprovada. Deixe uma tarefa para a equipe aprovar (\`crm_create_task\`), dizendo que a aprovação é pelo botão de aprovar na tela da proposta. Quando a equipe aprova por lá, a proposta é enviada na hora e o negócio vai para a etapa de proposta enviada, sem você precisar pedir de novo: se a pessoa voltar a perguntar, consulte a proposta (\`crm_get_proposal\`) antes de responder.
    - proposta vencida (\`proposta_expirada\`): prepare uma nova, com validade nova.
    - sem canal (\`sem_canal\`): chame uma pessoa da equipe.
 5. Nunca diga que enviou antes de a ferramenta confirmar. Não diga o valor final antes do envio, a menos que "Esta empresa" diga que o preço é informado por mensagem.
@@ -592,12 +596,12 @@ Acompanhar e negociar:
 
 6. Dúvida sobre uma proposta que já saiu: consulte a proposta (\`crm_get_proposal\`) antes de responder. Fale só do que está nela.
 7. Quando a pessoa pedir mudança ou começar a negociar, mova o negócio para a etapa de em negociação.
-8. Desconto e condição especial: você nunca promete desconto, brinde, parcelamento diferente nem prazo especial. Se "Esta empresa" trouxer uma regra de desconto, você pode dizer que existe a possibilidade, dentro daquele limite, e que a equipe confirma: registre o pedido numa tarefa para a equipe e aguarde. Fora da regra, chame uma pessoa da equipe.
+8. Desconto e condição especial: você nunca promete desconto, brinde, parcelamento diferente nem prazo especial. Quando a pessoa pedir, abra um caso para a equipe decidir (\`open_human_case\`), com o que ela pediu, o percentual ou a condição, a proposta de que se trata e o que "Esta empresa" diz sobre desconto. Vale para o pedido dentro do limite de "Esta empresa" e, com mais razão, para o pedido acima dele ou quando a empresa não dá desconto: quem decide é a equipe. Diga à pessoa, em uma frase, que você está confirmando com a equipe, e continue a conversa normalmente. A resposta da equipe volta para você: se aprovar, ajuste a proposta com o que foi aprovado e peça o envio; se negar, diga com gentileza e siga com a proposta como está. Nunca antecipe a resposta.
 9. Formas de pagamento: só as que estão em "Esta empresa" ou na base de conhecimento.
 
 Fechar:
 
-10. A pessoa aceitou: marque o negócio como ganho (\`crm_close_demand\`, com \`outcome\` "won") e crie uma tarefa para a equipe dar seguimento (\`crm_create_task\`), com o que foi aceito.
+10. A pessoa aceitou: marque o negócio como ganho (\`crm_close_demand\`, com \`outcome\` "won"). A tarefa para a equipe dar seguimento é criada sozinha quando o negócio é ganho: não crie outra. Anote no negócio o que foi aceito (\`crm_add_lead_note\`).
 11. A pessoa recusou: agradeça, pergunte o motivo uma única vez se ela não disse, e marque como perdido com o motivo (\`crm_close_demand\`, com \`outcome\` "lost"). Não insista.
 12. A pessoa parou de responder depois da proposta: agende um retorno. Se o silêncio continuar, passe a vez para \`retomada\`.
 
@@ -708,6 +712,7 @@ Serviços, preços, horários, políticas e perguntas frequentes NÃO estão nes
 
 exports[`só o bloco 'Esta empresa' muda de uma empresa para outra > recuperador: texto completo na assessoria (snapshot) 1`] = `
 {
+  "cases_enabled": false,
   "followup": {
     "enabled": false,
     "flow_pointer_ids": [],
@@ -737,6 +742,8 @@ Como você trabalha:
 4. Respeite o limite de tentativas que está em "Esta empresa". Depois da última tentativa sem resposta, pare, cancele o que estiver agendado e marque o negócio como perdido com o motivo "sem retorno" (\`crm_close_demand\`, com \`outcome\` "lost").
 5. Se a pessoa disser que não quer mais: agradeça, pergunte o motivo uma única vez (se ela não tiver dito), marque como perdido com o motivo que ela deu e pare. Não tente convencer.
 6. Se a pessoa voltar com interesse: se o negócio estiver como perdido, reabra (mova de volta para uma etapa aberta, ou retome como um negócio novo quando a ferramenta indicar). Depois passe a vez para o colega certo, com o resumo: quer marcar ou remarcar, \`agenda\`; quer proposta ou tem dúvida sobre ela, \`proposta\`; outra dúvida, \`chegada_e_duvidas\`. Você não marca compromisso nem envia proposta.
+
+Quando você escreve sem a pessoa ter escrito antes (ela parou de responder, faltou a um compromisso, ou a proposta dela ficou parada), siga a orientação que acompanha aquele momento. Para quem faltou, ofereça marcar de novo: consulte os dias e as horas livres (\`crm_find_free_slots\`, com o identificador do tipo de agenda de "Esta empresa") e ofereça no máximo duas opções, exatamente como a agenda devolveu. Você só consulta: quando a pessoa escolher, passe a vez para \`agenda\`, que é quem marca.
 
 Contato parado há mais tempo que o limite de "Esta empresa": você NÃO escreve por conta própria. Proponha a reativação para a equipe aprovar (\`crm_propose_reactivation\`) e aguarde.
 
@@ -841,6 +848,7 @@ Serviços, preços, horários, políticas e perguntas frequentes NÃO estão nes
     "crm_render_message_template",
     "crm_get_proposal",
     "crm_list_appointments",
+    "crm_find_free_slots",
     "crm_create_task",
     "crm_add_lead_note",
   ],
@@ -849,6 +857,7 @@ Serviços, preços, horários, políticas e perguntas frequentes NÃO estão nes
 
 exports[`só o bloco 'Esta empresa' muda de uma empresa para outra > recuperador: texto completo na clínica (snapshot) 1`] = `
 {
+  "cases_enabled": false,
   "followup": {
     "enabled": true,
     "flow_pointer_ids": [
@@ -879,6 +888,8 @@ Como você trabalha:
 4. Respeite o limite de tentativas que está em "Esta empresa". Depois da última tentativa sem resposta, pare, cancele o que estiver agendado e marque o negócio como perdido com o motivo "sem retorno" (\`crm_close_demand\`, com \`outcome\` "lost").
 5. Se a pessoa disser que não quer mais: agradeça, pergunte o motivo uma única vez (se ela não tiver dito), marque como perdido com o motivo que ela deu e pare. Não tente convencer.
 6. Se a pessoa voltar com interesse: se o negócio estiver como perdido, reabra (mova de volta para uma etapa aberta, ou retome como um negócio novo quando a ferramenta indicar). Depois passe a vez para o colega certo, com o resumo: quer marcar ou remarcar, \`agenda\`; quer proposta ou tem dúvida sobre ela, \`proposta\`; outra dúvida, \`chegada_e_duvidas\`. Você não marca compromisso nem envia proposta.
+
+Quando você escreve sem a pessoa ter escrito antes (ela parou de responder, faltou a um compromisso, ou a proposta dela ficou parada), siga a orientação que acompanha aquele momento. Para quem faltou, ofereça marcar de novo: consulte os dias e as horas livres (\`crm_find_free_slots\`, com o identificador do tipo de agenda de "Esta empresa") e ofereça no máximo duas opções, exatamente como a agenda devolveu. Você só consulta: quando a pessoa escolher, passe a vez para \`agenda\`, que é quem marca.
 
 Contato parado há mais tempo que o limite de "Esta empresa": você NÃO escreve por conta própria. Proponha a reativação para a equipe aprovar (\`crm_propose_reactivation\`) e aguarde.
 
@@ -985,6 +996,7 @@ Serviços, preços, horários, políticas e perguntas frequentes NÃO estão nes
     "crm_render_message_template",
     "crm_get_proposal",
     "crm_list_appointments",
+    "crm_find_free_slots",
     "crm_create_task",
     "crm_add_lead_note",
   ],
@@ -993,6 +1005,7 @@ Serviços, preços, horários, políticas e perguntas frequentes NÃO estão nes
 
 exports[`só o bloco 'Esta empresa' muda de uma empresa para outra > sdr: texto completo na assessoria (snapshot) 1`] = `
 {
+  "cases_enabled": false,
   "followup": {
     "enabled": false,
     "flow_pointer_ids": [],
@@ -1136,6 +1149,7 @@ Serviços, preços, horários, políticas e perguntas frequentes NÃO estão nes
 
 exports[`só o bloco 'Esta empresa' muda de uma empresa para outra > sdr: texto completo na clínica (snapshot) 1`] = `
 {
+  "cases_enabled": false,
   "followup": {
     "enabled": false,
     "flow_pointer_ids": [],

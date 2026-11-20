@@ -255,6 +255,19 @@ describe("o motor: follow-up", () => {
     expect(await reguaDaEquipeForaDoPlano(admin({ instalacao, plano: PLANO_PREMIUM }), "org", "regua-da-equipe")).toBe(false);
   });
 
+  it("⭐ os fluxos dos GATILHOS (faltou ao compromisso, proposta parada) também param fora do Premium", async () => {
+    const instalacao = {
+      followup_flow_pointer_id: "regua-da-equipe",
+      gatilhos: { fluxo_de_falta_id: "fluxo-de-falta", fluxo_de_proposta_parada_id: "fluxo-de-proposta" },
+    };
+    const standard = admin({ instalacao, plano: PLANO_STANDARD });
+    for (const fluxo of ["regua-da-equipe", "fluxo-de-falta", "fluxo-de-proposta"]) {
+      expect(await reguaDaEquipeForaDoPlano(standard, "org", fluxo), fluxo).toBe(true);
+      expect(await reguaDaEquipeForaDoPlano(admin({ instalacao, plano: PLANO_PREMIUM }), "org", fluxo), fluxo).toBe(false);
+    }
+    expect(await reguaDaEquipeForaDoPlano(standard, "org", "fluxo-do-cliente")).toBe(false);
+  });
+
   it("empresa sem equipe pronta, ou leitura que falha: nada é adiado", async () => {
     expect(await reguaDaEquipeForaDoPlano(admin({ plano: PLANO_STANDARD }), "org", "x")).toBe(false);
     expect(await reguaDaEquipeForaDoPlano(admin({ plano: PLANO_STANDARD, erroNaLeitura: true }), "org", "x")).toBe(false);

@@ -312,6 +312,7 @@ export async function lerEstadoDaEquipe(
       etapas_criadas: [],
       tipos_de_agenda_desativados: [],
       agentes: {},
+      gatilhos: { fluxo_de_falta_id: null, fluxo_de_proposta_parada_id: null, regra_de_proposta_parada_id: null },
       roteador_confirmado: null,
       pausa: null,
     };

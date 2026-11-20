@@ -289,6 +289,29 @@ describe("versão 2: o que cada papel passou a fazer", () => {
     }
   });
 
+  it("gatilhos: a Recuperação só LÊ os horários livres, para oferecer um novo a quem faltou", () => {
+    expect(ferramentas("recuperador")).toContain("crm_find_free_slots");
+    expect(catalogEntry("crm_find_free_slots")).toBeDefined();
+    expect(allTools.find((t) => t.name === "crm_find_free_slots")?.category).toBe("read");
+    const texto = papelPorId("recuperador")!.prompt;
+    expect(texto).toContain("passe a vez para `agenda`");
+  });
+
+  it("gatilhos: o pedido de desconto vira caso para a equipe, e só Propostas abre caso", () => {
+    expect(PAPEIS.filter((p) => p.abreCasoParaAEquipe === true).map((p) => p.id)).toEqual(["proposta"]);
+    const texto = papelPorId("proposta")!.prompt;
+    expect(texto).toContain("`open_human_case`");
+    expect(texto).toContain("A resposta da equipe volta para você");
+    // Quem decide o desconto é a equipe: o texto não manda mais "registrar numa tarefa e aguardar".
+    expect(texto).not.toContain("registre o pedido numa tarefa");
+  });
+
+  it("gatilhos: a tarefa de seguimento do ganho é do sistema; Propostas não cria a segunda", () => {
+    const texto = papelPorId("proposta")!.prompt;
+    expect(texto).toContain("é criada sozinha quando o negócio é ganho");
+    expect(texto).not.toContain("crie uma tarefa para a equipe dar seguimento");
+  });
+
   it("só quem cuida da proposta envia proposta; ninguém manda mensagem solta por ferramenta", () => {
     expect(PAPEIS.filter((p) => p.toolIds.includes("crm_send_proposal")).map((p) => p.id)).toEqual(["proposta"]);
     for (const p of PAPEIS) expect(p.toolIds, p.id).not.toContain("crm_send_whatsapp_message");
