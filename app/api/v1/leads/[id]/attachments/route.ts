@@ -6,9 +6,15 @@ import { requireSupportWrite } from "@/lib/impersonate/support";
 import { fail, ok } from "@/lib/api/wrappers";
 import { requireRole } from "@/lib/auth/require-role";
 import { audit } from "@/lib/audit";
-import { settingsDoFunil } from "@/lib/leads/campos-exigidos";
-import { emitLeadActivity } from "@/lib/leads/activity-emitter";
-import { camposDoFunil, escopoDoCampo } from "@/lib/leads/campos-do-funil";
+import {
+  BUCKET_DOS_ANEXOS,
+  COLUNAS_DO_ANEXO,
+  campoDeArquivoDoNegocio,
+  gravarAnexoDoNegocio,
+  listarAnexosDoNegocio,
+  recusaDoArquivo,
+  serializarAnexo,
+} from "@/lib/leads/anexos-do-negocio";
 import { customFieldSchema } from "@/lib/schemas/settings";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -18,31 +24,19 @@ import { isLeadAttachmentPathOwnedBy } from "@/lib/messaging/media/upload-valida
 
 export const dynamic = "force-dynamic";
 
-const BUCKET = "internal-media";
-const MAX_BYTES = 50 * 1024 * 1024; // 50 MB
-
-const ALLOWED_MIMES = new Set([
-  "application/pdf",
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-  "image/jpg",
-]);
+/**
+ * Formatos, tamanho, caminho no Storage e a gravação moram em
+ * `lib/leads/anexos-do-negocio.ts`: a ferramenta do agente
+ * (`lib/mcp/tools/anexos-do-negocio.ts`) anexa pela MESMA função, porque o token
+ * de API não entra nesta rota.
+ */
+const BUCKET = BUCKET_DOS_ANEXOS;
 
 interface RouteCtx {
   params: Promise<{ id: string }>;
 }
 
-export interface LeadAttachment {
-  id: string;
-  name: string;
-  path: string;
-  size: number;
-  type: string;
-  url: string;
-  created_at?: string;
-  uploaded_at?: string;
-}
+export type { LeadAttachment } from "@/lib/leads/anexos-do-negocio";
 
 // A MESMA régua da chave que o funil aceita ao cadastrar o campo: a chave entra
 // no caminho do objeto no Storage.
@@ -54,30 +48,6 @@ const DeleteSchema = z.object({
   field_key: z.string().trim().min(1, "field_key é obrigatório."),
   attachment_id: z.string().uuid("attachment_id inválido."),
 });
-
-function sanitizeFileName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9._-]/g, "_");
-}
-
-function serializarAnexo(row: {
-  id: string;
-  file_name: string;
-  storage_path: string;
-  file_size: number | string;
-  mime_type: string;
-  created_at: string;
-}, leadId: string): LeadAttachment {
-  return {
-    id: row.id,
-    name: row.file_name,
-    path: row.storage_path,
-    size: Number(row.file_size) || 0,
-    type: row.mime_type,
-    url: `/api/v1/leads/${leadId}/attachments/${row.id}/media`,
-    created_at: row.created_at,
-    uploaded_at: row.created_at,
-  };
-}
 
 export async function GET(req: NextRequest, ctx: RouteCtx): Promise<Response> {
   const requestId = randomUUID();
@@ -107,24 +77,13 @@ export async function GET(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     return fail("not_found", t("Lead não encontrado."), 404, { requestId });
   }
 
-  let query = supabase
-    .from("crm_lead_attachments")
-    .select("id, file_name, storage_path, file_size, mime_type, created_at")
-    .eq("lead_id", leadId)
-    .eq("organization_id", orgId)
-    .order("created_at", { ascending: true });
-
-  if (fieldKey) {
-    query = query.eq("field_key", fieldKey);
-  }
-
-  const { data: rows, error: rowsErr } = await query;
-  if (rowsErr) {
-    logger.error("[leads/attachments] erro ao listar anexos", { error: rowsErr.message, requestId });
+  const lista = await listarAnexosDoNegocio(supabase, orgId, leadId, fieldKey);
+  if (!lista.ok) {
+    logger.error("[leads/attachments] erro ao listar anexos", { error: lista.erro, requestId });
     return fail("internal_error", t("Falha ao buscar anexos."), 500, { requestId });
   }
 
-  const files = (rows ?? []).map((r) => serializarAnexo(r, leadId));
+  const files = lista.linhas.map((r) => serializarAnexo(r, leadId));
   return ok({ files }, { requestId });
 }
 
@@ -160,11 +119,11 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     return fail("validation_failed", t("Arquivo não informado."), 422, { requestId });
   }
 
-  if (file.size > MAX_BYTES) {
+  const recusa = recusaDoArquivo({ tipo: file.type, tamanho: file.size });
+  if (recusa === "grande_demais") {
     return fail("payload_too_large", t("O arquivo excede o limite de 50 MB."), 413, { requestId });
   }
-
-  if (!ALLOWED_MIMES.has(file.type.toLowerCase())) {
+  if (recusa === "tipo_nao_aceito") {
     return fail("unsupported_media_type", t("Formato inválido. Envie PDF ou imagem (PNG, JPG, WebP)."), 415, {
       requestId,
       details: { mime: file.type },
@@ -184,95 +143,45 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
   }
 
   // Só se anexa a um campo `file` do NEGÓCIO que o funil deste lead declara.
-  const settings = await settingsDoFunil(supabase, lead.pipeline_id);
-  const campo = camposDoFunil(settings as Record<string, unknown> | null).find(
-    (c) => c.key === fieldKey,
-  );
-  if (!campo || campo.type !== "file" || escopoDoCampo(campo) !== "negocio") {
+  const campo = await campoDeArquivoDoNegocio(supabase, lead.pipeline_id, fieldKey);
+  if (!campo) {
     return fail("validation_failed", t("Este funil não tem um campo de arquivo com essa chave."), 422, {
       requestId,
     });
   }
 
-  const safeName = sanitizeFileName(file.name);
-  const attachmentId = randomUUID();
-  const ext = safeName.includes(".") ? safeName.split(".").pop() : "bin";
   // `lead.id` (do banco), não o parâmetro da URL: o banco confere o caminho
   // contra `lead_id::text`, sempre minúsculo.
-  const storagePath = `${orgId}/leads/${lead.id}/${fieldKey}/${attachmentId}.${ext}`;
-
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const admin = createAdminClient();
-
-  const { error: uploadError } = await admin.storage
-    .from(BUCKET)
-    .upload(storagePath, bytes, { contentType: file.type, upsert: false });
-
-  if (uploadError) {
-    logger.error("[leads/attachments] upload falhou", { detalhe: uploadError.message, requestId });
-    return fail("internal_error", t("Falha ao salvar arquivo no armazenamento."), 500, { requestId });
-  }
-
-  // Grava na tabela crm_lead_attachments
-  const { data: inserted, error: insertError } = await supabase
-    .from("crm_lead_attachments")
-    .insert({
-      id: attachmentId,
-      organization_id: orgId,
-      lead_id: leadId,
-      field_key: fieldKey,
-      file_name: file.name,
-      file_size: file.size,
-      mime_type: file.type,
-      storage_path: storagePath,
-      created_by: authz.user.id,
-    })
-    .select("id, file_name, storage_path, file_size, mime_type, created_at")
-    .single();
-
-  if (insertError || !inserted) {
-    logger.error("[leads/attachments] insert falhou", { detalhe: insertError?.message, requestId });
-    // Tenta limpar o arquivo enviado para não deixar lixo no Storage
-    await admin.storage.from(BUCKET).remove([storagePath]).catch(() => null);
-    return fail("internal_error", t("Falha ao registrar anexo no banco de dados."), 500, { requestId });
-  }
-
-  await audit({
-    action: "lead.attachment_uploaded",
-    resourceType: "crm_leads",
-    resourceId: leadId,
-    metadata: {
-      attachment_id: attachmentId,
-      field_key: fieldKey,
-      file_name: file.name,
-      file_size: file.size,
-      mime_type: file.type,
+  const gravacao = await gravarAnexoDoNegocio({
+    supabase,
+    admin: createAdminClient(),
+    organizationId: orgId,
+    leadId: lead.id,
+    campo,
+    arquivo: {
+      nome: file.name,
+      tipo: file.type,
+      tamanho: file.size,
+      bytes: new Uint8Array(await file.arrayBuffer()),
     },
-    requestId,
+    criadoPor: authz.user.id,
+    ator: { type: "user", id: authz.user.id },
+    auditoria: { actorUserId: authz.user.id, requestId },
   });
 
-  // A LINHA DO TEMPO (#3316): sem ela, o documento existe no card e some da
-  // história do negócio — quem abre o card uma semana depois não vê quando o
-  // voucher chegou nem que arquivo sustenta a proposta que a IA leu dele.
-  // Fire-and-forget como todo emissor: a timeline não derruba o upload que ela
-  // descreve. O payload é NOME e TIPO do arquivo — nunca o conteúdo.
-  void emitLeadActivity(supabase, {
-    organizationId: orgId,
-    leadId,
-    type: "document_attached",
-    sourceModule: "leads/attachments",
-    sourceId: attachmentId,
-    actor: { type: "user", id: authz.user.id },
-    reason: `Documento anexado ao campo ${campo.label ?? fieldKey}`,
-    payload: { field_key: fieldKey, file_name: file.name, mime_type: file.type },
-  }).catch(() => null);
+  if (!gravacao.ok) {
+    return gravacao.recusa === "falha_no_armazenamento"
+      ? fail("internal_error", t("Falha ao salvar arquivo no armazenamento."), 500, { requestId })
+      : fail("internal_error", t("Falha ao registrar anexo no banco de dados."), 500, { requestId });
+  }
+  const inserted = gravacao.anexo;
 
   const attachment = serializarAnexo(inserted, leadId);
 
   // Busca todos os arquivos deste campo para devolver a lista atualizada
   const { data: allRows } = await supabase
     .from("crm_lead_attachments")
-    .select("id, file_name, storage_path, file_size, mime_type, created_at")
+    .select(COLUNAS_DO_ANEXO)
     .eq("lead_id", leadId)
     .eq("organization_id", orgId)
     .eq("field_key", fieldKey)
@@ -377,7 +286,7 @@ export async function DELETE(req: NextRequest, ctx: RouteCtx): Promise<Response>
   // Retorna a lista restante
   const { data: remainingRows } = await supabase
     .from("crm_lead_attachments")
-    .select("id, file_name, storage_path, file_size, mime_type, created_at")
+    .select(COLUNAS_DO_ANEXO)
     .eq("lead_id", leadId)
     .eq("organization_id", orgId)
     .eq("field_key", fieldKey)
