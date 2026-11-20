@@ -132,6 +132,9 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "crm_set_next_action": { tokens: 233, motivo: SUPERFICIE_DE_AGENTE },
   "crm_get_proposal": { tokens: 338, motivo: "capacidade nova (superfície de agente, PR 2): o agente consulta status, validade, itens, valor e link do PDF de uma proposta; a descrição lista os status porque o modelo os recebe como estão no banco" },
   "crm_list_lead_events": { tokens: 463, motivo: "capacidade nova (ajustes, AJ-2): a linha do tempo de um negócio ou de um funil por MCP, com filtro de período, tipo e autor. A descrição diz o que não entra (mensagem) e que a página pode vir menor que o limite, porque o modelo pararia de paginar numa página curta" },
+  "crm_find_duplicate_contacts": { tokens: 201, motivo: "capacidade nova (ajustes, AJ-3): os grupos de contatos que parecem a mesma pessoa. A descrição diz que `nome_parecido` é sugestão e não prova, porque é o motivo que junta gente diferente" },
+  "crm_merge_contacts": { tokens: 380, motivo: "capacidade nova (ajustes, AJ-3), só para token tratado como gerente: nunca é montada no turno do agente do CRM (`apenasHumano`), então não pesa no atendimento. Dois ids com `.uuid()` de propósito: id malformado tem de ser recusado antes de chegar à função do banco" },
+  "crm_undo_contact_merge": { tokens: 387, motivo: "capacidade nova (ajustes, AJ-3), o desfazer da junção: mesma condição da `crm_merge_contacts` (gerente, fora do turno). A descrição diz que junção feita pela tela não é desfeita, para o agente não tentar" },
   "get_lead_context": { tokens: 46, motivo: BASE },
   "send_message": { tokens: 137, motivo: BASE },
   "update_lead_state": { tokens: 240, motivo: BASE },
@@ -147,7 +150,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "schedule_followup (com negócio)": { tokens: 314, motivo: BASE },
 };
 
-const TETO_TOTAL = 33792;
+const TETO_TOTAL = 34760;
 
 const VARIANTE = "schedule_followup (com negócio)";
 

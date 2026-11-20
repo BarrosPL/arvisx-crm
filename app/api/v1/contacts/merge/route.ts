@@ -24,57 +24,11 @@ import { ApiError } from "@/lib/api/types";
 import { ok, fail } from "@/lib/api/wrappers";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
+import { desfechoDaFusao, type ResultadoDaFusao } from "@/lib/contacts/fusao-de-contatos";
 import { contactsMergeSchema, validateRequest } from "@/lib/schemas";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-
-/**
- * O que a função levanta ↔ o que o operador precisa ler.
- *
- * `message` do `raise` chega em `error.message`; o código SQLSTATE chega em
- * `error.code`. Casar pela MENSAGEM (e não pelo código) é de propósito: três
- * desfechos distintos compartilham o `22023`/`P0002`, e é a mensagem que os
- * separa. Sem este mapa, todo desfecho previsto viraria 500 — e um 500 diz ao
- * operador "o sistema quebrou" quando o que houve foi "esse contato não serve".
- */
-const DESFECHOS: Record<string, { code: string; status: number; message: string }> = {
-  insufficient_role: {
-    code: "forbidden_role",
-    status: 403,
-    message: "Juntar contatos exige papel de gerente ou acima.",
-  },
-  selecao_de_mesclagem_invalida: {
-    code: "validation_failed",
-    status: 422,
-    message: "Seleção inválida: escolha um contato principal e ao menos um a ser absorvido.",
-  },
-  secundario_repetido: {
-    code: "validation_failed",
-    status: 422,
-    message: "O mesmo contato aparece duas vezes na seleção.",
-  },
-  contato_principal_indisponivel: {
-    code: "not_found",
-    status: 404,
-    message:
-      "O contato principal não está disponível — ele pode ter sido anonimizado ou já mesclado em outro.",
-  },
-  contato_secundario_indisponivel: {
-    code: "not_found",
-    status: 404,
-    message:
-      "Um dos contatos selecionados não está disponível — ele pode ter sido anonimizado ou já mesclado em outro.",
-  },
-};
-
-interface ResultadoDaFusao {
-  contato_id: string;
-  contatos_mesclados: string[];
-  repontado: Record<string, number>;
-  nao_repontado: Record<string, number>;
-  atividades_emitidas: number;
-}
 
 export async function POST(req: NextRequest): Promise<Response> {
   const supportDenied = await requireSupportWrite();
@@ -107,16 +61,9 @@ export async function POST(req: NextRequest): Promise<Response> {
   });
 
   if (error) {
-    // Casamento por CONTINÊNCIA, não por igualdade. O `message` que o PostgREST
-    // devolve é o do `raise`, mas isso é contrato de uma camada que não é nossa:
-    // basta ele passar a decorar a linha ("...: insufficient_role") para a
-    // igualdade parar de casar — e o modo de falha seria 500 em TODO desfecho
-    // previsto, ou seja, o operador lendo "o sistema quebrou" quando o que houve
-    // foi "esse contato não serve". A continência sobrevive à decoração; os seis
-    // rótulos não são prefixo um do outro, então não há ambiguidade.
-    const bruto = error.message ?? "";
-    const chave = Object.keys(DESFECHOS).find((k) => bruto.includes(k));
-    const previsto = chave ? DESFECHOS[chave] : undefined;
+    // O mapa do que a função levanta para o que o operador lê mora em
+    // `lib/contacts/fusao-de-contatos.ts`, que a ferramenta do agente também usa.
+    const previsto = desfechoDaFusao(error.message);
     if (previsto) {
       return fail(previsto.code, previsto.message, previsto.status, { requestId });
     }

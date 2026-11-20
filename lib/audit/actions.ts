@@ -70,6 +70,9 @@ export const AUDIT_ACTIONS = [
   "contact.anonymized",
   "contact.merge_pending",
   "contact.merged",
+  // A junção feita por agente (`crm_merge_contacts`) guarda o que juntou
+  // (`fusoes_de_contatos`, migration 9813); esta é a volta, com o mesmo registro.
+  "contact.merge_undone",
   "contact.aniversario_emitido",
   /**
    * A varredura de data do funil (#989) emitiu o aviso de "faltam N dias". A
