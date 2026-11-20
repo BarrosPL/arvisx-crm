@@ -44,6 +44,15 @@
  *      outcome reclassificado honestamente ('fallback'/'no_match'). Se o
  *      PRÓPRIO fallback também não tiver versão publicada, config:null é o
  *      fim legítimo da linha — outcome permanece o que já descrevia a causa.
+ *   8. passagem entre colegas (`passar_para_colega`, `passagem-entre-colegas.ts`):
+ *      o agente que recebeu a vez fica fixado na conversa ATÉ O ASSUNTO MUDAR.
+ *      Enquanto a passagem vale (ela aponta para o agente fixado), a regra 2
+ *      ganha dois ajustes: a aderência vale mesmo com `router.sticky` desligado,
+ *      e a intenção de ORIGEM (a do colega que passou a vez) conta como o mesmo
+ *      assunto. Sem o segundo ajuste a passagem se desfazia na mensagem
+ *      seguinte: o classificador voltaria a apontar o assunto de antes, com
+ *      confiança, e a regra 2 devolveria a conversa a quem acabou de passá-la.
+ *      Só uma TERCEIRA intenção, com confiança, troca o agente.
  *
  * Robustez: qualquer erro inesperado no branch do router (DB fora do ar,
  * shape quebrado) NUNCA derruba o turno — cai no `loadPublishedAgentConfig`
@@ -80,6 +89,7 @@ import {
 } from './agent-config';
 import { classifyIntent, type ClassifierContextMessage, type IntentVerdict } from './intent-classifier';
 import { corpoDaMensagem, type CorpoDaMensagemRow } from '../edge/crm/get-lead-context';
+import { lerPassagemEmVigor, passagemValePara, type PassagemGravada } from './passagem-entre-colegas';
 
 
 export interface TurnAgentResolution {
@@ -183,6 +193,12 @@ export function destinoDoVeredito(
   stickyMember: RouterMember | undefined,
   stickyIntent: string | null,
   verdict: IntentVerdict | null,
+  /**
+   * Regra 8: a intenção de ORIGEM de uma passagem entre colegas em vigor. Vale
+   * como o mesmo assunto da aderência. `null`/ausente = sem passagem, e a
+   * regra 2 fica exatamente como sempre foi.
+   */
+  intencaoDeOrigem: string | null = null,
 ): DestinoDoVeredito {
   // regra 4: classificador falhou — um `null` é informação mais pobre que
   // "sem sinal", nunca deve derrubar a stickiness (review T4 finding 1).
@@ -200,7 +216,11 @@ export function destinoDoVeredito(
 
   if (stickyMember !== undefined) {
     // regra 2: só troca se a intenção vier DIFERENTE da sticky, com confiança.
-    if (casado === undefined || verdict.intentName === stickyIntent) {
+    if (
+      casado === undefined ||
+      verdict.intentName === stickyIntent ||
+      (intencaoDeOrigem !== null && verdict.intentName === intencaoDeOrigem)
+    ) {
       return { membro: stickyMember, outcome: 'sticky', intentName: stickyIntent, confidence: verdict.confidence };
     }
     return { membro: casado, outcome: 'reclassified', intentName: verdict.intentName, confidence: verdict.confidence };
@@ -244,6 +264,8 @@ export async function resolveTurnAgent(
     stickyIntent: string | null;
     /** Mensagens anteriores ao signal, mais antiga → mais recente. Default []. */
     recentMessages?: ClassifierContextMessage[];
+    /** A passagem entre colegas gravada na conversa (regra 8). Default: nenhuma. */
+    passagem?: PassagemGravada | null;
   },
   deps: ResolveTurnAgentDeps,
 ): Promise<TurnAgentResolution> {
@@ -462,9 +484,17 @@ export async function resolveTurnAgent(
 
     // sticky elegível: config liga sticky E o agente ainda é membro do router
     // (membro removido ⇒ trata como sem sticky, decisão segura — ver report).
+    //
+    // Regra 8: com uma passagem entre colegas em vigor, a aderência vale mesmo
+    // com `router.sticky` desligado (foi um agente que fixou o colega, não a
+    // configuração), e o membro é o da intenção que recebeu a vez.
+    const passagem = passagemValePara(input.passagem ?? null, input.stickyAgentId) ? input.passagem! : null;
+    const intencaoDeOrigem = passagem?.de_intencao ?? null;
     const stickyMember =
-      router.sticky && input.stickyAgentId !== null
-        ? router.members.find((m) => m.agentId === input.stickyAgentId)
+      (router.sticky || passagem !== null) && input.stickyAgentId !== null
+        ? (passagem !== null
+            ? router.members.find((m) => m.agentId === input.stickyAgentId && m.intentName === passagem.para_intencao)
+            : undefined) ?? router.members.find((m) => m.agentId === input.stickyAgentId)
         : undefined;
 
     // regra 6: sem mensagem inbound (follow-up) — nunca classifica.
@@ -526,12 +556,15 @@ export async function resolveTurnAgent(
     const doJev = independente
       ? jevConfiavel ? escolhaIndependente : null
       : estadoDoJev === 'decidindo' ? await jev.escolha : null;
-    const destino = destinoDoVeredito(router, stickyMember, input.stickyIntent, doJev?.veredito ?? verdict);
+    const destino = destinoDoVeredito(
+      router, stickyMember, input.stickyIntent, doJev?.veredito ?? verdict, intencaoDeOrigem,
+    );
 
     jev.observar({
       conversationId: input.conversationId,
       messageId: input.signalMessageId ?? null,
-      rotuloDe: (v) => agenteDoDestino(router, destinoDoVeredito(router, stickyMember, input.stickyIntent, v)),
+      rotuloDe: (v) =>
+        agenteDoDestino(router, destinoDoVeredito(router, stickyMember, input.stickyIntent, v, intencaoDeOrigem)),
       // Sem resposta da IA não há par: a linha fica sem o lado dela, fora da concordância.
       // Reservas são uma amostra selecionada por falha/baixa confiança, não
       // um par comparativo. Também ficam fora do indicador antigo do cartão.
@@ -601,8 +634,9 @@ export async function resolveConversationTurn(
   const { rows } = await db.query<{
     active_ai_agent_id: string | null;
     active_intent: string | null;
+    metadata?: unknown;
   }>(
-    'select active_ai_agent_id,active_intent from conversations where organization_id=$1 and id=$2',
+    'select active_ai_agent_id,active_intent,metadata from conversations where organization_id=$1 and id=$2',
     [input.tenantId, input.conversationId],
   );
   const signalRow = input.inbound
@@ -647,5 +681,6 @@ export async function resolveConversationTurn(
     recentMessages,
     stickyAgentId: rows[0]?.active_ai_agent_id ?? null,
     stickyIntent: rows[0]?.active_intent ?? null,
+    passagem: lerPassagemEmVigor(rows[0]?.metadata),
   }, deps);
 }

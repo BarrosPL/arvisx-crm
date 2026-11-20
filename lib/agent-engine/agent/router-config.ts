@@ -56,6 +56,15 @@ export interface LoadedRouter {
    */
   classifierProvider: string | null;
   sticky: boolean;
+  /**
+   * Os agentes deste roteador podem passar a vez uns aos outros
+   * (`passar_para_colega`, `passagem-entre-colegas.ts`). Vem de
+   * `config.passagem_entre_colegas`; só `true` liga. Ausente = desligado, que é
+   * o estado de todo roteador criado antes da ferramenta existir. Opcional no
+   * tipo pela mesma razão de `contextMessageCount`: os dublês de roteador dos
+   * testes existentes não precisam mudar.
+   */
+  passagemEntreColegas?: boolean;
   minConfidence: number;
   contextMessageCount?: number;
   fallbackAgentId: string | null;
@@ -110,6 +119,7 @@ export async function loadActiveRouter(
     classifier_model?: unknown;
     classifier_provider?: unknown;
     sticky?: unknown;
+    passagem_entre_colegas?: unknown;
     min_confidence?: unknown;
     context_message_count?: unknown;
   };
@@ -138,6 +148,7 @@ export async function loadActiveRouter(
     classifierModel,
     classifierProvider,
     sticky,
+    passagemEntreColegas: cfg.passagem_entre_colegas === true,
     minConfidence,
     contextMessageCount,
     fallbackAgentId: router.fallback_agent_id,
