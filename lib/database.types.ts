@@ -13536,9 +13536,12 @@ export type Database = {
           channel_session_id: string;
           comment_id: string;
           commented_at: string;
+          contact_id: string | null;
           created_at: string;
           estado: string;
+          hidden: Json | null;
           id: string;
+          ignore_reason: string | null;
           media_id: string | null;
           media_product_type: string | null;
           organization_id: string;
@@ -13558,9 +13561,12 @@ export type Database = {
           channel_session_id: string;
           comment_id: string;
           commented_at: string;
+          contact_id?: string | null;
           created_at?: string;
           estado?: string;
+          hidden?: Json | null;
           id?: string;
+          ignore_reason?: string | null;
           media_id?: string | null;
           media_product_type?: string | null;
           organization_id: string;
@@ -13579,9 +13585,12 @@ export type Database = {
           channel_session_id?: string;
           comment_id?: string;
           commented_at?: string;
+          contact_id?: string | null;
           created_at?: string;
           estado?: string;
+          hidden?: Json | null;
           id?: string;
+          ignore_reason?: string | null;
           media_id?: string | null;
           media_product_type?: string | null;
           organization_id?: string;
@@ -13597,6 +13606,13 @@ export type Database = {
             columns: ["channel_session_id"];
             isOneToOne: false;
             referencedRelation: "channel_sessions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "social_comments_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
             referencedColumns: ["id"];
           },
           {
