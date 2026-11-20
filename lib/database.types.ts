@@ -9242,6 +9242,85 @@ export type Database = {
           },
         ];
       };
+      fusoes_de_contatos: {
+        Row: {
+          contato_absorvido_id: string;
+          contato_principal_id: string;
+          created_at: string;
+          criado_por_token_id: string | null;
+          desfeito_em: string | null;
+          desfeito_por_token_id: string | null;
+          estado_anterior: NonNullable<Json>;
+          id: string;
+          organization_id: string;
+          resultado_do_desfazer: Json | null;
+          vinculos: NonNullable<Json>;
+        };
+        ComputedFields: never;
+        Insert: {
+          contato_absorvido_id: string;
+          contato_principal_id: string;
+          created_at?: string;
+          criado_por_token_id?: string | null;
+          desfeito_em?: string | null;
+          desfeito_por_token_id?: string | null;
+          estado_anterior?: NonNullable<Json>;
+          id?: string;
+          organization_id: string;
+          resultado_do_desfazer?: Json | null;
+          vinculos?: NonNullable<Json>;
+        };
+        Update: {
+          contato_absorvido_id?: string;
+          contato_principal_id?: string;
+          created_at?: string;
+          criado_por_token_id?: string | null;
+          desfeito_em?: string | null;
+          desfeito_por_token_id?: string | null;
+          estado_anterior?: NonNullable<Json>;
+          id?: string;
+          organization_id?: string;
+          resultado_do_desfazer?: Json | null;
+          vinculos?: NonNullable<Json>;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fusoes_de_contatos_contato_absorvido_id_fkey";
+            columns: ["contato_absorvido_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fusoes_de_contatos_contato_principal_id_fkey";
+            columns: ["contato_principal_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fusoes_de_contatos_criado_por_token_id_fkey";
+            columns: ["criado_por_token_id"];
+            isOneToOne: false;
+            referencedRelation: "api_tokens";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fusoes_de_contatos_desfeito_por_token_id_fkey";
+            columns: ["desfeito_por_token_id"];
+            isOneToOne: false;
+            referencedRelation: "api_tokens";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fusoes_de_contatos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       golden_candidates: {
         Row: {
           created_at: string;
@@ -15398,6 +15477,10 @@ export type Database = {
         Returns: Json;
       };
       fn_colegas_podem_mexer_na_agenda: { Args: { p_org: string }; Returns: boolean };
+      fn_colunas_que_apontam_para_contato: {
+        Args: Record<PropertyKey, never>;
+        Returns: { coluna: string; filtro: string; tabela: string; tipo_do_id: string | null }[];
+      };
       fn_comando_da_conversa: {
         Args: {
           p_agora: string;
@@ -15616,6 +15699,10 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      fn_desfazer_fusao_de_contatos: {
+        Args: { p_organization_id: string; p_registro_id: string; p_token_id: string | null };
+        Returns: Json;
       };
       fn_encerrar_roteiros_vencidos: { Args: { p_limite?: number }; Returns: number };
       fn_encrypt_oauth: { Args: { plaintext: string }; Returns: string };
@@ -15964,6 +16051,15 @@ export type Database = {
           p_contato_principal: string;
           p_contatos_secundarios: string[];
           p_organization_id: string;
+        };
+        Returns: Json;
+      };
+      fn_mesclar_contatos_com_registro: {
+        Args: {
+          p_contato_absorvido: string;
+          p_contato_principal: string;
+          p_organization_id: string;
+          p_token_id: string | null;
         };
         Returns: Json;
       };

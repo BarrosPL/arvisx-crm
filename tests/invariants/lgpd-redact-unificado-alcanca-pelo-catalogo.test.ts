@@ -363,6 +363,11 @@ const DECISOES: Record<string, Decisao> = {
     decidida: "manter",
     razao: "body_hash é IRREVERSÍVEL (a própria doutrina do invariante irmão manda `_hash` ficar de fora) e last_error/status são código; é a prova de que a mensagem saiu, sem guardar o que ela dizia.",
   },
+  fusoes_de_contatos: {
+    decidida: "manter",
+    razao:
+      "9813: o registro da junção de contatos feita por agente, para poder desfazer. Guarda só ids (das duas fichas e das linhas que mudaram de ficha), NOMES de campo herdado e contagens — nunca o valor: telefone, e-mail e etiqueta continuam só em `contacts`, que a cascata anonimiza. Depois da anonimização o registro não serve mais para desfazer (`fn_desfazer_fusao_de_contatos` recusa ficha anonimizada), e some junto com o contato no expurgo (`on delete cascade`). A prova de que nenhuma coluna guarda valor da pessoa está em tests/invariants/fusao-de-contatos-registro-e-desfazer.test.ts.",
+  },
 };
 
 /** As 11 tabelas da issue #1504 — nenhuma tem FK DIRETA, por isso medida à parte. */
