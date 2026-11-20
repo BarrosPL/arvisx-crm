@@ -377,6 +377,35 @@ describe("crm_find_duplicate_contacts — o que não sai", () => {
     expect(r).toMatchObject({ permitido: false, motivo: "fora_do_atendimento" });
     expect(banco.consultas.contacts ?? 0).toBe(0);
   });
+
+  // O nome da agenda do celular é o rótulo que alguém da empresa escreveu
+  // ("Maria caloteira"). A varredura o COMPARA, como a tela; a ferramenta nunca o
+  // DEVOLVE: quem lê a resposta é um agente, e agente fala com o cliente
+  // (tests/unit/nome-da-agenda-nunca-vai-ao-cliente.test.ts).
+  it("⭐ o nome salvo na agenda do celular serve para achar o par e não sai na resposta", async () => {
+    const SO_AGENDA_1 = "aaaaaaaa-0000-4000-8000-0000000000d1";
+    const SO_AGENDA_2 = "aaaaaaaa-0000-4000-8000-0000000000d2";
+    banco.tabelas.contacts!.push(
+      contato(SO_AGENDA_1, ORG_A, {
+        address_book_name: "Oficina Caloteira Betim",
+        phone_number: "+5531911110001",
+        created_at: "2026-10-20T10:00:00.000Z",
+      }),
+      contato(SO_AGENDA_2, ORG_A, {
+        address_book_name: "Oficina Caloteira Betim Filial",
+        phone_number: "+5531922220002",
+        created_at: "2026-10-21T10:00:00.000Z",
+      }),
+    );
+
+    const r = await buscar({ reason: ["nome_parecido"] });
+    const par = r.groups.find((g) => g.contacts.some((c) => c.id === SO_AGENDA_1))!;
+    // Controle: sem ler a agenda o par não existiria, e o caso passaria vazio.
+    expect(par.contacts.map((c) => c.id).sort()).toEqual([SO_AGENDA_1, SO_AGENDA_2].sort());
+    for (const c of par.contacts) expect(c.name).toBeNull();
+    expect(JSON.stringify(r)).not.toContain("Caloteira");
+    expect(JSON.stringify(r)).not.toContain("address_book_name");
+  });
 });
 
 describe("⭐ crm_merge_contacts — recusado sem o papel", () => {
