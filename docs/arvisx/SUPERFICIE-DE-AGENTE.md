@@ -187,9 +187,10 @@ com roteador passa a vez a outro agente do mesmo roteador.
 
 - **Quem é colega.** Os outros agentes do roteador do número. O `papel` é o nome da intenção do membro
   (`ai_router_members.intent_name`). O motor não conhece papel nenhum pelo nome.
-- **Como se liga.** No roteador: `ai_routers.config.passagem_entre_colegas = true`. Nasce desligada e ainda não tem
-  botão na tela. A ferramenta não usa a lista de ferramentas do agente (que é validada contra o catálogo MCP) nem
-  conta no teto de 27.
+- **Como se liga.** No roteador: `ai_routers.config.passagem_entre_colegas = true`. Nasce desligada num roteador
+  criado à mão, e liga-se na tela do roteador (IA › Roteadores, "Passagem entre colegas"). O roteador que a Equipe de
+  IA pronta cria nasce com ela ligada. A ferramenta não usa a lista de ferramentas do agente (que é validada contra o
+  catálogo MCP) nem conta no teto de 27.
 - **O que ela faz.** Atualiza a nota "Resumo do atendimento" da ficha do contato (substitui a anterior, não duplica),
   fixa o colega como o agente da conversa e registra a passagem no traço do turno.
 - **O colega responde na mesma rodada**, no mesmo job, com o motivo e o resumo na abertura. O cliente não é avisado da
@@ -203,5 +204,32 @@ com roteador passa a vez a outro agente do mesmo roteador.
 - **Agente externo não tem colega no CRM.** A passagem equivalente é `crm_request_human_handoff` mais uma nota com
   `recipient`.
 
-Os papéis da Equipe de IA pronta ainda não usam a passagem nem as ferramentas novas: a liberação vem numa entrega
-própria.
+Os papéis da Equipe de IA pronta usam a passagem e as ferramentas deste documento desde a versão 2 dos papéis
+([`EQUIPE-PRONTA.md`](EQUIPE-PRONTA.md)).
+
+## Gravar no cadastro do contato
+
+`crm_update_contact` grava direto no cadastro o que a pessoa informou: `name`, `email`, `secondary_phone`, `cpf`,
+`birthdate`, o endereço (`zip_code`, `street`, `number`, `complement`, `district`, `city`, `state`) e `custom_fields`.
+
+- Envie só os campos a gravar. `custom_fields` é mesclado: a chave que não veio continua como está.
+- Valor inválido é recusado com o código do campo: `email_invalido`, `data_invalida`, `telefone_invalido`,
+  `documento_invalido`. A chamada inteira é recusada; nada entra pela metade.
+- O documento é validado pela régua do país da organização (no Brasil, o dígito verificador do CPF), guardado cifrado
+  e nunca devolvido: a resposta só traz `cpf_available`. Ele também não entra na auditoria.
+- `secondary_phone` entra como telefone extra da ficha. O telefone principal não muda por esta ferramenta.
+- A auditoria (`contact.updated_by_agent`) leva o valor anterior de cada campo. Campo personalizado sai pelo nome.
+- É a irmã que grava de `crm_propose_contact_field`, que continua existindo e só propõe.
+- Pacote: Não perder o cliente.
+
+## Enviar proposta
+
+`crm_send_proposal` envia ao cliente, na conversa, a proposta em rascunho (`proposal_id`). **É a única ferramenta deste
+documento que fala com o cliente**: é de risco crítico, aparece no pacote Não perder o cliente para ser marcada à mão, e
+o botão do pacote não a liga.
+
+- Quem autoriza é o modo de envio da empresa, não um papel humano. No padrão (`apos_aprovacao`) só sai a proposta que a
+  equipe aprovou. A regra completa, as recusas e as travas estão em
+  [`EQUIPE-PRONTA.md`](EQUIPE-PRONTA.md#envio-de-proposta).
+- Empresa sem perfil de Equipe pronta segue o padrão: sem aprovação, não envia.
+- Resposta: `enviada: true` quando saiu; `em_fila: true` quando a mensagem ficou na fila do canal.

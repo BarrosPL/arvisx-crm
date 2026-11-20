@@ -7,6 +7,10 @@ questionário: **Atendimento** (SDR), **Agendamento**, **Propostas** e
 Este documento descreve o que existe no código. O que ainda não existe está na
 seção "O que falta".
 
+Os papéis estão na **versão 2**: os agentes gravam direto no CRM, trabalham o
+mesmo negócio e passam a vez um para o outro. A seção "Versão 2: uma equipe, um
+cliente, uma ficha" descreve o que mudou.
+
 ## As três camadas
 
 | Camada | Onde mora | Muda por empresa? | Quem edita |
@@ -39,9 +43,10 @@ duplica nada.
 3. **Tipo de agenda principal**: o escolhido, ou um novo. Os três tipos de
    fábrica (`consulta`, `reuniao`, `atendimento`) são desativados quando não têm
    horário publicado nem compromisso.
-4. **Etapas do funil**: as marcas `agent_stage_hint` de qualificado
-   (`qualified`), proposta (`negotiating`) e perdido (`lost`), nas etapas
-   escolhidas.
+4. **Etapas do funil**: a instalação acha no funil a etapa de cada uma das
+   nove chaves da equipe e **cria a que falta**. Nunca renomeia nem apaga etapa
+   da empresa. O mapeamento fica em `instalacao.etapas` (ver "Etapas da
+   equipe").
 5. **Régua de follow-up** "Equipe pronta · Recuperação de vendas", com
    mensagens geradas (não texto fixo).
 6. **Canal em ensaio**: só os telefones de teste do questionário falam com a
@@ -52,8 +57,9 @@ duplica nada.
    foi ativada.
 7. **Os quatro agentes**, marcados em `ai_agents.config.equipe_pronta` com
    `{ papel, versao, hash }`.
-8. **Roteador do canal** com os quatro membros e o Atendimento como destino
-   padrão.
+8. **Roteador do canal** com os quatro membros, o Atendimento como destino
+   padrão e a passagem entre colegas ligada
+   (`ai_routers.config.passagem_entre_colegas`).
 9. **Publicação** dos agentes.
 
 ### Canal que já tem roteador
@@ -118,6 +124,108 @@ Sem chave de IA válida ou sem WhatsApp conectado, o banco recusa a publicação
 A instalação termina com os agentes em rascunho, e o checklist diz o que falta.
 Instalar de novo, depois de resolver, publica.
 
+O agente nasce pausado e sai da pausa na rodada em que é publicado, tenha sido
+criado nela ou reaproveitado de uma instalação que não conseguiu publicar. A
+pausa que o cliente fez num agente já publicado não é desfeita, nem a pausa da
+equipe pela tela. "Pausa de nascimento" é a de quem nunca tinha sido publicado
+quando a rodada começou, ou a que tem a hora do nascimento do agente (folga de
+`TOLERANCIA_DA_PAUSA_DE_NASCIMENTO_S`); a segunda regra solta, ao reinstalar,
+quem ficou publicado e pausado antes da correção.
+
+## Versão 2: uma equipe, um cliente, uma ficha
+
+O cliente fala com uma atendente só (o nome configurado). Os quatro papéis
+compartilham:
+
+- **um negócio aberto por contato**: `crm_create_lead`, chamada por um agente da
+  equipe para um contato que já tem negócio aberto no mesmo funil, devolve o
+  que existe (`ja_existia: true`) e não cria outro;
+- **a ficha do atendimento**: a nota "Resumo do atendimento" da ficha do
+  contato, que cada papel atualiza ao terminar a sua parte;
+- **a passagem com motivo**: `passar_para_colega` (ver
+  [`SUPERFICIE-DE-AGENTE.md`](SUPERFICIE-DE-AGENTE.md));
+- **o dono de cada etapa**.
+
+Tudo isso está no texto comum dos papéis (`papeis/comum.ts`) e é conferido de
+novo na ferramenta (`lib/ai/equipe-pronta/dono-de-etapa.ts`).
+
+### Etapas da equipe
+
+`lib/ai/equipe-pronta/etapas.ts`. A chave é interna; o nome da etapa é da
+empresa.
+
+| Chave | Quem move o negócio para ela | Criada só se |
+|---|---|---|
+| `novo` | é onde o negócio nasce | sempre |
+| `em_atendimento`, `qualificado` | Atendimento | sempre |
+| `agendado`, `compareceu` | Agendamento | a empresa agenda |
+| `proposta_enviada`, `em_negociacao` | Propostas | a empresa usa proposta |
+| `ganho` | Propostas | sempre |
+| `perdido` | qualquer papel, com o motivo | sempre |
+
+Reabrir um negócio perdido é só da Recuperação. Etapa que a empresa criou por
+conta própria, fora do mapeamento, não tem dono.
+
+Como a instalação acha a etapa de cada chave, nesta ordem
+(`mapearEtapasDaEquipe`): a escolha do questionário (`onde.etapas`; `proposta`
+é o nome antigo de `proposta_enviada`), o que a instalação anterior já tinha
+mapeado, a marca do funil (ganho, perda e `agent_stage_hint`) e o nome da etapa
+(sem diferença de caixa nem de acento). O que sobra é criado, logo depois da
+etapa anterior que existe. Instalar de novo não cria nada.
+
+A regra vale em quatro ferramentas, só para agente marcado como da equipe
+(`ai_agents.config.equipe_pronta`): `crm_move_lead_stage`, `crm_create_lead`,
+`crm_close_demand` e `crm_retomar_lead`. A recusa vem com o código
+(`etapa_de_outro_papel`, `reabrir_e_da_retomada`, `perda_sem_motivo`) e com o
+colega a quem passar a vez. Vale também quando o card anda sozinho porque o
+agente avançou o próprio estado (o espelho do motor). Agente externo por token
+e agente que a empresa criou por conta própria não mudam de comportamento.
+
+### O que os agentes gravam
+
+Direto, sem "sugestão para confirmar": negócio, etapa, valor, campos, etiqueta,
+nota, tarefa e os dados do contato. Os dados do contato entram por
+`crm_update_contact` (nome, e-mail, outro telefone, documento, endereço, data
+de nascimento e campos personalizados), que substitui
+`crm_propose_contact_field` nos quatro papéis. Toda escrita fica na auditoria
+com o agente como autor; a de contato leva o valor anterior de cada campo
+(`contact.updated_by_agent`). O documento (CPF) é validado pelo dígito
+verificador, guardado cifrado e nunca devolvido.
+
+### Envio de proposta
+
+O agente de Propostas envia a proposta com `crm_send_proposal`. Quem decide se
+ela sai é o modo da empresa, `proposta.envio_de_proposta` no perfil
+(`lib/propostas/envio-pelo-agente.ts`):
+
+| Modo | Quando o agente envia |
+|---|---|
+| `apos_aprovacao` (padrão) | só o rascunho que a equipe aprovou |
+| `direto` | sozinho, se todos os itens são do catálogo, com o preço do catálogo, sem desconto e sem condição escrita à mão; fora disso, precisa da aprovação |
+
+A aprovação são duas colunas de `crm_proposals` (migration 9814),
+`aprovada_em` e `aprovada_na_revisao`, e só vale enquanto a revisão aprovada
+for a atual: editar o rascunho a invalida. Só o servidor grava as duas. **A tela
+ainda não tem o botão de aprovar** (ver "O que falta"): até ele existir, no
+modo padrão toda tentativa de envio responde `precisa_aprovacao`.
+
+O envio é a mesma função da rota da tela (`lib/propostas/enviar-proposta.ts`).
+Antes dela, a ferramenta recusa quando: o canal está em ensaio e o número não é
+de teste (`modo_ensaio`), uma pessoa assumiu a conversa (`humano_assumiu`), o
+contato pediu para parar (`contato_pediu_para_parar`), o agente ou a equipe
+está pausado (`equipe_pausada`), o plano não libera a equipe (`fora_do_plano`),
+a proposta venceu (`proposta_expirada`) ou não há canal conectado
+(`sem_canal`).
+
+### Ferramentas por papel
+
+A lista de cada papel é explícita (`papeis/*.ts`) e fica abaixo do teto de
+ferramentas por agente. Para ver a de hoje:
+
+```bash
+grep -c '"crm_' lib/ai/equipe-pronta/papeis/{sdr,agendamento,proposta,recuperador}.ts
+```
+
 ## Ensaio e ativação
 
 - `POST /api/v1/ai/equipe-pronta/ativar`: abre o canal para todos. Só com o
@@ -149,7 +257,7 @@ Calculado em `lib/ai/equipe-pronta/estado.ts`, devolvido pelo
 | Catálogo | Há item ativo com preço | a empresa informa preço por mensagem |
 | WhatsApp | O canal está conectado | sempre |
 | Modelo de proposta | "Proposta comercial" disponível | a empresa usa proposta |
-| Funil | Etapas de qualificado e perdido marcadas (e proposta, se usa) | sempre |
+| Funil | As etapas de qualificado e de perdido existem (e a de proposta enviada, se usa) | sempre |
 | Agentes | Os quatro publicados | sempre |
 
 ## Plano
@@ -182,8 +290,8 @@ Nunca é automático.
   modelo de reserva, que a régua não leva. No WhatsApp conectado por QR não há
   essa exigência.
 - **Etapa de "agendado"**: o motor não tem marca de etapa para compromisso
-  marcado. O compromisso fica na agenda e na linha do tempo do negócio; a
-  equipe pronta não move etapa por ele.
+  marcado. Quem move o negócio para "agendado" e "compareceu" é o agente de
+  Agendamento, por ferramenta, depois de marcar ou de registrar o resultado.
 - **Silêncio de até 7 dias**: o gatilho de silêncio do follow-up alcança no
   máximo 7 dias. Contato parado há mais tempo só é retomado com aprovação
   humana, pela ferramenta de reativação.
@@ -228,6 +336,16 @@ estão pausados pelo plano (a mesma pergunta que o motor faz,
 Jornada pela tela: `tests/e2e/equipe-pronta.spec.ts`.
 
 ## O que falta
+
+- **Aprovar a proposta pela tela.** As colunas de aprovação existem e a
+  ferramenta de envio já as lê, mas ninguém as grava ainda: falta o botão
+  "Aprovar e deixar o agente enviar" e a rota que confere o papel.
+- **Escolher `envio_de_proposta` pela tela.** O campo existe no perfil e tem
+  padrão (`apos_aprovacao`); o questionário ainda não o pergunta.
+- **Gatilhos.** Resposta ao lembrete da agenda, falta ao compromisso, proposta
+  aprovada e proposta parada ainda não acordam o papel certo sozinhos.
+- **Desfazer pela tela.** A auditoria guarda o valor anterior do que o agente
+  gravou no contato; não há um botão que o restaure.
 
 - O texto do checklist e as notas de versão dos papéis saem do servidor em
   português: em espanhol, a moldura da tela é traduzida e essas frases não.

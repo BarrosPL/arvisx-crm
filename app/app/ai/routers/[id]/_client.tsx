@@ -149,6 +149,11 @@ export function RouterEditorClient({
       ? router.config.context_message_count
       : 4,
   );
+  // Passagem entre colegas (`ai_routers.config.passagem_entre_colegas`): só
+  // `true` liga. É no roteador que os colegas são definidos.
+  const [passagemEntreColegas, setPassagemEntreColegas] = React.useState(
+    () => router.config?.passagem_entre_colegas === true,
+  );
   const [draftMembers, setDraftMembers] = React.useState<DraftMember[]>(() =>
     members.map((m) => ({ ...m, key: m.id })),
   );
@@ -204,6 +209,7 @@ export function RouterEditorClient({
         typeof router.config?.context_message_count === "number"
           ? router.config.context_message_count
           : 4,
+      passagemEntreColegas: router.config?.passagem_entre_colegas === true,
       members: members.map(camposDoMembro),
     }),
     [router, members],
@@ -218,6 +224,7 @@ export function RouterEditorClient({
     fallbackAgentId !== baseline.fallbackAgentId ||
     classifier !== baseline.classifier ||
     contextMessageCount !== baseline.contextMessageCount ||
+    passagemEntreColegas !== baseline.passagemEntreColegas ||
     JSON.stringify(currentMembers) !== JSON.stringify(baseline.members);
 
   const memberErrors = draftMembers.map((m) => {
@@ -278,7 +285,8 @@ export function RouterEditorClient({
         isActive !== baseline.isActive ||
         fallbackAgentId !== baseline.fallbackAgentId ||
         classifier !== baseline.classifier ||
-        contextMessageCount !== baseline.contextMessageCount
+        contextMessageCount !== baseline.contextMessageCount ||
+        passagemEntreColegas !== baseline.passagemEntreColegas
       ) {
         const [provider, modelId] = classifier.split("::");
         await updateRouter.mutateAsync({
@@ -292,6 +300,7 @@ export function RouterEditorClient({
               ? { classifier_model: null, classifier_provider: null }
               : { classifier_model: modelId, classifier_provider: provider }),
             context_message_count: contextMessageCount,
+            passagem_entre_colegas: passagemEntreColegas,
             sender_routes: senderRoutes,
           },
         });
@@ -519,6 +528,26 @@ export function RouterEditorClient({
                 )}
               </details>
             </div>
+          </Card>
+
+          <Card className="space-y-3 p-4">
+            <h3 className="text-sm font-medium">{t("Passagem entre colegas")}</h3>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="router-passagem-entre-colegas"
+                checked={passagemEntreColegas}
+                onCheckedChange={setPassagemEntreColegas}
+                disabled={!canManage}
+              />
+              <Label htmlFor="router-passagem-entre-colegas">
+                {t("Os agentes deste roteador passam a vez um para o outro")}
+              </Label>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t(
+                "Quando o assunto muda, o agente passa a conversa para o colega certo, com o motivo e um resumo. O cliente não é avisado da troca.",
+              )}
+            </p>
           </Card>
 
           <Card className="space-y-3 p-4">
