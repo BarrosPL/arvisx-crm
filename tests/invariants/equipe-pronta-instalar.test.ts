@@ -166,6 +166,7 @@ async function retrato(org: string) {
     tipos_de_agenda: await conta("select count(*) n from calendar_event_types where organization_id=$1"),
     memorias: await conta("select count(*) n from org_memory_versions where organization_id=$1"),
     perfis: await conta("select count(*) n from equipe_pronta_perfis where organization_id=$1"),
+    etapas: await conta("select count(*) n from crm_stages where organization_id=$1"),
   };
 }
 
@@ -208,6 +209,8 @@ describe("a primeira instalação", () => {
     expect(roteador.rows).toHaveLength(1);
     expect(roteador.rows[0]).toMatchObject({ name: NOME_DO_ROTEADOR, channel_session_id: canal });
     expect(roteador.rows[0].config.sticky).toBe(true);
+    // Os quatro passam a vez um para o outro: a passagem entre colegas nasce ligada.
+    expect(roteador.rows[0].config.passagem_entre_colegas).toBe(true);
     expect(roteador.rows[0].fallback_agent_id).toBe(r.agentes.find((a) => a.papel === "sdr")!.agent_id);
     const membros = await pool.query(
       "select intent_name from ai_router_members where organization_id=$1 order by 1",
@@ -502,6 +505,112 @@ describe("agente editado à mão", () => {
       [org],
     );
     expect(sdr.rows[0].token_budget).toBe(77777);
+  });
+});
+
+/**
+ * AS ETAPAS DA EQUIPE (v2, decisão do dono): o instalador acha cada etapa no
+ * funil e CRIA a que falta. Nunca renomeia nem apaga etapa da empresa.
+ */
+describe("as etapas da equipe no funil", () => {
+  const etapasDe = async (org: string) =>
+    (
+      await pool.query(
+        "select id, name, slug, position, is_won, is_lost, agent_stage_hint from crm_stages where organization_id=$1 and not is_archived order by position",
+        [org],
+      )
+    ).rows;
+
+  it("⭐ cria as que faltam, mapeia as que existem e grava o mapeamento — sem tocar no que era da empresa", async () => {
+    const { org, ctx } = await novaOrganizacao();
+    const antes = await etapasDe(org);
+    expect(antes.length).toBeGreaterThan(0);
+
+    const r = await instalarEquipePronta(pool, portas(zero()), ctx);
+    const depois = await etapasDe(org);
+
+    // A empresa agenda e usa proposta: as nove chaves têm etapa.
+    expect(Object.keys(r.instalacao.etapas).sort()).toEqual(
+      ["agendado", "compareceu", "em_atendimento", "em_negociacao", "ganho", "novo", "perdido", "proposta_enviada", "qualificado"],
+    );
+    // Cada chave aponta para uma etapa viva do funil da equipe, e nenhuma etapa serve a duas chaves.
+    const ids = Object.values(r.instalacao.etapas);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const id of ids) expect(depois.some((e) => e.id === id)).toBe(true);
+    // Ganho numa etapa de ganho, perdido numa etapa de perda.
+    expect(depois.find((e) => e.id === r.instalacao.etapas.ganho)?.is_won).toBe(true);
+    expect(depois.find((e) => e.id === r.instalacao.etapas.perdido)?.is_lost).toBe(true);
+
+    // ⭐ Nenhuma etapa da empresa foi renomeada, reposicionada nem apagada.
+    for (const e of antes) {
+      expect(depois.find((d) => d.id === e.id)).toMatchObject({ name: e.name, slug: e.slug, position: e.position });
+    }
+    // O que nasceu é exatamente o que a instalação diz ter criado.
+    const novas = depois.filter((d) => !antes.some((e) => e.id === d.id)).map((d) => d.id);
+    expect(novas.sort()).toEqual([...r.instalacao.etapas_criadas].sort());
+    expect(r.criados.filter((c) => c.startsWith("etapa_")).length).toBe(novas.length);
+
+    // O texto dos agentes cita as etapas pelo id real.
+    const sdr = await pool.query(
+      `select v.system_prompt from ai_agents a join ai_agent_versions v on v.id = a.published_version_id
+        where a.organization_id=$1 and a.config->'equipe_pronta'->>'papel'='sdr'`,
+      [org],
+    );
+    expect(sdr.rows[0].system_prompt).toContain(`\`to_stage_id\`: \`${r.instalacao.etapas.em_atendimento}\``);
+  });
+
+  it("⭐ idempotente: instalar de novo não cria etapa nem muda o mapeamento", async () => {
+    const { org, ctx } = await novaOrganizacao();
+    const primeira = await instalarEquipePronta(pool, portas(zero()), ctx);
+    const antes = await etapasDe(org);
+
+    const segunda = await instalarEquipePronta(pool, portas(zero()), ctx);
+
+    expect(segunda.criados).toEqual([]);
+    expect(segunda.instalacao.etapas).toEqual(primeira.instalacao.etapas);
+    expect(segunda.instalacao.etapas_criadas).toEqual(primeira.instalacao.etapas_criadas);
+    expect(await etapasDe(org)).toEqual(antes);
+  });
+
+  it("etapa que já existe com o nome da equipe é reaproveitada, não duplicada", async () => {
+    const { org, ctx } = await novaOrganizacao();
+    const funil = await pool.query("select id from crm_pipelines where organization_id=$1 order by position, created_at limit 1", [org]);
+    const existente = await pool.query(
+      `insert into crm_stages (organization_id, pipeline_id, name, slug, position)
+       values ($1, $2, 'AGENDADO', 'ja-tinha-agendado', 2.5) returning id`,
+      [org, funil.rows[0].id],
+    );
+
+    const r = await instalarEquipePronta(pool, portas(zero()), ctx);
+
+    expect(r.instalacao.etapas.agendado).toBe(String(existente.rows[0].id));
+    expect(r.criados).not.toContain("etapa_agendado");
+    const nome = await pool.query("select name from crm_stages where id=$1", [existente.rows[0].id]);
+    expect(nome.rows[0].name).toBe("AGENDADO");
+  });
+
+  it("empresa que não agenda nem usa proposta: essas etapas não são criadas", async () => {
+    const { ctx } = await novaOrganizacao({
+      ...RESPOSTAS,
+      primeiro_passo: { tipo: "humano" },
+      proposta: { usa: false },
+    });
+    const r = await instalarEquipePronta(pool, portas(zero()), ctx);
+    for (const chave of ["agendado", "compareceu", "em_negociacao"]) {
+      expect(r.criados, chave).not.toContain(`etapa_${chave}`);
+    }
+  });
+
+  it("quem desligou a passagem entre colegas na tela do roteador continua com ela desligada", async () => {
+    const { org, ctx } = await novaOrganizacao();
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+    await pool.query(
+      `update ai_routers set config = config || '{"passagem_entre_colegas":false}'::jsonb where organization_id=$1`,
+      [org],
+    );
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+    const roteador = await pool.query("select config from ai_routers where organization_id=$1", [org]);
+    expect(roteador.rows[0].config.passagem_entre_colegas).toBe(false);
   });
 });
 
@@ -896,5 +1005,91 @@ describe("canal em produção", () => {
     await instalarEquipePronta(pool, portas(zero()), ctx);
 
     expect(await gate(canal)).not.toBe("allowlist");
+  });
+});
+
+/**
+ * A PAUSA DE NASCIMENTO (correção A6, bug real na conta de teste em 19/11/2026).
+ *
+ * O agente nasce pausado e sai da pausa quando é publicado. Antes, só saía se
+ * tivesse sido CRIADO na mesma rodada: instalar com o WhatsApp desconectado
+ * criava os quatro pausados e em rascunho; conectar e instalar de novo
+ * publicava os quatro, o checklist ficava todo verde, e eles continuavam
+ * pausados, sem responder ninguém.
+ */
+describe("a pausa de nascimento sai na rodada em que o agente é publicado", () => {
+  const pausados = async (org: string) =>
+    (
+      await pool.query(
+        "select config->'equipe_pronta'->>'papel' as papel from ai_agents where organization_id=$1 and paused_at is not null order by 1",
+        [org],
+      )
+    ).rows.map((r) => r.papel);
+
+  it("⭐ instalar offline → conectar → reinstalar: os quatro publicados e SEM pausa", async () => {
+    const { org, canal, ctx } = await novaOrganizacao();
+    await pool.query("update channel_sessions set status='STOPPED' where id=$1", [canal]);
+
+    const offline = await instalarEquipePronta(pool, portas(zero()), ctx);
+    expect(offline.agentes.every((a) => !a.publicado)).toBe(true);
+    // Em rascunho, a pausa de nascimento continua: nada responde ainda.
+    expect(await pausados(org)).toHaveLength(PAPEIS.length);
+
+    await pool.query("update channel_sessions set status='WORKING' where id=$1", [canal]);
+    const conectado = await instalarEquipePronta(pool, portas(zero()), ctx);
+
+    expect(conectado.agentes.every((a) => a.publicado)).toBe(true);
+    // Reaproveitados, não criados: era aqui que a pausa ficava para trás.
+    expect(conectado.agentes.every((a) => a.acao !== "criado")).toBe(true);
+    expect(await pausados(org)).toEqual([]);
+    const estado = await lerEstadoDaEquipe(pool, portasDoEstado, org);
+    expect(estado.checklist.find((i) => i.id === "agentes_publicados")?.ok).toBe(true);
+  });
+
+  it("⭐ pausa feita pelo cliente num agente já publicado continua intocada", async () => {
+    const { org, ctx } = await novaOrganizacao();
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+    // O cliente pausa o agente de Propostas à mão, bem depois de ele nascer.
+    await pool.query(
+      `update ai_agents set paused_at = created_at + interval '2 hours'
+        where organization_id=$1 and config->'equipe_pronta'->>'papel'='proposta'`,
+      [org],
+    );
+
+    // Reinstalar, inclusive com uma resposta mudada (gera versão nova e publica de novo).
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+    await pool.query(
+      "update equipe_pronta_perfis set respostas = jsonb_set(respostas, '{atendente,nome}', '\"Bia\"') where organization_id=$1",
+      [org],
+    );
+    const r = await instalarEquipePronta(pool, portas(zero()), ctx);
+
+    expect(r.agentes.every((a) => a.publicado)).toBe(true);
+    expect(await pausados(org)).toEqual(["proposta"]);
+  });
+
+  it("quem já ficou preso (publicado, com a pausa com que nasceu) é solto ao reinstalar", async () => {
+    const { org, ctx } = await novaOrganizacao();
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+    // O estado que o defeito deixava: publicado, e ainda com a pausa de nascimento.
+    await pool.query("update ai_agents set paused_at = created_at where organization_id=$1", [org]);
+    expect(await pausados(org)).toHaveLength(PAPEIS.length);
+
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+
+    expect(await pausados(org)).toEqual([]);
+  });
+
+  it("a equipe pausada pela tela não é religada pela reinstalação, nem na primeira publicação", async () => {
+    const { org, canal, ctx } = await novaOrganizacao();
+    await pool.query("update channel_sessions set status='STOPPED' where id=$1", [canal]);
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+    await pausarEquipePronta(pool, ctx);
+    await pool.query("update channel_sessions set status='WORKING' where id=$1", [canal]);
+
+    const r = await instalarEquipePronta(pool, portas(zero()), ctx);
+
+    expect(r.agentes.every((a) => a.publicado)).toBe(true);
+    expect(await pausados(org)).toHaveLength(PAPEIS.length);
   });
 });

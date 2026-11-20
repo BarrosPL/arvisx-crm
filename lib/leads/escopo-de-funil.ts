@@ -168,6 +168,14 @@ export const ALVO_DE_FUNIL: Record<string, AlvoDeFunil> = {
   crm_resume_ai_attendance: "sem_funil",
   crm_save_org_memory: "sem_funil",
   crm_propose_contact_field: "sem_funil",
+  // Equipe pronta v2. Gravar no cadastro do CONTATO não toca negócio nem funil.
+  crm_update_contact: "sem_funil",
+  // Enviar a proposta opera por `proposal_id`, nunca por `lead_id`: classificá-la
+  // `funil_vem_do_lead` seria o teatro que o bloco da agenda descreve. Quem a
+  // limita é OUTRA barreira: o dono `proposta` de `ESCOPO_DAS_ESCRITAS` (só a
+  // proposta do cliente da conversa) e a regra de envio da empresa
+  // (`lib/propostas/envio-pelo-agente.ts`).
+  crm_send_proposal: "sem_funil",
   // Rascunho sugerido por integração (#1611): opera por `conversation_id`,
   // nunca `lead_id`, e não mexe em estado de funil nenhum. A barreira é OUTRA,
   // e é dela que a segurança depende: o RBAC da rota (agent+), o escopo

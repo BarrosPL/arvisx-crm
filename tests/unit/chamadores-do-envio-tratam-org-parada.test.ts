@@ -27,8 +27,10 @@ const CHAMADORES: Record<string, string> = {
   "app/api/v1/messages/route.ts": "rota de API: o ApiError 403 org_suspended vira a resposta JSON de quem chamou",
   "app/api/v1/messages/[id]/retry/route.ts":
     "rota de API: requireRole já recusa a org parada; se a suspensão chegar no meio, o ApiError devolve a linha ao estado lido e vira a resposta JSON",
-  "app/api/v1/proposals/[id]/send/route.ts":
-    "o catch devolve a proposta a rascunho; nada fica gravado como enviado, e a pessoa reenvia depois",
+  // O envio da proposta saiu da rota `app/api/v1/proposals/[id]/send` para cá:
+  // a rota da tela e a ferramenta `crm_send_proposal` chamam a mesma função.
+  "lib/propostas/enviar-proposta.ts":
+    "o catch devolve a proposta a rascunho; nada fica gravado como enviado, e a pessoa (ou o agente) reenvia depois",
   "lib/ai/handoff/aviso-ao-lead.ts": "devolve avisado:false; é aviso de um instante, sem fila nem estado que sobreviva",
   "lib/agent-engine/agent/aviso-fora-do-horario.ts":
     "propaga ao chamador; o inbound-turn engole e só perde o aviso — nada gravado, sem retentativa, e o turno da org parada já é negado antes",

@@ -2,7 +2,19 @@ import { describe, expect, it } from "vitest";
 
 import { catalogEntry, VALID_TOOL_IDS } from "@/lib/mcp/tools/catalogo";
 import { TETO_TOOLS_POR_AGENTE } from "@/lib/mcp/tools/selecao-por-pacote";
-import { PAPEIS, PAPEIS_DA_EQUIPE, PAPEL_DE_ENTRADA, REGRAS_COMUNS, papelPorId } from "./index";
+import { FERRAMENTA_DE_PASSAGEM_ENTRE_COLEGAS, TITULO_DO_RESUMO_DO_ATENDIMENTO } from "@/lib/agent-engine/agent/passagem-entre-colegas";
+import { ROLE_RANK } from "@/lib/auth/types";
+import { ESCOPO_DAS_ESCRITAS } from "@/lib/ai/runtime/escopo-das-escritas";
+import { allTools } from "@/lib/mcp/tools";
+import { IDS_DO_HARNESS } from "@/lib/mcp/tools/ferramentas-do-harness";
+import {
+  PAPEIS,
+  PAPEIS_DA_EQUIPE,
+  PAPEL_DE_ENTRADA,
+  REGRAS_COMUNS,
+  VERSAO_DAS_REGRAS_COMUNS,
+  papelPorId,
+} from "./index";
 
 /**
  * A REGRA DE UNIVERSALIDADE, como cerca.
@@ -181,15 +193,161 @@ describe("as ferramentas de cada papel", () => {
     ]) {
       expect(tem("agendamento", f), f).toBe(true);
     }
-    // Proposta: catálogo e rascunho.
-    expect(tem("proposta", "crm_search_products")).toBe(true);
-    expect(tem("proposta", "crm_preparar_proposta")).toBe(true);
+    // Proposta: catálogo, rascunho, consulta e envio.
+    for (const f of ["crm_search_products", "crm_preparar_proposta", "crm_get_proposal", "crm_send_proposal"]) {
+      expect(tem("proposta", f), f).toBe(true);
+    }
     // Recuperador: lead frio só com aprovação humana.
     expect(tem("recuperador", "crm_propose_reactivation")).toBe(true);
     // Quem move o negócio de etapa tem a ferramenta de mover.
     for (const p of PAPEIS) expect(p.toolIds, p.id).toContain("crm_move_lead_stage");
     // Todos consultam a base antes de responder.
     for (const p of PAPEIS) expect(p.toolIds, p.id).toContain("crm_search_knowledge");
+  });
+});
+
+/**
+ * VERSÃO 2 — os agentes completos. O que a tarefa manda liberar em cada papel,
+ * escrito como lista: papel que perde uma destas ferramentas numa edição futura
+ * reprova aqui, e não numa conversa com cliente.
+ */
+describe("versão 2: o que cada papel passou a fazer", () => {
+  const ferramentas = (papel: string) => papelPorId(papel)!.toolIds;
+
+  it("os quatro papéis estão na versão 2, com a nota do que mudou", () => {
+    for (const p of PAPEIS) {
+      expect(p.versao, p.id).toBe(2);
+      expect(p.notasDaVersao.length, p.id).toBeGreaterThan(40);
+    }
+    expect(VERSAO_DAS_REGRAS_COMUNS).toBe(2);
+  });
+
+  it("⭐ nenhum papel propõe dado para confirmar: todos gravam direto no cadastro", () => {
+    for (const p of PAPEIS) {
+      expect(p.toolIds, p.id).not.toContain("crm_propose_contact_field");
+      expect(p.toolIds, p.id).toContain("crm_update_contact");
+    }
+  });
+
+  it("Atendimento", () => {
+    expect(ferramentas("sdr")).toEqual(
+      expect.arrayContaining([
+        "crm_search_contacts",
+        "crm_list_contact_orders",
+        "crm_close_demand",
+        "crm_list_available_attendants",
+        "crm_assign_conversation",
+        "crm_set_conversation_sector",
+        "crm_create_lead",
+        "crm_update_lead",
+        "crm_move_lead_stage",
+        "crm_manage_tags",
+        "crm_create_task",
+      ]),
+    );
+  });
+
+  it("Agendamento", () => {
+    expect(ferramentas("agendamento")).toEqual(
+      expect.arrayContaining([
+        "crm_create_lead",
+        "crm_update_lead",
+        "crm_move_lead_stage",
+        "crm_set_appointment_outcome",
+        "crm_confirm_appointment",
+        "crm_manage_tags",
+      ]),
+    );
+  });
+
+  it("Propostas", () => {
+    expect(ferramentas("proposta")).toEqual(
+      expect.arrayContaining([
+        "crm_close_demand",
+        "crm_get_proposal",
+        "crm_send_proposal",
+        "crm_attach_to_lead",
+        "crm_create_task",
+      ]),
+    );
+  });
+
+  it("Recuperação", () => {
+    expect(ferramentas("recuperador")).toEqual(
+      expect.arrayContaining([
+        "crm_enroll_followup_flow",
+        "crm_list_message_templates",
+        "crm_render_message_template",
+        "crm_close_demand",
+        "crm_retomar_lead",
+        "crm_move_lead_stage",
+      ]),
+    );
+    // Quem retoma passa a vez: não marca compromisso nem envia proposta.
+    for (const f of ["crm_find_and_book_appointment", "crm_book_appointment", "crm_send_proposal"]) {
+      expect(ferramentas("recuperador"), f).not.toContain(f);
+    }
+  });
+
+  it("só quem cuida da proposta envia proposta; ninguém manda mensagem solta por ferramenta", () => {
+    expect(PAPEIS.filter((p) => p.toolIds.includes("crm_send_proposal")).map((p) => p.id)).toEqual(["proposta"]);
+    for (const p of PAPEIS) expect(p.toolIds, p.id).not.toContain("crm_send_whatsapp_message");
+  });
+
+  it.each(PAPEIS.map((p) => [p.id, p] as const))(
+    "%s: toda ferramenta tem handler, não é do motor, e toda escrita cabe num turno",
+    (_id, p) => {
+      const porNome = new Map(allTools.map((t) => [t.name, t]));
+      for (const id of p.toolIds) {
+        const tool = porNome.get(id);
+        expect(tool, id).toBeDefined();
+        // Ferramenta do motor não conta no teto e não entra na lista do papel.
+        expect(IDS_DO_HARNESS.has(id), id).toBe(false);
+        // Ao alcance do agente nativo; escrita sem escopo de turno seria recusada na conversa.
+        expect(ROLE_RANK[tool!.requiresRole], id).toBeLessThanOrEqual(ROLE_RANK.ai_operator);
+        if (tool!.category !== "read") expect(Object.hasOwn(ESCOPO_DAS_ESCRITAS, id), id).toBe(true);
+      }
+    },
+  );
+
+  it("a passagem entre colegas não é da lista do papel: quem a liga é o roteador", () => {
+    for (const p of PAPEIS) expect(p.toolIds, p.id).not.toContain(FERRAMENTA_DE_PASSAGEM_ENTRE_COLEGAS);
+    expect(REGRAS_COMUNS).toContain(`\`${FERRAMENTA_DE_PASSAGEM_ENTRE_COLEGAS}\``);
+  });
+
+  it("as regras comuns citam a ficha pelo título que o motor grava, e os colegas pelo nome do roteador", () => {
+    expect(REGRAS_COMUNS).toContain(`"${TITULO_DO_RESUMO_DO_ATENDIMENTO}"`);
+    for (const p of PAPEIS) expect(REGRAS_COMUNS, p.id).toContain(`\`${p.intencao.nome}\``);
+  });
+
+  it("as regras comuns dizem o que o agente nunca faz", () => {
+    for (const trecho of [
+      "Um negócio por pessoa",
+      "Cada etapa do funil tem um dono",
+      "Inventar preço",
+      "desconto fora da regra",
+      "Apagar",
+      "Cobrar",
+      "Responder por cima de uma pessoa da equipe",
+      "pediu para parar",
+    ]) {
+      expect(REGRAS_COMUNS, trecho).toContain(trecho);
+    }
+  });
+
+  it("o papel só cita, no texto, ferramenta que ele tem", () => {
+    for (const p of PAPEIS) {
+      const citadas = [...p.prompt.matchAll(/`(crm_[a-z_]+)`/g)].map((m) => m[1]!);
+      expect(citadas.filter((f) => !p.toolIds.includes(f)), p.id).toEqual([]);
+    }
+  });
+
+  it("o papel só passa a vez para colega que existe", () => {
+    const colegas = new Set(PAPEIS.map((p) => p.intencao.nome));
+    for (const p of PAPEIS) {
+      const citados = [...p.prompt.matchAll(/passe a vez para `([a-z_]+)`/g)].map((m) => m[1]!);
+      expect(citados.filter((c) => !colegas.has(c) || c === p.intencao.nome), p.id).toEqual([]);
+    }
   });
 });
 

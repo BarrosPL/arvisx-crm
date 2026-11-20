@@ -105,6 +105,21 @@ export const TOOLS_ATENDIMENTO = declararTools([
     pacotes: ["vender"],
   },
   {
+    // A irmã que GRAVA (Equipe pronta v2): `crm_propose_contact_field` propõe
+    // para uma pessoa confirmar; esta escreve direto, com o valor anterior na
+    // auditoria. Fica em `reter`, com as outras ferramentas de acompanhamento,
+    // pela mesma conta de `crm_get_proposal`: `vender` é o pacote com que todo
+    // agente nasce e `atender` é o que encosta no teto primeiro.
+    name: "crm_update_contact",
+    category: "write",
+    rotulo: "Gravar dado no cadastro do contato",
+    explicacao:
+      "Grava direto no cadastro o que a pessoa informou na conversa: nome, e-mail, outro telefone, documento, endereço, data de nascimento e campos personalizados. O valor anterior fica registrado, e o documento nunca é mostrado.",
+    oQueToca: "Cadastro de clientes",
+    risco: "atencao",
+    pacotes: ["reter"],
+  },
+  {
     name: "crm_list_conversations",
     category: "read",
     rotulo: "Listar conversas",

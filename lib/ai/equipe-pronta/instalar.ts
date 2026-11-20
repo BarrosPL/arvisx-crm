@@ -13,10 +13,13 @@
  *   1. memória da organização (o resumo do negócio, num bloco delimitado);
  *   2. fonte de conhecimento "Política comercial e perguntas frequentes";
  *   3. tipo de agenda principal, e os de fábrica vazios desativados;
- *   4. etapas do funil marcadas por passo (`agent_stage_hint`);
+ *   4. etapas da equipe no funil: acha cada uma (pela escolha, pelo que já
+ *      estava mapeado, pela marca ou pelo nome) e CRIA a que falta. Nunca
+ *      renomeia nem apaga etapa da empresa. O mapeamento fica gravado;
  *   5. régua de follow-up do Recuperador;
  *   6. os 4 agentes (rascunho novo, ou versão nova do que já existe);
- *   7. roteador do canal com os 4 membros, fallback = SDR;
+ *   7. roteador do canal com os 4 membros, fallback = SDR, e a passagem entre
+ *      colegas ligada;
  *   8. publicação dos agentes — precisa do roteador, porque é dele que a
  *      publicação tira o canal;
  *   9. canal em ensaio (só os telefones de teste);
@@ -54,23 +57,38 @@ import {
   type InstalacaoDaEquipe,
   type PerfilDoNegocio,
 } from "@/lib/schemas/equipe-pronta";
+import {
+  DEFINICOES_DAS_ETAPAS,
+  ETAPAS_DA_EQUIPE,
+  etapaSeAplica,
+  mapaPelasMarcas,
+  nomeNormalizado,
+  type ChaveDeEtapa,
+  type EtapaLida,
+  type MapaDeEtapas,
+} from "./etapas";
 import { CHAVE_DE_CONFIG, PAPEIS, PAPEL_DE_ENTRADA } from "./index";
 import { NOME_DA_REGUA, gatilhoDaRegua, grafoDaRegua } from "./regua";
 import { hashDosCampos, renderizarAgente, situacaoDoAgente, type SituacaoDoAgente } from "./renderizar";
 import {
-  PASSOS_DA_EQUIPE,
   type CamposDoAgente,
   type ContextoDaInstalacao,
   type EtapaDoFunil,
   type PapelDaEquipe,
   type PapelId,
-  type PassoDaEquipe,
 } from "./tipos";
 
 export const NOME_DA_FONTE = "Política comercial e perguntas frequentes";
 export const NOME_DO_ROTEADOR = "Equipe pronta";
 /** Os tipos que `fn_semear_tipos_de_agendamento` cria em toda organização nova. */
 export const SLUGS_DE_FABRICA = ["consulta", "reuniao", "atendimento"] as const;
+
+/**
+ * Até quantos segundos depois de o agente nascer a pausa dele ainda é a de
+ * NASCIMENTO. O agente nasce pausado na mesma escrita que o cria; a folga
+ * cobre a diferença de relógio entre o aplicativo e o banco.
+ */
+export const TOLERANCIA_DA_PAUSA_DE_NASCIMENTO_S = 300;
 
 const INICIO_DA_MEMORIA = "<!-- equipe-pronta:inicio -->";
 const FIM_DA_MEMORIA = "<!-- equipe-pronta:fim -->";
@@ -286,23 +304,130 @@ async function resolverFunil(
   );
 }
 
-/** As etapas do funil que já estão marcadas com o passo da equipe. */
-async function etapasMarcadas(
-  db: pg.PoolClient,
-  orgId: string,
-  funilId: string,
-): Promise<Partial<Record<PassoDaEquipe, EtapaDoFunil>>> {
+interface EtapaDoBanco extends EtapaLida {
+  slug: string;
+  position: number;
+}
+
+/** As etapas vivas do funil, na ordem do quadro. */
+async function etapasDoFunil(db: pg.PoolClient, orgId: string, funilId: string): Promise<EtapaDoBanco[]> {
   const { rows } = await db.query(
-    `select id, name, agent_stage_hint from crm_stages
-      where organization_id=$1 and pipeline_id=$2 and not is_archived and agent_stage_hint = any($3::text[])`,
-    [orgId, funilId, Object.values(PASSOS_DA_EQUIPE)],
+    `select id, name, slug, position, is_won, is_lost, agent_stage_hint from crm_stages
+      where organization_id=$1 and pipeline_id=$2 and not is_archived
+      order by position, created_at`,
+    [orgId, funilId],
   );
-  const etapas: Partial<Record<PassoDaEquipe, { id: string; nome: string }>> = {};
-  for (const passo of Object.keys(PASSOS_DA_EQUIPE) as PassoDaEquipe[]) {
-    const linha = rows.find((r) => r.agent_stage_hint === PASSOS_DA_EQUIPE[passo]);
-    if (linha) etapas[passo] = { id: String(linha.id), nome: String(linha.name) };
+  return rows.map((r) => ({
+    id: String(r.id),
+    name: String(r.name),
+    slug: String(r.slug),
+    position: Number(r.position),
+    is_won: r.is_won === true,
+    is_lost: r.is_lost === true,
+    agent_stage_hint: r.agent_stage_hint === null ? null : String(r.agent_stage_hint),
+  }));
+}
+
+/** O mapeamento com o NOME atual de cada etapa: é o que o texto do agente cita. */
+function etapasComNome(
+  mapa: MapaDeEtapas,
+  etapas: readonly EtapaLida[],
+): Partial<Record<ChaveDeEtapa, EtapaDoFunil>> {
+  const saida: Partial<Record<ChaveDeEtapa, EtapaDoFunil>> = {};
+  for (const chave of ETAPAS_DA_EQUIPE) {
+    const etapa = etapas.find((e) => e.id === mapa[chave]);
+    if (etapa) saida[chave] = { id: etapa.id, nome: etapa.name };
   }
-  return etapas;
+  return saida;
+}
+
+/** A etapa serve para esta chave? Ganho só em etapa de ganho, perda só em etapa de perda. */
+function etapaServeParaAChave(chave: ChaveDeEtapa, etapa: EtapaLida): boolean {
+  const def = DEFINICOES_DAS_ETAPAS[chave];
+  if (def.ganho) return etapa.is_won;
+  if (def.perda) return etapa.is_lost;
+  return !etapa.is_won && !etapa.is_lost;
+}
+
+/** O que o perfil escolheu, por chave. `proposta` é o nome da v1 para `proposta_enviada`. */
+function etapasEscolhidas(perfil: PerfilDoNegocio): MapaDeEtapas {
+  const { proposta, ...resto } = perfil.onde.etapas;
+  const escolhidas: MapaDeEtapas = {};
+  for (const chave of ETAPAS_DA_EQUIPE) {
+    const id = resto[chave] ?? (chave === "proposta_enviada" ? proposta : undefined);
+    if (id !== undefined) escolhidas[chave] = id;
+  }
+  return escolhidas;
+}
+
+/**
+ * A ETAPA REAL DE CADA CHAVE — pura, para ser medida sem banco.
+ *
+ * Quatro degraus, do mais explícito ao mais frouxo. Cada etapa serve a UMA
+ * chave só; o que um degrau decidiu, o seguinte não desfaz.
+ *
+ *   1. a escolha da empresa no questionário;
+ *   2. o que a instalação anterior já tinha mapeado (se a etapa ainda existe);
+ *   3. a marca do funil: ganho, perda e `agent_stage_hint`;
+ *   4. o nome da etapa, sem diferença de caixa nem de acento.
+ *
+ * O que sobrar em `faltam` é o que o instalador cria.
+ */
+export function mapearEtapasDaEquipe(c: {
+  etapas: readonly EtapaLida[];
+  escolhidas: MapaDeEtapas;
+  anteriores: MapaDeEtapas;
+  empresa: { agenda: boolean; proposta: boolean };
+}): { mapa: MapaDeEtapas; faltam: ChaveDeEtapa[] } {
+  const mapa: MapaDeEtapas = {};
+  const usadas = new Set<string>();
+  const fixar = (chave: ChaveDeEtapa, etapa: EtapaLida | undefined) => {
+    if (!etapa || mapa[chave] !== undefined || usadas.has(etapa.id)) return;
+    if (!etapaServeParaAChave(chave, etapa)) return;
+    mapa[chave] = etapa.id;
+    usadas.add(etapa.id);
+  };
+  const porId = (id: string | undefined) => c.etapas.find((e) => e.id === id);
+
+  for (const chave of ETAPAS_DA_EQUIPE) fixar(chave, porId(c.escolhidas[chave]));
+  for (const chave of ETAPAS_DA_EQUIPE) fixar(chave, porId(c.anteriores[chave]));
+  const pelasMarcas = mapaPelasMarcas(c.etapas.filter((e) => !usadas.has(e.id)));
+  for (const chave of ETAPAS_DA_EQUIPE) fixar(chave, porId(pelasMarcas[chave]));
+  for (const chave of ETAPAS_DA_EQUIPE) {
+    const aceitos = DEFINICOES_DAS_ETAPAS[chave].nomesAceitos.map(nomeNormalizado);
+    fixar(
+      chave,
+      c.etapas.find((e) => !usadas.has(e.id) && aceitos.includes(nomeNormalizado(e.name))),
+    );
+  }
+  return {
+    mapa,
+    faltam: ETAPAS_DA_EQUIPE.filter((chave) => mapa[chave] === undefined && etapaSeAplica(chave, c.empresa)),
+  };
+}
+
+/**
+ * A POSIÇÃO de uma etapa nova: logo depois da etapa da chave anterior que já
+ * existe, para o quadro ficar na ordem do atendimento. Sem anterior, vai para
+ * o começo. Ganho e perda vão para o fim.
+ */
+export function posicaoDaEtapaNova(
+  chave: ChaveDeEtapa,
+  mapa: MapaDeEtapas,
+  etapas: readonly { id: string; position: number }[],
+): number {
+  const posicoes = etapas.map((e) => e.position).sort((x, y) => x - y);
+  const maior = posicoes.length > 0 ? posicoes[posicoes.length - 1]! : 0;
+  const def = DEFINICOES_DAS_ETAPAS[chave];
+  if (def.ganho || def.perda) return maior + 1;
+  const indice = ETAPAS_DA_EQUIPE.indexOf(chave);
+  for (let i = indice - 1; i >= 0; i -= 1) {
+    const anterior = etapas.find((e) => e.id === mapa[ETAPAS_DA_EQUIPE[i]!]);
+    if (!anterior) continue;
+    const seguinte = posicoes.find((p) => p > anterior.position);
+    return seguinte === undefined ? anterior.position + 1 : (anterior.position + seguinte) / 2;
+  }
+  return posicoes.length > 0 ? posicoes[0]! - 1 : 1;
 }
 
 /** O agente de um papel: pelo id guardado, e na falta dele pela marca em `config`. */
@@ -413,11 +538,10 @@ export async function contextoDoQueExiste(
       [orgId, instalacao.pipeline_id],
     );
     if (rows[0]) {
-      funil = {
-        id: String(rows[0].id),
-        nome: String(rows[0].name),
-        etapas: await etapasMarcadas(db, orgId, String(rows[0].id)),
-      };
+      const etapas = await etapasDoFunil(db, orgId, String(rows[0].id));
+      // Instalação anterior ao mapeamento: lê o que as marcas do funil dizem.
+      const mapa = Object.keys(instalacao.etapas).length > 0 ? instalacao.etapas : mapaPelasMarcas(etapas);
+      funil = { id: String(rows[0].id), nome: String(rows[0].name), etapas: etapasComNome(mapa, etapas) };
     }
   }
   return {
@@ -606,42 +730,115 @@ async function passoDoFunil(
   ctx: ContextoDeQuemChama,
   perfil: PerfilDoNegocio,
   funil: { id: string; nome: string } | null,
-): Promise<ContextoDaInstalacao["funil"]> {
-  if (funil === null) return null;
-  for (const passo of Object.keys(PASSOS_DA_EQUIPE) as PassoDaEquipe[]) {
-    const etapaId = perfil.onde.etapas[passo];
-    if (etapaId === undefined) continue;
-    const { rows } = await db.query(
-      "select id, name, is_won, is_lost, agent_stage_hint from crm_stages where organization_id=$1 and pipeline_id=$2 and id=$3 and not is_archived",
-      [ctx.orgId, funil.id, etapaId],
-    );
-    const etapa = rows[0];
+  instalacao: InstalacaoDaEquipe,
+  empresa: { agenda: boolean; proposta: boolean },
+  criados: string[],
+): Promise<{ funil: ContextoDaInstalacao["funil"]; etapas: MapaDeEtapas; criadas: string[] }> {
+  if (funil === null) return { funil: null, etapas: {}, criadas: [...instalacao.etapas_criadas] };
+
+  let etapas = await etapasDoFunil(db, ctx.orgId, funil.id);
+  const escolhidas = etapasEscolhidas(perfil);
+
+  // A escolha da empresa é conferida antes de qualquer escrita: etapa que não
+  // existe neste funil, ou que não serve para a chave, é recusa.
+  for (const chave of ETAPAS_DA_EQUIPE) {
+    const id = escolhidas[chave];
+    if (id === undefined) continue;
+    const etapa = etapas.find((e) => e.id === id);
     if (!etapa) {
       throw new EquipeProntaError("etapa_invalida", "Uma das etapas escolhidas não existe neste funil.");
     }
-    const hint = PASSOS_DA_EQUIPE[passo];
-    // O banco exige coerência entre a marca e o desfecho da etapa: "perdido" só
-    // numa etapa de perda, e nenhuma outra marca numa etapa de ganho ou perda.
-    if ((hint === "lost") !== (etapa.is_lost === true) || etapa.is_won === true) {
+    if (!etapaServeParaAChave(chave, etapa)) {
+      const def = DEFINICOES_DAS_ETAPAS[chave];
       throw new EquipeProntaError(
         "etapa_incoerente",
-        passo === "perdido"
+        def.perda
           ? `A etapa "${etapa.name}" não é uma etapa de perda. Escolha, para "perdido", uma etapa de perda do funil.`
-          : `A etapa "${etapa.name}" é de ganho ou de perda, e não serve para "${passo}".`,
+          : def.ganho
+            ? `A etapa "${etapa.name}" não é uma etapa de ganho. Escolha, para "ganho", a etapa de ganho do funil.`
+            : `A etapa "${etapa.name}" é de ganho ou de perda, e não serve para "${chave}".`,
       );
     }
-    if (etapa.agent_stage_hint === hint) continue;
-    // A marca é única por funil: sai de onde estava antes de entrar na nova.
-    await db.query(
-      "update crm_stages set agent_stage_hint=null where organization_id=$1 and pipeline_id=$2 and agent_stage_hint=$3 and id<>$4",
-      [ctx.orgId, funil.id, hint, etapaId],
+  }
+
+  const { mapa, faltam } = mapearEtapasDaEquipe({
+    etapas,
+    escolhidas,
+    anteriores: instalacao.etapas,
+    empresa,
+  });
+
+  // ── cria as que faltam (decisão do dono: nunca renomeia nem apaga) ──
+  const criadas = [...instalacao.etapas_criadas];
+  if (faltam.length > 0) {
+    const slugs = await db.query(
+      "select slug from crm_stages where organization_id=$1 and pipeline_id=$2",
+      [ctx.orgId, funil.id],
     );
+    const usados = new Set(slugs.rows.map((r) => String(r.slug)));
+    for (const chave of faltam) {
+      const def = DEFINICOES_DAS_ETAPAS[chave];
+      let slug = def.slug;
+      for (let n = 2; usados.has(slug); n += 1) slug = `${def.slug}_${n}`;
+      usados.add(slug);
+      // A marca do motor é única por funil: a etapa nova só a leva se estiver livre.
+      const marcaLivre = def.hint !== null && !etapas.some((e) => e.agent_stage_hint === def.hint);
+      const position = posicaoDaEtapaNova(chave, mapa, etapas);
+      const nova = await db.query(
+        `insert into crm_stages (organization_id, pipeline_id, name, slug, position, is_won, is_lost, agent_stage_hint)
+         values ($1, $2, $3, $4, $5, $6, $7, $8)
+         returning id`,
+        [ctx.orgId, funil.id, def.nome, slug, position, def.ganho, def.perda, marcaLivre ? def.hint : null],
+      );
+      const id = String(nova.rows[0].id);
+      mapa[chave] = id;
+      criadas.push(id);
+      criados.push(`etapa_${chave}`);
+      etapas = [
+        ...etapas,
+        {
+          id,
+          name: def.nome,
+          slug,
+          position,
+          is_won: def.ganho,
+          is_lost: def.perda,
+          agent_stage_hint: marcaLivre ? def.hint : null,
+        },
+      ];
+    }
+  }
+
+  // ── as marcas do motor (`agent_stage_hint`) ──
+  for (const chave of ETAPAS_DA_EQUIPE) {
+    const { hint } = DEFINICOES_DAS_ETAPAS[chave];
+    const id = mapa[chave];
+    if (hint === null || id === undefined) continue;
+    const etapa = etapas.find((e) => e.id === id)!;
+    if (etapa.agent_stage_hint === hint) continue;
+    const dona = etapas.find((e) => e.agent_stage_hint === hint && e.id !== id);
+    if (escolhidas[chave] === id) {
+      // A empresa ESCOLHEU esta etapa: a marca sai de onde estava e entra aqui.
+      if (dona) {
+        await db.query(
+          "update crm_stages set agent_stage_hint=null where organization_id=$1 and pipeline_id=$2 and id=$3",
+          [ctx.orgId, funil.id, dona.id],
+        );
+        dona.agent_stage_hint = null;
+      }
+    } else if (dona || etapa.agent_stage_hint !== null) {
+      // Etapa achada pelo nome: só recebe a marca se ela estiver livre e a
+      // etapa não tiver outra. Marca que a empresa pôs não é mexida.
+      continue;
+    }
     await db.query(
       "update crm_stages set agent_stage_hint=$4 where organization_id=$1 and pipeline_id=$2 and id=$3",
-      [ctx.orgId, funil.id, etapaId, hint],
+      [ctx.orgId, funil.id, id, hint],
     );
+    etapa.agent_stage_hint = hint;
   }
-  return { ...funil, etapas: await etapasMarcadas(db, ctx.orgId, funil.id) };
+
+  return { funil: { ...funil, etapas: etapasComNome(mapa, etapas) }, etapas: mapa, criadas };
 }
 
 async function passoDaRegua(
@@ -741,6 +938,11 @@ interface AgentePreparado {
   acao: AgenteNoResultado["acao"];
   /** A versão a publicar; `null` = a vigente já está publicada e em dia. */
   aPublicar: string | null;
+  /**
+   * O agente NUNCA tinha sido publicado quando esta rodada começou. É o que
+   * diz que a pausa dele é a de nascimento, e não uma pausa do cliente.
+   */
+  nuncaPublicado: boolean;
 }
 
 async function passoDosAgentes(
@@ -800,6 +1002,7 @@ async function passoDosAgentes(
         hash: gerado,
         acao: "criado",
         aPublicar: String(version.id),
+        nuncaPublicado: true,
       });
       criados.push(`agente_${papel.id}`);
       continue;
@@ -820,6 +1023,7 @@ async function passoDosAgentes(
         acao: "sem_mudanca",
         // Em dia mas nunca publicado (a publicação foi recusada da outra vez).
         aPublicar: agente.published_version_id === String(vigente.id) ? null : String(vigente.id),
+        nuncaPublicado: agente.published_version_id === null,
       });
       continue;
     }
@@ -837,6 +1041,7 @@ async function passoDosAgentes(
       hash: gerado,
       acao: "atualizado",
       aPublicar: versionId,
+      nuncaPublicado: agente.published_version_id === null,
     });
   }
   return preparados;
@@ -1058,6 +1263,14 @@ async function passoDoRoteador(
         where organization_id=$1 and id=$2 and (fallback_agent_id is distinct from $3 or coalesce(config->>'sticky','true') = 'false')`,
       [ctx.orgId, routerId, sdr.agentId],
     );
+    // A passagem entre colegas é ligada quando o roteador ainda não diz nada
+    // sobre ela. Quem a desligou pela tela do roteador continua com ela
+    // desligada: a chave presente, com qualquer valor, é decisão de alguém.
+    await db.query(
+      `update ai_routers set config = config || '{"passagem_entre_colegas":true}'::jsonb
+        where organization_id=$1 and id=$2 and not (config ? 'passagem_entre_colegas')`,
+      [ctx.orgId, routerId],
+    );
   } else {
     const novo = await db.query(
       `insert into ai_routers (organization_id, name, channel_session_id, fallback_agent_id, config, created_by)
@@ -1068,7 +1281,12 @@ async function passoDoRoteador(
         NOME_DO_ROTEADOR,
         canalId,
         sdr.agentId,
-        JSON.stringify({ sticky: true, context_message_count: NEW_ROUTER_CONTEXT_MESSAGES }),
+        JSON.stringify({
+          sticky: true,
+          context_message_count: NEW_ROUTER_CONTEXT_MESSAGES,
+          // Os quatro agentes passam a vez um para o outro (`passar_para_colega`).
+          passagem_entre_colegas: true,
+        }),
         ctx.userId,
       ],
     );
@@ -1188,7 +1406,16 @@ export async function instalarEquipePronta(
     // ── 2 a 5. base, agenda, funil e régua ─────────────────────────────────
     const fonteId = await passoDaBase(db, portas, ctx, perfil, instalacao, criados);
     const { agenda, desativados } = await passoDaAgenda(db, ctx, perfil, instalacao, criados);
-    const funil = await passoDoFunil(db, ctx, perfil, funilEscolhido);
+    const doFunil = await passoDoFunil(
+      db,
+      ctx,
+      perfil,
+      funilEscolhido,
+      instalacao,
+      { agenda: agenda !== null, proposta: perfil.proposta.usa },
+      criados,
+    );
+    const funil = doFunil.funil;
     await db.query("commit");
     emTransacao = false;
 
@@ -1242,6 +1469,8 @@ export async function instalarEquipePronta(
       knowledge_source_id: fonteId,
       followup_flow_pointer_id: reguaId,
       proposal_template_id: null,
+      etapas: doFunil.etapas,
+      etapas_criadas: doFunil.criadas,
       tipos_de_agenda_desativados: desativados,
       agentes: agentesDaRodada,
       roteador_confirmado:
@@ -1268,16 +1497,25 @@ export async function instalarEquipePronta(
         publicado = r.ok;
         if (!r.ok) motivo = r.code;
       }
-      if (publicado) {
-        // Sai da pausa de nascimento. Quem o cliente pausou à mão depois de
-        // publicado não é religado aqui: só o que nasceu nesta rodada — e nem
-        // ele, se a equipe está pausada pela tela.
-        if (p.acao === "criado" && instalacao.pausa === null) {
-          await db.query(
-            "update ai_agents set paused_at=null where organization_id=$1 and id=$2 and published_version_id is not null",
-            [ctx.orgId, p.agentId],
-          );
-        }
+      if (publicado && instalacao.pausa === null) {
+        // SAI DA PAUSA DE NASCIMENTO, na rodada em que é publicado — tenha sido
+        // criado agora ou reaproveitado de uma instalação que não conseguiu
+        // publicar (WhatsApp desconectado, sem chave de IA). Antes, só o agente
+        // CRIADO na rodada saía da pausa: instalar offline, conectar e instalar
+        // de novo publicava os quatro e os deixava pausados, sem responder
+        // ninguém, com o checklist todo verde.
+        //
+        // Pausa de nascimento é a de quem nunca tinha sido publicado quando a
+        // rodada começou, OU a que tem a hora do nascimento do agente (é o que
+        // conserta quem já ficou preso: publicado, e ainda com a pausa com que
+        // nasceu). A pausa que o cliente fez depois, num agente publicado, não
+        // é tocada. Nem a equipe pausada pela tela (`instalacao.pausa`).
+        await db.query(
+          `update ai_agents set paused_at=null
+            where organization_id=$1 and id=$2 and published_version_id is not null and paused_at is not null
+              and ($3::boolean or paused_at <= created_at + make_interval(secs => $4))`,
+          [ctx.orgId, p.agentId, p.nuncaPublicado, TOLERANCIA_DA_PAUSA_DE_NASCIMENTO_S],
+        );
       }
       agentes.push({
         papel: p.papel.id,
