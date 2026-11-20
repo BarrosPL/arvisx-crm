@@ -108,6 +108,24 @@ para uma pessoa aprovar ou descartar. Nada é executado sozinho. `next_action: n
   ou ficar com a equipe para escolher: a resposta diz qual dos casos foi (`shown`).
 - Frase sem ação concreta ("responder o cliente") não é gravada, e a resposta avisa (`recorded: false`).
 
+## Fechar conversa
+
+`crm_close_conversation` fecha uma conversa (`conversation_id`; `reason` opcional, até 300 caracteres) para ela sair
+da caixa de entrada. O uso previsto: o agente falou por último e o cliente não respondeu há dias.
+
+- **Nada é enviado ao cliente.** Se ele escrever de novo, a conversa reabre, como sempre.
+- **Não fecha chamado nem negócio** (`crm_close_human_case` e `crm_close_demand` continuam sendo as ferramentas
+  disso) e não solta a trava de atendimento humano do contato: devolver ao automático segue sendo escolha da tela.
+- **Idempotente.** Conversa já encerrada (fechada, resolvida ou arquivada) responde `already_closed: true`, sem
+  escrever nada e sem nova linha de auditoria. Conversa arquivada continua arquivada.
+- **Auditoria** `conversation.closed`, a mesma ação da tela, com o token como ator e, no `metadata`, `via: "mcp"`,
+  o estado anterior e o `reason`.
+- Se o atendimento mudou entre a leitura e o fechamento, a recusa é `conversa_mudou`: leia de novo e decida.
+- A regra é a da rota `POST /api/v1/conversations/[id]/close` (`lib/inbox/fechar-conversa.ts`, chamada pelos dois
+  lados).
+- Aparece no pacote "Não perder o cliente". "Organizar a operação" não tinha vaga: com as ferramentas que só a
+  pessoa liga, ele já exige 26 das 27 vagas por agente.
+
 ## Em que pacote cada uma aparece
 
 Em "O que o agente pode fazer", na tela do agente:
