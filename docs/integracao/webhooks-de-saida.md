@@ -246,7 +246,7 @@ Para migrar:
 4. Pare de ler o `X-Deskcomm-Signature`. Quando ele for removido, as notas da
    versão avisam com antecedência.
 
-## 9. Os eventos de negócio, tarefa e mensagem
+## 9. Os eventos de negócio, tarefa, mensagem e conversa
 
 Todo evento abaixo é um gatilho das automações e sai pelo mesmo envelope das
 seções 1 e 2. Em `data` vêm sempre os campos do próprio evento e, quando o
@@ -273,6 +273,8 @@ negócio como ele está agora.
 | `task.completed` | uma tarefa foi concluída | `task_id`, `lead_id` e `contact_id` quando existem, e `task` |
 | `message.received` | chegou mensagem do cliente | `message_id`, `conversation_id`, `channel_session_id`, `body_preview` e `message` (abaixo) |
 | `message.failed` | uma mensagem não foi entregue | os mesmos de mensagem, mais o erro |
+| `conversation.ai_paused` | o atendimento automático parou numa conversa | `conversation_id`, `contact_id`, `channel_session_id`, `paused_until`, `durable`, `human_assigned`, `renewed` e `conversation` (abaixo) |
+| `conversation.ai_resumed` | o atendimento automático voltou numa conversa | `conversation_id`, `contact_id`, `channel_session_id` e `conversation` |
 
 **Texto inteiro.** `note.text`, `task.description`, `task.result` e
 `message.text` saem completos, sem corte. O `body_preview` de um evento de
@@ -301,8 +303,32 @@ responsável não aparece aqui: cada uma tem o seu evento.
 
 **Quem é o responsável.** A identidade de quem atende só sai quando a regra
 marca a opção de incluir o responsável: aí `data.owner` traz o responsável do
-negócio e `task.assigned_to` o da tarefa (`id` e `name`). Sem a opção, nenhum
-dos dois aparece.
+negócio, `task.assigned_to` o da tarefa e `conversation.ai.by` quem assumiu a
+conversa (`id` e `name`). Sem a opção, nenhum deles aparece.
+
+**A pausa e a volta do atendimento automático.** Servem para um agente de fora
+do CRM saber quando ficar calado numa conversa. Os dois eventos trazem o
+`contact` (não trazem `lead`).
+
+- `conversation.ai_paused` sai quando uma pessoa assume, responde ou pausa a
+  conversa, e quando o agente do CRM passa o caso para a equipe.
+  `paused_until` é a hora em que a pausa acaba sozinha, ou `null` quando ela
+  não tem prazo (`durable: true`). `human_assigned` diz se a conversa tem uma
+  pessoa como dona.
+- Ele sai **de novo**, com `renewed: true`, quando o prazo ou o dono muda. Cada
+  resposta de uma pessoa renova o prazo: guarde sempre o `paused_until` do
+  evento mais recente (ordene pelo `happened_at`).
+- `conversation.ai_resumed` sai quando alguém devolve a conversa ao
+  atendimento automático. **Pausa com prazo que vence não gera evento**: a
+  hora da volta é o `paused_until` que você já recebeu.
+- `conversation`: `id`, `contact_id`, `channel_session_id`, `status` e `ai`, o
+  estado na hora do envio: `paused`, `human_in_command`, `reason`, `since`,
+  `until`, `resumes_automatically` e `detail`. Os valores de `reason` são
+  `human_assigned`, `human_replied`, `human_replied_outside_crm`,
+  `handed_to_team`, `contact_locked`, `contact_always_human` e
+  `contact_opted_out`. Para decidir se responde, confie no `conversation.ai`
+  da entrega mais recente.
+- Conversa de grupo não gera estes eventos.
 
 **Ordem.** A entrega não garante ordem de chegada: uma retentativa, uma
 automação adiada ou um Reenviar chegam depois de eventos mais novos. Ordene

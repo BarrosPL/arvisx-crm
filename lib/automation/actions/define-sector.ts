@@ -36,6 +36,12 @@
  * roda uma vez por mensagem porque cada mensagem é um evento novo — não porque
  * a mudança de setor redispara a si mesma. E repetir a mesma chamada é
  * idempotente: a régua devolve `mudou: false` e não audita de novo.
+ *
+ * O caminho indireto que existe desde a migration 9811: a distribuição
+ * enfileirada pode dar um dono à conversa, e o dono novo grava
+ * `conversation.ai_paused`. Por isso esta ação é vetada nas regras desses dois
+ * gatilhos (`ACOES_QUE_TROCAM_O_DONO_DA_CONVERSA`, em `lib/schemas/webhooks.ts`):
+ * a regra que escuta a pausa não pode mudar o setor de novo.
  */
 import { registerAction } from "@/lib/automation/actions";
 import type { ActionCtx, ActionResultDetail } from "@/lib/automation/types";

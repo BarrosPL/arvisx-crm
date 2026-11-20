@@ -34,6 +34,15 @@ export const EVENTO_TAREFA_CRIADA = "lead.task_created";
 export const EVENTO_ANEXO_ADICIONADO = "lead.attachment_added";
 export const EVENTO_TAREFA_CONCLUIDA = "task.completed";
 
+/**
+ * A pausa e a retomada da IA numa conversa (superfície de agente, parte 3).
+ * NÃO são emitidos pela aplicação: nascem do gatilho do banco
+ * `fn_anunciar_pausa_da_ia` (migration 9811), que vê todo escritor de
+ * `conversations`. As constantes existem para quem LÊ o evento.
+ */
+export const EVENTO_IA_PAUSADA = "conversation.ai_paused";
+export const EVENTO_IA_RETOMADA = "conversation.ai_resumed";
+
 /** A entidade que cada evento grava: a mesma que o motor espera na fonte única. */
 const ENTIDADE_DO_EVENTO = {
   [EVENTO_TAG_REMOVIDA]: "crm_lead",

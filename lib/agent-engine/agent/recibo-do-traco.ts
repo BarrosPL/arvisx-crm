@@ -52,6 +52,9 @@ const MOTIVOS_DE_ABORTO = new Set([
   "cost_budget_exceeded",
   "max_steps_reached",
   "sentinel:requested_human",
+  // O filtro de entrada da empresa barrou o turno antes de qualquer modelo
+  // (`lib/agent-engine/guardrails/filtro-de-entrada.ts`).
+  "filtro_de_entrada",
 ]);
 // Nomes nativos de AGENT_TOOL_DEFS; MCP vem do catálogo canônico sem handlers.
 // Nome externo/desconhecido não é texto livre que este leitor possa devolver.
@@ -70,6 +73,9 @@ const FERRAMENTAS = new Set([
   "provide_case_update",
   "passar_para_colega",
   "send_template",
+  // Não é ferramenta do modelo: é a regra da empresa que barrou o turno antes
+  // dele. Entra aqui para o recibo mostrar a categoria e o que foi feito.
+  "filtro_de_entrada",
 ]);
 const ESTADOS = new Set(["ok", "recusado", "falhou", "bloqueada"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
