@@ -28,6 +28,9 @@ import { chamarGraph } from "./graph";
  * `business_management` entra porque páginas de um Gerenciador de Negócios só
  * aparecem em `me/accounts` com ela; sem ela, quem administra a página pelo
  * Business Manager veria a lista vazia e acharia que não tem página.
+ *
+ * As duas de comentários (`ESCOPOS_DE_COMENTARIOS`) são pedidas junto, mas
+ * ninguém é barrado por não tê-las: ver o comentário daquela lista.
  */
 export const ESCOPOS_DO_LOGIN = [
   "pages_show_list",
@@ -36,6 +39,8 @@ export const ESCOPOS_DO_LOGIN = [
   "instagram_basic",
   "instagram_manage_messages",
   "business_management",
+  "instagram_manage_comments",
+  "pages_read_engagement",
 ] as const;
 
 /** Sem estas não há atendimento nenhum: recusar no fim, não depois de gravar. */
@@ -43,6 +48,21 @@ export const ESCOPOS_OBRIGATORIOS = ["pages_show_list", "pages_messaging", "page
 
 /** As do Instagram: sem elas a página conecta, mas o Instagram não. */
 export const ESCOPOS_DO_INSTAGRAM = ["instagram_basic", "instagram_manage_messages"] as const;
+
+/**
+ * As de COMENTÁRIOS do Instagram — as que o webhook `comments`/`live_comments`
+ * exige além das que a conexão já pedia (matriz de campos e permissões da
+ * Meta, login do Facebook: `instagram_basic`, `instagram_manage_comments`,
+ * `pages_manage_metadata`, `pages_read_engagement`, `pages_show_list`).
+ *
+ * OPCIONAIS, e é por isso que NÃO entram em `ESCOPOS_DO_INSTAGRAM`: aquela
+ * lista decide se o Instagram conecta, e uma permissão que a Meta ainda não
+ * liberou para o app (ou que a pessoa desmarcou) não pode tirar as mensagens
+ * de quem só quer mensagens. Sem estas duas, a conexão recebe e responde
+ * mensagem como sempre; só os comentários ficam indisponíveis, e a conexão
+ * diz isso (`estadoDosComentarios`, em `./store.ts`).
+ */
+export const ESCOPOS_DE_COMENTARIOS = ["instagram_manage_comments", "pages_read_engagement"] as const;
 
 /** O caminho da volta — o MESMO que o dono cadastra no app da Meta. */
 export const CAMINHO_DA_VOLTA = "/auth/meta-social-return";
@@ -92,16 +112,28 @@ export async function tokenDeUsuarioDeLongaDuracao(entrada: {
   return longo.access_token ?? curto.access_token;
 }
 
-/** As permissões que a pessoa NÃO concedeu, dentre as pedidas. */
-export async function permissoesNegadas(token: string, appSecret: string): Promise<string[]> {
+async function permissoesConcedidasNaMeta(token: string, appSecret: string): Promise<Set<string>> {
   const r = await chamarGraph<{ data?: { permission?: string; status?: string }[] }>(
     "me/permissions",
     { token, appSecret },
   );
-  const concedidas = new Set(
-    (r.data ?? []).filter((p) => p.status === "granted").map((p) => p.permission ?? ""),
-  );
+  return new Set((r.data ?? []).filter((p) => p.status === "granted").map((p) => p.permission ?? ""));
+}
+
+/** As permissões que a pessoa NÃO concedeu, dentre as pedidas. */
+export async function permissoesNegadas(token: string, appSecret: string): Promise<string[]> {
+  const concedidas = await permissoesConcedidasNaMeta(token, appSecret);
   return ESCOPOS_DO_LOGIN.filter((e) => !concedidas.has(e));
+}
+
+/**
+ * As permissões que a pessoa CONCEDEU, dentre as pedidas. É o que fica gravado
+ * na conexão, para ela saber dizer — sem perguntar de novo à Meta — se tem as
+ * de comentários.
+ */
+export async function escoposConcedidos(token: string, appSecret: string): Promise<string[]> {
+  const concedidas = await permissoesConcedidasNaMeta(token, appSecret);
+  return ESCOPOS_DO_LOGIN.filter((e) => concedidas.has(e));
 }
 
 /** O id da pessoa no app (app-scoped). É o que o pedido de exclusão da Meta traz. */
@@ -165,7 +197,16 @@ export async function paginasDoUsuario(token: string, appSecret: string): Promis
   return normalizarPaginas(r.data ?? []);
 }
 
-/** Os campos de mensagens que a página entrega ao app (Messenger e Instagram). */
+/**
+ * Os campos de mensagens que a página entrega ao app (Messenger e Instagram).
+ *
+ * Comentários do Instagram NÃO entram aqui, e não é esquecimento: `comments` e
+ * `live_comments` são campos do objeto `instagram`, escolhidos UMA vez no
+ * painel do app (Webhooks › Instagram) e válidos para todas as contas. O
+ * `subscribed_apps` da página só aceita campos de página; o que a Meta exige
+ * dela é estar assinada, e estes campos já a assinam. O passo do painel está
+ * em `docs/integracao/comentarios-do-instagram.md`.
+ */
 export const CAMPOS_DA_ASSINATURA = [
   "messages",
   "message_echoes",

@@ -103,6 +103,13 @@ export const ENTIDADE_ESPERADA_POR_GATILHO = {
   // regras do mesmo gatilho com N diferentes disparariam juntas.
   "lead.silent_for": "crm_lead",
   "lead.stage_stale": "crm_lead",
+  // Chegou um comentário numa publicação do Instagram (migration 9810). Quem
+  // emite é `lib/channels/meta-social/comentarios.ts`, depois de gravar a linha
+  // em `social_comments` — e só quando o canal está com os comentários
+  // ligados. A entidade é o próprio comentário: ele NÃO tem contato nem
+  // negócio (nasce sem os dois, por decisão), então a regra enxerga só
+  // `event.*`, e a ação que faz sentido é avisar outro sistema.
+  "comment.received": "social_comment",
 } as const;
 
 export type GatilhoDeAutomacao = keyof typeof ENTIDADE_ESPERADA_POR_GATILHO;

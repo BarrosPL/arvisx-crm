@@ -71,6 +71,45 @@ describe("POST /api/v1/webhooks/meta-social", () => {
     expect(h.processar).not.toHaveBeenCalled();
   });
 
+  it("comentário do Instagram: só entra com a assinatura, e chega à entrada como `comentario`", async () => {
+    const comentario = JSON.stringify({
+      object: "instagram",
+      entry: [
+        {
+          id: "17840000000000001",
+          time: 1_763_640_000,
+          changes: [
+            {
+              field: "comments",
+              value: {
+                id: "17865799348089039",
+                from: { id: "232323232", username: "cliente.exemplo" },
+                text: "Qual o valor?",
+                media: { id: "17900000000000123", media_product_type: "FEED" },
+              },
+            },
+          ],
+        },
+      ],
+    });
+    expect((await post(comentario, null)).status).toBe(401);
+    expect(h.processar).not.toHaveBeenCalled();
+
+    h.processar.mockResolvedValue(["comentarios_desligados"]);
+    const r = await post(comentario, assinar(comentario, h.app.appSecret!));
+    // Desligado (o padrão) também é 200: a Meta não reentrega o que não vai mudar.
+    expect(r.status).toBe(200);
+    expect(await r.json()).toEqual({ received: 1, outcomes: ["comentarios_desligados"] });
+    expect(h.processar.mock.calls[0]![1]).toEqual([
+      expect.objectContaining({
+        tipo: "comentario",
+        conta: "17840000000000001",
+        commentId: "17865799348089039",
+        texto: "Qual o valor?",
+      }),
+    ]);
+  });
+
   it("JSON inválido com assinatura válida: 400", async () => {
     const lixo = "{nao-e-json";
     expect((await post(lixo, assinar(lixo, h.app.appSecret!))).status).toBe(400);

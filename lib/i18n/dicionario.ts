@@ -7610,6 +7610,14 @@ export const DICIONARIO: Traducoes = {
   "Quando um contato ganhar uma tag": { es: "Cuando un contacto reciba una etiqueta" },
   // #2812 — o gatilho de ficha SEM número que recebe um.
   "Quando um contato ganhar um telefone": { es: "Cuando un contacto reciba un teléfono" },
+  // Comentários do Instagram (migration 9810).
+  "Quando chegar um comentário no Instagram": { es: "Cuando llegue un comentario en Instagram" },
+  "Texto do comentário": { es: "Texto del comentario" },
+  "Publicação (id)": { es: "Publicación (id)" },
+  "Comentários só existem em conexões do Instagram.": { es: "Los comentarios solo existen en conexiones de Instagram." },
+  "Não foi possível mudar o modo dos comentários. Tente de novo.": {
+    es: "No fue posible cambiar el modo de los comentarios. Inténtalo de nuevo.",
+  },
   "alterado pelo assistente": { es: "cambiado por el asistente" },
   "alterado automaticamente pelo sistema": { es: "cambiado automáticamente por el sistema" },
   é: { es: "es" },

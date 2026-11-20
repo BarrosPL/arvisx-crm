@@ -207,6 +207,12 @@ export const CURATED_FIELDS: Record<TriggerEvent, CuratedField[]> = {
   // funil (via etapa/tags) e tags do contato.
   "lead.silent_for": LEAD_FIELDS,
   "lead.stage_stale": [...LEAD_FIELDS, STAGE_FIELD],
+  // O comentário não tem contato nem negócio: o que dá para filtrar é o que
+  // veio NELE — o texto (inteiro) e a publicação onde foi feito.
+  "comment.received": [
+    { value: "event.text", label: "Texto do comentário", op: "contains" },
+    { value: "event.media_id", label: "Publicação (id)", op: "eq" },
+  ],
 };
 
 export const OP_LABELS: Record<Op, string> = {

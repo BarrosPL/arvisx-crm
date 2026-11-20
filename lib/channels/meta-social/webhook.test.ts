@@ -123,3 +123,110 @@ describe("lerWebhookDireto", () => {
     expect(lerWebhookDireto(envelope("page", "nao-numerico", [{ sender: { id: PSID }, message: { mid: "m", text: "x" } }]))).toEqual([]);
   });
 });
+
+describe("lerWebhookDireto — comentários do Instagram", () => {
+  const comentario = (valor: Record<string, unknown>, campo = "comments") => ({
+    object: "instagram",
+    entry: [{ id: IG, time: 1_763_640_000, changes: [{ field: campo, value: valor }] }],
+  });
+  const BASE = {
+    id: "17865799348089039",
+    from: { id: "232323232", username: "cliente.exemplo" },
+    text: "Qual o valor?",
+    media: { id: "17900000000000123", media_product_type: "REELS" },
+  };
+
+  it("lê `entry[].changes[]` com `field: comments` — a conta é `entry.id`, a hora é a da notificação", () => {
+    expect(lerWebhookDireto(comentario({ ...BASE, parent_id: "17860000000000777" }))).toEqual([
+      {
+        tipo: "comentario",
+        rede: "instagram",
+        conta: IG,
+        commentId: "17865799348089039",
+        parentId: "17860000000000777",
+        mediaId: "17900000000000123",
+        mediaProductType: "REELS",
+        adId: null,
+        adTitle: null,
+        autorId: "232323232",
+        autorUsuario: "cliente.exemplo",
+        texto: "Qual o valor?",
+        aoVivo: false,
+        proprio: false,
+        quando: new Date(1_763_640_000_000).toISOString(),
+      },
+    ]);
+  });
+
+  it("`live_comments` sai marcado como ao vivo; `mentions` e campo desconhecido são ignorados", () => {
+    expect(lerWebhookDireto(comentario(BASE, "live_comments"))[0]).toMatchObject({ tipo: "comentario", aoVivo: true });
+    expect(lerWebhookDireto(comentario(BASE, "mentions"))).toEqual([]);
+    expect(lerWebhookDireto(comentario(BASE, "story_insights"))).toEqual([]);
+  });
+
+  it("aceita os dois formatos da doc: `comment_id` no lugar de `id`, e o anúncio dentro de `media`", () => {
+    const [porExemplo] = lerWebhookDireto(
+      comentario({
+        comment_id: "17865799348089040",
+        from: BASE.from,
+        text: "Oi",
+        media: { id: "179", media_product_type: "AD", ad_id: "1202", ad_title: "Campanha" },
+      }),
+    );
+    expect(porExemplo).toMatchObject({ commentId: "17865799348089040", adId: "1202", adTitle: "Campanha" });
+    const [porReferencia] = lerWebhookDireto(comentario({ ...BASE, ad_id: "1203", ad_title: "Outra" }));
+    expect(porReferencia).toMatchObject({ commentId: "17865799348089039", adId: "1203", adTitle: "Outra" });
+  });
+
+  it("o envelope do login direto do Instagram (sem `changes`) também é lido", () => {
+    const eventos = lerWebhookDireto({
+      object: "instagram",
+      entry: [{ id: IG, time: 1_763_640_000, field: "comments", value: BASE }],
+    });
+    expect(eventos).toHaveLength(1);
+    expect(eventos[0]).toMatchObject({ tipo: "comentario", conta: IG, commentId: "17865799348089039" });
+  });
+
+  it("comentário escrito pela própria conta sai marcado como `proprio`", () => {
+    const [evento] = lerWebhookDireto(comentario({ ...BASE, from: { id: IG, username: "loja" } }));
+    expect(evento).toMatchObject({ tipo: "comentario", proprio: true });
+    // `self_ig_scoped_id` sozinho não marca: só a igualdade com a conta.
+    const [deFora] = lerWebhookDireto(comentario({ ...BASE, from: { ...BASE.from, self_ig_scoped_id: "999" } }));
+    expect(deFora).toMatchObject({ proprio: false });
+  });
+
+  it("o texto não é cortado, e comentário sem texto continua sendo comentário", () => {
+    const longo = "a".repeat(2200);
+    expect(lerWebhookDireto(comentario({ ...BASE, text: longo }))[0]).toMatchObject({ texto: longo });
+    expect(lerWebhookDireto(comentario({ ...BASE, text: undefined }))[0]).toMatchObject({ texto: null });
+  });
+
+  it("id de comentário ausente ou com caractere de caminho é descartado; os outros ids viram nulos", () => {
+    expect(lerWebhookDireto(comentario({ ...BASE, id: undefined }))).toEqual([]);
+    expect(lerWebhookDireto(comentario({ ...BASE, id: "123/replies" }))).toEqual([]);
+    expect(lerWebhookDireto(comentario({ ...BASE, id: "../me" }))).toEqual([]);
+    expect(lerWebhookDireto(comentario("lixo" as never))).toEqual([]);
+    expect(lerWebhookDireto(comentario({ ...BASE, parent_id: "a b", media: { id: "x/y" } }))[0]).toMatchObject({
+      parentId: null,
+      mediaId: null,
+    });
+  });
+
+  it("comentário NÃO é lido no objeto `page` (Facebook fica fora) e não atrapalha as mensagens", () => {
+    expect(
+      lerWebhookDireto({ object: "page", entry: [{ id: PAGINA, time: 1, changes: [{ field: "comments", value: BASE }] }] }),
+    ).toEqual([]);
+    const misto = lerWebhookDireto({
+      object: "instagram",
+      entry: [
+        {
+          id: IG,
+          time: 1_763_640_000,
+          changes: [{ field: "comments", value: BASE }],
+          messaging: [{ sender: { id: PSID }, recipient: { id: IG }, timestamp: 1_700_000_000_123, message: { mid: "m_1", text: "Oi" } }],
+        },
+      ],
+    });
+    expect(misto.map((e) => e.tipo)).toEqual(["comentario", "mensagem"]);
+  });
+});

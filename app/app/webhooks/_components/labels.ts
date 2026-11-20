@@ -70,6 +70,9 @@ export const TRIGGER_LABELS: Record<TriggerEvent, string> = {
   // funil) ficam embaixo, na configuração da regra.
   "lead.silent_for": "Quando ficar N dias sem mensagem",
   "lead.stage_stale": "Quando um lead ficar N dias na mesma etapa",
+  // Comentário em publicação, não mensagem: a frase diz ONDE, porque quem monta
+  // a regra precisa saber que isto não é a caixa de entrada.
+  "comment.received": "Quando chegar um comentário no Instagram",
 };
 
 export const ACTION_LABELS: Record<ActionType, string> = {

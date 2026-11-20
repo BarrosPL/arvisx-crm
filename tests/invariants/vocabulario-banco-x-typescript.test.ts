@@ -436,6 +436,15 @@ const PARES: Array<{
     simbolo: "MODOS_DA_EQUIPE",
   },
   {
+    tabela: "social_comments",
+    coluna: "estado",
+    // Migration 9810: em que pé está o comentário do Instagram. Um estado só no
+    // CHECK seria linha que a API não sabe filtrar; só no TypeScript, `23514`
+    // ao gravar a resposta.
+    arquivo: "lib/channels/meta-social/comentarios.ts",
+    simbolo: "ESTADOS_DO_COMENTARIO",
+  },
+  {
     tabela: "entregas_de_aviso_de_agendamento",
     coluna: "tipo",
     // Migration 0707: aviso de um evento, ou o resumo das 7h.
