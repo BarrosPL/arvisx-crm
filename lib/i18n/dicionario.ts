@@ -10110,6 +10110,8 @@ export const DICIONARIO: Traducoes = {
   "Deixa no cartão do negócio a próxima ação sugerida pelo agente, para uma pessoa da equipe aprovar ou descartar. Nada é executado sozinho.": { es: "Deja en la tarjeta del negocio la próxima acción sugerida por el agente, para que una persona del equipo la apruebe o la descarte. Nada se ejecuta solo." },
   // ─── Superfície de agente (PR 2): consulta de proposta ───
   "Consultar proposta comercial": { es: "Consultar propuesta comercial" },
+  "Ler a linha do tempo do negócio": { es: "Leer la línea de tiempo del negocio" },
+  "Mostra o que aconteceu num negócio ou em todos os negócios de um funil num período: mudança de etapa, de responsável e de marcador, anotações e tarefas, com quem fez cada coisa.": { es: "Muestra lo que ocurrió en un negocio o en todos los negocios de un embudo en un período: cambio de etapa, de responsable y de etiqueta, notas y tareas, con quién hizo cada cosa." },
   "Mostra em que situação está a proposta de um negócio, até quando ela vale, os itens e o valor total, com um acesso temporário ao documento enviado.": { es: "Muestra en qué situación está la propuesta de un negocio, hasta cuándo es válida, los ítems y el valor total, con un acceso temporal al documento enviado." },
   "Listar funis": { es: "Listar embudos" },
   "Criar oportunidade no funil": { es: "Crear oportunidad en el embudo" },

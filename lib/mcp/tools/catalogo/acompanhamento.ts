@@ -93,6 +93,20 @@ export const TOOLS_ACOMPANHAMENTO = declararTools([
     pacotes: ["escalar"],
   },
   {
+    // Fica em `reter`, como as outras leituras de acompanhamento que vieram
+    // depois: `organizar` está a uma vaga do teto por agente, e `vender` é o
+    // pacote com que todo agente nasce. Saber o que andou e o que parou num
+    // negócio é o trabalho de não deixar o cliente esfriar.
+    name: "crm_list_lead_events",
+    category: "read",
+    rotulo: "Ler a linha do tempo do negócio",
+    explicacao:
+      "Mostra o que aconteceu num negócio ou em todos os negócios de um funil num período: mudança de etapa, de responsável e de marcador, anotações e tarefas, com quem fez cada coisa.",
+    oQueToca: "Linha do tempo do negócio",
+    risco: "seguro",
+    pacotes: ["reter"],
+  },
+  {
     name: "crm_add_lead_note",
     category: "write",
     rotulo: "Anotar no negócio",
