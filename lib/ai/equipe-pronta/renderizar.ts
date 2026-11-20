@@ -24,6 +24,7 @@
 import { createHash } from "node:crypto";
 
 import type { PerfilDoNegocio } from "@/lib/schemas/equipe-pronta";
+import { DEFINICOES_DAS_ETAPAS, ETAPAS_DA_EQUIPE } from "./etapas";
 import { REGRAS_COMUNS } from "./papeis/comum";
 import type { CamposDoAgente, ContextoDaInstalacao, PapelDaEquipe } from "./tipos";
 
@@ -72,17 +73,20 @@ function secaoDoFunil(contexto: ContextoDaInstalacao): string {
   const linhas = [
     `Funil: "${contexto.funil.nome}" (\`pipeline_id\`: \`${contexto.funil.id}\`). Trabalhe só neste funil.`,
   ];
-  const marcadas: [string, { id: string; nome: string } | undefined][] = [
-    ["Qualificado", etapas.qualificado],
-    ["Proposta", etapas.proposta],
-    ["Perdido", etapas.perdido],
-  ];
-  for (const [rotulo, etapa] of marcadas) {
-    if (etapa) linhas.push(`- ${rotulo}: etapa "${etapa.nome}" (\`to_stage_id\`: \`${etapa.id}\`).`);
+  // Todas as etapas da equipe, com o id real e quem move para cada uma: é a
+  // mesma tabela que a ferramenta confere (`etapas.ts`).
+  const mapeadas = ETAPAS_DA_EQUIPE.filter((chave) => etapas[chave] !== undefined);
+  if (mapeadas.length > 0) linhas.push("Etapas da equipe, e quem move o negócio para cada uma:");
+  for (const chave of mapeadas) {
+    const etapa = etapas[chave]!;
+    const def = DEFINICOES_DAS_ETAPAS[chave];
+    linhas.push(
+      `- ${def.nome}: etapa "${etapa.nome}" (\`to_stage_id\`: \`${etapa.id}\`). Quem move: ${def.quemMove}.`,
+    );
   }
   if (etapas.perdido) {
     linhas.push(
-      "Ao mover para a etapa de perdido, informe o motivo de perda (`lost_reason`) que a pessoa deu.",
+      "Ao marcar o negócio como perdido, informe o motivo de perda (`lost_reason`) que a pessoa deu.",
     );
   }
   return linhas.join("\n");
@@ -102,14 +106,24 @@ function secaoDoDesconto(perfil: PerfilDoNegocio): string {
 }
 
 function secaoDaProposta(perfil: PerfilDoNegocio): string {
-  return perfil.proposta.usa
-    ? `Proposta: esta empresa usa proposta. Ela é preparada como rascunho para a equipe aprovar, com validade de ${perfil.proposta.validade_dias} dias.`
-    : "Proposta: esta empresa não usa proposta pela conversa. Se a pessoa pedir, chame uma pessoa da equipe.";
+  if (!perfil.proposta.usa) {
+    return "Proposta: esta empresa não usa proposta pela conversa. Se a pessoa pedir, chame uma pessoa da equipe.";
+  }
+  const envio =
+    perfil.proposta.envio_de_proposta === "direto"
+      ? "Envio: você envia a proposta sozinho quando todos os itens são do catálogo, com o preço do catálogo e sem desconto. Com desconto ou condição diferente, a equipe aprova antes."
+      : "Envio: a equipe aprova o rascunho, e depois da aprovação você envia.";
+  return `Proposta: esta empresa usa proposta, com validade de ${perfil.proposta.validade_dias} dias. ${envio}`;
 }
 
-function secaoDaRecuperacao(perfil: PerfilDoNegocio): string {
+function secaoDaRecuperacao(perfil: PerfilDoNegocio, contexto: ContextoDaInstalacao): string {
   const r = perfil.recuperacao;
   return [
+    ...(contexto.reguaDeFollowupId !== null
+      ? [
+          `Sequência de retomada desta empresa: \`flow_id\`: \`${contexto.reguaDeFollowupId}\`. Copie exatamente ao inscrever alguém nela.`,
+        ]
+      : []),
     `Retomada: uma conversa é considerada parada depois de ${r.dias_para_esfriar} dia(s) sem resposta.`,
     `No máximo ${r.toques_maximos} tentativa(s) de retomada, com ${r.intervalo_dias} dia(s) entre elas.`,
     `Contato parado há mais de ${r.limite_lead_frio_dias} dias: só com aprovação de uma pessoa da equipe.`,
@@ -145,7 +159,7 @@ export function blocoEstaEmpresa(perfil: PerfilDoNegocio, contexto: ContextoDaIn
     perfil.humano.situacoes.length > 0
       ? `Chame uma pessoa da equipe quando:\n${lista(perfil.humano.situacoes)}`
       : "Chame uma pessoa da equipe sempre que a pessoa pedir.",
-    secaoDaRecuperacao(perfil),
+    secaoDaRecuperacao(perfil, contexto),
     perfil.ligacoes.pode_ligar
       ? "Ligações: a equipe pode ligar para a pessoa, se ela aceitar."
       : "Ligações: não ofereça ligação. O atendimento é por mensagem.",
@@ -190,8 +204,9 @@ export function renderizarAgente(
     },
     pipeline_ids: contexto.funil ? [contexto.funil.id] : [],
     knowledge_source_ids: [...contexto.knowledgeSourceIds],
-    // Decisão P-03: proposta sempre como rascunho para a equipe aprovar. Com a
-    // empresa dizendo que não usa proposta, a capacidade sai de todos os papéis.
+    // O agente prepara a proposta como rascunho; como ela sai para o cliente é
+    // decidido por `envio_de_proposta`, na ferramenta de envio. Com a empresa
+    // dizendo que não usa proposta, a capacidade sai de todos os papéis.
     proposal_ai_draft_enabled: perfil.proposta.usa,
   };
 }

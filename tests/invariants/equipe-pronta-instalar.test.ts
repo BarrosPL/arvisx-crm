@@ -166,6 +166,7 @@ async function retrato(org: string) {
     tipos_de_agenda: await conta("select count(*) n from calendar_event_types where organization_id=$1"),
     memorias: await conta("select count(*) n from org_memory_versions where organization_id=$1"),
     perfis: await conta("select count(*) n from equipe_pronta_perfis where organization_id=$1"),
+    etapas: await conta("select count(*) n from crm_stages where organization_id=$1"),
   };
 }
 
@@ -208,6 +209,8 @@ describe("a primeira instalação", () => {
     expect(roteador.rows).toHaveLength(1);
     expect(roteador.rows[0]).toMatchObject({ name: NOME_DO_ROTEADOR, channel_session_id: canal });
     expect(roteador.rows[0].config.sticky).toBe(true);
+    // Os quatro passam a vez um para o outro: a passagem entre colegas nasce ligada.
+    expect(roteador.rows[0].config.passagem_entre_colegas).toBe(true);
     expect(roteador.rows[0].fallback_agent_id).toBe(r.agentes.find((a) => a.papel === "sdr")!.agent_id);
     const membros = await pool.query(
       "select intent_name from ai_router_members where organization_id=$1 order by 1",
@@ -502,6 +505,112 @@ describe("agente editado à mão", () => {
       [org],
     );
     expect(sdr.rows[0].token_budget).toBe(77777);
+  });
+});
+
+/**
+ * AS ETAPAS DA EQUIPE (v2, decisão do dono): o instalador acha cada etapa no
+ * funil e CRIA a que falta. Nunca renomeia nem apaga etapa da empresa.
+ */
+describe("as etapas da equipe no funil", () => {
+  const etapasDe = async (org: string) =>
+    (
+      await pool.query(
+        "select id, name, slug, position, is_won, is_lost, agent_stage_hint from crm_stages where organization_id=$1 and not is_archived order by position",
+        [org],
+      )
+    ).rows;
+
+  it("⭐ cria as que faltam, mapeia as que existem e grava o mapeamento — sem tocar no que era da empresa", async () => {
+    const { org, ctx } = await novaOrganizacao();
+    const antes = await etapasDe(org);
+    expect(antes.length).toBeGreaterThan(0);
+
+    const r = await instalarEquipePronta(pool, portas(zero()), ctx);
+    const depois = await etapasDe(org);
+
+    // A empresa agenda e usa proposta: as nove chaves têm etapa.
+    expect(Object.keys(r.instalacao.etapas).sort()).toEqual(
+      ["agendado", "compareceu", "em_atendimento", "em_negociacao", "ganho", "novo", "perdido", "proposta_enviada", "qualificado"],
+    );
+    // Cada chave aponta para uma etapa viva do funil da equipe, e nenhuma etapa serve a duas chaves.
+    const ids = Object.values(r.instalacao.etapas);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const id of ids) expect(depois.some((e) => e.id === id)).toBe(true);
+    // Ganho numa etapa de ganho, perdido numa etapa de perda.
+    expect(depois.find((e) => e.id === r.instalacao.etapas.ganho)?.is_won).toBe(true);
+    expect(depois.find((e) => e.id === r.instalacao.etapas.perdido)?.is_lost).toBe(true);
+
+    // ⭐ Nenhuma etapa da empresa foi renomeada, reposicionada nem apagada.
+    for (const e of antes) {
+      expect(depois.find((d) => d.id === e.id)).toMatchObject({ name: e.name, slug: e.slug, position: e.position });
+    }
+    // O que nasceu é exatamente o que a instalação diz ter criado.
+    const novas = depois.filter((d) => !antes.some((e) => e.id === d.id)).map((d) => d.id);
+    expect(novas.sort()).toEqual([...r.instalacao.etapas_criadas].sort());
+    expect(r.criados.filter((c) => c.startsWith("etapa_")).length).toBe(novas.length);
+
+    // O texto dos agentes cita as etapas pelo id real.
+    const sdr = await pool.query(
+      `select v.system_prompt from ai_agents a join ai_agent_versions v on v.id = a.published_version_id
+        where a.organization_id=$1 and a.config->'equipe_pronta'->>'papel'='sdr'`,
+      [org],
+    );
+    expect(sdr.rows[0].system_prompt).toContain(`\`to_stage_id\`: \`${r.instalacao.etapas.em_atendimento}\``);
+  });
+
+  it("⭐ idempotente: instalar de novo não cria etapa nem muda o mapeamento", async () => {
+    const { org, ctx } = await novaOrganizacao();
+    const primeira = await instalarEquipePronta(pool, portas(zero()), ctx);
+    const antes = await etapasDe(org);
+
+    const segunda = await instalarEquipePronta(pool, portas(zero()), ctx);
+
+    expect(segunda.criados).toEqual([]);
+    expect(segunda.instalacao.etapas).toEqual(primeira.instalacao.etapas);
+    expect(segunda.instalacao.etapas_criadas).toEqual(primeira.instalacao.etapas_criadas);
+    expect(await etapasDe(org)).toEqual(antes);
+  });
+
+  it("etapa que já existe com o nome da equipe é reaproveitada, não duplicada", async () => {
+    const { org, ctx } = await novaOrganizacao();
+    const funil = await pool.query("select id from crm_pipelines where organization_id=$1 order by position, created_at limit 1", [org]);
+    const existente = await pool.query(
+      `insert into crm_stages (organization_id, pipeline_id, name, slug, position)
+       values ($1, $2, 'AGENDADO', 'ja-tinha-agendado', 2.5) returning id`,
+      [org, funil.rows[0].id],
+    );
+
+    const r = await instalarEquipePronta(pool, portas(zero()), ctx);
+
+    expect(r.instalacao.etapas.agendado).toBe(String(existente.rows[0].id));
+    expect(r.criados).not.toContain("etapa_agendado");
+    const nome = await pool.query("select name from crm_stages where id=$1", [existente.rows[0].id]);
+    expect(nome.rows[0].name).toBe("AGENDADO");
+  });
+
+  it("empresa que não agenda nem usa proposta: essas etapas não são criadas", async () => {
+    const { ctx } = await novaOrganizacao({
+      ...RESPOSTAS,
+      primeiro_passo: { tipo: "humano" },
+      proposta: { usa: false },
+    });
+    const r = await instalarEquipePronta(pool, portas(zero()), ctx);
+    for (const chave of ["agendado", "compareceu", "em_negociacao"]) {
+      expect(r.criados, chave).not.toContain(`etapa_${chave}`);
+    }
+  });
+
+  it("quem desligou a passagem entre colegas na tela do roteador continua com ela desligada", async () => {
+    const { org, ctx } = await novaOrganizacao();
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+    await pool.query(
+      `update ai_routers set config = config || '{"passagem_entre_colegas":false}'::jsonb where organization_id=$1`,
+      [org],
+    );
+    await instalarEquipePronta(pool, portas(zero()), ctx);
+    const roteador = await pool.query("select config from ai_routers where organization_id=$1", [org]);
+    expect(roteador.rows[0].config.passagem_entre_colegas).toBe(false);
   });
 });
 

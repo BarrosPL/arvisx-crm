@@ -20,6 +20,8 @@
  */
 import { z } from "zod";
 
+import { ETAPAS_DA_EQUIPE } from "@/lib/ai/equipe-pronta/etapas";
+
 const linha = (max: number) => z.string().trim().min(1).max(max);
 const listaCurta = (itens: number, max: number) => z.array(linha(max)).max(itens);
 
@@ -165,8 +167,18 @@ const ondeSchema = z.object({
   etapas: z
     .object({
       qualificado: z.string().uuid().optional(),
+      /** O nome da v1 para `proposta_enviada`. Continua aceito. */
       proposta: z.string().uuid().optional(),
       perdido: z.string().uuid().optional(),
+      // As demais chaves da equipe (v2). Ausente = o instalador acha a etapa
+      // pelo nome ou cria a que falta.
+      novo: z.string().uuid().optional(),
+      em_atendimento: z.string().uuid().optional(),
+      agendado: z.string().uuid().optional(),
+      compareceu: z.string().uuid().optional(),
+      proposta_enviada: z.string().uuid().optional(),
+      em_negociacao: z.string().uuid().optional(),
+      ganho: z.string().uuid().optional(),
     })
     .default({}),
   /** E.164 com `+`. É a lista do ENSAIO: só estes números falam com a equipe. */
@@ -286,6 +298,14 @@ export const instalacaoSchema = z.object({
   knowledge_source_id: z.string().uuid().nullable().default(null),
   followup_flow_pointer_id: z.string().uuid().nullable().default(null),
   proposal_template_id: z.string().uuid().nullable().default(null),
+  /**
+   * O mapeamento das etapas da equipe: chave interna → etapa real do funil
+   * (`lib/ai/equipe-pronta/etapas.ts`). É o que a ferramenta lê para saber de
+   * quem é cada etapa. Vazio numa instalação anterior ao mapeamento.
+   */
+  etapas: z.partialRecord(z.enum(ETAPAS_DA_EQUIPE), z.string().uuid()).default({}),
+  /** As etapas que ESTA instalação criou no funil — para a tela poder dizer quais. */
+  etapas_criadas: z.array(z.string().uuid()).default([]),
   /** Tipos de agenda que ESTA instalação desativou — para a tela poder dizer quais. */
   tipos_de_agenda_desativados: z.array(z.string().uuid()).default([]),
   agentes: z.partialRecord(

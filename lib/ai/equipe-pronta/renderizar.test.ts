@@ -81,7 +81,7 @@ const CTX_ASSESSORIA: ContextoDaInstalacao = {
     nome: "Cidadania",
     etapas: {
       qualificado: { id: "88888888-8888-4888-8888-888888888888", nome: "Elegível" },
-      proposta: { id: "99999999-9999-4999-8999-999999999999", nome: "Proposta enviada" },
+      proposta_enviada: { id: "99999999-9999-4999-8999-999999999999", nome: "Proposta enviada" },
       perdido: { id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", nome: "Perdido" },
     },
   },
@@ -154,7 +154,9 @@ describe("o bloco 'Esta empresa' carrega identificador real, nunca preço nem ho
     expect(bloco).toContain("`to_stage_id`: `33333333-3333-4333-8333-333333333333`");
     expect(bloco).toContain("`lost_reason`");
     // Passo sem etapa marcada não é inventado.
-    expect(bloco).not.toContain("Proposta: etapa");
+    expect(bloco).not.toContain("Proposta enviada: etapa");
+    // Cada etapa diz quem move o negócio para ela.
+    expect(bloco).toContain("Quem move: quem recebe.");
   });
 
   it("sem tipo de agenda, o bloco diz para chamar a equipe em vez de inventar um", () => {
