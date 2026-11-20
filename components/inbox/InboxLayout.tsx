@@ -30,6 +30,7 @@ import { ChatThread } from "./ChatThread";
 import { Composer, type ComposerHandle } from "./Composer";
 import { ConversationHeader } from "./ConversationHeader";
 import { BotaoIniciarConversa } from "./PainelIniciarConversa";
+import { AtalhoDosComentarios } from "./AtalhoDosComentarios";
 import { RetentionNotice } from "./RetentionNotice";
 import { CRMSidePanel } from "./CRMSidePanel";
 import type { ModuloDaLateral } from "@/lib/inbox/modulos-da-lateral";
@@ -951,6 +952,7 @@ export function InboxLayout({
         )}
       >
         <BotaoIniciarConversa />
+        <AtalhoDosComentarios />
         <InboxFilters value={filterValue} onChange={setFilterValue} />
         {podeAgirEmLote && (
           <BarraDeAcoesEmLote
