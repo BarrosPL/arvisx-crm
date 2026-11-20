@@ -53,6 +53,14 @@ describe("a ponte do turno respeita `apenasHumano`", () => {
   // parte, e não estufar o "-3" fixo, é o que mantém este teste medindo o
   // filtro cego que ele foi escrito para pegar, e não a soma dos dois efeitos.
   const semModulo = TOOL_CATALOG.filter((t) => t.modulo).length;
+  // Capacidade OPCIONAL da empresa (`capacidade:` no catálogo, hoje as três de
+  // proposta: rascunhar, preparar e consultar) some do turno quando a empresa
+  // não a ligou — `contexto()` não passa `capacidadesLigadas`, então
+  // `deCapacidadeDesligada` trata todas como desligadas. Contadas à parte pela
+  // mesma razão das de módulo: a consulta de proposta (`crm_get_proposal`)
+  // entrou no catálogo e, com a conta fixa, o teste reprovou sem que filtro
+  // nenhum tivesse ficado cego.
+  const semCapacidade = TOOL_CATALOG.filter((t) => t.capacidade && !t.modulo && !t.apenasHumano).length;
 
   it("existe ao menos uma capacidade marcada (guarda de vacuidade)", () => {
     // Sem isto, remover a marca de todas faria o teste abaixo passar por
@@ -89,11 +97,16 @@ describe("a ponte do turno respeita `apenasHumano`", () => {
     // Controle positivo: se o filtro derrubasse tudo, o teste acima passaria
     // vacuamente e o agente ficaria sem ferramenta nenhuma. A folga conta as
     // exclusões deliberadas que este teste monta: o handoff (toggle desligado
-    // aqui), o rascunho e o preparo da proposta (fora pela chave da versão e
-    // pela capacidade, as duas desligadas aqui), e as de módulo opcional, que
-    // nenhum módulo ligado aqui oferece.
+    // aqui), as de capacidade opcional (as de proposta, com a capacidade
+    // desligada aqui) e as de módulo opcional, que nenhum módulo ligado aqui
+    // oferece. O "-2" é o handoff mais um de margem, a mesma margem de antes.
+    expect(semCapacidade, "nenhuma capacidade opcional no catálogo: a conta abaixo mudou de sentido").toBeGreaterThan(0);
     expect(Object.keys(montadas).length).toBeGreaterThan(
-      allTools.length - apenasHumano.length - semModulo - 4,
+      allTools.length - apenasHumano.length - semModulo - semCapacidade - 2,
+    );
+    // E a conta é exata: fora das exclusões declaradas, só o handoff não chega.
+    expect(Object.keys(montadas).length).toBe(
+      allTools.length - apenasHumano.length - semModulo - semCapacidade - 1,
     );
     expect(montadas).toHaveProperty("crm_search_contacts");
   });
