@@ -126,7 +126,9 @@ const QUEM_LE_A_AGENDA: Record<string, string> = {
   "app/api/v1/lgpd/requests/[id]/preview/route.ts": "a prévia do export que a equipe confere antes de entregar",
   "lib/contacts/duplicados.ts":
     "a varredura de duplicados lê o nome da agenda para sugerir fichas parecidas (Spec 31); não monta mensagem",
-  "app/api/v1/contacts/duplicates/route.ts": "select da tela Duplicados (tela da equipe)",
+  "lib/contacts/varredura-de-duplicados.ts":
+    "o select da varredura de duplicados, que saiu da rota para servir também ao agente: lê o nome da agenda só para COMPARAR. A tela o mostra à equipe; `crm_find_duplicate_contacts` devolve `nomeDoContato` (sem a agenda), provado em tests/unit/mcp-contatos-duplicados.test.ts",
+  "app/api/v1/contacts/duplicates/route.ts": "a resposta da tela Duplicados (tela da equipe)",
   "app/api/v1/contacts/compare/route.ts": "a comparação lado a lado da tela Duplicados (tela da equipe)",
   "hooks/contacts/useContactDuplicates.ts": "tipo da lista de duplicados (tela da equipe)",
   "hooks/contacts/useCompararFichas.ts": "tipo da comparação lado a lado (tela da equipe)",
