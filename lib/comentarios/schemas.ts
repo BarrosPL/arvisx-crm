@@ -8,7 +8,7 @@
  */
 import { z } from "zod";
 
-import { ESTADOS_DO_COMENTARIO } from "@/lib/channels/meta-social/comentarios";
+import { ESTADOS_DO_COMENTARIO, type EstadoDoComentario } from "@/lib/channels/meta-social/comentarios";
 
 /** Quem respondeu, ocultou ou ignorou: pessoa, agente ou integração. */
 export const autorDaAcaoSchema = z.object({
@@ -76,6 +76,34 @@ export function lerRespostaPrivada(valor: unknown): RespostaPrivada | null {
 export function lerOcultacao(valor: unknown): Ocultacao | null {
   const r = ocultacaoSchema.safeParse(valor);
   return r.success ? r.data : null;
+}
+
+/** O comentário como a API e o MCP o devolvem. */
+export interface Comentario {
+  id: string;
+  /** O id do comentário na rede. */
+  comment_id: string;
+  channel_session_id: string;
+  parent_comment_id: string | null;
+  media_id: string | null;
+  media_product_type: string | null;
+  ad_id: string | null;
+  ad_title: string | null;
+  ao_vivo: boolean;
+  author: { id: string | null; username: string | null };
+  /** O texto inteiro, sem corte. */
+  text: string | null;
+  commented_at: string;
+  /** Até quando a resposta privada é aceita pela rede. */
+  private_reply_deadline: string;
+  estado: EstadoDoComentario;
+  public_reply: RespostaPublica | null;
+  private_reply: RespostaPrivada | null;
+  hidden: Ocultacao | null;
+  ignore_reason: string | null;
+  contact_id: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 // ─── O que as rotas e as ferramentas aceitam ────────────────────────────────

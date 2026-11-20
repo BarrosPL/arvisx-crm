@@ -44,8 +44,7 @@ import { channelLabel, useChannelSessions } from "@/hooks/channels/useChannelSes
 import { useT } from "@/hooks/i18n/useT";
 import { apiClient } from "@/lib/api/client";
 import { CHANNEL_PROVIDER_SOCIAL_DIRETO } from "@/lib/channels/capabilities";
-import type { Comentario } from "@/lib/comentarios/acoes";
-import type { RespostaPrivada, RespostaPublica } from "@/lib/comentarios/schemas";
+import type { Comentario, RespostaPrivada, RespostaPublica } from "@/lib/comentarios/schemas";
 import { useIdioma } from "@/lib/i18n/IdiomaProvider";
 import { tagDeIdioma } from "@/lib/i18n/datas";
 
