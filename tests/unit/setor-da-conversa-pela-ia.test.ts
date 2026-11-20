@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getAction } from "@/lib/automation/actions";
@@ -15,7 +18,13 @@ import { allTools } from "@/lib/mcp/tools";
 import { TOOL_CATALOG } from "@/lib/mcp/tools/catalogo";
 import { crmSetConversationSector } from "@/lib/mcp/tools/governance";
 import type { McpContext } from "@/lib/mcp/types";
-import { ENTIDADE_ESPERADA_POR_GATILHO, actionSchema } from "@/lib/schemas/webhooks";
+import {
+  ENTIDADE_ESPERADA_POR_GATILHO,
+  GATILHOS_DO_TRIGGER_DE_CONVERSA,
+  acoesQueFechamLaco,
+  actionSchema,
+  createAutomationRuleSchema,
+} from "@/lib/schemas/webhooks";
 
 /**
  * #3881 — o SETOR da conversa escolhido pela IA e pela automação.
@@ -626,11 +635,67 @@ describe("ação de automação: define_sector", () => {
 
   it("mudar setor não é gatilho de automação", () => {
     // A prova estrutural do laço: o motor só escuta os eventos deste mapa, e
-    // nenhum deles nasce de uma mudança de setor (nem existe gatilho de
-    // conversa). Sem isso, a regra que muda setor poderia redisparar a si mesma.
+    // nenhum deles nasce de uma mudança de setor. Sem isso, a regra que muda
+    // setor poderia redisparar a si mesma.
+    //
+    // Os ÚNICOS gatilhos de conversa são os dois da pausa da IA (migration
+    // 9811), e eles não nascem do setor: o gatilho do banco só dispara quando
+    // muda o silêncio ou o dono da conversa (ver o caso seguinte). Um terceiro
+    // `conversation.*` reprova aqui até alguém provar que ele não fecha laço.
     const gatilhos = Object.keys(ENTIDADE_ESPERADA_POR_GATILHO);
-    expect(gatilhos.filter((gatilho) => gatilho.startsWith("conversation."))).toEqual([]);
+    const deConversa = gatilhos.filter((gatilho) => gatilho.startsWith("conversation."));
+    expect(deConversa).toEqual(["conversation.ai_paused", "conversation.ai_resumed"]);
+    expect(deConversa).toEqual([...GATILHOS_DO_TRIGGER_DE_CONVERSA]);
     expect(gatilhos).not.toContain("conversation.sector_changed");
+  });
+
+  it("gravar só o setor não emite a pausa da IA: o gatilho do banco não olha `sector_id`", () => {
+    // `definirSetorDaConversa` grava `sector_id` e `metadata`. O gatilho da 9811
+    // só acorda quando muda o silêncio, o tipo de dono ou o dono. Se alguém
+    // acrescentar `sector_id` à cláusula `when`, toda mudança de setor passa a
+    // ser gatilho de automação pela porta dos fundos.
+    const migration = readFileSync(
+      join(process.cwd(), "supabase/migrations/20261120150000_9811_ia_pausada_e_retomada_viram_evento.sql"),
+      "utf8",
+    ).replace(/\r\n/g, "\n");
+    const gatilho = migration.slice(migration.indexOf("create trigger trg_anunciar_pausa_da_ia"));
+    const quando = gatilho.slice(gatilho.indexOf("when ("), gatilho.indexOf("execute function"));
+    const colunas = [...quando.matchAll(/old\.([a-z_]+) is distinct from new\.\1/g)].map((m) => m[1]);
+    expect(colunas).toEqual(["bot_silenced_until", "assignee_kind", "assigned_to_user_id"]);
+    expect(migration.slice(migration.indexOf("create or replace function"))).not.toMatch(/sector_id/);
+  });
+
+  it("nos gatilhos de conversa, a regra não pode mudar setor nem dono (o laço que sobrou está vetado)", () => {
+    // O caminho indireto: mudar o setor de uma conversa sem dono pede
+    // distribuição, a distribuição dá um dono, e o dono novo grava
+    // `conversation.ai_paused`. Uma regra desse gatilho que mudasse setor ou
+    // dono realimentaria o próprio gatilho. O veto é por tipo, alcança a ação
+    // escondida dentro de `ai_decide`, e vale na porta da API.
+    for (const gatilho of GATILHOS_DO_TRIGGER_DE_CONVERSA) {
+      expect(acoesQueFechamLaco(gatilho, [{ type: "define_sector" }])).toEqual(["define_sector"]);
+      expect(acoesQueFechamLaco(gatilho, [{ type: "assign_owner" }])).toEqual(["assign_owner"]);
+      expect(
+        acoesQueFechamLaco(gatilho, [
+          { type: "ai_decide", config: { opcoes: [{ acao: { type: "define_sector" } }] } },
+        ]),
+      ).toEqual(["define_sector"]);
+
+      const regra = { name: "Regra de teste", trigger_event: gatilho, conditions: [] };
+      expect(
+        createAutomationRuleSchema.safeParse({
+          ...regra,
+          actions: [{ type: "define_sector", config: { sector_id: SETOR } }],
+        }).success,
+      ).toBe(false);
+      expect(
+        createAutomationRuleSchema.safeParse({
+          ...regra,
+          actions: [{ type: "call_webhook", config: { url: "https://exemplo.test/hook" } }],
+        }).success,
+      ).toBe(true);
+    }
+    // Fora deles, mudar setor segue livre: é o uso normal da ação.
+    expect(acoesQueFechamLaco("message.received", [{ type: "define_sector" }])).toEqual([]);
   });
 
   it("sem setor configurado, falha nomeada (regra quebrada não passa calada)", async () => {
