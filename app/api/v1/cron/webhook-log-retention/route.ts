@@ -51,6 +51,13 @@
  * forense levasse a captação junto, uma tabela sem `order` derrubaria as DUAS
  * podas, e o conserto de uma passaria a exigir o conserto da outra. O
  * `catch` daqui devolve o resultado parcial e segue.
+ *
+ * ─── A terceira poda: os comentários de rede social (migration 9810) ────────
+ *
+ * `social_comments` é podada por último, no mesmo tique e com `try` próprio
+ * (`lib/channels/retencao-dos-comentarios.ts`). Ela só roda quando a captação
+ * passou — a falha da captação já encerrou a rodada com 500 —, e a falha dela
+ * sai pelos mesmos três canais, com o que as duas de cima fizeram em `details`.
  */
 import { randomUUID } from "node:crypto";
 import type { NextRequest } from "next/server";
@@ -63,6 +70,7 @@ import {
   type ResultadoDaPoda,
   podarArquivoDeWebhooks,
 } from "@/lib/channels/retencao-do-arquivo";
+import { podarComentariosAntigos } from "@/lib/channels/retencao-dos-comentarios";
 import { podarHistoricoDeCaptacao } from "@/lib/webhooks/retencao-da-captacao";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
@@ -184,6 +192,31 @@ export async function GET(req: NextRequest): Promise<Response> {
     });
   }
 
+  // OS COMENTÁRIOS de rede social (`social_comments`, migration 9810) rodam no
+  // MESMO tique, pela mesma razão da captação: é mais uma tabela que cresce
+  // com o que chega de fora, e uma rota a mais seria mais uma linha de
+  // agendamento para alguém esquecer. Try PRÓPRIO: quem falha aqui falha aqui,
+  // e o que as duas podas de cima já fizeram vai em `details`.
+  let comentarios: Awaited<ReturnType<typeof podarComentariosAntigos>>;
+  try {
+    comentarios = await podarComentariosAntigos(admin, { lote });
+  } catch (err) {
+    const detalhe = err instanceof Error ? err.message : String(err);
+    // A LINHA DE TRILHA dentro do `catch`, pelo mesmo motivo das podas de cima.
+    void audit(linhaDeFalhaDePoda("social_comments", detalhe, requestId));
+    registraFalhaDePoda("comentários", err, requestId);
+    avisaSentry(err, requestId, "social_comments");
+    return fail("internal_error", "social_comments_retention_failed", 500, {
+      requestId,
+      details: {
+        erro: detalhe.slice(0, 300),
+        arquivo_forense: arquivo,
+        arquivo_forense_falhou: falhaDoArquivo,
+        captacao,
+      },
+    });
+  }
+
   // A captação passou e o arquivo forense não. A rodada responde 500 pelo
   // MESMO motivo de quando a captação falha — a poda que segura o espaço é a
   // que o operador precisa ver parada — e o que a captação conseguiu vem em
@@ -191,11 +224,11 @@ export async function GET(req: NextRequest): Promise<Response> {
   if (falhaDoArquivo) {
     return fail("internal_error", "webhook_events_log_retention_failed", 500, {
       requestId,
-      details: { erro: falhaDoArquivo.slice(0, 300), arquivo_forense: arquivo, captacao },
+      details: { erro: falhaDoArquivo.slice(0, 300), arquivo_forense: arquivo, captacao, comentarios },
     });
   }
 
-  return ok({ ...arquivo, captacao }, { requestId });
+  return ok({ ...arquivo, captacao, comentarios }, { requestId });
 }
 
 /**
