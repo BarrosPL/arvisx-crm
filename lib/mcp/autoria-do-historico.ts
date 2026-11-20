@@ -11,38 +11,54 @@
  * caixa de entrada (`components/inbox/MessageBubble.tsx`): `sent_via`,
  * `sent_by_user_id`, `sent_on_behalf_of_user_id` e os nomes que o servidor
  * grava em `metadata` depois da entrada do cliente (`ai_actor_name`,
- * `sent_on_behalf`). Nada novo é gravado.
+ * `sent_on_behalf`, `sent_by_token`). Esta leitura não grava nada.
  *
- * ─── As quatro origens ─────────────────────────────────────────────────────
+ * ─── As origens ────────────────────────────────────────────────────────────
  *
  *  - `cliente`: mensagem recebida. Em grupo, `name` é o participante que falou.
- *  - `ia`: escrita por um agente de IA. `name` é o nome gravado na linha (ou o
- *    do cadastro); `id` só sai quando o id gravado é de um agente desta
+ *  - `ia`: escrita por um agente de IA DO CRM. `name` é o nome gravado na linha
+ *    (ou o do cadastro); `id` só sai quando o id gravado é de um agente desta
  *    organização.
+ *  - `agente`: enviada por um sistema de fora, por token de API (o agente
+ *    externo). `id` é o id do token e `name` o nome que o administrador deu a
+ *    ele. `is_self` diz se o token é o MESMO de quem está lendo: é assim que o
+ *    agente externo separa a própria fala da de outra integração.
  *  - `equipe`: escrita por uma pessoa. `name` é só o nome (nunca e-mail nem
  *    telefone). `detail: "celular"` = saiu do aparelho ligado ao número, fora do
  *    CRM, e a linha não diz quem digitou. `detail: "em_nome_de"` = um sistema
  *    enviou por decisão daquela pessoa (`via_token` diz qual).
  *  - `sistema`: ninguém escreveu na hora. `detail: "automacao"` = texto fixo de
  *    regra, follow-up ou lembrete; `detail: "integracao"` = enviada por token de
- *    API sem agente de IA.
+ *    API numa linha que não guarda qual (ver abaixo).
  *
- * ─── O que a linha NÃO guarda ──────────────────────────────────────────────
+ * ─── De onde vem o token ───────────────────────────────────────────────────
  *
- * A mensagem enviada por token de API não leva o token: duas integrações
- * diferentes saem iguais (`sistema` / `integracao`), e um agente externo não
- * distingue a própria fala da de outra integração. O que ele distingue com
- * certeza é o que importa para não repetir nem contradizer: o que foi a equipe.
+ * O envio grava `metadata.sent_by_token = { token_id, token_name }` a partir do
+ * token AUTENTICADO (`app/api/v1/messages/_handler.ts`), e tira a mesma chave
+ * do que o chamador mandou: ninguém a forja pelo corpo da requisição. Só o id
+ * e o nome; o valor do token não existe no banco. O nome devolvido é o do
+ * cadastro de hoje (token renomeado sai com o nome novo) e, sem ele (token
+ * apagado), o que foi gravado no envio. Só vale em linha que saiu por token
+ * (`sent_via` `system` ou `ai`).
+ *
+ * ─── O que a linha ANTIGA não guarda ───────────────────────────────────────
+ *
+ * A mensagem enviada por token ANTES de o envio gravar o token continua como
+ * estava: `sistema` / `integracao` (ou `ia` sem id, no token com escopo de
+ * agente). Não há como saber, depois, qual token a enviou, e nada é reescrito.
  */
+import { CHAVE_DO_ENVIO_POR_TOKEN } from "@/lib/api/handlers/token-do-ator";
 import { lerRemetenteDeGrupo } from "@/lib/messaging/remetente-de-grupo";
 import { nomesDosAtendentesCom } from "@/lib/users/nome-do-atendente";
 
 import type { McpContext } from "./types";
 
 export interface AutorDaMensagem {
-  kind: "cliente" | "ia" | "equipe" | "sistema";
+  kind: "cliente" | "ia" | "agente" | "equipe" | "sistema";
   id: string | null;
   name: string | null;
+  /** Só em `agente`: o token que enviou é o mesmo de quem está lendo. */
+  is_self?: boolean;
   detail?: "celular" | "em_nome_de" | "automacao" | "integracao" | "participante_de_grupo";
   /** Só em `em_nome_de`: o nome do token que enviou. */
   via_token?: string | null;
@@ -70,12 +86,20 @@ function idDoAgenteGravado(m: MensagemComAutoria): string | null {
   return id && UUID.test(id) ? id : null;
 }
 
+/** O token que o envio gravou na linha, quando ela saiu por token. */
+function tokenGravado(m: MensagemComAutoria): { id: string; nome: string | null } | null {
+  if (m.sent_via !== "system" && m.sent_via !== "ai") return null;
+  const gravado = (m.metadata?.[CHAVE_DO_ENVIO_POR_TOKEN] ?? null) as { token_id?: unknown; token_name?: unknown } | null;
+  const id = texto(gravado?.token_id);
+  return id ? { id, nome: texto(gravado?.token_name) } : null;
+}
+
 /**
  * O autor de cada mensagem de UMA página. Nunca lança: nome que não pôde ser
  * lido sai `null`, e o histórico continua legível.
  */
 export async function autoresDoHistorico(
-  ctx: Pick<McpContext, "supabase" | "organizationId">,
+  ctx: Pick<McpContext, "supabase" | "organizationId"> & Partial<Pick<McpContext, "apiTokenId">>,
   mensagens: ReadonlyArray<MensagemComAutoria>,
 ): Promise<Map<string, AutorDaMensagem>> {
   const saidas = mensagens.filter((m) => m.direction === "outbound");
@@ -87,9 +111,17 @@ export async function autoresDoHistorico(
   const agentes = [
     ...new Set(
       saidas
-        .filter((m) => m.sent_via === "ai")
+        .filter((m) => m.sent_via === "ai" && !tokenGravado(m))
         .map(idDoAgenteGravado)
         .filter((id): id is string => id !== null),
+    ),
+  ];
+  const tokens = [
+    ...new Set(
+      saidas
+        .filter((m) => !m.sent_on_behalf_of_user_id)
+        .map((m) => tokenGravado(m)?.id)
+        .filter((id): id is string => typeof id === "string" && UUID.test(id)),
     ),
   ];
 
@@ -120,6 +152,22 @@ export async function autoresDoHistorico(
   } catch {
     nomeDoAgente.clear();
   }
+  const nomeDoToken = new Map<string, string | null>();
+  try {
+    if (tokens.length > 0) {
+      // Só o nome, e só de token DESTA organização.
+      const { data } = await ctx.supabase
+        .from("api_tokens")
+        .select("id, name")
+        .eq("organization_id", ctx.organizationId)
+        .in("id", tokens);
+      for (const t of (data ?? []) as Array<{ id: string; name: string | null }>) {
+        nomeDoToken.set(t.id, texto(t.name));
+      }
+    }
+  } catch {
+    nomeDoToken.clear();
+  }
 
   const autores = new Map<string, AutorDaMensagem>();
   for (const m of mensagens) {
@@ -141,6 +189,16 @@ export async function autoresDoHistorico(
         name: texto(emNomeDe?.user_name),
         detail: "em_nome_de",
         via_token: texto(emNomeDe?.token_name),
+      });
+      continue;
+    }
+    const token = tokenGravado(m);
+    if (token) {
+      autores.set(m.id, {
+        kind: "agente",
+        id: token.id,
+        name: nomeDoToken.get(token.id) ?? token.nome,
+        is_self: Boolean(ctx.apiTokenId) && token.id === ctx.apiTokenId,
       });
       continue;
     }

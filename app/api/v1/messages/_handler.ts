@@ -32,6 +32,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { ApiError } from "@/lib/api/types";
 import { decidirPreGoLiveDoCanalViaSupabase } from "@/lib/ai/elegibilidade/consulta-pre-go-live";
 import type { Actor, HandlerCtx } from "@/lib/api/handlers/types";
+import { CHAVE_DO_ENVIO_POR_TOKEN, envioPorTokenDoAtor } from "@/lib/api/handlers/token-do-ator";
 import { audit, isServiceRoleConfigured } from "@/lib/audit";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { assertOrgOperante } from "@/lib/organizacao/operante";
@@ -958,7 +959,18 @@ export async function sendMessageHandler(
   // mostra o que o cliente recebeu, e não faz join (`lib/messaging/botoes-do-modelo.ts`).
   // Lidos do espelho da definição — nunca do `metadata` de entrada, que é do
   // cliente da API — e sem barrar nada: é dado de exibição.
-  const { [CHAVE_DOS_BOTOES_DO_MODELO]: _botoesDoCliente, ...metadataDeEntrada } = input.metadata ?? {};
+  // `sent_by_token` sai da entrada pelo mesmo motivo: quem enviou é dito pelo
+  // servidor, a partir do token autenticado, nunca pelo corpo da requisição.
+  const {
+    [CHAVE_DOS_BOTOES_DO_MODELO]: _botoesDoCliente,
+    [CHAVE_DO_ENVIO_POR_TOKEN]: _tokenDoCliente,
+    ...metadataDeEntrada
+  } = input.metadata ?? {};
+  // QUEM ENVIOU, quando foi um sistema de fora por token de API: o id do token
+  // e o nome que o administrador deu a ele. É o que deixa um agente externo
+  // separar, no histórico, a própria fala da de outra integração. O agente
+  // nativo não passa por aqui (ele já sai com `ai_actor_id`/`ai_actor_name`).
+  const envioPorToken = await envioPorTokenDoAtor(supabase, ctx.organization_id, ctx.actor);
   const botoesDoModeloEnviado =
     input.type === "template"
       ? await botoesDaDefinicao(supabase, {
@@ -1007,6 +1019,7 @@ export async function sendMessageHandler(
       ...(ctx.actor.type === "ai_agent" ? { ai_actor_id: ctx.actor.id } : {}),
       ...(origemDoEmissor === "ai" ? { ai_actor_name: nomeDoAgente } : {}),
       ...(botoesDoModeloEnviado.length > 0 ? { [CHAVE_DOS_BOTOES_DO_MODELO]: botoesDoModeloEnviado } : {}),
+      ...(envioPorToken ? { [CHAVE_DO_ENVIO_POR_TOKEN]: envioPorToken } : {}),
       // Os dois nomes viajam GRAVADOS porque o balão não faz join: "Fulano ·
       // via {token}" é desenhado da própria linha. Vêm DEPOIS de
       // `input.metadata` de propósito — metadata é entrada do cliente, e
