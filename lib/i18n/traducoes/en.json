@@ -9759,5 +9759,13 @@
   "Anexar documento ao negócio": "Attach a document to the deal",
   "Guarda no negócio um arquivo que o cliente já enviou na conversa, para o documento ficar no cartão e não se perder no meio das mensagens.": "Stores on the deal a file the customer already sent in the conversation, so the document stays on the card and does not get lost among the messages.",
   "Propor a próxima ação do negócio": "Propose the deal's next action",
-  "Deixa no cartão do negócio a próxima ação sugerida pelo agente, para uma pessoa da equipe aprovar ou descartar. Nada é executado sozinho.": "Leaves on the deal card the next action suggested by the agent, for someone on the team to approve or dismiss. Nothing runs on its own."
+  "Deixa no cartão do negócio a próxima ação sugerida pelo agente, para uma pessoa da equipe aprovar ou descartar. Nada é executado sozinho.": "Leaves on the deal card the next action suggested by the agent, for someone on the team to approve or dismiss. Nothing runs on its own.",
+  "Consultar proposta comercial": "Look up a commercial proposal",
+  "Mostra em que situação está a proposta de um negócio, até quando ela vale, os itens e o valor total, com um acesso temporário ao documento enviado.": "Shows the status of a deal's proposal, how long it is valid, the items and the total amount, with temporary access to the document that was sent.",
+  "Quando um lead perder uma tag": "When a lead loses a tag",
+  "Quando um campo do negócio for alterado": "When a deal field is changed",
+  "Quando alguém escrever uma nota no negócio": "When someone writes a note on the deal",
+  "Quando uma tarefa for criada no negócio": "When a task is created on the deal",
+  "Quando um documento for anexado ao negócio": "When a document is attached to the deal",
+  "Quando uma tarefa for concluída": "When a task is completed"
 }

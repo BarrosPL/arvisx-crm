@@ -110,6 +110,39 @@ export async function buildContext(admin: SupabaseClient, row: EventRow): Promis
       // porque o mesmo contexto serve às condições e às ações.
       await hidratarCamposDoFunil(context, admin, org);
     }
+  } else if (row.entity_kind === "crm_task" && row.entity_id) {
+    // `task.completed`: a tarefa traz o negócio e/ou o contato a que está presa.
+    // Tudo lido da linha atual e com o filtro de organização, como os demais.
+    const { data: task } = await admin
+      .from("crm_tasks")
+      .select("id, lead_id, contact_id")
+      .eq("id", row.entity_id)
+      .eq("organization_id", org)
+      .maybeSingle();
+    const tarefa = task as { lead_id?: string | null; contact_id?: string | null } | null;
+    let contactId = tarefa?.contact_id ?? null;
+    if (tarefa?.lead_id) {
+      const { data: lead } = await admin
+        .from("crm_leads")
+        .select("*")
+        .eq("id", tarefa.lead_id)
+        .eq("organization_id", org)
+        .maybeSingle();
+      if (lead) {
+        context.lead = ocultarProvaMetaNaResposta(lead as Record<string, unknown>);
+        contactId = contactId ?? ((lead as { contact_id?: string | null }).contact_id ?? null);
+        await hidratarCamposDoFunil(context, admin, org);
+      }
+    }
+    if (contactId) {
+      const { data: contact } = await admin
+        .from("contacts")
+        .select("*")
+        .eq("id", contactId)
+        .eq("organization_id", org)
+        .maybeSingle();
+      if (contact) context.contact = contact;
+    }
   } else if (row.entity_kind === "contact" && row.entity_id) {
     const { data: contact } = await admin
       .from("contacts")

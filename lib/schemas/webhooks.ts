@@ -103,6 +103,18 @@ export const ENTIDADE_ESPERADA_POR_GATILHO = {
   // regras do mesmo gatilho com N diferentes disparariam juntas.
   "lead.silent_for": "crm_lead",
   "lead.stage_stale": "crm_lead",
+  // A superfície de agente (`lib/automation/eventos-de-saida.ts`): o que um
+  // sistema de fora escuta sobre o negócio além do que já existia. Emitidos
+  // pela aplicação, no ponto único de cada escrita (tela e agente passam pelo
+  // mesmo). Trocar o responsável é `lead.assigned` e perder é `lead.lost`, que
+  // já estavam aqui: não ganharam um segundo nome.
+  "lead.tag_removed": "crm_lead",
+  "lead.field_changed": "crm_lead",
+  "lead.note_added": "crm_lead",
+  "lead.task_created": "crm_lead",
+  "lead.attachment_added": "crm_lead",
+  // A entidade é a TAREFA: ela pode não estar presa a negócio nenhum.
+  "task.completed": "crm_task",
 } as const;
 
 export type GatilhoDeAutomacao = keyof typeof ENTIDADE_ESPERADA_POR_GATILHO;

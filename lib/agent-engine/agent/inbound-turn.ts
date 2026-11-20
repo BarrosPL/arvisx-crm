@@ -137,6 +137,16 @@ import { buildOpeningMessage, ritualBlocks, type FormatoDoHistorico } from "./ab
 import { snapshotDoCaso } from "./conversa-do-caso/contexto";
 import { lerRemetenteDeGrupo, type RemetenteDeGrupo } from "@/lib/messaging/remetente-de-grupo";
 import { applySaveLeadNote, buildNotesIndexBlock, getLeadNoteBody } from './lead-notes';
+import {
+  FERRAMENTA_DE_PASSAGEM_ENTRE_COLEGAS,
+  RECUSA_DEPOIS_DA_PASSAGEM,
+  applyPassarParaColega,
+  blocoDaPassagemRecebida,
+  colegasDoAgente,
+  defDaPassagemEntreColegas,
+  type PassagemAceita,
+} from './passagem-entre-colegas';
+import { loadActiveRouter } from './router-config';
 import { buildCompromissosBlock } from './compromissos-do-contato';
 import { buildOrigemBlock } from './abertura/origem-do-contato';
 import { agendaNoFechamento } from './abertura/agenda-no-fechamento';
@@ -192,7 +202,7 @@ import {
   catalogoEntregueAoOperador,
 } from './entrega-de-capacidade';
 import { composeSystemPrompt, loadOrgMemory, memoriaEscritaPorPessoas, renderOrgMemory } from './org-memory';
-import { matchesHandoffKeyword, type PublishedAgentConfig } from './agent-config';
+import { loadPublishedAgentConfigById, matchesHandoffKeyword, type PublishedAgentConfig } from './agent-config';
 import { garantirPerguntaDoRoteiro, perguntaDoRoteiroPodeSair, prepararRoteiroDoTurno } from './roteiro-no-turno';
 import { validarRespostaDoFluxo } from './flow-validate';
 import { moduloLigadoComMemo } from '@/lib/instalacao/modulos';
@@ -1810,6 +1820,26 @@ export interface AgentTurnInput {
     coletor: ColetorDeFerramentas;
     desfecho: DesfechoDoTurno;
   };
+  /**
+   * Passagem entre colegas (`passagem-entre-colegas.ts`). Quem passa este
+   * objeto está dizendo "este turno PODE passar a vez, e eu trato a
+   * continuação": a ferramenta `passar_para_colega` só é oferecida com ele, e
+   * é nele que o turno deixa a passagem aceita. Só o handler do `inbound_turn`
+   * o passa, e só na primeira execução da rodada: o colega que recebe a vez
+   * roda sem ele, então não há passagem em cadeia dentro do mesmo job.
+   */
+  passagemParaColega?: {
+    aceita: PassagemAceita | null;
+    /** Mensagens que o agente já tinha enviado ao cliente quando passou a vez. */
+    mensagensEnviadas: number;
+  };
+  /**
+   * Coletor de ferramentas herdado de quem chama. O traço é uma linha por job:
+   * quando a rodada tem dois turnos (o de quem passou a vez e o do colega), os
+   * dois registram no MESMO coletor, e a linha final guarda a passagem ao lado
+   * do que o colega fez. Ausente = `runAgentTurn` cria o seu, como sempre.
+   */
+  coletorHerdado?: ColetorDeFerramentas;
   /** monta a abertura APÓS o ritual de leitura (inbound vs. bloco temporal do follow-up). */
   buildOpening: (ritual: {
     previous: LeadCheckpointRow | null;
@@ -2186,7 +2216,7 @@ export async function runAgentTurn(
   // quando o turno falha ou é devolvido à fila. Mora AQUI, e não num envoltório
   // por fora, para que os quatro call sites (e os dublês que os testes fazem
   // de `runAgentTurn`) sigam iguais. A gravação nunca lança.
-  const coletor = criarColetorDeFerramentas();
+  const coletor = entradaDoChamador.coletorHerdado ?? criarColetorDeFerramentas();
   const desfecho: DesfechoDoTurno = {};
   const input: AgentTurnInput = { ...entradaDoChamador, tracoDoTurno: { coletor, desfecho } };
   const logDaEscolta = withFields(deps.log, {
@@ -3789,6 +3819,10 @@ async function executarTurnoDoAgente(
   // tente de novo o que a cadeia proíbe — ver `VETOS_IRREVOGAVEIS`.
   let vetoIrrevogavel = false;
   let passouParaAEquipe = false;
+  // Passagem entre colegas: o agente passou a vez a outro agente do roteador.
+  // Daqui em diante ele não fala mais com o cliente neste turno (quem responde
+  // é o colega, na mesma rodada), e o silêncio dele é decisão, não turno mudo.
+  let passouParaColega = false;
   // Teto de mensagens físicas por turno (F2-15b) — `seq` JÁ é a contagem certa: ele só
   // avança quando o envio de fato sai pro canal (send_message + send_template, bolhas
   // incluídas), nunca em veto de gate. Checar `seq` antes de tentar o próximo envio
@@ -5376,6 +5410,99 @@ async function executarTurnoDoAgente(
     }),
   };
 
+  // Passagem entre colegas (`passagem-entre-colegas.ts`). Só entra quando: o
+  // chamador trata a continuação (`input.passagemParaColega`, que só o handler
+  // do inbound passa), o roteador do número liga a passagem e existe ao menos
+  // um colega. MUTANTE (ficha do contato e agente da conversa), fora de
+  // READ_ONLY_TOOLS. Conversa, contato e agente vêm do closure, nunca do payload.
+  const passagemDoTurno = input.passagemParaColega;
+  if (!preview && job?.kind === 'inbound_turn' && passagemDoTurno !== undefined && agentConfig !== null) {
+    let colegas: ReturnType<typeof colegasDoAgente> = [];
+    try {
+      colegas = colegasDoAgente(
+        await loadActiveRouter(pool, tenantId, input.channelSessionId),
+        agentConfig.agentId,
+      );
+    } catch (err) {
+      // Sem conseguir ler o roteador, o turno segue sem a ferramenta: o agente
+      // atende como atenderia num número sem colegas.
+      runLog.warn('passagem entre colegas indisponível neste turno — roteador não lido', {
+        error: (err instanceof Error ? err.message : String(err)).slice(0, 120),
+      });
+    }
+    if (colegas.length > 0) {
+      const agenteDoTurno = agentConfig;
+      rawTools[FERRAMENTA_DE_PASSAGEM_ENTRE_COLEGAS] = tool({
+        ...defDaPassagemEntreColegas(colegas),
+        execute: async (raw: unknown) => {
+          if (passouParaColega) return RECUSA_DEPOIS_DA_PASSAGEM;
+          try {
+            const res = await applyPassarParaColega(
+              pool,
+              {
+                tenantId,
+                leadId,
+                conversationId: input.conversationId,
+                agentId: agenteDoTurno.agentId,
+                intentName: routed.intentName,
+              },
+              {
+                budgetTokens: deps.knobs.notesIndexMaxTokens,
+                colegas,
+                carregarColega: (agentId) => loadPublishedAgentConfigById(pool, tenantId, agentId),
+                agora: clock,
+              },
+              raw,
+            );
+            if (!res.ok) return res; // ensino: papel desconhecido, colega fora, resumo recusado
+            passouParaColega = true;
+            passagemDoTurno.aceita = res.passagem;
+            passagemDoTurno.mensagensEnviadas = seq;
+            // Quem fala agora é o colega: o "digitando…" deste agente para aqui.
+            pararDigitando();
+            runLog.info('passagem entre colegas — vez passada', {
+              de_agente: res.passagem.deAgente,
+              para_agente: res.passagem.paraAgente,
+              papel: res.passagem.paraIntencao,
+              mensagens_ja_enviadas: seq,
+            });
+            return {
+              ok: true,
+              status: 'vez_passada',
+              papel: res.passagem.paraIntencao,
+              para_agente: res.passagem.paraAgente,
+              de_agente: res.passagem.deAgente,
+              motivo: res.passagem.motivo,
+              message: res.message,
+            };
+          } catch (err) {
+            noteRunError(err instanceof Error ? err : new Error(String(err)));
+            return {
+              ok: false,
+              error: {
+                code: 'internal_error',
+                message: 'erro interno ao passar a vez para o colega — encerre o turno agora.',
+              },
+            };
+          }
+        },
+      });
+      // Depois de passar a vez, este agente não fala mais com o cliente: as
+      // duas ferramentas de envio devolvem ensino em vez de enviar. Sem isto, o
+      // modelo que ignorasse o "encerre o turno" responderia por cima do colega.
+      for (const nome of ['send_message', 'send_template'] as const) {
+        const original = rawTools[nome];
+        const enviar = original?.execute as ((...args: unknown[]) => unknown) | undefined;
+        if (original === undefined || enviar === undefined) continue;
+        rawTools[nome] = {
+          ...original,
+          execute: (async (...args: unknown[]) =>
+            passouParaColega ? RECUSA_DEPOIS_DA_PASSAGEM : enviar(...args)) as typeof original.execute,
+        };
+      }
+    }
+  }
+
   // F3-02: a tool nativa só entra com janela configurada e callback habilitado
   // na versão publicada. Tenant/lead vêm da ROW do job (closure), nunca do
   // payload do modelo. É MUTANTE (cria cron_job), por isso fica fora de
@@ -6346,7 +6473,9 @@ async function executarTurnoDoAgente(
             vetoIrrevogavel,
             enviadas: outcomes.length,
             turnoDescartado,
-            passouParaAEquipe,
+            // Passar a vez a um colega é razão legítima de silêncio, como passar
+            // à equipe: quem responde ao cliente é o colega, na mesma rodada.
+            passouParaAEquipe: passouParaAEquipe || passouParaColega,
             capDeEnvio: capDeEnvioAtingido(),
           });
     if (correcaoDoTurnoMudoPedida) {
@@ -6439,6 +6568,7 @@ async function executarTurnoDoAgente(
       !vetoIrrevogavel &&
       !turnoDescartado &&
       !passouParaAEquipe &&
+      !passouParaColega &&
       !capDeEnvioAtingido();
     if (silencioSemRazaoLegitima && (saidaTruncada || correcaoTruncou || correcaoTentouEnviar || tetoNaCorrecao)) {
       const desfechoTerminal = saidaTruncada
@@ -7137,6 +7267,88 @@ export async function runAgentPreview(
  * mensagem. Ids de envio vêm do payload do drain (fonte confiável — F2-05); a
  * abertura é o ritual padrão, sem bloco temporal.
  */
+/**
+ * O COLEGA RESPONDE NA MESMA RODADA (`passagem-entre-colegas.ts`).
+ *
+ * Quando o turno que acabou de rodar passou a vez, roda aqui o turno do colega,
+ * no MESMO job: o cliente recebe a resposta sem esperar a próxima mensagem dele
+ * e sem perceber a troca. O que este segundo turno tem de diferente do primeiro:
+ *
+ *   - o agente já vem resolvido (o colega), com a intenção que recebeu a vez;
+ *     o roteador não é consultado de novo;
+ *   - a abertura leva o motivo e o resumo da passagem, para ele não repetir
+ *     pergunta já respondida;
+ *   - ele roda SEM `passagemParaColega`: não pode passar a vez de volta nesta
+ *     rodada, então dois agentes nunca ficam se devolvendo a conversa num job.
+ *
+ * Só continua quando quem passou a vez não tinha falado com o cliente neste
+ * turno. Se já tinha, o cliente tem uma resposta, e os envios do colega no
+ * mesmo job repetiriam a numeração dos envios já feitos (a chave do ledger de
+ * envio é do job). O colega fica fixado e responde na próxima mensagem.
+ *
+ * Colega pausado, em modo assistido ou sem versão publicada: a ferramenta já
+ * recusa antes de passar a vez; a conferência daqui cobre a mudança que
+ * acontecer entre a passagem e esta leitura. Nesse caso o colega segue fixado
+ * e as travas normais do turno dele decidem na próxima mensagem.
+ */
+export async function continuarComOColega(
+  deps: InboundTurnDeps,
+  job: JobRow,
+  pool: pg.Pool,
+  ctx: { workerId: string },
+  rodada: {
+    passagem: NonNullable<AgentTurnInput['passagemParaColega']>;
+    resolvedAgent: TurnAgentResolution;
+    coletorDaRodada: ColetorDeFerramentas;
+    channelSessionId: string;
+    conversationId: string;
+    inboundMessageId: string;
+    abertura: AgentTurnInput['buildOpening'];
+  },
+  /** Injetáveis só para o teste; em produção são os de sempre. */
+  portas: {
+    rodar?: typeof runAgentTurn;
+    carregarColega?: typeof loadPublishedAgentConfigById;
+  } = {},
+): Promise<void> {
+  const rodar = portas.rodar ?? runAgentTurn;
+  const carregarColega = portas.carregarColega ?? loadPublishedAgentConfigById;
+  const aceita = rodada.passagem.aceita;
+  if (aceita === null) return;
+  const campos = {
+    job_id: job.id,
+    conversation_id: rodada.conversationId,
+    de_agente: aceita.deAgente,
+    para_agente: aceita.paraAgente,
+  };
+  if (rodada.passagem.mensagensEnviadas > 0) {
+    deps.log.info('passagem entre colegas — quem passou já tinha respondido; o colega assume na próxima mensagem', campos);
+    return;
+  }
+  const colega = await carregarColega(pool, job.organization_id, aceita.paraAgente);
+  if (colega === null || colega.pausedAt || colega.operationMode === 'assisted') {
+    deps.log.warn('passagem entre colegas — o colega deixou de atender entre a passagem e a resposta', campos);
+    return;
+  }
+  deps.log.info('passagem entre colegas — o colega responde na mesma rodada', campos);
+  await rodar(deps, job, pool, ctx, {
+    resolvedAgent: {
+      config: colega,
+      routerId: rodada.resolvedAgent.routerId,
+      intentName: aceita.paraIntencao,
+      confidence: null,
+      // Para o roteador é aderência: o colega foi fixado na conversa, e o
+      // registro de roteamento deste job já foi gravado pelo primeiro turno.
+      outcome: 'sticky',
+    },
+    channelSessionId: rodada.channelSessionId,
+    conversationId: rodada.conversationId,
+    inboundMessageId: rodada.inboundMessageId,
+    coletorHerdado: rodada.coletorDaRodada,
+    buildOpening: (ritual) => `${rodada.abertura(ritual)}\n\n${blocoDaPassagemRecebida(aceita)}`,
+  });
+}
+
 export function createInboundTurnHandler(deps: InboundTurnDeps) {
   return async (job: JobRow, pool: pg.Pool, ctx: { workerId: string }): Promise<void> => {
     const payload = inboundTurnPayloadSchema.parse(job.payload);
@@ -7264,12 +7476,20 @@ export function createInboundTurnHandler(deps: InboundTurnDeps) {
       return;
     }
     await anotarUltimaInboundVista(pool, alvo);
-    await runAgentTurn(deps, job, pool, ctx, {
-      resolvedAgent,
-      channelSessionId: payload.channel_session_id,
-      conversationId: payload.conversation_id,
-      inboundMessageId: payload.inbound_message_id,
-      buildOpening: ({
+    const abertura: AgentTurnInput['buildOpening'] = ({
+      previous,
+      leadState,
+      context,
+      notesIndexBlock,
+      projeta,
+      entregues,
+      compromissosBlock,
+      origemBlock,
+      currentInboundText,
+      currentInboundSender,
+      formatoDoHistorico,
+    }) =>
+      buildOpeningMessage(
         previous,
         leadState,
         context,
@@ -7277,24 +7497,33 @@ export function createInboundTurnHandler(deps: InboundTurnDeps) {
         projeta,
         entregues,
         compromissosBlock,
-        origemBlock,
         currentInboundText,
         currentInboundSender,
+        origemBlock,
         formatoDoHistorico,
-      }) =>
-        buildOpeningMessage(
-          previous,
-          leadState,
-          context,
-          notesIndexBlock,
-          projeta,
-          entregues,
-          compromissosBlock,
-          currentInboundText,
-          currentInboundSender,
-          origemBlock,
-          formatoDoHistorico,
-        ),
+      );
+    // A rodada pode ter DOIS turnos: o do agente que o roteador escolheu e, se
+    // ele passar a vez (`passar_para_colega`), o do colega. Os dois registram
+    // no mesmo coletor, porque o traço é uma linha por job.
+    const coletorDaRodada = criarColetorDeFerramentas();
+    const passagem: NonNullable<AgentTurnInput['passagemParaColega']> = { aceita: null, mensagensEnviadas: 0 };
+    await runAgentTurn(deps, job, pool, ctx, {
+      resolvedAgent,
+      channelSessionId: payload.channel_session_id,
+      conversationId: payload.conversation_id,
+      inboundMessageId: payload.inbound_message_id,
+      passagemParaColega: passagem,
+      coletorHerdado: coletorDaRodada,
+      buildOpening: abertura,
+    });
+    await continuarComOColega(deps, job, pool, ctx, {
+      passagem,
+      resolvedAgent,
+      coletorDaRodada,
+      channelSessionId: payload.channel_session_id,
+      conversationId: payload.conversation_id,
+      inboundMessageId: payload.inbound_message_id,
+      abertura,
     });
   };
 }

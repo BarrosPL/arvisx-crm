@@ -20,6 +20,13 @@ import { listaLegivel } from "@/lib/leads/activity-vocabulary";
 import { camposAlterados } from "@/lib/leads/campos-alterados";
 import { valoresAntesDepois } from "@/lib/leads/valores-audit";
 import {
+  EVENTO_CAMPO_ALTERADO,
+  EVENTO_TAG_REMOVIDA,
+  emitirEventoDaSuperficie,
+  payloadDoCampoAlterado,
+  tagsRemovidas,
+} from "@/lib/automation/eventos-de-saida";
+import {
   mencionaRecorrencia,
   recorrenciaParaGravar,
   type RecorrenciaNoPatch,
@@ -1241,8 +1248,41 @@ export async function updateLeadHandler(
       if (error) console.error("[lead.update] emit_event failed", error.message);
     });
 
+  // `lead.field_changed`: o que um sistema de fora escuta para saber que campo
+  // mudou. `lead.updated` acima é interno e não é gatilho. O payload segue a
+  // régua da auditoria: antes-e-depois só dos campos tipados sem dado de
+  // titular; o resto sai pelo nome (`lib/automation/eventos-de-saida.ts`).
+  const campoAlterado = payloadDoCampoAlterado({
+    leadId,
+    contactId: (updated as { contact_id?: string | null }).contact_id ?? null,
+    fields,
+    anterior: existing as Record<string, unknown>,
+    enviados: camposDaAuditoria,
+  });
+  if (campoAlterado) {
+    await emitirEventoDaSuperficie(supabase, {
+      tipo: EVENTO_CAMPO_ALTERADO,
+      organizationId: existing.organization_id,
+      entidadeId: leadId,
+      payload: campoAlterado,
+      requestId: ctx.requestId,
+      ator: a.metadataActor,
+    });
+  }
+
   if (input.tags !== undefined) {
     const prevTags: string[] = (existing as { tags?: string[] }).tags ?? [];
+    const removidas = tagsRemovidas(prevTags, input.tags);
+    if (removidas.length) {
+      await emitirEventoDaSuperficie(supabase, {
+        tipo: EVENTO_TAG_REMOVIDA,
+        organizationId: existing.organization_id,
+        entidadeId: leadId,
+        payload: { lead_id: leadId, removed_tags: removidas, tags: input.tags },
+        requestId: ctx.requestId,
+        ator: a.metadataActor,
+      });
+    }
     const addedTags = input.tags.filter((t) => !prevTags.includes(t));
     if (addedTags.length) {
       await createAdminClient()

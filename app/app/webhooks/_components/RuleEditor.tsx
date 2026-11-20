@@ -207,6 +207,16 @@ export const CURATED_FIELDS: Record<TriggerEvent, CuratedField[]> = {
   // funil (via etapa/tags) e tags do contato.
   "lead.silent_for": LEAD_FIELDS,
   "lead.stage_stale": [...LEAD_FIELDS, STAGE_FIELD],
+  // A superfície de agente: o fato é o gatilho, e a condição é sobre QUAL
+  // negócio (funil, tags, origem), como nos demais gatilhos de negócio.
+  "lead.tag_removed": LEAD_FIELDS,
+  "lead.field_changed": LEAD_FIELDS,
+  "lead.note_added": LEAD_FIELDS,
+  "lead.task_created": LEAD_FIELDS,
+  "lead.attachment_added": LEAD_FIELDS,
+  // A tarefa pode não ter negócio: com negócio valem os campos dele; sem,
+  // a condição sobre o negócio simplesmente não casa.
+  "task.completed": LEAD_FIELDS,
 };
 
 export const OP_LABELS: Record<Op, string> = {

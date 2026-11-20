@@ -68,6 +68,7 @@ const FERRAMENTAS = new Set([
   "read_skill_reference",
   "open_human_case",
   "provide_case_update",
+  "passar_para_colega",
   "send_template",
 ]);
 const ESTADOS = new Set(["ok", "recusado", "falhou", "bloqueada"]);

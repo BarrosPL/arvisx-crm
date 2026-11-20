@@ -28,6 +28,7 @@ import { registerAction } from "@/lib/automation/actions";
 import type { ActionCtx, ActionResultDetail } from "@/lib/automation/types";
 import { assertDestinoResolvidoSeguro } from "@/lib/automation/outbound-ip";
 import { assertSafeOutboundUrl } from "@/lib/automation/outbound-url";
+import { detalheDoEvento } from "@/lib/automation/detalhe-do-evento";
 import { mensagemDeErro } from "@/lib/automation/actions/erro-legivel";
 import { decryptWebhookSecret } from "@/lib/webhooks/secrets";
 import { nomesDosAtendentesCom } from "@/lib/users/nome-do-atendente";
@@ -417,6 +418,11 @@ export async function executeCallWebhook(
   const contactPublic = projectPublicFields(ctx.context.contact, CONTACT_PUBLIC_FIELDS);
   const ownerPublic = await responsavelPublico(ctx, config);
   const compromissoPublic = localDoCompromisso(ctx.context.appointment);
+  // O texto inteiro da mensagem, da nota e da tarefa, lido da linha atual
+  // (`detalhe-do-evento.ts`). Vazio para os eventos que não têm o que buscar.
+  const detalhe = await detalheDoEvento(ctx.admin, ctx.organizationId, ctx.event, {
+    incluirResponsavel: config.include_owner === true,
+  });
   const entrega = idDaEntrega(ctx.event.id, ctx.ruleId, ctx.actionIndex ?? 0, ctx.ruleActions ?? []);
   const body = JSON.stringify({
     event: ctx.event.event_type,
@@ -428,6 +434,7 @@ export async function executeCallWebhook(
       ...(leadPublic ? { lead: leadPublic } : {}),
       ...(contactPublic ? { contact: contactPublic } : {}),
       ...(compromissoPublic ?? {}),
+      ...detalhe,
       // Só com `include_owner: true` (#1612) — ver `responsavelPublico`.
       ...(ownerPublic ? { owner: ownerPublic } : {}),
     },
