@@ -388,6 +388,26 @@ export const ApiErrorCodes = {
   // Migration 0711: envio rápido (rajada) só pelo número oficial, com modelo aprovado.
   campanha_velocidade_do_canal: "campanha_velocidade_do_canal", // 422: envio rápido pedido num número por QR
 
+  // Comentários do Instagram (`lib/comentarios/acoes.ts`, migration 9812).
+  ja_respondido: "ja_respondido", // 409: o comentário já tem resposta pública (`details.resposta`)
+  ja_respondido_em_privado: "ja_respondido_em_privado", // 409: a rede só aceita UMA resposta privada por comentário
+  resposta_em_andamento: "resposta_em_andamento", // 409: outra chamada está enviando a resposta agora
+  // 409 na chamada seguinte e 502 na que falhou: a rede não confirmou, e a
+  // resposta PODE ter saído. Não é repetida sozinha; `confirmar_reenvio` repete.
+  resposta_incerta: "resposta_incerta",
+  comentarios_desligados: "comentarios_desligados", // 409: o canal está com os comentários em `off`
+  canal_indisponivel: "canal_indisponivel", // 409: a conexão do comentário foi desconectada ou está sem autorização
+  janela_de_7_dias: "janela_de_7_dias", // 422: passou o prazo da rede para a resposta privada
+  comentario_ao_vivo: "comentario_ao_vivo", // 422: a rede não aceita esta ação em comentário de transmissão ao vivo
+  comentario_oculto: "comentario_oculto", // 422: a rede não aceita resposta pública a comentário oculto
+  escopo_ausente: "escopo_ausente", // 422: a conexão não tem a permissão de comentários; reautorizar resolve
+  contato_bloqueado: "contato_bloqueado", // 422: a pessoa pediu para não receber mensagens (ou é contato pessoal)
+  contato_anonimizado: "contato_anonimizado", // 409: o contato do comentário foi anonimizado a pedido do titular
+  contato_em_criacao: "contato_em_criacao", // 409: outra chamada está criando o contato deste comentário agora
+  // 422: a rede respondeu "não" (recusa definitiva). Não é indisponibilidade:
+  // repetir igual não adianta. `details.codigo_da_rede` traz o código dela.
+  recusado_pela_rede: "recusado_pela_rede",
+
   // 500 / upstream
   internal_error: "internal_error",
   upstream_unavailable: "upstream_unavailable",

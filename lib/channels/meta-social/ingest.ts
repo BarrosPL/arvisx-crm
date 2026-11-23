@@ -52,7 +52,8 @@ export interface ContextoDaEntrada {
   appSecret: string;
 }
 
-function identidadeSocial(rede: string, conta: string, participante: string): string {
+/** A identidade social de um participante: `<rede>:<conta>:<participante>`. */
+export function identidadeSocial(rede: string, conta: string, participante: string): string {
   return `${rede}:${conta}:${participante}`;
 }
 

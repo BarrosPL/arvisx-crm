@@ -58,7 +58,13 @@ describe("juntar as duas metades do catálogo", () => {
       pacotes: ["atender"],
       marcavel: true,
       motivo_nao_marcavel: null,
+      manual: false,
     });
+  });
+
+  it("a marcação manual do catálogo chega à tela", () => {
+    const [servida] = juntarCatalogoComHandlers([HANDLER_FAKE], [{ ...ENTRADA_FAKE, manual: true }]);
+    expect(servida!.manual).toBe(true);
   });
 
   it("recusa servir handler sem entrada no catálogo, e diz qual é", () => {

@@ -594,6 +594,27 @@ export interface MetaCtwaClickRow {
 }
 
 /**
+ * Um comentário que o titular fez numa publicação da empresa (migrations 9810
+ * e 9812), com o que lhe foi respondido.
+ *
+ * Entra porque a anonimização o REDIGE (`fn_redigir_comentarios_ao_anonimizar`):
+ * o que se apaga a pedido dele é o que se entrega a pedido dele. Vão o texto
+ * dele e o das respostas; quem respondeu (pessoa, agente, token) é da equipe e
+ * não vai.
+ */
+export interface SocialCommentRow {
+  comment_id: string;
+  media_id: string | null;
+  media_product_type: string | null;
+  author_username: string | null;
+  text: string | null;
+  commented_at: string;
+  estado: string;
+  public_reply: { texto: string; quando: string; simulada: boolean } | null;
+  private_reply: { texto: string; quando: string; simulada: boolean } | null;
+}
+
+/**
  * Uma campanha que falou com este titular (migration 0374).
  *
  * O texto vai junto porque é o que foi DITO a ele; o telefone não, porque ele já
@@ -773,6 +794,11 @@ export interface ExportPayload {
    * não tem cliques; tokens de claim e detalhes internos não são coletados.
    */
   meta_ctwa_click_dispatches?: MetaCtwaClickRow[];
+  /**
+   * Os comentários dele nas publicações da empresa. Opcional pelo mesmo motivo
+   * da seção acima: só existe quando há o que entregar.
+   */
+  social_comments?: SocialCommentRow[];
   /**
    * Casos, linha do tempo do caso e demandas (migration 0280).
    *
@@ -2066,6 +2092,64 @@ export async function collectExportData(args: CollectArgs): Promise<ExportPayloa
     }
   }
 
+  // Os comentários do titular nas publicações da empresa (9810/9812). A
+  // anonimização redige os comentários ligados ao contato E os outros do MESMO
+  // autor; o acesso entrega os mesmos dois conjuntos. Falha não vira relatório
+  // que diz que não guardamos nada: sobe.
+  const social_comments: SocialCommentRow[] = [];
+  if (contactId) {
+    const COLUNAS_DO_COMENTARIO =
+      "comment_id, media_id, media_product_type, author_id, author_username, text, commented_at, estado, public_reply, private_reply";
+    type LinhaDoComentario = Omit<SocialCommentRow, "public_reply" | "private_reply"> & {
+      author_id: string | null;
+      public_reply: unknown;
+      private_reply: unknown;
+    };
+    const { data: doContato, error: erroDoContato } = await admin
+      .from("social_comments")
+      .select(COLUNAS_DO_COMENTARIO)
+      .eq("organization_id", organizationId)
+      .eq("contact_id", contactId)
+      .order("commented_at")
+      .limit(500);
+    if (erroDoContato) throw erroDoContato;
+    const linhas = [...((doContato ?? []) as unknown as LinhaDoComentario[])];
+    const autores = [...new Set(linhas.map((l) => l.author_id).filter((a): a is string => Boolean(a)))];
+    if (autores.length > 0) {
+      const { data: doAutor, error: erroDoAutor } = await admin
+        .from("social_comments")
+        .select(COLUNAS_DO_COMENTARIO)
+        .eq("organization_id", organizationId)
+        .in("author_id", autores)
+        .order("commented_at")
+        .limit(500);
+      if (erroDoAutor) throw erroDoAutor;
+      const vistos = new Set(linhas.map((l) => l.comment_id));
+      for (const l of (doAutor ?? []) as unknown as LinhaDoComentario[]) {
+        if (!vistos.has(l.comment_id)) linhas.push(l);
+      }
+    }
+    conferirTeto("social_comments", linhas, 500);
+    const resposta = (valor: unknown): SocialCommentRow["public_reply"] => {
+      const r = valor as { texto?: unknown; quando?: unknown; simulada?: unknown; situacao?: unknown } | null;
+      if (!r || typeof r.texto !== "string" || typeof r.quando !== "string" || r.situacao !== "concluida") return null;
+      return { texto: r.texto, quando: r.quando, simulada: r.simulada === true };
+    };
+    for (const l of linhas) {
+      social_comments.push({
+        comment_id: l.comment_id,
+        media_id: l.media_id,
+        media_product_type: l.media_product_type,
+        author_username: l.author_username,
+        text: l.text,
+        commented_at: l.commented_at,
+        estado: l.estado,
+        public_reply: resposta(l.public_reply),
+        private_reply: resposta(l.private_reply),
+      });
+    }
+  }
+
   // Audit log extract (best-effort: rows where metadata.contact_id matches).
   let audit_log_extract: AuditRow[] = [];
   if (contactId) {
@@ -2553,6 +2637,7 @@ export async function collectExportData(args: CollectArgs): Promise<ExportPayloa
     voice_calls,
     prospecting_candidates,
     ...(meta_ctwa_click_dispatches.length > 0 ? { meta_ctwa_click_dispatches } : {}),
+    ...(social_comments.length > 0 ? { social_comments } : {}),
     cases,
     case_events,
     demandas,

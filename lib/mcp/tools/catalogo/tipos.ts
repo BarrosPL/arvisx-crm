@@ -44,6 +44,18 @@ export interface McpToolCatalogEntry {
    */
   apenasHumano?: boolean;
   /**
+   * Marcacao MANUAL: a capacidade aparece no pacote, mas o interruptor do
+   * pacote NAO a liga — so entra marcada uma a uma, como as criticas. Diferente
+   * de `critico`, nao diz nada sobre o estrago: diz que ligar a jornada nao e
+   * decisao de ligar ISTO.
+   *
+   * Existe porque capacidade que o agente publicado nunca monta
+   * (`apenasHumano`) e que entra sozinha pelo pacote ocupa vaga do teto por
+   * agente sem dar nada a ele (revisao de 20/11/2026, item 2.21). Tambem nao
+   * reserva vaga ao ligar o pacote: a reserva e so das criticas.
+   */
+  manual?: boolean;
+  /**
    * Capacidade de um MODULO OPCIONAL da instalacao (`lib/instalacao/modulos.ts`).
    * Com o modulo desligado ela nao e oferecida a ninguem — nem ao agente, nem
    * ao cliente MCP externo, nem a tela que escolhe capacidades. Ver

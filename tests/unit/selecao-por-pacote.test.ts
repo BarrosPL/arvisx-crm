@@ -19,10 +19,12 @@ import {
   TETO_TOOLS_POR_AGENTE,
   capacidadesAutomaticasDoPacote,
   capacidadesCriticasDoPacote,
+  capacidadesManuaisDoPacote,
   desligarPacote,
   estadoDoPacote,
   excedeuTeto,
   ligarPacote,
+  vagasExigidasPeloPacote,
   vagasRestantes,
   type CapacidadeSelecionavel,
   textoDaContagem,
@@ -38,6 +40,13 @@ const FIXTURE: ReadonlyArray<CapacidadeSelecionavel> = [
   { name: "enviar", risco: "critico", pacotes: ["atender"] },
   { name: "vender_a", risco: "atencao", pacotes: ["vender"] },
   { name: "so_critica", risco: "critico", pacotes: ["escalar"] },
+];
+
+/** Com uma capacidade de marcação MANUAL (o pacote mostra e não liga). */
+const COM_MANUAL: ReadonlyArray<CapacidadeSelecionavel> = [
+  ...FIXTURE,
+  { name: "manual_a", risco: "atencao", pacotes: ["atender"], manual: true },
+  { name: "manual_critica", risco: "critico", pacotes: ["atender"], manual: true },
 ];
 
 describe("o que um pacote liga", () => {
@@ -81,6 +90,34 @@ describe("o que um pacote liga", () => {
     const uma = ligarPacote([], FIXTURE, "atender");
     const duas = ligarPacote(uma, FIXTURE, "atender");
     expect(duas).toEqual(uma);
+  });
+});
+
+describe("capacidade de marcação manual (revisão de 20/11, item 2.21)", () => {
+  it("⭐ o pacote NÃO a liga, e ela não aparece entre as automáticas", () => {
+    expect(capacidadesAutomaticasDoPacote(COM_MANUAL, "atender")).toEqual(["ler_a", "ler_b", "escrever_a"]);
+    expect(ligarPacote([], COM_MANUAL, "atender")).not.toContain("manual_a");
+  });
+
+  it("é listada à parte, para marcar uma a uma; a crítica manual continua só entre as críticas", () => {
+    expect(capacidadesManuaisDoPacote(COM_MANUAL, "atender")).toEqual(["manual_a"]);
+    expect(capacidadesCriticasDoPacote(COM_MANUAL, "atender")).toEqual(["enviar", "manual_critica"]);
+  });
+
+  it("⭐ não reserva vaga ao ligar o pacote: a reserva é só das críticas", () => {
+    const semManual = COM_MANUAL.filter((c) => c.name !== "manual_a");
+    expect(vagasExigidasPeloPacote([], COM_MANUAL, "atender")).toBe(vagasExigidasPeloPacote([], semManual, "atender"));
+  });
+
+  it("o pacote fica ligado sem ela, e ligar o pacote preserva a que foi marcada à mão", () => {
+    const ligado = ligarPacote(["manual_a"], COM_MANUAL, "atender");
+    expect(ligado).toContain("manual_a");
+    expect(estadoDoPacote(ligarPacote([], COM_MANUAL, "atender"), COM_MANUAL, "atender")).toBe("ligado");
+  });
+
+  it("desligar o pacote leva junto a que foi marcada à mão", () => {
+    const ligado = ligarPacote(["manual_a"], COM_MANUAL, "atender");
+    expect(desligarPacote(ligado, COM_MANUAL, "atender", TODOS)).not.toContain("manual_a");
   });
 });
 

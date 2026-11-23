@@ -135,6 +135,23 @@ export async function sessaoPelaConta(db: SupabaseClient, conta: string): Promis
   return linhas[0] ? paraSessao(linhas[0]) : null;
 }
 
+/**
+ * UMA conexão direta ATIVA desta organização, pelo id. `null` quando não
+ * existe, é de outra organização ou foi desconectada.
+ */
+export async function sessaoPorId(db: SupabaseClient, org: string, sessionId: string): Promise<SessaoDireta | null> {
+  const { data, error } = await db
+    .from("channel_sessions")
+    .select(COLUNAS)
+    .eq("organization_id", org)
+    .eq("id", sessionId)
+    .eq("provider", CHANNEL_PROVIDER_SOCIAL_DIRETO)
+    .is("archived_at", null)
+    .maybeSingle();
+  if (error) throw new ErroDaConexaoDireta("Não foi possível ler a conexão.", 500, "internal_error");
+  return data ? paraSessao(data as LinhaDaSessao) : null;
+}
+
 /** O token da página desta sessão, decifrado. `null` = desconectada ou cifra indisponível. */
 export async function tokenDaSessao(
   db: SupabaseClient,

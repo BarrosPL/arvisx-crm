@@ -32,6 +32,7 @@ import {
   TETO_TOOLS_POR_AGENTE,
   capacidadesAutomaticasDoPacote,
   capacidadesCriticasDoPacote,
+  capacidadesManuaisDoPacote,
   desligarPacote,
   estadoDoPacote,
   ligarPacote,
@@ -343,7 +344,12 @@ export function ToolPicker({ value: valorSalvo, onChange, disabled, ocultar }: P
       <div className="grid gap-3">
         {PACOTES.map((pacote) => {
           const automaticas = capacidadesAutomaticasDoPacote(catalogo, pacote.id);
-          const criticas = capacidadesCriticasDoPacote(catalogo, pacote.id);
+          // As críticas e as de marcação manual vão para a mesma caixa: nas
+          // duas o pacote mostra e não liga. Só as críticas reservam vaga.
+          const criticas = [
+            ...capacidadesCriticasDoPacote(catalogo, pacote.id),
+            ...capacidadesManuaisDoPacote(catalogo, pacote.id),
+          ];
           const estado = estadoDoPacote(value, catalogo, pacote.id);
           const total = automaticas.length + criticas.length;
           const ligadas = [...automaticas, ...criticas].filter((n) =>
@@ -390,7 +396,7 @@ export function ToolPicker({ value: valorSalvo, onChange, disabled, ocultar }: P
 
               {recusa && recusa.pacote === pacote.id ? <AvisoTeto texto={recusa.texto} /> : null}
 
-              {/* Crítico nunca entra por pacote: exige o dedo do humano. */}
+              {/* Crítico (e o de marcação manual) nunca entra por pacote: exige o dedo do humano. */}
               {criticas.length > 0 ? (
                 <div
                   data-testid={`criticas-${pacote.id}`}

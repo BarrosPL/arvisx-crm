@@ -42,6 +42,42 @@ export class ErroDaGraph extends Error {
   get tokenInvalido(): boolean {
     return this.detalhe.code === 190 || this.detalhe.code === 102;
   }
+  /** A Meta limitou as chamadas: a operação NÃO foi feita, e tentar depois é seguro. */
+  get limiteDeTaxa(): boolean {
+    return CODIGOS_DE_LIMITE.has(this.detalhe.code ?? -1);
+  }
+  /** Falta a permissão de comentários na conexão: só reautorizar resolve. */
+  get escopoDeComentariosAusente(): boolean {
+    return faltaEscopoDeComentarios(this.detalhe);
+  }
+  /**
+   * Não dá para saber se a Meta executou o pedido: a resposta não chegou
+   * (`status` 0: rede ou tempo esgotado), o servidor dela falhou (5xx) ou ela
+   * devolveu o erro genérico de serviço (1 e 2). Quem publica NÃO repete
+   * sozinho depois disto — a publicação pode ter saído.
+   */
+  get desfechoIncerto(): boolean {
+    const { status, code } = this.detalhe;
+    return status === 0 || status >= 500 || code === 1 || code === 2;
+  }
+}
+
+/** Os códigos com que a Graph diz "chamadas demais" (app, usuário, página e conta). */
+const CODIGOS_DE_LIMITE: ReadonlySet<number> = new Set([4, 17, 32, 613]);
+
+/** A frase de quando a conexão não tem a permissão de comentários. */
+export const FRASE_SEM_ESCOPO_DE_COMENTARIOS =
+  "Esta conexão não tem a permissão de comentários do Instagram. Reautorize a conexão em Conexões › Facebook / Instagram e aceite a permissão de comentários.";
+
+/**
+ * A recusa é por falta do escopo de comentários? A Graph responde com o código
+ * de permissão (10, 200 a 299, ou 3) e NOMEIA a permissão na mensagem — é o
+ * nome que separa esta recusa das outras de permissão.
+ */
+function faltaEscopoDeComentarios(d: DetalheDoErroDaGraph): boolean {
+  const { code } = d;
+  const dePermissao = code === 10 || code === 3 || (code !== null && code >= 200 && code < 300);
+  return dePermissao && /instagram_manage_comments|pages_read_engagement/i.test(d.mensagem ?? "");
 }
 
 /** A frase do operador para um erro da Graph. Pura, para ser testada sem rede. */
@@ -53,13 +89,14 @@ export function fraseDoErroDaGraph(d: DetalheDoErroDaGraph): string {
   if (code === 190 || code === 102) {
     return "A autorização da Meta expirou ou foi removida. Reconecte a página em Conexões › Facebook / Instagram.";
   }
+  if (faltaEscopoDeComentarios(d)) return FRASE_SEM_ESCOPO_DE_COMENTARIOS;
   if (code === 10 || (code !== null && code >= 200 && code < 300)) {
     return "A Meta recusou por falta de permissão. Reconecte a página e aceite todas as permissões pedidas.";
   }
   if (code === 551 || subcode === 1545041) {
     return "Esta pessoa não está disponível para receber mensagens agora.";
   }
-  if (code === 4 || code === 17 || code === 32 || code === 613) {
+  if (CODIGOS_DE_LIMITE.has(code ?? -1)) {
     return "A Meta limitou as chamadas desta página por agora. Tente de novo em alguns minutos.";
   }
   if (code === 100) {
