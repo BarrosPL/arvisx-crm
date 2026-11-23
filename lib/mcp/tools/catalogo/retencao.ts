@@ -117,7 +117,7 @@ export const TOOLS_RETENCAO = declararTools([
     category: "write",
     rotulo: "Fechar conversa sem resposta",
     explicacao:
-      "Fecha a conversa em que o cliente parou de responder, para ela sair da caixa de entrada. Nada é enviado ao cliente, e a conversa reabre sozinha se ele escrever de novo.",
+      "Fecha a conversa em que o cliente parou de responder, para ela sair da caixa de entrada. Nada é enviado ao cliente, e a conversa reabre sozinha se ele escrever de novo. Conversa que uma pessoa da equipe assumiu não é fechada pelo agente.",
     oQueToca: "Atendimento",
     // `atencao`, não `critico`: nada sai para o cliente e o gesto se desfaz
     // sozinho — a próxima mensagem dele reabre a conversa, e a equipe a reabre

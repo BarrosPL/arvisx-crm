@@ -21,11 +21,19 @@
  *  - é IDEMPOTENTE: conversa já encerrada (fechada, resolvida ou arquivada)
  *    devolve sucesso sem escrever nada e sem nova linha de auditoria. Uma
  *    conversa arquivada continua arquivada — a ferramenta não a traz de volta;
- *  - NÃO há trava por atendente humano responsável (`assigned_to_user_id`): a
- *    régua da tela (`exigirControleDaConversa`) só vale para o ator "user", e
- *    o dono decidiu em 20/11 (PR #14) que a ferramenta segue fechando qualquer
- *    conversa aberta da organização. A descrição avisa o modelo (revisão
- *    20/11, item 2.31).
+ *  - conversa ASSUMIDA POR UMA PESSOA (`assigned_to_user_id` preenchido) não é
+ *    fechada por esta porta: recusa `conversa_com_humano`, sem escrever e sem
+ *    auditar. Vale para todo ator daqui, de qualquer papel (token comum, de
+ *    gerente, de administrador e agente nativo): quem chama esta ferramenta é
+ *    um agente, e papel alto no token não o torna a pessoa que assumiu. Fechar
+ *    conversa assumida é da tela, onde vale `exigirControleDaConversa`.
+ *    Decisão do dono em 23/11/2026, que troca a de 20/11 registrada no PR #14
+ *    (revisão 20/11, item 2.31).
+ *
+ *    LIMITE CONHECIDO: a conferência é feita na leitura. Assumir a conversa não
+ *    mexe em `service_revision`, então, se uma pessoa assumir no instante entre
+ *    a leitura e a `fn_service_status`, o fechamento ainda passa. Fechar essa
+ *    janela pede a condição dentro da função do banco (migration).
  */
 import { z } from "zod";
 
@@ -56,6 +64,13 @@ const CONVERSA_NAO_ENCONTRADA = recusa(
 const CONVERSA_DE_CONTATO_PESSOAL = recusa(
   "contato_pessoal",
   "esta conversa é de um contato marcado como pessoal — fora da operação: não a altere.",
+);
+
+const CONVERSA_COM_HUMANO = recusa(
+  "conversa_com_humano",
+  "uma pessoa da equipe assumiu esta conversa e está com ela: você não pode fechá-la. Nada foi " +
+    "alterado. Não tente de novo; se a conversa precisa mesmo ser encerrada, quem fecha é a " +
+    "pessoa responsável (ou um gerente), pela tela.",
 );
 
 const CONVERSA_MUDOU = recusa(
@@ -119,7 +134,8 @@ export const crmCloseConversation: McpToolDefinition<typeof inputShape> = {
     "Fecha uma conversa para ela sair da caixa de entrada — por exemplo, quando você falou por " +
     "último e o cliente não respondeu há dias. NADA é enviado ao cliente; se ele escrever de " +
     "novo, a conversa reabre. Não fecha chamado nem negócio. Repetir numa conversa já encerrada " +
-    "não muda nada. Fecha também a conversa que uma pessoa da equipe assumiu: confira antes.",
+    "não muda nada. NÃO fecha conversa que uma pessoa da equipe assumiu: nesse caso recusa, e quem " +
+    "fecha é a pessoa, pela tela.",
   inputSchema: inputShape,
   category: "write",
   requiresRole: "agent",
@@ -130,6 +146,7 @@ export const crmCloseConversation: McpToolDefinition<typeof inputShape> = {
     const { conversa } = pedido;
 
     if (conversaJaEncerrada(conversa.status)) return jaEncerrada(conversa);
+    if (conversa.assigned_to_user_id !== null) return CONVERSA_COM_HUMANO;
 
     const a = auditoriaDoContexto(ctx, {
       previous_status: conversa.status,

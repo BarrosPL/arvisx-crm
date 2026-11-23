@@ -17,10 +17,10 @@ nativos: `crm_close_conversation`, com a conversa e um motivo opcional.
   encerrada. Conversa arquivada continua arquivada.
 - O fechamento fica na auditoria como o da tela (`conversation.closed`), com o
   agente como autor e o motivo informado.
-- A ferramenta fecha também a conversa que uma pessoa da equipe assumiu: a
-  regra da tela (só quem tem o controle da conversa fecha) vale para pessoas,
-  não para o agente. A descrição da ferramenta avisa o agente para conferir
-  antes.
+- A ferramenta não fecha conversa que uma pessoa da equipe assumiu: ela recusa,
+  avisa o agente de que uma pessoa está com a conversa e não altera nada. Vale
+  para qualquer token, inclusive o de gerente. Conversa assumida é fechada por
+  uma pessoa, pela tela, como sempre.
 - A trava de atendimento humano do contato não é tocada: devolver o contato ao
   automático continua sendo escolha de quem fecha pela tela.
 
