@@ -92,12 +92,59 @@ export function serializarAnexo(row: LinhaDoAnexo, leadId: string): LeadAttachme
   };
 }
 
-/** Por que o arquivo não serve — antes de tocar o Storage. */
-export type RecusaDoArquivo = "grande_demais" | "tipo_nao_aceito";
+/**
+ * As extensões que o NOME do arquivo pode ter — as dos formatos aceitos.
+ *
+ * O tipo (MIME) é dito por quem envia, e o nome também: sem esta lista,
+ * `foo.exe` declarado como `application/pdf` passava, e a extensão dele ia
+ * para o caminho do objeto no Storage (revisão de 20/11, item 2.15). Nome SEM
+ * extensão continua aceito — o objeto é guardado como `.bin`.
+ */
+export const EXTENSOES_ACEITAS_NO_ANEXO: ReadonlySet<string> = new Set([
+  "pdf",
+  "png",
+  "jpg",
+  "jpeg",
+  "jfif",
+  "webp",
+]);
 
-export function recusaDoArquivo(arquivo: { tipo: string; tamanho: number }): RecusaDoArquivo | null {
+/** A extensão do nome, em minúsculas e sem o ponto; `null` quando o nome não tem. */
+export function extensaoDoNome(nome: string): string | null {
+  const limpo = nome.trim();
+  const ponto = limpo.lastIndexOf(".");
+  if (ponto < 0 || ponto === limpo.length - 1) return null;
+  return limpo.slice(ponto + 1).toLowerCase();
+}
+
+/**
+ * O nome do arquivo como vai para a AUDITORIA: o tamanho e a extensão, nunca o
+ * texto. Nome de arquivo é escrito pelo cliente e costuma trazer dado dele
+ * ("RG_Maria_Souza.pdf"); a auditoria guarda quem anexou, quando e de que
+ * formato — o nome fica na linha do anexo e na timeline do negócio, que têm a
+ * mesma proteção do resto do cadastro (revisão de 20/11, item 2.15).
+ */
+export function nomeDoArquivoParaAuditoria(nome: string): string {
+  const extensao = extensaoDoNome(nome);
+  const sufixo = extensao && EXTENSOES_ACEITAS_NO_ANEXO.has(extensao) ? `.${extensao}` : "";
+  return `[${nome.length} caracteres]${sufixo}`;
+}
+
+/** Por que o arquivo não serve — antes de tocar o Storage. */
+export type RecusaDoArquivo = "grande_demais" | "tipo_nao_aceito" | "extensao_nao_aceita";
+
+export function recusaDoArquivo(arquivo: {
+  tipo: string;
+  tamanho: number;
+  /** O nome com que o arquivo será gravado. Ausente = só tipo e tamanho são conferidos. */
+  nome?: string | null;
+}): RecusaDoArquivo | null {
   if (arquivo.tamanho > TAMANHO_MAXIMO_DO_ANEXO) return "grande_demais";
   if (!MIMES_ACEITOS_NO_ANEXO.has(arquivo.tipo.toLowerCase())) return "tipo_nao_aceito";
+  if (arquivo.nome) {
+    const extensao = extensaoDoNome(arquivo.nome);
+    if (extensao !== null && !EXTENSOES_ACEITAS_NO_ANEXO.has(extensao)) return "extensao_nao_aceita";
+  }
   return null;
 }
 
@@ -220,7 +267,8 @@ export async function gravarAnexoDoNegocio(entrada: {
     metadata: {
       attachment_id: attachmentId,
       field_key: fieldKey,
-      file_name: arquivo.nome,
+      // Nunca o nome cru: ver `nomeDoArquivoParaAuditoria`.
+      file_name: nomeDoArquivoParaAuditoria(arquivo.nome),
       file_size: arquivo.tamanho,
       mime_type: arquivo.tipo,
       ...auditoria.metadata,
