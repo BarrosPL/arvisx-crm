@@ -3605,6 +3605,7 @@
   "Os comentários desta conexão estão desligados. Ligue em modo de registro ou real para responder.": "Comments are turned off for this connection. Turn them on in record or live mode to reply.",
   "Este comentário já foi respondido.": "This comment has already been replied to.",
   "Outra resposta a este comentário está sendo enviada agora.": "Another reply to this comment is being sent right now.",
+  "Outra chamada está criando o contato deste comentário agora. Tente de novo em instantes.": "Another call is creating the contact for this comment right now. Try again in a moment.",
   "A tentativa anterior não foi confirmada pela rede e pode ter sido publicada. Confira na rede; para enviar de novo assim mesmo, repita com confirmar_reenvio.": "The previous attempt was not confirmed by the network and may have been published. Check on the network; to send it again anyway, repeat with confirmar_reenvio.",
   "O texto da resposta não pode ser vazio.": "The reply text cannot be empty.",
   "A rede não aceita resposta pública a comentário de transmissão ao vivo. Responda em privado, durante a transmissão.": "The network does not accept a public reply to a live broadcast comment. Reply privately, during the broadcast.",

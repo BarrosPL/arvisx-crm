@@ -7641,6 +7641,7 @@ export const DICIONARIO: Traducoes = {
   "Os comentários desta conexão estão desligados. Ligue em modo de registro ou real para responder.": { es: "Los comentarios de esta conexión están desactivados. Actívalos en modo de registro o real para responder." },
   "Este comentário já foi respondido.": { es: "Este comentario ya fue respondido." },
   "Outra resposta a este comentário está sendo enviada agora.": { es: "Otra respuesta a este comentario se está enviando ahora." },
+  "Outra chamada está criando o contato deste comentário agora. Tente de novo em instantes.": { es: "Otra llamada está creando el contacto de este comentario ahora. Inténtalo de nuevo en unos instantes." },
   "A tentativa anterior não foi confirmada pela rede e pode ter sido publicada. Confira na rede; para enviar de novo assim mesmo, repita com confirmar_reenvio.": { es: "El intento anterior no fue confirmado por la red y puede haberse publicado. Compruébalo en la red; para enviarlo de nuevo de todos modos, repite con confirmar_reenvio." },
   "O texto da resposta não pode ser vazio.": { es: "El texto de la respuesta no puede estar vacío." },
   "A rede não aceita resposta pública a comentário de transmissão ao vivo. Responda em privado, durante a transmissão.": { es: "La red no acepta respuesta pública a un comentario de transmisión en vivo. Responde en privado, durante la transmisión." },
