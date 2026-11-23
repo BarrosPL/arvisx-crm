@@ -174,6 +174,9 @@ export const ALVO_DE_FUNIL: Record<string, AlvoDeFunil> = {
   // `mcp:write` do token e o fato de a porta NÃO enviar nada — o texto fica
   // guardado e quem atende é que clica em enviar.
   crm_create_conversation_draft: "sem_funil",
+  // Ajustes (AJ-1): fecha a CONVERSA por `conversation_id`; não lê nem grava
+  // negócio. Quem a limita no turno é o dono `conversa` de `ESCOPO_DAS_ESCRITAS`.
+  crm_close_conversation: "sem_funil",
   // Configuração da casa. Já não é alcançável pelo agente (papel acima do dele);
   // entram aqui para o teste de vacuidade não as acusar, e com a nota de que a
   // barreira delas é OUTRA.

@@ -81,6 +81,8 @@ export const ESCOPO_DAS_ESCRITAS: Readonly<Record<string, Readonly<Record<string
   crm_send_whatsapp_message: { conversation_id: "conversa" },
   crm_request_human_handoff: { conversation_id: "conversa", target_user_id: "configuracao" },
   crm_resume_ai_attendance: { conversation_id: "conversa" },
+  // Ajustes (AJ-1): num turno, o agente só fecha conversa do cliente que atende.
+  crm_close_conversation: { conversation_id: "conversa" },
 
   // ---- casos humanos ----
   crm_add_case_note: { case_id: "chamado" },

@@ -10108,6 +10108,9 @@ export const DICIONARIO: Traducoes = {
   "Guarda no negócio um arquivo que o cliente já enviou na conversa, para o documento ficar no cartão e não se perder no meio das mensagens.": { es: "Guarda en el negocio un archivo que el cliente ya envió en la conversación, para que el documento quede en la tarjeta y no se pierda entre los mensajes." },
   "Propor a próxima ação do negócio": { es: "Proponer la próxima acción del negocio" },
   "Deixa no cartão do negócio a próxima ação sugerida pelo agente, para uma pessoa da equipe aprovar ou descartar. Nada é executado sozinho.": { es: "Deja en la tarjeta del negocio la próxima acción sugerida por el agente, para que una persona del equipo la apruebe o la descarte. Nada se ejecuta solo." },
+  // ─── Ajustes (AJ-1): fechar conversa por agente ───
+  "Fechar conversa sem resposta": { es: "Cerrar conversación sin respuesta" },
+  "Fecha a conversa em que o cliente parou de responder, para ela sair da caixa de entrada. Nada é enviado ao cliente, e a conversa reabre sozinha se ele escrever de novo. Conversa que uma pessoa da equipe assumiu não é fechada pelo agente.": { es: "Cierra la conversación en la que el cliente dejó de responder, para que salga de la bandeja de entrada. No se envía nada al cliente, y la conversación se reabre sola si él vuelve a escribir. La conversación que asumió una persona del equipo no la cierra el agente." },
   "Listar funis": { es: "Listar embudos" },
   "Criar oportunidade no funil": { es: "Crear oportunidad en el embudo" },
   "Atualizar uma oportunidade": { es: "Actualizar una oportunidad" },
