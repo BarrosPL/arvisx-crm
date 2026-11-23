@@ -296,8 +296,12 @@ No MCP: `crm_list_comments`, `crm_get_comment`, `crm_reply_comment`,
 `crm_private_reply_comment`, `crm_ignore_comment` e
 `crm_create_contact_from_comment`. Não há ferramenta de ocultar. A recusa volta
 como dado: `{ permitido: false, motivo, mensagem, detalhes? }`, com `motivo`
-igual ao `code` da rota. As duas de resposta são capacidades críticas: nunca
-entram ligadas por pacote.
+igual ao `code` da rota. Nenhuma das seis entra ligada por pacote: as duas de
+resposta são capacidades críticas, e as outras quatro são de marcação manual
+(aparecem no pacote "Não perder o cliente" para marcar uma a uma, e o
+interruptor do pacote não as liga). Motivo: o agente do atendimento nunca
+monta essas ferramentas, e ligadas por arrasto elas só ocupariam vagas do
+teto de capacidades por agente.
 
 ## 11. O que cada resposta garante
 

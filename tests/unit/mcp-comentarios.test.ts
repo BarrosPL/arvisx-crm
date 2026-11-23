@@ -25,7 +25,12 @@ import { ensureRole, McpAuthError } from "@/lib/mcp/auth";
 import { allTools, getToolByName } from "@/lib/mcp/tools";
 import { catalogEntry, TOOL_CATALOG } from "@/lib/mcp/tools/catalog";
 import { entraPorPacote } from "@/lib/mcp/tools/pacotes";
-import { capacidadesAutomaticasDoPacote, capacidadesCriticasDoPacote } from "@/lib/mcp/tools/selecao-por-pacote";
+import {
+  capacidadesAutomaticasDoPacote,
+  capacidadesCriticasDoPacote,
+  capacidadesManuaisDoPacote,
+  ligarPacote,
+} from "@/lib/mcp/tools/selecao-por-pacote";
 import type { McpContext } from "@/lib/mcp/types";
 
 const LEITURAS = ["crm_list_comments", "crm_get_comment"];
@@ -95,6 +100,29 @@ describe("catálogo e registro", () => {
       for (const nome of CRITICAS) {
         expect(JSON.stringify(automaticas), `${nome} entra ligada pelo pacote ${pacote}`).not.toContain(`"${nome}"`);
         expect(JSON.stringify(criticas), `${nome} não é listada como crítica de ${pacote}`).toContain(nome);
+      }
+    }
+  });
+
+  // Revisão de 20/11, item 2.21: comentário não entra por arrasto do pacote.
+  it("⭐ NENHUMA das seis entra ligada por pacote: ligar qualquer jornada não gasta vaga com comentário", () => {
+    const pacotes = [...new Set(TODAS.flatMap((n) => [...catalogEntry(n)!.pacotes]))];
+    expect(pacotes.length).toBeGreaterThan(0);
+    for (const pacote of pacotes) {
+      const ligadas = ligarPacote([], TOOL_CATALOG, pacote as never);
+      for (const nome of TODAS) expect(ligadas, `${nome} entrou pelo pacote ${pacote}`).not.toContain(nome);
+      expect(capacidadesAutomaticasDoPacote(TOOL_CATALOG, pacote as never).filter((n) => TODAS.includes(n))).toEqual([]);
+    }
+  });
+
+  it("⭐ as quatro não críticas são de marcação manual: o pacote as mostra para marcar uma a uma", () => {
+    const naoCriticas = TODAS.filter((n) => !CRITICAS.includes(n));
+    for (const nome of naoCriticas) {
+      const entrada = catalogEntry(nome)!;
+      expect(entrada.manual, `${nome} sem a marca de marcação manual`).toBe(true);
+      expect(entrada.pacotes.length, `${nome} sumiu de todos os pacotes: a tela não a mostraria`).toBeGreaterThan(0);
+      for (const pacote of entrada.pacotes) {
+        expect(capacidadesManuaisDoPacote(TOOL_CATALOG, pacote)).toContain(nome);
       }
     }
   });

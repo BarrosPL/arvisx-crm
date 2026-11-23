@@ -98,6 +98,12 @@ export interface CapacidadeSelecionavel {
    * capacidade à mão (teste, catálogo de terceiro) não tem como saber disto.
    */
   marcavel?: boolean;
+  /**
+   * `true` = marcação MANUAL: o pacote mostra a capacidade, mas o interruptor
+   * dele não a liga. Só entra marcada uma a uma. Ver `manual` em
+   * `lib/mcp/tools/catalogo/tipos.ts`.
+   */
+  manual?: boolean;
 }
 
 export type EstadoPacote = "ligado" | "parcial" | "desligado";
@@ -109,13 +115,29 @@ function doPacote(
   return catalogo.filter((c) => c.pacotes.includes(pacote) && c.marcavel !== false);
 }
 
-/** As que o toggle do pacote liga sozinho — tudo que não é `critico`. */
+/** As que o toggle do pacote liga sozinho — tudo que não é `critico` nem de marcação manual. */
 export function capacidadesAutomaticasDoPacote(
   catalogo: ReadonlyArray<CapacidadeSelecionavel>,
   pacote: ToolBundle,
 ): string[] {
   return doPacote(catalogo, pacote)
-    .filter((c) => entraPorPacote(c.risco))
+    .filter((c) => entraPorPacote(c.risco) && c.manual !== true)
+    .map((c) => c.name);
+}
+
+/**
+ * As de marcação MANUAL que não são críticas: o pacote as mostra para marcar
+ * uma a uma e não as liga. Ficam fora de `capacidadesCriticasDoPacote` de
+ * propósito — aquela lista é a que RESERVA vaga ao ligar o pacote
+ * (`vagasExigidasPeloPacote`), e capacidade manual não reserva nada: ligar a
+ * jornada não é intenção de ligá-la.
+ */
+export function capacidadesManuaisDoPacote(
+  catalogo: ReadonlyArray<CapacidadeSelecionavel>,
+  pacote: ToolBundle,
+): string[] {
+  return doPacote(catalogo, pacote)
+    .filter((c) => entraPorPacote(c.risco) && c.manual === true)
     .map((c) => c.name);
 }
 

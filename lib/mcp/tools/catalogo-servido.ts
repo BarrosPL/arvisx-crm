@@ -49,6 +49,8 @@ export interface CapacidadeServida {
   marcavel: boolean;
   /** Por que não é marcável, em pt-BR para a tela. `null` quando é marcável. */
   motivo_nao_marcavel: string | null;
+  /** `true` = o pacote mostra, mas não liga sozinho: só marcando uma a uma. */
+  manual: boolean;
 }
 
 export function juntarCatalogoComHandlers(
@@ -78,6 +80,7 @@ export function juntarCatalogoComHandlers(
       pacotes: entrada.pacotes,
       marcavel: !IDS_DO_HARNESS.has(handler.name),
       motivo_nao_marcavel: motivoDoHarness(handler.name),
+      manual: entrada.manual === true,
     };
   });
 }
