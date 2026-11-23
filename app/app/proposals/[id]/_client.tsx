@@ -40,6 +40,17 @@ interface Proposta {
   ultima_falha_envio: string | null;
   /** C1 — modelo CONFIRMADO. Nulo/vazio: a rota de envio recusa com 422. */
   template_slug: string | null;
+  /** Quando a equipe aprovou o rascunho para o agente enviar (9814). */
+  aprovada_em?: string | null;
+  /** A revisão aprovada: a aprovação só vale enquanto for a revisão atual. */
+  aprovada_na_revisao?: number | null;
+}
+
+/** O que `POST /approve` devolve: a proposta e o que aconteceu com o envio. */
+interface RespostaDaAprovacao {
+  proposta: Omit<Proposta, "itens"> | null;
+  envio: { enviada: boolean; em_fila: boolean; motivo: string | null; mensagem: string | null };
+  negocio_movido: boolean;
 }
 
 interface Produto {
@@ -131,8 +142,21 @@ function camposRecusados(details: Record<string, unknown> | undefined): string[]
   return Object.keys(mapa).map(campoRecusado);
 }
 
-export function ProposalEditorClient({ id, podeEditar, podeRevisar = false }: { id: string; podeEditar: boolean; podeRevisar?: boolean }) {
+export function ProposalEditorClient({
+  id,
+  podeEditar,
+  podeRevisar = false,
+  podeAprovarParaOAgente = false,
+}: {
+  id: string;
+  podeEditar: boolean;
+  podeRevisar?: boolean;
+  /** Gestor numa empresa com o agente de Propostas instalado: mostra "Aprovar e deixar o agente enviar". */
+  podeAprovarParaOAgente?: boolean;
+}) {
   const t = useT();
+  // O que aconteceu depois de aprovar, quando o agente não enviou na hora.
+  const [avisoDaAprovacao, setAvisoDaAprovacao] = useState<string | null>(null);
   const [proposta, setProposta] = useState<Proposta | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -231,6 +255,12 @@ export function ProposalEditorClient({ id, podeEditar, podeRevisar = false }: { 
   const itensComDrift = proposta.itens.filter(
     (it) => it.product_id !== null && it.preco_catalogo_atual_cents !== null && it.preco_catalogo_atual_cents !== undefined && it.preco_catalogo_atual_cents !== it.preco_unitario_cents,
   );
+
+  const aprovadaNestaRevisao =
+    Boolean(proposta.aprovada_em) &&
+    proposta.aprovada_na_revisao !== null &&
+    proposta.aprovada_na_revisao !== undefined &&
+    Number(proposta.aprovada_na_revisao) === Number(proposta.revision);
 
   function atualizarItem(idx: number, patch: Partial<ProposalItem>) {
     setProposta((p) =>
@@ -407,6 +437,51 @@ export function ProposalEditorClient({ id, podeEditar, podeRevisar = false }: { 
         e instanceof ApiError && e.status === 409
           ? t("A proposta mudou ou já está sendo enviada. Recarregue e confira antes de enviar.")
           : t("Não foi possível enviar. Confira se você tem papel de gestor."),
+      );
+      showApiError(e);
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  /**
+   * "Aprovar e deixar o agente enviar": a equipe aprova o rascunho e o agente
+   * de Propostas envia na hora. Como o Enviar, grava antes o que está na tela:
+   * a aprovação vale para UMA revisão, e aprovar a versão velha deixaria o
+   * agente enviar o que a pessoa não está vendo.
+   *
+   * Aprovar e o agente não enviar (canal em ensaio, alguém assumiu a conversa)
+   * não é erro: a aprovação fica, e a resposta traz a frase que explica.
+   */
+  async function aprovar() {
+    if (!proposta) return;
+    const sujo = ultimaGravacao.current !== null && ultimaGravacao.current !== assinaturaDoRascunho(proposta);
+    // A revisão que a pessoa está aprovando: a do Salvar que acabou de rodar,
+    // ou a da tela. O servidor recusa (409) se o rascunho já estiver em outra.
+    let revisao = proposta.revision;
+    if (sujo) {
+      revisaoGravada.current = null;
+      const salvou = await salvar();
+      if (!salvou) return;
+      if (revisaoGravada.current !== null) revisao = revisaoGravada.current;
+    }
+    setSalvando(true);
+    setErro(null);
+    setAvisoDaAprovacao(null);
+    try {
+      const aprovacao = await apiClient.post<ApiSuccess<RespostaDaAprovacao>>(
+        `/api/v1/proposals/${id}/approve`,
+        typeof revisao === "number" ? { revision: revisao } : {},
+      );
+      const res = await apiClient.get<ApiSuccess<Proposta>>(`/api/v1/proposals/${id}`);
+      ultimaGravacao.current = assinaturaDoRascunho(res.data);
+      setProposta(res.data);
+      setAvisoDaAprovacao(aprovacao.data.envio.mensagem);
+    } catch (e) {
+      setErro(
+        e instanceof ApiError && e.status === 409
+          ? t("A proposta mudou desde que você abriu. Recarregue antes de aprovar.")
+          : t("Não foi possível aprovar. Confira se você tem papel de gestor."),
       );
       showApiError(e);
     } finally {
@@ -738,11 +813,27 @@ export function ProposalEditorClient({ id, podeEditar, podeRevisar = false }: { 
       {proposta.status === "rascunho" && !proposta.template_slug && (
         <p className="text-sm text-warning-fg">{t("Escolha e confirme o modelo da proposta antes de enviar.")}</p>
       )}
+      {/* A aprovação vale para a revisão aprovada: editar o rascunho a desfaz. */}
+      {proposta.status === "rascunho" && aprovadaNestaRevisao && (
+        <p className="text-sm text-muted-foreground">
+          {t("Aprovada para o agente enviar. Editar a proposta desfaz a aprovação.")}
+        </p>
+      )}
+      {avisoDaAprovacao && (
+        <div role="status" className="rounded-lg border border-warning/40 bg-warning-bg p-3 text-sm text-warning-fg">
+          {avisoDaAprovacao}
+        </div>
+      )}
       {proposta.status === "rascunho" && (
         <div className="flex flex-wrap gap-2">
           <Button onClick={enviar} disabled={salvando || !proposta.template_slug} className="flex-1">
             {t("Enviar ao cliente")}
           </Button>
+          {podeAprovarParaOAgente && (
+            <Button onClick={aprovar} disabled={salvando || !proposta.template_slug} variant="outline" className="flex-1">
+              {t("Aprovar e deixar o agente enviar")}
+            </Button>
+          )}
           <Button onClick={descartar} disabled={salvando} variant="outline">
             {t("Descartar rascunho")}
           </Button>

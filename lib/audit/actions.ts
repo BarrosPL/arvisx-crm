@@ -1494,6 +1494,8 @@ export const AUDIT_ACTIONS = [
   // de cada um (`changes`), para a equipe desfazer. O documento nunca entra em
   // claro, e campo personalizado sai pelo nome. `resource_id` = o contato.
   "contact.updated_by_agent",
+  /** Equipe pronta v2: a equipe aprovou o rascunho para o agente de Propostas enviar. */
+  "proposal.aprovada_para_o_agente",
 ] as const;
 
 /** Um código de auditoria. Derivado de `AUDIT_ACTIONS` — não redigite a lista. */

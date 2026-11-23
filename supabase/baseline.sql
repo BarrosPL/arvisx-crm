@@ -74795,6 +74795,39 @@ comment on column public.crm_tasks.result is
 
 notify pgrst, 'reload schema';
 
+-- ---- uma tarefa de seguimento por negócio ganho (migration 9817) ----
+-- Espelho idempotente da 9817 (o porquê está no cabeçalho da migration): índice
+-- único parcial em `crm_tasks (organization_id, lead_id)` para
+-- `kind = 'dar_seguimento'`. ANTES do índice, as tarefas repetidas que já
+-- existirem perdem o tipo reservado (a mais antiga de cada negócio fica; nada
+-- é apagado): sem isso a criação do índice falharia num banco que já tem a
+-- repetição. Fica DEPOIS do bloco da 9809, que cria a coluna `kind`, e não cria
+-- função (pode ficar depois da VARREDURA anon).
+-- ── 1. o que já estiver repetido deixa de ter o tipo reservado ────────────
+update public.crm_tasks t
+   set kind = 'dar_seguimento_repetida'
+  from (
+    select id,
+           row_number() over (
+             partition by organization_id, lead_id
+             order by created_at asc, id asc
+           ) as ordem
+      from public.crm_tasks
+     where kind = 'dar_seguimento'
+       and lead_id is not null
+  ) r
+ where t.id = r.id
+   and r.ordem > 1;
+
+-- ── 2. o índice ───────────────────────────────────────────────────────────
+create unique index if not exists crm_tasks_seguimento_do_ganho_uidx
+  on public.crm_tasks (organization_id, lead_id)
+  where kind = 'dar_seguimento' and lead_id is not null;
+
+comment on index public.crm_tasks_seguimento_do_ganho_uidx is
+  'Uma tarefa de seguimento do ganho (kind = dar_seguimento) por negócio: o gatilho da Equipe pronta é entregue ao menos uma vez. Migration 9817.';
+
+notify pgrst, 'reload schema';
 -- ---- a nota do negócio: uma por chave de idempotência (migration 9818) ----
 -- Espelho idempotente da 9818 (o porquê está no cabeçalho da migration): índice
 -- único PARCIAL sobre a `Idempotency-Key` que `crm_add_lead_note` grava no

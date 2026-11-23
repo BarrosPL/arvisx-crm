@@ -28,6 +28,7 @@ import {
   lerPerfil,
   type AgenteExaminado,
 } from "./instalar";
+import { gatilhosQueFaltam, type GatilhoQueFalta } from "./gatilhos/fluxos";
 import { renderizarAgente } from "./renderizar";
 import { mapaPelasMarcas, type ChaveDeEtapa } from "./etapas";
 import type { PapelId } from "./tipos";
@@ -86,6 +87,13 @@ export interface EstadoDaEquipe {
   faltam: string[];
   agentes: AgenteNoEstado[];
   atualizacao_disponivel: { papel: PapelId; de: number; para: number; notas: string }[];
+  /**
+   * Os gatilhos que a instalação criaria agora e ainda não existem (equipe
+   * instalada antes deles, ou uma peça que sumiu). Vazio = nada a fazer, e
+   * sempre vazio enquanto a equipe não está instalada. Não entra no checklist:
+   * a falta deles não impede ativar, só pede instalar de novo.
+   */
+  gatilhos_que_faltam: GatilhoQueFalta[];
   checklist: ItemDoChecklist[];
   pode_ativar: boolean;
 }
@@ -312,6 +320,7 @@ export async function lerEstadoDaEquipe(
       etapas_criadas: [],
       tipos_de_agenda_desativados: [],
       agentes: {},
+      gatilhos: { fluxo_de_falta_id: null, fluxo_de_proposta_parada_id: null, regra_de_proposta_parada_id: null },
       roteador_confirmado: null,
       pausa: null,
     };
@@ -376,6 +385,7 @@ export async function lerEstadoDaEquipe(
       atualizacao_disponivel: agentes.flatMap((a) =>
         a.atualizacao_disponivel ? [{ papel: a.papel, ...a.atualizacao_disponivel }] : [],
       ),
+      gatilhos_que_faltam: estado === "instalado" && lido.ok ? gatilhosQueFaltam(lido.perfil, instalacao) : [],
       checklist,
       pode_ativar: estado === "instalado" && checklist.length > 0 && checklist.every((i) => i.ok),
     };

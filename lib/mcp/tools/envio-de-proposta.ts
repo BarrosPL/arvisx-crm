@@ -60,9 +60,7 @@
  */
 import { z } from "zod";
 
-import { CHAVE_DE_CONFIG } from "@/lib/ai/equipe-pronta/constantes";
-import { decidirPreGoLiveDoCanalViaSupabase } from "@/lib/ai/elegibilidade/consulta-pre-go-live";
-import { planoLiberaAEquipeProntaSeLido } from "@/lib/cobranca/equipe-pronta-no-plano";
+import { travasDeFalarComOCliente } from "@/lib/ai/equipe-pronta/gatilhos/travas";
 import { capacidadesDaOrganizacao } from "@/lib/organizacao/capacidades";
 import { dataIsoNoFuso, fusoDaOrganizacao } from "@/lib/propostas/data-no-fuso";
 import { enviarProposta } from "@/lib/propostas/enviar-proposta";
@@ -115,160 +113,27 @@ interface LinhaDaProposta {
   aprovada_na_revisao: number | null;
 }
 
-/** As travas de convivência: `null` = pode falar com este cliente agora. */
+/**
+ * As travas de convivência: `null` = pode falar com este cliente agora.
+ *
+ * A regra mora em `lib/ai/equipe-pronta/gatilhos/travas.ts`, a MESMA que os
+ * gatilhos da equipe usam (a proposta aprovada pela tela, por exemplo): a
+ * ferramenta e o gatilho param nas mesmas condições.
+ */
 async function travaDeFalarComOCliente(
   ctx: McpContext,
   proposta: LinhaDaProposta,
 ): Promise<RecusaParaOAgente | null> {
-  // ── quem envia está pausado, ou fora do plano? ──
-  const agentId = ctx.actor.type === "ai_agent" ? ctx.actor.agent_id : undefined;
-  if (agentId) {
-    const { data: agente, error } = await ctx.supabase
-      .from("ai_agents")
-      // `config` vem na MESMA leitura da pausa: é dela que sai "este agente é
-      // da Equipe pronta?", que decide as travas de pausa da equipe e de plano.
-      // Uma segunda leitura que falhasse em silêncio (`papelDoAgenteDaEquipe`
-      // devolve "não é da equipe" no erro) fazia a ferramenta pular as duas e
-      // falar com o cliente (revisão de 20/11, item 2.2). Aqui, leitura que
-      // falha é recusa.
-      .select("paused_at, archived_at, config")
-      .eq("organization_id", ctx.organizationId)
-      .eq("id", agentId)
-      .maybeSingle();
-    if (error) return CONSULTA_INDISPONIVEL;
-    const a = agente as { paused_at?: string | null; archived_at?: string | null; config?: unknown } | null;
-    if (!a || a.paused_at || a.archived_at) {
-      return recusa("equipe_pausada", "este agente está pausado: nada é enviado ao cliente enquanto a pausa durar.");
-    }
-    // Marcado como da equipe = a chave existe na config, qualquer que seja o
-    // papel escrito nela: marca com papel ilegível ainda é agente da equipe.
-    const daEquipe =
-      a.config !== null && typeof a.config === "object" && CHAVE_DE_CONFIG in (a.config as Record<string, unknown>);
-    if (daEquipe) {
-      const { data: perfil, error: erroDoPerfil } = await ctx.supabase
-        .from("equipe_pronta_perfis")
-        .select("instalacao")
-        .eq("organization_id", ctx.organizationId)
-        .maybeSingle();
-      if (erroDoPerfil) return CONSULTA_INDISPONIVEL;
-      const instalacao = (perfil as { instalacao?: { pausa?: unknown } | null } | null)?.instalacao;
-      if (instalacao?.pausa) {
-        return recusa("equipe_pausada", "a equipe está pausada: nada é enviado ao cliente enquanto a pausa durar.");
-      }
-      // Plano que não pôde ser lido NÃO é plano que libera: falha fechada.
-      const liberado = await planoLiberaAEquipeProntaSeLido(ctx.supabase, ctx.organizationId);
-      if (liberado === null) return CONSULTA_INDISPONIVEL;
-      if (!liberado) {
-        return recusa("fora_do_plano", "o plano desta empresa não inclui a equipe de IA: nada é enviado.");
-      }
-    }
-  }
-
-  if (!proposta.contact_id) {
-    return recusa("sem_canal", "esta proposta não tem contato ligado: não há para quem enviar. Chame uma pessoa da equipe.");
-  }
-
-  // ── o contato: opt-out e atendimento humano ──
-  const { data: contato, error: erroDoContato } = await ctx.supabase
-    .from("contacts")
-    .select("is_blocked, is_personal, force_human, ai_opt_out, phone_number")
-    .eq("organization_id", ctx.organizationId)
-    .eq("id", proposta.contact_id)
-    .maybeSingle();
-  if (erroDoContato) return CONSULTA_INDISPONIVEL;
-  const c = contato as {
-    is_blocked?: boolean;
-    is_personal?: boolean;
-    force_human?: boolean;
-    ai_opt_out?: boolean;
-    phone_number?: string | null;
-  } | null;
-  if (!c) return recusa("sem_canal", "o contato desta proposta não existe mais. Chame uma pessoa da equipe.");
-  if (c.is_personal === true) return NEGOCIO_DE_CONTATO_PESSOAL;
-  if (c.is_blocked === true) {
-    return recusa(
-      "contato_pediu_para_parar",
-      "esta pessoa pediu para não receber mensagens: nada é enviado a ela. Não insista.",
-    );
-  }
-  if (c.force_human === true || c.ai_opt_out === true) {
-    return recusa("humano_assumiu", "o atendimento desta pessoa é feito pela equipe: quem envia a proposta é uma pessoa.");
-  }
-
-  // ── a conversa por onde a proposta sai: a mesma escolha de `enviarProposta` ──
-  const colunas = "id, channel_session_id, bot_silenced_until";
-  const { data: conversa, error: erroDaConversa } = proposta.conversation_id
-    ? await ctx.supabase
-        .from("conversations")
-        .select(colunas)
-        .eq("organization_id", ctx.organizationId)
-        .eq("id", proposta.conversation_id)
-        .eq("contact_id", proposta.contact_id)
-        .maybeSingle()
-    : await ctx.supabase
-        .from("conversations")
-        .select(colunas)
-        .eq("organization_id", ctx.organizationId)
-        .eq("contact_id", proposta.contact_id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-  if (erroDaConversa) return CONSULTA_INDISPONIVEL;
-  const conv = conversa as { id: string; channel_session_id: string; bot_silenced_until: string | null } | null;
-  if (!conv) {
-    return recusa("sem_canal", "não há conversa com este contato por onde enviar a proposta. Chame uma pessoa da equipe.");
-  }
-
-  // Uma pessoa assumiu (ou respondeu há pouco) em QUALQUER conversa do contato:
-  // a mesma leitura de `isLeadInHandoff`, do motor.
-  const { data: silenciadas, error: erroDoSilencio } = await ctx.supabase
-    .from("conversations")
-    .select("bot_silenced_until")
-    .eq("organization_id", ctx.organizationId)
-    .eq("contact_id", proposta.contact_id);
-  if (erroDoSilencio) return CONSULTA_INDISPONIVEL;
-  const agora = Date.now();
-  const assumida = ((silenciadas ?? []) as Array<{ bot_silenced_until: string | null }>).some(
-    (s) => s.bot_silenced_until === "infinity" || (s.bot_silenced_until !== null && new Date(s.bot_silenced_until).getTime() > agora),
-  );
-  if (assumida) {
-    return recusa(
-      "humano_assumiu",
-      "uma pessoa da equipe assumiu esta conversa: você não envia por cima dela. Deixe a proposta para ela enviar.",
-    );
-  }
-
-  // ── o canal: conectado, e fora do ensaio para este número ──
-  const { data: canal, error: erroDoCanal } = await ctx.supabase
-    .from("channel_sessions")
-    .select("status, archived_at")
-    .eq("organization_id", ctx.organizationId)
-    .eq("id", conv.channel_session_id)
-    .maybeSingle();
-  if (erroDoCanal) return CONSULTA_INDISPONIVEL;
-  const sessao = canal as { status?: string; archived_at?: string | null } | null;
-  if (!sessao || sessao.archived_at || sessao.status !== "WORKING") {
-    return recusa(
-      "sem_canal",
-      "o canal desta conversa não está conectado: a proposta não tem por onde sair. Chame uma pessoa da equipe.",
-    );
-  }
-  try {
-    const acesso = await decidirPreGoLiveDoCanalViaSupabase(ctx.supabase, {
-      organizationId: ctx.organizationId,
-      channelSessionId: conv.channel_session_id,
-      contactPhoneNumber: c.phone_number ?? "",
-    });
-    if (!acesso.permite) {
-      return recusa(
-        "modo_ensaio",
-        "o canal está em ensaio e este número não é um dos números de teste: nada é enviado a ele.",
-      );
-    }
-  } catch {
-    return CONSULTA_INDISPONIVEL;
-  }
-  return null;
+  const resultado = await travasDeFalarComOCliente(ctx.supabase, {
+    organizationId: ctx.organizationId,
+    agentId: ctx.actor.type === "ai_agent" ? (ctx.actor.agent_id ?? null) : null,
+    contactId: proposta.contact_id,
+    conversationId: proposta.conversation_id,
+  });
+  if (resultado.trava === null) return null;
+  if (resultado.trava.codigo === "consulta_indisponivel") return CONSULTA_INDISPONIVEL;
+  if (resultado.trava.codigo === "contato_pessoal") return NEGOCIO_DE_CONTATO_PESSOAL;
+  return recusa(resultado.trava.codigo, resultado.trava.mensagem);
 }
 
 const inputShape = {

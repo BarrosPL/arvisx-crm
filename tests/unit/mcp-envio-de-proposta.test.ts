@@ -28,6 +28,8 @@ vi.mock("@/lib/organizacao/capacidades", async (original) => ({
 }));
 vi.mock("@/lib/cobranca/equipe-pronta-no-plano", () => ({
   planoLiberaAEquipeProntaSeLido: vi.fn(async () => h.planoLibera),
+  // `travaDaEquipe` (ações internas) segue na falha de leitura; a ferramenta não passa por ela.
+  planoLiberaAEquipePronta: vi.fn(async () => h.planoLibera !== false),
 }));
 vi.mock("@/lib/propostas/enviar-proposta", () => ({ enviarProposta: h.enviar }));
 vi.mock("@/lib/mcp/audit", () => ({ auditMcpToolCall: vi.fn().mockResolvedValue(undefined) }));

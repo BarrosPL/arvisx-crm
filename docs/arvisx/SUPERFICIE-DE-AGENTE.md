@@ -272,6 +272,9 @@ o botão do pacote não a liga.
   equipe aprovou. A regra completa, as recusas e as travas estão em
   [`EQUIPE-PRONTA.md`](EQUIPE-PRONTA.md#envio-de-proposta).
 - Empresa sem perfil de Equipe pronta segue o padrão: sem aprovação, não envia.
+- A aprovação é dada na tela da proposta, pelo botão "Aprovar e deixar o agente enviar"
+  (`POST /api/v1/proposals/[id]/approve`, papel `manager`). Com a Equipe pronta instalada, o agente de Propostas
+  envia na mesma chamada; sem ela, a proposta fica aprovada para um agente com esta ferramenta enviar.
 - **Alcance.** Num turno de atendimento, só a proposta do cliente da conversa (outra recebe `fora_da_conversa`). Fora
   de um atendimento (agente externo por token, rotina sem conversa) o alcance é o de toda ferramenta do MCP: qualquer
   proposta da organização. É de propósito, e por isso tem um limite a mais: **fora de um atendimento só sai a proposta

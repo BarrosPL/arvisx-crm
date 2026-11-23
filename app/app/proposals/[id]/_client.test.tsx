@@ -413,3 +413,86 @@ describe("ProposalEditorClient — Enviar envia o que está NA TELA", () => {
     expect(post).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * Equipe pronta v2 — "Aprovar e deixar o agente enviar".
+ *
+ * O botão só existe para quem pode aprovar (gestor, numa empresa com o agente
+ * de Propostas instalado) e só no rascunho. Ele chama a rota de aprovação, e a
+ * tela mostra a frase que a rota devolve quando o agente não enviou.
+ */
+describe("ProposalEditorClient — aprovar e deixar o agente enviar", () => {
+  const RASCUNHO = { ...PROPOSTA_BASE, status: "rascunho", ultima_falha_envio: null, template_slug: "site_institucional" };
+  const BOTAO = "Aprovar e deixar o agente enviar";
+
+  beforeEach(() => {
+    vi.mocked(apiClient.post).mockReset();
+  });
+
+  it("não aparece para quem não pode aprovar (o padrão)", async () => {
+    responderProposta({ data: RASCUNHO });
+    render(<ProposalEditorClient id="p1" podeEditar={true} podeRevisar={true} />);
+    await screen.findByText("Enviar ao cliente");
+    expect(screen.queryByText(BOTAO)).not.toBeInTheDocument();
+  });
+
+  it("aparece no rascunho, ao lado de Enviar ao cliente, para quem pode aprovar", async () => {
+    responderProposta({ data: RASCUNHO });
+    render(<ProposalEditorClient id="p1" podeEditar={true} podeRevisar={true} podeAprovarParaOAgente={true} />);
+    expect(await screen.findByRole("button", { name: BOTAO })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Enviar ao cliente" })).toBeInTheDocument();
+  });
+
+  it("não aparece em proposta que já saiu", async () => {
+    responderProposta({ data: { ...RASCUNHO, status: "enviada" } });
+    render(<ProposalEditorClient id="p1" podeEditar={true} podeRevisar={true} podeAprovarParaOAgente={true} />);
+    await screen.findByText("Marcar como aceita");
+    expect(screen.queryByText(BOTAO)).not.toBeInTheDocument();
+  });
+
+  it("fica desligado sem modelo confirmado, como o Enviar", async () => {
+    responderProposta({ data: { ...RASCUNHO, template_slug: null } });
+    render(<ProposalEditorClient id="p1" podeEditar={true} podeRevisar={true} podeAprovarParaOAgente={true} />);
+    expect(await screen.findByRole("button", { name: BOTAO })).toBeDisabled();
+  });
+
+  it("o clique chama a rota de aprovação e mostra por que o agente não enviou", async () => {
+    responderProposta({ data: RASCUNHO });
+    vi.mocked(apiClient.post).mockResolvedValue({
+      data: {
+        proposta: null,
+        envio: { enviada: false, em_fila: false, motivo: "modo_ensaio", mensagem: "Aprovada. O agente não enviou porque o WhatsApp está em ensaio." },
+        negocio_movido: false,
+      },
+    });
+    render(<ProposalEditorClient id="p1" podeEditar={true} podeRevisar={true} podeAprovarParaOAgente={true} />);
+    fireEvent.click(await screen.findByRole("button", { name: BOTAO }));
+    // A tela manda a revisão que está mostrando: o servidor não aprova outra.
+    await waitFor(() => expect(apiClient.post).toHaveBeenCalledWith("/api/v1/proposals/p1/approve", { revision: 1 }));
+    expect(await screen.findByRole("status")).toHaveTextContent("O agente não enviou porque o WhatsApp está em ensaio.");
+  });
+
+  it("quando o agente envia, não sobra aviso nenhum", async () => {
+    responderProposta({ data: RASCUNHO });
+    vi.mocked(apiClient.post).mockResolvedValue({
+      data: { proposta: null, envio: { enviada: true, em_fila: false, motivo: null, mensagem: null }, negocio_movido: true },
+    });
+    render(<ProposalEditorClient id="p1" podeEditar={true} podeRevisar={true} podeAprovarParaOAgente={true} />);
+    fireEvent.click(await screen.findByRole("button", { name: BOTAO }));
+    await waitFor(() => expect(apiClient.post).toHaveBeenCalled());
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("mostra que o rascunho está aprovado enquanto a revisão aprovada for a atual", async () => {
+    responderProposta({ data: { ...RASCUNHO, revision: 4, aprovada_em: "2026-11-20T10:00:00Z", aprovada_na_revisao: 4 } });
+    render(<ProposalEditorClient id="p1" podeEditar={true} podeRevisar={true} podeAprovarParaOAgente={true} />);
+    expect(await screen.findByText(/Aprovada para o agente enviar/)).toBeInTheDocument();
+  });
+
+  it("aprovação de uma revisão anterior não é mostrada como válida", async () => {
+    responderProposta({ data: { ...RASCUNHO, revision: 5, aprovada_em: "2026-11-20T10:00:00Z", aprovada_na_revisao: 4 } });
+    render(<ProposalEditorClient id="p1" podeEditar={true} podeRevisar={true} podeAprovarParaOAgente={true} />);
+    await screen.findByText("Enviar ao cliente");
+    expect(screen.queryByText(/Aprovada para o agente enviar/)).not.toBeInTheDocument();
+  });
+});

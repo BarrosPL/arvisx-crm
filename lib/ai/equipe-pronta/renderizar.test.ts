@@ -281,7 +281,17 @@ describe("o hash dos campos e a detecção de edição à mão", () => {
       pipeline_ids: [],
       knowledge_source_ids: [],
       proposal_ai_draft_enabled: true,
+      cases_enabled: false,
     });
+  });
+
+  it("⭐ o campo novo (casos) só entra no hash quando LIGADO: a instalação anterior não vira 'editada à mão'", () => {
+    // O hash guardado por uma instalação anterior não conhecia o campo. Com ele
+    // desligado, o hash de hoje tem de ser o MESMO de antes.
+    const semOCampo = { ...gerado } as Record<string, unknown>;
+    delete semOCampo.cases_enabled;
+    expect(hashDosCampos({ ...gerado, cases_enabled: false })).toBe(hashDosCampos(semOCampo));
+    expect(hashDosCampos({ ...gerado, cases_enabled: true })).not.toBe(hashDosCampos(semOCampo));
   });
 
   const A = "a".repeat(64);
@@ -320,5 +330,39 @@ describe("o hash dos campos e a detecção de edição à mão", () => {
     expect(situacaoDoAgente({ publicado: mexido, gerado: instalado, instalado })).toBe(
       "editado_a_mao",
     );
+  });
+});
+
+describe("gatilhos: o que o renderizador liga em cada agente", () => {
+  const FALTA = "77777777-7777-4777-8777-777777777771";
+  const PROPOSTA_PARADA = "77777777-7777-4777-8777-777777777772";
+  const comGatilhos: ContextoDaInstalacao = { ...CTX_CLINICA, fluxosDeGatilho: [FALTA, PROPOSTA_PARADA] };
+
+  it("só a Recuperação arma os fluxos dos gatilhos, junto com a régua", () => {
+    for (const papel of PAPEIS) {
+      const { followup } = renderizarAgente(papel, CLINICA, comGatilhos);
+      if (papel.id === "recuperador") {
+        expect(followup).toEqual({
+          enabled: true,
+          flow_pointer_ids: [CTX_CLINICA.reguaDeFollowupId, FALTA, PROPOSTA_PARADA],
+        });
+      } else {
+        expect(followup, papel.id).toEqual({ enabled: false, flow_pointer_ids: [] });
+      }
+    }
+  });
+
+  it("sem fluxo de gatilho, a Recuperação leva só a régua, como antes", () => {
+    const recuperador = PAPEIS.find((p) => p.id === "recuperador")!;
+    expect(renderizarAgente(recuperador, CLINICA, CTX_CLINICA).followup).toEqual({
+      enabled: true,
+      flow_pointer_ids: [CTX_CLINICA.reguaDeFollowupId],
+    });
+  });
+
+  it("só Propostas abre caso para a equipe (o pedido de desconto)", () => {
+    for (const papel of PAPEIS) {
+      expect(renderizarAgente(papel, CLINICA, CTX_CLINICA).cases_enabled, papel.id).toBe(papel.id === "proposta");
+    }
   });
 });

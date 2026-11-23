@@ -153,6 +153,7 @@ import {
 } from "@/lib/agenda/lembrete-por-modelo";
 import { atualizarAvisoDeRemetente } from "@/lib/agenda/aviso-de-remetente";
 import { moldeDoDegrau } from "@/lib/agenda/lembretes";
+import { entregarRespostaDoLembreteAoAgendamento } from "@/lib/ai/equipe-pronta/gatilhos/lembrete";
 import { autorizaCron } from "@/lib/auth/cron-auth";
 import { recursoOcioso } from "@/lib/cron/piso-ocioso";
 import {
@@ -568,6 +569,7 @@ const PASSOS_DEPOIS_DO_PORTAO = [
   "const linhas",
   "let enviados",
   "let enviadosPorModelo",
+  "let entreguesAoAgendamento",
   "let pulados",
   "const motivos",
   "const pular",
@@ -645,6 +647,7 @@ async function handle(req: NextRequest): Promise<Response> {
   const linhas = (data ?? []) as unknown as CompromissoAVencer[];
   let enviados = 0;
   let enviadosPorModelo = 0;
+  let entreguesAoAgendamento = 0;
   let pulados = 0;
   const motivos: Record<string, number> = {};
   const pular = (motivo: string) => {
@@ -874,6 +877,15 @@ async function handle(req: NextRequest): Promise<Response> {
       );
       enviados += 1;
       if (modelo) enviadosPorModelo += 1;
+      // Equipe de IA pronta: a resposta a este lembrete vai para o agente de
+      // Agendamento, que confirma ou remarca. Só fixa o agente da conversa; não
+      // envia nada e nunca lança (`lib/ai/equipe-pronta/gatilhos/lembrete.ts`).
+      const entrega = await entregarRespostaDoLembreteAoAgendamento(admin, {
+        organizationId: org,
+        conversationId: conversaId,
+        contactId: contato.id,
+      });
+      if (entrega.fixado) entreguesAoAgendamento += 1;
     } catch (err) {
       // A org parou entre a leitura da rodada e o envio: não é erro, é a
       // suspensão (a porta de saída lança OrgNaoOperanteError). Nesta corrida o
@@ -901,7 +913,13 @@ async function handle(req: NextRequest): Promise<Response> {
       action: "agenda.lembrete_enviado",
       resourceType: "calendar_appointment",
       requestId,
-      metadata: { enviados, por_modelo: enviadosPorModelo, pulados, motivos },
+      metadata: {
+        enviados,
+        por_modelo: enviadosPorModelo,
+        pulados,
+        motivos,
+        ...(entreguesAoAgendamento > 0 ? { entregues_ao_agendamento: entreguesAoAgendamento } : {}),
+      },
     });
   }
 

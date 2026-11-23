@@ -2422,6 +2422,27 @@ export const DICIONARIO: Traducoes = {
   "Idioma do atendimento": { es: "Idioma de la atención" },
   "Instalar a equipe": { es: "Instalar el equipo" },
   "Instalar de novo com estas respostas": { es: "Instalar de nuevo con estas respuestas" },
+  "Os gatilhos da equipe ainda não foram instalados": {
+    es: "Los disparadores del equipo aún no fueron instalados",
+  },
+  "Esta instalação é anterior aos gatilhos: a equipe responde quem escreve, mas ainda não age sozinha nos casos abaixo. Instale de novo para criá-los.": {
+    es: "Esta instalación es anterior a los disparadores: el equipo responde a quien escribe, pero aún no actúa por su cuenta en los casos de abajo. Instala de nuevo para crearlos.",
+  },
+  "Retomar quem faltou a um compromisso e oferecer um novo horário": {
+    es: "Retomar a quien faltó a una cita y ofrecer un nuevo horario",
+  },
+  "Retomar a proposta que ficou sem resposta": {
+    es: "Retomar la propuesta que quedó sin respuesta",
+  },
+  "A regra de automação que inicia a retomada da proposta sem resposta": {
+    es: "La regla de automatización que inicia el seguimiento de la propuesta sin respuesta",
+  },
+  "Instalar de novo substitui o que foi editado fora da equipe pronta: a régua de silêncio e os fluxos da equipe voltam ao que as suas respostas geram, sem perguntar. Agente alterado à mão e roteador do canal pedem confirmação antes de serem substituídos.": {
+    es: "Instalar de nuevo reemplaza lo que se editó fuera del equipo listo: la secuencia de silencio y los flujos del equipo vuelven a lo que generan tus respuestas, sin preguntar. Un agente modificado a mano y el enrutador del canal piden confirmación antes de ser reemplazados.",
+  },
+  "Instalar de novo para criar os gatilhos": {
+    es: "Instalar de nuevo para crear los disparadores",
+  },
   "Jeito de falar": { es: "Forma de hablar" },
   "Manter como está": { es: "Dejar como está" },
   "Marcar um horário": { es: "Agendar un horario" },
@@ -20301,7 +20322,35 @@ export const DICIONARIO: Traducoes = {
   "Comparar os planos": { es: "Comparar los planes" },
   "{n} dias de teste. Se gostar, a assinatura é {preco} por {periodo}.": { es: "{n} días de prueba. Si te gusta, la suscripción es {preco} por {periodo}." },
   "Criar conta e testar o {plano}": { es: "Crear cuenta y probar {plano}" },
-  "Você testa por {n} dias. No fim, se gostar, faz a sua assinatura.": { es: "Pruebas durante {n} días. Al final, si te gusta, haces tu suscripción." },
+  "Você testa por {n} dias. No fim, se gostar, faz a sua assinatura.": { es: "Pruebas durante {n} días. Al final, si te gusta, haces tu suscripción." },  // Equipe pronta v2, gatilhos: aprovar a proposta para o agente enviar, o limite de retomadas e a tarefa do ganho.
+  "Aprovar e deixar o agente enviar": { es: "Aprobar y dejar que el agente envíe" },
+  "Aprovada para o agente enviar. Editar a proposta desfaz a aprovação.": { es: "Aprobada para que el agente la envíe. Editar la propuesta deshace la aprobación." },
+  "Não foi possível aprovar. Confira se você tem papel de gestor.": { es: "No se pudo aprobar. Comprueba que tienes rol de gestor." },
+  "Não foi possível aprovar a proposta agora.": { es: "No se pudo aprobar la propuesta ahora." },
+  "Só uma proposta em rascunho pode ser aprovada.": { es: "Solo se puede aprobar una propuesta en borrador." },
+  "A proposta mudou desde que você abriu. Recarregue antes de aprovar.": { es: "La propuesta cambió desde que la abriste. Recarga antes de aprobar." },
+  "Item sem preço definido: {itens}.": { es: "Ítem sin precio definido: {itens}." },
+  "Aprovada. Não há agente de propostas instalado para enviar: use o botão Enviar ao cliente.": { es: "Aprobada. No hay un agente de propuestas instalado para enviarla: usa el botón Enviar al cliente." },
+  "Aprovada, mas a validade desta proposta já terminou. Ajuste a validade e aprove de novo.": { es: "Aprobada, pero la validez de esta propuesta ya terminó. Ajusta la validez y aprueba de nuevo." },
+  "Aprovada. O agente não enviou porque a equipe de IA está pausada.": { es: "Aprobada. El agente no la envió porque el equipo de IA está en pausa." },
+  "Aprovada. O agente não enviou porque o plano desta empresa não inclui a equipe de IA.": { es: "Aprobada. El agente no la envió porque el plan de esta empresa no incluye el equipo de IA." },
+  "Aprovada. O agente não enviou porque este contato pediu para não receber mensagens.": { es: "Aprobada. El agente no la envió porque este contacto pidió no recibir mensajes." },
+  "Aprovada. O agente não enviou porque este contato é pessoal.": { es: "Aprobada. El agente no la envió porque este contacto es personal." },
+  "Aprovada. O agente não enviou porque uma pessoa da equipe assumiu esta conversa. Use o botão Enviar ao cliente.": { es: "Aprobada. El agente no la envió porque una persona del equipo asumió esta conversación. Usa el botón Enviar al cliente." },
+  "Aprovada. O agente não enviou porque o WhatsApp está em ensaio e este número não é um número de teste.": { es: "Aprobada. El agente no la envió porque WhatsApp está en ensayo y este número no es un número de prueba." },
+  "Aprovada. O agente não enviou porque não há conversa ou WhatsApp conectado por onde enviar.": { es: "Aprobada. El agente no la envió porque no hay conversación o WhatsApp conectado por donde enviarla." },
+  "Aprovada. O agente não enviou agora porque está fora do horário de envio. Aprove de novo mais tarde.": { es: "Aprobada. El agente no la envió ahora porque está fuera del horario de envío. Aprueba de nuevo más tarde." },
+  "Aprovada. O agente não enviou porque o limite diário de mensagens desta conexão foi atingido.": { es: "Aprobada. El agente no la envió porque se alcanzó el límite diario de mensajes de esta conexión." },
+  "Aprovada. O agente não conseguiu enviar agora. Aprove de novo em instantes.": { es: "Aprobada. El agente no pudo enviarla ahora. Aprueba de nuevo en unos instantes." },
+  "Aprovada, mas o envio falhou e a proposta continua em rascunho. Aprove de novo em instantes.": { es: "Aprobada, pero el envío falló y la propuesta sigue en borrador. Aprueba de nuevo en unos instantes." },
+  "Aprovada, mas a proposta mudou ou já está sendo enviada: nada saiu por esta aprovação. Recarregue e confira; se ela foi editada, aprove de novo.": {
+    es: "Aprobada, pero la propuesta cambió o ya se está enviando: no salió nada por esta aprobación. Recarga y revisa; si fue editada, aprueba de nuevo.",
+  },
+  "Aprovada, mas a proposta ainda não está pronta para sair.": { es: "Aprobada, pero la propuesta todavía no está lista para salir." },
+  "Encerrado sem enviar: o limite de retomadas deste contato já foi usado": { es: "Finalizado sin enviar: el límite de reintentos de este contacto ya se usó" },
+  "a equipe de IA já tinha retomado este contato depois da última mensagem dele": { es: "el equipo de IA ya había retomado a este contacto después de su último mensaje" },
+  "Dar seguimento ao negócio ganho": { es: "Dar seguimiento al negocio ganado" },
+  "Este negócio foi marcado como ganho. Confira o que foi combinado com o cliente e dê seguimento.": { es: "Este negocio se marcó como ganado. Revisa lo acordado con el cliente y dale seguimiento." },
 };
 
 /**
