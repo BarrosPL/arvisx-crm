@@ -285,7 +285,7 @@ Todas as rotas respondem no envelope padrão (`{ data, meta? }` ou
 | Rota | O que faz |
 |---|---|
 | `GET /api/v1/social-comments` | Lista, do mais recente. Filtros: `canal` (id da conexão), `estado`, `desde` (ISO-8601 com fuso), `midia` (id da publicação), `limite` (até 100), `cursor`. `meta.cursor` e `meta.has_more` paginam. |
-| `GET /api/v1/social-comments/:id` | Um comentário, com o texto inteiro, as respostas, o estado e `private_reply_deadline`. |
+| `GET /api/v1/social-comments/:id` | Um comentário, com o texto inteiro, as respostas, o estado, `private_reply_deadline` e `modo_do_canal` (o modo atual da conexão que o recebeu: `off`, `registrar` ou `real`; `null` se a conexão foi removida). |
 | `POST .../:id/reply` `{ text }` | Responde em público. |
 | `POST .../:id/private-reply` `{ text, criar_contato? }` | Responde em privado (mensagem direta a quem comentou). |
 | `POST .../:id/hide` | Oculta o comentário na rede. |
@@ -518,8 +518,17 @@ Onde fica: `/app/inbox/comentarios`. **Não tem item de menu.** Chega-se por:
   a Meta;
 - o botão **Ver comentários** do cartão do Instagram.
 
-Quem pode usar: gerente e administrador — o mesmo papel das rotas (seção 9).
-Como a tela mora dentro do Inbox, ela acompanha o plano do Inbox.
+Quem pode usar: gerente e administrador **da empresa** — o mesmo papel das
+rotas (seção 9). Como a tela mora dentro do Inbox, ela acompanha o plano do
+Inbox.
+
+Decisão (revisão de 20/11/2026, item 2.25): quem administra a **plataforma**
+sem ter papel de gerente na empresa **não vê** a tela nem o atalho. As rotas
+exigem o papel na empresa e recusariam tudo com 403; mostrar a tela seria
+oferecer botões que só falham, e o comentário é dado da empresa. A porta é
+uma só: o papel na empresa. Se o papel mudar com a tela aberta, ela mostra
+"Você não tem permissão para ver os comentários desta empresa" em vez do erro
+cru.
 
 O que mostra, do mais recente: a conexão, quem comentou, o texto inteiro, a
 publicação (tipo e id), o anúncio quando há, o estado e as duas respostas.
@@ -527,7 +536,7 @@ Filtros: conexão, estado e "só desta publicação".
 
 | Na tela | O que quer dizer |
 |---|---|
-| selo **Simulada** | a conexão estava em Registrando: a resposta ficou anotada e nada foi publicado |
+| selo **Simulada** | a conexão estava em Registrando: a resposta ficou anotada e nada foi publicado. Se a conexão já está em Ativo, a tela avisa que dá para responder de verdade e volta a oferecer o botão; a resposta publicada substitui a simulada |
 | selo **Publicada** | a rede confirmou a resposta |
 | selo **Incerta** | a rede não confirmou; a resposta pode ter saído. A tela não repete sozinha: só com "Conferi, enviar de novo", que avisa do risco de duplicar |
 | **Oculto (simulado)** | a ocultação foi só anotada (modo Registrando) |
@@ -538,6 +547,18 @@ chamam as rotas da seção 10; a tela não tem regra própria. Quando o servidor
 recusa, a tela mostra a frase dele, em português ou em espanhol conforme o
 idioma da pessoa (um sistema externo, por token, recebe em português e decide
 pelo `code`). "Responder em privado" fica desligado depois dos 7 dias.
+
+"Responder" e "Responder em privado" ficam desligados quando o comentário já
+tem aquela resposta — menos quando ela é **simulada** e a conexão está em
+**Ativo** (`modo_do_canal: "real"`): aí o comentário ainda não foi respondido
+de verdade, e o botão volta. O diálogo avisa que a resposta enviada será
+publicada e fica no lugar da simulada.
+
+Cada botão leva o autor do comentário no nome lido por leitor de tela
+("Responder — @usuario"). O campo da resposta aceita até 10.000 caracteres, o
+mesmo teto da rota. Enquanto uma ação está sendo enviada, um segundo clique
+não manda a mesma ação de novo (responder, ocultar, ignorar e a confirmação
+do modo Ativo no cartão da conexão).
 
 **Limite conhecido:** a tela não abre a publicação no Instagram. A notificação
 da Meta traz só o id da publicação, e o endereço dela (`permalink`) não é

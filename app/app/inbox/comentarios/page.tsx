@@ -23,6 +23,13 @@ export const metadata: Metadata = { title: "Comentários" };
  * Gerente para cima — o mesmo papel que as rotas `/api/v1/social-comments`
  * exigem (`app/api/v1/social-comments/_borda.ts`). Quem recusa de verdade é a
  * rota; o redirecionamento daqui só evita uma tela que só devolveria 403.
+ *
+ * Quem administra a PLATAFORMA sem ter papel de gerente nesta empresa NÃO vê a
+ * tela (decisão da revisão de 20/11/2026, item 2.25): as rotas exigem o papel
+ * na empresa e recusariam tudo com 403. O comentário é texto de gente de fora,
+ * dado da empresa; a porta é a mesma para todos, o papel na empresa. Se o
+ * papel mudar com a tela aberta, ela mostra "sem permissão" em vez do 403 cru
+ * (`ComentariosClient`).
  */
 export default async function ComentariosPage({
   searchParams,
@@ -31,9 +38,7 @@ export default async function ComentariosPage({
 }) {
   const user = await requireAuth();
   const activeOrg = await resolveActiveOrg(user);
-  const podeVer =
-    !!activeOrg &&
-    ((user.is_platform_admin && !user.support) || ROLE_RANK[activeOrg.role] >= ROLE_RANK.manager);
+  const podeVer = !!activeOrg && ROLE_RANK[activeOrg.role] >= ROLE_RANK.manager;
   if (!podeVer) redirect("/app/inbox");
   const idioma = user.idioma;
   const pedido = (await searchParams).canal;

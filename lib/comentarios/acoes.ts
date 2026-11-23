@@ -135,11 +135,55 @@ interface Linha {
  */
 export type { Comentario };
 
-function apresentar(l: Linha): Comentario {
+/**
+ * O modo de comentários de cada conexão pedida (id → modo). Conexão removida
+ * ou arquivada não entra no mapa, e falha de leitura devolve o mapa vazio: o
+ * modo é informação para quem lê, e não pode derrubar a leitura do comentário.
+ */
+async function modosDosCanais(
+  db: SupabaseClient,
+  org: string,
+  canais: readonly string[],
+): Promise<Map<string, ModoDeComentarios>> {
+  const modos = new Map<string, ModoDeComentarios>();
+  const ids = [...new Set(canais)];
+  if (ids.length === 0) return modos;
+  try {
+    const { data, error } = await db
+      .from("channel_sessions")
+      .select("id, metadata")
+      .eq("organization_id", org)
+      .in("id", ids)
+      .is("archived_at", null);
+    if (error) throw new Error(error.message);
+    for (const c of (data ?? []) as { id: string; metadata: Record<string, unknown> | null }[]) {
+      modos.set(c.id, lerModoDeComentarios(c.metadata));
+    }
+  } catch (erro) {
+    logger.warn("[comentarios] não deu para ler o modo das conexões dos comentários", {
+      organization_id: org,
+      erro: erro instanceof Error ? erro.message : String(erro),
+    });
+  }
+  return modos;
+}
+
+/** A linha como a API a devolve, com o modo atual da conexão dela. */
+async function apresentarUm(db: SupabaseClient, l: Linha): Promise<Comentario> {
+  return apresentar(l, await modosDosCanais(db, l.organization_id, [l.channel_session_id]));
+}
+
+/** Relê o comentário e o devolve como a API o mostra. */
+async function devolver(db: SupabaseClient, org: string, id: string, quem: Pick<QuemAge, "requestId">): Promise<Comentario> {
+  return apresentarUm(db, await carregar(db, org, id, quem));
+}
+
+function apresentar(l: Linha, modos: ReadonlyMap<string, ModoDeComentarios>): Comentario {
   return {
     id: l.id,
     comment_id: l.comment_id,
     channel_session_id: l.channel_session_id,
+    modo_do_canal: modos.get(l.channel_session_id) ?? null,
     parent_comment_id: l.parent_comment_id,
     media_id: l.media_id,
     media_product_type: l.media_product_type,
@@ -244,8 +288,10 @@ export async function listarComentarios(
   const pagina = linhas.slice(0, limite);
   const ultima = pagina[pagina.length - 1];
   const temMais = linhas.length > limite;
+  // Uma leitura só para a página inteira: o modo é por conexão, não por comentário.
+  const modos = await modosDosCanais(db, org, pagina.map((l) => l.channel_session_id));
   return {
-    comentarios: pagina.map(apresentar),
+    comentarios: pagina.map((l) => apresentar(l, modos)),
     cursor: temMais && ultima ? codificarCursor({ quando: new Date(ultima.commented_at).toISOString(), id: ultima.id }) : null,
     tem_mais: temMais,
   };
@@ -272,7 +318,7 @@ export async function lerComentario(
   id: string,
   quem: Pick<QuemAge, "requestId">,
 ): Promise<Comentario> {
-  return apresentar(await carregar(db, org, id, quem));
+  return devolver(db, org, id, quem);
 }
 
 // ─── o que as respostas têm em comum ────────────────────────────────────────
@@ -470,7 +516,7 @@ export async function responderEmPublico(
     const resposta = simuladaOuConcluida(base, true, null);
     semConcorrente(await reservar(db, linha, { public_reply: resposta, estado: "respondido" }, "public_reply", condicao));
     await auditar(quem, org, "social_comment.respondido", linha, { simulada: true });
-    return { comment: apresentar(await carregar(db, org, id, quem)), simulada: true };
+    return { comment: await devolver(db, org, id, quem), simulada: true };
   }
 
   const reserva: RespostaPublica = { ...base, id: null, simulada: false, situacao: "enviando" };
@@ -494,7 +540,7 @@ export async function responderEmPublico(
     reply_id: r.id,
     ...(substituida ? { substituiu_simulada: { quando: substituida.quando } } : {}),
   });
-  return { comment: apresentar(await carregar(db, org, id, quem)), simulada: false };
+  return { comment: await devolver(db, org, id, quem), simulada: false };
 }
 
 /**
@@ -648,7 +694,7 @@ export async function responderEmPrivado(
       criar_contato: entrada.criar_contato === true,
     });
     return {
-      comment: apresentar(await carregar(db, org, id, quem)),
+      comment: await devolver(db, org, id, quem),
       simulada: true,
       contact_id: linha.contact_id,
       conversation_id: null,
@@ -728,7 +774,7 @@ export async function responderEmPrivado(
     ...(substituida ? { substituiu_simulada: { quando: substituida.quando } } : {}),
   });
   return {
-    comment: apresentar(await carregar(db, org, id, quem)),
+    comment: await devolver(db, org, id, quem),
     simulada: false,
     contact_id: conversa?.contactId ?? linha.contact_id,
     conversation_id: conversa?.conversationId ?? null,
@@ -747,7 +793,7 @@ export async function ocultarComentario(
 ): Promise<ResultadoDaResposta & { ja_estava_oculto: boolean }> {
   const linha = await carregar(db, org, id, quem);
   const existente = lerOcultacao(linha.hidden);
-  if (existente) return { comment: apresentar(linha), simulada: existente.simulada, ja_estava_oculto: true };
+  if (existente) return { comment: await apresentarUm(db, linha), simulada: existente.simulada, ja_estava_oculto: true };
   const { sessao, modo } = await canalAtivo(db, linha, quem);
   if (linha.ao_vivo) {
     throw recusa(quem, 422, "comentario_ao_vivo", "A rede não oculta comentário de transmissão ao vivo.");
@@ -764,7 +810,7 @@ export async function ocultarComentario(
   const ocultacao: Ocultacao = { quando: new Date().toISOString(), quem: autorDe(quem), simulada };
   await gravar(db, linha, { hidden: ocultacao });
   await auditar(quem, org, "social_comment.ocultado", linha, { simulada });
-  return { comment: apresentar(await carregar(db, org, id, quem)), simulada, ja_estava_oculto: false };
+  return { comment: await devolver(db, org, id, quem), simulada, ja_estava_oculto: false };
 }
 
 // ─── ignorar ────────────────────────────────────────────────────────────────
@@ -786,11 +832,11 @@ export async function ignorarComentario(
   }
   const motivo = entrada.motivo?.trim() || null;
   if (linha.estado === "sem_acao" && (motivo === null || motivo === linha.ignore_reason)) {
-    return { comment: apresentar(linha) };
+    return { comment: await apresentarUm(db, linha) };
   }
   await gravar(db, linha, { estado: "sem_acao", ignore_reason: motivo ?? linha.ignore_reason });
   await auditar(quem, org, "social_comment.ignorado", linha, { motivo });
-  return { comment: apresentar(await carregar(db, org, id, quem)) };
+  return { comment: await devolver(db, org, id, quem) };
 }
 
 // ─── criar contato (e negócio) ──────────────────────────────────────────────
@@ -945,7 +991,7 @@ export async function criarContatoDoComentario(
     lead_ja_existia: lead?.ja_existia ?? null,
   });
   return {
-    comment: apresentar(await carregar(db, org, id, quem)),
+    comment: await devolver(db, org, id, quem),
     contact_id: contactId,
     contato_ja_existia: jaExistia,
     lead,

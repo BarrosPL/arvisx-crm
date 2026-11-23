@@ -48,6 +48,22 @@ it.each(["agent", "viewer"])("%s não vê o atalho: a tela é de gerente para ci
   expect(container).toBeEmptyDOMElement();
 });
 
+// Revisão de 20/11, item 2.25: as rotas exigem papel de gerente NA EMPRESA, e
+// administrar a plataforma não o dá. O atalho levaria a uma tela que só recusa.
+it.each(["agent", "viewer"])("quem administra a plataforma com papel %s na empresa não vê o atalho", (papel) => {
+  h.plataforma = true;
+  h.papel = papel;
+  const { container } = render(<AtalhoDosComentarios />);
+  expect(container).toBeEmptyDOMElement();
+});
+
+it("quem administra a plataforma E é gerente da empresa vê o atalho, pelo papel na empresa", () => {
+  h.plataforma = true;
+  h.papel = "manager";
+  render(<AtalhoDosComentarios />);
+  expect(screen.getByRole("link", { name: "Comentários do Instagram" })).toBeInTheDocument();
+});
+
 it("sem conexão direta com a Meta, não desenha nada", () => {
   h.sessoes = [POR_QR];
   const { container } = render(<AtalhoDosComentarios />);

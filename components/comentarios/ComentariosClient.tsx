@@ -16,6 +16,11 @@
  *               conferir na rede e confirmar (`confirmar_reenvio`);
  *   - ENVIANDO  outra chamada está publicando agora.
  *
+ * Resposta SIMULADA não trava a resposta de verdade: quando a conexão já está
+ * em modo real (`modo_do_canal`), o comentário que só tem resposta simulada
+ * volta a oferecer Responder, e a tela avisa que a simulada será substituída.
+ * Em modo de registro a simulada continua valendo, como no servidor.
+ *
  * A recusa do servidor é mostrada com a frase que ele mandou (já no idioma da
  * pessoa); a tela não adivinha o motivo.
  */
@@ -68,6 +73,33 @@ const SELO_DO_ESTADO: Record<Estado, "default" | "success" | "neutral"> = {
 
 const ROTA = "/api/v1/social-comments";
 const POR_PAGINA = 30;
+/**
+ * O teto do texto de uma resposta: o mesmo `TETO_DE_TRANSPORTE_DO_TEXTO` de
+ * `lib/comentarios/schemas.ts` (a tela não importa valor de módulo do
+ * servidor; um teste confere que os dois números são iguais). Acima disso a
+ * rota recusaria com "Dados inválidos".
+ */
+export const TETO_DO_TEXTO_DA_RESPOSTA = 10_000;
+
+/**
+ * A resposta gravada é uma SIMULADA que a resposta real pode substituir agora?
+ * Só quando ela é de modo de registro (nada saiu) e a conexão está hoje em
+ * modo real — a mesma regra de `lib/comentarios/acoes.ts`.
+ */
+function simuladaSubstituivel(resposta: Resposta | null, comentario: Comentario): boolean {
+  return (
+    resposta !== null &&
+    resposta.simulada &&
+    resposta.situacao === "concluida" &&
+    comentario.modo_do_canal === "real"
+  );
+}
+
+/** O servidor recusou por papel: a pessoa não é gerente desta empresa. */
+function semPermissao(e: unknown): boolean {
+  const erro = e as { status?: unknown; code?: unknown } | null;
+  return erro?.status === 403 || erro?.code === "forbidden" || erro?.code === "insufficient_role";
+}
 
 interface Pagina {
   data: Comentario[];
@@ -106,12 +138,15 @@ function BlocoDaResposta({
   quando,
   onReenviar,
   ocupado,
+  substituivel,
 }: {
   titulo: string;
   resposta: Resposta;
   quando: string;
   onReenviar: () => void;
   ocupado: boolean;
+  /** A simulada pode ser substituída por uma resposta de verdade agora. */
+  substituivel: boolean;
 }) {
   const t = useT();
   return (
@@ -125,6 +160,11 @@ function BlocoDaResposta({
       {resposta.simulada && resposta.situacao === "concluida" && (
         <p className="text-xs text-muted-foreground">
           {t("Resposta simulada: a conexão estava em modo de registro, então nada foi publicado.")}
+        </p>
+      )}
+      {substituivel && (
+        <p className="text-xs text-muted-foreground" data-testid="simulada-substituivel">
+          {t("A conexão agora publica de verdade: você pode responder a este comentário, e a resposta publicada substitui a simulada.")}
         </p>
       )}
       {resposta.situacao === "incerta" && (
@@ -199,6 +239,8 @@ export function ComentariosClient({ canalInicial = null }: { canalInicial?: stri
   }
 
   async function enviarResposta() {
+    // Duplo clique (ou Enter repetido) não manda duas respostas.
+    if (ocupado) return;
     if (!respondendo || !texto.trim()) return;
     const { comentario, acao, reenvio } = respondendo;
     setOcupado(true);
@@ -235,6 +277,7 @@ export function ComentariosClient({ canalInicial = null }: { canalInicial?: stri
   }
 
   async function ocultar() {
+    if (ocupado) return;
     if (!ocultando) return;
     setOcupado(true);
     try {
@@ -252,6 +295,7 @@ export function ComentariosClient({ canalInicial = null }: { canalInicial?: stri
   }
 
   async function ignorar() {
+    if (ocupado) return;
     if (!ignorando) return;
     setOcupado(true);
     setErroDaAcao(null);
@@ -310,11 +354,19 @@ export function ComentariosClient({ canalInicial = null }: { canalInicial?: stri
         </Button>
       </Card>
 
-      {lista.isError && (
-        <p role="alert" className="rounded-md border border-destructive p-3 text-sm text-destructive">
-          {lista.error instanceof Error ? lista.error.message : t("Não foi possível carregar os comentários.")}
-        </p>
-      )}
+      {lista.isError &&
+        (semPermissao(lista.error) ? (
+          // Quem não é gerente desta empresa (inclusive quem administra a
+          // plataforma sem papel na empresa) vê o motivo, não um 403 cru.
+          <Card className="p-6 text-sm text-muted-foreground" role="status" data-testid="comentarios-sem-permissao">
+            <p className="font-medium text-foreground">{t("Você não tem permissão para ver os comentários desta empresa.")}</p>
+            <p>{t("Esta tela é de gerentes e administradores da empresa. Peça a quem administra a empresa para ajustar o seu papel.")}</p>
+          </Card>
+        ) : (
+          <p role="alert" className="rounded-md border border-destructive p-3 text-sm text-destructive">
+            {lista.error instanceof Error ? lista.error.message : t("Não foi possível carregar os comentários.")}
+          </p>
+        ))}
       {lista.isLoading && <p role="status">{t("Carregando…")}</p>}
       {!lista.isLoading && !lista.isError && comentarios.length === 0 && (
         <Card className="p-6 text-sm text-muted-foreground" data-testid="comentarios-vazio">
@@ -329,6 +381,11 @@ export function ComentariosClient({ canalInicial = null }: { canalInicial?: stri
         {comentarios.map((c) => {
           const prazoVencido = Date.parse(c.private_reply_deadline) < lidoEm;
           const oculto = c.hidden !== null;
+          // Os botões se repetem em cada cartão: o nome acessível diz de quem
+          // é o comentário, para quem navega por leitor de tela.
+          const autor = c.author.username ? `@${c.author.username}` : t("Autor não informado");
+          const publicaSubstituivel = simuladaSubstituivel(c.public_reply, c);
+          const privadaSubstituivel = simuladaSubstituivel(c.private_reply, c);
           return (
             <Card key={c.id} className="flex flex-col gap-3 p-4" data-testid="comentario">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -377,6 +434,7 @@ export function ComentariosClient({ canalInicial = null }: { canalInicial?: stri
                   resposta={c.public_reply}
                   quando={data(c.public_reply.quando)}
                   ocupado={ocupado}
+                  substituivel={publicaSubstituivel}
                   onReenviar={() => abrirResposta(c, "publica", true)}
                 />
               )}
@@ -386,6 +444,7 @@ export function ComentariosClient({ canalInicial = null }: { canalInicial?: stri
                   resposta={c.private_reply}
                   quando={data(c.private_reply.quando)}
                   ocupado={ocupado}
+                  substituivel={privadaSubstituivel && !prazoVencido}
                   onReenviar={() => abrirResposta(c, "privada", true)}
                 />
               )}
@@ -396,21 +455,36 @@ export function ComentariosClient({ canalInicial = null }: { canalInicial?: stri
               )}
 
               <div className="flex flex-wrap gap-2">
-                <Button disabled={ocupado || c.public_reply !== null} onClick={() => abrirResposta(c, "publica")}>
+                <Button
+                  data-testid="responder-em-publico"
+                  aria-label={`${t("Responder")} — ${autor}`}
+                  disabled={ocupado || (c.public_reply !== null && !publicaSubstituivel)}
+                  onClick={() => abrirResposta(c, "publica")}
+                >
                   {t("Responder")}
                 </Button>
                 <Button
                   variant="outline"
-                  disabled={ocupado || c.private_reply !== null || prazoVencido}
+                  data-testid="responder-em-privado"
+                  aria-label={`${t("Responder em privado")} — ${autor}`}
+                  disabled={ocupado || (c.private_reply !== null && !privadaSubstituivel) || prazoVencido}
                   onClick={() => abrirResposta(c, "privada")}
                 >
                   {t("Responder em privado")}
                 </Button>
-                <Button variant="outline" disabled={ocupado || oculto} onClick={() => setOcultando(c)}>
+                <Button
+                  variant="outline"
+                  data-testid="ocultar-comentario"
+                  aria-label={`${t("Ocultar")} — ${autor}`}
+                  disabled={ocupado || oculto}
+                  onClick={() => setOcultando(c)}
+                >
                   {t("Ocultar")}
                 </Button>
                 <Button
                   variant="outline"
+                  data-testid="ignorar-comentario"
+                  aria-label={`${t("Ignorar")} — ${autor}`}
                   disabled={ocupado || c.estado === "respondido" || c.estado === "sem_acao"}
                   onClick={() => {
                     setMotivo("");
@@ -456,6 +530,16 @@ export function ComentariosClient({ canalInicial = null }: { canalInicial?: stri
               )}
             </DialogDescription>
           </DialogHeader>
+          {respondendo &&
+            !respondendo.reenvio &&
+            simuladaSubstituivel(
+              respondendo.acao === "publica" ? respondendo.comentario.public_reply : respondendo.comentario.private_reply,
+              respondendo.comentario,
+            ) && (
+              <p role="status" className="rounded-md border p-3 text-sm text-muted-foreground" data-testid="aviso-substitui-simulada">
+                {t("Este comentário tem uma resposta simulada, que não foi publicada. A resposta que você enviar agora será publicada de verdade e fica no lugar dela.")}
+              </p>
+            )}
           {respondendo?.reenvio && (
             <p role="status" className="rounded-md border border-warning/40 bg-warning-bg p-3 text-sm text-text-muted">
               {t("Você está enviando de novo uma resposta que pode já ter sido publicada. Se ela saiu, a pessoa verá duas.")}
@@ -466,7 +550,13 @@ export function ComentariosClient({ canalInicial = null }: { canalInicial?: stri
           </p>
           <div className="space-y-2">
             <Label htmlFor="texto-da-resposta">{t("Sua resposta")}</Label>
-            <Textarea id="texto-da-resposta" rows={4} value={texto} onChange={(e) => setTexto(e.target.value)} />
+            <Textarea
+              id="texto-da-resposta"
+              rows={4}
+              maxLength={TETO_DO_TEXTO_DA_RESPOSTA}
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+            />
           </div>
           {respondendo?.acao === "privada" && (
             <label className="flex items-start gap-2 text-sm">
@@ -518,7 +608,7 @@ export function ComentariosClient({ canalInicial = null }: { canalInicial?: stri
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!ocultando} onOpenChange={(aberto) => !aberto && setOcultando(null)}>
+      <AlertDialog open={!!ocultando} onOpenChange={(aberto) => !aberto && !ocupado && setOcultando(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Ocultar este comentário?")}</AlertDialogTitle>
@@ -527,8 +617,8 @@ export function ComentariosClient({ canalInicial = null }: { canalInicial?: stri
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("Cancelar")}</AlertDialogCancel>
-            <AlertDialogAction onClick={() => void ocultar()} data-testid="confirmar-ocultar">
+            <AlertDialogCancel disabled={ocupado}>{t("Cancelar")}</AlertDialogCancel>
+            <AlertDialogAction disabled={ocupado} onClick={() => void ocultar()} data-testid="confirmar-ocultar">
               {t("Ocultar")}
             </AlertDialogAction>
           </AlertDialogFooter>

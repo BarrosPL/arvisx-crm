@@ -3,8 +3,10 @@
 /**
  * O atalho do Inbox para a tela de Comentários do Instagram.
  *
- * Só aparece para quem pode usar a tela (gerente e administrador) e só quando
- * a empresa tem a conexão direta com a Meta — a única que recebe comentários.
+ * Só aparece para quem pode usar a tela (gerente e administrador DA EMPRESA) e
+ * só quando a empresa tem a conexão direta com a Meta — a única que recebe
+ * comentários. Quem administra a plataforma sem papel de gerente na empresa
+ * não vê o atalho: as rotas recusariam tudo (mesma régua da página).
  * Para todo o resto ele não desenha NADA: a coluna da lista fica exatamente
  * como era, sem linha a mais.
  *
@@ -23,9 +25,9 @@ import { ChatCircle } from "@/lib/ui/icons";
 
 export function AtalhoDosComentarios() {
   const t = useT();
-  const { user, activeOrg } = useAuth();
+  const { activeOrg } = useAuth();
   const { data: sessoes } = useChannelSessions();
-  const podeVer = (user.is_platform_admin && !user.support) || roleAtLeast(activeOrg?.role, "manager");
+  const podeVer = roleAtLeast(activeOrg?.role, "manager");
   const temConexaoDireta = (sessoes ?? []).some((s) => s.provider === CHANNEL_PROVIDER_SOCIAL_DIRETO);
   if (!podeVer || !temConexaoDireta) return null;
 

@@ -179,7 +179,7 @@ test.describe("comentários do Instagram", () => {
     await expect(primeiro).toContainText(NOME);
 
     // Resposta pública: a tela diz que foi simulada, e o banco concorda.
-    await primeiro.getByRole("button", { name: "Responder", exact: true }).click();
+    await primeiro.getByTestId("responder-em-publico").click();
     await page.getByLabel("Sua resposta").fill("Te respondo no privado!");
     await page.getByTestId("enviar-resposta").click();
     await expect(primeiro.getByTestId("selo-simulada")).toBeVisible();
@@ -190,7 +190,7 @@ test.describe("comentários do Instagram", () => {
       .toMatchObject({ simulada: true, situacao: "concluida", texto: "Te respondo no privado!" });
 
     // Resposta privada, no mesmo comentário: também simulada.
-    await primeiro.getByRole("button", { name: "Responder em privado" }).click();
+    await primeiro.getByTestId("responder-em-privado").click();
     await page.getByLabel("Sua resposta").fill("Oi! O valor é sob consulta.");
     await page.getByTestId("enviar-resposta").click();
     await expect(primeiro.getByTestId("selo-simulada")).toHaveCount(2);
@@ -198,18 +198,18 @@ test.describe("comentários do Instagram", () => {
       .poll(async () => (await linha(comentarios[TEXTO_1]!)).private_reply)
       .toMatchObject({ simulada: true, situacao: "concluida" });
     // Uma resposta de cada tipo: a tela não oferece a segunda.
-    await expect(primeiro.getByRole("button", { name: "Responder", exact: true })).toBeDisabled();
-    await expect(primeiro.getByRole("button", { name: "Responder em privado" })).toBeDisabled();
+    await expect(primeiro.getByTestId("responder-em-publico")).toBeDisabled();
+    await expect(primeiro.getByTestId("responder-em-privado")).toBeDisabled();
 
     // Ocultar, com confirmação: anotado como simulado.
-    await primeiro.getByRole("button", { name: "Ocultar" }).click();
+    await primeiro.getByTestId("ocultar-comentario").click();
     await page.getByTestId("confirmar-ocultar").click();
     await expect(primeiro).toContainText("Oculto (simulado)");
     await expect.poll(async () => (await linha(comentarios[TEXTO_1]!)).hidden).toMatchObject({ simulada: true });
 
     // Ignorar o segundo, com o motivo.
     const segundo = cartao(page, TEXTO_2);
-    await segundo.getByRole("button", { name: "Ignorar" }).click();
+    await segundo.getByTestId("ignorar-comentario").click();
     await page.getByLabel("Motivo (opcional)").fill("elogio");
     await page.getByTestId("confirmar-ignorar").click();
     await expect(segundo.getByTestId("estado-do-comentario")).toHaveText("Sem ação");
@@ -251,7 +251,7 @@ test.describe("comentários do Instagram", () => {
     await conexao.getByRole("link", { name: "Ver comentários" }).click();
     await expect(page).toHaveURL(new RegExp(`/app/inbox/comentarios\\?canal=${canal}`));
     const terceiro = cartao(page, TEXTO_3);
-    await terceiro.getByRole("button", { name: "Responder", exact: true }).click();
+    await terceiro.getByTestId("responder-em-publico").click();
     await page.getByLabel("Sua resposta").fill("Temos sim!");
     await page.getByTestId("enviar-resposta").click();
     await expect(page.getByRole("alert")).toContainText("estão desligados");
@@ -269,7 +269,7 @@ test.describe("comentários do Instagram", () => {
     await loginAdmin(page);
     await page.goto(`/app/inbox/comentarios?canal=${canal}`);
     const terceiro = cartao(page, TEXTO_3);
-    await terceiro.getByRole("button", { name: "Responder", exact: true }).click();
+    await terceiro.getByTestId("responder-em-publico").click();
     await page.getByLabel("Sua resposta").fill("Temos sim!");
     await page.getByTestId("enviar-resposta").click();
 
@@ -287,7 +287,7 @@ test.describe("comentários do Instagram", () => {
     await expect(terceiro.getByTestId("selo-incerta")).toBeVisible();
     await expect(terceiro).toContainText("pode ter sido publicada ou não");
     // O botão comum fica desligado; o único caminho é o reenvio confirmado.
-    await expect(terceiro.getByRole("button", { name: "Responder", exact: true })).toBeDisabled();
+    await expect(terceiro.getByTestId("responder-em-publico")).toBeDisabled();
     await expect(terceiro.getByTestId("reenviar-incerta")).toBeVisible();
     await page.screenshot({ path: path.join(EVIDENCE, "03-resposta-incerta.png"), fullPage: true });
 

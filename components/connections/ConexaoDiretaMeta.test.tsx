@@ -243,6 +243,22 @@ it("mudar para Registrando grava direto; para Ativo pede confirmação antes", a
   );
 });
 
+// Revisão de 20/11, item 2.25: a confirmação do modo real não tinha guarda.
+it("dois cliques na confirmação do modo real mandam UMA troca", async () => {
+  h.get.mockResolvedValue(conexoes({ ...IG, comentarios: comentarios("registrar", true) }));
+  let soltar: (v: unknown) => void = () => undefined;
+  h.post.mockReturnValue(new Promise((resolve) => (soltar = resolve)));
+  montar();
+  fireEvent.change(await screen.findByTestId("modo-dos-comentarios"), { target: { value: "real" } });
+  const confirmar = await screen.findByTestId("confirmar-modo-real");
+  fireEvent.click(confirmar);
+  fireEvent.click(confirmar);
+  await vi.waitFor(() => expect(h.post).toHaveBeenCalledTimes(1));
+  soltar({ data: { modo: "real", alterado: true } });
+  await vi.waitFor(() => expect(screen.getByTestId("modo-dos-comentarios")).toBeEnabled());
+  expect(h.post).toHaveBeenCalledTimes(1);
+});
+
 it("a recusa do servidor ao mudar o modo aparece com a frase dele", async () => {
   h.get.mockResolvedValue(conexoes({ ...IG, comentarios: comentarios("off", true) }));
   h.post.mockRejectedValue(new Error("Permissão insuficiente."));

@@ -8,7 +8,11 @@
  */
 import { z } from "zod";
 
-import { ESTADOS_DO_COMENTARIO, type EstadoDoComentario } from "@/lib/channels/meta-social/comentarios";
+import {
+  ESTADOS_DO_COMENTARIO,
+  type EstadoDoComentario,
+  type ModoDeComentarios,
+} from "@/lib/channels/meta-social/comentarios";
 
 /** Quem respondeu, ocultou ou ignorou: pessoa, agente ou integração. */
 export const autorDaAcaoSchema = z.object({
@@ -84,6 +88,14 @@ export interface Comentario {
   /** O id do comentário na rede. */
   comment_id: string;
   channel_session_id: string;
+  /**
+   * O modo ATUAL de comentários da conexão que recebeu este comentário (`off`,
+   * `registrar` ou `real`). `null` quando a conexão foi removida ou não deu
+   * para ler. É o que diz se uma resposta simulada ainda vale como a resposta
+   * do comentário (`registrar`) ou se ele já pode ser respondido de verdade
+   * (`real`).
+   */
+  modo_do_canal: ModoDeComentarios | null;
   parent_comment_id: string | null;
   media_id: string | null;
   media_product_type: string | null;

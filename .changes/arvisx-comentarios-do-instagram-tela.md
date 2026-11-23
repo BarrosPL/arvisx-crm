@@ -25,7 +25,12 @@ Responder, Responder em privado, Ocultar e Ignorar.
 A tela diz com clareza o que aconteceu com cada resposta: "Simulada" quando a
 conexão estava em Registrando e nada foi publicado; "Incerta" quando a rede não
 confirmou e a resposta pode ter saído. Uma resposta incerta nunca é repetida
-sozinha: só depois de a pessoa conferir no Instagram e confirmar.
+sozinha: só depois de a pessoa conferir no Instagram e confirmar. Um
+comentário que só tem resposta simulada volta a oferecer Responder quando a
+conexão passa para Ativo, e a resposta publicada fica no lugar da simulada.
+
+A tela é de gerentes e administradores da empresa. Quem administra a
+instalação sem ter esse papel na empresa não vê a tela nem o atalho.
 
 As recusas dessas ações agora chegam em espanhol para quem usa o produto em
 espanhol. Para sistemas externos nada muda: o código da recusa é o mesmo.

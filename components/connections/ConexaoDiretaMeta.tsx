@@ -249,6 +249,8 @@ export function ConexaoDiretaMeta({ emHomologacao = false }: { emHomologacao?: b
   }
 
   async function mudarModo(conexao: Conexao, modo: ModoDeComentarios) {
+    // Duplo clique na confirmação não manda a troca duas vezes.
+    if (ocupado) return;
     setOcupado(conexao.id);
     setErro(null);
     try {
@@ -594,6 +596,7 @@ export function ConexaoDiretaMeta({ emHomologacao = false }: { emHomologacao?: b
             <AlertDialogCancel>{t("Cancelar")}</AlertDialogCancel>
             <AlertDialogAction
               data-testid="confirmar-modo-real"
+              disabled={!!ocupado}
               onClick={() => ligandoDeVerdade && void mudarModo(ligandoDeVerdade, "real")}
             >
               {t("Ativar")}
