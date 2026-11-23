@@ -27,6 +27,16 @@
  * Ordem das escritas: a nota vem primeiro porque é a única que pode ser
  * recusada (orçamento do índice). Recusada, nada mudou e o agente segue dono
  * da conversa.
+ *
+ * As duas escritas valem JUNTAS (revisão de 20/11, item 2.11). O colega é
+ * conferido ANTES de qualquer gravação; depois, a nota e a troca do agente da
+ * conversa rodam na mesma transação (`cfg.emTransacao`, que o turno passa). Sem
+ * isso, um erro na segunda escrita deixava o resumo dizendo "Passagem para X"
+ * numa conversa que continuava com quem passou — e o resumo anterior já apagado.
+ *
+ * E a passagem pode ser DESFEITA (`desfazerPassagem`): se o colega deixar de
+ * atender entre a passagem e a resposta dele, o turno devolve a conversa a quem
+ * passou, que responde ao cliente na mesma rodada. Ver `continuarComOColega`.
  */
 import { z } from 'zod';
 
@@ -196,6 +206,12 @@ export async function applyPassarParaColega(
     /** A versão publicada do colega; `null` = sem versão publicada. */
     carregarColega: (agentId: string) => Promise<PublishedAgentConfig | null>;
     agora?: () => Date;
+    /**
+     * Roda as duas escritas (a nota e o agente da conversa) numa transação: ou
+     * as duas ficam, ou nenhuma. Ausente = as escritas rodam direto em `db`
+     * (os testes de unidade, que não têm transação para abrir).
+     */
+    emTransacao?: <T>(escrever: (tx: Queryable) => Promise<T>) => Promise<T>;
   },
   rawInput: unknown,
 ): Promise<ResultadoDaPassagem> {
@@ -231,48 +247,56 @@ export async function applyPassarParaColega(
     );
   }
 
-  // 1. O "Resumo do atendimento": uma nota só, de título fixo. A anterior de
-  //    mesmo título sai na mesma escrita (`supersedes`).
-  const indice = await getLeadNotesIndex(db, ids.tenantId, ids.leadId);
-  const anteriores = indice
-    .filter((n) => chaveDoPapel(n.headline) === chaveDoPapel(TITULO_DO_RESUMO_DO_ATENDIMENTO))
-    .map((n) => n.id);
-  const nota = await applySaveLeadNote(
-    db,
-    { tenantId: ids.tenantId, leadId: ids.leadId },
-    { budgetTokens: cfg.budgetTokens },
-    {
-      headline: TITULO_DO_RESUMO_DO_ATENDIMENTO,
-      body: `${resumo}\n\nPassagem para "${colega.intentName}": ${motivo}`,
-      ...(anteriores.length > 0 ? { supersedes: anteriores } : {}),
-    },
-  );
-  if (!nota.ok) {
-    return ensinar(
-      nota.error.code === 'index_budget_exceeded' ? 'index_budget_exceeded' : 'invalid_payload',
-      `a passagem NÃO foi feita porque o resumo não pôde ser gravado: ${nota.error.message}`,
+  // Tudo o que podia recusar a passagem por causa do COLEGA já foi conferido
+  // acima, antes de qualquer gravação. Daqui em diante, as duas escritas valem
+  // juntas: erro em qualquer uma desfaz a outra (e propaga).
+  const emTransacao = cfg.emTransacao ?? (<T>(escrever: (tx: Queryable) => Promise<T>) => escrever(db));
+  const recusada = await emTransacao(async (tx): Promise<ResultadoDaPassagem | null> => {
+    // 1. O "Resumo do atendimento": uma nota só, de título fixo. A anterior de
+    //    mesmo título sai na mesma escrita (`supersedes`).
+    const indice = await getLeadNotesIndex(tx, ids.tenantId, ids.leadId);
+    const anteriores = indice
+      .filter((n) => chaveDoPapel(n.headline) === chaveDoPapel(TITULO_DO_RESUMO_DO_ATENDIMENTO))
+      .map((n) => n.id);
+    const nota = await applySaveLeadNote(
+      tx,
+      { tenantId: ids.tenantId, leadId: ids.leadId },
+      { budgetTokens: cfg.budgetTokens },
+      {
+        headline: TITULO_DO_RESUMO_DO_ATENDIMENTO,
+        body: `${resumo}\n\nPassagem para "${colega.intentName}": ${motivo}`,
+        ...(anteriores.length > 0 ? { supersedes: anteriores } : {}),
+      },
     );
-  }
+    if (!nota.ok) {
+      return ensinar(
+        nota.error.code === 'index_budget_exceeded' ? 'index_budget_exceeded' : 'invalid_payload',
+        `a passagem NÃO foi feita porque o resumo não pôde ser gravado: ${nota.error.message}`,
+      );
+    }
 
-  // 2. O próximo agente da conversa. A aderência é a que o roteador já lê; a
-  //    origem vai no jsonb para ele reconhecer "o assunto de antes da passagem".
-  const gravada: PassagemGravada = {
-    para_agente: colega.agentId,
-    para_intencao: colega.intentName,
-    de_agente: ids.agentId,
-    de_intencao: ids.intentName,
-    motivo,
-    em: (cfg.agora?.() ?? new Date()).toISOString(),
-  };
-  await db.query(
-    `update conversations
-        set active_ai_agent_id = $3,
-            active_intent = $4,
-            active_agent_set_at = now(),
-            metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object($5::text, $6::jsonb)
-      where organization_id = $1 and id = $2`,
-    [ids.tenantId, ids.conversationId, colega.agentId, colega.intentName, CHAVE_DA_PASSAGEM, JSON.stringify(gravada)],
-  );
+    // 2. O próximo agente da conversa. A aderência é a que o roteador já lê; a
+    //    origem vai no jsonb para ele reconhecer "o assunto de antes da passagem".
+    const gravada: PassagemGravada = {
+      para_agente: colega.agentId,
+      para_intencao: colega.intentName,
+      de_agente: ids.agentId,
+      de_intencao: ids.intentName,
+      motivo,
+      em: (cfg.agora?.() ?? new Date()).toISOString(),
+    };
+    await tx.query(
+      `update conversations
+          set active_ai_agent_id = $3,
+              active_intent = $4,
+              active_agent_set_at = now(),
+              metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object($5::text, $6::jsonb)
+        where organization_id = $1 and id = $2`,
+      [ids.tenantId, ids.conversationId, colega.agentId, colega.intentName, CHAVE_DA_PASSAGEM, JSON.stringify(gravada)],
+    );
+    return null;
+  });
+  if (recusada !== null) return recusada;
 
   return {
     ok: true,
@@ -313,6 +337,49 @@ export function blocoDaPassagemRecebida(passagem: Pick<PassagemAceita, 'motivo' 
       'atendimento parou. Não se apresente de novo e não repita pergunta que já foi respondida.',
     `Motivo da passagem: ${passagem.motivo}`,
     `Resumo do atendimento até aqui: ${passagem.resumo}`,
+  ].join('\n');
+}
+
+/**
+ * DESFAZ a passagem: a conversa volta para quem passou a vez.
+ *
+ * Só desfaz se a conversa AINDA estiver com o colega (a condição vai no
+ * UPDATE): se o roteador, uma pessoa ou outro turno já mudou o agente nesse
+ * meio-tempo, não há o que devolver e nada é escrito. O "Resumo do atendimento"
+ * fica: ele é a ficha do contato, e continua verdadeiro para quem atender.
+ *
+ * Devolve se a conversa voltou.
+ */
+export async function desfazerPassagem(
+  db: Queryable,
+  ids: { tenantId: string; conversationId: string },
+  passagem: Pick<PassagemAceita, 'paraAgente' | 'deAgente' | 'deIntencao'>,
+): Promise<boolean> {
+  const { rowCount } = await db.query(
+    `update conversations
+        set active_ai_agent_id = $3,
+            active_intent = $4,
+            active_agent_set_at = now(),
+            metadata = coalesce(metadata, '{}'::jsonb) - $5::text
+      where organization_id = $1 and id = $2 and active_ai_agent_id = $6`,
+    [ids.tenantId, ids.conversationId, passagem.deAgente, passagem.deIntencao, CHAVE_DA_PASSAGEM, passagem.paraAgente],
+  );
+  return (rowCount ?? 0) > 0;
+}
+
+/**
+ * O bloco que QUEM PASSOU lê quando a passagem é desfeita, na mesma rodada.
+ * Texto para o MODELO, nunca para o cliente.
+ */
+export function blocoDaPassagemDesfeita(passagem: Pick<PassagemAceita, 'paraIntencao' | 'motivo'>): string {
+  return [
+    '## A passagem para o colega não aconteceu',
+    `Você passou a vez para o colega do papel "${passagem.paraIntencao}" (motivo: ${passagem.motivo}), mas ele ` +
+      'deixou de atender antes de responder. A conversa voltou para você, e o cliente ainda NÃO recebeu ' +
+      'resposta nesta rodada.',
+    'Responda agora à última mensagem dele com o que você souber, sem mencionar a troca. Não tente passar a ' +
+      'vez de novo nesta rodada. Se você não puder resolver o que ele precisa, chame a equipe ' +
+      '(request_human_handoff) em vez de deixá-lo sem resposta.',
   ].join('\n');
 }
 

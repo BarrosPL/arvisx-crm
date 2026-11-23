@@ -84,6 +84,42 @@ const TAREFA_NAO_ENCONTRADA = recusa(
   "não existe tarefa com esse id nesta organização. Liste as tarefas para conferir o id.",
 );
 
+const TAREFA_CANCELADA = recusa(
+  "tarefa_cancelada",
+  "esta tarefa foi cancelada — concluí-la registraria um trabalho que ninguém fez. Se o " +
+    "trabalho voltou a existir, crie uma tarefa nova.",
+);
+
+const NEGOCIO_E_CONTATO_DIVERGEM = recusa(
+  "negocio_de_outro_contato",
+  "o `lead_id` e o `contact_id` informados não são da mesma pessoa: o negócio pertence a outro " +
+    "contato. Envie só o `lead_id` (a tarefa herda o contato dele) ou corrija um dos dois.",
+);
+
+/**
+ * Num turno de atendimento, a tarefa tem de ser do cliente atendido: pelo
+ * contato dela, ou por um negócio dele. A ponte do turno já confere isso antes
+ * de chamar (`ESCOPO_DAS_ESCRITAS`, dono `tarefa`); aqui é a segunda trava, no
+ * próprio handler — a mesma que `crm_list_tasks` e `negocioDoContexto` têm
+ * (revisão de 20/11, item 2.17). Tarefa de outro cliente e tarefa inexistente
+ * recebem a MESMA recusa: o id não vira oráculo.
+ */
+async function tarefaEhDoTurno(ctx: McpContext, tarefa: Tarefa | null): Promise<boolean> {
+  const contato = ctx.contatoDoTurno;
+  if (!contato) return true;
+  if (!tarefa) return false;
+  if (tarefa.contact_id && tarefa.contact_id.toLowerCase() === contato.toLowerCase()) return true;
+  if (!tarefa.lead_id) return false;
+  const { data } = await ctx.supabase
+    .from("crm_leads")
+    .select("id, contact_id")
+    .eq("organization_id", ctx.organizationId)
+    .eq("id", tarefa.lead_id)
+    .maybeSingle();
+  const doNegocio = (data as { contact_id?: string | null } | null)?.contact_id;
+  return typeof doNegocio === "string" && doNegocio.toLowerCase() === contato.toLowerCase();
+}
+
 function recusaDaTarefa(codigo: RecusaDaTarefa): RecusaParaOAgente {
   switch (codigo) {
     case "responsavel_fora_da_equipe":
@@ -101,6 +137,8 @@ function recusaDaTarefa(codigo: RecusaDaTarefa): RecusaParaOAgente {
       return recusa("demanda_encerrada", "a demanda vinculada já foi encerrada.");
     case "nao_encontrada":
       return TAREFA_NAO_ENCONTRADA;
+    case "ja_fechada":
+      return TAREFA_CANCELADA;
     default:
       return recusa(
         "indisponivel",
@@ -254,6 +292,12 @@ export const crmCreateTask: McpToolDefinition<typeof criacaoInputShape> = {
   category: "write",
   requiresRole: "agent",
   requiresScope: "mcp:write",
+  // A descrição fala do cliente, como o resultado e a nota: na auditoria vai só
+  // o tamanho (revisão de 20/11, item 2.16).
+  redigirParaAuditoria: (args) =>
+    typeof args.description === "string"
+      ? { ...args, description: `[${args.description.length} caracteres]` }
+      : args,
   handler: async (input, ctx) =>
     comChaveDoPedido(ctx, "crm_create_task", input, async () => {
       const responsavel = responsavelDoArgumento(input.assigned_to);
@@ -266,6 +310,17 @@ export const crmCreateTask: McpToolDefinition<typeof criacaoInputShape> = {
       if (input.lead_id) {
         const negocio = await negocioDoContexto(ctx, input.lead_id);
         if (!negocio.ok) return negocio.recusa;
+        // Negócio de uma pessoa e contato de outra, na mesma organização, é
+        // pedido contraditório: gravado, a tarefa apareceria na linha do tempo
+        // de um cliente e nas tarefas de outro (revisão de 20/11, item 2.14).
+        // Negócio SEM contato não diverge de nada.
+        if (
+          input.contact_id &&
+          negocio.lead.contact_id &&
+          negocio.lead.contact_id.toLowerCase() !== input.contact_id.toLowerCase()
+        ) {
+          return NEGOCIO_E_CONTATO_DIVERGEM;
+        }
         // Tarefa presa a um negócio herda o contato dele quando nenhum foi dito:
         // é o que a faz aparecer também nas tarefas da pessoa.
         contactId ??= negocio.lead.contact_id;
@@ -306,7 +361,10 @@ export const crmCreateTask: McpToolDefinition<typeof criacaoInputShape> = {
           ? "Tarefa criada e atribuída; ela aparece na tela de Tarefas de quem vai cumprir."
           : "Tarefa criada sem responsável; ela fica na lista da equipe até alguém assumir.",
       };
-    }),
+    },
+    // Sem `Idempotency-Key`, o mesmo pedido do mesmo autor em poucos minutos é
+    // repetição (timeout, replay do job), não uma segunda tarefa.
+    { derivarDe: input }),
 };
 
 // ---------------------------------------------------------------------------
@@ -355,6 +413,7 @@ export const crmCompleteTask: McpToolDefinition<typeof conclusaoInputShape> = {
       : args,
   handler: async (input, ctx) => {
     const lida = await lerTarefa(ctx, input.task_id);
+    if (!(await tarefaEhDoTurno(ctx, lida.ok ? lida.tarefa : null))) return NEGOCIO_FORA_DA_CONVERSA;
     if (!lida.ok) return lida.recusa;
 
     if (lida.tarefa.status === "done") {
@@ -367,13 +426,7 @@ export const crmCompleteTask: McpToolDefinition<typeof conclusaoInputShape> = {
         next_action: "A tarefa já estava concluída; nada foi alterado.",
       };
     }
-    if (lida.tarefa.status === "cancelled") {
-      return recusa(
-        "tarefa_cancelada",
-        "esta tarefa foi cancelada — concluí-la registraria um trabalho que ninguém fez. Se o " +
-          "trabalho voltou a existir, crie uma tarefa nova.",
-      );
-    }
+    if (lida.tarefa.status === "cancelled") return TAREFA_CANCELADA;
 
     const desfecho = await editarTarefa({
       supabase: ctx.supabase,
@@ -381,10 +434,24 @@ export const crmCompleteTask: McpToolDefinition<typeof conclusaoInputShape> = {
       organizationId: ctx.organizationId,
       id: input.task_id,
       mudancas: { status: "done", ...(input.result ? { result: input.result } : {}) },
+      // A leitura acima é só o atalho. Quem decide é o UPDATE condicionado: se
+      // outra chamada concluiu (ou cancelou) entre a leitura e a gravação, esta
+      // não grava nada — nem o `result`, nem auditoria, nem linha na timeline.
+      apenasSeAberta: true,
       ator: ctx.actor,
       auditoria: auditoriaDoContexto(ctx),
       colunas: COLUNAS_DA_TAREFA_COM_DESFECHO,
     });
+    if (!desfecho.ok && desfecho.recusa === "ja_fechada" && desfecho.situacao === "done") {
+      const depois = await lerTarefa(ctx, input.task_id);
+      if (!depois.ok) return depois.recusa;
+      return {
+        task: paraOAgente(depois.tarefa),
+        completed: true,
+        already_completed: true,
+        next_action: "A tarefa já estava concluída; nada foi alterado.",
+      };
+    }
     if (!desfecho.ok) return recusaDaTarefa(desfecho.recusa);
 
     return {
@@ -425,6 +492,11 @@ export const crmUpdateTask: McpToolDefinition<typeof edicaoInputShape> = {
     if (responsavel.responsavel !== undefined) mudancas.assigned_to = responsavel.responsavel;
     if (Object.keys(mudancas).length === 0) {
       return recusa("nada_para_alterar", "informe `due_date` e/ou `assigned_to` — nada foi enviado para mudar.");
+    }
+
+    if (ctx.contatoDoTurno) {
+      const lida = await lerTarefa(ctx, input.task_id);
+      if (!(await tarefaEhDoTurno(ctx, lida.ok ? lida.tarefa : null))) return NEGOCIO_FORA_DA_CONVERSA;
     }
 
     const desfecho = await editarTarefa({

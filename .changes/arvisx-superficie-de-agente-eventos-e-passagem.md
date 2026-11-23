@@ -35,3 +35,10 @@ vezes a mesma entrega são os que já existiam, e valem para os gatilhos novos.
 Organização suspensa continua sem enviar aviso nenhum. O guia de quem recebe
 (`docs/integracao/webhooks-de-saida.md`) ganhou a lista dos eventos e do que
 cada um traz. Não há mudança de banco.
+
+Depois da revisão de 20/11: a regra de automação com a condição "Texto da
+mensagem contém" passa a ler a mensagem inteira (antes só os primeiros 280
+caracteres, e a palavra dita depois disso não disparava a regra). Na passagem
+entre agentes, se o colega deixar de atender entre a passagem e a resposta, a
+conversa volta para quem passou, que responde na mesma rodada; antes o cliente
+ficava sem resposta.

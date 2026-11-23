@@ -31,6 +31,7 @@ import {
 } from "@/lib/leads/notas-do-negocio";
 import { instanteDoArgumento } from "../argumentos-do-agente";
 import { auditoriaDoContexto, autorDoContexto } from "../ator-do-contexto";
+import { comChaveDoPedido } from "../idempotencia";
 import { CONSULTA_INDISPONIVEL, negocioDoContexto, recusa } from "../negocio-do-contexto";
 import type { McpToolDefinition } from "../types";
 
@@ -139,49 +140,65 @@ export const crmAddLeadNote: McpToolDefinition<typeof criacaoInputShape> = {
   // A nota fala do cliente: na auditoria vai o tamanho, nunca o texto.
   redigirParaAuditoria: (args) =>
     typeof args.text === "string" ? { ...args, text: `[${args.text.length} caracteres]` } : args,
-  handler: async (input, ctx) => {
-    const negocio = await negocioDoContexto(ctx, input.lead_id);
-    if (!negocio.ok) return negocio.recusa;
+  // Três camadas contra a nota em dobro (revisão de 20/11, item 2.13):
+  //  1. o recibo do pedido (`comChaveDoPedido`): a `Idempotency-Key` do
+  //     cabeçalho ou, sem ela, a chave derivada do conteúdo — a mesma nota, do
+  //     mesmo autor, no mesmo negócio, repetida em poucos minutos, devolve a
+  //     primeira;
+  //  2. a chave do cabeçalho gravada na própria nota, que responde depois que o
+  //     recibo venceu;
+  //  3. o índice único do banco sobre essa chave (migration 9818), que decide
+  //     a corrida entre duas chamadas simultâneas.
+  handler: async (input, ctx) =>
+    comChaveDoPedido(
+      ctx,
+      "crm_add_lead_note",
+      input,
+      async () => {
+        const negocio = await negocioDoContexto(ctx, input.lead_id);
+        if (!negocio.ok) return negocio.recusa;
 
-    const autor = await autorDoContexto(ctx);
-    const desfecho = await registrarNotaDoNegocio({
-      supabase: ctx.supabase,
-      organizationId: ctx.organizationId,
-      lead: { id: negocio.lead.id, contact_id: negocio.lead.contact_id },
-      texto: input.text,
-      destinatario: input.recipient ?? null,
-      autor,
-      ator: ctx.actor,
-      chaveDeIdempotencia: ctx.idempotencyKey ?? null,
-    });
-    if (!desfecho.ok) {
-      return recusa("indisponivel", "não consegui gravar a nota agora; tente de novo em instantes.");
-    }
+        const autor = await autorDoContexto(ctx);
+        const desfecho = await registrarNotaDoNegocio({
+          supabase: ctx.supabase,
+          organizationId: ctx.organizationId,
+          lead: { id: negocio.lead.id, contact_id: negocio.lead.contact_id },
+          texto: input.text,
+          destinatario: input.recipient ?? null,
+          autor,
+          ator: ctx.actor,
+          chaveDeIdempotencia: ctx.idempotencyKey ?? null,
+        });
+        if (!desfecho.ok) {
+          return recusa("indisponivel", "não consegui gravar a nota agora; tente de novo em instantes.");
+        }
 
-    if (!desfecho.repetida) {
-      const a = auditoriaDoContexto(ctx, {
-        note_id: desfecho.nota.id,
-        text_length: input.text.length,
-        has_recipient: Boolean(input.recipient),
-      });
-      await audit({
-        action: "lead.note_added",
-        organizationId: ctx.organizationId,
-        actorUserId: a.actorUserId,
-        actorApiTokenId: a.actorApiTokenId,
-        resourceType: "crm_leads",
-        resourceId: negocio.lead.id,
-        requestId: a.requestId,
-        metadata: a.metadata,
-      });
-    }
+        if (!desfecho.repetida) {
+          const a = auditoriaDoContexto(ctx, {
+            note_id: desfecho.nota.id,
+            text_length: input.text.length,
+            has_recipient: Boolean(input.recipient),
+          });
+          await audit({
+            action: "lead.note_added",
+            organizationId: ctx.organizationId,
+            actorUserId: a.actorUserId,
+            actorApiTokenId: a.actorApiTokenId,
+            resourceType: "crm_leads",
+            resourceId: negocio.lead.id,
+            requestId: a.requestId,
+            metadata: a.metadata,
+          });
+        }
 
-    return {
-      note: desfecho.nota,
-      ...(desfecho.repetida ? { idempotent_replay: true } : {}),
-      next_action: desfecho.repetida
-        ? "Esta nota já estava gravada (mesma Idempotency-Key); nada foi duplicado."
-        : "Nota gravada na linha do tempo do negócio, com o seu nome.",
-    };
-  },
+        return {
+          note: desfecho.nota,
+          ...(desfecho.repetida ? { idempotent_replay: true } : {}),
+          next_action: desfecho.repetida
+            ? "Esta nota já estava gravada (mesma Idempotency-Key); nada foi duplicado."
+            : "Nota gravada na linha do tempo do negócio, com o seu nome.",
+        };
+      },
+      { derivarDe: input },
+    ),
 };

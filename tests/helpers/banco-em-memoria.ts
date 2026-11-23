@@ -77,6 +77,8 @@ function condicao(texto: string): Predicado {
 export interface ArquivoNoStorage {
   bytes: Uint8Array;
   tipo: string;
+  /** O tamanho que os METADADOS do Storage dizem; ausente = o dos bytes. */
+  tamanhoDeclarado?: number;
 }
 
 export interface BancoEmMemoria {
@@ -86,6 +88,8 @@ export interface BancoEmMemoria {
   arquivos: Map<string, ArquivoNoStorage>;
   /** Os caminhos pedidos ao Storage, na ordem: prova que nada foi buscado fora dele. */
   downloads: string[];
+  /** Os caminhos cujos METADADOS foram pedidos (sem baixar), na ordem. */
+  infos: string[];
   /** O cliente, com a forma do `SupabaseClient` que os handlers usam. */
   cliente: { from: (tabela: string) => unknown; storage: { from: (bucket: string) => unknown } };
   /** Quantas consultas chegaram a cada tabela. */
@@ -110,6 +114,7 @@ export function bancoEmMemoria(
   for (const [nome, linhas] of Object.entries(inicial)) tabelas[nome] = linhas.map((l) => ({ ...l }));
   const arquivos = new Map(Object.entries(arquivosIniciais));
   const downloads: string[] = [];
+  const infos: string[] = [];
   const consultas: Record<string, number> = {};
 
   // Relógio monotônico: cada linha gravada nasce 1s depois da anterior, para a
@@ -262,6 +267,16 @@ export function bancoEmMemoria(
           error: null,
         });
       },
+      // Só os metadados — o que o handler pergunta ANTES de baixar.
+      info: (caminho: string) => {
+        infos.push(`${bucket}/${caminho}`);
+        const arquivo = arquivos.get(`${bucket}/${caminho}`);
+        if (!arquivo) return Promise.resolve({ data: null, error: { message: "not found" } });
+        return Promise.resolve({
+          data: { size: arquivo.tamanhoDeclarado ?? arquivo.bytes.byteLength, contentType: arquivo.tipo },
+          error: null,
+        });
+      },
       upload: (caminho: string, bytes: Uint8Array, opcoes?: { contentType?: string }) => {
         arquivos.set(`${bucket}/${caminho}`, { bytes, tipo: opcoes?.contentType ?? "" });
         return Promise.resolve({ data: { path: caminho }, error: null });
@@ -280,7 +295,7 @@ export function bancoEmMemoria(
     }),
   };
 
-  return { tabelas, arquivos, downloads, cliente: { from, storage }, consultas };
+  return { tabelas, arquivos, downloads, infos, cliente: { from, storage }, consultas };
 }
 
 /**
