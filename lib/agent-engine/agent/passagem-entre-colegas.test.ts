@@ -294,7 +294,7 @@ describe('as duas escritas da passagem valem juntas (revisão 20/11, 2.11)', () 
   it('⭐ a troca do agente falha depois de a nota entrar: a transação é desfeita e o erro propaga', async () => {
     const { db } = bancoFalso();
     const query = (db as unknown as { query: ReturnType<typeof vi.fn> }).query;
-    const original = query.getMockImplementation()!;
+    const original = query.getMockImplementation() as (sql: string, valores?: unknown[]) => Promise<unknown>;
     query.mockImplementation(async (sql: string, valores: unknown[] = []) => {
       if (sql.includes('update conversations')) throw new Error('conexão caiu');
       return original(sql, valores);
