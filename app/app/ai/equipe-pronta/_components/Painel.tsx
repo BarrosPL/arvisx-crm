@@ -13,6 +13,10 @@
  *   • CHECKLIST. Cada pendência leva à tela que a resolve.
  *   • CARTÃO POR AGENTE: publicado ou não, a versão do papel instalada, se foi
  *     editado à mão, e se há versão nova do papel (nunca aplicada sozinha).
+ *   • GATILHOS NÃO INSTALADOS. Equipe instalada antes de os gatilhos existirem
+ *     tem os quatro agentes "em dia" e, mesmo assim, não retoma sozinha quem
+ *     faltou nem a proposta parada. O aviso diz o que falta, oferece instalar
+ *     de novo e avisa o que instalar de novo substitui.
  */
 import Link from "next/link";
 
@@ -21,12 +25,20 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useT } from "@/hooks/i18n/useT";
 import type { AgenteNoEstado, EstadoDaEquipe } from "@/lib/ai/equipe-pronta/estado";
+import type { GatilhoQueFalta } from "@/lib/ai/equipe-pronta/gatilhos/fluxos";
 
 const SITUACAO: Record<AgenteNoEstado["situacao"], string> = {
   em_dia: "Em dia com as suas respostas",
   desatualizado: "As respostas mudaram: instale de novo para aplicar",
   editado_a_mao: "Editado à mão",
   nao_instalado: "Não instalado",
+};
+
+/** O que cada gatilho faz, para quem lê o aviso de "não instalado". */
+const GATILHO: Record<GatilhoQueFalta, string> = {
+  fluxo_de_falta: "Retomar quem faltou a um compromisso e oferecer um novo horário",
+  fluxo_de_proposta_parada: "Retomar a proposta que ficou sem resposta",
+  regra_de_proposta_parada: "A regra de automação que inicia a retomada da proposta sem resposta",
 };
 
 export function Painel({
@@ -52,7 +64,12 @@ export function Painel({
   const ativo = estado.modo === "ativo";
   const pausada = estado.pausada === true;
   const pendencias = estado.checklist.filter((i) => !i.ok).length;
-  const precisaReinstalar = estado.agentes.some((a) => a.situacao === "desatualizado" || a.situacao === "nao_instalado");
+  // Resposta de servidor anterior a este campo não o traz: sem ele, não há aviso.
+  const gatilhosQueFaltam = estado.estado === "instalado" ? (estado.gatilhos_que_faltam ?? []) : [];
+  const gatilhosNaoInstalados = gatilhosQueFaltam.length > 0;
+  const precisaReinstalar =
+    gatilhosNaoInstalados ||
+    estado.agentes.some((a) => a.situacao === "desatualizado" || a.situacao === "nao_instalado");
 
   return (
     <div className="max-w-5xl space-y-6" data-testid="ep-painel">
@@ -130,6 +147,36 @@ export function Painel({
           </p>
         ) : null}
       </Card>
+
+      {gatilhosNaoInstalados ? (
+        <Card className="space-y-3 border-warning/40 bg-warning-bg p-4" role="status" data-testid="ep-gatilhos-nao-instalados">
+          <h2 className="text-sm font-semibold text-warning-fg">{t("Os gatilhos da equipe ainda não foram instalados")}</h2>
+          <p className="text-sm">
+            {t(
+              "Esta instalação é anterior aos gatilhos: a equipe responde quem escreve, mas ainda não age sozinha nos casos abaixo. Instale de novo para criá-los.",
+            )}
+          </p>
+          <ul className="list-disc space-y-1 pl-5 text-sm" data-testid="ep-gatilhos-que-faltam">
+            {gatilhosQueFaltam.map((g) => (
+              <li key={g} data-gatilho={g}>
+                {t(GATILHO[g])}
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-muted-foreground" data-testid="ep-o-que-reinstalar-substitui">
+            {t(
+              "Instalar de novo substitui o que foi editado fora da equipe pronta: a régua de silêncio e os fluxos da equipe voltam ao que as suas respostas geram, sem perguntar. Agente alterado à mão e roteador do canal pedem confirmação antes de serem substituídos.",
+            )}
+          </p>
+          {administra ? (
+            <Button type="button" disabled={ocupado} onClick={aoInstalar} data-testid="ep-instalar-gatilhos">
+              {t("Instalar de novo para criar os gatilhos")}
+            </Button>
+          ) : (
+            <p className="text-sm text-muted-foreground">{t("Ativar, pausar e instalar são de quem administra a empresa.")}</p>
+          )}
+        </Card>
+      ) : null}
 
       <section className="space-y-2" aria-labelledby="ep-checklist-titulo">
         <h2 id="ep-checklist-titulo" className="text-sm font-semibold">

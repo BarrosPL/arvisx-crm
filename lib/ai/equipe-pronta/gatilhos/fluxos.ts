@@ -33,7 +33,7 @@
 import type { TriggerConfig } from "@/lib/followup/api-schemas";
 import type { FlowGraph } from "@/lib/followup/graph-schema";
 import { GATILHO_ETAPA_PARADA } from "@/lib/automation/gatilhos-de-tempo";
-import type { PerfilDoNegocio } from "@/lib/schemas/equipe-pronta";
+import type { InstalacaoDaEquipe, PerfilDoNegocio } from "@/lib/schemas/equipe-pronta";
 import { escadaDeRetomada } from "../regua";
 
 /** `followup_flow_pointers` tem `unique (organization_id, name)`: é por ele que se reencontra. */
@@ -66,6 +66,43 @@ const DICA_DA_PROPOSTA_TOQUES_SEGUINTES =
   "ainda mais curta, sem repetir o texto de antes: mostre que continua à disposição para tirar dúvidas " +
   "sobre a proposta e deixe claro que ela pode responder quando quiser ou avisar se não tem mais " +
   "interesse. Não pressione, não ofereça desconto e não escreva valor de memória.";
+
+/** Um gatilho que a instalação desta empresa deveria ter criado e não criou. */
+export type GatilhoQueFalta = "fluxo_de_falta" | "fluxo_de_proposta_parada" | "regra_de_proposta_parada";
+
+/**
+ * OS GATILHOS QUE FALTAM numa equipe já instalada.
+ *
+ * Quem instalou a equipe antes de os gatilhos existirem continua com os quatro
+ * agentes "em dia" (nada mudou nas respostas), e a tela só olhava os agentes:
+ * não havia aviso nenhum de que a equipe ainda não retoma quem faltou nem a
+ * proposta parada. Esta função responde "o que a instalação criaria agora e
+ * ainda não existe", com as MESMAS condições do passo que cria
+ * (`passoDosGatilhos`, em `instalar.ts`):
+ *
+ *   • fluxo de falta: só se a empresa agenda (há tipo de agenda da equipe);
+ *   • fluxo e regra de proposta parada: só se a empresa usa proposta e a etapa
+ *     de proposta enviada existe no funil da equipe.
+ *
+ * A regra que o cliente DESLIGOU não falta: ela existe, e o id continua
+ * guardado. PURA: sem banco.
+ */
+export function gatilhosQueFaltam(
+  perfil: Pick<PerfilDoNegocio, "proposta">,
+  instalacao: Pick<InstalacaoDaEquipe, "event_type_id" | "pipeline_id" | "etapas" | "gatilhos">,
+): GatilhoQueFalta[] {
+  const faltam: GatilhoQueFalta[] = [];
+  if (instalacao.event_type_id !== null && instalacao.gatilhos.fluxo_de_falta_id === null) {
+    faltam.push("fluxo_de_falta");
+  }
+  const usaPropostaParada =
+    perfil.proposta.usa && instalacao.pipeline_id !== null && (instalacao.etapas.proposta_enviada ?? null) !== null;
+  if (usaPropostaParada) {
+    if (instalacao.gatilhos.fluxo_de_proposta_parada_id === null) faltam.push("fluxo_de_proposta_parada");
+    if (instalacao.gatilhos.regra_de_proposta_parada_id === null) faltam.push("regra_de_proposta_parada");
+  }
+  return faltam;
+}
 
 /** O gatilho do fluxo de falta: toda falta registrada, de qualquer tipo de agenda. */
 export function gatilhoDoFluxoDeFalta(): TriggerConfig {

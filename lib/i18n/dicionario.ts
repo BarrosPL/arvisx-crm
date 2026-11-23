@@ -2422,6 +2422,27 @@ export const DICIONARIO: Traducoes = {
   "Idioma do atendimento": { es: "Idioma de la atención" },
   "Instalar a equipe": { es: "Instalar el equipo" },
   "Instalar de novo com estas respostas": { es: "Instalar de nuevo con estas respuestas" },
+  "Os gatilhos da equipe ainda não foram instalados": {
+    es: "Los disparadores del equipo aún no fueron instalados",
+  },
+  "Esta instalação é anterior aos gatilhos: a equipe responde quem escreve, mas ainda não age sozinha nos casos abaixo. Instale de novo para criá-los.": {
+    es: "Esta instalación es anterior a los disparadores: el equipo responde a quien escribe, pero aún no actúa por su cuenta en los casos de abajo. Instala de nuevo para crearlos.",
+  },
+  "Retomar quem faltou a um compromisso e oferecer um novo horário": {
+    es: "Retomar a quien faltó a una cita y ofrecer un nuevo horario",
+  },
+  "Retomar a proposta que ficou sem resposta": {
+    es: "Retomar la propuesta que quedó sin respuesta",
+  },
+  "A regra de automação que inicia a retomada da proposta sem resposta": {
+    es: "La regla de automatización que inicia el seguimiento de la propuesta sin respuesta",
+  },
+  "Instalar de novo substitui o que foi editado fora da equipe pronta: a régua de silêncio e os fluxos da equipe voltam ao que as suas respostas geram, sem perguntar. Agente alterado à mão e roteador do canal pedem confirmação antes de serem substituídos.": {
+    es: "Instalar de nuevo reemplaza lo que se editó fuera del equipo listo: la secuencia de silencio y los flujos del equipo vuelven a lo que generan tus respuestas, sin preguntar. Un agente modificado a mano y el enrutador del canal piden confirmación antes de ser reemplazados.",
+  },
+  "Instalar de novo para criar os gatilhos": {
+    es: "Instalar de nuevo para crear los disparadores",
+  },
   "Jeito de falar": { es: "Forma de hablar" },
   "Manter como está": { es: "Dejar como está" },
   "Marcar um horário": { es: "Agendar un horario" },

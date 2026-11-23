@@ -28,6 +28,7 @@ import { grafoDaRegua } from "../regua";
 import {
   gatilhoDoFluxoDeFalta,
   gatilhoDoFluxoDePropostaParada,
+  gatilhosQueFaltam,
   grafoDoFluxoDeFalta,
   grafoDoFluxoDePropostaParada,
   regraDePropostaParada,
@@ -143,5 +144,56 @@ describe("a regra de proposta parada", () => {
   it("não derruba outra sequência que já esteja andando para o contato", () => {
     const config = regraDePropostaParada(perfil(), alvo).actions[0].config as Record<string, unknown>;
     expect(config.replace_live_flow).toBeUndefined();
+  });
+});
+
+// Revisão de 20/11, item 2.7: quem instalou antes dos gatilhos precisa de aviso.
+describe("os gatilhos que faltam numa equipe instalada", () => {
+  const TIPO = "11111111-1111-4111-8111-111111111111";
+  const FUNIL = "22222222-2222-4222-8222-222222222222";
+  const ETAPA = "33333333-3333-4333-8333-333333333333";
+  const ID = "44444444-4444-4444-8444-444444444444";
+  const usaProposta = { proposta: { usa: true } } as Parameters<typeof gatilhosQueFaltam>[0];
+  const semProposta = { proposta: { usa: false } } as Parameters<typeof gatilhosQueFaltam>[0];
+  const nenhum = { fluxo_de_falta_id: null, fluxo_de_proposta_parada_id: null, regra_de_proposta_parada_id: null };
+  const instalacao = (mudancas: Partial<Parameters<typeof gatilhosQueFaltam>[1]> = {}) =>
+    ({
+      event_type_id: TIPO,
+      pipeline_id: FUNIL,
+      etapas: { proposta_enviada: ETAPA },
+      gatilhos: nenhum,
+      ...mudancas,
+    }) as Parameters<typeof gatilhosQueFaltam>[1];
+
+  it("⭐ instalação anterior aos gatilhos, de empresa que agenda e usa proposta: faltam os três", () => {
+    expect(gatilhosQueFaltam(usaProposta, instalacao())).toEqual([
+      "fluxo_de_falta",
+      "fluxo_de_proposta_parada",
+      "regra_de_proposta_parada",
+    ]);
+  });
+
+  it("instalação em dia: não falta nada", () => {
+    const todos = { fluxo_de_falta_id: ID, fluxo_de_proposta_parada_id: ID, regra_de_proposta_parada_id: ID };
+    expect(gatilhosQueFaltam(usaProposta, instalacao({ gatilhos: todos }))).toEqual([]);
+  });
+
+  it("o que não se aplica à empresa não falta: quem não agenda, quem não usa proposta, funil sem a etapa", () => {
+    // Não agenda: o fluxo de falta não é criado, então não falta.
+    expect(gatilhosQueFaltam(usaProposta, instalacao({ event_type_id: null }))).toEqual([
+      "fluxo_de_proposta_parada",
+      "regra_de_proposta_parada",
+    ]);
+    // Não usa proposta: só o de falta.
+    expect(gatilhosQueFaltam(semProposta, instalacao())).toEqual(["fluxo_de_falta"]);
+    // Sem funil ou sem a etapa de proposta enviada, a instalação também não cria os de proposta.
+    expect(gatilhosQueFaltam(usaProposta, instalacao({ pipeline_id: null }))).toEqual(["fluxo_de_falta"]);
+    expect(gatilhosQueFaltam(usaProposta, instalacao({ etapas: {} }))).toEqual(["fluxo_de_falta"]);
+    expect(gatilhosQueFaltam(semProposta, instalacao({ event_type_id: null }))).toEqual([]);
+  });
+
+  it("a regra que sumiu falta sozinha; a que o cliente só DESLIGOU continua com o id e não falta", () => {
+    const semRegra = { fluxo_de_falta_id: ID, fluxo_de_proposta_parada_id: ID, regra_de_proposta_parada_id: null };
+    expect(gatilhosQueFaltam(usaProposta, instalacao({ gatilhos: semRegra }))).toEqual(["regra_de_proposta_parada"]);
   });
 });

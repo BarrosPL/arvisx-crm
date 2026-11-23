@@ -291,7 +291,15 @@ se o agente ativo mudou entre a leitura e a gravação (uma passagem entre
 colegas, o roteador, uma pessoa assumindo), nada é escrito por cima.
 
 Os dois fluxos e a regra são criados pela instalação (`passoDosGatilhos`) e
-guardados em `instalacao.gatilhos`. O de falta só existe se a empresa agenda; o
+guardados em `instalacao.gatilhos`. **Quem instalou a equipe antes dos gatilhos
+precisa instalar de novo**, e a tela avisa: o estado traz
+`gatilhos_que_faltam` (`gatilhosQueFaltam`, em `gatilhos/fluxos.ts`, com as
+mesmas condições do passo que cria), e o painel mostra o aviso "Os gatilhos da
+equipe ainda não foram instalados", com o que falta, um botão para instalar de
+novo e o que instalar de novo substitui: a régua de silêncio e os fluxos da
+equipe voltam ao que as respostas geram, sem perguntar; agente alterado à mão e
+roteador do canal pedem confirmação. A falta dos gatilhos não entra no
+checklist: não impede ativar. O de falta só existe se a empresa agenda; o
 de proposta parada, se a empresa usa proposta. Os dias da proposta parada vêm de
 `recuperacao.dias_proposta_parada` no perfil (padrão 5; só muda no banco).
 

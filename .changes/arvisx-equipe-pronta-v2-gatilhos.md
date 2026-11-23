@@ -6,7 +6,13 @@ titulo: Equipe de IA pronta age sem o cliente escrever, e a proposta ganha o bot
 
 A Equipe de IA pronta (plano Premium) passa a agir em cinco momentos em que o
 cliente não escreveu nada. Quem já tem a equipe instalada precisa
-**instalar de novo** (IA › Equipe pronta) para os gatilhos serem criados.
+**instalar de novo** (IA › Equipe pronta) para os gatilhos serem criados. A
+tela avisa: enquanto eles não existirem, o painel da equipe mostra "Os
+gatilhos da equipe ainda não foram instalados", com o que falta e um botão
+para instalar de novo. Atenção: instalar de novo substitui o que foi editado
+fora da equipe pronta. A régua de silêncio e os fluxos da equipe voltam ao que
+as suas respostas geram, sem perguntar; agente alterado à mão e roteador do
+canal pedem confirmação antes.
 
 - **Resposta ao lembrete da agenda** — a resposta da pessoa ao lembrete vai
   para o agente de Agendamento, que confirma ou remarca.
