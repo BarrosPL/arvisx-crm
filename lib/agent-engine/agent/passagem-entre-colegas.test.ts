@@ -13,9 +13,11 @@ import {
   RECUSA_DEPOIS_DA_PASSAGEM,
   TITULO_DO_RESUMO_DO_ATENDIMENTO,
   applyPassarParaColega,
+  blocoDaPassagemDesfeita,
   blocoDaPassagemRecebida,
   colegasDoAgente,
   descricaoDaPassagemEntreColegas,
+  desfazerPassagem,
   lerPassagemEmVigor,
   passagemValePara,
 } from './passagem-entre-colegas';
@@ -253,5 +255,109 @@ describe('o que cada lado lê', () => {
 
   it('quem já passou a vez recebe recusa, não envio', () => {
     expect(RECUSA_DEPOIS_DA_PASSAGEM).toMatchObject({ ok: false, error: { code: 'ja_passou_a_vez' } });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Revisão de 20/11, item 2.11
+// ---------------------------------------------------------------------------
+
+describe('as duas escritas da passagem valem juntas (revisão 20/11, 2.11)', () => {
+  /** Uma "transação" de teste: registra o que entrou, o que confirmou e o que desfez. */
+  function transacao(db: { query: (...a: unknown[]) => Promise<unknown> }) {
+    const eventos: string[] = [];
+    const emTransacao = async <T,>(escrever: (tx: never) => Promise<T>): Promise<T> => {
+      eventos.push('begin');
+      try {
+        const r = await escrever(db as never);
+        eventos.push('commit');
+        return r;
+      } catch (err) {
+        eventos.push('rollback');
+        throw err;
+      }
+    };
+    return { eventos, emTransacao };
+  }
+
+  it('a nota e o agente da conversa são gravados DENTRO da mesma transação', async () => {
+    const { db, escritas } = bancoFalso();
+    const t = transacao(db);
+    const r = await applyPassarParaColega(db, ids, cfg({ emTransacao: t.emTransacao }), pedido);
+
+    expect(r.ok).toBe(true);
+    expect(t.eventos).toEqual(['begin', 'commit']);
+    expect(escritas.some((e) => e.sql.includes('insert into lead_notes'))).toBe(true);
+    expect(escritas.some((e) => e.sql.includes('update conversations'))).toBe(true);
+  });
+
+  it('⭐ a troca do agente falha depois de a nota entrar: a transação é desfeita e o erro propaga', async () => {
+    const { db } = bancoFalso();
+    const query = (db as unknown as { query: ReturnType<typeof vi.fn> }).query;
+    const original = query.getMockImplementation() as (sql: string, valores?: unknown[]) => Promise<unknown>;
+    query.mockImplementation(async (sql: string, valores: unknown[] = []) => {
+      if (sql.includes('update conversations')) throw new Error('conexão caiu');
+      return original(sql, valores);
+    });
+    const t = transacao(db);
+
+    await expect(applyPassarParaColega(db, ids, cfg({ emTransacao: t.emTransacao }), pedido)).rejects.toThrow(
+      'conexão caiu',
+    );
+    expect(t.eventos).toEqual(['begin', 'rollback']);
+  });
+
+  it('⭐ o colega é conferido ANTES de qualquer gravação: indisponível, a transação nem abre', async () => {
+    for (const config of [null, colega({ pausedAt: '2026-11-20T00:00:00Z' }), colega({ operationMode: 'assisted' })]) {
+      const { db, escritas } = bancoFalso();
+      const t = transacao(db);
+      const r = await applyPassarParaColega(
+        db,
+        ids,
+        cfg({ carregarColega: vi.fn(async () => config), emTransacao: t.emTransacao }),
+        pedido,
+      );
+      expect(r).toMatchObject({ ok: false, error: { code: 'colega_indisponivel' } });
+      expect(t.eventos).toEqual([]);
+      expect(escritas).toEqual([]);
+    }
+  });
+
+  it('resumo recusado dentro da transação: nada mais é gravado e a recusa volta como ensino', async () => {
+    const { db, escritas } = bancoFalso();
+    const t = transacao(db);
+    const r = await applyPassarParaColega(db, ids, cfg({ budgetTokens: 1, emTransacao: t.emTransacao }), pedido);
+
+    expect(r.ok).toBe(false);
+    expect(escritas.some((e) => e.sql.includes('update conversations'))).toBe(false);
+  });
+});
+
+describe('desfazer a passagem (revisão 20/11, 2.11)', () => {
+  const aceita = { paraAgente: 'agente-horarios', deAgente: 'agente-entrada', deIntencao: 'entrada' };
+
+  it('⭐ devolve a conversa a quem passou, tira a chave da passagem, e SÓ se a conversa ainda estiver com o colega', async () => {
+    const query = vi.fn(async (_sql: string, _valores: unknown[] = []) => ({ rows: [], rowCount: 1 }));
+    const devolvida = await desfazerPassagem({ query } as never, { tenantId: ORG, conversationId: CONVERSA }, aceita);
+
+    expect(devolvida).toBe(true);
+    const [sql, valores] = query.mock.calls[0]!;
+    expect(sql).toContain('update conversations');
+    expect(sql).toContain('active_ai_agent_id = $6');
+    expect(sql).toContain('organization_id = $1');
+    expect(valores).toEqual([ORG, CONVERSA, 'agente-entrada', 'entrada', CHAVE_DA_PASSAGEM, 'agente-horarios']);
+  });
+
+  it('a conversa já mudou de agente (roteador, pessoa, outro turno): nada é devolvido', async () => {
+    const query = vi.fn(async () => ({ rows: [], rowCount: 0 }));
+    expect(await desfazerPassagem({ query } as never, { tenantId: ORG, conversationId: CONVERSA }, aceita)).toBe(false);
+  });
+
+  it('quem passou lê que a conversa voltou, que o cliente ainda não foi respondido e que pode chamar a equipe', () => {
+    const texto = blocoDaPassagemDesfeita({ paraIntencao: 'Marcação', motivo: 'a pessoa quer marcar um horário' });
+    expect(texto).toContain('A passagem para o colega não aconteceu');
+    expect(texto).toContain('"Marcação"');
+    expect(texto).toContain('ainda NÃO recebeu');
+    expect(texto).toContain('request_human_handoff');
   });
 });
