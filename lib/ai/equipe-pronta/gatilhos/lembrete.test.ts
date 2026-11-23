@@ -53,6 +53,42 @@ describe("resposta ao lembrete → Agendamento", () => {
     expect(duble.escritas).toEqual([]);
   }
 
+  // ─── Revisão de 20/11, item 2.8: a gravação do agente ativo tem condição ───
+  it("⭐ conversa que está com um agente de FORA da equipe não é tomada dele", async () => {
+    const banco = bancoPadrao();
+    const DE_FORA = "12121212-1212-4121-8121-121212121212";
+    banco.conversations![0]!.active_ai_agent_id = DE_FORA;
+    banco.conversations![0]!.active_intent = "suporte";
+    const { resultado, duble, conversa } = await rodar(banco);
+    expect(resultado).toEqual({ fixado: false, motivo: "conversa_de_outro_agente" });
+    expect(conversa?.active_ai_agent_id).toBe(DE_FORA);
+    expect(conversa?.active_intent).toBe("suporte");
+    expect(duble.escritas).toEqual([]);
+  });
+
+  it("conversa que já está com um COLEGA da equipe passa para o Agendamento (é para isso que o gatilho existe)", async () => {
+    const banco = bancoPadrao();
+    banco.conversations![0]!.active_ai_agent_id = AGENTES.sdr;
+    const { resultado, conversa } = await rodar(banco);
+    expect(resultado).toEqual({ fixado: true, agentId: AGENTES.agendamento });
+    expect(conversa?.active_ai_agent_id).toBe(AGENTES.agendamento);
+  });
+
+  it("⭐ o agente ativo mudou entre a leitura e a gravação: não escreve por cima (comparação e troca)", async () => {
+    const duble = dublarSupabase(bancoPadrao());
+    // Depois de a conversa ser lida, e antes da gravação, uma passagem entre
+    // colegas põe o agente de Propostas na conversa. A leitura do canal é a
+    // última das travas, logo antes da escrita.
+    const real = duble.cliente.from;
+    duble.cliente.from = (tabela: string) => {
+      if (tabela === "channel_sessions") duble.tabelas.conversations![0]!.active_ai_agent_id = AGENTES.proposta;
+      return real(tabela);
+    };
+    const resultado = await entregarRespostaDoLembreteAoAgendamento(duble.cliente, entrada);
+    expect(resultado).toEqual({ fixado: false, motivo: "conversa_mudou" });
+    expect(duble.tabelas.conversations![0]!.active_ai_agent_id).toBe(AGENTES.proposta);
+  });
+
   it("modo ensaio: número que não é de teste não é entregue à equipe", async () => {
     const banco = bancoPadrao();
     banco.channel_sessions![0]!.metadata = { ...metadataInicialDoCanal(), [AI_TEST_PHONE_NUMBERS_KEY]: ["+5511888880000"] };

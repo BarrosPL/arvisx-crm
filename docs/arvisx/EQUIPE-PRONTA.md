@@ -276,6 +276,20 @@ que já existia a um papel, pelo mecanismo que o produto já roda.
 | `lead.stage_stale` na etapa de proposta enviada | Recuperação | Retoma a proposta | Regra de automação "Equipe pronta · Proposta sem resposta" (ação `start_message_flow`) e o fluxo de follow-up de mesmo nome |
 | `lead.won` | uma pessoa | Tarefa "Dar seguimento ao negócio ganho" | Consumidor do evento (`negocio-ganho.handler.ts`), com `criarTarefa` |
 
+**A tarefa do ganho é única por negócio, pelo banco** (migration 9817). O
+evento `lead.won` é entregue ao menos uma vez, e procurar a tarefa antes de
+criar não basta quando duas entregas rodam juntas. O índice único parcial
+`crm_tasks_seguimento_do_ganho_uidx`, em `(organization_id, lead_id)` para
+`kind = 'dar_seguimento'`, recusa a segunda; o gatilho procura de novo e
+devolve a que já existe. `dar_seguimento` é, por isso, um tipo de tarefa
+reservado: a segunda tarefa desse tipo no mesmo negócio é recusada também pela
+tela e por `crm_create_task`.
+
+**O lembrete só fixa o Agendamento com condição.** A conversa que está com um
+agente de fora da equipe não é tomada dele; e a gravação é comparação e troca:
+se o agente ativo mudou entre a leitura e a gravação (uma passagem entre
+colegas, o roteador, uma pessoa assumindo), nada é escrito por cima.
+
 Os dois fluxos e a regra são criados pela instalação (`passoDosGatilhos`) e
 guardados em `instalacao.gatilhos`. O de falta só existe se a empresa agenda; o
 de proposta parada, se a empresa usa proposta. Os dias da proposta parada vêm de

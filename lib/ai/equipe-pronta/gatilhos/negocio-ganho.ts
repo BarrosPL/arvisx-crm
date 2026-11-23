@@ -18,6 +18,14 @@
  * concluída): o dreno que reexecuta a linha, o ganho regravado e o negócio
  * reaberto e ganho de novo acham a que já existe e não criam outra.
  *
+ * Procurar e criar são duas idas ao banco, e o evento é entregue AO MENOS uma
+ * vez: duas entregas que rodem juntas leem "não existe" e criariam duas. Quem
+ * garante a unicidade é o banco (migration 9817): índice único parcial em
+ * `crm_tasks (organization_id, lead_id)` para este tipo. A segunda gravação é
+ * recusada, e este arquivo procura de novo e devolve a tarefa de quem ganhou
+ * (`ja_existia`). A busca antes de criar continua: evita a gravação recusada
+ * no caso comum (revisão de 20/11, item 2.8).
+ *
  * ═══ As travas ═══
  *
  * A tarefa é interna: ninguém fala com o cliente aqui. Por isso valem as
@@ -97,19 +105,26 @@ export async function tarefaDeSeguimentoDoGanho(
     return { estado: "pulado", motivo: "outro_funil" };
   }
 
+  // A tarefa de seguimento que este negócio já tem, se tiver.
+  const buscarExistente = async (): Promise<{ id: string | null; erro?: string }> => {
+    const { data: existente, error: erroDaBusca } = await admin
+      .from("crm_tasks")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("lead_id", leadId)
+      .eq("kind", TIPO_DA_TAREFA_DE_SEGUIMENTO)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (erroDaBusca) return { id: null, erro: erroDaBusca.message };
+    return { id: existente ? String((existente as { id: string }).id) : null };
+  };
+
   // ── a tarefa que já existe vem ANTES das travas: repetir o evento com a
   //    equipe pausada devolve a mesma resposta de antes, não um motivo novo ──
-  const { data: existente, error: erroDaBusca } = await admin
-    .from("crm_tasks")
-    .select("id")
-    .eq("organization_id", organizationId)
-    .eq("lead_id", leadId)
-    .eq("kind", TIPO_DA_TAREFA_DE_SEGUIMENTO)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  if (erroDaBusca) return { estado: "falha", erro: `tarefa: ${erroDaBusca.message}` };
-  if (existente) return { estado: "ja_existia", tarefaId: String((existente as { id: string }).id) };
+  const antes = await buscarExistente();
+  if (antes.erro) return { estado: "falha", erro: `tarefa: ${antes.erro}` };
+  if (antes.id) return { estado: "ja_existia", tarefaId: antes.id };
 
   let daEquipe: Awaited<ReturnType<typeof travaDaEquipe>>;
   try {
@@ -184,6 +199,15 @@ export async function tarefaDeSeguimentoDoGanho(
   // ou quando o dono saiu da equipe.
   let desfecho = await criar(negocio.owner_user_id);
   if (!desfecho.ok && desfecho.recusa === "responsavel_fora_da_equipe") desfecho = await criar(null);
-  if (!desfecho.ok) return { estado: "falha", erro: `tarefa: ${desfecho.recusa}` };
+  if (!desfecho.ok) {
+    // A gravação foi recusada. Se foi o índice único (9817), outra entrega do
+    // mesmo evento criou a tarefa entre a busca lá de cima e esta gravação:
+    // a tarefa existe, e a resposta certa é `ja_existia`, não falha (que faria
+    // o dreno tentar de novo até o teto). Qualquer outra recusa continua
+    // sendo falha: procurar de novo não acha nada.
+    const depois = await buscarExistente();
+    if (depois.id) return { estado: "ja_existia", tarefaId: depois.id };
+    return { estado: "falha", erro: `tarefa: ${desfecho.recusa}` };
+  }
   return { estado: "criada", tarefaId: desfecho.tarefa.id };
 }

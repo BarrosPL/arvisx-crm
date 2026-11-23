@@ -106,6 +106,48 @@ describe("negócio ganho → tarefa de seguimento", () => {
     expect(duble.tabelas.crm_tasks).toHaveLength(1);
   });
 
+  // ─── Revisão de 20/11, item 2.8: o evento é entregue ao menos uma vez ───
+  /**
+   * `criarTarefa` de mentira que respeita o índice único da migration 9817:
+   * a segunda tarefa de seguimento do mesmo negócio é recusada, como o banco
+   * recusa (23505, que `criarTarefa` devolve como `falha`). A gravação cede a
+   * vez antes de acontecer, para as duas entregas passarem juntas pela busca.
+   */
+  function ligarCriacaoComIndiceUnico(duble: DubleDoSupabase) {
+    criarTarefa.mockImplementation(async (portas: { dados: Record<string, unknown>; organizationId: string }) => {
+      await new Promise((r) => setTimeout(r, 0));
+      const repetida = duble.tabelas.crm_tasks!.some(
+        (t) => t.organization_id === portas.organizationId && t.lead_id === portas.dados.lead_id && t.kind === portas.dados.kind,
+      );
+      if (repetida) return { ok: false, recusa: "falha" };
+      const tarefa = { id: `tarefa-${duble.tabelas.crm_tasks!.length + 1}`, organization_id: portas.organizationId, ...portas.dados };
+      duble.tabelas.crm_tasks!.push(tarefa);
+      return { ok: true, tarefa, fechouAgora: false };
+    });
+  }
+
+  it("⭐ duas entregas SIMULTÂNEAS do mesmo ganho: uma tarefa só; quem perde a gravação devolve a de quem ganhou", async () => {
+    const duble = dublarSupabase(banco());
+    ligarCriacaoComIndiceUnico(duble);
+    const [a, b] = await Promise.all([
+      tarefaDeSeguimentoDoGanho(duble.cliente, db, entrada),
+      tarefaDeSeguimentoDoGanho(duble.cliente, db, { ...entrada, requestId: "event:2" }),
+    ]);
+    // As duas passaram pela busca antes de qualquer gravação: era aqui que nasciam duas.
+    expect(criarTarefa).toHaveBeenCalledTimes(2);
+    expect(duble.tabelas.crm_tasks).toHaveLength(1);
+    expect([a.estado, b.estado].sort()).toEqual(["criada", "ja_existia"]);
+    expect(a).toMatchObject({ tarefaId: "tarefa-1" });
+    expect(b).toMatchObject({ tarefaId: "tarefa-1" });
+  });
+
+  it("gravação recusada por outro motivo, sem tarefa nenhuma no negócio, continua sendo falha (o dreno tenta de novo)", async () => {
+    const duble = dublarSupabase(banco());
+    ligarCriacao(duble, () => "falha");
+    expect(await tarefaDeSeguimentoDoGanho(duble.cliente, db, entrada)).toEqual({ estado: "falha", erro: "tarefa: falha" });
+    expect(duble.tabelas.crm_tasks).toHaveLength(0);
+  });
+
   it("tarefa de seguimento já CONCLUÍDA também conta: reabrir e ganhar de novo não cria a segunda", async () => {
     const duble = dublarSupabase(
       banco({

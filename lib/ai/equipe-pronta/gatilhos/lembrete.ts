@@ -22,6 +22,20 @@
  * agente pausado, ensaio (só número de teste), pessoa que assumiu a conversa e
  * opt-out. A janela de resposta do canal é conferida pelo turno de resposta.
  *
+ * ═══ Quando NÃO fixa, mesmo com as travas abertas (revisão de 20/11, item 2.8) ═══
+ *
+ * A primeira versão gravava o agente de Agendamento na conversa sem condição
+ * nenhuma. Duas coisas ficavam erradas:
+ *
+ *   • a conversa que está com um agente que NÃO é da equipe (a empresa tem
+ *     outros agentes no mesmo número) era tomada dele. A equipe só troca a vez
+ *     entre os colegas dela: conversa de outro agente fica como está
+ *     (`conversa_de_outro_agente`);
+ *   • entre ler a conversa e gravar, outra coisa podia ter mudado o agente (uma
+ *     passagem entre colegas, o roteador, uma pessoa assumindo). A gravação
+ *     agora é comparação e troca: só vale se o agente ativo ainda for o que foi
+ *     lido. Mudou, não grava (`conversa_mudou`).
+ *
  * NUNCA lança: o lembrete já saiu, e uma falha aqui não pode virar "erro no
  * envio" na rodada do cron.
  */
@@ -35,6 +49,10 @@ export type MotivoDeNaoFixar =
   | "sem_agente_de_agendamento"
   | "conversa_de_outro_canal"
   | "conversa_nao_encontrada"
+  /** A conversa está com um agente que não é da equipe: a equipe não a toma. */
+  | "conversa_de_outro_agente"
+  /** O agente ativo da conversa mudou entre a leitura e a gravação. */
+  | "conversa_mudou"
   | "falha"
   | CodigoDaTrava;
 
@@ -62,17 +80,26 @@ export async function entregarRespostaDoLembreteAoAgendamento(
 
     const { data: conversa, error } = await admin
       .from("conversations")
-      .select("id, channel_session_id")
+      .select("id, channel_session_id, active_ai_agent_id")
       .eq("organization_id", organizationId)
       .eq("id", conversationId)
       .eq("contact_id", contactId)
       .maybeSingle();
     if (error) return { fixado: false, motivo: "falha" };
-    const conv = conversa as { id: string; channel_session_id: string } | null;
+    const conv = conversa as { id: string; channel_session_id: string; active_ai_agent_id?: string | null } | null;
     if (!conv) return { fixado: false, motivo: "conversa_nao_encontrada" };
     // Só o canal em que a equipe atende: noutro número quem responde é outro agente.
     if (conv.channel_session_id !== equipe.instalacao.channel_session_id) {
       return { fixado: false, motivo: "conversa_de_outro_canal" };
+    }
+    // Só a conversa sem agente, ou a que já está com um colega da equipe. A
+    // conversa de um agente de fora da equipe não é tomada dele.
+    const agenteAtual = conv.active_ai_agent_id ?? null;
+    const daEquipeInteira = Object.values(equipe.instalacao.agentes)
+      .map((a) => a?.agent_id)
+      .filter((id): id is string => typeof id === "string");
+    if (agenteAtual !== null && !daEquipeInteira.includes(agenteAtual)) {
+      return { fixado: false, motivo: "conversa_de_outro_agente" };
     }
 
     const travas = await travasDeFalarComOCliente(admin, {
@@ -83,7 +110,10 @@ export async function entregarRespostaDoLembreteAoAgendamento(
     });
     if (travas.trava) return { fixado: false, motivo: travas.trava.codigo };
 
-    const { error: erroDaEscrita } = await admin
+    // Comparação e troca: a gravação só vale se o agente ativo ainda for o que
+    // foi lido lá em cima. Uma passagem entre colegas, o roteador ou uma pessoa
+    // assumindo no meio do caminho ganham: não se escreve por cima deles.
+    const escrita = admin
       .from("conversations")
       .update({
         active_ai_agent_id: agentId,
@@ -92,7 +122,11 @@ export async function entregarRespostaDoLembreteAoAgendamento(
       })
       .eq("organization_id", organizationId)
       .eq("id", conversationId);
+    const { data: gravadas, error: erroDaEscrita } = await (
+      agenteAtual === null ? escrita.is("active_ai_agent_id", null) : escrita.eq("active_ai_agent_id", agenteAtual)
+    ).select("id");
     if (erroDaEscrita) return { fixado: false, motivo: "falha" };
+    if (((gravadas ?? []) as unknown[]).length === 0) return { fixado: false, motivo: "conversa_mudou" };
     return { fixado: true, agentId };
   } catch {
     return { fixado: false, motivo: "falha" };

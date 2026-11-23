@@ -57,3 +57,10 @@ de contar com o recomeço.
 Quando o sistema não consegue conferir se a equipe está pausada (uma falha de
 leitura no banco), a sequência espera cinco minutos e tenta de novo, em vez de
 enviar.
+
+Migration 9817: a tarefa "Dar seguimento ao negócio ganho" passa a ser única
+por negócio no próprio banco. Se já houver tarefas repetidas desse tipo no
+mesmo negócio, a mais antiga continua como está e as outras só mudam de tipo;
+nenhuma tarefa é apagada.
+
+O lembrete da agenda não tira mais a conversa de um agente que não é da equipe.

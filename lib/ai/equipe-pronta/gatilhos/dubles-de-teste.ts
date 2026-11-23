@@ -77,6 +77,11 @@ export function dublarSupabase(tabelas: Record<string, Linha[]>): DubleDoSupabas
         filtros.push((l) => l[coluna] !== valor);
         return q;
       },
+      // `.is(coluna, null)`: nulo e ausente são a mesma coisa, como no banco.
+      is: (coluna: string, valor: unknown) => {
+        filtros.push((l) => (valor === null ? l[coluna] === null || l[coluna] === undefined : l[coluna] === valor));
+        return q;
+      },
       in: (coluna: string, valores: unknown[]) => {
         filtros.push((l) => valores.includes(l[coluna]));
         return q;
