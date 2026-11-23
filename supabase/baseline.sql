@@ -69943,6 +69943,76 @@ comment on function public.fn_proposta_gravar_edicao(uuid, uuid, bigint, jsonb, 
 
 notify pgrst, 'reload schema';
 
+-- ---- o agente preenche campo personalizado do contato no banco (migration 9820) ----
+-- Espelho idempotente da 9820 (o porquê está no cabeçalho da migration): uma
+-- função `security invoker`, com EXECUTE só para `service_role`, que mescla em
+-- `contacts.custom_fields` SÓ as chaves vazias, com a linha travada. Sem coluna
+-- nem constraint: nenhuma linha existente muda. Por criar função, este bloco
+-- fica ANTES da VARREDURA anon.
+create or replace function public.fn_contato_preencher_campos_personalizados(
+  p_org uuid,
+  p_contato uuid,
+  p_campos jsonb
+) returns jsonb
+language plpgsql security invoker set search_path = public, pg_temp as $$
+declare
+  v_atual jsonb;
+  v_novos jsonb;
+  v_gravados jsonb;
+  v_ocupados jsonb;
+begin
+  if p_campos is null or jsonb_typeof(p_campos) <> 'object' then
+    return jsonb_build_object('gravados', '[]'::jsonb, 'ja_preenchidos', '[]'::jsonb);
+  end if;
+
+  -- A trava da linha é o que torna a mescla atômica.
+  select coalesce(c.custom_fields, '{}'::jsonb)
+    into v_atual
+    from public.contacts c
+   where c.organization_id = p_org
+     and c.id = p_contato
+     and coalesce(c.is_anonymized, false) = false
+     for update;
+  if not found then
+    return null;
+  end if;
+  if jsonb_typeof(v_atual) <> 'object' then
+    v_atual := '{}'::jsonb;
+  end if;
+
+  select coalesce(jsonb_object_agg(e.key, e.value) filter (where e.vazia), '{}'::jsonb),
+         coalesce(jsonb_agg(e.key order by e.key) filter (where e.vazia), '[]'::jsonb),
+         coalesce(jsonb_agg(e.key order by e.key) filter (where not e.vazia and e.value is distinct from e.atual), '[]'::jsonb)
+    into v_novos, v_gravados, v_ocupados
+    from (
+      select n.key,
+             n.value,
+             v_atual -> n.key as atual,
+             coalesce(v_atual -> n.key, 'null'::jsonb) in ('null'::jsonb, '""'::jsonb) as vazia
+        from jsonb_each(p_campos) n
+       -- valor vazio que veio não é dado a gravar
+       where n.value not in ('null'::jsonb, '""'::jsonb)
+    ) e;
+
+  if v_novos <> '{}'::jsonb then
+    update public.contacts c
+       set custom_fields = v_atual || v_novos,
+           updated_at = now()
+     where c.organization_id = p_org
+       and c.id = p_contato;
+  end if;
+
+  return jsonb_build_object('gravados', v_gravados, 'ja_preenchidos', v_ocupados);
+end;
+$$;
+revoke execute on function public.fn_contato_preencher_campos_personalizados(uuid, uuid, jsonb) from public, anon, authenticated;
+grant execute on function public.fn_contato_preencher_campos_personalizados(uuid, uuid, jsonb) to service_role;
+
+comment on function public.fn_contato_preencher_campos_personalizados(uuid, uuid, jsonb) is
+  'Preenche campos personalizados do contato SÓ onde estão vazios, com a linha travada (sem perder escrita concorrente). Devolve os nomes gravados e os que já tinham outro valor; nunca devolve valor. Invoker. Migration 9820.';
+
+notify pgrst, 'reload schema';
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria

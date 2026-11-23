@@ -212,13 +212,23 @@ Os papéis da Equipe de IA pronta usam a passagem e as ferramentas deste documen
 `crm_update_contact` grava direto no cadastro o que a pessoa informou: `name`, `email`, `secondary_phone`, `cpf`,
 `birthdate`, o endereço (`zip_code`, `street`, `number`, `complement`, `district`, `city`, `state`) e `custom_fields`.
 
-- Envie só os campos a gravar. `custom_fields` é mesclado: a chave que não veio continua como está.
+- Envie só os campos a gravar. `custom_fields` é mesclado no banco (`fn_contato_preencher_campos_personalizados`,
+  migration 9820), com a linha do contato travada: a chave que não veio continua como está, e a escrita de quem gravou
+  ao mesmo tempo não é perdida.
+- **Só preenche o que está vazio.** Campo que já tem valor (coluna, documento ou chave de `custom_fields`) não é
+  trocado pelo que veio na conversa: ele volta em `campos_ja_preenchidos`, e o agente deixa uma tarefa para a equipe
+  conferir. Só campos já preenchidos na chamada: recusa `campo_ja_preenchido`. Valor igual ao que já está não é
+  escrita. A resposta nunca devolve o valor que estava no cadastro.
 - Valor inválido é recusado com o código do campo: `email_invalido`, `data_invalida`, `telefone_invalido`,
   `documento_invalido`. A chamada inteira é recusada; nada entra pela metade.
 - O documento é validado pela régua do país da organização (no Brasil, o dígito verificador do CPF), guardado cifrado
   e nunca devolvido: a resposta só traz `cpf_available`. Ele também não entra na auditoria.
-- `secondary_phone` entra como telefone extra da ficha. O telefone principal não muda por esta ferramenta.
-- A auditoria (`contact.updated_by_agent`) leva o valor anterior de cada campo. Campo personalizado sai pelo nome.
+- `secondary_phone` entra como telefone extra da ficha. O telefone principal não muda por esta ferramenta. Quando o
+  número não entra, a recusa é uma só (`telefone_nao_gravado`), seja porque ele já é de outro contato, seja por outra
+  falha: a ferramenta não diz se um número existe em outro cadastro.
+- A auditoria (`contact.updated_by_agent`) leva o agente como autor e só os nomes dos campos preenchidos, para todos os
+  tipos de campo. Nenhum valor entra: o novo é dado de titular (a auditoria não é alcançada pela anonimização) e o
+  anterior era vazio, porque a ferramenta só preenche o que não tinha valor. Desfazer é limpar o campo.
 - É a irmã que grava de `crm_propose_contact_field`, que continua existindo e só propõe.
 - Pacote: Não perder o cliente.
 

@@ -15430,6 +15430,10 @@ export type Database = {
         Args: { p_contact: string; p_org: string };
         Returns: number;
       };
+      fn_contato_preencher_campos_personalizados: {
+        Args: { p_campos: Json; p_contato: string; p_org: string };
+        Returns: Json;
+      };
       fn_conversa_remove_trechos_do_rag: {
         Args: { p_conversation: string; p_org: string };
         Returns: number;

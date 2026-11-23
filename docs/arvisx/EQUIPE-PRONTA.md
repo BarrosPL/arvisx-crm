@@ -188,9 +188,24 @@ nota, tarefa e os dados do contato. Os dados do contato entram por
 `crm_update_contact` (nome, e-mail, outro telefone, documento, endereço, data
 de nascimento e campos personalizados), que substitui
 `crm_propose_contact_field` nos quatro papéis. Toda escrita fica na auditoria
-com o agente como autor; a de contato leva o valor anterior de cada campo
-(`contact.updated_by_agent`). O documento (CPF) é validado pelo dígito
+com o agente como autor. O documento (CPF) é validado pelo dígito
 verificador, guardado cifrado e nunca devolvido.
+
+**No cadastro do contato o agente só preenche o que está vazio** (decisão da
+revisão de 20/11, item 2.3). Nome, e-mail, endereço, data de nascimento,
+documento ou campo personalizado que já tem valor não é trocado pelo texto que
+o cliente mandou na conversa: a ferramenta devolve o nome do campo
+(`campos_ja_preenchidos`) e o agente deixa uma tarefa para a equipe conferir.
+Por isso a auditoria da escrita (`contact.updated_by_agent`) leva só os nomes
+dos campos, sem valor nenhum: o anterior era vazio, e desfazer é limpar o
+campo. A primeira versão sobrescrevia e guardava o valor anterior em claro na
+auditoria (que a anonimização não alcança), sem valor anterior para os campos
+personalizados. Os campos personalizados são mesclados no banco (migration
+9820), para duas escritas simultâneas não se apagarem. **Para o dono decidir:**
+se a empresa quiser que o agente também CORRIJA dado existente (o texto do
+papel de Recuperação fala em "corrigir"), isso pede uma confirmação de uma
+pessoa (`crm_propose_contact_field`) ou uma decisão explícita de voltar a
+sobrescrever.
 
 ### Envio de proposta
 
