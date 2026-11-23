@@ -126,6 +126,13 @@ export type DesfechoDaNota =
  * `chaveDeIdempotencia`: a mesma chave no mesmo negócio devolve a nota já
  * gravada em vez de gravar outra — o agente externo que repete a chamada depois
  * de um timeout não duplica o recado.
+ *
+ * Quem garante é o BANCO, não a leitura abaixo: o índice único
+ * `uq_crm_lead_activities_nota_idempotencia` (migration 9818) recusa a segunda
+ * linha com a mesma chave no mesmo negócio. A leitura é só o atalho do caso
+ * comum; duas chamadas simultâneas passam as duas por ela, e a que perde a
+ * corrida recebe `23505` e devolve a nota que a outra gravou (revisão de 20/11,
+ * item 2.13).
  */
 export async function registrarNotaDoNegocio(entrada: {
   supabase: SupabaseClient;
@@ -141,17 +148,20 @@ export async function registrarNotaDoNegocio(entrada: {
   const destinatario = entrada.destinatario?.trim() || null;
   const chave = entrada.chaveDeIdempotencia ?? null;
 
-  if (chave) {
-    const { data: anterior, error } = await supabase
+  const jaGravada = async (chaveDaNota: string) =>
+    supabase
       .from("crm_lead_activities")
       .select(COLUNAS)
       .eq("organization_id", organizationId)
       .eq("lead_id", lead.id)
       .eq("type", "note")
       .eq("source_module", MODULO_DAS_NOTAS)
-      .contains("payload", { idempotency_key: chave })
+      .contains("payload", { idempotency_key: chaveDaNota })
       .limit(1)
       .maybeSingle();
+
+  if (chave) {
+    const { data: anterior, error } = await jaGravada(chave);
     if (error) return { ok: false, erro: error.message };
     if (anterior) return { ok: true, nota: paraNota(anterior as LinhaDaNota), repetida: true };
   }
@@ -179,6 +189,14 @@ export async function registrarNotaDoNegocio(entrada: {
     .insert(linha)
     .select(COLUNAS)
     .single();
+  if (error && (error as { code?: string }).code === "23505" && chave) {
+    // Perdeu a corrida para outra chamada com a mesma chave: a nota existe.
+    const { data: vencedora, error: erroDaLeitura } = await jaGravada(chave);
+    if (erroDaLeitura || !vencedora) {
+      return { ok: false, erro: erroDaLeitura?.message ?? error.message };
+    }
+    return { ok: true, nota: paraNota(vencedora as LinhaDaNota), repetida: true };
+  }
   if (error || !data) return { ok: false, erro: error?.message ?? "a nota não foi gravada" };
 
   const nota = paraNota(data as LinhaDaNota);

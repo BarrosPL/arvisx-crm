@@ -119,7 +119,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     return fail("validation_failed", t("Arquivo não informado."), 422, { requestId });
   }
 
-  const recusa = recusaDoArquivo({ tipo: file.type, tamanho: file.size });
+  const recusa = recusaDoArquivo({ tipo: file.type, tamanho: file.size, nome: file.name });
   if (recusa === "grande_demais") {
     return fail("payload_too_large", t("O arquivo excede o limite de 50 MB."), 413, { requestId });
   }
@@ -128,6 +128,14 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
       requestId,
       details: { mime: file.type },
     });
+  }
+  if (recusa === "extensao_nao_aceita") {
+    return fail(
+      "unsupported_media_type",
+      t("A extensão do arquivo não é aceita. Envie .pdf, .png, .jpg, .jpeg ou .webp."),
+      415,
+      { requestId },
+    );
   }
 
   const supabase = await createClient();

@@ -33,10 +33,12 @@ import {
   BUCKET_DAS_MIDIAS_DE_CONVERSA,
   BUCKET_DOS_ANEXOS,
   COLUNAS_DO_ANEXO_COM_CAMPO,
+  TAMANHO_MAXIMO_DO_ANEXO,
   VALIDADE_DO_LINK_DO_ANEXO_S,
   camposDeArquivoDoNegocio,
   gravarAnexoDoNegocio,
   listarAnexosDoNegocio,
+  nomeDoArquivoParaAuditoria,
   objetoDaUrlAssinada,
   recusaDoArquivo,
   type CampoDeArquivo,
@@ -281,6 +283,45 @@ const ARQUIVO_GRANDE_DEMAIS = recusa(
   "o arquivo excede o limite de 50 MB dos anexos do negócio.",
 );
 
+const EXTENSAO_NAO_ACEITA = recusa(
+  "extensao_de_arquivo_nao_aceita",
+  "o nome do arquivo tem uma extensão que o negócio não aceita. Só PDF e imagem: .pdf, .png, " +
+    ".jpg, .jpeg, .jfif ou .webp. Se o arquivo é mesmo um desses, informe `file_name` com a extensão certa.",
+);
+
+const ARQUIVO_INDISPONIVEL = recusa(
+  "arquivo_indisponivel",
+  "não consegui ler o arquivo no armazenamento do CRM (ele pode ter sido removido).",
+);
+
+/**
+ * O tamanho e o tipo do objeto, perguntados ao Storage SEM baixar.
+ *
+ * O download do cliente do Storage traz o arquivo inteiro para a memória antes
+ * de devolver qualquer coisa. Para a mídia de uma mensagem o tamanho costuma
+ * estar na linha dela; para a URL assinada não há linha — e sem esta pergunta o
+ * limite de 50 MB só era conferido DEPOIS de o arquivo inteiro estar em memória
+ * (revisão de 20/11, item 2.15). `null` = o Storage não respondeu: quem chama
+ * recusa, não baixa às cegas.
+ */
+async function medidasNoStorage(
+  ctx: McpContext,
+  bucket: string,
+  caminho: string,
+): Promise<{ tamanho: number; tipo: string | null } | null> {
+  const { data, error } = await ctx.supabase.storage.from(bucket).info(caminho);
+  if (error || !data) return null;
+  const lido = data as {
+    size?: number | string | null;
+    contentType?: string | null;
+    metadata?: { size?: number | string | null; mimetype?: string | null } | null;
+  };
+  const tamanho = Number(lido.size ?? lido.metadata?.size);
+  if (!Number.isFinite(tamanho) || tamanho < 0) return null;
+  const tipo = lido.contentType ?? lido.metadata?.mimetype ?? null;
+  return { tamanho, tipo: typeof tipo === "string" && tipo ? tipo : null };
+}
+
 function tipoNaoAceito(tipo: string): RecusaParaOAgente {
   return recusa(
     "tipo_de_arquivo_nao_aceito",
@@ -299,9 +340,15 @@ export const crmAttachToLead: McpToolDefinition<typeof anexoInputShape> = {
   category: "write",
   requiresRole: "agent",
   requiresScope: "mcp:write",
-  // A URL assinada carrega um token de acesso ao arquivo: fora da auditoria.
-  redigirParaAuditoria: (args) =>
-    typeof args.signed_url === "string" ? { ...args, signed_url: "[redacted]" } : args,
+  // A URL assinada carrega um token de acesso ao arquivo: fora da auditoria. O
+  // nome do arquivo é texto do cliente: vai só o tamanho e a extensão.
+  redigirParaAuditoria: (args) => ({
+    ...args,
+    ...(typeof args.signed_url === "string" ? { signed_url: "[redacted]" } : {}),
+    ...(typeof args.file_name === "string"
+      ? { file_name: nomeDoArquivoParaAuditoria(args.file_name) }
+      : {}),
+  }),
   handler: async (input, ctx) =>
     comChaveDoPedido(ctx, "crm_attach_to_lead", input, async () => {
       if (Boolean(input.message_id) === Boolean(input.signed_url)) {
@@ -335,27 +382,39 @@ export const crmAttachToLead: McpToolDefinition<typeof anexoInputShape> = {
       if (!localizada.ok) return localizada.recusa;
       const { origem } = localizada;
 
-      // O que já se sabe sem baixar é conferido antes de baixar.
-      if (origem.tamanho !== null && origem.tipo !== null) {
-        const antes = recusaDoArquivo({ tipo: origem.tipo, tamanho: origem.tamanho });
+      const nome = input.file_name ?? origem.nome ?? "arquivo";
+
+      // NADA é baixado antes de se saber o tamanho. O que a linha da mensagem
+      // não diz é perguntado ao Storage (só os metadados); sem resposta, recusa.
+      let tamanhoSabido = origem.tamanho;
+      let tipoSabido = origem.tipo;
+      if (tamanhoSabido === null || tipoSabido === null) {
+        const medidas = await medidasNoStorage(ctx, origem.bucket, origem.caminho);
+        if (!medidas) return ARQUIVO_INDISPONIVEL;
+        tamanhoSabido ??= medidas.tamanho;
+        tipoSabido ??= medidas.tipo;
+      }
+      if (tamanhoSabido > TAMANHO_MAXIMO_DO_ANEXO) return ARQUIVO_GRANDE_DEMAIS;
+      if (tipoSabido !== null) {
+        const antes = recusaDoArquivo({ tipo: tipoSabido, tamanho: tamanhoSabido, nome });
         if (antes === "grande_demais") return ARQUIVO_GRANDE_DEMAIS;
-        if (antes === "tipo_nao_aceito") return tipoNaoAceito(origem.tipo);
+        if (antes === "tipo_nao_aceito") return tipoNaoAceito(tipoSabido);
+        if (antes === "extensao_nao_aceita") return EXTENSAO_NAO_ACEITA;
       }
 
       const baixado = await ctx.supabase.storage.from(origem.bucket).download(origem.caminho);
-      if (baixado.error || !baixado.data) {
-        return recusa(
-          "arquivo_indisponivel",
-          "não consegui ler o arquivo no armazenamento do CRM (ele pode ter sido removido).",
-        );
-      }
+      if (baixado.error || !baixado.data) return ARQUIVO_INDISPONIVEL;
+      // O tamanho do que chegou, antes de copiar para outro buffer: o número
+      // dito antes (pela linha da mensagem ou pelos metadados) pode estar errado.
+      if (baixado.data.size > TAMANHO_MAXIMO_DO_ANEXO) return ARQUIVO_GRANDE_DEMAIS;
       const bytes = new Uint8Array(await baixado.data.arrayBuffer());
-      const tipo = (origem.tipo ?? baixado.data.type ?? "").split(";")[0]!.trim().toLowerCase();
+      const tipo = (tipoSabido ?? baixado.data.type ?? "").split(";")[0]!.trim().toLowerCase();
 
       // A régua da tela, sobre o arquivo de verdade: o tamanho é o dos bytes lidos.
-      const veredito = recusaDoArquivo({ tipo, tamanho: bytes.byteLength });
+      const veredito = recusaDoArquivo({ tipo, tamanho: bytes.byteLength, nome });
       if (veredito === "grande_demais") return ARQUIVO_GRANDE_DEMAIS;
       if (veredito === "tipo_nao_aceito") return tipoNaoAceito(tipo);
+      if (veredito === "extensao_nao_aceita") return EXTENSAO_NAO_ACEITA;
 
       const gravacao = await gravarAnexoDoNegocio({
         supabase: ctx.supabase,
@@ -364,7 +423,7 @@ export const crmAttachToLead: McpToolDefinition<typeof anexoInputShape> = {
         leadId: negocio.lead.id,
         campo: escolha.campo,
         arquivo: {
-          nome: input.file_name ?? origem.nome ?? "arquivo",
+          nome,
           tipo,
           tamanho: bytes.byteLength,
           bytes,
@@ -394,5 +453,22 @@ export const crmAttachToLead: McpToolDefinition<typeof anexoInputShape> = {
         lead_id: negocio.lead.id,
         next_action: "Arquivo anexado ao negócio; ele aparece no card e na linha do tempo.",
       };
+    },
+    // Sem `Idempotency-Key`, o mesmo arquivo anexado ao mesmo campo do mesmo
+    // negócio em poucos minutos é repetição. A origem entra pelo OBJETO, não
+    // pela URL: a mesma URL reassinada traz outro token e é o mesmo arquivo.
+    {
+      derivarDe: {
+        lead_id: input.lead_id,
+        origem: input.message_id
+          ? { message_id: input.message_id }
+          : (objetoDaUrlAssinada(
+              input.signed_url ?? "",
+              process.env.NEXT_PUBLIC_SUPABASE_URL,
+              ctx.organizationId,
+            ) ?? { url: input.signed_url ?? null }),
+        field_key: input.field_key ?? null,
+        file_name: input.file_name ?? null,
+      },
     }),
 };
