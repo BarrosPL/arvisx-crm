@@ -147,21 +147,49 @@ function cadeiaDeImports(arquivo: string, vistos = new Set<string>()): string[] 
   if (vistos.has(arquivo)) return [];
   vistos.add(arquivo);
   const achados: string[] = [];
+  for (const aresta of arestasDe(arquivo)) {
+    if (aresta.proibido !== undefined) achados.push(aresta.proibido);
+    else achados.push(...cadeiaDeImports(aresta.local, vistos));
+  }
+  return achados;
+}
+
+/** Um import de um arquivo: ou é o achado proibido, ou é o arquivo local para onde ele leva. */
+type Aresta = { proibido: string; local?: undefined } | { proibido?: undefined; local: string };
+
+/**
+ * Os imports de UM arquivo, lidos e resolvidos uma vez só.
+ *
+ * A travessia continua inteira e por tela — cada tela percorre a própria
+ * cadeia até o fim, com o próprio `vistos`. O que este cache guarda é só o que
+ * não depende de quem pergunta: o que um arquivo importa e para onde cada
+ * import resolve. Sem ele, cada tela relia do disco tudo o que alcançava:
+ * medidas 532 telas somando 58.245 leituras e 303.453 `statSync` sobre 2.268
+ * arquivos distintos, e o caso estourou os 15 s no CI quando o grafo cresceu
+ * 12%. Com ele, cada arquivo é lido uma vez e a soma das travessias é memória.
+ */
+const ARESTAS = new Map<string, Aresta[]>();
+
+function arestasDe(arquivo: string): Aresta[] {
+  const prontas = ARESTAS.get(arquivo);
+  if (prontas) return prontas;
+  const arestas: Aresta[] = [];
+  ARESTAS.set(arquivo, arestas);
   let fonte: string;
   try {
     fonte = readFileSync(arquivo, "utf8");
   } catch {
-    return [];
+    return arestas;
   }
   for (const especificador of importesDe(fonte)) {
     if (PROIBIDOS.test(especificador)) {
-      achados.push(`${relativoEmBarraNormal(RAIZ, arquivo)} → ${especificador}`);
+      arestas.push({ proibido: `${relativoEmBarraNormal(RAIZ, arquivo)} → ${especificador}` });
       continue;
     }
     const local = resolverLocal(especificador, arquivo);
-    if (local) achados.push(...cadeiaDeImports(local, vistos));
+    if (local) arestas.push({ local });
   }
-  return achados;
+  return arestas;
 }
 
 describe("tela alcançável não come dado de mentira", () => {
