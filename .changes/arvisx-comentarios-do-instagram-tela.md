@@ -11,8 +11,9 @@ o estado dos comentários (Desligado, Registrando ou Ativo) e deixa o
 administrador trocar o modo. Ir para Ativo pede confirmação, porque a partir
 dali as respostas são publicadas de verdade. Quando a conexão não tem a
 permissão de comentários, o cartão avisa e oferece o botão "Reautorizar para
-comentários": ele refaz o login na Meta, atualiza a conexão sem apagá-la e não
-muda o modo.
+comentários": ele abre um login próprio na Meta, o único que pede as
+permissões de comentários, atualiza a conexão sem apagá-la e não muda o modo.
+O botão Conectar continua pedindo só as permissões de mensagem.
 
 A tela de Comentários fica dentro do Atendimento, sem item novo no menu.
 Gerentes e administradores chegam nela pelo atalho "Comentários do Instagram"

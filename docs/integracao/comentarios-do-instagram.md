@@ -109,9 +109,9 @@ A volta é a mesma do login normal (`concluir`, depois `conectar` na mesma
 página). Os dois logins usam `auth_type=rerequest`, então quem negou uma
 permissão antes é perguntado de novo. O que fica gravado na conexão é tudo o
 que a pessoa já concedeu ao app (a Meta devolve o conjunto inteiro), então
-reconectar depois pelo login normal não tira as de comentários. Enquanto não
-há tela, a reautorização é feita por esta chamada; o botão "Reautorizar para
-comentários" vem com a tela e faz exatamente ela.
+reconectar depois pelo login normal não tira as de comentários. Na tela, é o
+botão "Reautorizar para comentários" do cartão do Instagram que faz esta
+chamada (seção 15); o botão "Conectar" faz a do login normal.
 
 Decisão registrada (revisão de 20/11/2026, item 2.20): enquanto o dono do
 produto não disser o contrário, vale o login em duas fases.
@@ -489,9 +489,13 @@ O cartão do Messenger não tem nada disto: comentários só existem no Instagra
 
 ### Reautorizar para comentários
 
-É o mesmo login do Facebook, refeito (**CONFIRMADO** por teste):
+É um login próprio do Facebook (**CONFIRMADO** por teste), o único que pede
+as permissões de comentários; o "Conectar" comum pede só as de mensagem
+(login em duas fases, seção 3):
 
-1. o botão leva à Meta, que pergunta de novo o que foi negado
+1. o botão pede ao servidor o login de reautorização
+   (`iniciar` com `para_comentarios: true`) e leva à Meta, que pede as
+   permissões de comentários e pergunta de novo o que foi negado
    (`auth_type=rerequest`);
 2. na volta, a página daquela conexão já vem marcada, só com as redes que a
    empresa já tinha naquela página — reautorizar o Instagram não cria uma

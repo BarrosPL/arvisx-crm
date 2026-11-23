@@ -213,11 +213,20 @@ export function ConexaoDiretaMeta({ emHomologacao = false }: { emHomologacao?: b
       .finally(() => setOcupado(null));
   }, [metaEstado, metaCode, metaErro, t]);
 
-  async function iniciar() {
+  /**
+   * Abre o login da Meta. `paraComentarios` é o login de REAUTORIZAÇÃO: o único
+   * que pede as permissões de comentários. O Conectar comum nunca as pede — se
+   * a Meta ainda não as liberou para o app, pedi-las derrubaria o login de quem
+   * só quer mensagens.
+   */
+  async function iniciar(paraComentarios = false) {
     setOcupado("iniciar");
     setErro(null);
     try {
-      const r = await apiClient.post<{ data: { url: string } }>("/api/v1/channels/meta-social", { acao: "iniciar" });
+      const r = await apiClient.post<{ data: { url: string } }>(
+        "/api/v1/channels/meta-social",
+        paraComentarios ? { acao: "iniciar", para_comentarios: true } : { acao: "iniciar" },
+      );
       window.location.assign(r.data.url);
     } catch (e) {
       setErro(e instanceof Error ? e.message : t("Não foi possível abrir a Meta."));
@@ -226,16 +235,17 @@ export function ConexaoDiretaMeta({ emHomologacao = false }: { emHomologacao?: b
   }
 
   /**
-   * Refaz o login para a conexão ganhar as permissões de comentários. É o mesmo
-   * caminho do Conectar: a conexão existente é atualizada (não apagada) e o
-   * modo dos comentários fica como estava.
+   * Refaz o login para a conexão ganhar as permissões de comentários. É um
+   * login PRÓPRIO (pede as permissões de comentários, que o Conectar comum não
+   * pede), com a mesma volta do Conectar: a conexão existente é atualizada (não
+   * apagada) e o modo dos comentários fica como estava.
    */
   async function reautorizar(conexao: Conexao) {
     guardarReautorizacao({
       conta: conexao.conta,
       contasConectadas: (estado?.conexoes ?? []).map((c) => c.conta),
     });
-    await iniciar();
+    await iniciar(true);
   }
 
   async function mudarModo(conexao: Conexao, modo: ModoDeComentarios) {

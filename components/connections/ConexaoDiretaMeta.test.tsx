@@ -55,7 +55,9 @@ it("pronto: Conectar pede a URL do login ao servidor", async () => {
   await vi.waitFor(() => expect(botao).toBeEnabled());
   fireEvent.click(botao);
   await screen.findByText("falhou de propósito");
+  // O Conectar comum NÃO pede as permissões de comentários (item 2.20).
   expect(h.post).toHaveBeenCalledWith("/api/v1/channels/meta-social", { acao: "iniciar" });
+  expect(h.post).not.toHaveBeenCalledWith("/api/v1/channels/meta-social", expect.objectContaining({ para_comentarios: true }));
 });
 
 it("volta do login: conclui uma vez, mostra as páginas e conecta a escolhida", async () => {
@@ -152,8 +154,10 @@ it("sem a permissão: avisa e oferece Reautorizar, que refaz o login sem descone
   fireEvent.click(screen.getByTestId("reautorizar-para-comentarios"));
   await screen.findByText("falhou de propósito");
   // O único pedido é o do login: nada de desconectar, nada de trocar o modo.
+  // E é o login de REAUTORIZAÇÃO (revisão de 20/11, item 2.20): só ele pede as
+  // permissões de comentários.
   expect(h.post).toHaveBeenCalledTimes(1);
-  expect(h.post).toHaveBeenCalledWith("/api/v1/channels/meta-social", { acao: "iniciar" });
+  expect(h.post).toHaveBeenCalledWith("/api/v1/channels/meta-social", { acao: "iniciar", para_comentarios: true });
   expect(JSON.parse(window.sessionStorage.getItem("conexao-direta-reautorizar") ?? "null")).toEqual({
     conta: "178",
     contasConectadas: ["178", "111"],
