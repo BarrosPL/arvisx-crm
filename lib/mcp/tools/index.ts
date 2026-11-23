@@ -102,11 +102,7 @@ import { crmAddLeadNote, crmListLeadNotes } from "./notas-do-negocio";
 import { crmAttachToLead, crmListLeadAttachments } from "./anexos-do-negocio";
 import { crmSetNextAction } from "./proxima-acao";
 import { crmListLeadEvents } from "./eventos-do-negocio";
-import {
-  crmFindDuplicateContacts,
-  crmMergeContacts,
-  crmUndoContactMerge,
-} from "./contatos-duplicados";
+import { crmFindDuplicateContacts } from "./contatos-duplicados";
 
 // Cast via `unknown` porque McpToolDefinition<TInput> nao e covariante
 // em TInput (handler usa TInput em posicao contravariante). Coletar
@@ -213,9 +209,6 @@ export const allTools: ReadonlyArray<McpToolDefinition> = [
   crmAddLeadNote,
   crmAttachToLead,
   crmSetNextAction,
-  // write — contatos duplicados (ajustes, AJ-3): papel `manager`, `apenasHumano`
-  crmMergeContacts,
-  crmUndoContactMerge,
   // handoff (special)
   crmRequestHumanHandoff,
 ] as unknown as ReadonlyArray<McpToolDefinition>;
