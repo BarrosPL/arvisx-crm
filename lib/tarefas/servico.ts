@@ -111,11 +111,14 @@ export type RecusaDaTarefa =
   | "vinculo_inexistente"
   | "demanda_encerrada"
   | "nao_encontrada"
+  /** Só com `apenasSeAberta`: a tarefa existe, mas já não está aberta. */
+  | "ja_fechada"
   | "falha";
 
 export type DesfechoDaTarefa =
   | { ok: true; tarefa: Tarefa; fechouAgora: boolean }
-  | { ok: false; recusa: RecusaDaTarefa };
+  /** `situacao`: só na recusa `ja_fechada` — em que estado a tarefa está. */
+  | { ok: false; recusa: RecusaDaTarefa; situacao?: string };
 
 /** Quem responde pela escrita no `api_audit_log`. */
 export interface AuditoriaDaTarefa {
@@ -237,7 +240,24 @@ export async function criarTarefa(
 }
 
 export async function editarTarefa(
-  portas: PortasDaTarefa & { id: string; mudancas: MudancasDaTarefa },
+  portas: PortasDaTarefa & {
+    id: string;
+    mudancas: MudancasDaTarefa;
+    /**
+     * A gravação só vale se a tarefa AINDA estiver aberta — a condição vai no
+     * próprio UPDATE (`status in (abertas)`), não numa leitura anterior
+     * (revisão de 20/11, item 2.13).
+     *
+     * É o que a conclusão pelo agente precisa: com "ler, depois gravar", duas
+     * conclusões simultâneas passavam as duas pela leitura, e a segunda
+     * sobrescrevia o `result` da primeira, auditava de novo e punha uma
+     * segunda linha "tarefa concluída" na timeline; e uma conclusão que
+     * chegasse junto com um cancelamento concluía por cima dele. Com a
+     * condição no UPDATE o banco deixa passar uma só; a outra recebe
+     * `ja_fechada` com a situação em que a tarefa ficou, sem gravar nada.
+     */
+    apenasSeAberta?: boolean;
+  },
 ): Promise<DesfechoDaTarefa> {
   const { supabase, db, organizationId, id, mudancas } = portas;
 
@@ -246,23 +266,44 @@ export async function editarTarefa(
 
   // A situação ANTES da edição decide se esta é a vez em que a tarefa fechou.
   // Sem ler antes, marcar "concluída" duas vezes emitiria duas linhas na
-  // timeline do negócio — e a segunda seria mentira.
-  const { data: antes } = await supabase
-    .from("crm_tasks")
-    .select("status")
-    .eq("id", id)
-    .eq("organization_id", organizationId)
-    .maybeSingle();
+  // timeline do negócio — e a segunda seria mentira. Com `apenasSeAberta` a
+  // leitura é dispensada: quem responde é a condição do UPDATE.
+  const antes = portas.apenasSeAberta
+    ? null
+    : (
+        await supabase
+          .from("crm_tasks")
+          .select("status")
+          .eq("id", id)
+          .eq("organization_id", organizationId)
+          .maybeSingle()
+      ).data;
 
-  const { data, error } = await supabase
+  let atualizacao = supabase
     .from("crm_tasks")
     .update(mudancas)
     .eq("id", id)
-    .eq("organization_id", organizationId)
+    .eq("organization_id", organizationId);
+  if (portas.apenasSeAberta) {
+    atualizacao = atualizacao.in("status", [...SITUACOES_ABERTAS_DA_TAREFA]);
+  }
+  const { data, error } = await atualizacao
     .select(portas.colunas ?? COLUNAS_DA_TAREFA)
     .single();
 
   if (error) {
+    if (error.code === "PGRST116" && portas.apenasSeAberta) {
+      // Nenhuma linha casou: ou a tarefa não existe, ou já não está aberta.
+      const { data: atual } = await supabase
+        .from("crm_tasks")
+        .select("status")
+        .eq("id", id)
+        .eq("organization_id", organizationId)
+        .maybeSingle();
+      const situacao = (atual as { status?: string } | null)?.status;
+      if (situacao) return { ok: false, recusa: "ja_fechada", situacao };
+      return { ok: false, recusa: "nao_encontrada" };
+    }
     if (error.code === "PGRST116") return { ok: false, recusa: "nao_encontrada" };
     if (error.code === "23503") return { ok: false, recusa: "vinculo_inexistente" };
     return { ok: false, recusa: "falha" };
@@ -279,8 +320,11 @@ export async function editarTarefa(
     metadata: { campos: Object.keys(mudancas), ...portas.auditoria.metadata },
   });
 
+  // Com `apenasSeAberta` a linha só foi gravada porque estava aberta: se saiu
+  // concluída, foi agora.
   const fechouAgora =
-    tarefa.status === "done" && (antes as { status?: string } | null)?.status !== "done";
+    tarefa.status === "done" &&
+    (portas.apenasSeAberta === true || (antes as { status?: string } | null)?.status !== "done");
   if (fechouAgora) {
     await registraAtividadeDaTarefa(db, {
       organizationId,
