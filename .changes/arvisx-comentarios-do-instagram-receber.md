@@ -16,6 +16,11 @@ mensagens sem reautorizar. Para usar, o administrador da empresa liga o modo da
 conexão (registrar ou real). Comentário não vira contato nem negócio; o que a
 própria conta escreve é ignorado; a mesma notificação repetida não duplica.
 
+O login da conexão continua pedindo só as permissões de mensagem. As duas
+permissões de comentários são pedidas num login separado, o de reautorização
+para comentários, para que o login de quem só usa mensagens não seja recusado
+enquanto a Meta não liberar essas permissões para o app.
+
 Nesta versão entra o recebimento. Responder ao comentário (em público e em
 privado) e a tela de comentários chegam nas versões seguintes; até lá a troca
 de modo é feita pela API.

@@ -24,10 +24,15 @@ Nada, até alguém ligar. **CONFIRMADO** por teste:
   comentários **desligados**: o comentário que chega é descartado, sem gravar;
 - conexão feita antes desta versão continua recebendo e respondendo mensagens
   sem reautorizar;
-- as duas permissões novas são pedidas no login, mas **não são obrigatórias**:
-  quem não as concede (ou conecta enquanto a Meta ainda não as liberou para o
-  app) conecta e atende mensagens normalmente; só os comentários ficam
-  indisponíveis.
+- o login normal **não pede** as duas permissões novas. O login é em duas
+  fases: conectar (ou reconectar) pede só as permissões de mensagem, as mesmas
+  de antes; as de comentários só são pedidas num login próprio, o de
+  **reautorização para comentários** (seção 3). Assim, se a Meta ainda não
+  liberou as permissões de comentários para o app, o login de quem só usa
+  mensagens não é recusado ("Invalid Scopes");
+- as duas permissões continuam **não obrigatórias**: quem não as concede na
+  reautorização segue conectado e atendendo mensagens; só os comentários
+  ficam indisponíveis.
 
 ## 2. O passo manual no painel da Meta (uma vez, para a instalação inteira)
 
@@ -80,10 +85,31 @@ devolve, em cada conexão do Instagram:
 "comentarios": { "modo": "off", "escopo_concedido": false, "disponivel": false }
 ```
 
-- `escopo_concedido`: a conexão tem as duas permissões. `false` também para
-  conexão feita antes desta versão — para liberar, a pessoa conecta de novo
-  (o botão "Reautorizar para comentários" vem com a tela);
+- `escopo_concedido`: a conexão tem as duas permissões. `false` para conexão
+  feita antes desta versão e para toda conexão feita pelo login normal — para
+  liberar, a pessoa faz a **reautorização para comentários**;
 - `disponivel`: é do Instagram **e** tem as permissões.
+
+### O login em duas fases
+
+O login normal (`POST /api/v1/channels/meta-social` com `{ "acao": "iniciar" }`)
+pede só as permissões de mensagem. A reautorização para comentários é um login
+próprio, o único que pede `instagram_manage_comments` e `pages_read_engagement`:
+
+```json
+{ "acao": "iniciar", "para_comentarios": true }
+```
+
+A volta é a mesma do login normal (`concluir`, depois `conectar` na mesma
+página). Os dois logins usam `auth_type=rerequest`, então quem negou uma
+permissão antes é perguntado de novo. O que fica gravado na conexão é tudo o
+que a pessoa já concedeu ao app (a Meta devolve o conjunto inteiro), então
+reconectar depois pelo login normal não tira as de comentários. Enquanto não
+há tela, a reautorização é feita por esta chamada; o botão "Reautorizar para
+comentários" vem com a tela e faz exatamente ela.
+
+Decisão registrada (revisão de 20/11/2026, item 2.20): enquanto o dono do
+produto não disser o contrário, vale o login em duas fases.
 
 ## 4. O modo por conexão
 
@@ -214,8 +240,9 @@ numa.
 ## 8. Como testar sem publicar nada
 
 1. Faça o passo 2 no painel da Meta.
-2. Conecte (ou reconecte) o Instagram aceitando todas as permissões e confira
-   `comentarios.disponivel: true` no `GET`.
+2. Faça a reautorização para comentários (`iniciar` com
+   `para_comentarios: true`), aceitando todas as permissões, conecte a mesma
+   página e confira `comentarios.disponivel: true` no `GET`.
 3. Ponha a conexão em `registrar`.
 4. Com outra conta (testador do app, enquanto o acesso for padrão), comente
    numa publicação. O webhook responde `comentario_registrado`; a linha aparece

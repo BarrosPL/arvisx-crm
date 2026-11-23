@@ -76,9 +76,13 @@ Código: `lib/channels/meta-social/` (login, webhook, envio, sessões, exclusão
 | `pages_read_engagement` (opcional para conectar) | exigida pela Meta, junto da anterior, para o webhook de comentários |
 | (opcional) **Human Agent** | responder até 7 dias depois da última mensagem do cliente; só depois de aprovada, ligar `META_HUMAN_AGENT_TAG=on` no `.env` |
 
-As duas de comentários são pedidas no login, mas quem não as concede conecta e
-atende mensagens do mesmo jeito: só os comentários ficam indisponíveis naquela
-conexão. Conexão feita antes delas continua funcionando sem reautorizar.
+As duas de comentários **não** são pedidas no login normal: só no login de
+reautorização para comentários, que é um login próprio (duas fases; ver
+`docs/integracao/comentarios-do-instagram.md`, seção 3). Assim o login de quem
+só usa mensagens não depende de a Meta já ter liberado as de comentários para
+o app. Quem não as concede atende mensagens do mesmo jeito: só os comentários
+ficam indisponíveis naquela conexão. Conexão feita antes delas continua
+funcionando sem reautorizar.
 
 Texto de uso (para cada permissão): "O Arvisx CRM é uma central de atendimento.
 A empresa cliente conecta a própria página e o Instagram profissional; as
