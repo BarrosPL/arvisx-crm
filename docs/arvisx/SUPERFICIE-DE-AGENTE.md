@@ -29,7 +29,17 @@ filtro de entrada).
 - **Num turno de atendimento**, o agente nativo só alcança o que é do cliente da conversa. Registro de outro
   cliente e registro inexistente recebem a mesma recusa (`fora_da_conversa`).
 - **Repetição segura.** O cabeçalho `Idempotency-Key` (UUID) da requisição MCP vale para `crm_create_task`,
-  `crm_add_lead_note` e `crm_attach_to_lead`: a mesma chave não grava duas vezes. Recusa não vira recibo.
+  `crm_add_lead_note` e `crm_attach_to_lead`: a mesma chave não grava duas vezes, por 24 horas. A mesma chave
+  com outros dados é recusada (`chave_de_idempotencia_em_conflito`). Recusa não vira recibo.
+- **Sem o cabeçalho, a chave sai do conteúdo.** Nessas três ferramentas, o mesmo pedido (mesmos argumentos), do
+  mesmo autor (token, agente e, no turno, o contato atendido), repetido em até **10 minutos**, devolve o resultado
+  do primeiro com `idempotent_replay: true` e `idempotent_replay_reason`, e nada é criado de novo. É o que cobre
+  o agente que repete depois de um timeout e o replay do mesmo turno do agente nativo, que não manda cabeçalho.
+  Passada a janela, o mesmo pedido cria de novo. Para criar dois iguais em seguida de propósito, mande uma
+  `Idempotency-Key` nova em cada pedido.
+- **A descrição da tarefa, o resultado, o texto da nota e o nome do arquivo não vão para a auditoria.** A linha
+  de auditoria guarda o tamanho (`[123 caracteres]`, e a extensão no caso do arquivo). O conteúdo fica no próprio
+  registro, onde vale a proteção do resto do cadastro.
 
 ## Tarefas
 
@@ -47,6 +57,13 @@ linha do tempo dele.
   da equipe da organização e não pode ser só leitor: é a mesma conferência da tela.
 - Datas são ISO-8601 com fuso (`2026-01-31T15:00:00-03:00`).
 - `kind` e `result` são colunas novas de `crm_tasks` (migration 9809). A tela de Tarefas ainda não as mostra.
+- `lead_id` e `contact_id` juntos têm de ser da mesma pessoa. Negócio de um contato com o `contact_id` de outro é
+  recusado (`negocio_de_outro_contato`); só com `lead_id`, a tarefa herda o contato do negócio.
+- `crm_complete_task` decide no banco: a gravação só acontece se a tarefa ainda estiver aberta. Duas conclusões
+  ao mesmo tempo gravam uma vez (um `result`, uma linha de auditoria, uma linha na linha do tempo), e a que chega
+  junto com um cancelamento não conclui por cima dele (`tarefa_cancelada`).
+- Num turno de atendimento, `crm_complete_task` e `crm_update_task` só alcançam tarefa do cliente da conversa (pelo
+  contato dela ou por um negócio dele); a conferência é feita na ponte do turno e de novo no handler.
 
 ## Notas do negócio
 
@@ -97,6 +114,12 @@ controla o orçamento.
   desta instalação, bucket do CRM e caminho que começa pela organização do token. O servidor nunca busca a URL.
 - Num turno de atendimento só vale `message_id`: a mensagem tem dono conferível (o cliente da conversa), a URL não.
 - Formatos e tamanho são os da tela: PDF, PNG, JPG e WebP, até 50 MB.
+- **O tamanho é conferido antes de baixar.** Para a mídia de uma mensagem ele vem da linha dela; para a URL
+  assinada (e quando a linha não diz) o CRM pergunta só os metadados ao Storage. Sem resposta, a chamada é
+  recusada (`arquivo_indisponivel`) e nada é baixado. O que chega é medido de novo antes de ser gravado.
+- **A extensão do nome também é conferida**, na ferramenta e na tela: só `.pdf`, `.png`, `.jpg`, `.jpeg`, `.jfif`
+  e `.webp`. `foo.exe` declarado como PDF é recusado (`extensao_de_arquivo_nao_aceita`). Nome sem extensão segue
+  aceito.
 - O anexo entra num campo de arquivo que o funil do negócio declara (`field_key`). Com um campo só, o argumento é
   dispensável; com mais de um, a recusa lista os campos; sem nenhum, não há onde anexar.
 
@@ -201,6 +224,13 @@ com roteador passa a vez a outro agente do mesmo roteador.
 - **Limites.** Uma passagem por rodada (o colega não devolve a vez no mesmo job). Se quem passou já tinha enviado
   mensagem naquele turno, o colega assume na mensagem seguinte. Colega pausado, em modo assistido ou sem versão
   publicada: a ferramenta recusa e nada muda.
+- **A passagem vale inteira ou não vale.** O colega é conferido antes de qualquer gravação; o resumo e a troca do
+  agente da conversa são gravados na mesma transação.
+- **Se o colega deixar de atender entre a passagem e a resposta** (foi pausado, mudou para o modo assistido ou perdeu
+  a versão publicada nesse intervalo), a passagem é desfeita: a conversa volta para quem passou, que responde ao
+  cliente na mesma rodada, avisado do que houve e sem poder passar a vez de novo. Ele responde com o que souber ou
+  chama a equipe (`request_human_handoff`). O cliente não fica sem resposta e a conversa não fica presa num agente
+  parado.
 - **Agente externo não tem colega no CRM.** A passagem equivalente é `crm_request_human_handoff` mais uma nota com
   `recipient`.
 

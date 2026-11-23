@@ -74554,6 +74554,40 @@ comment on column public.crm_tasks.result is
 
 notify pgrst, 'reload schema';
 
+-- ---- a nota do negócio: uma por chave de idempotência (migration 9818) ----
+-- Espelho idempotente da 9818 (o porquê está no cabeçalho da migration): índice
+-- único PARCIAL sobre a `Idempotency-Key` que `crm_add_lead_note` grava no
+-- `payload` da nota. Antes do índice, as notas que já estão em dobro são
+-- corrigidas sem apagar nada — a mais antiga fica com a chave, as demais passam
+-- a guardá-la em `idempotency_key_repetida` —, senão o `update.sh` de um banco
+-- com a duplicata pararia aqui. Na segunda passada não há o que corrigir.
+with repetidas as (
+  select id,
+         row_number() over (
+           partition by organization_id, lead_id, payload->>'idempotency_key'
+           order by performed_at, created_at, id
+         ) as ordem
+    from public.crm_lead_activities
+   where type = 'note'
+     and source_module = 'notas'
+     and payload->>'idempotency_key' is not null
+)
+update public.crm_lead_activities a
+   set payload = (a.payload - 'idempotency_key')
+                 || jsonb_build_object('idempotency_key_repetida', a.payload->>'idempotency_key')
+  from repetidas r
+ where r.id = a.id
+   and r.ordem > 1;
+
+create unique index if not exists uq_crm_lead_activities_nota_idempotencia
+  on public.crm_lead_activities (organization_id, lead_id, (payload->>'idempotency_key'))
+  where type = 'note'
+    and source_module = 'notas'
+    and payload->>'idempotency_key' is not null;
+
+comment on index public.uq_crm_lead_activities_nota_idempotencia is
+  'Uma nota do negócio por Idempotency-Key (migration 9818): decide no banco a corrida entre duas chamadas simultâneas de crm_add_lead_note. Parcial — só type=note, source_module=notas, com chave.';
+
 -- ---- empresa suspensa não grava pelo banco (migration 9806): a chamada ----
 -- As funções nasceram antes da VARREDURA anon; aqui, no fim, toda tabela já
 -- existe. A função só cria a policy que falta: na passada de atualização não

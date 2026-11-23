@@ -281,6 +281,11 @@ negócio como ele está agora.
 mensagem continua sendo só o começo do texto (até 280 caracteres) e continua
 com esse nome; quem precisa da mensagem inteira lê `message.text`.
 
+Dentro do CRM, as **condições e as ações da regra** leem a mensagem inteira:
+a condição "Texto da mensagem contém" casa uma palavra dita em qualquer ponto
+do texto, não só nos primeiros 280 caracteres. O corte ficou restrito ao
+`body_preview` que o corpo do webhook publica.
+
 - `note`: `id`, `lead_id`, `text`, `author` (`kind`, `id`, `name`),
   `recipient`, `created_at`.
 - `task`: `id`, `title`, `description`, `due_date`, `priority`, `status`,

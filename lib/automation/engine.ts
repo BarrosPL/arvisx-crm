@@ -204,6 +204,32 @@ export async function buildContext(admin: SupabaseClient, row: EventRow): Promis
         .maybeSingle();
       if (contact) context.contact = contact;
     }
+    // O TEXTO INTEIRO da mensagem (revisão de 20/11, item 2.10). O evento só
+    // traz `body_preview`, os primeiros 280 caracteres (`fn_emit_message_event`):
+    // a condição "Texto da mensagem contém" e o texto das ações liam a prévia, e
+    // a palavra dita depois do caractere 280 nunca disparava a regra. A linha é
+    // lida aqui, com o filtro de organização, como a entrega do webhook faz
+    // (`detalhe-do-evento.ts`).
+    //
+    // O contexto ganha `message.text` e, na CÓPIA do payload que as regras
+    // leem, `body_preview` passa a valer o texto inteiro: é o campo que as
+    // regras já salvas usam (`event.body_preview`), e trocá-lo de nome as
+    // deixaria todas sem casar. A linha do `event_log` não muda: `row.payload`
+    // segue com a prévia, que é o que o corpo do webhook publica com esse nome.
+    //
+    // Mensagem sem texto (mídia, ou já limpa pela anonimização) e falha de
+    // leitura: o contexto fica com a prévia que o evento trouxe.
+    const { data: mensagem } = await admin
+      .from("messages")
+      .select("id, body")
+      .eq("id", row.entity_id)
+      .eq("organization_id", org)
+      .maybeSingle();
+    const texto = (mensagem as { body?: unknown } | null)?.body;
+    if (typeof texto === "string" && texto !== "") {
+      context.message = { text: texto };
+      context.event = { ...row.payload, body_preview: texto };
+    }
   }
   return context;
 }
