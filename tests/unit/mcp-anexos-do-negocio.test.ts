@@ -446,3 +446,148 @@ describe("contrato das duas ferramentas", () => {
     ]);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Revisão de 20/11 — itens 2.15 e 2.13
+// ---------------------------------------------------------------------------
+
+describe("⭐ o anexo é medido ANTES de ser baixado (revisão 20/11, 2.15)", () => {
+  const assinada = (bucket: string, caminho: string) =>
+    `${BASE}/storage/v1/object/sign/${bucket}/${caminho}?token=abc`;
+  const CAMINHO_GIGANTE = `${ORG_A}/${CONVERSA_A}/gigante.pdf`;
+
+  it("URL assinada de um objeto acima de 50 MB: recusada pelos METADADOS, sem baixar um byte", async () => {
+    banco.arquivos.set(`whatsapp-media/${CAMINHO_GIGANTE}`, {
+      bytes: new Uint8Array(4),
+      tipo: "application/pdf",
+      tamanhoDeclarado: TAMANHO_MAXIMO_DO_ANEXO + 1,
+    });
+
+    const r = await anexar({ lead_id: NEGOCIO_A, signed_url: assinada("whatsapp-media", CAMINHO_GIGANTE) });
+
+    expect(r).toMatchObject({ permitido: false, motivo: "arquivo_grande_demais" });
+    expect(banco.infos).toEqual([`whatsapp-media/${CAMINHO_GIGANTE}`]);
+    expect(banco.downloads).toEqual([]);
+    expect(anexosDaA()).toHaveLength(0);
+  });
+
+  it("URL assinada de formato fora da lista: recusada pelos metadados, sem baixar", async () => {
+    const r = await anexar({ lead_id: NEGOCIO_A, signed_url: assinada("whatsapp-media", CAMINHO_AUDIO) });
+
+    expect(r).toMatchObject({ permitido: false, motivo: "tipo_de_arquivo_nao_aceito" });
+    expect(banco.downloads).toEqual([]);
+  });
+
+  it("o Storage não diz o tamanho (objeto removido): recusa, e NÃO baixa às cegas", async () => {
+    const r = await anexar({
+      lead_id: NEGOCIO_A,
+      signed_url: assinada("whatsapp-media", `${ORG_A}/${CONVERSA_A}/sumiu.pdf`),
+    });
+
+    expect(r).toMatchObject({ permitido: false, motivo: "arquivo_indisponivel" });
+    expect(banco.downloads).toEqual([]);
+  });
+
+  it("mensagem com tamanho e tipo na linha não precisa perguntar ao Storage", async () => {
+    await anexar({ lead_id: NEGOCIO_A, message_id: MSG_PDF });
+    expect(banco.infos).toEqual([]);
+    expect(banco.downloads).toEqual([`whatsapp-media/${CAMINHO_PDF}`]);
+  });
+
+  it("o tamanho dito antes estava errado: o que chegou é medido de novo, e o excesso não é gravado", async () => {
+    const falso = {
+      size: TAMANHO_MAXIMO_DO_ANEXO + 1,
+      type: "application/pdf",
+      arrayBuffer: () => {
+        throw new Error("o arquivo acima do limite não pode ser copiado para a memória");
+      },
+    };
+    const cliente = {
+      ...banco.cliente,
+      storage: {
+        from: (bucket: string) => ({
+          ...(banco.cliente.storage.from(bucket) as object),
+          download: () => Promise.resolve({ data: falso, error: null }),
+        }),
+      },
+    };
+
+    const r = await anexar({ lead_id: NEGOCIO_A, message_id: MSG_PDF }, ctx({ supabase: cliente as never }));
+
+    expect(r).toMatchObject({ permitido: false, motivo: "arquivo_grande_demais" });
+    expect(anexosDaA()).toHaveLength(0);
+  });
+});
+
+describe("⭐ extensão do nome: só as dos formatos aceitos (revisão 20/11, 2.15)", () => {
+  it("`foo.exe` declarado como PDF é recusado, sem baixar e sem gravar", async () => {
+    const r = await anexar({ lead_id: NEGOCIO_A, message_id: MSG_PDF, file_name: "foo.exe" });
+
+    expect(r).toMatchObject({ permitido: false, motivo: "extensao_de_arquivo_nao_aceita" });
+    expect(banco.downloads).toEqual([]);
+    expect(anexosDaA()).toHaveLength(0);
+    expect(gravadosNoBucketDosAnexos()).toEqual([]);
+  });
+
+  it("a régua é a mesma das duas portas: `recusaDoArquivo` com o nome", async () => {
+    const { recusaDoArquivo } = await import("@/lib/leads/anexos-do-negocio");
+    const pdf = { tipo: "application/pdf", tamanho: 10 };
+
+    expect(recusaDoArquivo({ ...pdf, nome: "foo.exe" })).toBe("extensao_nao_aceita");
+    expect(recusaDoArquivo({ ...pdf, nome: "contrato.pdf.js" })).toBe("extensao_nao_aceita");
+    expect(recusaDoArquivo({ ...pdf, nome: "Contrato.PDF" })).toBeNull();
+    expect(recusaDoArquivo({ tipo: "image/jpeg", tamanho: 10, nome: "foto.jfif" })).toBeNull();
+    // Nome sem extensão continua aceito (o objeto é guardado como .bin).
+    expect(recusaDoArquivo({ ...pdf, nome: "contrato" })).toBeNull();
+    // Sem nome, só tipo e tamanho — como era.
+    expect(recusaDoArquivo(pdf)).toBeNull();
+  });
+});
+
+describe("⭐ o nome do arquivo não vai cru para a auditoria (revisão 20/11, 2.15)", () => {
+  it("na linha `lead.attachment_uploaded` vai o tamanho e a extensão; o nome fica no anexo e na timeline", async () => {
+    await anexar({ lead_id: NEGOCIO_A, message_id: MSG_PDF });
+
+    const nome = "Comprovante de residência.pdf";
+    const chamada = h.audit.mock.calls.find(
+      (c) => (c[0] as { action?: string }).action === "lead.attachment_uploaded",
+    )![0] as { metadata: Record<string, unknown> };
+    expect(chamada.metadata.file_name).toBe(`[${nome.length} caracteres].pdf`);
+    expect(JSON.stringify(chamada)).not.toContain("Comprovante");
+    // O produto continua mostrando o nome a quem abre o negócio.
+    expect(anexosDaA()[0]).toMatchObject({ file_name: nome });
+  });
+
+  it("o argumento `file_name` da chamada também é redigido", () => {
+    const limpo = crmAttachToLead.redigirParaAuditoria!({ lead_id: "x", message_id: "m", file_name: "RG Maria Souza.pdf" });
+    expect(limpo).toEqual({ lead_id: "x", message_id: "m", file_name: "[18 caracteres].pdf" });
+  });
+});
+
+describe("⭐ sem Idempotency-Key, o mesmo arquivo não é anexado duas vezes em seguida (revisão 20/11, 2.13)", () => {
+  it("mesma mensagem, mesmo negócio, mesmo campo: um anexo só", async () => {
+    const primeira = await anexar({ lead_id: NEGOCIO_A, message_id: MSG_PDF });
+    const segunda = await anexar({ lead_id: NEGOCIO_A, message_id: MSG_PDF });
+
+    expect(anexosDaA()).toHaveLength(1);
+    expect((segunda.attachment as Resposta).id).toBe((primeira.attachment as Resposta).id);
+    expect(segunda.idempotent_replay).toBe(true);
+    expect(gravadosNoBucketDosAnexos()).toHaveLength(1);
+  });
+
+  it("a mesma URL REASSINADA (outro token) é o mesmo arquivo", async () => {
+    const url = (token: string) =>
+      `${BASE}/storage/v1/object/sign/whatsapp-media/${CAMINHO_PDF}?token=${token}`;
+    await anexar({ lead_id: NEGOCIO_A, signed_url: url("um") });
+    const segunda = await anexar({ lead_id: NEGOCIO_A, signed_url: url("outro") });
+
+    expect(segunda.idempotent_replay).toBe(true);
+    expect(anexosDaA()).toHaveLength(1);
+  });
+
+  it("outro campo de arquivo do mesmo negócio é outro anexo", async () => {
+    await anexar({ lead_id: NEGOCIO_DOIS_CAMPOS, message_id: MSG_PDF, field_key: "contrato" });
+    await anexar({ lead_id: NEGOCIO_DOIS_CAMPOS, message_id: MSG_PDF, field_key: "documento" });
+    expect(anexosDaA()).toHaveLength(2);
+  });
+});

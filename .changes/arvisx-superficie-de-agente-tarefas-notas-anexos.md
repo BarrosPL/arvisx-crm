@@ -35,3 +35,15 @@ A tarefa ganhou duas colunas opcionais (tipo e resultado, migration 9809), que
 o `update.sh` aplica sozinho. Em "O que o agente pode fazer", as tarefas ficam
 em "Organizar a operação", as anotações em "Passar para um humano" e os
 documentos e a próxima ação em "Não perder o cliente".
+
+Depois da revisão de 20/11: criar tarefa, anotar e anexar não duplicam mais
+quando o agente repete o pedido sem `Idempotency-Key` (o mesmo pedido, do mesmo
+autor, em até 10 minutos, devolve o primeiro resultado); a nota tem índice único
+por chave (migration 9818, que o `update.sh` aplica sozinho e que não apaga
+nota nenhuma); concluir tarefa não sobrescreve o resultado de uma conclusão
+simultânea nem conclui por cima de um cancelamento; tarefa com negócio de um
+contato e `contact_id` de outro é recusada; o anexo é medido antes de ser
+baixado e o nome do arquivo precisa ter extensão de PDF ou imagem — a mesma
+conferência passa a valer no envio pela tela, que recusa `foo.exe` mesmo
+declarado como PDF. A descrição da tarefa e o nome do arquivo deixam de ir para
+a auditoria, que guarda só o tamanho.
