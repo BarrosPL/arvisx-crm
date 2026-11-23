@@ -16,6 +16,7 @@
   "Sair do atendimento": "Leave conversation",
   "Não foi possível remover agora. Tente de novo.": "Could not remove now. Try again.",
   "O convite permite responder, sem mudar o responsável ou encerrar o atendimento.": "The invitation allows replies without changing the owner or closing the conversation.",
+  "Uma pessoa da equipe assumiu esta conversa. Só ela, ou um gerente pela tela, pode encerrá-la.": "A team member has taken over this conversation. Only they, or a manager on screen, can close it.",
   "Arquivo": "File",
   "Atualizado": "Updated",
   "Buscar por nome ou CNPJ": "Search by name or CNPJ",

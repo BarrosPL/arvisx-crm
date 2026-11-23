@@ -12513,6 +12513,7 @@ export const DICIONARIO: Traducoes = {
   "Sair do atendimento": { es: "Salir de la atención" },
   "Não foi possível remover agora. Tente de novo.": { es: "No se pudo quitar ahora. Inténtalo de nuevo." },
   "O convite permite responder, sem mudar o responsável ou encerrar o atendimento.": { es: "La invitación permite responder, sin cambiar al responsable ni cerrar la atención." },
+  "Uma pessoa da equipe assumiu esta conversa. Só ela, ou um gerente pela tela, pode encerrá-la.": { es: "Una persona del equipo asumió esta conversación. Solo ella, o un gerente desde la pantalla, puede cerrarla." },
   "Convidar para atender junto": { es: "Invitar a atender en conjunto" },
   "Convidando…": { es: "Invitando…" },
   "Carregando colegas…": { es: "Cargando colegas…" },

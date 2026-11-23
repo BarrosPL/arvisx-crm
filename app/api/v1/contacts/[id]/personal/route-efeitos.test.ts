@@ -50,6 +50,8 @@ let atividades: Array<Record<string, unknown>> = [];
 const chamadasRpc: Array<{ funcao: string; args: Record<string, unknown> }> = [];
 /** O que a RPC de remoção de trechos do RAG devolve no fake (#2394). */
 let trechosDeRagRemovidos = 0;
+/** Erro que a `fn_service_status` devolve no fake (o fechar que falha). */
+let erroAoFechar: { code: string; message: string } | null = null;
 
 const contexto = () => ({ params: Promise.resolve({ id: CONTATO }) });
 const req = () => new NextRequest(`http://localhost/api/v1/contacts/${CONTATO}/personal`, { method: "POST" });
@@ -136,7 +138,8 @@ beforeEach(() => {
   atividades = [];
   chamadasRpc.length = 0;
   trechosDeRagRemovidos = 0;
-  tabelas["contacts"] = [{ id: CONTATO, organization_id: ORG, status: "", display_name: "Mello", is_personal: false } as Linha];
+  erroAoFechar = null;
+  tabelas["contacts"] =[{ id: CONTATO, organization_id: ORG, status: "", display_name: "Mello", is_personal: false } as Linha];
   tabelas["crm_leads"] = [];
   tabelas["crm_pipelines"] = [];
   tabelas["followup_enrollments"] = [];
@@ -156,6 +159,7 @@ beforeEach(() => {
       chamadasRpc.push({ funcao, args });
       if (funcao === "fn_conversation_assign") return { data: [{ id: args["p_conversation_id"] }], error: null };
       if (funcao === "fn_contato_pessoal_remove_trechos_do_rag") return { data: trechosDeRagRemovidos, error: null };
+      if (funcao === "fn_service_status" && erroAoFechar) return { data: null, error: erroAoFechar };
       return { data: { id: args["p_conversation"] }, error: null };
     },
   } as unknown as ReturnType<typeof createAdminClient>);
@@ -298,6 +302,82 @@ describe("marcar: fecha conversas e tira do atendente", () => {
     expect(chamadasRpc.filter((c) => c.funcao !== "fn_contato_pessoal_remove_trechos_do_rag")).toHaveLength(0);
     expect(acoesDeAuditoria()).not.toContain("conversation.closed");
   });
+
+  // O fechar daqui passou a chamar a regra compartilhada
+  // (`lib/inbox/fechar-conversa.ts`). Os três casos abaixo prendem o que é só
+  // deste caminho e não pode mudar com a troca — passam nas duas versões da rota.
+  it("fecha SEM trava de revisão: a chamada ao banco não leva p_expected", async () => {
+    tabelas["conversations"] = [
+      { id: "c1", organization_id: ORG, contact_id: CONTATO, status: "claimed", assigned_to_user_id: "alguem" } as Linha,
+    ];
+    await POST(req(), contexto());
+    expect(chamadasRpc[0]).toEqual({
+      funcao: "fn_conversation_assign",
+      args: {
+        p_organization_id: ORG,
+        p_conversation_id: "c1",
+        p_to_user_id: null,
+        p_reason: "release",
+        p_enforce_expected: false,
+      },
+    });
+    // `toEqual`, e não `toMatchObject`: uma revisão a mais aqui faria o marcar
+    // falhar com 500 sempre que o soltar da linha de cima mexesse na conversa.
+    expect(chamadasRpc[1]).toEqual({
+      funcao: "fn_service_status",
+      args: { p_org: ORG, p_conversation: "c1", p_status: "closed" },
+    });
+  });
+
+  it("audita o soltar ANTES do fechar, cada um com a forma de sempre", async () => {
+    tabelas["conversations"] = [
+      { id: "c1", organization_id: ORG, contact_id: CONTATO, status: "open", assigned_to_user_id: null } as Linha,
+      { id: "c2", organization_id: ORG, contact_id: CONTATO, status: "ai_handling", assigned_to_user_id: null } as Linha,
+    ];
+    const resposta = await POST(req(), contexto());
+    const corpo = (await resposta.json()) as { data: { effects: { conversas_fechadas: number } } };
+    expect(corpo.data.effects.conversas_fechadas).toBe(2);
+
+    const daConversa = vi
+      .mocked(audit)
+      .mock.calls.map((c) => c[0])
+      .filter((e) => e?.resourceType === "conversation");
+    const linha = (action: string, id: string) => ({
+      action,
+      actorUserId: ORG, // o fake de `requireRole` usa o mesmo uuid para o usuário
+      organizationId: ORG,
+      resourceType: "conversation",
+      resourceId: id,
+      requestId: expect.any(String),
+      metadata: { via: "contato_pessoal" },
+    });
+    expect(daConversa).toEqual([
+      linha("conversation.released", "c1"),
+      linha("conversation.closed", "c1"),
+      linha("conversation.released", "c2"),
+      linha("conversation.closed", "c2"),
+    ]);
+  });
+
+  it.each(["PT409", "XX000"])(
+    "fechar que falha (%s): 500 genérico, sem auditar soltar nem fechar, e sem a prova do marcar",
+    async (code) => {
+      tabelas["conversations"] = [
+        { id: "c1", organization_id: ORG, contact_id: CONTATO, status: "claimed", assigned_to_user_id: "alguem" } as Linha,
+      ];
+      erroAoFechar = { code, message: "do banco" };
+      const resposta = await POST(req(), contexto());
+      expect(resposta.status).toBe(500);
+      const corpo = (await resposta.json()) as { error: { code: string; message: string } };
+      expect(corpo.error.code).toBe("internal_error");
+      expect(corpo.error.message).toBe("Não foi possível marcar o contato como pessoal.");
+      expect(acoesDeAuditoria()).not.toContain("conversation.released");
+      expect(acoesDeAuditoria()).not.toContain("conversation.closed");
+      expect(acoesDeAuditoria()).not.toContain("contact.marked_personal");
+      // Parou ali: o RAG não chegou a ser tocado.
+      expect(chamadasRpc.map((c) => c.funcao)).toEqual(["fn_conversation_assign", "fn_service_status"]);
+    },
+  );
 });
 
 describe("marcar: a prova fecha a conta", () => {
