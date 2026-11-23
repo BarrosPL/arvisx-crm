@@ -353,6 +353,7 @@ foi feito.
 | `escopo_ausente` | 422 | a conexão não tem a permissão de comentários; reautorizar resolve |
 | `contato_bloqueado` | 422 | a pessoa pediu para não receber mensagens, ou é contato pessoal |
 | `contato_anonimizado` | 409 | o contato do comentário foi anonimizado a pedido do titular |
+| `contato_em_criacao` | 409 | outra chamada está criando o contato deste comentário agora; repetir em instantes devolve o mesmo contato |
 | `rate_limited` | 429 | a Meta limitou as chamadas e não cedeu |
 | `upstream_unavailable` | 502 | a Meta recusou; a frase diz por quê |
 
@@ -389,7 +390,14 @@ privada não é enviada.
 comentário do mesmo autor reaproveita o contato. Com `pipeline_id`, o negócio
 reaproveita o card aberto do contato naquele funil (a mesma regra da captação
 por webhook); sem card aberto, é criado na etapa informada ou na primeira etapa
-ativa do funil.
+ativa do funil. A etapa informada tem de ser da empresa de quem chama e do
+funil informado (404 `not_found` ou 422 `stage_pipeline_mismatch`).
+
+Duas chamadas ao mesmo tempo para o **mesmo** comentário criam um contato só:
+a segunda espera a primeira e devolve o mesmo contato; se a primeira não
+terminar a tempo, a segunda recebe 409 `contato_em_criacao` e nada é criado.
+Dois comentários **diferentes** do mesmo autor, pedidos no mesmo instante,
+ainda podem gerar dois contatos (a junção de contatos resolve).
 
 ## 13. LGPD
 

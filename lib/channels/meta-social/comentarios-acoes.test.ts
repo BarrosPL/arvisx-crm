@@ -769,6 +769,52 @@ describe("criar contato", () => {
     expect(banco.tabelas.contacts).toHaveLength(1);
   });
 
+  // Revisão de 20/11, item 2.23: duas chamadas ao mesmo tempo criavam dois contatos.
+  it("⭐ duas chamadas ao mesmo tempo no MESMO comentário criam UM contato, e as duas devolvem o mesmo", async () => {
+    const db = montar("real");
+    const [a, b] = await Promise.all([
+      criarContatoDoComentario(db, ORG, COMENTARIO, {}, TOKEN),
+      criarContatoDoComentario(db, ORG, COMENTARIO, {}, TOKEN),
+    ]);
+    expect(banco.tabelas.contacts).toHaveLength(1);
+    expect(a.contact_id).toBe(b.contact_id);
+    expect(linha().contact_id).toBe(a.contact_id);
+    expect([a.contato_ja_existia, b.contato_ja_existia].sort()).toEqual([false, true]);
+  });
+
+  it("três chamadas ao mesmo tempo, com funil: um contato só, e o negócio é pedido para ele", async () => {
+    const db = montar("real");
+    banco.tabelas.crm_stages!.push({ id: "etapa-1", organization_id: ORG, pipeline_id: "ffffffff-0000-4000-8000-000000000001", is_archived: false, position: 1 });
+    h.cardAberto.mockResolvedValue(null);
+    h.criarLead.mockResolvedValue({ id: "lead-novo" });
+    const pedidos = [1, 2, 3].map(() =>
+      criarContatoDoComentario(db, ORG, COMENTARIO, { pipeline_id: "ffffffff-0000-4000-8000-000000000001" }, TOKEN),
+    );
+    const r = await Promise.all(pedidos);
+    expect(banco.tabelas.contacts).toHaveLength(1);
+    expect(new Set(r.map((x) => x.contact_id)).size).toBe(1);
+  });
+
+  it("a outra chamada some no meio (não liga o contato): recusa com 409, sem criar um segundo", async () => {
+    const db = montar("real");
+    // Simula a chamada concorrente que tomou a vez e ainda não terminou: a
+    // linha muda entre a leitura e a tomada da vez, e o contato não aparece.
+    // As consultas a `social_comments`, na ordem: ler o comentário, procurar
+    // outro do mesmo autor, tomar a vez. A linha muda antes da terceira.
+    const original = banco.from.bind(banco);
+    let consultas = 0;
+    banco.from = (tabela: string) => {
+      if (tabela === "social_comments" && ++consultas === 3) {
+        linha().updated_at = new Date(Date.now() + 5_000).toISOString();
+      }
+      return original(tabela);
+    };
+    const erro = await recusa(criarContatoDoComentario(db, ORG, COMENTARIO, {}, TOKEN));
+    expect([erro.status, erro.code]).toEqual([409, "contato_em_criacao"]);
+    expect(banco.tabelas.contacts).toHaveLength(0);
+    expect(linha().contact_id).toBeNull();
+  });
+
   it("outro comentário do MESMO autor reaproveita o contato; o de outra organização, não", async () => {
     const db = montar("real");
     const outro = "aaaaaaaa-0000-4000-8000-000000000009";

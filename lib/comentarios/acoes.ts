@@ -63,6 +63,7 @@ import {
   identidadeCandidataDoAutor,
   ocultarNaRede,
   publicarRespostaPublica,
+  relogio,
   type FalhaDoEnvio,
 } from "@/lib/channels/meta-social/comentarios-resposta";
 import { sessaoPorId, type SessaoDireta } from "@/lib/channels/meta-social/store";
@@ -819,6 +820,25 @@ export interface ResultadoDoContato {
  *
  * O negócio reaproveita o card ABERTO do contato naquele funil, pela mesma
  * regra da captação — um comentário a mais não abre um segundo card.
+ *
+ * ─── Duas chamadas ao mesmo tempo criam UM contato ──────────────────────────
+ *
+ * Ler "não tem contato" e depois inserir são dois passos, e entre eles cabe a
+ * segunda chamada (revisão de 20/11/2026, item 2.23). Antes de inserir, a
+ * chamada TOMA A VEZ no comentário: um UPDATE condicional que só casa se a
+ * linha está exatamente como foi lida (`updated_at`) e ainda sem contato. Só
+ * quem casa insere. Quem não casa espera a outra chamada ligar o contato e o
+ * devolve; se o contato não aparecer (a outra morreu no meio), recusa com 409
+ * `contato_em_criacao` — nunca cria um segundo. A vez não deixa trava para
+ * trás: é só a linha ter mudado, e a próxima chamada lê a linha nova.
+ *
+ * O que isto NÃO cobre: dois comentários DIFERENTES do mesmo autor pedindo
+ * contato ao mesmo tempo podem criar dois contatos (a vez é por comentário).
+ * A junção de contatos resolve; fechar isso pede trava no banco por autor.
+ *
+ * O funil e a etapa informados são conferidos por `createLeadHandler`: a
+ * etapa tem de ser da organização de quem chama e do funil informado; sem
+ * etapa, a primeira etapa ativa é procurada dentro da organização.
  */
 export async function criarContatoDoComentario(
   db: SupabaseClient,
@@ -854,8 +874,23 @@ export async function criarContatoDoComentario(
     );
   }
 
-  const jaExistia = contato !== null;
+  let jaExistia = contato !== null;
   let contactId = contato?.id ?? null;
+  if (!contactId && !(await tomarAVezDeCriarContato(db, linha))) {
+    // Outra chamada tomou a vez. O contato é o que ela ligar.
+    const daOutra = await contatoDaOutraChamada(db, org, id, quem);
+    if (daOutra.is_anonymized) {
+      throw recusa(
+        quem,
+        409,
+        "contato_anonimizado",
+        "O contato desta pessoa foi anonimizado a pedido dela. Não é possível criar outro a partir deste comentário.",
+      );
+    }
+    contactId = daOutra.id;
+    jaExistia = true;
+    linha.contact_id = daOutra.id;
+  }
   if (!contactId) {
     const nome = linha.author_username ? `@${linha.author_username}` : null;
     const { data, error } = await db
@@ -922,6 +957,55 @@ export async function criarContatoDoComentario(
     contato_ja_existia: jaExistia,
     lead,
   };
+}
+
+/** Quantas vezes, e de quanto em quanto, quem perdeu a vez espera o contato da outra chamada. */
+const ESPERAS_PELO_CONTATO_DA_OUTRA_CHAMADA = 6;
+const ESPERA_PELO_CONTATO_MS = 250;
+
+/**
+ * Toma a vez de criar o contato deste comentário. `true` = é esta chamada que
+ * cria. O UPDATE só casa se a linha está como foi lida e sem contato; como
+ * todo UPDATE anda o `updated_at`, a segunda chamada (que leu o mesmo
+ * `updated_at`) não casa linha nenhuma.
+ */
+async function tomarAVezDeCriarContato(db: SupabaseClient, linha: Linha): Promise<boolean> {
+  const { data, error } = await db
+    .from("social_comments")
+    .update({ updated_at: new Date().toISOString() })
+    .eq("organization_id", linha.organization_id)
+    .eq("id", linha.id)
+    .eq("updated_at", linha.updated_at)
+    .is("contact_id", null)
+    .select("id");
+  if (error) throw new Error(`social_comments: ${error.message}`);
+  return ((data as { id: string }[] | null) ?? []).length > 0;
+}
+
+/**
+ * O contato que a OUTRA chamada ligou ao comentário. Espera um pouco por ele;
+ * se não aparecer, recusa — criar aqui seria o segundo contato.
+ */
+async function contatoDaOutraChamada(
+  db: SupabaseClient,
+  org: string,
+  id: string,
+  quem: QuemAge,
+): Promise<FichaDoContato> {
+  for (let tentativa = 0; tentativa < ESPERAS_PELO_CONTATO_DA_OUTRA_CHAMADA; tentativa++) {
+    const atual = await carregar(db, org, id, quem);
+    if (atual.contact_id) {
+      const ficha = await contatoVivo(db, org, atual.contact_id);
+      if (ficha) return ficha;
+    }
+    await relogio.esperar(ESPERA_PELO_CONTATO_MS);
+  }
+  throw recusa(
+    quem,
+    409,
+    "contato_em_criacao",
+    "Outra chamada está criando o contato deste comentário agora. Tente de novo em instantes.",
+  );
 }
 
 async function primeiraEtapa(db: SupabaseClient, org: string, pipelineId: string, quem: QuemAge): Promise<string> {
