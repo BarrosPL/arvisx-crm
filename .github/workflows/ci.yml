@@ -682,8 +682,16 @@ jobs:
         # O token é só para `gh release view`: o test:db confere o update.sh da
         # última release publicada (issue #1909), e a API anônima tem teto de 60
         # consultas/hora por IP — o executor próprio é um IP só.
+        #
+        # `CONFERENCIA_KIT_REPO_PAI` só tem valor FORA do repositório do produto:
+        # uma cópia que o GitHub não marca como fork não tem release própria nem
+        # `parent`, e o passo morria com FATAL antes de `tests/invariants/` rodar
+        # (revisão de 20/11, item 3.1). Com ele, a release e as tags vêm de lá e
+        # as três conferências continuam rodando. No repositório do produto a
+        # variável fica vazia e nada muda.
         env:
           GH_TOKEN: ${{ github.token }}
+          CONFERENCIA_KIT_REPO_PAI: ${{ github.repository != 'melgarafael/DeskcommCRM' && 'melgarafael/DeskcommCRM' || '' }}
         run: pnpm test:db
 
       # O `update.sh` do cliente roda sobre um banco COM DADOS, e nenhum gate
