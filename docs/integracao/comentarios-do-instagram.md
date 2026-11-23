@@ -112,6 +112,11 @@ Tabela `social_comments`, uma linha por comentário, única por
 (`media_id`, `media_product_type`), o anúncio (`ad_id`, `ad_title`), o autor
 (`author_id`, `author_username`), o texto inteiro, a hora e o estado.
 
+- **Quem lê.** Só o servidor grava. Pela sessão de uma pessoa (a REST do
+  banco), só **gerente para cima** lê: é o mesmo papel que as rotas e as
+  ferramentas de comentários pedem (migration `9819`). Atendente e leitor não
+  leem comentário pelo banco.
+
 - **Não vira contato nem negócio.** Contato nasce quando alguém decide
   responder em privado ou pedir a criação (próxima entrega).
 - **Comentário da própria conta é ignorado** — inclusive as respostas que o
