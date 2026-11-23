@@ -13,8 +13,9 @@ servem a tela. Um token de API não entra nelas. A regra é uma só: ela foi ext
 chamada pelos dois lados (`lib/tarefas/servico.ts`, `lib/leads/anexos-do-negocio.ts`,
 `lib/leads/proposta-de-proxima-acao.ts`).
 
-Este documento cobre a parte 1 (tarefas, notas, anexos e próxima ação) e a parte 2 (eventos para sistemas externos,
-consulta de proposta, fechar e atribuir, passagem entre colegas). A convivência entre humano e IA vem na parte 3.
+Este documento cobre a parte 1 (tarefas, notas, anexos e próxima ação), a parte 2 (eventos para sistemas externos,
+consulta de proposta, fechar e atribuir, passagem entre colegas) e os ajustes que o uso real dos agentes externos pediu
+(linha do tempo por MCP, filtros de negócio e autoria no histórico). A convivência entre humano e IA vem na parte 3.
 
 ## Regras que valem para todas
 
@@ -139,7 +140,7 @@ Em "O que o agente pode fazer", na tela do agente:
 |---|---|
 | Organizar a operação | as quatro de tarefa |
 | Passar para um humano | as duas de nota |
-| Não perder o cliente | as duas de anexo, a de próxima ação e a consulta de proposta |
+| Não perder o cliente | as duas de anexo, a de próxima ação, a consulta de proposta e a linha do tempo |
 
 Elas não couberam num pacote só: um pacote sozinho não pode passar do teto de ferramentas por agente
 (`TETO_TOOLS_POR_AGENTE`), e "Organizar a operação" já ocupava 22 das 27 vagas. Nenhuma entra em "Vender e mover o
@@ -159,6 +160,114 @@ funil", que é o pacote com que todo agente nasce.
   assinado desse PDF, que vence em 60 segundos, e só existe para proposta que já saiu (nunca para rascunho).
 - Num turno de atendimento, proposta de outro cliente e proposta inexistente recebem a mesma recusa.
 - Some para a organização que desligou propostas.
+
+## Linha do tempo do negócio
+
+`crm_list_lead_events` lê o que aconteceu num negócio, ou em todos os negócios de um funil, do mais antigo para o mais
+novo. Só leitura (`mcp:read`, papel `agent`). Serve ao resumo do dia ou da semana e a "quem mexeu neste negócio".
+
+| Argumento | O que faz |
+|---|---|
+| `lead_id` ou `pipeline_id` | Exatamente um. Com `pipeline_id` vêm os negócios do funil, cada linha com `lead_id` e `lead_title`. |
+| `since`, `until` | ISO-8601 com fuso. `since` inclui o instante, `until` não. |
+| `type` | Lista: `etapa`, `responsavel`, `tag`, `campo`, `nota`, `tarefa`, `outro`. Sem ele, vem tudo. |
+| `author` | Lista: `pessoa`, `agente`, `sistema`, `cliente`. Linha com autor `nao_registrado` (a troca de responsável) nunca casa: ver abaixo. |
+| `limit`, `cursor` | Até 100 por página. Repita com o `cursor` enquanto `has_more` for `true`. |
+
+Cada linha traz `kind` (a categoria), `type` (o tipo cru), `label`, `happened_at`, `text` (inteiro, sem corte),
+`author` (`kind`, `id`, `name`), `details` e `source`.
+
+**De onde vem cada categoria.** Nada novo é gravado: a ferramenta lê duas fontes que já existiam e as devolve numa
+ordem só.
+
+| Categoria | Fonte (`source`) | O que traz |
+|---|---|---|
+| `etapa` | linha do tempo do card (`timeline`) | Entrada no funil, mudança de etapa, correção de movimento da IA, troca de funil, reabertura e encerramento. `details` leva `from_stage_id` e `to_stage_id`. |
+| `campo` | `timeline` | Edição do negócio. `details.fields` são os **nomes** dos campos alterados. |
+| `nota` | `timeline` | A nota inteira, com o autor e, em `details.recipient`, o destinatário. |
+| `tarefa` | `timeline` | Tarefa criada, concluída ou plano aplicado. `details` leva `task_id`, `due_date` e `priority`. |
+| `outro` | `timeline` | O resto da linha do tempo: agenda, retorno, proposta, passagem para humano, ligação. |
+| `tag` | fila de eventos (`event_log`) | `lead.tag_added` e `lead.tag_removed`, com as tags em `details`. |
+| `responsavel` | `event_log` | `lead.assigned`, com de quem para quem (`from_name`, `to_name`: só o nome). |
+
+As tags e o responsável saem da fila de eventos porque a linha do tempo não sustenta os dois: ela registra "Alterou as
+tags" sem dizer qual (de propósito), e a tag posta por `crm_manage_tags`, em massa ou por automação não gera linha no
+card. Por isso uma edição pela tela que mexe em tag aparece duas vezes, com informações diferentes: uma linha `campo`
+(quem editou, quais campos) e uma linha `tag` (qual tag).
+
+**O que não entra, e por quê.**
+
+- **Mensagem.** Mensagem é da conversa, que é do contato: um contato com dois negócios teria as mesmas mensagens nos
+  dois. Leia a conversa com `crm_get_conversation_history`.
+- **Quem trocou o responsável.** `lead.assigned` nasce de um gatilho do banco e não guarda o autor: sai
+  `author.kind: "nao_registrado"`. Quando a troca veio pela edição do negócio, a linha `campo` vizinha tem o autor.
+- **Qual pessoa pôs ou tirou a tag.** A fila de eventos guarda que foi uma pessoa, não qual (`id` e `name` nulos). O
+  agente por token sai com o nome do token.
+- **Remoção de tag antiga.** `lead.tag_removed` existe desde a parte 2; remoção anterior só aparece como "Alterou as
+  tags".
+- **O valor anterior de um campo.** O produto não guarda o antes de título, descrição, tags e campos do funil
+  (`lib/leads/valores-audit.ts`). A linha diz o campo, não o valor.
+- **O agente externo como autor de uma mudança de etapa.** A linha do tempo grava a escrita feita por token como
+  `sistema` (a linha não guarda o token). A nota é a exceção: ela leva o autor.
+
+**Custo.** A consulta por funil exige `since` e aceita janela de até 31 dias. Ela sempre filtra por tipo e por data,
+que são os índices que já existem, e confere por lote quais negócios são do funil. Cada chamada faz no máximo quatro
+idas ao banco por fonte: com filtro que descarta muita linha, a página pode vir menor que o limite (até vazia) com
+`has_more: true`, e o cursor continua de onde a varredura parou. Negócio de contato marcado como pessoal fica de fora.
+
+**O filtro `author` e o autor `nao_registrado`.** `author` aceita só `pessoa`, `agente`, `sistema` e `cliente`. A
+troca de responsável (`lead.assigned`) sai com `author.kind: "nao_registrado"`, que não é um valor do filtro: qualquer
+chamada com `author` deixa essas linhas de fora, e não há como pedir só elas por autor. Quem quer as trocas de
+responsável pede `type: ["responsavel"]` **sem** `author`. O filtro de autor (como o de funil) é aplicado depois da
+busca, dentro do teto de quatro idas ao banco: é o caso em que a página curta ou vazia com `has_more: true` mais
+aparece (por exemplo `type: ["responsavel"]` com `author`, que nunca devolve nada). `has_more: true` com página vazia
+não é fim: repita com o `cursor` até `has_more: false`. O teto de idas ao banco é o que limita o custo da consulta por
+funil e não foi mexido.
+
+## Filtros de `crm_list_leads`
+
+Além de funil, etapa, status, responsável e motivo de perda:
+
+| Filtro | O que faz |
+|---|---|
+| `created_since` | Criados a partir do instante. |
+| `moved_since` | Entraram na etapa **atual** a partir do instante. O negócio recém-criado conta: ele entrou na primeira etapa ao nascer. |
+| `last_activity_before` | Sem movimento desde o instante: a última atividade é anterior a ele, ou o negócio nunca teve atividade e foi criado antes dele. |
+| `tag` | Só os que têm a tag. |
+| `sem_tag` | Só os que não têm a tag. |
+
+- Os instantes são ISO-8601 com fuso.
+- "Atividade" é o que o banco carimba em `last_activity_at` do negócio: turno da IA, nota, edição, mudança de etapa,
+  próxima ação aprovada, ligação atendida (`fn_update_last_activity_at`) e mensagem enviada por uma pessoa da equipe
+  (`fn_mensagem_do_vendedor_e_atividade`). Ligação que ninguém atendeu não conta, e mensagem do cliente que ninguém
+  respondeu também não: o negócio continua "parado".
+- `tag` e `sem_tag` não diferenciam caixa nas grafias em que uma pessoa escreve o mesmo nome: a pedida, minúsculas,
+  MAIÚSCULAS, Inicial maiúscula e Iniciais Maiúsculas. `vip`, `VIP` e `Vip` acham os mesmos negócios, e
+  `sem_tag: "vip"` deixa de fora quem tem `VIP`. A tela grava a tag do negócio como foi digitada, e `crm_manage_tags`
+  grava em minúsculas. **Limite:** a coluna é uma lista de textos e a consulta compara cada grafia inteira; caixa
+  misturada fora dessas formas (`viP`) só casa se pedida exatamente assim. Fechar esse resto pede uma função no banco
+  (migration), que este PR não tem.
+- Os filtros entram na consulta, antes do limite. O cursor e `has_more` descrevem o conjunto filtrado.
+- O responsável continua saindo só pelo nome (`owner_user_name`), sem e-mail nem telefone.
+
+## Quem escreveu cada mensagem do histórico
+
+`crm_get_conversation_history` devolve, em cada mensagem, `author` e `channel` (o canal da conversa: `whatsapp`,
+`instagram`...). `direction` e `sent_via` continuam na resposta.
+
+| `author.kind` | Quando | `id` e `name` |
+|---|---|---|
+| `cliente` | Mensagem recebida. | `id` é o contato. Em grupo, `name` é o participante que falou (`detail: "participante_de_grupo"`). |
+| `ia` | Escrita por um agente de IA. | O nome gravado na mensagem ou, sem ele, o do cadastro. `id` só sai quando é de um agente desta organização. |
+| `equipe` | Escrita por uma pessoa. | `id` e o nome da pessoa (nunca e-mail nem telefone). |
+| `sistema` | Ninguém escreveu na hora. | `detail: "automacao"` (texto fixo de regra, follow-up ou lembrete) ou `detail: "integracao"` (enviada por token de API). |
+
+Dois casos de `equipe` têm `detail`: `celular` (saiu do aparelho ligado ao número, fora do CRM, e a mensagem não diz
+quem digitou) e `em_nome_de` (um sistema enviou por decisão daquela pessoa; `via_token` diz qual).
+
+A autoria é lida da própria mensagem, como o balão da caixa de entrada lê. **Limite:** a mensagem enviada por token de
+API não guarda o token. Um agente externo distingue com certeza o que foi a equipe, o cliente e a IA do CRM, mas não
+separa a própria fala da de outra integração (as duas saem `sistema` / `integracao`).
 
 ## Fechar o negócio e atribuir a conversa
 

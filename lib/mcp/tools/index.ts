@@ -101,6 +101,7 @@ import { crmCompleteTask, crmCreateTask, crmListTasks, crmUpdateTask } from "./t
 import { crmAddLeadNote, crmListLeadNotes } from "./notas-do-negocio";
 import { crmAttachToLead, crmListLeadAttachments } from "./anexos-do-negocio";
 import { crmSetNextAction } from "./proxima-acao";
+import { crmListLeadEvents } from "./eventos-do-negocio";
 
 // Cast via `unknown` porque McpToolDefinition<TInput> nao e covariante
 // em TInput (handler usa TInput em posicao contravariante). Coletar
@@ -159,6 +160,8 @@ export const allTools: ReadonlyArray<McpToolDefinition> = [
   crmListLeadAttachments,
   // read — consulta de proposta (superfície de agente, PR 2)
   crmGetProposal,
+  // read — linha do tempo do negócio (ajustes, AJ-2)
+  crmListLeadEvents,
   // write
   // A que consulta E marca numa chamada só vem primeiro: quando o cliente já deu
   // dia e hora, é o caminho curto, e é o que evita o turno morrer no meio (#831).
