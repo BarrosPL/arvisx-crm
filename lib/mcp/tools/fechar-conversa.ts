@@ -20,7 +20,12 @@
  *    a devolução ao automático é escolha da tela, e o agente nunca reassume;
  *  - é IDEMPOTENTE: conversa já encerrada (fechada, resolvida ou arquivada)
  *    devolve sucesso sem escrever nada e sem nova linha de auditoria. Uma
- *    conversa arquivada continua arquivada — a ferramenta não a traz de volta.
+ *    conversa arquivada continua arquivada — a ferramenta não a traz de volta;
+ *  - NÃO há trava por atendente humano responsável (`assigned_to_user_id`): a
+ *    régua da tela (`exigirControleDaConversa`) só vale para o ator "user", e
+ *    o dono decidiu em 20/11 (PR #14) que a ferramenta segue fechando qualquer
+ *    conversa aberta da organização. A descrição avisa o modelo (revisão
+ *    20/11, item 2.31).
  */
 import { z } from "zod";
 
@@ -114,7 +119,7 @@ export const crmCloseConversation: McpToolDefinition<typeof inputShape> = {
     "Fecha uma conversa para ela sair da caixa de entrada — por exemplo, quando você falou por " +
     "último e o cliente não respondeu há dias. NADA é enviado ao cliente; se ele escrever de " +
     "novo, a conversa reabre. Não fecha chamado nem negócio. Repetir numa conversa já encerrada " +
-    "não muda nada.",
+    "não muda nada. Fecha também a conversa que uma pessoa da equipe assumiu: confira antes.",
   inputSchema: inputShape,
   category: "write",
   requiresRole: "agent",
