@@ -33,3 +33,27 @@ do agente, a janela e o horário do canal são respeitados, quem pediu para para
 não recebe, e a equipe pausada ou fora do plano Premium não age. O agente de
 Recuperação também não soma sequências: entre uma resposta da pessoa e a
 seguinte, ela recebe no máximo o número de retomadas configurado.
+
+**Mudança de comportamento para quem já usa a régua de silêncio.** O limite de
+retomadas passa a valer também para a régua que já existia, e ela deixa de se
+comportar como na versão anterior:
+
+- **A régua não recomeça sozinha.** Antes, quem continuava sem responder
+  recebia uma sequência de retomadas, depois outra, depois outra. Agora recebe
+  uma, e a seguinte é encerrada sem enviar nada.
+- **Quem nunca respondeu é retomado uma vez só.** O contato que nunca escreveu
+  recebe uma sequência na vida. Ele só volta a ser retomado depois de mandar
+  uma mensagem.
+- **As sequências contam juntas.** Silêncio, falta ao compromisso e proposta
+  parada dividem o mesmo limite. Quem já recebeu a régua de silêncio e depois
+  falta a um compromisso, sem ter escrito nada no meio, não recebe a sequência
+  de falta; quem recebeu a de proposta parada não recebe as outras.
+
+Em Follow-ups, a sequência que não enviou aparece como "Encerrado sem enviar:
+o limite de retomadas deste contato já foi usado". Se você dependia de a régua
+insistir com quem não responde, aumente o número de retomadas no perfil em vez
+de contar com o recomeço.
+
+Quando o sistema não consegue conferir se a equipe está pausada (uma falha de
+leitura no banco), a sequência espera cinco minutos e tenta de novo, em vez de
+enviar.

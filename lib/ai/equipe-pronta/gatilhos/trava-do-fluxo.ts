@@ -22,13 +22,43 @@
  *      conta zera. Assim, entre uma resposta e outra, o contato recebe no
  *      máximo N retomadas, somando os três fluxos.
  *
- * ═══ Falha de leitura = segue ═══
+ * ═══ O que a regra 2 mudou na régua de silêncio da v1 (e é de propósito) ═══
  *
- * A mesma régua da trava de plano: se o perfil ou a contagem não puderem ser
- * lidos, a inscrição segue. Estas duas regras rodam dentro do tique de TODA
- * empresa; um banco que soluça não pode parar o follow-up de quem nem tem
- * equipe pronta. As travas que protegem o cliente (opt-out, ensaio, pessoa no
- * comando) são do motor e não dependem desta leitura.
+ * A régua de silêncio existia antes dos gatilhos, sem este limite. Com ele:
+ *
+ *   • a régua NÃO recomeça para quem continua calado. Antes, com
+ *     `dias_para_esfriar` curto, o mesmo contato recebia uma escada, depois
+ *     outra, depois outra, enquanto não respondesse. Agora a segunda inscrição
+ *     nasce e é encerrada sem mandar nada;
+ *   • o contato que NUNCA respondeu (nenhuma mensagem dele em conversa nenhuma)
+ *     recebe UMA escada na vida. Sem resposta não há "última mensagem dele"
+ *     para zerar a conta: toda retomada já enviada conta, para sempre;
+ *   • os toques de um fluxo contam para os outros dois. Quem já recebeu a
+ *     régua de silêncio e depois falta a um compromisso, sem ter escrito nada
+ *     no meio, NÃO recebe a sequência de falta; quem recebeu a de proposta
+ *     parada não recebe a de falta nem a régua, e assim por diante.
+ *
+ * ═══ Falha de leitura = ADIA (revisão de 20/11, item 2.6) ═══
+ *
+ * A primeira versão seguia quando não conseguia ler: "um banco que soluça não
+ * pode parar o follow-up de quem nem tem equipe pronta". Só que seguir, aqui,
+ * é ENVIAR, e a leitura que falhou é justamente a que diria "a equipe está
+ * pausada". A pergunta da revisão foi se o nó de envio confere a pausa de
+ * novo. Conferido no código: não com garantia. A mensagem de um passo
+ * `ai_message` sai por um turno `followup_turn`, e o turno para quando o
+ * agente RESOLVIDO PARA A CONVERSA está pausado (`executarTurnoDoAgente`, em
+ * `lib/agent-engine/agent/inbound-turn.ts`). Pausar a equipe pausa os quatro
+ * agentes dela, então quase sempre o turno para. Mas o agente da conversa é o
+ * que o roteador resolve (o follow-up não fixa o agente da inscrição): se a
+ * conversa estiver com um agente que não é da equipe, a mensagem sairia com a
+ * equipe pausada. Por isso, falha fechada.
+ *
+ * O custo é pequeno e só existe quando o banco falha: a inscrição é ADIADA por
+ * poucos minutos (`ADIAMENTO_POR_LEITURA_MS`, no motor), nunca cancelada, e o
+ * tique seguinte tenta de novo. Empresa sem equipe pronta (perfil que não
+ * existe) e fluxo que não é da equipe continuam seguindo sem custo: só a
+ * leitura que ERRA adia. Um banco que não responde também não entregaria a
+ * mensagem.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -37,6 +67,8 @@ import { NO_DE_INICIO_DA_ESCADA } from "../constantes";
 
 /** O motivo gravado quando a inscrição é adiada pela pausa. */
 export const ERRO_DA_EQUIPE_PAUSADA = "equipe_pausada";
+/** O motivo gravado quando a inscrição é adiada porque a trava não pôde ser lida. */
+export const ERRO_DA_LEITURA_DA_TRAVA = "equipe_pronta_leitura_indisponivel";
 /** O motivo gravado quando a inscrição é encerrada pelo limite de toques. */
 export const MOTIVO_DO_LIMITE_DE_TOQUES = "limite_de_toques_da_equipe";
 /** O evento de `followup_enrollment_events` que marca uma mensagem que SAIU. */
@@ -44,8 +76,23 @@ const EVENTO_DE_MENSAGEM_ENVIADA = "action_sent";
 
 export type TravaDoFluxoDaEquipe =
   | null
-  | { acao: "adiar"; motivo: typeof ERRO_DA_EQUIPE_PAUSADA }
+  | { acao: "adiar"; motivo: typeof ERRO_DA_EQUIPE_PAUSADA | typeof ERRO_DA_LEITURA_DA_TRAVA }
   | { acao: "encerrar"; motivo: typeof MOTIVO_DO_LIMITE_DE_TOQUES; toques: number };
+
+/** Não deu para ler: adia (falha fechada). Nunca cancela. */
+export const TRAVA_SEM_LEITURA: TravaDoFluxoDaEquipe = { acao: "adiar", motivo: ERRO_DA_LEITURA_DA_TRAVA };
+
+/**
+ * Os status em que uma inscrição ainda pode mandar mensagem. `completed`,
+ * `cancelled` e os demais terminais ficam de fora.
+ */
+const STATUS_DE_INSCRICAO_VIVA: readonly string[] = [
+  "active",
+  "waiting_reply",
+  "dormente",
+  "paused_handoff",
+  "paused_manual",
+];
 
 /** Todos os fluxos de follow-up que são da equipe: a régua e os dois dos gatilhos. */
 export function fluxosDaEquipe(
@@ -56,6 +103,25 @@ export function fluxosDaEquipe(
     instalacao.followup_flow_pointer_id,
     instalacao.gatilhos?.fluxo_de_falta_id ?? null,
     instalacao.gatilhos?.fluxo_de_proposta_parada_id ?? null,
+  ].filter((id): id is string => typeof id === "string" && id !== "");
+}
+
+/**
+ * Os mesmos fluxos, lidos do JSON cru da instalação: serve para saber se um
+ * fluxo É da equipe mesmo quando a instalação não passa no schema. Nesse caso
+ * não dá para confiar na pausa lida, e o fluxo da equipe é adiado.
+ */
+function fluxosDaEquipeNoBruto(bruta: unknown): string[] {
+  if (bruta === null || typeof bruta !== "object") return [];
+  const instalacao = bruta as Record<string, unknown>;
+  const gatilhos =
+    instalacao.gatilhos !== null && typeof instalacao.gatilhos === "object"
+      ? (instalacao.gatilhos as Record<string, unknown>)
+      : {};
+  return [
+    instalacao.followup_flow_pointer_id,
+    gatilhos.fluxo_de_falta_id,
+    gatilhos.fluxo_de_proposta_parada_id,
   ].filter((id): id is string => typeof id === "string" && id !== "");
 }
 
@@ -74,10 +140,16 @@ export function decidirTravaDoFluxo(c: {
   acabouDeNascer: boolean;
   /** Retomadas que a equipe já mandou a este contato depois da última mensagem dele. */
   toquesDesdeAUltimaResposta: number;
+  /**
+   * Há OUTRA inscrição de fluxo da equipe, deste contato, mais antiga e ainda
+   * viva? Duas escadas nascidas quase juntas veem zero toques uma da outra
+   * (nenhuma mandou nada ainda): a mais nova sai, a mais antiga fica.
+   */
+  outraEscadaVivaMaisAntiga?: boolean;
 }): TravaDoFluxoDaEquipe {
   if (!c.fluxoDaEquipe) return null;
   if (c.pausada) return { acao: "adiar", motivo: ERRO_DA_EQUIPE_PAUSADA };
-  if (c.acabouDeNascer && c.toquesDesdeAUltimaResposta > 0) {
+  if (c.acabouDeNascer && (c.toquesDesdeAUltimaResposta > 0 || c.outraEscadaVivaMaisAntiga === true)) {
     return { acao: "encerrar", motivo: MOTIVO_DO_LIMITE_DE_TOQUES, toques: c.toquesDesdeAUltimaResposta };
   }
   return null;
@@ -89,9 +161,18 @@ export interface InscricaoParaATrava {
   pointer_id: string;
   contact_id: string;
   current_node_id: string;
+  /** Quando a inscrição nasceu: desempata duas escadas nascidas juntas. */
+  started_at?: string | null;
 }
 
-/** A mesma decisão, lendo o perfil, a pausa e os toques. Nunca lança. */
+/**
+ * A mesma decisão, lendo o perfil, a pausa e os toques. Nunca lança.
+ *
+ * Leitura que FALHA adia (`TRAVA_SEM_LEITURA`), em três pontos: o perfil (sem
+ * ele não se sabe nem se o fluxo é da equipe), a pausa do agente de Recuperação
+ * e a contagem dos toques. Perfil que não existe e fluxo que não é da equipe
+ * seguem: não são falha.
+ */
 export async function travaDoFluxoDaEquipe(
   admin: SupabaseClient,
   inscricao: InscricaoParaATrava,
@@ -103,12 +184,17 @@ export async function travaDoFluxoDaEquipe(
       .select("instalacao")
       .eq("organization_id", orgId)
       .maybeSingle();
-    if (error || !data) return null;
-    const lida = instalacaoSchema.safeParse((data as { instalacao?: unknown }).instalacao ?? {});
-    if (!lida.success) return null;
-    const instalacao = lida.data;
-    const fluxos = fluxosDaEquipe(instalacao);
+    if (error) return TRAVA_SEM_LEITURA;
+    // A empresa não tem equipe pronta: o fluxo não é dela.
+    if (!data) return null;
+    const bruta = (data as { instalacao?: unknown }).instalacao;
+    const lida = instalacaoSchema.safeParse(bruta ?? {});
+    const fluxos = lida.success ? fluxosDaEquipe(lida.data) : fluxosDaEquipeNoBruto(bruta);
     if (!fluxos.includes(inscricao.pointer_id)) return null;
+    // Daqui em diante o fluxo É da equipe. Instalação que não passa no schema
+    // não diz, com confiança, se a equipe está pausada.
+    if (!lida.success) return TRAVA_SEM_LEITURA;
+    const instalacao = lida.data;
 
     let pausada = instalacao.pausa !== null;
     const recuperador = instalacao.agentes.recuperador?.agent_id;
@@ -119,38 +205,60 @@ export async function travaDoFluxoDaEquipe(
         .eq("organization_id", orgId)
         .eq("id", recuperador)
         .maybeSingle();
-      if (!erroDoAgente && (agente as { paused_at?: string | null } | null)?.paused_at) pausada = true;
+      if (erroDoAgente) return TRAVA_SEM_LEITURA;
+      if ((agente as { paused_at?: string | null } | null)?.paused_at) pausada = true;
     }
 
     const acabouDeNascer = inscricao.current_node_id === NO_DE_INICIO_DA_ESCADA;
     let toques = 0;
+    let outraEscadaVivaMaisAntiga = false;
     if (!pausada && acabouDeNascer) {
-      toques = await toquesDesdeAUltimaResposta(admin, orgId, inscricao, fluxos);
+      const contagem = await toquesDesdeAUltimaResposta(admin, orgId, inscricao, fluxos);
+      if (contagem === null) return TRAVA_SEM_LEITURA;
+      toques = contagem.toques;
+      outraEscadaVivaMaisAntiga = contagem.outraEscadaVivaMaisAntiga;
     }
     return decidirTravaDoFluxo({
       fluxoDaEquipe: true,
       pausada,
       acabouDeNascer,
       toquesDesdeAUltimaResposta: toques,
+      outraEscadaVivaMaisAntiga,
     });
   } catch {
-    return null;
+    return TRAVA_SEM_LEITURA;
   }
 }
 
-/** Mensagens de retomada que os fluxos da equipe mandaram ao contato depois da última mensagem dele. */
+/**
+ * Mensagens de retomada que os fluxos da equipe mandaram ao contato depois da
+ * última mensagem dele, e se há outra escada da equipe, mais antiga, ainda
+ * viva para ele. `null` = alguma leitura falhou.
+ *
+ * ═══ Duas inscrições nascidas juntas ═══
+ *
+ * Contar só o que já foi ENVIADO não vê a escada que nasceu no mesmo tique e
+ * ainda não mandou nada: as duas leriam zero e as duas enviariam. Hoje o banco
+ * não deixa isso acontecer: `idx_followup_enrollments_one_live` é único em
+ * `(organization_id, contact_id)` para os status `active`, `waiting_reply`,
+ * `paused_handoff` e `paused_manual`, então um contato tem no máximo uma
+ * inscrição viva, de qualquer fluxo. A conferência abaixo não depende desse
+ * índice (que não cobre `dormente`, e que pode mudar): a inscrição mais NOVA
+ * sai quando há outra da equipe, mais antiga, ainda viva. O desempate é
+ * `started_at` e depois `id`, igual para as duas, então exatamente uma fica.
+ */
 async function toquesDesdeAUltimaResposta(
   admin: SupabaseClient,
   orgId: string,
   inscricao: InscricaoParaATrava,
   fluxos: readonly string[],
-): Promise<number> {
+): Promise<{ toques: number; outraEscadaVivaMaisAntiga: boolean } | null> {
   const { data: conversas, error: erroDasConversas } = await admin
     .from("conversations")
     .select("last_inbound_at")
     .eq("organization_id", orgId)
     .eq("contact_id", inscricao.contact_id);
-  if (erroDasConversas) return 0;
+  if (erroDasConversas) return null;
   let ultimaResposta: string | null = null;
   for (const c of (conversas ?? []) as Array<{ last_inbound_at: string | null }>) {
     if (c.last_inbound_at && (ultimaResposta === null || c.last_inbound_at > ultimaResposta)) {
@@ -160,14 +268,21 @@ async function toquesDesdeAUltimaResposta(
 
   const { data: outras, error: erroDasOutras } = await admin
     .from("followup_enrollments")
-    .select("id")
+    .select("id, status, started_at")
     .eq("organization_id", orgId)
     .eq("contact_id", inscricao.contact_id)
     .in("pointer_id", [...fluxos])
     .neq("id", inscricao.id);
-  if (erroDasOutras) return 0;
-  const ids = ((outras ?? []) as Array<{ id: string }>).map((o) => o.id);
-  if (ids.length === 0) return 0;
+  if (erroDasOutras) return null;
+  const irmas = (outras ?? []) as Array<{ id: string; status?: string | null; started_at?: string | null }>;
+  const minhaHora = inscricao.started_at ?? "";
+  const outraEscadaVivaMaisAntiga = irmas.some((o) => {
+    if (!STATUS_DE_INSCRICAO_VIVA.includes(o.status ?? "")) return false;
+    const horaDela = o.started_at ?? "";
+    return horaDela < minhaHora || (horaDela === minhaHora && o.id < inscricao.id);
+  });
+  const ids = irmas.map((o) => o.id);
+  if (ids.length === 0) return { toques: 0, outraEscadaVivaMaisAntiga };
 
   let consulta = admin
     .from("followup_enrollment_events")
@@ -177,6 +292,6 @@ async function toquesDesdeAUltimaResposta(
     .in("enrollment_id", ids);
   if (ultimaResposta !== null) consulta = consulta.gt("created_at", ultimaResposta);
   const { count, error } = await consulta;
-  if (error) return 0;
-  return count ?? 0;
+  if (error) return null;
+  return { toques: count ?? 0, outraEscadaVivaMaisAntiga };
 }

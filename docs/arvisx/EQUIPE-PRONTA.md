@@ -292,7 +292,7 @@ Os dois fluxos são a mesma escada da régua de silêncio: no máximo
 | Pessoa que assumiu a conversa | `travas.ts` | `handoff_policy: pause` e a pessoa no comando | não se aplica |
 | Janela e horário do canal | `enviarProposta` recusa; o turno de resposta confere | o passo é adiado até a janela abrir | não se aplica |
 | Opt-out | `travas.ts` | a inscrição é cancelada | não se aplica |
-| Pausa da equipe | `travas.ts` | a inscrição é adiada (`trava-do-fluxo.ts`) | não cria |
+| Pausa da equipe | `travas.ts` | a inscrição é adiada (`trava-do-fluxo.ts`); se a pausa não puder ser lida, também | não cria |
 | Plano | `travas.ts` | a inscrição é adiada (`reguaDaEquipeForaDoPlano`) | não cria |
 
 `travas.ts` é a mesma função que `crm_send_proposal` usa. A tarefa do ganho é
@@ -308,6 +308,36 @@ num fluxo da equipe é encerrada, sem mandar nada, quando a equipe já mandou
 alguma retomada a esse contato depois da última mensagem dele
 (`trava-do-fluxo.ts`). Vale para os três fluxos, a régua de silêncio inclusive.
 Quando a pessoa responde, a conta zera.
+
+**Isto mudou o comportamento da régua de silêncio da v1**, e é de propósito:
+
+- **A régua não recomeça sozinha.** Antes, com `dias_para_esfriar` curto, quem
+  continuava calado recebia uma escada, depois outra, depois outra. Agora a
+  segunda inscrição nasce e é encerrada sem mandar nada (em Follow-ups aparece
+  "Encerrado sem enviar: o limite de retomadas deste contato já foi usado").
+- **Quem nunca respondeu recebe uma escada na vida.** Sem nenhuma mensagem do
+  contato não há "última mensagem dele" para zerar a conta: toda retomada já
+  enviada conta, para sempre. Ele só volta a ser retomado depois de escrever.
+- **Os toques de um fluxo contam para os outros.** Quem recebeu a régua de
+  silêncio e depois falta a um compromisso, sem ter escrito nada no meio, não
+  recebe a sequência de falta. Quem recebeu a de proposta parada não recebe a
+  de falta nem a régua. O limite é por contato, somando os três fluxos.
+
+**Duas inscrições nascidas juntas.** O banco só deixa uma inscrição viva por
+contato (`idx_followup_enrollments_one_live`). A trava não depende disso: se
+houver outra escada da equipe, mais antiga e ainda viva, a recém-nascida é
+encerrada mesmo que nenhuma das duas tenha mandado nada ainda.
+
+**Leitura que falha adia.** Se a trava não consegue ler o perfil, a pausa do
+agente de Recuperação ou a contagem de retomadas, a inscrição é adiada por
+cinco minutos (`ADIAMENTO_POR_LEITURA_MS`) e fica com
+`last_error = equipe_pronta_leitura_indisponivel`; nada é enviado e nada é
+cancelado. A primeira versão seguia, e seguir era enviar sem saber se a equipe
+estava pausada. O passo que envia não é uma segunda guarda confiável: a
+mensagem sai por um turno que para quando o agente da CONVERSA está pausado,
+e esse agente é o que o roteador resolve, não necessariamente um dos quatro da
+equipe. Empresa sem equipe pronta e fluxo que não é da equipe não pagam por
+isso: só a leitura que erra adia.
 
 ### Aprovar a proposta pela tela
 
