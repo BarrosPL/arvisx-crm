@@ -173,6 +173,26 @@ export async function buildContext(admin: SupabaseClient, row: EventRow): Promis
         if (contact) context.contact = contact;
       }
     }
+  } else if (row.entity_kind === "conversation" && row.entity_id) {
+    // `conversation.ai_paused` / `conversation.ai_resumed`: a conversa traz o
+    // contato. O id do contato é lido da LINHA da conversa, com o filtro de
+    // organização, e não do payload.
+    const { data: conversa } = await admin
+      .from("conversations")
+      .select("id, contact_id")
+      .eq("id", row.entity_id)
+      .eq("organization_id", org)
+      .maybeSingle();
+    const contactId = (conversa as { contact_id?: string | null } | null)?.contact_id ?? null;
+    if (contactId) {
+      const { data: contact } = await admin
+        .from("contacts")
+        .select("*")
+        .eq("id", contactId)
+        .eq("organization_id", org)
+        .maybeSingle();
+      if (contact) context.contact = contact;
+    }
   } else if (row.entity_kind === "message" && row.entity_id) {
     const contactId = row.payload.contact_id as string | undefined;
     if (contactId) {

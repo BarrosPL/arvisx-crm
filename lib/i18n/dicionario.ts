@@ -17830,6 +17830,8 @@ export const DICIONARIO: Traducoes = {
   "Quando uma tarefa for criada no negócio": { es: "Cuando se cree una tarea en el negocio" },
   "Quando um documento for anexado ao negócio": { es: "Cuando se adjunte un documento al negocio" },
   "Quando uma tarefa for concluída": { es: "Cuando se complete una tarea" },
+  "Quando o atendimento automático for pausado numa conversa": { es: "Cuando la atención automática se pause en una conversación" },
+  "Quando o atendimento automático voltar numa conversa": { es: "Cuando la atención automática vuelva en una conversación" },
   "Criar tarefa interna (sem mensagem ao cliente)": { es: "Crear tarea interna (sin mensaje al cliente)" },
   "A tarefa não foi criada: o evento que disparou a regra não trouxe um lead nem um contato para pendurar nela.": {
     es: "La tarea no se creó: el evento que disparó la regla no trajo un lead ni un contacto donde colgarla.",
@@ -19658,6 +19660,19 @@ export const DICIONARIO: Traducoes = {
   },
   "Formato inválido. Envie PDF ou imagem (PNG, JPG, WebP).": {
     es: "Formato no válido. Envía PDF o imagen (PNG, JPG, WebP).",
+  },
+  // ─── Filtro de entrada da IA: avisos de falso positivo (revisão 20/11, 2.29) ───
+  "O filtro de entrada barra a mensagem pelas palavras da lista, sem entender o contexto. Um termo que também é sobrenome, nome de lugar ou palavra do dia a dia pode deixar um cliente sem resposta. Prefira expressões de duas ou mais palavras e acompanhe as conversas marcadas.": {
+    es: "El filtro de entrada bloquea el mensaje por las palabras de la lista, sin entender el contexto. Un término que también es apellido, nombre de lugar o palabra de uso diario puede dejar a un cliente sin respuesta. Prefiere expresiones de dos o más palabras y revisa las conversaciones marcadas.",
+  },
+  "Há regra sem limite de palavras além do termo: qualquer mensagem que contenha um termo da lista fica sem resposta, mesmo trazendo um pedido ou uma reclamação legítima.": {
+    es: "Hay una regla sin límite de palabras además del término: cualquier mensaje que contenga un término de la lista queda sin respuesta, aunque traiga un pedido o un reclamo legítimo.",
+  },
+  "Há termo de uma palavra só e curta na lista. É o caso que mais barra por engano: confira se ele não é também um nome ou uma palavra comum.": {
+    es: "Hay un término de una sola palabra corta en la lista. Es el caso que más bloquea por error: revisa que no sea también un nombre o una palabra común.",
+  },
+  "Em número com agente em modo assistido, a resposta automática do filtro não é enviada: a mensagem segue para o agente, e a resposta só sai depois de uma pessoa aprovar.": {
+    es: "En un número con agente en modo asistido, la respuesta automática del filtro no se envía: el mensaje sigue al agente, y la respuesta solo sale después de que una persona la apruebe.",
   },
   "A extensão do arquivo não é aceita. Envie .pdf, .png, .jpg, .jpeg ou .webp.": {
     es: "La extensión del archivo no se acepta. Envía .pdf, .png, .jpg, .jpeg o .webp.",

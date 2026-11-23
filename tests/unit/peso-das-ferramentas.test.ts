@@ -48,7 +48,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "crm_get_contact": { tokens: 188, motivo: BASE },
   "crm_propose_contact_field": { tokens: 438, motivo: BASE },
   "crm_list_conversations": { tokens: 283, motivo: BASE },
-  "crm_get_conversation": { tokens: 228, motivo: BASE },
+  "crm_get_conversation": { tokens: 266, motivo: "+38 do bloco `ai` (superfície de agente, PR 3): sem a frase, o agente não sabe que a resposta diz se uma pessoa assumiu a conversa, nem que com `ai.paused` ele não deve responder ao cliente" },
   "crm_get_conversation_history": { tokens: 203, motivo: BASE },
   "crm_get_queue_status": { tokens: 83, motivo: BASE },
   "crm_list_leads": { tokens: 500, motivo: BASE },
@@ -146,7 +146,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "schedule_followup (com negócio)": { tokens: 314, motivo: BASE },
 };
 
-const TETO_TOTAL = 33216;
+const TETO_TOTAL = 33254;
 
 const VARIANTE = "schedule_followup (com negócio)";
 

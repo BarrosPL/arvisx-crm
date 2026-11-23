@@ -15,6 +15,7 @@ import {
 import { listMessagesHandler } from "@/app/api/v1/messages/_handler";
 import { ApiError } from "@/lib/api/types";
 import { audit } from "@/lib/audit";
+import { estadoDaIaNaConversa } from "@/lib/inbox/estado-da-ia";
 import { criarRascunho, JANELA_MAXIMA_HORAS, TEXTO_MAXIMO } from "@/lib/inbox/rascunho-sugerido";
 import { VALIDADE_DO_LINK_DE_MIDIA_S } from "@/lib/messaging/media/link-temporario";
 import { getQueuePositions } from "@/lib/routing/queue";
@@ -167,6 +168,7 @@ export const crmGetConversation: McpToolDefinition<typeof getInputShape> = {
   description:
     "Retorna detalhes de uma conversa pelo UUID. Inclui status, atribuicao, contato, ultima atividade. " +
     "Governança: assignee_kind ('user'|'ai'|null), assigned_to_user_id + assigned_to_user_name (só o nome, sem email/telefone), tags[], e queue_position (1-based na fila do inbox — null quando não está na fila). " +
+    "`ai`: se a IA está pausada aqui (paused, reason, since, by = quem assumiu, until). Com ai.paused = true, não responda ao cliente. " +
     "Em conversa de atendimento, devolve apenas conversas do contato desta conversa.",
   inputSchema: getInputShape,
   category: "read",
@@ -226,6 +228,43 @@ export const crmGetConversation: McpToolDefinition<typeof getInputShape> = {
     const queue_position = isInQueue(conv)
       ? ((await getQueuePositions(ctx.supabase, ctx.organizationId)).get(conv.id) ?? null)
       : null;
+    // A IA ESTÁ PAUSADA? POR QUÊ, DESDE QUANDO, POR QUEM (superfície de agente,
+    // parte 3). Calculado das colunas que a conversa já devolve, pela mesma
+    // regra da tela; a marca permanente do contato não vem no `select` da
+    // conversa, então é lida aqui, com o filtro de organização. Falha nessa
+    // leitura não derruba a ferramenta: o resto do estado continua valendo.
+    const contatoDaConversa = (conv as unknown as {
+      contacts?: { force_human?: boolean | null; is_blocked?: boolean | null } | null;
+    }).contacts;
+    let sempreHumano = false;
+    if (conv.contact_id) {
+      try {
+        const { data: marca } = await ctx.supabase
+          .from("contacts")
+          .select("ai_opt_out")
+          .eq("id", conv.contact_id)
+          .eq("organization_id", ctx.organizationId)
+          .maybeSingle();
+        sempreHumano = (marca as { ai_opt_out?: boolean | null } | null)?.ai_opt_out === true;
+      } catch {
+        sempreHumano = false;
+      }
+    }
+    const estado = estadoDaIaNaConversa({
+      status: conv.status,
+      assigned_to_user_id: conv.assigned_to_user_id,
+      assignee_kind: conv.assignee_kind,
+      assigned_at: conv.assigned_at,
+      bot_silenced_until: conv.bot_silenced_until,
+      last_handoff_at: conv.last_handoff_at,
+      last_handoff_reason: conv.last_handoff_reason ?? null,
+      last_outbound_at: conv.last_outbound_at,
+      is_group: conv.is_group,
+      force_human: contatoDaConversa?.force_human ?? false,
+      is_blocked: contatoDaConversa?.is_blocked ?? false,
+      ai_opt_out: sempreHumano,
+    });
+    const { by_user_id, ...estadoSemDono } = estado;
     return {
       id: conv.id,
       contact_id: conv.contact_id,
@@ -247,6 +286,11 @@ export const crmGetConversation: McpToolDefinition<typeof getInputShape> = {
       is_group: conv.is_group,
       group_chat_id: conv.group_chat_id,
       created_at: conv.created_at,
+      ai: {
+        ...estadoSemDono,
+        // Quem assumiu: só o id e o nome, a mesma régua de `assigned_to_user_name`.
+        by: by_user_id ? { user_id: by_user_id, name: names.get(by_user_id) ?? null } : null,
+      },
     };
   },
 };

@@ -80,6 +80,10 @@ export const TRIGGER_LABELS: Record<TriggerEvent, string> = {
   "lead.task_created": "Quando uma tarefa for criada no negócio",
   "lead.attachment_added": "Quando um documento for anexado ao negócio",
   "task.completed": "Quando uma tarefa for concluída",
+  // A convivência entre pessoa e IA: o que o agente de fora escuta para ficar
+  // calado e para voltar. "Atendimento automático" é a palavra do produto.
+  "conversation.ai_paused": "Quando o atendimento automático for pausado numa conversa",
+  "conversation.ai_resumed": "Quando o atendimento automático voltar numa conversa",
 };
 
 export const ACTION_LABELS: Record<ActionType, string> = {

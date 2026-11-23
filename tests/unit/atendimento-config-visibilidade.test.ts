@@ -95,11 +95,13 @@ describe("config de atendimento — routing + visibilidade na mesma porta", () =
     // O corpo antigo não conhece o prazo de devolução, "a conversa fica com
     // quem atendeu", o prazo do silêncio manual nem a devolução AO RODÍZIO
     // (#2985): no PATCH eles ficam OMITIDOS (e a mescla preserva o que vale), no
-    // schema do jsonb eles têm o padrão (null, false, null e null).
+    // schema do jsonb eles têm o padrão (null, false, null e null). O prazo do
+    // silêncio depois de uma resposta pela TELA segue a mesma regra.
     const {
       handoff_return_after_minutes: _padrao,
       conversation_stays_with_attendant: _fica,
       manual_reply_silence_minutes: _silencio,
+      screen_reply_silence_minutes: _silencioDaTela,
       unanswered_return_minutes: _devolveAoRodizio,
       ...semPrazo
     } = routingConfigSchema.parse(antigo);

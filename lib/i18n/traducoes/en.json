@@ -9767,5 +9767,7 @@
   "Quando alguém escrever uma nota no negócio": "When someone writes a note on the deal",
   "Quando uma tarefa for criada no negócio": "When a task is created on the deal",
   "Quando um documento for anexado ao negócio": "When a document is attached to the deal",
-  "Quando uma tarefa for concluída": "When a task is completed"
+  "Quando uma tarefa for concluída": "When a task is completed",
+  "Quando o atendimento automático for pausado numa conversa": "When automatic support is paused in a conversation",
+  "Quando o atendimento automático voltar numa conversa": "When automatic support resumes in a conversation"
 }

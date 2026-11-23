@@ -217,6 +217,9 @@ export const CURATED_FIELDS: Record<TriggerEvent, CuratedField[]> = {
   // A tarefa pode não ter negócio: com negócio valem os campos dele; sem,
   // a condição sobre o negócio simplesmente não casa.
   "task.completed": LEAD_FIELDS,
+  // A conversa traz o contato: a condição é sobre QUEM é o contato.
+  "conversation.ai_paused": CONTACT_FIELDS,
+  "conversation.ai_resumed": CONTACT_FIELDS,
 };
 
 export const OP_LABELS: Record<Op, string> = {

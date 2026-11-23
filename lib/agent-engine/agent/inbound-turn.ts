@@ -184,6 +184,8 @@ import {
   type StageClassifierKnobs,
 } from './stage-classifier';
 import { classificadoresDoTurno } from './classificadores-do-turno';
+import { aplicarFiltroDeEntrada, falasPendentesDoCliente } from './filtro-de-entrada-no-turno';
+import { MOTIVO_DE_ABORTO_DO_FILTRO } from '../guardrails/filtro-de-entrada';
 import { loadPlaybook, textoDaOrganizacao } from './playbook';
 import {
   concessoesSemLastro,
@@ -2408,13 +2410,7 @@ async function escalarComercialAntesDoModelo(
 ): Promise<boolean> {
   const tenantId = job.organization_id;
   if (!(await comercialExigeHumano(pool, tenantId))) return false;
-  const textos = (await pool.query<{ body: string | null }>(
-    `select m.body from messages m
-     where m.organization_id = $1 and m.conversation_id = $2 and m.direction = 'inbound'
-       and m.created_at > coalesce((select max(o.created_at) from messages o
-         where o.organization_id = $1 and o.conversation_id = $2 and o.direction = 'outbound'), '-infinity')
-     order by m.created_at desc limit 100`, [tenantId, turno.conversationId],
-  )).rows.map((m) => m.body ?? '');
+  const textos = await falasPendentesDoCliente(pool, tenantId, turno.conversationId);
   // STOP e pedido de humano VENCEM o desvio comercial. "Quanto custa? Para de me
   // mandar mensagem" caía aqui: o cliente recebia o aviso comercial e o turno
   // voltava sem registrar o opt-out. Com `false`, o turno segue para as
@@ -2452,6 +2448,61 @@ async function escalarComercialAntesDoModelo(
       passagem: { origem: 'runtime_nativo', motivoCodigo: 'low_confidence', briefing },
       avisoAoLead: aviso, log });
   log.info('assunto comercial restrito encaminhado sem chamada ao redator', { lead_avisado: aviso.avisado });
+  return true;
+}
+
+/**
+ * O filtro de entrada da empresa (`filtro-de-entrada-no-turno.ts`) — ANTES do
+ * roteador, como a passagem comercial acima: a mensagem que a regra da empresa
+ * barra (ofensa, spam, fora de escopo, por lista configurada) não chama modelo
+ * nenhum, nem o que escolhe o agente.
+ *
+ * Quando barra, o turno acaba aqui, e é AQUI que ele deixa a linha no traço:
+ * o envoltório que grava o traço (`runAgentTurn`) nem chega a rodar.
+ */
+async function barrarPeloFiltroDeEntrada(
+  pool: pg.Pool,
+  deps: InboundTurnDeps,
+  job: JobRow,
+  turno: { leadId: string; conversationId: string; channelSessionId: string },
+): Promise<boolean> {
+  const log = withFields(deps.log, { job_id: job.id, tenant_id: job.organization_id, lead_id: turno.leadId });
+  const desfecho = await aplicarFiltroDeEntrada(
+    pool,
+    {
+      tenantId: job.organization_id,
+      leadId: turno.leadId,
+      conversationId: turno.conversationId,
+      channelSessionId: turno.channelSessionId,
+      jobId: job.id,
+      jobClaim: claimOfJob(job),
+    },
+    {
+      channel: () => (deps.channel ?? ((p: pg.Pool) => new WahaChannelAdapter(p, deps.crmCfg)))(pool),
+      origem: tipoDeEnvio(eTurnoDeResposta(job)),
+      now: deps.clock?.() ?? new Date(),
+      log,
+      ...(deps.knobs.disclosureMode !== undefined ? { disclosureMode: deps.knobs.disclosureMode } : {}),
+      ...(deps.sleep !== undefined ? { sleep: deps.sleep } : {}),
+    },
+  );
+  if (!desfecho.barrou) return false;
+  const coletor = criarColetorDeFerramentas();
+  coletor.registrar(desfecho.registro);
+  await gravarTracoDoTurno(deps.log, pool, {
+    organizationId: job.organization_id,
+    jobId: job.id,
+    previewRunId: null,
+    conversationId: turno.conversationId,
+    contactId: job.contact_id,
+    // Nenhum agente foi escolhido: o filtro roda antes do roteador.
+    config: null,
+    isDryRun: false,
+    status: 'completed',
+    erro: null,
+    desfecho: { abortReason: MOTIVO_DE_ABORTO_DO_FILTRO, messagesSent: desfecho.respostaEnviada ? 1 : 0 },
+    coletor,
+  });
   return true;
 }
 
@@ -7281,6 +7332,45 @@ export async function runAgentPreview(
 }
 
 /**
+ * Uma pessoa assumiu (ou a conversa saiu do automático) ENTRE o turno de quem
+ * passou a vez e a resposta do colega? As mesmas duas travas do começo de todo
+ * turno: `isLeadInHandoff` e o gate de elegibilidade (dono humano, silêncio,
+ * trava do contato). A passagem entre colegas roda dois turnos no mesmo job, e
+ * o intervalo entre eles é uma chamada de modelo inteira: tempo de sobra para
+ * alguém clicar em Assumir.
+ *
+ * O turno do colega refaz as duas (`runAgentTurn`), mas depois de carregar a
+ * versão publicada dele e de montar a abertura. Aqui a resposta sai antes, e
+ * a decisão de não continuar fica escrita no log da passagem.
+ *
+ * Falha da consulta de elegibilidade degrada ABERTO, como no handler: quem
+ * barra de verdade, o handoff, já rodou e falha fechado.
+ */
+export async function humanoAssumiuAConversa(
+  pool: pg.Pool,
+  deps: InboundTurnDeps,
+  job: JobRow,
+  conversationId: string,
+): Promise<boolean> {
+  if (job.contact_id !== null && (await isLeadInHandoff(pool, job.organization_id, job.contact_id))) return true;
+  try {
+    const elegib = await decidirElegibilidadeDaConversa(pool, {
+      organizationId: job.organization_id,
+      conversationId,
+      agora: deps.clock?.() ?? new Date(),
+      ttlMs: deps.knobs.allowlistTtlMs ?? ALLOWLIST_TTL_MS_PADRAO,
+    });
+    return elegib !== null && !elegib.permite;
+  } catch (err) {
+    deps.log.warn('passagem entre colegas — checagem de elegibilidade falhou, seguindo', {
+      job_id: job.id,
+      error: (err instanceof Error ? err.message : String(err)).slice(0, 160),
+    });
+    return false;
+  }
+}
+
+/**
  * Handler de `inbound_turn` para o registry do daemon (main.ts): o lead mandou uma
  * mensagem. Ids de envio vêm do payload do drain (fonte confiável — F2-05); a
  * abertura é o ritual padrão, sem bloco temporal.
@@ -7336,11 +7426,13 @@ export async function continuarComOColega(
   portas: {
     rodar?: typeof runAgentTurn;
     carregarColega?: typeof loadPublishedAgentConfigById;
+    humanoAssumiu?: typeof humanoAssumiuAConversa;
     desfazer?: typeof desfazerPassagem;
   } = {},
 ): Promise<void> {
   const rodar = portas.rodar ?? runAgentTurn;
   const carregarColega = portas.carregarColega ?? loadPublishedAgentConfigById;
+  const humanoAssumiu = portas.humanoAssumiu ?? humanoAssumiuAConversa;
   const desfazer = portas.desfazer ?? desfazerPassagem;
   const aceita = rodada.passagem.aceita;
   if (aceita === null) return;
@@ -7352,6 +7444,11 @@ export async function continuarComOColega(
   };
   if (rodada.passagem.mensagensEnviadas > 0) {
     deps.log.info('passagem entre colegas — quem passou já tinha respondido; o colega assume na próxima mensagem', campos);
+    return;
+  }
+  // A trava de "uma pessoa assumiu" vale também para quem RECEBE a passagem.
+  if (await humanoAssumiu(pool, deps, job, rodada.conversationId)) {
+    deps.log.info('passagem entre colegas — uma pessoa assumiu a conversa; o colega não responde', campos);
     return;
   }
   const colega = await carregarColega(pool, job.organization_id, aceita.paraAgente);
@@ -7463,6 +7560,14 @@ export function createInboundTurnHandler(deps: InboundTurnDeps) {
       });
     }
     if (await escalarComercialAntesDoModelo(pool, deps, job, {
+      leadId: job.contact_id,
+      conversationId: payload.conversation_id,
+      channelSessionId: payload.channel_session_id,
+    })) return;
+    // Depois da passagem comercial (que chama a equipe) e antes do roteador
+    // (que já é uma chamada de modelo): o que a regra da empresa barra não
+    // gasta token nenhum.
+    if (await barrarPeloFiltroDeEntrada(pool, deps, job, {
       leadId: job.contact_id,
       conversationId: payload.conversation_id,
       channelSessionId: payload.channel_session_id,

@@ -1,7 +1,8 @@
 import { requireSupportWrite } from "@/lib/impersonate/support";
 /**
  * GET  /api/v1/settings/routing — lê a config de ATENDIMENTO (manager+):
- *      `organizations.settings.routing` + `settings.visibility_mode`.
+ *      `organizations.settings.routing` + `settings.visibility_mode` +
+ *      `settings.ai_entry_filter` (o filtro de entrada da IA).
  * PATCH /api/v1/settings/routing — grava as duas (manager+).
  *
  * Rota v1 dedicada (não o Server Action updateTenant): a matriz spec 13 §4 nota
@@ -37,6 +38,8 @@ import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
 import { atendimentoConfigPatchSchema, routingConfigSchema, validateRequest } from "@/lib/schemas";
 import { mesclarSettingsDeAtendimento } from "@/lib/schemas/routing";
+import { lerFiltroDeEntrada } from "@/lib/agent-engine/guardrails/filtro-de-entrada";
+import { avisosDoFiltroParaQuemConfigura } from "@/lib/atendimento/avisos-do-filtro-de-entrada";
 import { DEFAULT_VISIBILITY_MODE, type VisibilityMode } from "@/lib/auth/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -66,7 +69,18 @@ export async function GET(_req: NextRequest): Promise<Response> {
   // a chave não existe (`coalesce(..., 'own_and_unassigned')`). Divergir aqui
   // faria a tela mostrar um estado que o banco não pratica.
   const visibility_mode = (settings.visibility_mode as VisibilityMode | undefined) ?? DEFAULT_VISIBILITY_MODE;
-  return ok({ ...routing, visibility_mode }, { requestId });
+  // O filtro de entrada da IA mora ao lado (`settings.ai_entry_filter`) e ainda
+  // não tem tela: lê-se e grava-se por esta rota.
+  const entry_filter = lerFiltroDeEntrada(settings);
+  return ok(
+    {
+      ...routing,
+      visibility_mode,
+      entry_filter,
+      entry_filter_warnings: avisosDoFiltroParaQuemConfigura(entry_filter, authz.user.idioma),
+    },
+    { requestId },
+  );
 }
 
 export async function PATCH(req: NextRequest): Promise<Response> {
@@ -137,7 +151,22 @@ export async function PATCH(req: NextRequest): Promise<Response> {
     resourceType: "organization",
     resourceId: activeOrg.orgId,
     requestId,
-    metadata: { routing, ...(visibility_mode !== undefined ? { visibility_mode } : {}) },
+    metadata: {
+      routing,
+      ...(visibility_mode !== undefined ? { visibility_mode } : {}),
+      // Só o fato e os tamanhos: as listas são configuração longa, e a
+      // auditoria é append-only.
+      ...(input.entry_filter !== undefined
+        ? {
+            entry_filter: {
+              enabled: input.entry_filter.enabled,
+              offense_terms: input.entry_filter.rules.offense?.terms.length ?? 0,
+              spam_terms: input.entry_filter.rules.spam?.terms.length ?? 0,
+              out_of_scope_terms: input.entry_filter.rules.out_of_scope?.terms.length ?? 0,
+            },
+          }
+        : {}),
+    },
   });
 
   return ok(
@@ -146,6 +175,11 @@ export async function PATCH(req: NextRequest): Promise<Response> {
       visibility_mode:
         visibility_mode ??
         ((currentSettings.visibility_mode as VisibilityMode | undefined) ?? DEFAULT_VISIBILITY_MODE),
+      entry_filter: lerFiltroDeEntrada(nextSettings),
+      entry_filter_warnings: avisosDoFiltroParaQuemConfigura(
+        lerFiltroDeEntrada(nextSettings),
+        authz.user.idioma,
+      ),
     },
     { requestId },
   );
