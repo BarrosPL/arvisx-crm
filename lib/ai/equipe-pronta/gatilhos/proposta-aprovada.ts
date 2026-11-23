@@ -57,6 +57,11 @@ export type MotivoDeNaoEnviar =
   | "fora_da_janela"
   | "limite_diario"
   | "envio_falhou"
+  /**
+   * O rascunho foi editado entre a aprovação e o envio (a aprovação caiu com a
+   * edição), ou outro pedido já está enviando esta mesma proposta.
+   */
+  | "proposta_mudou"
   /** A proposta em si não está pronta para sair (sem itens, sem preço, sem modelo, campo faltando). */
   | "proposta_incompleta";
 
@@ -115,6 +120,8 @@ export function fraseDeNaoEnviar(motivo: MotivoDeNaoEnviar, t: Tradutor): string
       return t("Aprovada. O agente não conseguiu enviar agora. Aprove de novo em instantes.");
     case "envio_falhou":
       return t("Aprovada, mas o envio falhou e a proposta continua em rascunho. Aprove de novo em instantes.");
+    case "proposta_mudou":
+      return t("A proposta mudou ou já está sendo enviada: nada saiu por esta aprovação. Recarregue, confira e aprove de novo.");
     case "proposta_incompleta":
       return t("Aprovada, mas a proposta ainda não está pronta para sair.");
   }
@@ -152,6 +159,13 @@ export async function aprovarPropostaParaOAgente(
     requestId: string;
     idioma?: Idioma;
     t: Tradutor;
+    /**
+     * A revisão que a pessoa estava VENDO quando clicou em aprovar (a tela a
+     * manda). Sem ela, a aprovação valeria para a revisão que o servidor lê na
+     * hora, que pode já ser outra: alguém editou o rascunho enquanto a tela
+     * estava aberta, e a pessoa aprovaria um conteúdo que não viu.
+     */
+    revisaoEsperada?: number;
   },
 ): Promise<ResultadoDaAprovacao> {
   const { orgId, propostaId, userId, requestId, t } = entrada;
@@ -171,6 +185,15 @@ export async function aprovarPropostaParaOAgente(
       codigo: "proposal_context_stale",
       status: 409,
       mensagem: t("Só uma proposta em rascunho pode ser aprovada."),
+    };
+  }
+
+  if (entrada.revisaoEsperada !== undefined && entrada.revisaoEsperada !== Number(proposta.revision)) {
+    return {
+      tipo: "recusa",
+      codigo: "proposal_context_stale",
+      status: 409,
+      mensagem: t("A proposta mudou desde que você abriu. Recarregue antes de aprovar."),
     };
   }
 
@@ -272,9 +295,16 @@ async function enviarPeloAgente(
       },
     },
     t,
+    // A revisão APROVADA (revisão de 20/11, item 2.9). Depois do CAS da
+    // aprovação, o envio relia a proposta sem dizer qual revisão esperava: uma
+    // edição nesse intervalo saía ao cliente com a aprovação de outra revisão.
+    // Com ela, o envio só entra em `enviando` se o rascunho ainda for o
+    // aprovado; e dois cliques em Aprovar enviam uma vez só.
+    revisaoEsperada: Number(proposta.revision),
   });
 
   if (resultado.tipo === "recusa") {
+    if (resultado.motivo === "mudou") return { envio: naoEnviou("proposta_mudou", t), agentId, equipe };
     if (resultado.motivo === "sem_conversa") return { envio: naoEnviou("sem_canal", t), agentId, equipe };
     if (resultado.motivo === "fora_da_janela" || resultado.motivo === "limite_diario") {
       return { envio: naoEnviou(resultado.motivo, t), agentId, equipe };

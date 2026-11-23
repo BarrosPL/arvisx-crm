@@ -14,6 +14,7 @@ export const dynamic = "force-dynamic";
 type Ctx = { params: Promise<{ id: string }> };
 
 const paramsSchema = z.object({ id: z.string().uuid() });
+const corpoSchema = z.object({ revision: z.number().int().positive().optional() });
 
 /**
  * POST /api/v1/proposals/[id]/approve — "Aprovar e deixar o agente enviar".
@@ -25,13 +26,15 @@ const paramsSchema = z.object({ id: z.string().uuid() });
  *
  * Casca fina: autentica e chama `aprovarPropostaParaOAgente`
  * (`lib/ai/equipe-pronta/gatilhos/proposta-aprovada.ts`), onde moram a regra e
- * as travas. Sem corpo: a organização vem da sessão e a proposta, do caminho.
+ * as travas. A organização vem da sessão e a proposta, do caminho. O corpo é
+ * opcional e só leva `revision`, a revisão que a pessoa estava vendo: se o
+ * rascunho já estiver em outra, a resposta é 409 e nada é aprovado.
  *
  * Resposta: `{ proposta, envio: { enviada, em_fila, motivo, mensagem }, negocio_movido }`.
  * Aprovar e não enviar é 200: a aprovação ficou gravada, e `envio.mensagem` diz
  * por que nada saiu.
  */
-export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
+export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
   const supportDenied = await requireSupportWrite();
   if (supportDenied) return supportDenied;
 
@@ -46,6 +49,11 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     return fail("validation_failed", t("Campos inválidos."), 422, { requestId, details: params.error.flatten() });
   }
 
+  const corpo = corpoSchema.safeParse((await req.json().catch(() => null)) ?? {});
+  if (!corpo.success) {
+    return fail("validation_failed", t("Campos inválidos."), 422, { requestId, details: corpo.error.flatten() });
+  }
+
   try {
     const resultado = await aprovarPropostaParaOAgente(createAdminClient(), {
       orgId: authz.org.orgId,
@@ -54,6 +62,7 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
       requestId,
       idioma: authz.user.idioma,
       t,
+      ...(corpo.data.revision !== undefined ? { revisaoEsperada: corpo.data.revision } : {}),
     });
     if (resultado.tipo === "recusa") {
       return fail(resultado.codigo, resultado.mensagem, resultado.status, { requestId });

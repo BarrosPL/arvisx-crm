@@ -467,7 +467,8 @@ describe("ProposalEditorClient — aprovar e deixar o agente enviar", () => {
     });
     render(<ProposalEditorClient id="p1" podeEditar={true} podeRevisar={true} podeAprovarParaOAgente={true} />);
     fireEvent.click(await screen.findByRole("button", { name: BOTAO }));
-    await waitFor(() => expect(apiClient.post).toHaveBeenCalledWith("/api/v1/proposals/p1/approve", {}));
+    // A tela manda a revisão que está mostrando: o servidor não aprova outra.
+    await waitFor(() => expect(apiClient.post).toHaveBeenCalledWith("/api/v1/proposals/p1/approve", { revision: 1 }));
     expect(await screen.findByRole("status")).toHaveTextContent("O agente não enviou porque o WhatsApp está em ensaio.");
   });
 

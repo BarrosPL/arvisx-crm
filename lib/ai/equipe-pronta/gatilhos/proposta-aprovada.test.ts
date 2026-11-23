@@ -115,6 +115,9 @@ describe("aprovar e deixar o agente enviar", () => {
     expect(enviarProposta).toHaveBeenCalledTimes(1);
     const envio = enviarProposta.mock.calls[0]![1];
     expect(envio).toMatchObject({ orgId: ORG, propostaId: PROPOSTA });
+    // Revisão de 20/11, item 2.9: o envio recebe a revisão APROVADA. Editada
+    // depois do CAS da aprovação, a proposta não sai.
+    expect(envio.revisaoEsperada).toBe(3);
     expect(envio.quem.actor).toEqual({ type: "ai_agent", id: AGENTES.proposta, role: "agent", agent_id: AGENTES.proposta });
     expect(envio.quem.userId).toBeNull();
     expect(envio.quem.auditoria.metadata).toMatchObject({
@@ -276,6 +279,39 @@ describe("aprovar e deixar o agente enviar", () => {
     expect(audit).toHaveBeenCalledTimes(1);
   });
 
+  // ─── Revisão de 20/11, item 2.9: a corrida aprovar × editar ───
+  it("⭐ a tela manda a revisão que a pessoa VIU; rascunho que já está em outra não é aprovado nem enviado", async () => {
+    const duble = dublarSupabase(banco());
+    const resultado = await aprovarPropostaParaOAgente(duble.cliente, { ...entrada, revisaoEsperada: 2 });
+    expect(resultado).toMatchObject({ tipo: "recusa", codigo: "proposal_context_stale", status: 409 });
+    expect(duble.tabelas.crm_proposals![0]!.aprovada_em).toBeNull();
+    expect(audit).not.toHaveBeenCalled();
+    expect(enviarProposta).not.toHaveBeenCalled();
+  });
+
+  it("revisão vista igual à atual: aprova e envia", async () => {
+    const duble = dublarSupabase(banco());
+    const resultado = await aprovarPropostaParaOAgente(duble.cliente, { ...entrada, revisaoEsperada: 3 });
+    expect(resultado.tipo === "ok" && resultado.envio.enviada).toBe(true);
+  });
+
+  it("⭐ rascunho editado DEPOIS do CAS da aprovação (ou já sendo enviado por outro pedido): nada sai, o negócio não anda e a frase diz o que fazer", async () => {
+    enviarProposta.mockResolvedValue({
+      tipo: "recusa",
+      motivo: "mudou",
+      codigo: "proposal_context_stale",
+      status: 409,
+      mensagem: "x",
+    });
+    const { resultado } = await aprovar(banco());
+    expect(resultado.tipo).toBe("ok");
+    if (resultado.tipo !== "ok") return;
+    expect(resultado.envio).toMatchObject({ enviada: false, em_fila: false, motivo: "proposta_mudou" });
+    expect(resultado.envio.mensagem).toContain("aprove de novo");
+    expect(resultado.negocio_movido).toBe(false);
+    expect(moveLeadHandler).not.toHaveBeenCalled();
+  });
+
   it("recusas: proposta de outra organização ou inexistente (404) e proposta que não é rascunho (409)", async () => {
     const outraOrg = banco();
     outraOrg.crm_proposals![0]!.organization_id = "99999999-9999-4999-8999-999999999999";
@@ -306,6 +342,7 @@ describe("aprovar e deixar o agente enviar", () => {
       "fora_da_janela",
       "limite_diario",
       "envio_falhou",
+      "proposta_mudou",
       "proposta_incompleta",
     ];
     for (const m of motivos) expect(fraseDeNaoEnviar(m, (s) => s), m).toMatch(/^Aprovada/);

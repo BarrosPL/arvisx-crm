@@ -456,21 +456,33 @@ export function ProposalEditorClient({
   async function aprovar() {
     if (!proposta) return;
     const sujo = ultimaGravacao.current !== null && ultimaGravacao.current !== assinaturaDoRascunho(proposta);
+    // A revisão que a pessoa está aprovando: a do Salvar que acabou de rodar,
+    // ou a da tela. O servidor recusa (409) se o rascunho já estiver em outra.
+    let revisao = proposta.revision;
     if (sujo) {
+      revisaoGravada.current = null;
       const salvou = await salvar();
       if (!salvou) return;
+      if (revisaoGravada.current !== null) revisao = revisaoGravada.current;
     }
     setSalvando(true);
     setErro(null);
     setAvisoDaAprovacao(null);
     try {
-      const aprovacao = await apiClient.post<ApiSuccess<RespostaDaAprovacao>>(`/api/v1/proposals/${id}/approve`, {});
+      const aprovacao = await apiClient.post<ApiSuccess<RespostaDaAprovacao>>(
+        `/api/v1/proposals/${id}/approve`,
+        typeof revisao === "number" ? { revision: revisao } : {},
+      );
       const res = await apiClient.get<ApiSuccess<Proposta>>(`/api/v1/proposals/${id}`);
       ultimaGravacao.current = assinaturaDoRascunho(res.data);
       setProposta(res.data);
       setAvisoDaAprovacao(aprovacao.data.envio.mensagem);
     } catch (e) {
-      setErro(t("Não foi possível aprovar. Confira se você tem papel de gestor."));
+      setErro(
+        e instanceof ApiError && e.status === 409
+          ? t("A proposta mudou desde que você abriu. Recarregue antes de aprovar.")
+          : t("Não foi possível aprovar. Confira se você tem papel de gestor."),
+      );
       showApiError(e);
     } finally {
       setSalvando(false);
