@@ -69736,11 +69736,9 @@ create trigger trg_social_comments_updated_at
 
 alter table public.social_comments enable row level security;
 
-drop policy if exists tenant_isolation_social_comments_select on public.social_comments;
-create policy tenant_isolation_social_comments_select on public.social_comments
-  for select using (
-    (organization_id in (select public.fn_user_org_ids())) or (select public.fn_is_platform_admin())
-  );
+-- A política de SELECT não nasce aqui: a definição que vale é a do bloco da
+-- migration 9819, logo abaixo (só gerente para cima). Recriar a versão antiga
+-- neste ponto a deixaria em vigor, a cada atualização, até o bloco seguinte rodar.
 
 -- `ALTER DEFAULT PRIVILEGES … GRANT ALL ON TABLES TO anon` do baseline alcança
 -- toda tabela criada depois dele. Sem este revoke, o comentário e quem o
