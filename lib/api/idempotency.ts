@@ -179,6 +179,13 @@ export type EntradaDaIdempotencia<T> = {
   corpo: unknown;
   /** O efeito. Só é chamado por quem conseguir reservar a chave. */
   executar: () => Promise<{ resposta: T; status: number }>;
+  /**
+   * Por quanto tempo o recibo responde pela chave. Padrão: `TTL_MS` (24 h), o
+   * do cabeçalho `Idempotency-Key`. Quem deriva a chave do CONTEÚDO do pedido
+   * (`lib/mcp/idempotencia.ts`) usa uma janela curta: ali a chave não é uma
+   * promessa de quem chama, e 24 h impediriam um pedido igual feito de propósito.
+   */
+  ttlMs?: number;
   /** Relógio injetado — o repo testa janela de tempo assim, não com sleep. */
   agora?: () => Date;
 };
@@ -297,7 +304,7 @@ export async function comIdempotencia<T>(
     .update({
       status_code: status,
       response_body: resposta as unknown as Record<string, unknown>,
-      expires_at: new Date(agora().getTime() + TTL_MS).toISOString(),
+      expires_at: new Date(agora().getTime() + (entrada.ttlMs ?? TTL_MS)).toISOString(),
     })
     .eq("organization_id", organizationId)
     .eq("key", chave)
