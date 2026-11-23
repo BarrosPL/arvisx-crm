@@ -20319,8 +20319,8 @@ export const DICIONARIO: Traducoes = {
   "Aprovada. O agente não enviou porque o limite diário de mensagens desta conexão foi atingido.": { es: "Aprobada. El agente no la envió porque se alcanzó el límite diario de mensajes de esta conexión." },
   "Aprovada. O agente não conseguiu enviar agora. Aprove de novo em instantes.": { es: "Aprobada. El agente no pudo enviarla ahora. Aprueba de nuevo en unos instantes." },
   "Aprovada, mas o envio falhou e a proposta continua em rascunho. Aprove de novo em instantes.": { es: "Aprobada, pero el envío falló y la propuesta sigue en borrador. Aprueba de nuevo en unos instantes." },
-  "A proposta mudou ou já está sendo enviada: nada saiu por esta aprovação. Recarregue, confira e aprove de novo.": {
-    es: "La propuesta cambió o ya se está enviando: no salió nada por esta aprobación. Recarga, revisa y aprueba de nuevo.",
+  "Aprovada, mas a proposta mudou ou já está sendo enviada: nada saiu por esta aprovação. Recarregue e confira; se ela foi editada, aprove de novo.": {
+    es: "Aprobada, pero la propuesta cambió o ya se está enviando: no salió nada por esta aprobación. Recarga y revisa; si fue editada, aprueba de nuevo.",
   },
   "Aprovada, mas a proposta ainda não está pronta para sair.": { es: "Aprobada, pero la propuesta todavía no está lista para salir." },
   "Encerrado sem enviar: o limite de retomadas deste contato já foi usado": { es: "Finalizado sin enviar: el límite de reintentos de este contacto ya se usó" },

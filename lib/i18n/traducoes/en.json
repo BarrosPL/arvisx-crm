@@ -9802,7 +9802,7 @@
   "Aprovada. O agente não enviou porque o limite diário de mensagens desta conexão foi atingido.": "Approved. The agent did not send it because this connection's daily message limit has been reached.",
   "Aprovada. O agente não conseguiu enviar agora. Aprove de novo em instantes.": "Approved. The agent could not send it right now. Approve again in a moment.",
   "Aprovada, mas o envio falhou e a proposta continua em rascunho. Aprove de novo em instantes.": "Approved, but sending failed and the proposal is still a draft. Approve again in a moment.",
-  "A proposta mudou ou já está sendo enviada: nada saiu por esta aprovação. Recarregue, confira e aprove de novo.": "The proposal changed or is already being sent: nothing went out for this approval. Reload, review and approve again.",
+  "Aprovada, mas a proposta mudou ou já está sendo enviada: nada saiu por esta aprovação. Recarregue e confira; se ela foi editada, aprove de novo.": "Approved, but the proposal changed or is already being sent: nothing went out for this approval. Reload and review; if it was edited, approve again.",
   "Aprovada, mas a proposta ainda não está pronta para sair.": "Approved, but the proposal is not ready to go out yet.",
   "Encerrado sem enviar: o limite de retomadas deste contato já foi usado": "Ended without sending: this contact's follow-up limit was already used",
   "a equipe de IA já tinha retomado este contato depois da última mensagem dele": "the AI team had already followed up with this contact after their last message",

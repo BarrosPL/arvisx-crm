@@ -121,7 +121,7 @@ export function fraseDeNaoEnviar(motivo: MotivoDeNaoEnviar, t: Tradutor): string
     case "envio_falhou":
       return t("Aprovada, mas o envio falhou e a proposta continua em rascunho. Aprove de novo em instantes.");
     case "proposta_mudou":
-      return t("A proposta mudou ou já está sendo enviada: nada saiu por esta aprovação. Recarregue, confira e aprove de novo.");
+      return t("Aprovada, mas a proposta mudou ou já está sendo enviada: nada saiu por esta aprovação. Recarregue e confira; se ela foi editada, aprove de novo.");
     case "proposta_incompleta":
       return t("Aprovada, mas a proposta ainda não está pronta para sair.");
   }
