@@ -177,6 +177,26 @@ describe("crm_close_conversation fecha a conversa", () => {
   });
 });
 
+describe("conversa assumida por uma pessoa (revisão 20/11, item 2.31)", () => {
+  // Decisão do dono registrada no PR #14 (20/11): a ferramenta segue fechando
+  // qualquer conversa aberta da organização, sem trava por atendente humano
+  // responsável. Este teste FIXA a decisão; se ela mudar, ele muda junto com a
+  // descrição e com `docs/arvisx/SUPERFICIE-DE-AGENTE.md`.
+  it("token comum fecha a conversa que tem atendente humano responsável", async () => {
+    conversa(CONVERSA_ABERTA).assigned_to_user_id = "aaaaaaaa-0000-4000-8000-0000000000f1";
+
+    const r = await fechar({ conversation_id: CONVERSA_ABERTA });
+
+    expect(r).toMatchObject({ conversation_id: CONVERSA_ABERTA, status: "closed", already_closed: false });
+    expect(conversa(CONVERSA_ABERTA).status).toBe("closed");
+    expect(h.audit).toHaveBeenCalledTimes(1);
+  });
+
+  it("a descrição avisa o modelo de que a ferramenta não respeita o dono humano", () => {
+    expect(crmCloseConversation.description).toMatch(/pessoa da equipe assumiu/);
+  });
+});
+
 describe("⭐ organização errada", () => {
   it("conversa de OUTRA organização: recusa, sem tocar no banco e sem auditoria", async () => {
     const antes = { ...conversa(CONVERSA_B) };

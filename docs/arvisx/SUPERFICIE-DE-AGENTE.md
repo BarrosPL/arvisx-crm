@@ -116,6 +116,12 @@ da caixa de entrada. O uso previsto: o agente falou por último e o cliente não
 - **Nada é enviado ao cliente.** Se ele escrever de novo, a conversa reabre, como sempre.
 - **Não fecha chamado nem negócio** (`crm_close_human_case` e `crm_close_demand` continuam sendo as ferramentas
   disso) e não solta a trava de atendimento humano do contato: devolver ao automático segue sendo escolha da tela.
+- **Fecha também a conversa que uma pessoa assumiu.** A régua da tela (`exigirControleDaConversa`: só quem tem o
+  controle da conversa fecha) vale para sessão de usuário, não para token. Qualquer token com papel `agent` e escopo
+  `mcp:write` fecha qualquer conversa aberta da organização, inclusive a que tem atendente humano responsável
+  (`assigned_to_user_id` preenchido). É decisão do dono (20/11, PR #14), não lacuna: a descrição da ferramenta avisa
+  o modelo para conferir antes. Quem não quer isso não liga a ferramenta para o agente, ou emite o token sem
+  `mcp:write`. Num turno de atendimento o alcance já é só a conversa do cliente atendido.
 - **Idempotente.** Conversa já encerrada (fechada, resolvida ou arquivada) responde `already_closed: true`, sem
   escrever nada e sem nova linha de auditoria. Conversa arquivada continua arquivada.
 - **Auditoria** `conversation.closed`, a mesma ação da tela, com o token como ator e, no `metadata`, `via: "mcp"`,
