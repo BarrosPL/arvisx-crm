@@ -232,6 +232,32 @@ describe("crm_send_proposal: quem envia e como fica registrado", () => {
     h.enviar.mockResolvedValue({ tipo: "recusa", motivo: "sem_conversa", codigo: "validation_failed", status: 422, mensagem: "x" });
     expect(await chamar()).toMatchObject({ permitido: false, motivo: "sem_canal" });
   });
+
+  // Revisão de 20/11, itens 2.1 e 2.9: o envio só sai da revisão que a
+  // ferramenta julgou. A corrida em si é medida em
+  // app/api/v1/proposals/[id]/send/route.test.ts, contra `enviarProposta`.
+  it("⭐ passa ao envio a revisão que julgou (a aprovada), para o envio recusar o rascunho que mudou", async () => {
+    aprovar();
+    await chamar();
+    const [, entrada] = h.enviar.mock.calls[0] as [unknown, Record<string, unknown>];
+    expect(entrada.revisaoEsperada).toBe(3);
+  });
+
+  it("⭐ no modo direto a revisão esperada é a que a regra conferiu item a item", async () => {
+    modo("direto");
+    Object.assign(aProposta(), { revision: 8 });
+    await chamar();
+    const [, entrada] = h.enviar.mock.calls[0] as [unknown, Record<string, unknown>];
+    expect(entrada.revisaoEsperada).toBe(8);
+  });
+
+  it("⭐ proposta editada no meio, ou já sendo enviada por outro turno: proposta_mudou, e não diz que enviou", async () => {
+    aprovar();
+    h.enviar.mockResolvedValue({ tipo: "recusa", motivo: "mudou", codigo: "proposal_context_stale", status: 409, mensagem: "x" });
+    const r = await chamar();
+    expect(r).toMatchObject({ permitido: false, motivo: "proposta_mudou" });
+    expect(r.enviada).toBeUndefined();
+  });
 });
 
 describe("crm_send_proposal: o estado da proposta", () => {

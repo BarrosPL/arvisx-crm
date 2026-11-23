@@ -225,6 +225,13 @@ ainda não tem o botão de aprovar** (ver "O que falta"): até ele existir, no
 modo padrão toda tentativa de envio responde `precisa_aprovacao`.
 
 O envio é a mesma função da rota da tela (`lib/propostas/enviar-proposta.ts`).
+A proposta só entra em `enviando` por comparação e troca: precisa estar ainda
+em rascunho e ainda na revisão que quem pediu o envio conferiu
+(`revisaoEsperada`: a ferramenta passa a revisão que ela julgou; a tela passa a
+revisão que está mostrando). Dois pedidos ao mesmo tempo (dois turnos do
+agente, dois cliques, o agente e a tela) enviam uma vez só, e quem perde recebe
+`proposta_mudou` (na rota, 409 `proposal_context_stale`). O mesmo vale para o
+rascunho editado entre a conferência e o envio: nada sai.
 Antes dela, a ferramenta recusa quando: o canal está em ensaio e o número não é
 de teste (`modo_ensaio`), uma pessoa assumiu a conversa (`humano_assumiu`), o
 contato pediu para parar (`contato_pediu_para_parar`), o agente ou a equipe

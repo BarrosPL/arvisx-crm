@@ -10117,6 +10117,9 @@ export const DICIONARIO: Traducoes = {
   // O envio da proposta saiu da rota para `lib/propostas/enviar-proposta.ts`.
   "Proposta não encontrada.": { es: "Propuesta no encontrada." },
   "Esta proposta não pode ser enviada neste estado.": { es: "Esta propuesta no puede enviarse en este estado." },
+  "A proposta mudou ou já está sendo enviada. Recarregue e confira antes de enviar.": {
+    es: "La propuesta cambió o ya se está enviando. Recarga y revisa antes de enviar.",
+  },
   "A proposta não tem itens.": { es: "La propuesta no tiene ítems." },
   "Nenhuma conversa com este contato para enviar.": { es: "No hay ninguna conversación con este contacto para enviar." },
   "Fora do horário de envio configurado. Tente novamente mais tarde.": { es: "Fuera del horario de envío configurado. Inténtelo de nuevo más tarde." },

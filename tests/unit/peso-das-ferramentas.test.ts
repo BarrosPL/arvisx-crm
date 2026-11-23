@@ -132,7 +132,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "crm_set_next_action": { tokens: 233, motivo: SUPERFICIE_DE_AGENTE },
   "crm_get_proposal": { tokens: 338, motivo: "capacidade nova (superfície de agente, PR 2): o agente consulta status, validade, itens, valor e link do PDF de uma proposta; a descrição lista os status porque o modelo os recebe como estão no banco" },
   "crm_update_contact": { tokens: 468, motivo: "capacidade nova (Equipe pronta v2): o agente grava direto no cadastro do contato; são 13 campos opcionais (nome, e-mail, outro telefone, documento, nascimento, sete de endereço e os personalizados), todos como texto simples e conferidos no handler, para não pagar a expressão regular do zod" },
-  "crm_send_proposal": { tokens: 293, motivo: "capacidade nova (Equipe pronta v2): o agente envia a proposta; um argumento só, e a descrição lista as recusas porque é por elas que o modelo decide o que dizer ao cliente" },
+  "crm_send_proposal": { tokens: 316, motivo: "capacidade nova (Equipe pronta v2): o agente envia a proposta; um argumento só, e a descrição lista as recusas porque é por elas que o modelo decide o que dizer ao cliente; +23 da recusa `proposta_mudou` (revisão de 20/11, itens 2.1 e 2.9): o envio só sai da revisão conferida e uma vez só, e o modelo precisa saber que deve consultar antes de repetir" },
   "get_lead_context": { tokens: 46, motivo: BASE },
   "send_message": { tokens: 137, motivo: BASE },
   "update_lead_state": { tokens: 240, motivo: BASE },
@@ -148,7 +148,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "schedule_followup (com negócio)": { tokens: 314, motivo: BASE },
 };
 
-const TETO_TOTAL = 33977;
+const TETO_TOTAL = 34000;
 
 const VARIANTE = "schedule_followup (com negócio)";
 

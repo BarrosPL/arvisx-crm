@@ -9777,6 +9777,7 @@
   "Quando o assunto muda, o agente passa a conversa para o colega certo, com o motivo e um resumo. O cliente não é avisado da troca.": "When the subject changes, the agent hands the conversation to the right colleague, with the reason and a summary. The customer is not told about the switch.",
   "Proposta não encontrada.": "Proposal not found.",
   "Esta proposta não pode ser enviada neste estado.": "This proposal cannot be sent in its current status.",
+  "A proposta mudou ou já está sendo enviada. Recarregue e confira antes de enviar.": "The proposal changed or is already being sent. Reload and review before sending.",
   "A proposta não tem itens.": "The proposal has no items.",
   "Nenhuma conversa com este contato para enviar.": "There is no conversation with this contact to send to.",
   "Fora do horário de envio configurado. Tente novamente mais tarde.": "Outside the configured sending hours. Try again later.",

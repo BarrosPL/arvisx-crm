@@ -38,6 +38,12 @@
  * da tela: mesma conferência de itens, preço, modelo e documento, mesma janela
  * e limite do canal, mesmo PDF.
  *
+ * A ferramenta passa a `revision` que ela julgou (`revisaoEsperada`): o envio
+ * só entra em `enviando` se o rascunho ainda estiver nessa revisão e ainda for
+ * rascunho. Proposta editada no meio do caminho, ou dois turnos pedindo o
+ * mesmo envio ao mesmo tempo, terminam em `proposta_mudou` para quem perdeu, e
+ * a proposta sai uma vez só.
+ *
  * `organization_id` SEMPRE do contexto. Num turno de atendimento, só proposta
  * do cliente da conversa; proposta de outro cliente e proposta inexistente
  * recebem a mesma recusa.
@@ -258,7 +264,8 @@ export const crmSendProposal: McpToolDefinition<typeof inputShape> = {
     "empresa: ou só envia proposta que a equipe aprovou, ou envia sozinho quando todos os itens são do " +
     "catálogo, com preço do catálogo e sem desconto. Recusas: `precisa_aprovacao` (avise que está em " +
     "revisão e deixe tarefa para a equipe), `proposta_expirada` (prepare outra), `sem_canal`, " +
-    "`modo_ensaio`, `humano_assumiu`, `contato_pediu_para_parar`, `equipe_pausada`. Só diga que enviou " +
+    "`modo_ensaio`, `humano_assumiu`, `contato_pediu_para_parar`, `equipe_pausada`, `proposta_mudou` " +
+    "(foi editada ou já está sendo enviada: consulte antes de repetir). Só diga que enviou " +
     "com `enviada: true`.",
   inputSchema: inputShape,
   category: "write",
@@ -349,9 +356,21 @@ export const crmSendProposal: McpToolDefinition<typeof inputShape> = {
         })(),
       },
       t: (texto) => texto,
+      // A revisão que as regras acima julgaram (a aprovada, ou a que a regra do
+      // envio direto conferiu item a item). Se o rascunho for editado entre a
+      // leitura e o envio, ou se outro turno já estiver enviando, nada sai.
+      revisaoEsperada: Number(proposta.revision),
     });
 
     if (resultado.tipo === "recusa") {
+      if (resultado.motivo === "mudou") {
+        return recusa(
+          "proposta_mudou",
+          "a proposta foi alterada depois de conferida, ou outro pedido já está enviando esta mesma proposta: " +
+            "nada saiu por esta chamada. Consulte a proposta (`crm_get_proposal`) para saber o estado dela antes " +
+            "de dizer qualquer coisa à pessoa; não repita o envio às cegas.",
+        );
+      }
       if (resultado.motivo === "sem_conversa") {
         return recusa("sem_canal", "não há conversa com este contato por onde enviar. Chame uma pessoa da equipe.");
       }
