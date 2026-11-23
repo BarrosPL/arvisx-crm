@@ -232,4 +232,13 @@ o botão do pacote não a liga.
   equipe aprovou. A regra completa, as recusas e as travas estão em
   [`EQUIPE-PRONTA.md`](EQUIPE-PRONTA.md#envio-de-proposta).
 - Empresa sem perfil de Equipe pronta segue o padrão: sem aprovação, não envia.
+- **Alcance.** Num turno de atendimento, só a proposta do cliente da conversa (outra recebe `fora_da_conversa`). Fora
+  de um atendimento (agente externo por token, rotina sem conversa) o alcance é o de toda ferramenta do MCP: qualquer
+  proposta da organização. É de propósito, e por isso tem um limite a mais: **fora de um atendimento só sai a proposta
+  aprovada pela equipe**. O envio direto (`envio_de_proposta: direto`) vale só na conversa com o próprio cliente; sem
+  ela, a resposta é `precisa_aprovacao` com `porque: "fora_de_atendimento"`. As travas de falar com o cliente (ensaio,
+  pessoa que assumiu, opt-out, pausa, plano) valem nos dois casos.
+- **Uma vez só.** O envio só sai da revisão que a ferramenta conferiu. Proposta editada no meio do caminho, ou dois
+  pedidos ao mesmo tempo, terminam em `proposta_mudou` para quem perdeu: consulte a proposta antes de repetir.
+- Falha ao ler a pausa do agente, a pausa da equipe ou o plano é recusa (`indisponivel`), nunca envio.
 - Resposta: `enviada: true` quando saiu; `em_fila: true` quando a mensagem ficou na fila do canal.

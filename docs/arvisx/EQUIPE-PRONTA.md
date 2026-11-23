@@ -201,7 +201,7 @@ ela sai é o modo da empresa, `proposta.envio_de_proposta` no perfil
 | Modo | Quando o agente envia |
 |---|---|
 | `apos_aprovacao` (padrão) | só o rascunho que a equipe aprovou |
-| `direto` | sozinho, se todos os itens são do catálogo, com o preço do catálogo, sem desconto e sem condição escrita à mão; fora disso, precisa da aprovação |
+| `direto` | sozinho, se todos os itens são do catálogo, com o preço do catálogo, sem desconto e sem condição escrita à mão; fora disso, precisa da aprovação. Só vale no atendimento do próprio cliente: chamada fora de um turno (token de integração) só envia proposta aprovada |
 
 A aprovação são duas colunas de `crm_proposals` (migration 9814),
 `aprovada_em` e `aprovada_na_revisao`, e só vale enquanto a revisão aprovada

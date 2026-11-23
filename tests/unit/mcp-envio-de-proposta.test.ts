@@ -96,6 +96,8 @@ const modo = (m: "apos_aprovacao" | "direto") =>
   Object.assign(banco.tabelas.equipe_pronta_perfis![0]!, { respostas: { proposta: { envio_de_proposta: m } } });
 const chamar = (id = RASCUNHO, c: McpContext = ctx()) =>
   crmSendProposal.handler({ proposal_id: id }, c) as Promise<Record<string, unknown>>;
+/** O turno de atendimento do cliente dono do rascunho (a ponte injeta o contato). */
+const noAtendimento = () => ctx({ contatoDoTurno: CONTATO_A });
 
 beforeEach(() => {
   h.capacidades = ["propostas"];
@@ -161,10 +163,29 @@ describe("crm_send_proposal: a regra da empresa", () => {
     expect(h.enviar).not.toHaveBeenCalled();
   });
 
-  it("⭐ direto: itens do catálogo, preço do catálogo, sem desconto — envia sozinho", async () => {
+  it("⭐ direto: itens do catálogo, preço do catálogo, sem desconto — envia sozinho, no atendimento do cliente", async () => {
     modo("direto");
-    expect(await chamar()).toMatchObject({ enviada: true, autorizada_por: "direto" });
+    expect(await chamar(RASCUNHO, noAtendimento())).toMatchObject({ enviada: true, autorizada_por: "direto" });
     expect(h.enviar).toHaveBeenCalledTimes(1);
+  });
+
+  // Revisão de 20/11, item 2.4: sem turno não há "cliente desta conversa" para
+  // cercar o envio; o que sobra é o alcance da organização inteira.
+  it("⭐ direto FORA de um atendimento (token de integração, rotina sem conversa): não envia, pede aprovação", async () => {
+    modo("direto");
+    const r = await chamar();
+    expect(r).toMatchObject({ permitido: false, motivo: "precisa_aprovacao", porque: "fora_de_atendimento", modo: "direto" });
+    expect(h.enviar).not.toHaveBeenCalled();
+    // O mesmo para o token de integração.
+    const externo = ctx({ actor: { type: "api_token", id: TOKEN_A, role: "agent" } });
+    expect(await chamar(RASCUNHO, externo)).toMatchObject({ motivo: "precisa_aprovacao", porque: "fora_de_atendimento" });
+    expect(h.enviar).not.toHaveBeenCalled();
+  });
+
+  it("fora de um atendimento, a proposta APROVADA continua saindo (uma pessoa a autorizou)", async () => {
+    modo("direto");
+    aprovar();
+    expect(await chamar()).toMatchObject({ enviada: true, autorizada_por: "aprovacao" });
   });
 
   it.each([
@@ -174,7 +195,7 @@ describe("crm_send_proposal: a regra da empresa", () => {
   ])("⭐ direto com %s: volta a pedir aprovação", async (porque, mudanca) => {
     modo("direto");
     Object.assign(banco.tabelas.crm_proposal_items![0]!, mudanca);
-    expect(await chamar()).toMatchObject({ permitido: false, motivo: "precisa_aprovacao", porque, modo: "direto" });
+    expect(await chamar(RASCUNHO, noAtendimento())).toMatchObject({ permitido: false, motivo: "precisa_aprovacao", porque, modo: "direto" });
     expect(h.enviar).not.toHaveBeenCalled();
   });
 
@@ -247,7 +268,7 @@ describe("crm_send_proposal: quem envia e como fica registrado", () => {
   it("⭐ no modo direto a revisão esperada é a que a regra conferiu item a item", async () => {
     modo("direto");
     Object.assign(aProposta(), { revision: 8 });
-    await chamar();
+    await chamar(RASCUNHO, noAtendimento());
     const [, entrada] = h.enviar.mock.calls[0] as [unknown, Record<string, unknown>];
     expect(entrada.revisaoEsperada).toBe(8);
   });

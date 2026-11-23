@@ -47,6 +47,16 @@
  * `organization_id` SEMPRE do contexto. Num turno de atendimento, só proposta
  * do cliente da conversa; proposta de outro cliente e proposta inexistente
  * recebem a mesma recusa.
+ *
+ * ═══ Fora de um atendimento ═══
+ *
+ * Sem `ctx.contatoDoTurno` (token de integração no MCP, rotina sem conversa)
+ * não há cliente da conversa para cercar, e o alcance é o de toda ferramenta do
+ * MCP: qualquer proposta da organização. É de propósito para a proposta
+ * APROVADA (uma pessoa autorizou aquele rascunho). O envio DIRETO, que não tem
+ * pessoa no caminho, só vale dentro do atendimento: fora dele a resposta é
+ * `precisa_aprovacao` com `porque: "fora_de_atendimento"`. As travas de falar
+ * com o cliente valem nos dois casos.
  */
 import { z } from "zod";
 
@@ -270,7 +280,8 @@ export const crmSendProposal: McpToolDefinition<typeof inputShape> = {
   description:
     "ENVIA ao cliente, na conversa, a proposta em rascunho (o PDF). Fala com o cliente. A regra é da " +
     "empresa: ou só envia proposta que a equipe aprovou, ou envia sozinho quando todos os itens são do " +
-    "catálogo, com preço do catálogo e sem desconto. Recusas: `precisa_aprovacao` (avise que está em " +
+    "catálogo, com preço do catálogo e sem desconto (isto só na conversa com o próprio cliente; fora de " +
+    "um atendimento, só a aprovada). Recusas: `precisa_aprovacao` (avise que está em " +
     "revisão e deixe tarefa para a equipe), `proposta_expirada` (prepare outra), `sem_canal`, " +
     "`modo_ensaio`, `humano_assumiu`, `contato_pediu_para_parar`, `equipe_pausada`, `proposta_mudou` " +
     "(foi editada ou já está sendo enviada: consulte antes de repetir). Só diga que enviou " +
@@ -347,6 +358,27 @@ export const crmSendProposal: McpToolDefinition<typeof inputShape> = {
           `${decisao.item ? ` ("${decisao.item}")` : ""}. Diga à pessoa que a proposta está em revisão, ` +
           "deixe uma tarefa para a equipe aprovar e não diga que foi enviada.",
         { porque: decisao.porque, modo: decisao.modo },
+      );
+    }
+    // FORA DE UM ATENDIMENTO, SÓ A APROVADA (revisão de 20/11, item 2.4).
+    //
+    // A cerca "só a proposta do cliente desta conversa" (`ESCOPO_DAS_ESCRITAS`
+    // e a conferência acima) existe quando há turno: `ctx.contatoDoTurno`.
+    // Quem chama sem turno (token de integração, rotina sem conversa) tem o
+    // alcance de qualquer ferramenta do MCP: a organização inteira. Para a
+    // proposta APROVADA isso é coerente: uma pessoa da equipe olhou aquele
+    // rascunho e disse "pode enviar". O envio DIRETO não tem pessoa nenhuma no
+    // caminho; o que o ancora é a conversa em que o cliente pediu a proposta.
+    // Sem conversa, o modo direto deixaria um chamador de alcance geral mandar
+    // qualquer rascunho de catálogo a qualquer cliente. Então, sem turno, o
+    // modo direto não vale: pede aprovação.
+    if (!ctx.contatoDoTurno && decisao.por !== "aprovacao") {
+      return recusa(
+        "precisa_aprovacao",
+        "fora de um atendimento com o cliente da proposta, só sai a proposta que a equipe aprovou: o envio " +
+          "sem aprovação vale apenas na conversa com o próprio cliente. Deixe uma tarefa para a equipe aprovar " +
+          "e não diga que foi enviada.",
+        { porque: "fora_de_atendimento", modo: decisao.modo },
       );
     }
 
