@@ -11,12 +11,11 @@
  */
 import type { NextRequest } from "next/server";
 
-import { respostaDeRecusa } from "@/lib/api/recusa";
 import { ok } from "@/lib/api/wrappers";
 import { ocultarComentario } from "@/lib/comentarios/acoes";
 import { requireSupportWrite } from "@/lib/impersonate/support";
 
-import { bordaDosComentarios, idDoCaminho } from "../../_borda";
+import { bordaDosComentarios, idDoCaminho, recusaDosComentarios } from "../../_borda";
 
 export const dynamic = "force-dynamic";
 
@@ -28,12 +27,12 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
 
   const borda = await bordaDosComentarios(req, "escrita");
   if (!borda.ok) return borda.response;
-  const alvo = idDoCaminho((await ctx.params).id, borda.requestId);
+  const alvo = idDoCaminho((await ctx.params).id, borda);
   if ("response" in alvo) return alvo.response;
   try {
     const r = await ocultarComentario(borda.db, borda.org, alvo.id, borda.quem);
     return ok(r, { requestId: borda.requestId });
   } catch (erro) {
-    return respostaDeRecusa(erro, borda.requestId);
+    return recusaDosComentarios(erro, borda);
   }
 }

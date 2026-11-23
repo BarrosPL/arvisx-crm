@@ -3,10 +3,11 @@
 > **Para quem é:** quem administra a instalação (o passo no painel da Meta), quem
 > liga os comentários numa empresa e quem mantém o sistema de fora que recebe o
 > aviso `comment.received`.
-> **O que cobre:** as duas primeiras das três entregas — o comentário chega, é
-> guardado e um sistema externo é avisado (seções 1 a 8); e pode ser lido e
-> respondido pela API e pelo MCP (seções 9 a 14). A tela de comentários vem na
-> terceira entrega.
+> **O que cobre:** as três entregas — o comentário chega, é guardado e um
+> sistema externo é avisado (seções 1 a 8); pode ser lido e respondido pela API
+> e pelo MCP (seções 9 a 14); e a equipe vê o estado em Conexões, reautoriza e
+> responde pela tela de Comentários (seção 15).
+> **Mapa:** `docs/architecture/comentarios-do-instagram.architecture.json`.
 > **Fonte da verdade no código:** `lib/channels/meta-social/webhook.ts` (leitura),
 > `lib/channels/meta-social/comentarios.ts` (modo, gravação e aviso),
 > `lib/channels/meta-social/store.ts` (estado da conexão e troca de modo),
@@ -90,7 +91,8 @@ devolve, em cada conexão do Instagram:
 
 - `escopo_concedido`: a conexão tem as duas permissões. `false` para conexão
   feita antes desta versão e para toda conexão feita pelo login normal — para
-  liberar, a pessoa faz a **reautorização para comentários**;
+  liberar, a pessoa faz a **reautorização para comentários**, pelo botão
+  "Reautorizar para comentários" do cartão do Instagram (seção 15);
 - `disponivel`: é do Instagram **e** tem as permissões.
 
 ### O login em duas fases
@@ -107,9 +109,9 @@ A volta é a mesma do login normal (`concluir`, depois `conectar` na mesma
 página). Os dois logins usam `auth_type=rerequest`, então quem negou uma
 permissão antes é perguntado de novo. O que fica gravado na conexão é tudo o
 que a pessoa já concedeu ao app (a Meta devolve o conjunto inteiro), então
-reconectar depois pelo login normal não tira as de comentários. Enquanto não
-há tela, a reautorização é feita por esta chamada; o botão "Reautorizar para
-comentários" vem com a tela e faz exatamente ela.
+reconectar depois pelo login normal não tira as de comentários. Na tela, é o
+botão "Reautorizar para comentários" do cartão do Instagram que faz esta
+chamada (seção 15); o botão "Conectar" faz a do login normal.
 
 Decisão registrada (revisão de 20/11/2026, item 2.20): enquanto o dono do
 produto não disser o contrário, vale o login em duas fases.
@@ -131,8 +133,9 @@ POST /api/v1/channels/meta-social
 { "acao": "comentarios_modo", "channel_session_id": "<id da conexão>", "modo": "registrar" }
 ```
 
-Conectar de novo ou reautorizar **não muda o modo**. Enquanto não há tela, a
-troca é por esta chamada; a tela vem na terceira entrega.
+Conectar de novo ou reautorizar **não muda o modo**. Na tela, a troca fica no
+cartão do Instagram em Conexões › Facebook / Instagram (seção 15); a chamada
+acima é a mesma que o cartão faz.
 
 ## 5. O que é guardado
 
@@ -282,7 +285,7 @@ Todas as rotas respondem no envelope padrão (`{ data, meta? }` ou
 | Rota | O que faz |
 |---|---|
 | `GET /api/v1/social-comments` | Lista, do mais recente. Filtros: `canal` (id da conexão), `estado`, `desde` (ISO-8601 com fuso), `midia` (id da publicação), `limite` (até 100), `cursor`. `meta.cursor` e `meta.has_more` paginam. |
-| `GET /api/v1/social-comments/:id` | Um comentário, com o texto inteiro, as respostas, o estado e `private_reply_deadline`. |
+| `GET /api/v1/social-comments/:id` | Um comentário, com o texto inteiro, as respostas, o estado, `private_reply_deadline` e `modo_do_canal` (o modo atual da conexão que o recebeu: `off`, `registrar` ou `real`; `null` se a conexão foi removida). |
 | `POST .../:id/reply` `{ text }` | Responde em público. |
 | `POST .../:id/private-reply` `{ text, criar_contato? }` | Responde em privado (mensagem direta a quem comentou). |
 | `POST .../:id/hide` | Oculta o comentário na rede. |
@@ -475,3 +478,110 @@ Lido em 20/11/2026.
 
 Em transmissão ao vivo o CRM não tem como saber se a transmissão ainda está no
 ar: a resposta privada é tentada, e a Meta recusa se ela já terminou.
+
+---
+
+## 15. A tela: Conexões, reautorização e Comentários
+
+### No cartão do Instagram (Conexões › Facebook / Instagram)
+
+Quem vê: administrador da empresa (a aba Conexões é dele).
+
+- **Estado dos comentários:** Desligado (`off`), Registrando (`registrar`) ou
+  Ativo (`real`), com uma frase dizendo o que cada um faz.
+- **Modo dos comentários:** o seletor troca o modo. Ir para Ativo pede
+  confirmação, porque a partir dali toda resposta é publicada de verdade.
+- **Aviso de permissão:** aparece quando `escopo_concedido` é `false`, junto do
+  botão **Reautorizar para comentários**.
+- **Ver comentários:** abre a tela de Comentários já filtrada por aquela conexão.
+
+O cartão do Messenger não tem nada disto: comentários só existem no Instagram.
+
+### Reautorizar para comentários
+
+É um login próprio do Facebook (**CONFIRMADO** por teste), o único que pede
+as permissões de comentários; o "Conectar" comum pede só as de mensagem
+(login em duas fases, seção 3):
+
+1. o botão pede ao servidor o login de reautorização
+   (`iniciar` com `para_comentarios: true`) e leva à Meta, que pede as
+   permissões de comentários e pergunta de novo o que foi negado
+   (`auth_type=rerequest`);
+2. na volta, a página daquela conexão já vem marcada, só com as redes que a
+   empresa já tinha naquela página — reautorizar o Instagram não cria uma
+   conexão do Messenger de carona;
+3. ao confirmar, a conexão existente é **atualizada**: token novo e a lista de
+   permissões concedidas regravada. Ela não é apagada, as conversas ficam, e o
+   **modo dos comentários não muda**.
+
+Se a pessoa desmarcar de novo a permissão de comentários na Meta, a conexão
+continua atendendo mensagens e o aviso continua no cartão. Se a página da
+conexão não vier entre as autorizadas, a tela diz isso em vez de oferecer
+outra página.
+
+### A tela de Comentários
+
+Onde fica: `/app/inbox/comentarios`. **Não tem item de menu.** Chega-se por:
+
+- o atalho **Comentários do Instagram** no Inbox, acima dos filtros. Aparece
+  para gerente e administrador, e só quando a empresa tem a conexão direta com
+  a Meta;
+- o botão **Ver comentários** do cartão do Instagram.
+
+Quem pode usar: gerente e administrador **da empresa** — o mesmo papel das
+rotas (seção 9). Como a tela mora dentro do Inbox, ela acompanha o plano do
+Inbox.
+
+Decisão (revisão de 20/11/2026, item 2.25): quem administra a **plataforma**
+sem ter papel de gerente na empresa **não vê** a tela nem o atalho. As rotas
+exigem o papel na empresa e recusariam tudo com 403; mostrar a tela seria
+oferecer botões que só falham, e o comentário é dado da empresa. A porta é
+uma só: o papel na empresa. Se o papel mudar com a tela aberta, ela mostra
+"Você não tem permissão para ver os comentários desta empresa" em vez do erro
+cru.
+
+O que mostra, do mais recente: a conexão, quem comentou, o texto inteiro, a
+publicação (tipo e id), o anúncio quando há, o estado e as duas respostas.
+Filtros: conexão, estado e "só desta publicação".
+
+| Na tela | O que quer dizer |
+|---|---|
+| selo **Simulada** | a conexão estava em Registrando: a resposta ficou anotada e nada foi publicado. Se a conexão já está em Ativo, a tela avisa que dá para responder de verdade e volta a oferecer o botão; a resposta publicada substitui a simulada |
+| selo **Publicada** | a rede confirmou a resposta |
+| selo **Incerta** | a rede não confirmou; a resposta pode ter saído. A tela não repete sozinha: só com "Conferi, enviar de novo", que avisa do risco de duplicar |
+| **Oculto (simulado)** | a ocultação foi só anotada (modo Registrando) |
+| estado **Sem ação** | alguém marcou em Ignorar; o motivo aparece embaixo |
+
+Os botões **Responder**, **Responder em privado**, **Ocultar** e **Ignorar**
+chamam as rotas da seção 10; a tela não tem regra própria. Quando o servidor
+recusa, a tela mostra a frase dele, em português ou em espanhol conforme o
+idioma da pessoa (um sistema externo, por token, recebe em português e decide
+pelo `code`). "Responder em privado" fica desligado depois dos 7 dias.
+
+"Responder" e "Responder em privado" ficam desligados quando o comentário já
+tem aquela resposta — menos quando ela é **simulada** e a conexão está em
+**Ativo** (`modo_do_canal: "real"`): aí o comentário ainda não foi respondido
+de verdade, e o botão volta. O diálogo avisa que a resposta enviada será
+publicada e fica no lugar da simulada.
+
+Cada botão leva o autor do comentário no nome lido por leitor de tela
+("Responder — @usuario"). O campo da resposta aceita até 10.000 caracteres, o
+mesmo teto da rota. Enquanto uma ação está sendo enviada, um segundo clique
+não manda a mesma ação de novo (responder, ocultar, ignorar e a confirmação
+do modo Ativo no cartão da conexão).
+
+**Limite conhecido:** a tela não abre a publicação no Instagram. A notificação
+da Meta traz só o id da publicação, e o endereço dela (`permalink`) não é
+guardado. O filtro "só desta publicação" junta os comentários da mesma
+publicação.
+
+### Como foi provado
+
+- Componentes: `components/connections/ConexaoDiretaMeta.test.tsx`,
+  `components/comentarios/ComentariosClient.test.tsx`,
+  `components/inbox/AtalhoDosComentarios.test.tsx`.
+- Idioma das recusas: `app/api/v1/social-comments/recusa-traduzida.test.ts`.
+- Pela tela, com a Graph simulada: `tests/e2e/comentarios-do-instagram.spec.ts`
+  (modo de registro, e modo real contra uma porta local que não responde, que
+  deixa a resposta incerta). **A CONFIRMAR:** a resposta aceita pela Meta nunca
+  foi exercitada pela tela; depende de conta real e do Acesso avançado.

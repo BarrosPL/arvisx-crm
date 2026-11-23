@@ -200,6 +200,28 @@ describe("ler e listar", () => {
     expect(c.author).toEqual({ id: AUTOR, username: "cliente.exemplo" });
   });
 
+  // A tela usa o modo para saber se a resposta simulada ainda trava o comentário.
+  it("⭐ o comentário diz o modo ATUAL da conexão dele — na leitura, na lista e na resposta das ações", async () => {
+    for (const [modo, esperado] of [["registrar", "registrar"], ["real", "real"], [null, "off"]] as const) {
+      const db = montar(modo);
+      expect((await lerComentario(db, ORG, COMENTARIO, TOKEN)).modo_do_canal).toBe(esperado);
+      expect((await listarComentarios(db, ORG, {}, TOKEN)).comentarios[0]!.modo_do_canal).toBe(esperado);
+    }
+    const db = montar("registrar");
+    expect((await responderEmPublico(db, ORG, COMENTARIO, { text: "oi" }, TOKEN)).comment.modo_do_canal).toBe("registrar");
+    expect((await ignorarComentario(montar("real"), ORG, COMENTARIO, {}, TOKEN)).comment.modo_do_canal).toBe("real");
+  });
+
+  it("conexão arquivada, ou de outra organização, não dá modo: `null`, e a leitura não falha", async () => {
+    const db = montar("real");
+    banco.tabelas.channel_sessions!.find((c) => c.id === CANAL)!.archived_at = agora();
+    expect((await lerComentario(db, ORG, COMENTARIO, TOKEN)).modo_do_canal).toBeNull();
+    // O modo é lido DENTRO da organização: a conexão da outra não empresta o dela.
+    montar("real");
+    linha().channel_session_id = CANAL_DA_OUTRA;
+    expect((await lerComentario(banco as never, ORG, COMENTARIO, TOKEN)).modo_do_canal).toBeNull();
+  });
+
   it("filtra por estado, canal, publicação e data", async () => {
     const db = montar("real");
     banco.tabelas.social_comments!.push(

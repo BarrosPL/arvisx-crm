@@ -48,6 +48,8 @@ const NAV_ALLOWLIST: Record<string, string> = {
     "porta é o rodapé de versão (VersionFooter), que aparece justamente quando há versão nova — melhor que um card fixo. Além disso é só do dono do servidor (is_platform_admin), papel que o registro não modela",
   "/app/proposals/novo":
     "sub-fluxo de criação de proposta, alcançado pelo botão 'Nova proposta' em /app/proposals",
+  "/app/inbox/comentarios":
+    "Comentários do Instagram: sub-tela do Atendimento, alcançada pelo atalho do Inbox (AtalhoDosComentarios, gerente e administrador, quando há conexão direta com a Meta) e pelo botão Ver comentários do cartão do Instagram em Conexões. Sem item de menu porque o menu lateral está no limite medido (e2e navegacao.spec.ts)",
   "/app/fora-do-plano":
     "não é destino: o proxy.ts REESCREVE para ela a página que o plano da empresa não libera (migration 9802), mantendo a URL pedida. Porta nenhuma deve levar a ela",
 };

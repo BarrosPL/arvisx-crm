@@ -3498,6 +3498,14 @@ de contrato; pareamento real por código ainda requer confirmação no celular.
 
 - [P0] Conexões → Redes sociais: credencial/perfil, contas e conexão sem expor chave.
 - [P0] Instagram/Facebook: habilitar recebimento, IA pausada, abrir Inbox existente.
+- [P1] Comentários do Instagram (2026-11-20): o cartão do Instagram em Conexões mostra o estado
+  (Desligado / Registrando / Ativo), avisa da permissão que falta e muda o modo; a tela
+  `/app/inbox/comentarios` (gerente+) lista e responde em público e em privado, oculta e ignora;
+  resposta simulada e resposta incerta aparecem com selo próprio, e a incerta só é reenviada com
+  confirmação. Spec `tests/e2e/comentarios-do-instagram.spec.ts`, com a Graph simulada (modo de
+  registro, e modo real contra uma porta local que não responde). **Ainda não executada:** a
+  primeira execução é no CI; a prova visual numa instalação fresca e a resposta aceita pela Meta
+  (conta real, Acesso avançado) seguem pendentes.
 - [P0] Webhook de outra conta/rede, assinatura inválida e evento repetido não produzem resposta.
 - [P1] Conta sem DMs implementados informa a limitação; não oferece ativação fictícia.
 - [P1] Falha na assinatura do webhook fica visível e retenta com reconciliação por URL.
