@@ -142,9 +142,11 @@ import {
   FERRAMENTA_DE_PASSAGEM_ENTRE_COLEGAS,
   RECUSA_DEPOIS_DA_PASSAGEM,
   applyPassarParaColega,
+  blocoDaPassagemDesfeita,
   blocoDaPassagemRecebida,
   colegasDoAgente,
   defDaPassagemEntreColegas,
+  desfazerPassagem,
   type PassagemAceita,
 } from './passagem-entre-colegas';
 import { loadActiveRouter } from './router-config';
@@ -5466,6 +5468,22 @@ async function executarTurnoDoAgente(
                 colegas,
                 carregarColega: (agentId) => loadPublishedAgentConfigById(pool, tenantId, agentId),
                 agora: clock,
+                // A nota e o agente da conversa valem juntos: ou as duas
+                // escritas ficam, ou nenhuma.
+                emTransacao: async (escrever) => {
+                  const cliente = await pool.connect();
+                  try {
+                    await cliente.query('begin');
+                    const resultado = await escrever(cliente);
+                    await cliente.query('commit');
+                    return resultado;
+                  } catch (err) {
+                    await cliente.query('rollback').catch(() => undefined);
+                    throw err;
+                  } finally {
+                    cliente.release();
+                  }
+                },
               },
               raw,
             );
@@ -7303,8 +7321,17 @@ export async function runAgentPreview(
  *
  * Colega pausado, em modo assistido ou sem versão publicada: a ferramenta já
  * recusa antes de passar a vez; a conferência daqui cobre a mudança que
- * acontecer entre a passagem e esta leitura. Nesse caso o colega segue fixado
- * e as travas normais do turno dele decidem na próxima mensagem.
+ * acontecer entre a passagem e esta leitura.
+ *
+ * Nesse caso a passagem é DESFEITA e QUEM PASSOU RESPONDE (revisão de 20/11,
+ * item 2.11). Antes ficava só um aviso no log: quem passou já tinha encerrado o
+ * turno sem falar (é o que a ferramenta manda), o colega não rodava, e o
+ * cliente ficava sem resposta — com a conversa fixada num agente parado, que
+ * também não responderia à mensagem seguinte. Agora a conversa volta para quem
+ * passou (`desfazerPassagem`, só se ainda estiver com o colega) e ele roda de
+ * novo no mesmo job, avisado do que houve e SEM a ferramenta de passagem: ou
+ * responde, ou chama a equipe. Como ele não tinha enviado nada, a numeração
+ * dos envios do job não se repete.
  */
 export async function continuarComOColega(
   deps: InboundTurnDeps,
@@ -7324,10 +7351,12 @@ export async function continuarComOColega(
   portas: {
     rodar?: typeof runAgentTurn;
     carregarColega?: typeof loadPublishedAgentConfigById;
+    desfazer?: typeof desfazerPassagem;
   } = {},
 ): Promise<void> {
   const rodar = portas.rodar ?? runAgentTurn;
   const carregarColega = portas.carregarColega ?? loadPublishedAgentConfigById;
+  const desfazer = portas.desfazer ?? desfazerPassagem;
   const aceita = rodada.passagem.aceita;
   if (aceita === null) return;
   const campos = {
@@ -7342,7 +7371,36 @@ export async function continuarComOColega(
   }
   const colega = await carregarColega(pool, job.organization_id, aceita.paraAgente);
   if (colega === null || colega.pausedAt || colega.operationMode === 'assisted') {
-    deps.log.warn('passagem entre colegas — o colega deixou de atender entre a passagem e a resposta', campos);
+    // A conversa volta para quem passou. Se a devolução falhar, ele responde
+    // assim mesmo: a mensagem que está na mão não fica sem resposta por causa
+    // de uma escrita que não entrou.
+    let devolvida = false;
+    try {
+      devolvida = await desfazer(
+        pool,
+        { tenantId: job.organization_id, conversationId: rodada.conversationId },
+        aceita,
+      );
+    } catch (err) {
+      deps.log.error('passagem entre colegas — a conversa não pôde ser devolvida a quem passou', {
+        ...campos,
+        error: (err instanceof Error ? err.message : String(err)).slice(0, 160),
+      });
+    }
+    deps.log.warn(
+      'passagem entre colegas — o colega deixou de atender entre a passagem e a resposta; quem passou responde',
+      { ...campos, conversa_devolvida: devolvida },
+    );
+    await rodar(deps, job, pool, ctx, {
+      // O mesmo agente e o mesmo roteamento do primeiro turno, SEM
+      // `passagemParaColega`: nesta rodada ele não passa a vez de novo.
+      resolvedAgent: rodada.resolvedAgent,
+      channelSessionId: rodada.channelSessionId,
+      conversationId: rodada.conversationId,
+      inboundMessageId: rodada.inboundMessageId,
+      coletorHerdado: rodada.coletorDaRodada,
+      buildOpening: (ritual) => `${rodada.abertura(ritual)}\n\n${blocoDaPassagemDesfeita(aceita)}`,
+    });
     return;
   }
   deps.log.info('passagem entre colegas — o colega responde na mesma rodada', campos);

@@ -324,3 +324,94 @@ describe("contrato das duas ferramentas", () => {
     expect(Object.keys(crmListLeadNotes.inputSchema)).not.toContain("organization_id");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Revisão de 20/11 — item 2.13
+// ---------------------------------------------------------------------------
+
+describe("⭐ a nota não entra em dobro (revisão 20/11, 2.13)", () => {
+  it("sem Idempotency-Key, a mesma nota do mesmo autor no mesmo negócio, repetida em seguida, é gravada UMA vez", async () => {
+    const primeira = await anotar({ lead_id: NEGOCIO_A, text: "Cliente pediu retorno às 15h" });
+    const segunda = await anotar({ lead_id: NEGOCIO_A, text: "Cliente pediu retorno às 15h" });
+
+    expect(linhasDaA()).toHaveLength(1);
+    expect((segunda.note as Nota).id).toBe((primeira.note as Nota).id);
+    expect(segunda.idempotent_replay).toBe(true);
+    expect(String(segunda.idempotent_replay_reason)).toContain("Idempotency-Key nova");
+    expect(h.audit).toHaveBeenCalledTimes(1);
+  });
+
+  it("texto diferente, outro negócio, outro destinatário ou outro autor são notas novas", async () => {
+    await anotar({ lead_id: NEGOCIO_A, text: "Recado" });
+    await anotar({ lead_id: NEGOCIO_A, text: "Recado, segunda parte" });
+    await anotar({ lead_id: NEGOCIO_A_IRMAO, text: "Recado" });
+    await anotar({ lead_id: NEGOCIO_A, text: "Recado", recipient: "financeiro" });
+    await anotar({ lead_id: NEGOCIO_A, text: "Recado" }, ctx(TOKEN_COBRANCA));
+
+    expect(linhasDaA()).toHaveLength(5);
+  });
+
+  it("a mesma Idempotency-Key com OUTRO texto é recusada — antes devolvia a nota antiga e perdia o texto novo", async () => {
+    const comChave = ctx(TOKEN_VENDAS, { idempotencyKey: "22222222-2222-4222-8222-222222222222" });
+    await anotar({ lead_id: NEGOCIO_A, text: "Primeiro texto" }, comChave);
+    const r = await anotar({ lead_id: NEGOCIO_A, text: "Texto diferente" }, comChave);
+
+    expect(r).toMatchObject({ permitido: false, motivo: "chave_de_idempotencia_em_conflito" });
+    expect(linhasDaA()).toHaveLength(1);
+  });
+
+  it("corrida que o índice único decide: quem recebe 23505 devolve a nota da outra chamada, sem erro", async () => {
+    const { registrarNotaDoNegocio } = await import("@/lib/leads/notas-do-negocio");
+    const CHAVE = "33333333-3333-4333-8333-333333333333";
+    const vencedora = {
+      id: "aaaaaaaa-0000-4000-8000-0000000000e9",
+      lead_id: NEGOCIO_A,
+      actor_kind: "ai_agent",
+      reason: "Agente de vendas: Uma vez só",
+      payload: {
+        texto: "Uma vez só",
+        autor: { tipo: "token", id: TOKEN_VENDAS, nome: "Agente de vendas" },
+        idempotency_key: CHAVE,
+      },
+      performed_at: "2026-11-23T10:00:00.000Z",
+    };
+
+    // A leitura ANTES da gravação não vê nada (a outra chamada ainda não
+    // gravou); o INSERT bate no índice único; a leitura DEPOIS acha a vencedora.
+    let leituras = 0;
+    const insercoes: unknown[] = [];
+    const leitura = () => {
+      const cadeia: Record<string, unknown> = {};
+      for (const m of ["select", "eq", "contains", "limit"]) cadeia[m] = () => cadeia;
+      cadeia.maybeSingle = () => Promise.resolve({ data: ++leituras === 1 ? null : vencedora, error: null });
+      return cadeia;
+    };
+    const supabase = {
+      from: () => ({
+        ...leitura(),
+        insert: (linha: unknown) => {
+          insercoes.push(linha);
+          return {
+            select: () => ({
+              single: () =>
+                Promise.resolve({ data: null, error: { code: "23505", message: "duplicate key value" } }),
+            }),
+          };
+        },
+      }),
+    };
+
+    const desfecho = await registrarNotaDoNegocio({
+      supabase: supabase as never,
+      organizationId: ORG_A,
+      lead: { id: NEGOCIO_A, contact_id: CONTATO_A },
+      texto: "Uma vez só",
+      autor: { tipo: "token", id: TOKEN_VENDAS, nome: "Agente de vendas" },
+      ator: { type: "api_token", id: TOKEN_VENDAS, role: "agent" },
+      chaveDeIdempotencia: CHAVE,
+    });
+
+    expect(insercoes).toHaveLength(1);
+    expect(desfecho).toMatchObject({ ok: true, repetida: true, nota: { id: vencedora.id, text: "Uma vez só" } });
+  });
+});

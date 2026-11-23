@@ -454,3 +454,244 @@ describe("contrato das quatro ferramentas", () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// Revisão de 20/11 — itens 2.13, 2.14, 2.16 e 2.17
+// ---------------------------------------------------------------------------
+
+describe("⭐ sem Idempotency-Key: a chave sai do conteúdo do pedido (revisão 20/11, 2.13)", () => {
+  const pedido = { title: "Ligar para confirmar", lead_id: NEGOCIO_A, kind: "ligação" };
+
+  it("o mesmo pedido, do mesmo autor, repetido em seguida NÃO cria a segunda tarefa", async () => {
+    const primeira = await criar(pedido);
+    const segunda = await criar(pedido);
+
+    expect(tarefasDaA()).toHaveLength(1);
+    expect((segunda.task as Resposta).id).toBe((primeira.task as Resposta).id);
+    expect(segunda.idempotent_replay).toBe(true);
+    expect(String(segunda.idempotent_replay_reason)).toContain("Idempotency-Key nova");
+    expect(h.audit).toHaveBeenCalledTimes(1);
+    expect(atividades().filter((a) => a.type === "task_created")).toHaveLength(1);
+  });
+
+  it("pedido DIFERENTE (outro título) é outra tarefa", async () => {
+    await criar(pedido);
+    await criar({ ...pedido, title: "Ligar de novo amanhã" });
+    expect(tarefasDaA()).toHaveLength(2);
+  });
+
+  it("OUTRO autor com o mesmo conteúdo não é repetição: cria a dele", async () => {
+    const OUTRO_TOKEN = "aaaaaaaa-0000-4000-8000-0000000000f2";
+    await criar(pedido);
+    const r = await criar(
+      pedido,
+      ctx({ apiTokenId: OUTRO_TOKEN, actor: { type: "api_token", id: OUTRO_TOKEN, role: "agent" } }),
+    );
+    expect(r.idempotent_replay).toBeUndefined();
+    expect(tarefasDaA()).toHaveLength(2);
+  });
+
+  it("o agente nativo é reconhecido pelo AGENTE, não pelo run: o replay do mesmo job não duplica", async () => {
+    const AGENTE = "aaaaaaaa-0000-4000-8000-0000000000a9";
+    const turno = (run: string) =>
+      ctx({ actor: { type: "ai_agent", id: run, role: "agent", agent_id: AGENTE }, contatoDoTurno: CONTATO_A });
+
+    await criar(pedido, turno("run-1"));
+    const replay = await criar(pedido, turno("run-2"));
+
+    expect(replay.idempotent_replay).toBe(true);
+    expect(tarefasDaA()).toHaveLength(1);
+  });
+
+  it("passada a janela, o mesmo pedido é uma tarefa nova — a chave derivada não vale 24 horas", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      vi.setSystemTime(new Date("2026-11-23T10:00:00.000Z"));
+      await criar(pedido);
+      vi.setSystemTime(new Date("2026-11-23T10:11:00.000Z"));
+      const r = await criar(pedido);
+      expect(r.idempotent_replay).toBeUndefined();
+      expect(tarefasDaA()).toHaveLength(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("recusa não vira recibo: corrigido o motivo, o mesmo pedido é atendido", async () => {
+    const paraONovato = { title: "Para o novato", assigned_to: LEITOR };
+    expect(await criar(paraONovato)).toMatchObject({ permitido: false, motivo: "responsavel_fora_da_equipe" });
+    banco.tabelas.user_organizations!.find((u) => u.user_id === LEITOR)!.role = "agent";
+    expect((await criar(paraONovato)).task).toMatchObject({ assigned_to: LEITOR });
+  });
+});
+
+describe("⭐ concluir decide no UPDATE, não na leitura (revisão 20/11, 2.13)", () => {
+  async function tarefaAberta() {
+    const r = await criar({ title: "A cumprir", lead_id: NEGOCIO_A });
+    h.audit.mockClear();
+    return (r.task as Resposta).id as string;
+  }
+
+  /**
+   * Um cliente que deixa a LEITURA do handler ver a tarefa aberta e, antes do
+   * UPDATE, aplica o que a chamada concorrente gravou. A leitura é a 1ª consulta
+   * a `crm_tasks`; o UPDATE condicionado é a 2ª.
+   */
+  function comConcorrente(id: string, concorrente: Record<string, unknown>) {
+    let consultas = 0;
+    const cliente = {
+      ...banco.cliente,
+      from: (tabela: string) => {
+        if (tabela === "crm_tasks" && ++consultas === 2) {
+          Object.assign(banco.tabelas.crm_tasks!.find((t) => t.id === id)!, concorrente);
+        }
+        return banco.cliente.from(tabela);
+      },
+    };
+    return ctx({ supabase: cliente as never });
+  }
+
+  it("outra chamada concluiu entre a leitura e a gravação: o resultado dela fica, sem 2ª auditoria nem 2ª linha", async () => {
+    const id = await tarefaAberta();
+
+    const r = await concluir(
+      { task_id: id, result: "resultado da segunda chamada" },
+      comConcorrente(id, { status: "done", result: "resultado da primeira chamada" }),
+    );
+
+    expect(r).toMatchObject({ completed: true, already_completed: true });
+    expect((r.task as Resposta).result).toBe("resultado da primeira chamada");
+    expect(tarefasDaA()[0]!.result).toBe("resultado da primeira chamada");
+    expect(h.audit).not.toHaveBeenCalled();
+    expect(atividades().filter((a) => a.type === "task_completed")).toHaveLength(0);
+  });
+
+  it("um cancelamento chegou entre a leitura e a gravação: a tarefa continua cancelada", async () => {
+    const id = await tarefaAberta();
+
+    const r = await concluir({ task_id: id, result: "feito" }, comConcorrente(id, { status: "cancelled" }));
+
+    expect(r).toMatchObject({ permitido: false, motivo: "tarefa_cancelada" });
+    expect(tarefasDaA()[0]).toMatchObject({ status: "cancelled" });
+    expect(tarefasDaA()[0]!.result ?? null).toBeNull();
+    expect(h.audit).not.toHaveBeenCalled();
+    expect(atividades().filter((a) => a.type === "task_completed")).toHaveLength(0);
+  });
+});
+
+describe("⭐ negócio e contato da tarefa têm de ser da mesma pessoa (revisão 20/11, 2.14)", () => {
+  it("negócio de um contato com `contact_id` de OUTRO, na mesma organização, é recusado e nada é gravado", async () => {
+    const r = await criar({ title: "Cruzada", lead_id: NEGOCIO_A, contact_id: CONTATO_A2 });
+
+    expect(r).toMatchObject({ permitido: false, motivo: "negocio_de_outro_contato" });
+    expect(tarefasDaA()).toHaveLength(0);
+    expect(h.audit).not.toHaveBeenCalled();
+  });
+
+  it("o par certo é aceito", async () => {
+    const r = await criar({ title: "Par certo", lead_id: NEGOCIO_A, contact_id: CONTATO_A });
+    expect(r.task).toMatchObject({ lead_id: NEGOCIO_A, contact_id: CONTATO_A });
+    expect(tarefasDaA()).toHaveLength(1);
+  });
+
+  it("negócio SEM contato não diverge de nada: aceita o contato informado", async () => {
+    banco.tabelas.crm_leads!.find((l) => l.id === NEGOCIO_A)!.contact_id = null;
+    const r = await criar({ title: "Negócio sem contato", lead_id: NEGOCIO_A, contact_id: CONTATO_A2 });
+    expect(r.task).toMatchObject({ lead_id: NEGOCIO_A, contact_id: CONTATO_A2 });
+  });
+
+  it("no turno, o contato do turno em MAIÚSCULAS ainda reconhece o negócio dele", async () => {
+    const turno = ctx({ contatoDoTurno: CONTATO_A.toUpperCase() });
+    const r = await criar({ title: "No turno", lead_id: NEGOCIO_A }, turno);
+    expect(r.task).toMatchObject({ lead_id: NEGOCIO_A });
+  });
+});
+
+describe("a descrição da tarefa não vai para a auditoria (revisão 20/11, 2.16)", () => {
+  it("só o tamanho — como o resultado e a nota", () => {
+    const descricao = "Cliente Maria, CPF 123, pediu segunda via.";
+    const limpo = crmCreateTask.redigirParaAuditoria!({ title: "Segunda via", description: descricao });
+    expect(limpo).toEqual({ title: "Segunda via", description: `[${descricao.length} caracteres]` });
+    expect(JSON.stringify(limpo)).not.toContain("Maria");
+  });
+
+  it("sem descrição, os argumentos passam como estão", () => {
+    expect(crmCreateTask.redigirParaAuditoria!({ title: "x" })).toEqual({ title: "x" });
+  });
+});
+
+describe("⭐ contato FORA do turno, no handler de verdade (revisão 20/11, 2.17)", () => {
+  const TAREFA_DO_A2 = "aaaaaaaa-0000-4000-8000-0000000000e2";
+  const TAREFA_DO_NEGOCIO_A2 = "aaaaaaaa-0000-4000-8000-0000000000e3";
+  const TAREFA_DO_A = "aaaaaaaa-0000-4000-8000-0000000000e4";
+  const INEXISTENTE = "99999999-9999-4999-8999-999999999999";
+  const turno = () => ctx({ contatoDoTurno: CONTATO_A });
+
+  const linha = (id: string, extra: Record<string, unknown>) => ({
+    id,
+    organization_id: ORG_A,
+    title: "Tarefa",
+    description: null,
+    due_date: null,
+    priority: "medium",
+    status: "pending",
+    lead_id: null,
+    contact_id: null,
+    assigned_to: null,
+    created_at: "2026-11-02T10:00:00.000Z",
+    updated_at: "2026-11-02T10:00:00.000Z",
+    ...extra,
+  });
+
+  beforeEach(() => {
+    banco.tabelas.crm_tasks!.push(
+      linha(TAREFA_DO_A2, { contact_id: CONTATO_A2 }),
+      linha(TAREFA_DO_NEGOCIO_A2, { lead_id: NEGOCIO_A2 }),
+      linha(TAREFA_DO_A, { contact_id: CONTATO_A }),
+    );
+  });
+
+  const daA = (id: string) => banco.tabelas.crm_tasks!.find((t) => t.id === id)!;
+
+  it("crm_create_task: `contact_id` de outro cliente da MESMA organização é recusado e nada é gravado", async () => {
+    const antes = tarefasDaA().length;
+    const r = await criar({ title: "Para o outro", contact_id: CONTATO_A2 }, turno());
+
+    expect(r).toMatchObject({ permitido: false, motivo: "fora_da_conversa" });
+    expect(tarefasDaA()).toHaveLength(antes);
+    expect(h.audit).not.toHaveBeenCalled();
+  });
+
+  it("crm_complete_task: tarefa de outro cliente (pelo contato ou pelo negócio) e tarefa inexistente recebem a MESMA recusa", async () => {
+    const peloContato = await concluir({ task_id: TAREFA_DO_A2, result: "x" }, turno());
+    const peloNegocio = await concluir({ task_id: TAREFA_DO_NEGOCIO_A2, result: "x" }, turno());
+    const inexistente = await concluir({ task_id: INEXISTENTE, result: "x" }, turno());
+
+    expect(peloContato).toMatchObject({ permitido: false, motivo: "fora_da_conversa" });
+    expect(peloNegocio).toEqual(peloContato);
+    expect(inexistente).toEqual(peloContato);
+    expect(daA(TAREFA_DO_A2)).toMatchObject({ status: "pending" });
+    expect(daA(TAREFA_DO_NEGOCIO_A2)).toMatchObject({ status: "pending" });
+    expect(h.audit).not.toHaveBeenCalled();
+  });
+
+  it("crm_update_task: tarefa de outro cliente não muda, e a recusa é a mesma da inexistente", async () => {
+    const alheia = await editar({ task_id: TAREFA_DO_A2, assigned_to: ANA }, turno());
+    const inexistente = await editar({ task_id: INEXISTENTE, assigned_to: ANA }, turno());
+
+    expect(alheia).toMatchObject({ permitido: false, motivo: "fora_da_conversa" });
+    expect(inexistente).toEqual(alheia);
+    expect(daA(TAREFA_DO_A2).assigned_to).toBeNull();
+    expect(h.audit).not.toHaveBeenCalled();
+  });
+
+  it("a tarefa do próprio cliente do turno segue alcançável", async () => {
+    expect(await editar({ task_id: TAREFA_DO_A, assigned_to: ANA }, turno())).toMatchObject({
+      task: { assigned_to: ANA },
+    });
+    expect(await concluir({ task_id: TAREFA_DO_A, result: "feito" }, turno())).toMatchObject({
+      completed: true,
+      already_completed: false,
+    });
+  });
+});

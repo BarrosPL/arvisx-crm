@@ -19698,6 +19698,9 @@ export const DICIONARIO: Traducoes = {
   "Formato inválido. Envie PDF ou imagem (PNG, JPG, WebP).": {
     es: "Formato no válido. Envía PDF o imagen (PNG, JPG, WebP).",
   },
+  "A extensão do arquivo não é aceita. Envie .pdf, .png, .jpg, .jpeg ou .webp.": {
+    es: "La extensión del archivo no se acepta. Envía .pdf, .png, .jpg, .jpeg o .webp.",
+  },
   "Falha ao salvar arquivo no armazenamento.": {
     es: "Error al guardar el archivo en el almacenamiento.",
   },
