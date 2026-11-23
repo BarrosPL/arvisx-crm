@@ -613,6 +613,25 @@ export async function patchConversationHandler(
     ? await getConversationHandler(supabase, ctx, conversationId)
     : null;
   if (observed) await exigirControleDaConversa(supabase, ctx, observed);
+  // A régua acima só olha o ator "user". Agente (token ou nativo) não fecha
+  // conversa que uma pessoa assumiu: a mesma recusa da ferramenta
+  // `crm_close_conversation` (revisão 20/11, item 2.31; decisão do dono em
+  // 23/11/2026). Hoje a rota só monta ator "user"; a recusa fica aqui para o
+  // caminho não virar a brecha no dia em que aceitar bearer.
+  if (
+    input.status === "closed" &&
+    observed &&
+    ctx.actor.type !== "user" &&
+    observed.assigned_to_user_id != null
+  ) {
+    throw new ApiError(
+      403,
+      "forbidden",
+      undefined,
+      ctx.requestId,
+      traduzir("Uma pessoa da equipe assumiu esta conversa. Só ela, ou um gerente pela tela, pode encerrá-la.", ctx.idioma ?? "pt-BR"),
+    );
+  }
 
   /**
    * O ATALHO `status='claimed'` PASSA PELA RPC, e não escreve o dono aqui.

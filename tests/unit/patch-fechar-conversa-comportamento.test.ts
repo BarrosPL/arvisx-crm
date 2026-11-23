@@ -242,6 +242,8 @@ describe("PATCH status=closed: a auditoria", () => {
 
   it("ator que não é pessoa: actorUserId nulo e o token no metadata, como sempre", async () => {
     const { patchConversationHandler } = await import("@/app/api/v1/conversations/_handler");
+    // Conversa SEM responsável humano: a assumida este ator não fecha (bloco abaixo).
+    estado.linha = { ...LINHA, assigned_to_user_id: null };
 
     await patchConversationHandler(
       clienteDaSessao(),
@@ -270,6 +272,49 @@ describe("PATCH status=closed: a auditoria", () => {
         },
       },
     ]);
+  });
+});
+
+// Revisão 20/11, item 2.31 — decisão do dono em 23/11/2026: agente não fecha
+// conversa que uma pessoa assumiu. A régua da tela (`exigirControleDaConversa`)
+// só olha o ator "user"; este caminho também fecha conversa e aceita outros
+// atores, então a mesma recusa da ferramenta `crm_close_conversation` vale aqui.
+describe("PATCH status=closed: ator que não é pessoa × conversa assumida", () => {
+  const AGENTE = {
+    organization_id: ORG,
+    actor: { type: "ai_agent" as const, id: "run-1", role: "agent" as const, api_token_id: TOKEN },
+    requestId: "req-1",
+  };
+
+  it("⭐ conversa assumida por uma pessoa: 403, sem chamar o banco e sem auditar", async () => {
+    const { patchConversationHandler } = await import("@/app/api/v1/conversations/_handler");
+
+    const erro = await patchConversationHandler(clienteDaSessao(), AGENTE, CONVERSA, { status: "closed" }).then(
+      () => null,
+      (e: unknown) => e as { status: number; code: string; message: string },
+    );
+
+    expect(erro).toMatchObject({ status: 403, code: "forbidden" });
+    expect(erro!.message).toMatch(/pessoa da equipe assumiu/);
+    expect(estado.rpcsAdmin).toEqual([]);
+    expect(estado.atualizacoes).toEqual([]);
+    expect(auditorias()).toEqual([]);
+  });
+
+  it("controle: a mesma conversa sem responsável fecha", async () => {
+    const { patchConversationHandler } = await import("@/app/api/v1/conversations/_handler");
+    estado.linha = { ...LINHA, assigned_to_user_id: null };
+
+    await patchConversationHandler(clienteDaSessao(), AGENTE, CONVERSA, { status: "closed" });
+
+    expect(estado.rpcsAdmin.map((r) => r.fn)).toEqual(["fn_service_status"]);
+    expect(auditorias().map((a) => a.action)).toEqual(["conversation.closed"]);
+  });
+
+  it("controle: a PESSOA responsável continua fechando a conversa que assumiu, pela rota", async () => {
+    const res = await patch({ status: "closed" });
+    expect(res.status).toBe(200);
+    expect(estado.rpcsAdmin.map((r) => r.fn)).toEqual(["fn_service_status"]);
   });
 });
 
