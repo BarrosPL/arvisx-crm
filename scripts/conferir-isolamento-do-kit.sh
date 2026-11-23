@@ -61,6 +61,14 @@
 # aqui com o baseline verde. Então, sem release no próprio repositório, a
 # pergunta vai ao repositório PAI (`gh repo view`), e a tag é buscada lá. Fork
 # com release própria continua respondendo pela sua.
+#
+# Numa CÓPIA que o GitHub não marca como fork (repositório criado por push, sem
+# `parent`), a segunda pergunta também volta vazia e o passo morria aqui, antes
+# de `tests/invariants/` rodar: o job `invariants` aplicava o baseline e parava
+# (revisão de 20/11, item 3.1). `CONFERENCIA_KIT_REPO_PAI=dono/nome` diz de onde
+# essa cópia veio. Só é lido quando o repositório não tem release própria NEM
+# `parent`, e não desliga nada: as três conferências rodam, com a release e as
+# tags do repositório nomeado.
 set -euo pipefail
 
 CONTAINER="${1:?uso: $0 <container> <banco>}"
@@ -74,6 +82,7 @@ if [ -z "$release" ] && [ -n "${GH_TOKEN:-}" ] && command -v gh >/dev/null 2>&1;
   release="$(cd "$ROOT" && gh release view --json tagName -q .tagName 2>/dev/null || true)"
   if [ -z "$release" ]; then
     pai="$(cd "$ROOT" && gh repo view --json parent -q '.parent | select(. != null) | .owner.login + "/" + .name' 2>/dev/null || true)"
+    [ -n "$pai" ] || pai="${CONFERENCIA_KIT_REPO_PAI:-}"
     if [ -n "$pai" ]; then
       release="$(gh release view -R "$pai" --json tagName -q .tagName 2>/dev/null || true)"
       [ -n "$release" ] && origem_das_tags="https://github.com/$pai.git"
