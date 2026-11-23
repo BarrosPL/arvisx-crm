@@ -294,7 +294,9 @@ describe("responder em público", () => {
     const db = montar("real");
     rede.mockResolvedValueOnce(erroDaRede(100, "Invalid parameter"));
     const erro = await recusa(responderEmPublico(db, ORG, COMENTARIO, { text: "Olá!" }, TOKEN));
-    expect([erro.status, erro.code]).toEqual([502, "upstream_unavailable"]);
+    // Revisão de 20/11, item 2.24: recusa definitiva não é indisponibilidade.
+    expect([erro.status, erro.code]).toEqual([422, "recusado_pela_rede"]);
+    expect(erro.details).toMatchObject({ origem: "rede", codigo_da_rede: 100 });
     expect(linha().public_reply).toBeNull();
     expect(linha().estado).toBe("novo");
     expect(h.audit).not.toHaveBeenCalled();
@@ -553,7 +555,8 @@ describe("responder em privado", () => {
     const db = montar("real");
     rede.mockResolvedValueOnce(erroDaRede(551, "indisponível"));
     const erro = await recusa(responderEmPrivado(db, ORG, COMENTARIO, { text: "oi" }, TOKEN));
-    expect(erro.status).toBe(502);
+    expect([erro.status, erro.code]).toEqual([422, "recusado_pela_rede"]);
+    expect(erro.details).toMatchObject({ origem: "rede", codigo_da_rede: 551 });
     expect(linha().private_reply).toBeNull();
     expect(linha().estado).toBe("novo");
     expect(h.ingest).not.toHaveBeenCalled();
@@ -702,6 +705,41 @@ describe("resposta simulada não trava a resposta real", () => {
     ]);
     expect(entradas[1]!.metadata.substituiu_simulada).toEqual({ quando: quandoDaSimulada });
     expect(entradas[0]!.metadata).not.toHaveProperty("substituiu_simulada");
+  });
+});
+
+// Revisão de 20/11, item 2.24.
+describe("recusa definitiva da rede × indisponibilidade", () => {
+  it("⭐ a Meta diz que o token expirou (190): 409 canal_indisponivel, com a frase de reconectar", async () => {
+    const db = montar("real");
+    rede.mockResolvedValueOnce(erroDaRede(190, "Error validating access token", 401));
+    const erro = await recusa(responderEmPublico(db, ORG, COMENTARIO, { text: "Olá!" }, TOKEN));
+    expect([erro.status, erro.code]).toEqual([409, "canal_indisponivel"]);
+    expect(erro.message).toMatch(/Reconecte/);
+    expect(linha().public_reply).toBeNull();
+  });
+
+  it("⭐ rede fora (5xx) NÃO vira recusa definitiva: a resposta fica incerta (502)", async () => {
+    const db = montar("real");
+    rede.mockResolvedValueOnce(erroDaRede(2, "Service temporarily unavailable", 503));
+    const erro = await recusa(responderEmPublico(db, ORG, COMENTARIO, { text: "Olá!" }, TOKEN));
+    expect([erro.status, erro.code]).toEqual([502, "resposta_incerta"]);
+  });
+
+  it("⭐ ocultar: recusa definitiva é 422 recusado_pela_rede; rede fora é 502 upstream_unavailable; nada é gravado", async () => {
+    const db = montar("real");
+    rede.mockResolvedValueOnce(erroDaRede(100, "Invalid parameter"));
+    const definitiva = await recusa(ocultarComentario(db, ORG, COMENTARIO, TOKEN));
+    expect([definitiva.status, definitiva.code]).toEqual([422, "recusado_pela_rede"]);
+
+    rede.mockRejectedValueOnce(new Error("timeout"));
+    const fora = await recusa(ocultarComentario(db, ORG, COMENTARIO, TOKEN));
+    expect([fora.status, fora.code]).toEqual([502, "upstream_unavailable"]);
+
+    rede.mockResolvedValueOnce(respostaDaRede({ success: false }));
+    const semConfirmar = await recusa(ocultarComentario(db, ORG, COMENTARIO, TOKEN));
+    expect([semConfirmar.status, semConfirmar.code]).toEqual([502, "upstream_unavailable"]);
+    expect(linha().hidden).toBeNull();
   });
 });
 

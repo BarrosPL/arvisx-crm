@@ -346,7 +346,7 @@ foi feito.
 | `resposta_em_andamento` | 409 | outra chamada está enviando agora |
 | `resposta_incerta` | 502 / 409 | a Meta não confirmou; pode ter saído |
 | `comentarios_desligados` | 409 | a conexão está em `off` |
-| `canal_indisponivel` | 409 | a conexão foi desconectada ou está sem autorização |
+| `canal_indisponivel` | 409 | a conexão foi desconectada ou está sem autorização (inclusive quando a Meta diz que o token expirou ou foi revogado) |
 | `janela_de_7_dias` | 422 | passou o prazo da resposta privada |
 | `comentario_ao_vivo` | 422 | resposta pública ou ocultação em comentário de transmissão ao vivo |
 | `comentario_oculto` | 422 | resposta pública a comentário oculto |
@@ -355,7 +355,8 @@ foi feito.
 | `contato_anonimizado` | 409 | o contato do comentário foi anonimizado a pedido do titular |
 | `contato_em_criacao` | 409 | outra chamada está criando o contato deste comentário agora; repetir em instantes devolve o mesmo contato |
 | `rate_limited` | 429 | a Meta limitou as chamadas e não cedeu |
-| `upstream_unavailable` | 502 | a Meta recusou; a frase diz por quê |
+| `recusado_pela_rede` | 422 | a Meta respondeu "não" (recusa definitiva); a frase diz por quê e `details.codigo_da_rede` / `details.subcodigo_da_rede` trazem o código dela. Repetir igual não adianta |
+| `upstream_unavailable` | 502 | a Meta não respondeu ou falhou ao ocultar; nada foi gravado e repetir é seguro |
 
 **Sem regra de conteúdo.** O CRM exige só que o texto não seja vazio. Link,
 preço e tamanho são decisão de quem responde; o limite de tamanho é o da rede.

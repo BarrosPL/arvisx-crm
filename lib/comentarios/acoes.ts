@@ -407,12 +407,24 @@ async function gravar(db: SupabaseClient, linha: Linha, campos: Record<string, u
   if (error) throw new Error(`social_comments: ${error.message}`);
 }
 
-/** A recusa da rede vira a recusa da API — com a frase que a rede justificou. */
+/**
+ * A recusa da rede vira a recusa da API — com a frase que a rede justificou.
+ *
+ * Recusa DEFINITIVA (a rede respondeu "não", 4xx) não é indisponibilidade
+ * (revisão de 20/11/2026, item 2.24): sai como 422 `recusado_pela_rede`, com o
+ * código da rede em `details`, para quem chama saber que repetir igual não
+ * adianta. `upstream_unavailable` (502) fica para quando a rede não respondeu
+ * ou falhou — e, nas respostas, isso é `resposta_incerta`.
+ */
 function recusaDaRede(quem: QuemAge, falha: Exclude<FalhaDoEnvio, { tipo: "incerta" }>): ApiError {
   if (falha.tipo === "limite") return recusa(quem, 429, "rate_limited", falha.frase, { origem: "rede" });
   if (falha.tipo === "sem_credencial") return recusa(quem, 409, "canal_indisponivel", falha.frase);
   if (falha.escopoAusente) return recusa(quem, 422, "escopo_ausente", falha.frase);
-  return recusa(quem, 502, "upstream_unavailable", falha.frase, { origem: "rede" });
+  return recusa(quem, 422, "recusado_pela_rede", falha.frase, {
+    origem: "rede",
+    codigo_da_rede: falha.codigo,
+    subcodigo_da_rede: falha.subcodigo,
+  });
 }
 
 /** A única regra de conteúdo do CRM: o texto não pode ser vazio. */
