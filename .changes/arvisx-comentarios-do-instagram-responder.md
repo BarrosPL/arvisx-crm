@@ -21,7 +21,9 @@ só anotada, sem publicar; em modo real ela é publicada. Cada comentário aceit
 uma resposta pública e uma privada; a privada só até 7 dias depois do
 comentário, que é o limite da própria rede. Se a rede recusar, o comentário
 não fica como respondido; se ela não confirmar, a resposta não é repetida
-sozinha.
+sozinha. A resposta anotada em modo de registro não impede a resposta de
+verdade: depois que a conexão passa para o modo real, o comentário pode ser
+respondido, e a anotação anterior fica na auditoria.
 
 A resposta privada enviada fica gravada na conversa do contato, e o que a
 pessoa responder cai no atendimento normal. Comentário continua não virando

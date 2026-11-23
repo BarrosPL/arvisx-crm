@@ -312,6 +312,18 @@ entram ligadas por pacote.
 409 `ja_respondido` (pública) ou `ja_respondido_em_privado` (privada), com a
 resposta existente em `details.resposta`.
 
+**Resposta simulada não trava a resposta real.** A resposta gravada em modo
+`registrar` não saiu. Enquanto a conexão continua em `registrar`, ela vale como
+a resposta do comentário: repetir devolve o 409 acima, com ela, e nada é
+regravado. Quando a conexão passa para `real`, a mesma chamada **publica** a
+resposta de verdade, que substitui a simulada no comentário; a simulada
+continua na auditoria (a entrada dela, e `metadata.substituiu_simulada` na
+entrada da resposta real). Se a Meta recusar a resposta real, a simulada volta
+para o comentário. Resposta de verdade nunca é substituída: `real` seguido de
+`real` continua 409, e a privada continua limitada a 7 dias. Com simulada
+gravada e a conexão desligada (ou desconectada), a recusa é a da conexão
+(`comentarios_desligados` ou `canal_indisponivel`).
+
 **Erro da Meta não deixa o comentário como respondido.** Se a Meta recusa, a
 resposta não é gravada e o estado não muda; a chamada pode ser repetida depois
 de corrigir a causa.

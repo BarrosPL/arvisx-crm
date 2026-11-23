@@ -28,6 +28,17 @@
  *                        `resposta_incerta`, e só `confirmar_reenvio: true` —
  *                        decisão de quem chama — manda de novo.
  *
+ * ─── Resposta simulada não é resposta ───────────────────────────────────────
+ *
+ * A resposta gravada em modo de registro (`simulada: true`) NÃO saiu. Enquanto
+ * a conexão segue em registro, ela vale como a resposta do comentário (repetir
+ * recebe 409 com ela, e nada é regravado). Quando a conexão passa para `real`,
+ * ela deixa de travar: a resposta real a SUBSTITUI, pelo mesmo UPDATE
+ * condicional (a linha tem de estar como foi lida), e a simulada continua na
+ * auditoria (a entrada dela, mais `substituiu_simulada` na entrada da real).
+ * Se a rede recusar a real, a simulada volta para a coluna. O contrário nunca
+ * acontece: resposta de verdade não é substituída, em modo nenhum.
+ *
  * ─── Sem regra de conteúdo ──────────────────────────────────────────────────
  *
  * O CRM exige texto não vazio e os limites da própria rede (uma resposta, 7
@@ -316,6 +327,10 @@ type Coluna = "public_reply" | "private_reply";
  * Confere a resposta que já está na coluna. Devolve o que o UPDATE condicional
  * tem de casar: a coluna vazia (`null`) ou a linha exatamente como foi lida
  * (`updated_at`), quando quem chama decidiu repetir uma resposta incerta.
+ *
+ * `simulada` é o terceiro desfecho: a coluna tem uma resposta de modo de
+ * registro, que não saiu. Quem decide o que fazer com ela é o MODO ATUAL do
+ * canal, que só se conhece depois (`resolverSimulada`).
  */
 function conferirRespostaExistente(
   quem: QuemAge,
@@ -323,8 +338,9 @@ function conferirRespostaExistente(
   lida: RespostaPublica | RespostaPrivada | null,
   confirmarReenvio: boolean,
   codigoJaRespondido: string,
-): "vazia" | "repetir" {
+): "vazia" | "repetir" | "simulada" {
   if (cru === null || cru === undefined) return "vazia";
+  if (lida && lida.situacao === "concluida" && lida.simulada) return "simulada";
   if (!lida || lida.situacao === "concluida") {
     throw recusa(quem, 409, codigoJaRespondido, "Este comentário já foi respondido.", { resposta: lida ?? cru });
   }
@@ -342,6 +358,28 @@ function conferirRespostaExistente(
     );
   }
   return "repetir";
+}
+
+/**
+ * A resposta simulada que já está na coluna, diante do modo ATUAL do canal:
+ *
+ *   registrar  continua valendo como a resposta do comentário: 409, com ela;
+ *   real       não trava: a resposta real a substitui. O UPDATE condicional
+ *              casa a linha como foi lida (`repetir`), então duas chamadas ao
+ *              mesmo tempo não publicam as duas.
+ */
+function resolverSimulada(
+  quem: QuemAge,
+  condicao: "vazia" | "repetir" | "simulada",
+  modo: Exclude<ModoDeComentarios, "off">,
+  lida: RespostaPublica | RespostaPrivada | null,
+  codigoJaRespondido: string,
+): { condicao: "vazia" | "repetir"; substituida: RespostaPublica | RespostaPrivada | null } {
+  if (condicao !== "simulada") return { condicao, substituida: null };
+  if (modo === "registrar") {
+    throw recusa(quem, 409, codigoJaRespondido, "Este comentário já foi respondido.", { resposta: lida });
+  }
+  return { condicao: "repetir", substituida: lida };
 }
 
 /** O UPDATE condicional. `false` = outra chamada chegou antes. */
@@ -405,14 +443,16 @@ export async function responderEmPublico(
 ): Promise<ResultadoDaResposta> {
   textoNaoVazio(quem, entrada.text);
   const linha = await carregar(db, org, id, quem);
-  const condicao = conferirRespostaExistente(
+  const existente = lerRespostaPublica(linha.public_reply);
+  const conferida = conferirRespostaExistente(
     quem,
     linha.public_reply,
-    lerRespostaPublica(linha.public_reply),
+    existente,
     entrada.confirmar_reenvio === true,
     "ja_respondido",
   );
   const { sessao, modo } = await canalAtivo(db, linha, quem);
+  const { condicao, substituida } = resolverSimulada(quem, conferida, modo, existente, "ja_respondido");
   if (linha.ao_vivo) {
     throw recusa(
       quem,
@@ -448,13 +488,18 @@ export async function responderEmPublico(
       await gravar(db, linha, { public_reply: { ...reserva, situacao: "incerta" } });
       throw recusa(quem, 502, "resposta_incerta", r.falha.frase);
     }
-    // A rede disse "não": a reserva sai, e o comentário volta a como estava.
-    await gravar(db, linha, { public_reply: null });
+    // A rede disse "não": a reserva sai, e o comentário volta a como estava —
+    // inclusive com a resposta simulada que a reserva tinha substituído.
+    await gravar(db, linha, { public_reply: substituida ? linha.public_reply : null });
     throw recusaDaRede(quem, r.falha);
   }
 
   await gravarDepoisDeSair(db, linha, { public_reply: simuladaOuConcluida(base, false, r.id), estado: "respondido" });
-  await auditar(quem, org, "social_comment.respondido", linha, { simulada: false, reply_id: r.id });
+  await auditar(quem, org, "social_comment.respondido", linha, {
+    simulada: false,
+    reply_id: r.id,
+    ...(substituida ? { substituiu_simulada: { quando: substituida.quando } } : {}),
+  });
   return { comment: apresentar(await carregar(db, org, id, quem)), simulada: false };
 }
 
@@ -568,10 +613,11 @@ export async function responderEmPrivado(
 ): Promise<ResultadoDaRespostaPrivada> {
   textoNaoVazio(quem, entrada.text);
   const linha = await carregar(db, org, id, quem);
-  const condicao = conferirRespostaExistente(
+  const existente = lerRespostaPrivada(linha.private_reply);
+  const conferida = conferirRespostaExistente(
     quem,
     linha.private_reply,
-    lerRespostaPrivada(linha.private_reply),
+    existente,
     entrada.confirmar_reenvio === true,
     "ja_respondido_em_privado",
   );
@@ -585,6 +631,7 @@ export async function responderEmPrivado(
     );
   }
   const { sessao, modo } = await canalAtivo(db, linha, quem);
+  const { condicao, substituida } = resolverSimulada(quem, conferida, modo, existente, "ja_respondido_em_privado");
   await conferirQueNaoEstaBloqueado(db, linha, sessao, quem);
 
   const base = { texto: entrada.text, quando: new Date().toISOString(), quem: autorDe(quem) };
@@ -631,7 +678,8 @@ export async function responderEmPrivado(
       await gravar(db, linha, { private_reply: { ...reserva, situacao: "incerta" } });
       throw recusa(quem, 502, "resposta_incerta", r.falha.frase);
     }
-    await gravar(db, linha, { private_reply: null });
+    // Como na pública: a simulada que a reserva substituiu volta para a coluna.
+    await gravar(db, linha, { private_reply: substituida ? linha.private_reply : null });
     throw recusaDaRede(quem, r.falha);
   }
 
@@ -683,6 +731,7 @@ export async function responderEmPrivado(
     contact_id: conversa?.contactId ?? null,
     conversation_id: conversa?.conversationId ?? null,
     sem_conversa: semConversa,
+    ...(substituida ? { substituiu_simulada: { quando: substituida.quando } } : {}),
   });
   return {
     comment: apresentar(await carregar(db, org, id, quem)),
