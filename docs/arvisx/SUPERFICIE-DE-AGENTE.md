@@ -15,8 +15,8 @@ chamada pelos dois lados (`lib/tarefas/servico.ts`, `lib/leads/anexos-do-negocio
 
 Este documento cobre a parte 1 (tarefas, notas, anexos e próxima ação), a parte 2 (eventos para sistemas externos,
 consulta de proposta, fechar e atribuir, passagem entre colegas) e os ajustes que o uso real dos agentes externos pediu
-(linha do tempo por MCP, filtros de negócio, autoria no histórico e contatos duplicados). A convivência entre humano e
-IA vem na parte 3.
+(linha do tempo por MCP, filtros de negócio, autoria no histórico, contatos duplicados e a autoria do que o agente
+externo faz por token). A convivência entre humano e IA vem na parte 3.
 
 ## Regras que valem para todas
 
@@ -27,6 +27,8 @@ IA vem na parte 3.
   agente (ver [Contatos duplicados](#contatos-duplicados)).
 - **Toda escrita fica na auditoria com o agente como autor**: `actor_api_token_id` é o token, e `metadata` leva
   `via: "mcp"`, o tipo do ator e, no agente nativo, o `agent_id`.
+- **O que o agente externo faz fica com a autoria dele também fora da auditoria**: a mensagem que ele envia e a linha
+  que ele deixa na linha do tempo do negócio guardam o token. Ver [Autoria do agente externo](#autoria-do-agente-externo).
 - **Recusa tem código.** A resposta vem com `permitido: false`, `motivo` (o código) e `mensagem` (o que fazer).
 - **Num turno de atendimento**, o agente nativo só alcança o que é do cliente da conversa. Registro de outro
   cliente e registro inexistente recebem a mesma recusa (`fora_da_conversa`).
@@ -177,7 +179,13 @@ novo. Só leitura (`mcp:read`, papel `agent`). Serve ao resumo do dia ou da sema
 | `limit`, `cursor` | Até 100 por página. Repita com o `cursor` enquanto `has_more` for `true`. |
 
 Cada linha traz `kind` (a categoria), `type` (o tipo cru), `label`, `happened_at`, `text` (inteiro, sem corte),
-`author` (`kind`, `id`, `name`), `details` e `source`.
+`author` (`kind`, `id`, `name` e, em `agente`, `is_self`), `details` e `source`.
+
+**Quem é `agente`.** O agente do CRM (`id` e `name` do cadastro do agente) e o agente externo, que age por token de API
+(`id` e `name` do token, só para quem pode vê-los: ver [Autoria do agente externo](#autoria-do-agente-externo)).
+`is_self: true` quer dizer que a linha foi feita por quem está lendo: o mesmo token ou, no
+agente do CRM, o mesmo agente. O filtro `author: ["agente"]` traz os dois. Mover etapa, editar o negócio, fechar,
+criar e concluir tarefa, anexar e pôr ou tirar tag por token saem todos assim.
 
 **De onde vem cada categoria.** Nada novo é gravado: a ferramenta lê duas fontes que já existiam e as devolve numa
 ordem só.
@@ -201,16 +209,19 @@ card. Por isso uma edição pela tela que mexe em tag aparece duas vezes, com in
 
 - **Mensagem.** Mensagem é da conversa, que é do contato: um contato com dois negócios teria as mesmas mensagens nos
   dois. Leia a conversa com `crm_get_conversation_history`.
-- **Quem trocou o responsável.** `lead.assigned` nasce de um gatilho do banco e não guarda o autor: sai
-  `author.kind: "nao_registrado"`. Quando a troca veio pela edição do negócio, a linha `campo` vizinha tem o autor.
+- **Quem trocou o responsável, na linha `responsavel`.** `lead.assigned` nasce de um gatilho do banco, dentro da
+  gravação do negócio, e o gatilho não sabe quem chamou: sai `author.kind: "nao_registrado"`, também quando foi o
+  agente por token. Quem trocou está na linha `campo` vizinha (`details.fields` com `owner_user_id`), que tem o autor,
+  inclusive o agente externo.
 - **Qual pessoa pôs ou tirou a tag.** A fila de eventos guarda que foi uma pessoa, não qual (`id` e `name` nulos). O
-  agente por token sai com o nome do token.
+  agente por token sai com o id e o nome do token, e o agente do CRM, com o id e o nome do agente.
 - **Remoção de tag antiga.** `lead.tag_removed` existe desde a parte 2; remoção anterior só aparece como "Alterou as
   tags".
 - **O valor anterior de um campo.** O produto não guarda o antes de título, descrição, tags e campos do funil
   (`lib/leads/valores-audit.ts`). A linha diz o campo, não o valor.
-- **O agente externo como autor de uma mudança de etapa.** A linha do tempo grava a escrita feita por token como
-  `sistema` (a linha não guarda o token). A nota é a exceção: ela leva o autor.
+- **O autor das linhas antigas feitas por token.** Até esta entrega a linha do tempo não guardava o token: a mudança
+  de etapa, a edição e a tarefa feitas por agente externo antes dela continuam `sistema`. Nada foi reescrito. A nota
+  sempre levou o autor.
 
 **Custo.** A consulta por funil exige `since` e aceita janela de até 31 dias. Ela sempre filtra por tipo e por data,
 que são os índices que já existem, e confere por lote quais negócios são do funil. Cada chamada faz no máximo quatro
@@ -260,16 +271,59 @@ Além de funil, etapa, status, responsável e motivo de perda:
 | `author.kind` | Quando | `id` e `name` |
 |---|---|---|
 | `cliente` | Mensagem recebida. | `id` é o contato. Em grupo, `name` é o participante que falou (`detail: "participante_de_grupo"`). |
-| `ia` | Escrita por um agente de IA. | O nome gravado na mensagem ou, sem ele, o do cadastro. `id` só sai quando é de um agente desta organização. |
+| `ia` | Escrita por um agente de IA do CRM. | O nome gravado na mensagem ou, sem ele, o do cadastro. `id` só sai quando é de um agente desta organização. |
+| `agente` | Enviada por um agente externo, por token de API. | `id` é o id do token e `name` o nome que o administrador deu a ele, para quem pode vê-los (ver [Autoria do agente externo](#autoria-do-agente-externo)); senão `null`. `is_self` diz se o token é o de quem está lendo. |
 | `equipe` | Escrita por uma pessoa. | `id` e o nome da pessoa (nunca e-mail nem telefone). |
-| `sistema` | Ninguém escreveu na hora. | `detail: "automacao"` (texto fixo de regra, follow-up ou lembrete) ou `detail: "integracao"` (enviada por token de API). |
+| `sistema` | Ninguém escreveu na hora. | `detail: "automacao"` (texto fixo de regra, follow-up ou lembrete) ou `detail: "integracao"` (mensagem antiga enviada por token, de antes de o envio guardar o token). |
 
 Dois casos de `equipe` têm `detail`: `celular` (saiu do aparelho ligado ao número, fora do CRM, e a mensagem não diz
 quem digitou) e `em_nome_de` (um sistema enviou por decisão daquela pessoa; `via_token` diz qual).
 
-A autoria é lida da própria mensagem, como o balão da caixa de entrada lê. **Limite:** a mensagem enviada por token de
-API não guarda o token. Um agente externo distingue com certeza o que foi a equipe, o cliente e a IA do CRM, mas não
-separa a própria fala da de outra integração (as duas saem `sistema` / `integracao`).
+A autoria é lida da própria mensagem, como o balão da caixa de entrada lê. O agente externo separa a própria fala
+(`author.kind: "agente"` com `is_self: true`) da de outra integração (`is_self: false`), da equipe, do cliente e da IA
+do CRM. A mensagem que um token envia **em nome de uma pessoa** continua sendo da pessoa (`equipe`, `em_nome_de`).
+
+## Autoria do agente externo
+
+Um agente externo é um token de API. O que ele faz fica com o token em três lugares:
+
+| Onde | O que é gravado | Quem lê |
+|---|---|---|
+| Auditoria (`api_audit_log`) | `actor_api_token_id`. Já existia. | A tela de auditoria. |
+| Mensagem enviada (`messages.metadata.sent_by_token`) | `token_id` e `token_name`. | `crm_get_conversation_history`. |
+| Linha do tempo do negócio (`crm_lead_activities.payload.autor`) | `{ tipo: "token", id }`, o formato que a nota já usava. | `crm_list_lead_events`. |
+
+- **Quem recebe o id e o nome do token** (revisão de 20/11, item 2.32). O nome do token é texto livre que o
+  administrador digitou na tela de tokens, e o id identifica uma credencial: os dois são dado de administração. A
+  regra é a mesma em `crm_get_conversation_history` e em `crm_list_lead_events` (`lib/mcp/identidade-do-token.ts`):
+
+  | Quem lê | O que recebe de uma mensagem ou linha feita por token |
+  |---|---|
+  | Token com papel `manager` ou `admin`, fora de um turno de atendimento | `id` e `name` de todo token. |
+  | Token comum (papel `agent`), fora de um turno de atendimento | `id` e `name` só do **próprio** token (`is_self: true`). De outro token: `kind: "agente"`, `is_self: false`, `id: null`, `name: null`. |
+  | Qualquer leitor **num turno de atendimento** (contato do turno posto), e o agente do CRM sempre | `kind: "agente"` e `is_self`, com `id: null` e `name: null`, inclusive do próprio token. |
+
+  No turno o modelo está respondendo ao cliente e poderia repetir o nome do token na mensagem; por isso ali não sai de
+  ninguém, nem para papel de gerente. `is_self` sai sempre: o agente externo continua separando a própria fala da de
+  outra integração. O `via_token` de uma mensagem `em_nome_de` (o nome do token que enviou em nome de uma pessoa) segue
+  a regra mais estreita: só para `manager` ou `admin` fora do turno, porque a linha não guarda o id do token e não há
+  como reconhecer "o próprio". O nome de pessoas da equipe e de agentes do CRM não mudou. **O que esta regra não cobre:**
+  o texto livre de uma nota ou de um motivo, se alguém escreveu o nome do token nele.
+- **Só o id e o nome.** O valor do token não é gravado em lugar nenhum (o banco guarda só o hash dele, e o hash não
+  sai em resposta alguma).
+- **O servidor grava, o chamador não.** O token vem da autenticação. A chave `sent_by_token` que chegar no `metadata`
+  de um envio é descartada, e a leitura só a considera em mensagem que saiu por token.
+- **Vale para todo envio por token**, não só pelo MCP: `crm_send_whatsapp_message`, `crm_start_conversation_and_send`
+  e `POST /api/v1/messages` com `Authorization: Bearer` passam pelo mesmo ponto de envio.
+- **O nome é o do cadastro de hoje.** Token renomeado sai com o nome novo. Token apagado sai com o nome gravado no
+  envio (mensagem) ou sem nome (linha do tempo); o id continua.
+- **O agente do CRM não mudou.** Ele já saía como `ia` no histórico e como `agente` na linha do tempo, com o agente. O
+  token dele é o efêmero da rodada, que não identifica ninguém e não é gravado.
+- **A tela não mudou.** A caixa de entrada segue mostrando "Sistema" no balão dessas mensagens, e o card do negócio
+  segue mostrando a linha como do sistema. As colunas de ator da linha do tempo não foram alteradas.
+- **Nada antigo foi reescrito.** Mensagem e linha gravadas antes desta entrega não têm o token: a mensagem continua
+  `sistema` / `integracao` (ou `ia` sem id, no token com escopo `actor:ai_agent`) e a linha continua `sistema`.
+- **Sem coluna nova.** Os dois campos são `jsonb` que já existiam; não houve migration.
 
 ## Contatos duplicados
 

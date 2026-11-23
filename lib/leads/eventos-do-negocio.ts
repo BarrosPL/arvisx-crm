@@ -25,12 +25,15 @@
  *    mensagem lê a conversa (`crm_get_conversation_history`).
  *  - `lead.assigned` nasce de um gatilho do banco e não leva quem trocou: o
  *    autor sai `nao_registrado`. Quando a troca veio pela edição do negócio, a
- *    linha de campo vizinha ("Alterou o responsável") tem o autor.
+ *    linha de campo vizinha ("Alterou o responsável") tem o autor — inclusive o
+ *    agente por token. O gatilho roda dentro do UPDATE de `crm_leads`, sem
+ *    contexto de quem chamou, e o produto não tem um jeito de passá-lo a ele.
  *  - Remoção de tag só existe no `event_log` desde que `lead.tag_removed` foi
  *    criado; a remoção anterior a isso aparece só como "Alterou as tags".
- *  - Escrita feita por token de API sem agente cadastrado é gravada na linha do
- *    tempo como `sistema` (a linha não guarda o token). A nota é a exceção: ela
- *    leva o autor no `payload`.
+ *  - Escrita feita por token de API (o agente externo) sai como `agente`, com o
+ *    id e o nome do token: `buildLeadActivityRow` grava `payload.autor` em toda
+ *    linha que nasce de um token. A linha gravada ANTES disso não guarda o
+ *    token e continua `sistema` (a nota sempre levou o autor). Nada é reescrito.
  *  - Edição de campo traz o NOME dos campos, nunca o valor anterior: o produto
  *    não guarda o antes de título, descrição, tags e campos do funil
  *    (`lib/leads/valores-audit.ts`).
@@ -123,6 +126,20 @@ export interface AutorDoEvento {
   kind: AutorDeEvento | "nao_registrado";
   id: string | null;
   name: string | null;
+  /** Só em `agente`, e só quando quem lê se identificou: foi ele mesmo. */
+  is_self?: boolean;
+}
+
+/** Quem está lendo, para a linha dizer "foi você": o token e, no agente do CRM, o agente. */
+export interface LeitorDosEventos {
+  tokenId?: string | null;
+  agentId?: string | null;
+  /**
+   * De quais tokens de API o leitor recebe o id e o nome (revisão 20/11, item
+   * 2.32; a regra mora em `lib/mcp/identidade-do-token.ts`). Sem dizer, nenhum:
+   * a linha sai `agente` com `is_self`, sem id e sem nome.
+   */
+  identidadeDoToken?: "todos" | "so_o_proprio" | "nenhum";
 }
 
 export interface EventoDoNegocio {
@@ -160,6 +177,7 @@ export interface FiltrosDosEventos {
   autores?: readonly AutorDeEvento[];
   limite: number;
   cursor?: string;
+  leitor?: LeitorDosEventos;
 }
 
 export type ListaDeEventos =
@@ -237,40 +255,50 @@ function depoisDe(coluna: string, c: Posicao): string {
   return `${coluna}.gt.${c.performed_at},and(${coluna}.eq.${c.performed_at},id.gt.${c.id})`;
 }
 
-function autorDaAtividade(linha: LinhaDeAtividade): Pick<Candidato, "usuarios" | "agentes"> & {
+function autorDaAtividade(linha: LinhaDeAtividade): Pick<Candidato, "usuarios" | "agentes" | "tokens"> & {
   autor: AutorDoEvento;
 } {
-  const autorDaNota = (linha.payload?.autor ?? null) as { tipo?: unknown; id?: unknown; nome?: unknown } | null;
+  const gravado = (linha.payload?.autor ?? null) as { tipo?: unknown; id?: unknown; nome?: unknown } | null;
   if (linha.actor_kind === "user") {
     return {
       autor: { kind: "pessoa", id: linha.performed_by_user_id, name: null },
       usuarios: linha.performed_by_user_id ? [linha.performed_by_user_id] : [],
       agentes: [],
+      tokens: [],
     };
   }
   if (linha.actor_kind === "contact") {
-    return { autor: { kind: "cliente", id: null, name: null }, usuarios: [], agentes: [] };
+    return { autor: { kind: "cliente", id: null, name: null }, usuarios: [], agentes: [], tokens: [] };
   }
   if (linha.actor_agent_id) {
     return {
-      autor: { kind: "agente", id: linha.actor_agent_id, name: texto(autorDaNota?.nome) },
+      autor: { kind: "agente", id: linha.actor_agent_id, name: texto(gravado?.nome) },
       usuarios: [],
       agentes: [linha.actor_agent_id],
+      tokens: [],
     };
   }
-  // A nota assinada por token (agente externo): a linha é de sistema, e o
-  // autor está no payload, resolvido do cadastro por quem escreveu.
-  if (autorDaNota && (autorDaNota.tipo === "agente" || autorDaNota.tipo === "token")) {
+  // A escrita por token (agente externo): a linha é de sistema para a tela, e o
+  // autor está no payload. A nota grava também o nome; as outras linhas só o id
+  // (`buildLeadActivityRow`), e o nome sai do cadastro, com a organização.
+  if (gravado && (gravado.tipo === "agente" || gravado.tipo === "token")) {
+    const id = texto(gravado.id);
+    const nome = texto(gravado.nome);
+    const semNome = id !== null && nome === null;
     return {
-      autor: { kind: "agente", id: texto(autorDaNota.id), name: texto(autorDaNota.nome) },
+      autor: { kind: "agente", id, name: nome },
       usuarios: [],
-      agentes: [],
+      agentes: semNome && gravado.tipo === "agente" ? [id] : [],
+      // O token entra SEMPRE, com ou sem nome gravado: é esta lista que diz, na
+      // hora de devolver, que o autor é um token (e não um agente do CRM), para
+      // a identidade dele só sair para quem pode ver (`identidadeDoToken`).
+      tokens: id !== null && gravado.tipo === "token" ? [id] : [],
     };
   }
   if (linha.actor_kind === "ai") {
-    return { autor: { kind: "agente", id: null, name: null }, usuarios: [], agentes: [] };
+    return { autor: { kind: "agente", id: null, name: null }, usuarios: [], agentes: [], tokens: [] };
   }
-  return { autor: { kind: "sistema", id: null, name: null }, usuarios: [], agentes: [] };
+  return { autor: { kind: "sistema", id: null, name: null }, usuarios: [], agentes: [], tokens: [] };
 }
 
 function detalhesDaAtividade(categoria: TipoDeEvento, linha: LinhaDeAtividade): Record<string, unknown> | undefined {
@@ -292,7 +320,7 @@ function detalhesDaAtividade(categoria: TipoDeEvento, linha: LinhaDeAtividade): 
 
 function candidatoDaAtividade(linha: LinhaDeAtividade): Candidato {
   const categoria = categoriaDaAtividade(linha.type);
-  const { autor, usuarios, agentes } = autorDaAtividade(linha);
+  const { autor, usuarios, agentes, tokens } = autorDaAtividade(linha);
   // A nota devolve o texto sem o nome na frente; o resto, o que a pessoa lê no card.
   const textoDaNota = categoria === "nota" ? texto(linha.payload?.texto) : null;
   const detalhes = detalhesDaAtividade(categoria, linha);
@@ -301,7 +329,7 @@ function candidatoDaAtividade(linha: LinhaDeAtividade): Candidato {
     leadId: linha.lead_id,
     usuarios,
     agentes,
-    tokens: [],
+    tokens,
     evento: {
       id: linha.id,
       source: "timeline",
@@ -317,19 +345,22 @@ function candidatoDaAtividade(linha: LinhaDeAtividade): Candidato {
   };
 }
 
-function autorDoEvento(metadata: Record<string, unknown> | null): Pick<Candidato, "tokens"> & {
+function autorDoEvento(metadata: Record<string, unknown> | null): Pick<Candidato, "tokens" | "agentes"> & {
   autor: AutorDoEvento;
 } {
   const tipo = texto(metadata?.actor_type);
-  if (tipo === "user") return { autor: { kind: "pessoa", id: null, name: null }, tokens: [] };
+  if (tipo === "user") return { autor: { kind: "pessoa", id: null, name: null }, tokens: [], agentes: [] };
   if (tipo === "ai_agent" || tipo === "api_token") {
-    // O token é o que identifica o agente de fora; o `actor_id` de um agente
-    // nativo é o id da execução, que não nomeia ninguém.
+    // O agente do CRM é identificado pelo agente: o token dele é o efêmero da
+    // rodada e o `actor_id` é o id da execução, e nenhum dos dois nomeia alguém.
+    const agente = tipo === "ai_agent" ? texto(metadata?.agent_id) : null;
+    if (agente) return { autor: { kind: "agente", id: agente, name: null }, tokens: [], agentes: [agente] };
+    // O token é o que identifica o agente de fora.
     const token = texto(metadata?.actor_api_token_id) ?? (tipo === "api_token" ? texto(metadata?.actor_id) : null);
-    return { autor: { kind: "agente", id: token, name: null }, tokens: token ? [token] : [] };
+    return { autor: { kind: "agente", id: token, name: null }, tokens: token ? [token] : [], agentes: [] };
   }
-  if (tipo) return { autor: { kind: "sistema", id: null, name: null }, tokens: [] };
-  return { autor: { kind: "nao_registrado", id: null, name: null }, tokens: [] };
+  if (tipo) return { autor: { kind: "sistema", id: null, name: null }, tokens: [], agentes: [] };
+  return { autor: { kind: "nao_registrado", id: null, name: null }, tokens: [], agentes: [] };
 }
 
 function candidatoDoEvento(linha: LinhaDeEvento): Candidato | null {
@@ -337,12 +368,12 @@ function candidatoDoEvento(linha: LinhaDeEvento): Candidato | null {
   const categoria = CATEGORIA_DO_EVENTO[linha.event_type];
   if (!leadId || !categoria) return null;
   const p = linha.payload ?? {};
-  const { autor, tokens } = autorDoEvento(linha.metadata);
+  const { autor, tokens, agentes: agentesDoAutor } = autorDoEvento(linha.metadata);
 
   let textoDoEvento = ROTULO_DO_EVENTO[linha.event_type]!;
   let detalhes: Record<string, unknown> = {};
   const usuarios: string[] = [];
-  const agentes: string[] = [];
+  const agentes: string[] = [...agentesDoAutor];
 
   if (linha.event_type === EVENTO_TAG_ADICIONADA) {
     const tags = listaDeTextos(p.added_tags);
@@ -412,15 +443,19 @@ async function nomesPorId(
   return nomes;
 }
 
+/** Ids em formato de uuid: o que não é nem vai ao banco (a coluna é uuid). */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** Põe os nomes na página escolhida. Um nome que falta sai `null`, nunca derruba a leitura. */
 async function comNomes(
   supabase: SupabaseClient,
   organizationId: string,
   pagina: Candidato[],
+  leitor: LeitorDosEventos | undefined,
 ): Promise<EventoDoNegocio[]> {
   const usuarios = pagina.flatMap((c) => c.usuarios);
-  const agentes = pagina.flatMap((c) => c.agentes);
-  const tokens = pagina.flatMap((c) => c.tokens);
+  const agentes = pagina.flatMap((c) => c.agentes).filter((id) => UUID.test(id));
+  const tokens = pagina.flatMap((c) => c.tokens).filter((id) => UUID.test(id));
 
   const [nomeDoUsuario, nomeDoAgente, nomeDoToken] = await Promise.all([
     usuarios.length > 0
@@ -430,13 +465,28 @@ async function comNomes(
     tokens.length > 0 ? nomesPorId(supabase, "api_tokens", organizationId, tokens) : new Map<string, string>(),
   ]);
 
-  return pagina.map(({ evento }) => {
+  return pagina.map(({ evento, tokens: tokensDaLinha }) => {
     const autor = { ...evento.author };
     if (autor.id && !autor.name) {
       if (autor.kind === "pessoa") autor.name = nomeDoUsuario.get(autor.id) ?? null;
       else if (autor.kind === "agente") {
-        autor.name =
-          (evento.source === "timeline" ? nomeDoAgente.get(autor.id) : nomeDoToken.get(autor.id)) ?? null;
+        // Cada linha diz em qual cadastro o id mora: token (agente de fora) ou agente do CRM.
+        autor.name = (tokensDaLinha.includes(autor.id) ? nomeDoToken : nomeDoAgente).get(autor.id) ?? null;
+      }
+    }
+    const autorEhToken = autor.kind === "agente" && autor.id !== null && tokensDaLinha.includes(autor.id);
+    if (autor.kind === "agente" && leitor) {
+      autor.is_self = autor.id !== null && (autor.id === leitor.tokenId || autor.id === leitor.agentId);
+    }
+    // O id e o nome de um token são dado de administração: saem para quem
+    // administra, ou para o próprio token. Num turno de atendimento, para
+    // ninguém. `is_self` já foi decidido acima, com o id ainda na mão.
+    if (autorEhToken) {
+      const alcance = leitor?.identidadeDoToken ?? "nenhum";
+      const visivel = alcance === "todos" || (alcance === "so_o_proprio" && autor.is_self === true);
+      if (!visivel) {
+        autor.id = null;
+        autor.name = null;
       }
     }
     if (evento.type !== EVENTO_RESPONSAVEL) return { ...evento, author: autor };
@@ -635,7 +685,7 @@ export async function listarEventosDoNegocio(
 
   return {
     ok: true,
-    eventos: await comNomes(supabase, organizationId, pagina),
+    eventos: await comNomes(supabase, organizationId, pagina, filtros.leitor),
     has_more: haMais,
     cursor: haMais && cursor ? encodeCursor(cursor) : null,
   };

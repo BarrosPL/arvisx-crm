@@ -36,6 +36,8 @@ const { TETO_TOOLS_POR_AGENTE, ligarPacote, vagasExigidasPeloPacote } = await im
   "@/lib/mcp/tools/selecao-por-pacote"
 );
 const { PACOTE_PADRAO_DO_ONBOARDING } = await import("@/lib/ai/agents/capacidades-padrao");
+import type { Actor } from "@/lib/api/handlers/types";
+import { buildLeadActivityRow } from "@/lib/leads/activity-emitter";
 import type { McpContext } from "@/lib/mcp/types";
 
 const ORG_A = "aaaaaaaa-0000-4000-8000-000000000001";
@@ -274,7 +276,7 @@ interface Evento {
   lead_id: string;
   lead_title?: string | null;
   text: string;
-  author: { kind: string; id: string | null; name: string | null };
+  author: { kind: string; id: string | null; name: string | null; is_self?: boolean };
   details?: Record<string, unknown>;
 }
 
@@ -391,11 +393,16 @@ describe("⭐ quem fez: as origens que cada fonte guarda", () => {
     expect(porTipo.get("stage_changed")).toEqual({ kind: "pessoa", id: PESSOA, name: "Andreia Lima" });
     expect(porTipo.get("task_created")).toEqual({ kind: "pessoa", id: OUTRA_PESSOA, name: "Bruno Reis" });
     // nota assinada por token: o autor vem do payload da nota
-    expect(porTipo.get("note")).toEqual({ kind: "agente", id: TOKEN, name: "Sophia" });
-    // agente nativo: o nome vem do cadastro do agente
-    expect(porTipo.get("lead_edited")).toEqual({ kind: "agente", id: AGENTE, name: "Recuperador de vendas" });
+    expect(porTipo.get("note")).toEqual({ kind: "agente", id: TOKEN, name: "Sophia", is_self: true });
+    // agente nativo: o nome vem do cadastro do agente (e quem lê é o token, não ele)
+    expect(porTipo.get("lead_edited")).toEqual({
+      kind: "agente",
+      id: AGENTE,
+      name: "Recuperador de vendas",
+      is_self: false,
+    });
     // evento emitido por token: o nome vem do cadastro do token
-    expect(porTipo.get("lead.tag_added")).toEqual({ kind: "agente", id: TOKEN, name: "Sophia" });
+    expect(porTipo.get("lead.tag_added")).toEqual({ kind: "agente", id: TOKEN, name: "Sophia", is_self: true });
     // a fila de eventos sabe que foi uma pessoa, mas não qual
     expect(porTipo.get("lead.tag_removed")).toEqual({ kind: "pessoa", id: null, name: null });
     expect(porTipo.get("consent_declined")).toEqual({ kind: "cliente", id: null, name: null });
@@ -430,8 +437,202 @@ describe("⭐ quem fez: as origens que cada fonte guarda", () => {
     const porTipo = new Map(eventos(await listar({ lead_id: NEGOCIO_1 })).map((e) => [e.type, e]));
 
     expect(porTipo.get("stage_changed")!.author).toEqual({ kind: "pessoa", id: PESSOA, name: null });
-    expect(porTipo.get("lead_edited")!.author).toEqual({ kind: "agente", id: AGENTE, name: null });
+    expect(porTipo.get("lead_edited")!.author).toEqual({ kind: "agente", id: AGENTE, name: null, is_self: false });
     expect(porTipo.get("lead.assigned")!.text).toBe("Responsável: sem nome → sem nome");
+  });
+});
+
+describe("⭐ a ação feita por token sai com o agente externo como autor", () => {
+  const OUTRO_TOKEN = "aaaaaaaa-0000-4000-8000-0000000000f2";
+  const EXECUCAO = "aaaaaaaa-0000-4000-8000-0000000000e7";
+  const ATOR_TOKEN = { type: "api_token", id: TOKEN, role: "agent" } as const;
+  const comoToken = (token: string) =>
+    ctx({ apiTokenId: token, actor: { type: "api_token", id: token, role: "agent" } });
+  /** Token "tratado como gerente": vê o id e o nome de todo token (item 2.32). */
+  const comoGerente = (token: string) =>
+    ctx({ apiTokenId: token, role: "manager", actor: { type: "api_token", id: token, role: "manager" } });
+
+  /** A linha exatamente como `buildLeadActivityRow` a grava para o ator dado. */
+  function gravada(actor: Actor, type: "stage_changed" | "lead_edited" | "task_created", hhmm: string, payload = {}) {
+    return atividade({
+      ...buildLeadActivityRow({
+        organizationId: ORG_A,
+        leadId: NEGOCIO_1,
+        contactId: CONTATO_1,
+        type,
+        sourceModule: "crm",
+        actor,
+        reason: "feito por quem chamou",
+        payload,
+      }),
+      performed_at: dia(hhmm),
+    });
+  }
+
+  beforeEach(() => {
+    (banco.tabelas.api_tokens as Linha[]).push({ id: OUTRO_TOKEN, organization_id: ORG_A, name: "Pedro" });
+    banco.tabelas.crm_lead_activities = [
+      gravada(ATOR_TOKEN, "stage_changed", "11:00", { from_stage_id: "s2", to_stage_id: "s3", pipeline_id: FUNIL }),
+      gravada(ATOR_TOKEN, "lead_edited", "11:05", { fields: ["owner_user_id", "value_cents"] }),
+      // o token com escopo de agente: o `id` do ator é a execução, o token vai à parte
+      gravada({ type: "ai_agent", id: EXECUCAO, role: "agent", api_token_id: OUTRO_TOKEN }, "task_created", "11:10"),
+      // linha ANTIGA de uma escrita por token: não guarda o token
+      atividade({ type: "stage_changed", reason: "movido antes de a linha guardar o token", performed_at: dia("09:00") }),
+      // uma pessoa, para o filtro ter o que separar
+      atividade({ type: "stage_changed", actor_kind: "user", performed_by_user_id: PESSOA, performed_at: dia("11:20") }),
+    ];
+    banco.tabelas.event_log = [
+      // `crm_manage_tags` por token com escopo de agente: o evento leva o token
+      evento({
+        event_type: "lead.tag_added",
+        payload: { added_tags: ["vip"] },
+        metadata: { actor_type: "ai_agent", actor_id: EXECUCAO, actor_api_token_id: OUTRO_TOKEN, via: "mcp" },
+        created_at: dia("11:12"),
+      }),
+      // o agente do CRM: o evento leva o agente, e o token efêmero não nomeia ninguém
+      evento({
+        event_type: "lead.tag_removed",
+        payload: { removed_tags: ["frio"] },
+        metadata: { actor_type: "ai_agent", actor_id: EXECUCAO, agent_id: AGENTE, via: "mcp" },
+        created_at: dia("11:14"),
+      }),
+      // a troca de responsável nasce do gatilho do banco
+      evento({
+        entity_kind: "lead",
+        event_type: "lead.assigned",
+        payload: { lead_id: NEGOCIO_1, from_user_id: null, to_user_id: PESSOA },
+        created_at: dia("11:06"),
+      }),
+    ];
+  });
+
+  const autores = async (c = comoToken(TOKEN)) =>
+    eventos(await listar({ lead_id: NEGOCIO_1 }, c)).map((e) => [e.happened_at.slice(11, 16), e.type, e.author] as const);
+
+  it("mover etapa, editar o negócio e criar tarefa por token: autor `agente`; para gerente, com id e nome do token", async () => {
+    const porHora = new Map((await autores(comoGerente(TOKEN))).map(([hora, , autor]) => [hora, autor]));
+    expect(porHora.get("11:00")).toEqual({ kind: "agente", id: TOKEN, name: "Sophia", is_self: true });
+    expect(porHora.get("11:05")).toMatchObject({ kind: "agente", id: TOKEN, name: "Sophia" });
+    expect(porHora.get("11:10")).toEqual({ kind: "agente", id: OUTRO_TOKEN, name: "Pedro", is_self: false });
+  });
+
+  it("⭐ o mesmo negócio lido pelo outro token: a autoria é a mesma, e `is_self` troca de lado", async () => {
+    const porHora = new Map((await autores(comoGerente(OUTRO_TOKEN))).map(([hora, , autor]) => [hora, autor]));
+    expect(porHora.get("11:00")).toEqual({ kind: "agente", id: TOKEN, name: "Sophia", is_self: false });
+    expect(porHora.get("11:10")).toEqual({ kind: "agente", id: OUTRO_TOKEN, name: "Pedro", is_self: true });
+  });
+
+  it("⭐ o filtro `author: agente` encontra a ação feita por token, e `sistema` deixa de trazê-la", async () => {
+    const horas = async (author: string[]) =>
+      eventos(await listar({ lead_id: NEGOCIO_1, author }, comoToken(TOKEN))).map((e) => e.happened_at.slice(11, 16));
+    expect(await horas(["agente"])).toEqual(["11:00", "11:05", "11:10", "11:12", "11:14"]);
+    expect(await horas(["sistema"])).toEqual(["09:00"]);
+    expect(await horas(["pessoa"])).toEqual(["11:20"]);
+  });
+
+  it("tag por token com escopo de agente: o evento sai com o token; pelo agente do CRM, com o agente", async () => {
+    const porTipo = new Map((await autores(comoGerente(TOKEN))).map(([, tipo, autor]) => [tipo, autor]));
+    expect(porTipo.get("lead.tag_added")).toEqual({ kind: "agente", id: OUTRO_TOKEN, name: "Pedro", is_self: false });
+    expect(porTipo.get("lead.tag_removed")).toEqual({
+      kind: "agente",
+      id: AGENTE,
+      name: "Recuperador de vendas",
+      is_self: false,
+    });
+  });
+
+  it("o agente do CRM lendo: a linha dele é dele, a do token não", async () => {
+    const nativo = ctx({
+      apiTokenId: "aaaaaaaa-0000-4000-8000-0000000000f9",
+      actor: { type: "ai_agent", id: EXECUCAO, role: "agent", agent_id: AGENTE },
+    });
+    const porTipo = new Map((await autores(nativo)).map(([, tipo, autor]) => [tipo, autor]));
+    expect(porTipo.get("lead.tag_removed")).toMatchObject({ id: AGENTE, is_self: true });
+    // O agente do CRM só existe para atender: do token ele sabe que foi outro
+    // agente, sem id e sem nome (item 2.32).
+    expect(porTipo.get("lead.tag_added")).toEqual({ kind: "agente", id: null, name: null, is_self: false });
+  });
+
+  it("⭐ token comum, fora do turno: id e nome só do PRÓPRIO token (revisão 20/11, item 2.32)", async () => {
+    const porHora = new Map((await autores(comoToken(TOKEN))).map(([hora, , autor]) => [hora, autor]));
+    expect(porHora.get("11:00")).toEqual({ kind: "agente", id: TOKEN, name: "Sophia", is_self: true });
+    expect(porHora.get("11:10")).toEqual({ kind: "agente", id: null, name: null, is_self: false });
+    const saida = JSON.stringify((await autores(comoToken(TOKEN))).map(([, , autor]) => autor));
+    expect(saida).not.toContain("Pedro");
+    expect(saida).not.toContain(OUTRO_TOKEN);
+    // o agente do CRM não é token: continua com o id e o nome dele
+    expect(saida).toContain("Recuperador de vendas");
+  });
+
+  it("⭐ num turno de atendimento nenhum token sai com nome nem id, nem o do próprio, nem para gerente", async () => {
+    const contatoDoNegocio = String(banco.tabelas.crm_leads!.find((l) => l.id === NEGOCIO_1)!.contact_id);
+    const turnos = [
+      ctx({ contatoDoTurno: contatoDoNegocio, apiTokenId: TOKEN, actor: { type: "api_token", id: TOKEN, role: "agent" } }),
+      ctx({
+        contatoDoTurno: contatoDoNegocio,
+        apiTokenId: TOKEN,
+        role: "manager",
+        actor: { type: "api_token", id: TOKEN, role: "manager" },
+      }),
+      ctx({
+        contatoDoTurno: contatoDoNegocio,
+        role: "ai_operator",
+        apiTokenId: "aaaaaaaa-0000-4000-8000-0000000000f9",
+        actor: { type: "ai_agent", id: EXECUCAO, role: "ai_operator", agent_id: AGENTE },
+      }),
+    ];
+    for (const turno of turnos) {
+      const linhas = await autores(turno);
+      expect(linhas.length).toBeGreaterThan(0);
+      const porHora = new Map(linhas.map(([hora, , autor]) => [hora, autor]));
+      expect(porHora.get("11:00")).toMatchObject({ kind: "agente", id: null, name: null });
+      expect(porHora.get("11:10")).toMatchObject({ kind: "agente", id: null, name: null, is_self: false });
+      const saida = JSON.stringify(linhas.map(([, , autor]) => autor));
+      for (const proibido of ["Sophia", "Pedro", TOKEN, OUTRO_TOKEN]) expect(saida).not.toContain(proibido);
+    }
+    // `is_self` continua valendo no turno do token
+    const proprio = new Map((await autores(turnos[0]!)).map(([hora, , autor]) => [hora, autor]));
+    expect(proprio.get("11:00")!.is_self).toBe(true);
+  });
+
+  it("a descrição diz que o id e o nome de outro token são só para gerente", () => {
+    expect(crmListLeadEvents.description).toMatch(/só para gerente/);
+  });
+
+  it("⭐ linha ANTIGA, sem o token: continua legível, como `sistema`", async () => {
+    const antiga = (await autores()).find(([hora]) => hora === "09:00")!;
+    expect(antiga[2]).toEqual({ kind: "sistema", id: null, name: null });
+  });
+
+  it("a troca de responsável continua sem autor na fila; a linha de campo vizinha diz que foi o token", async () => {
+    const r = eventos(await listar({ lead_id: NEGOCIO_1, type: ["responsavel", "campo"] }, comoToken(TOKEN)));
+    expect(r.map((e) => [e.type, e.author.kind, e.author.name])).toEqual([
+      ["lead_edited", "agente", "Sophia"],
+      ["lead.assigned", "nao_registrado", null],
+    ]);
+    expect(r[0]!.details).toEqual({ fields: ["owner_user_id", "value_cents"] });
+  });
+
+  it("⭐ isolamento: token de outra organização gravado na linha não ganha nome", async () => {
+    banco.tabelas.crm_lead_activities = [gravada({ type: "api_token", id: TOKEN_B, role: "agent" }, "stage_changed", "11:00")];
+    banco.tabelas.event_log = [];
+    const [linha] = eventos(await listar({ lead_id: NEGOCIO_1 }, comoGerente(TOKEN)));
+    expect(linha!.author).toEqual({ kind: "agente", id: TOKEN_B, name: null, is_self: false });
+    expect(JSON.stringify(linha)).not.toContain("outra empresa");
+  });
+
+  it("token apagado do cadastro: a linha continua `agente`, com o id e sem nome", async () => {
+    banco.tabelas.api_tokens = [];
+    const porHora = new Map((await autores()).map(([hora, , autor]) => [hora, autor]));
+    expect(porHora.get("11:00")).toEqual({ kind: "agente", id: TOKEN, name: null, is_self: true });
+  });
+
+  it("pelo funil vale igual", async () => {
+    const r = await listar(
+      { pipeline_id: FUNIL, since: "2026-11-10T00:00:00Z", until: "2026-11-11T00:00:00Z", author: ["agente"], type: ["etapa"] },
+      comoToken(TOKEN),
+    );
+    expect(eventos(r).map((e) => [e.lead_title, e.author.name, e.author.is_self])).toEqual([["Negócio 1", "Sophia", true]]);
   });
 });
 
