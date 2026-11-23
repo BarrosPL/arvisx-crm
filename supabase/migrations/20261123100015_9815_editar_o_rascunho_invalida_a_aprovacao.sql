@@ -149,7 +149,7 @@ begin
     end if;
     -- Marca da transação: os itens gravados a seguir são desta mesma edição.
     v_marca := coalesce(current_setting('arvisx.proposta_revisao_subida', true), '');
-    if position(new.id::text in v_marca) = 0 then
+    if strpos(v_marca, new.id::text) = 0 then
       perform set_config('arvisx.proposta_revisao_subida', v_marca || ' ' || new.id::text, true);
     end if;
   end if;
@@ -191,7 +191,7 @@ begin
     -- A revisão desta proposta já subiu nesta transação (a edição pela função
     -- fn_proposta_gravar_edicao, ou outra linha deste mesmo comando) e ninguém
     -- a aprovou depois: é a mesma edição, não soma de novo.
-    if position(v_id::text in coalesce(current_setting('arvisx.proposta_revisao_subida', true), '')) > 0
+    if strpos(coalesce(current_setting('arvisx.proposta_revisao_subida', true), ''), v_id::text) > 0
        and not exists (select 1 from public.crm_proposals p where p.id = v_id and p.aprovada_em is not null) then
       continue;
     end if;
