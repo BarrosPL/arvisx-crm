@@ -398,10 +398,17 @@ O comentário ligado a um contato (`contact_id`) é dado da pessoa.
 - **Anonimização:** quando o contato é anonimizado, o texto do comentário vira
   `(anonimizado)`, o autor e o motivo do ignorar são apagados e o texto das
   duas respostas é redigido. Vale para os comentários ligados ao contato e
-  para os outros comentários do mesmo autor naquela organização. A linha fica
-  (publicação, hora e estado).
-- **Cópia dos dados do titular:** o arquivo entregue traz os mesmos
-  comentários, com o texto e o que foi respondido.
+  para os outros comentários do mesmo autor naquela organização. Desde a
+  migration `9816`, vale também para quem já era contato por mensagem direta
+  e comentou sem que o comentário fosse ligado ao contato: a pessoa é achada
+  pela identidade social (`instagram:<conta>:<id do autor>`, na conta que
+  recebeu o comentário), inclusive pela identidade de uma ficha unida a ela. A
+  ocultação (`hidden`) fica só com quando, quem ocultou e se foi simulada. A
+  linha fica (publicação, hora e estado).
+- **Cópia dos dados do titular:** o arquivo entregue traz os comentários
+  ligados ao contato e os outros do mesmo autor, com o texto e o que foi
+  respondido. Os achados só pela identidade social (o caso da `9816`) ainda
+  não entram na cópia: a anonimização os alcança, a exportação não.
 
 ## 14. O que a documentação da Meta diz sobre responder
 

@@ -69827,6 +69827,102 @@ create trigger trg_redigir_comentarios_ao_anonimizar
 
 notify pgrst, 'reload schema';
 
+-- ---- Comentários do Instagram: a anonimização acha a pessoa pela identidade social (migration 9816) ----
+-- Espelho idempotente da 9816 (o porquê está no cabeçalho da migration): o
+-- corpo de `fn_redigir_comentarios_ao_anonimizar` passa a alcançar também os
+-- comentários de quem já era contato por mensagem direta e nunca foi ligado
+-- por `contact_id` (pela identidade social `instagram:<conta>:<author_id>`), e
+-- regrava `hidden` só com os campos conhecidos. Fica DEPOIS do bloco da 9812,
+-- para ser a última definição da função, e ANTES da VARREDURA anon porque cria
+-- função. Reaplicar não muda nada: `create or replace function` e
+-- `drop trigger if exists` + `create trigger`.
+create or replace function public.fn_redigir_comentarios_ao_anonimizar()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_identidades text[];
+begin
+  -- As identidades sociais da pessoa: a do contato (antes e depois da virada)
+  -- e as dos contatos unidos a ele. Só as do Instagram interessam aqui.
+  select coalesce(array_agg(distinct i.identidade), '{}'::text[])
+    into v_identidades
+    from (
+      select old.social_identity as identidade
+      union all
+      select new.social_identity
+      union all
+      select c.social_identity
+        from public.contacts c
+       where c.organization_id = new.organization_id
+         and c.is_merged_into = new.id
+    ) i
+   where i.identidade like 'instagram:%';
+
+  update public.social_comments sc
+     set text = case when sc.text is null then null else '(anonimizado)' end,
+         author_id = null,
+         author_username = null,
+         ignore_reason = null,
+         public_reply = case
+           when sc.public_reply is null then null
+           else sc.public_reply || jsonb_build_object('texto', '(anonimizado)')
+         end,
+         private_reply = case
+           when sc.private_reply is null then null
+           else sc.private_reply || jsonb_build_object('texto', '(anonimizado)')
+         end,
+         hidden = case
+           when sc.hidden is null then null
+           else jsonb_build_object(
+             'quando', sc.hidden -> 'quando',
+             'quem', sc.hidden -> 'quem',
+             'simulada', sc.hidden -> 'simulada'
+           )
+         end
+   where sc.organization_id = new.organization_id
+     and (
+       sc.contact_id = new.id
+       or sc.author_id in (
+         select s.author_id
+           from public.social_comments s
+          where s.organization_id = new.organization_id
+            and s.contact_id = new.id
+            and s.author_id is not null
+       )
+       or (
+         sc.author_id is not null
+         and cardinality(v_identidades) > 0
+         and exists (
+           select 1
+             from public.channel_sessions cs
+            where cs.id = sc.channel_session_id
+              and cs.organization_id = new.organization_id
+              and cs.meta_social_account_id is not null
+              and ('instagram:' || cs.meta_social_account_id || ':' || sc.author_id) = any (v_identidades)
+         )
+       )
+     );
+  return new;
+end;
+$$;
+
+revoke execute on function public.fn_redigir_comentarios_ao_anonimizar() from public, anon, authenticated;
+grant  execute on function public.fn_redigir_comentarios_ao_anonimizar() to service_role;
+
+-- O gatilho é o da 9812; recriá-lo aqui deixa a migration inteira reaplicável
+-- e garante que ele existe em quem aplicar só esta.
+drop trigger if exists trg_redigir_comentarios_ao_anonimizar on public.contacts;
+create trigger trg_redigir_comentarios_ao_anonimizar
+  after update of is_anonymized on public.contacts
+  for each row
+  when (new.is_anonymized is true and old.is_anonymized is distinct from true)
+  execute function public.fn_redigir_comentarios_ao_anonimizar();
+
+notify pgrst, 'reload schema';
+
 -- ---- Comentários do Instagram: só gerente para cima lê pelo banco (migration 9819) ----
 -- Espelho idempotente da 9819 (o porquê está no cabeçalho da migration): a
 -- política de SELECT de `social_comments` passa a pedir o papel que as rotas e

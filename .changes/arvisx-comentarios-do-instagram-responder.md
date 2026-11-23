@@ -34,5 +34,6 @@ titular (LGPD).
 
 Há três colunas novas na tabela `social_comments`. Quem atualiza pelo kit
 recebe a mudança sozinho; quem aplica as migrações à mão precisa aplicar a
-`9812` antes de subir a versão nova. A tela de comentários chega na versão
+`9812` e a `9816` antes de subir a versão nova (a `9816` faz a anonimização
+alcançar também os comentários de quem já era contato por mensagem direta). A tela de comentários chega na versão
 seguinte. O contrato está em `docs/integracao/comentarios-do-instagram.md`.
