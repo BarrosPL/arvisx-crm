@@ -648,7 +648,14 @@ jobs:
     # medido — não há Docker onde esta matriz foi escrita —, e existe para o
     # vermelho continuar falando de schema: mantido em 20, a perna morreria por
     # relógio no meio da segunda passada.
-    timeout-minutes: 30
+    timeout-minutes: 45
+    # 45 desde a revisão de 20/11 (item 3.1), e este É medido: na run
+    # 45182329914 (máquina do GitHub, a primeira em que esta cópia chegou ao
+    # vitest) só a PRIMEIRA passada levou 27 min no pg17 e 29 min no pg15 — 600
+    # arquivos, 1553 s e 1675 s de vitest. Com 30, a perna morreria por relógio
+    # na segunda passada assim que a primeira ficasse verde, e o vermelho deixaria
+    # de falar de schema. A segunda passada tem p90 de 325 s; 45 dá ~10 min de
+    # folga sobre as duas.
     # Executor próprio para trabalho nosso quando EXECUTOR_PROPRIO=ligado; o
     # porquê e a guarda contra fork: comentário do e2e-parte no e2e.yml.
     runs-on: ${{ vars.EXECUTOR_PROPRIO == 'ligado' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && 'deskcomm-proprio' || 'ubuntu-latest' }}
