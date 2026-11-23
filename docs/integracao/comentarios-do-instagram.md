@@ -328,6 +328,16 @@ para o comentário. Resposta de verdade nunca é substituída: `real` seguido de
 gravada e a conexão desligada (ou desconectada), a recusa é a da conexão
 (`comentarios_desligados` ou `canal_indisponivel`).
 
+**Ocultação simulada não trava a ocultação real.** Vale a mesma regra para
+`hide`: a ocultação gravada em `registrar` não ocultou nada. Em `registrar`,
+ocultar de novo devolve a que existe (`ja_estava_oculto: true`,
+`simulada: true`). Quando a conexão passa para `real`, a mesma chamada oculta
+na Meta e a ocultação real substitui a simulada (`ja_estava_oculto: false`,
+`simulada: false`; a auditoria da real leva `metadata.substituiu_simulada`). Se
+a Meta recusar, a simulada continua no comentário. Ocultação de verdade nunca
+é substituída. Com simulada gravada e a conexão desligada, a recusa é a da
+conexão.
+
 **Erro da Meta não deixa o comentário como respondido.** Se a Meta recusa, a
 resposta não é gravada e o estado não muda; a chamada pode ser repetida depois
 de corrigir a causa.
