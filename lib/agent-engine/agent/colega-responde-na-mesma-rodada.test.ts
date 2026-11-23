@@ -98,17 +98,82 @@ describe('continuarComOColega', () => {
     expect(carregarColega).not.toHaveBeenCalled();
   });
 
-  it.each([
+  // Revisão de 20/11, item 2.11: antes este caso terminava em "não roda" — só
+  // um aviso no log, com o cliente sem resposta e a conversa presa num agente
+  // parado. Agora a passagem é desfeita e quem passou responde.
+  describe.each([
     ['sem versão publicada', null],
     ['pausado', colega({ pausedAt: '2026-11-20T00:00:00Z' })],
     ['em modo assistido', colega({ operationMode: 'assisted' })],
-  ])('colega %s entre a passagem e a resposta: não roda', async (_caso, config) => {
+  ])('colega %s entre a passagem e a resposta', (_caso, config) => {
+    async function rodarCaso(desfazer = vi.fn(async () => true)) {
+      const rodar = vi.fn();
+      const r = rodada({ aceita, mensagensEnviadas: 0 });
+      const pool = { nome: 'pool' } as never;
+      await continuarComOColega(deps, job, pool, { workerId: 'w' }, r, {
+        rodar,
+        carregarColega: vi.fn(async () => config),
+        desfazer,
+      });
+      return { rodar, desfazer, r, pool };
+    }
+
+    it('⭐ a conversa é devolvida a quem passou, na organização do job', async () => {
+      const { desfazer, pool } = await rodarCaso();
+      expect(desfazer).toHaveBeenCalledTimes(1);
+      expect(desfazer).toHaveBeenCalledWith(pool, { tenantId: 'org-1', conversationId: 'conversa-1' }, aceita);
+    });
+
+    it('⭐ quem passou roda de novo no MESMO job e responde: o cliente não fica sem resposta', async () => {
+      const { rodar, r } = await rodarCaso();
+      expect(rodar).toHaveBeenCalledTimes(1);
+      const [, jobDaVolta, , , entrada] = rodar.mock.calls[0]! as [unknown, unknown, unknown, unknown, AgentTurnInput];
+      expect(jobDaVolta).toBe(job);
+      // O MESMO agente e roteamento do primeiro turno — não o colega.
+      expect(entrada.resolvedAgent).toBe(r.resolvedAgent);
+      expect(entrada.conversationId).toBe('conversa-1');
+      expect(entrada.inboundMessageId).toBe('mensagem-1');
+      expect(entrada.coletorHerdado).toBe(r.coletorDaRodada);
+      const abertura = entrada.buildOpening({} as never);
+      expect(abertura.startsWith('ABERTURA DO TURNO')).toBe(true);
+      expect(abertura).toContain('A passagem para o colega não aconteceu');
+      expect(abertura).toContain('request_human_handoff');
+      expect(abertura).not.toContain('Passagem recebida de um colega');
+    });
+
+    it('quem passou volta SEM a ferramenta de passagem: não passa a vez de novo nesta rodada', async () => {
+      const { rodar } = await rodarCaso();
+      expect((rodar.mock.calls[0]![4] as AgentTurnInput).passagemParaColega).toBeUndefined();
+    });
+
+    it('a devolução falhou no banco: quem passou responde assim mesmo', async () => {
+      const { rodar } = await rodarCaso(vi.fn(async () => {
+        throw new Error('conexão caiu');
+      }));
+      expect(rodar).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('quem passou já tinha falado com o cliente e o colega some: nada é desfeito nem roda (o cliente já tem resposta)', async () => {
     const rodar = vi.fn();
-    await continuarComOColega(deps, job, {} as never, { workerId: 'w' }, rodada({ aceita, mensagensEnviadas: 0 }), {
+    const desfazer = vi.fn();
+    await continuarComOColega(deps, job, {} as never, { workerId: 'w' }, rodada({ aceita, mensagensEnviadas: 1 }), {
       rodar,
-      carregarColega: vi.fn(async () => config),
+      carregarColega: vi.fn(async () => null),
+      desfazer,
     });
     expect(rodar).not.toHaveBeenCalled();
+    expect(desfazer).not.toHaveBeenCalled();
+  });
+
+  it('colega disponível: nada é desfeito', async () => {
+    const desfazer = vi.fn();
+    await continuarComOColega(deps, job, {} as never, { workerId: 'w' }, rodada({ aceita, mensagensEnviadas: 0 }), {
+      rodar: vi.fn(),
+      carregarColega: vi.fn(async () => colega()),
+      desfazer,
+    });
+    expect(desfazer).not.toHaveBeenCalled();
   });
 
   it('falha do turno do colega propaga: a fila re-tenta o job, e o colega já está fixado', async () => {
