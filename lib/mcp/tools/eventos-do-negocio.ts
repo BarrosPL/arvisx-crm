@@ -24,6 +24,7 @@ import {
   type AlvoDosEventos,
 } from "@/lib/leads/eventos-do-negocio";
 import { instanteDoArgumento } from "../argumentos-do-agente";
+import { alcanceDaIdentidadeDoToken } from "../identidade-do-token";
 import { CONSULTA_INDISPONIVEL, negocioDoContexto, recusa } from "../negocio-do-contexto";
 import type { McpToolDefinition } from "../types";
 
@@ -47,7 +48,7 @@ export const crmListLeadEvents: McpToolDefinition<typeof eventosInputShape> = {
     "Linha do tempo de um negócio (`lead_id`) ou dos negócios de um funil (`pipeline_id`, que exige " +
     `\`since\` e janela de até ${JANELA_MAXIMA_DO_FUNIL_DIAS} dias), em ordem cronológica: mudança de etapa, ` +
     "responsável, tag e campo, nota, tarefa e o resto (`outro`), com autor (`is_self`: foi " +
-    "você) e texto inteiro. Mensagem " +
+    "você; id e nome de outro token só para gerente) e texto inteiro. Mensagem " +
     "não entra: leia a conversa. Repita com o `cursor` enquanto `has_more` for true (a página pode " +
     "vir menor que o limite, até vazia). Troca de responsável sai com autor `nao_registrado`, que " +
     "`author` nunca casa.",
@@ -124,6 +125,9 @@ export const crmListLeadEvents: McpToolDefinition<typeof eventosInputShape> = {
       leitor: {
         tokenId: ctx.apiTokenId,
         agentId: ctx.actor.type === "ai_agent" ? (ctx.actor.agent_id ?? null) : null,
+        // O id e o nome de um token só saem para quem administra ou para o
+        // próprio token; num turno de atendimento, para ninguém (item 2.32).
+        identidadeDoToken: alcanceDaIdentidadeDoToken(ctx),
       },
     });
     if (!lista.ok) {

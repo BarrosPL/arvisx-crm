@@ -134,6 +134,12 @@ export interface AutorDoEvento {
 export interface LeitorDosEventos {
   tokenId?: string | null;
   agentId?: string | null;
+  /**
+   * De quais tokens de API o leitor recebe o id e o nome (revisão 20/11, item
+   * 2.32; a regra mora em `lib/mcp/identidade-do-token.ts`). Sem dizer, nenhum:
+   * a linha sai `agente` com `is_self`, sem id e sem nome.
+   */
+  identidadeDoToken?: "todos" | "so_o_proprio" | "nenhum";
 }
 
 export interface EventoDoNegocio {
@@ -283,7 +289,10 @@ function autorDaAtividade(linha: LinhaDeAtividade): Pick<Candidato, "usuarios" |
       autor: { kind: "agente", id, name: nome },
       usuarios: [],
       agentes: semNome && gravado.tipo === "agente" ? [id] : [],
-      tokens: semNome && gravado.tipo === "token" ? [id] : [],
+      // O token entra SEMPRE, com ou sem nome gravado: é esta lista que diz, na
+      // hora de devolver, que o autor é um token (e não um agente do CRM), para
+      // a identidade dele só sair para quem pode ver (`identidadeDoToken`).
+      tokens: id !== null && gravado.tipo === "token" ? [id] : [],
     };
   }
   if (linha.actor_kind === "ai") {
@@ -465,8 +474,20 @@ async function comNomes(
         autor.name = (tokensDaLinha.includes(autor.id) ? nomeDoToken : nomeDoAgente).get(autor.id) ?? null;
       }
     }
+    const autorEhToken = autor.kind === "agente" && autor.id !== null && tokensDaLinha.includes(autor.id);
     if (autor.kind === "agente" && leitor) {
       autor.is_self = autor.id !== null && (autor.id === leitor.tokenId || autor.id === leitor.agentId);
+    }
+    // O id e o nome de um token são dado de administração: saem para quem
+    // administra, ou para o próprio token. Num turno de atendimento, para
+    // ninguém. `is_self` já foi decidido acima, com o id ainda na mão.
+    if (autorEhToken) {
+      const alcance = leitor?.identidadeDoToken ?? "nenhum";
+      const visivel = alcance === "todos" || (alcance === "so_o_proprio" && autor.is_self === true);
+      if (!visivel) {
+        autor.id = null;
+        autor.name = null;
+      }
     }
     if (evento.type !== EVENTO_RESPONSAVEL) return { ...evento, author: autor };
 

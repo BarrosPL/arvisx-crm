@@ -22,7 +22,11 @@
  *  - `agente`: enviada por um sistema de fora, por token de API (o agente
  *    externo). `id` é o id do token e `name` o nome que o administrador deu a
  *    ele. `is_self` diz se o token é o MESMO de quem está lendo: é assim que o
- *    agente externo separa a própria fala da de outra integração.
+ *    agente externo separa a própria fala da de outra integração. O `id` e o
+ *    `name` são dado de administração e NÃO saem para todo leitor: gerente vê
+ *    de todo token, o token comum só do próprio, e num turno de atendimento
+ *    ninguém vê (`lib/mcp/identidade-do-token.ts`, revisão 20/11, item 2.32).
+ *    O mesmo vale para `via_token` do `em_nome_de`: só para gerente.
  *  - `equipe`: escrita por uma pessoa. `name` é só o nome (nunca e-mail nem
  *    telefone). `detail: "celular"` = saiu do aparelho ligado ao número, fora do
  *    CRM, e a linha não diz quem digitou. `detail: "em_nome_de"` = um sistema
@@ -51,6 +55,7 @@ import { CHAVE_DO_ENVIO_POR_TOKEN } from "@/lib/api/handlers/token-do-ator";
 import { lerRemetenteDeGrupo } from "@/lib/messaging/remetente-de-grupo";
 import { nomesDosAtendentesCom } from "@/lib/users/nome-do-atendente";
 
+import { alcanceDaIdentidadeDoToken, identidadeDoTokenVisivel } from "./identidade-do-token";
 import type { McpContext } from "./types";
 
 export interface AutorDaMensagem {
@@ -99,9 +104,12 @@ function tokenGravado(m: MensagemComAutoria): { id: string; nome: string | null 
  * lido sai `null`, e o histórico continua legível.
  */
 export async function autoresDoHistorico(
-  ctx: Pick<McpContext, "supabase" | "organizationId"> & Partial<Pick<McpContext, "apiTokenId">>,
+  ctx: Pick<McpContext, "supabase" | "organizationId"> &
+    Partial<Pick<McpContext, "apiTokenId" | "role" | "actor" | "contatoDoTurno">>,
   mensagens: ReadonlyArray<MensagemComAutoria>,
 ): Promise<Map<string, AutorDaMensagem>> {
+  // De quais tokens quem lê recebe o id e o nome (revisão 20/11, item 2.32).
+  const alcance = alcanceDaIdentidadeDoToken(ctx);
   const saidas = mensagens.filter((m) => m.direction === "outbound");
   const daEquipe = (m: MensagemComAutoria) => m.sent_via === "user" || m.sent_via === "crm";
 
@@ -154,7 +162,7 @@ export async function autoresDoHistorico(
   }
   const nomeDoToken = new Map<string, string | null>();
   try {
-    if (tokens.length > 0) {
+    if (tokens.length > 0 && alcance !== "nenhum") {
       // Só o nome, e só de token DESTA organização.
       const { data } = await ctx.supabase
         .from("api_tokens")
@@ -188,17 +196,21 @@ export async function autoresDoHistorico(
         id: m.sent_on_behalf_of_user_id,
         name: texto(emNomeDe?.user_name),
         detail: "em_nome_de",
-        via_token: texto(emNomeDe?.token_name),
+        // O nome do token que enviou é dado de administração: só para gerente.
+        // A linha não guarda o id dele, então não há como reconhecer "o próprio".
+        via_token: alcance === "todos" ? texto(emNomeDe?.token_name) : null,
       });
       continue;
     }
     const token = tokenGravado(m);
     if (token) {
+      const ehOProprio = Boolean(ctx.apiTokenId) && token.id === ctx.apiTokenId;
+      const visivel = identidadeDoTokenVisivel(alcance, ehOProprio);
       autores.set(m.id, {
         kind: "agente",
-        id: token.id,
-        name: nomeDoToken.get(token.id) ?? token.nome,
-        is_self: Boolean(ctx.apiTokenId) && token.id === ctx.apiTokenId,
+        id: visivel ? token.id : null,
+        name: visivel ? (nomeDoToken.get(token.id) ?? token.nome) : null,
+        is_self: ehOProprio,
       });
       continue;
     }

@@ -332,7 +332,7 @@ export const crmGetConversationHistory: McpToolDefinition<typeof historyInputSha
   description:
     "Carrega historico de mensagens de uma conversa. Use para dar contexto ao agente sem inflar o system prompt." +
     " Cada mensagem traz `author` (cliente, ia, agente, equipe ou sistema, com nome) e `channel`." +
-    " `agente` é envio por token de API; `is_self`: foi este token." +
+    " `agente` é envio por token de API; `is_self`: foi este token (id e nome de outro token só para gerente)." +
     " Em conversa de atendimento, devolve apenas o histórico da conversa do contato desta conversa.",
   inputSchema: historyInputShape,
   category: "read",

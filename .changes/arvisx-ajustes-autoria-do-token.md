@@ -18,6 +18,11 @@ etapa que ele fazia entrava na linha do tempo do negócio como "sistema".
   `author: ["agente"]` as encontra.
 - **O que é guardado** — só o id do token e o nome que o administrador deu a
   ele. O valor do token não é gravado.
+- **Quem vê o id e o nome do token** — token com papel de gerente ou admin vê
+  de todo token; token comum vê só o do próprio (de outro token ele sabe que
+  foi outro agente externo, sem nome e sem id). Durante um atendimento ninguém
+  recebe nome nem id de token, para o agente não repetir ao cliente o nome que
+  o administrador deu ao token. `is_self` sai sempre.
 
 A tela não mudou: o balão da caixa de entrada e o card do negócio mostram o
 mesmo de antes. Mensagens e linhas anteriores a esta versão ficam como estavam

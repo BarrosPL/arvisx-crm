@@ -198,6 +198,9 @@ const porToken = (id: string, token: string, nome: string | null, extra: Record<
 
 const comoToken = (token: string) =>
   ctx({ apiTokenId: token, actor: { type: "api_token", id: token, role: "agent" } });
+/** Token que o administrador marcou como "tratado como gerente": vê o id e o nome de todo token. */
+const comoGerente = (token: string) =>
+  ctx({ apiTokenId: token, role: "manager", actor: { type: "api_token", id: token, role: "manager" } });
 
 describe("⭐ o agente externo separa a PRÓPRIA fala da de outra integração", () => {
   const CONVERSA_DE_DOIS_AGENTES = [
@@ -206,8 +209,8 @@ describe("⭐ o agente externo separa a PRÓPRIA fala da de outra integração",
     porToken("do-pedro", TOKEN_PEDRO, "Pedro"),
   ];
 
-  it("a mensagem enviada por token sai como `agente`, com o id e o nome do token", async () => {
-    const todas = await historico(CONVERSA_DE_DOIS_AGENTES, comoToken(TOKEN_SOPHIA));
+  it("a mensagem enviada por token sai como `agente`; para gerente, com o id e o nome do token", async () => {
+    const todas = await historico(CONVERSA_DE_DOIS_AGENTES, comoGerente(TOKEN_SOPHIA));
     expect(todas.get("da-sophia")!.author).toEqual({ kind: "agente", id: TOKEN_SOPHIA, name: "Sophia", is_self: true });
     expect(todas.get("do-pedro")!.author).toEqual({ kind: "agente", id: TOKEN_PEDRO, name: "Pedro", is_self: false });
   });
@@ -266,18 +269,21 @@ describe("⭐ o agente externo separa a PRÓPRIA fala da de outra integração",
   });
 
   it("token renomeado sai com o nome de hoje; token apagado, com o nome gravado no envio", async () => {
-    const todas = await historico([
-      porToken("renomeado", TOKEN_SOPHIA, "Nome antigo"),
-      porToken("apagado", TOKEN_APAGADO, "Cobrança"),
-      porToken("apagado-sem-nome", TOKEN_APAGADO, null),
-    ]);
+    const todas = await historico(
+      [
+        porToken("renomeado", TOKEN_SOPHIA, "Nome antigo"),
+        porToken("apagado", TOKEN_APAGADO, "Cobrança"),
+        porToken("apagado-sem-nome", TOKEN_APAGADO, null),
+      ],
+      comoGerente("tok"),
+    );
     expect(todas.get("renomeado")!.author).toMatchObject({ kind: "agente", id: TOKEN_SOPHIA, name: "Sophia" });
     expect(todas.get("apagado")!.author).toMatchObject({ kind: "agente", id: TOKEN_APAGADO, name: "Cobrança" });
     expect(todas.get("apagado-sem-nome")!.author).toMatchObject({ kind: "agente", id: TOKEN_APAGADO, name: null });
   });
 
   it("⭐ isolamento: o nome do token é lido com a organização de quem lê", async () => {
-    const todas = await historico([porToken("x", TOKEN_DA_B, null)], comoToken(TOKEN_SOPHIA));
+    const todas = await historico([porToken("x", TOKEN_DA_B, null)], comoGerente(TOKEN_SOPHIA));
     expect(todas.get("x")!.author).toEqual({ kind: "agente", id: TOKEN_DA_B, name: null, is_self: false });
     expect(JSON.stringify(todas.get("x"))).not.toContain("outra empresa");
   });
@@ -317,7 +323,7 @@ describe("⭐ o agente externo separa a PRÓPRIA fala da de outra integração",
           },
         }),
       ],
-      comoToken(TOKEN_SOPHIA),
+      comoGerente(TOKEN_SOPHIA),
     );
     expect(todas.get("em-nome-de")!.author).toEqual({
       kind: "equipe",
@@ -337,14 +343,112 @@ describe("⭐ o agente externo separa a PRÓPRIA fala da de outra integração",
   });
 });
 
+describe("⭐ o id e o nome do token são dado de administração (revisão 20/11, item 2.32)", () => {
+  const CONVERSA = [
+    porToken("da-sophia", TOKEN_SOPHIA, "Sophia"),
+    porToken("do-pedro", TOKEN_PEDRO, "Pedro"),
+    msg({
+      id: "em-nome-de",
+      sent_via: "system",
+      sent_on_behalf_of_user_id: ANDREIA,
+      metadata: {
+        sent_on_behalf: { user_id: ANDREIA, user_name: "Andreia Lima", token_name: "Pedro" },
+        sent_by_token: { token_id: TOKEN_PEDRO, token_name: "Pedro" },
+      },
+    }),
+  ];
+  const semIdentidade = (m: { author: Record<string, unknown> }) =>
+    expect(m.author).toMatchObject({ kind: "agente", id: null, name: null });
+
+  it("token comum, fora do turno: vê o id e o nome só do PRÓPRIO token", async () => {
+    const todas = await historico(CONVERSA, comoToken(TOKEN_SOPHIA));
+    expect(todas.get("da-sophia")!.author).toEqual({ kind: "agente", id: TOKEN_SOPHIA, name: "Sophia", is_self: true });
+    expect(todas.get("do-pedro")!.author).toEqual({ kind: "agente", id: null, name: null, is_self: false });
+    expect(todas.get("em-nome-de")!.author).toEqual({
+      kind: "equipe",
+      id: ANDREIA,
+      name: "Andreia Lima",
+      detail: "em_nome_de",
+      via_token: null,
+    });
+    const saida = JSON.stringify([...todas.values()]);
+    expect(saida).not.toContain("Pedro");
+    expect(saida).not.toContain(TOKEN_PEDRO);
+  });
+
+  it("gerente e admin, fora do turno: veem o id e o nome de todo token", async () => {
+    for (const papel of ["manager", "admin"] as const) {
+      const todas = await historico(
+        CONVERSA,
+        ctx({ apiTokenId: TOKEN_SOPHIA, role: papel, actor: { type: "api_token", id: TOKEN_SOPHIA, role: papel } }),
+      );
+      expect(todas.get("do-pedro")!.author, papel).toEqual({ kind: "agente", id: TOKEN_PEDRO, name: "Pedro", is_self: false });
+      expect(todas.get("em-nome-de")!.author.via_token, papel).toBe("Pedro");
+    }
+  });
+
+  it("⭐ num turno de atendimento ninguém recebe nome nem id de token, nem o do próprio", async () => {
+    mockedConv.mockResolvedValue({ contact_id: CONTATO, channel: "whatsapp" } as never);
+    const turnos = [
+      // o agente do CRM, que roda como `ai_operator`
+      ctx({
+        contatoDoTurno: CONTATO,
+        role: "ai_operator",
+        apiTokenId: "tok-da-rodada",
+        actor: { type: "ai_agent", id: EXECUCAO, role: "ai_operator", agent_id: AGENTE },
+      }),
+      // o token comum com o contato do turno posto
+      ctx({ contatoDoTurno: CONTATO, apiTokenId: TOKEN_SOPHIA, actor: { type: "api_token", id: TOKEN_SOPHIA, role: "agent" } }),
+      // nem com papel de gerente: no turno o modelo fala com o cliente
+      ctx({
+        contatoDoTurno: CONTATO,
+        apiTokenId: TOKEN_SOPHIA,
+        role: "manager",
+        actor: { type: "api_token", id: TOKEN_SOPHIA, role: "manager" },
+      }),
+      // o agente do CRM sem contato do turno: continua sem ver
+      ctx({ role: "ai_operator", actor: { type: "ai_agent", id: EXECUCAO, role: "ai_operator", agent_id: AGENTE } }),
+    ];
+    for (const turno of turnos) {
+      const todas = await historico(CONVERSA, turno);
+      semIdentidade(todas.get("da-sophia")!);
+      semIdentidade(todas.get("do-pedro")!);
+      expect(todas.get("em-nome-de")!.author).toMatchObject({ kind: "equipe", name: "Andreia Lima", via_token: null });
+      const saida = JSON.stringify([...todas.values()].map((m) => m.author));
+      for (const proibido of ["Sophia", "Pedro", TOKEN_SOPHIA, TOKEN_PEDRO]) expect(saida).not.toContain(proibido);
+    }
+  });
+
+  it("no turno, `is_self` continua dizendo qual fala é a do leitor", async () => {
+    mockedConv.mockResolvedValue({ contact_id: CONTATO, channel: "whatsapp" } as never);
+    const todas = await historico(
+      CONVERSA,
+      ctx({ contatoDoTurno: CONTATO, apiTokenId: TOKEN_SOPHIA, actor: { type: "api_token", id: TOKEN_SOPHIA, role: "agent" } }),
+    );
+    expect(todas.get("da-sophia")!.author.is_self).toBe(true);
+    expect(todas.get("do-pedro")!.author.is_self).toBe(false);
+  });
+
+  it("no turno o cadastro de tokens nem é consultado", async () => {
+    mockedConv.mockResolvedValue({ contact_id: CONTATO, channel: "whatsapp" } as never);
+    banco.consultas.api_tokens = 0;
+    await historico(CONVERSA, ctx({ contatoDoTurno: CONTATO }));
+    expect(banco.consultas.api_tokens ?? 0).toBe(0);
+  });
+
+  it("a descrição diz que o id e o nome de outro token são só para gerente", () => {
+    expect(crmGetConversationHistory.description).toMatch(/só para gerente/);
+  });
+});
+
 describe("os casos de borda de cada origem", () => {
   it("celular ligado ao número: é da equipe, mas a linha não diz quem digitou", async () => {
     const m = (await historico(CONVERSA_COMPLETA)).get("do-celular")!;
     expect(m.author).toEqual({ kind: "equipe", id: null, name: null, detail: "celular" });
   });
 
-  it("enviada por um sistema EM NOME de uma pessoa: a autora é a pessoa, e diz por qual token", async () => {
-    const m = (await historico(CONVERSA_COMPLETA)).get("em-nome-de")!;
+  it("enviada por um sistema EM NOME de uma pessoa: a autora é a pessoa, e para gerente diz por qual token", async () => {
+    const m = (await historico(CONVERSA_COMPLETA, comoGerente("tok"))).get("em-nome-de")!;
     expect(m.author).toEqual({
       kind: "equipe",
       id: ANDREIA,

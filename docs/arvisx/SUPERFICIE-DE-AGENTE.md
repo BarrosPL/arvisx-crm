@@ -159,7 +159,8 @@ Cada linha traz `kind` (a categoria), `type` (o tipo cru), `label`, `happened_at
 `author` (`kind`, `id`, `name` e, em `agente`, `is_self`), `details` e `source`.
 
 **Quem é `agente`.** O agente do CRM (`id` e `name` do cadastro do agente) e o agente externo, que age por token de API
-(`id` e `name` do token). `is_self: true` quer dizer que a linha foi feita por quem está lendo: o mesmo token ou, no
+(`id` e `name` do token, só para quem pode vê-los: ver [Autoria do agente externo](#autoria-do-agente-externo)).
+`is_self: true` quer dizer que a linha foi feita por quem está lendo: o mesmo token ou, no
 agente do CRM, o mesmo agente. O filtro `author: ["agente"]` traz os dois. Mover etapa, editar o negócio, fechar,
 criar e concluir tarefa, anexar e pôr ou tirar tag por token saem todos assim.
 
@@ -248,7 +249,7 @@ Além de funil, etapa, status, responsável e motivo de perda:
 |---|---|---|
 | `cliente` | Mensagem recebida. | `id` é o contato. Em grupo, `name` é o participante que falou (`detail: "participante_de_grupo"`). |
 | `ia` | Escrita por um agente de IA do CRM. | O nome gravado na mensagem ou, sem ele, o do cadastro. `id` só sai quando é de um agente desta organização. |
-| `agente` | Enviada por um agente externo, por token de API. | `id` é o id do token e `name` o nome que o administrador deu a ele. `is_self` diz se o token é o de quem está lendo. |
+| `agente` | Enviada por um agente externo, por token de API. | `id` é o id do token e `name` o nome que o administrador deu a ele, para quem pode vê-los (ver [Autoria do agente externo](#autoria-do-agente-externo)); senão `null`. `is_self` diz se o token é o de quem está lendo. |
 | `equipe` | Escrita por uma pessoa. | `id` e o nome da pessoa (nunca e-mail nem telefone). |
 | `sistema` | Ninguém escreveu na hora. | `detail: "automacao"` (texto fixo de regra, follow-up ou lembrete) ou `detail: "integracao"` (mensagem antiga enviada por token, de antes de o envio guardar o token). |
 
@@ -269,6 +270,22 @@ Um agente externo é um token de API. O que ele faz fica com o token em três lu
 | Mensagem enviada (`messages.metadata.sent_by_token`) | `token_id` e `token_name`. | `crm_get_conversation_history`. |
 | Linha do tempo do negócio (`crm_lead_activities.payload.autor`) | `{ tipo: "token", id }`, o formato que a nota já usava. | `crm_list_lead_events`. |
 
+- **Quem recebe o id e o nome do token** (revisão de 20/11, item 2.32). O nome do token é texto livre que o
+  administrador digitou na tela de tokens, e o id identifica uma credencial: os dois são dado de administração. A
+  regra é a mesma em `crm_get_conversation_history` e em `crm_list_lead_events` (`lib/mcp/identidade-do-token.ts`):
+
+  | Quem lê | O que recebe de uma mensagem ou linha feita por token |
+  |---|---|
+  | Token com papel `manager` ou `admin`, fora de um turno de atendimento | `id` e `name` de todo token. |
+  | Token comum (papel `agent`), fora de um turno de atendimento | `id` e `name` só do **próprio** token (`is_self: true`). De outro token: `kind: "agente"`, `is_self: false`, `id: null`, `name: null`. |
+  | Qualquer leitor **num turno de atendimento** (contato do turno posto), e o agente do CRM sempre | `kind: "agente"` e `is_self`, com `id: null` e `name: null`, inclusive do próprio token. |
+
+  No turno o modelo está respondendo ao cliente e poderia repetir o nome do token na mensagem; por isso ali não sai de
+  ninguém, nem para papel de gerente. `is_self` sai sempre: o agente externo continua separando a própria fala da de
+  outra integração. O `via_token` de uma mensagem `em_nome_de` (o nome do token que enviou em nome de uma pessoa) segue
+  a regra mais estreita: só para `manager` ou `admin` fora do turno, porque a linha não guarda o id do token e não há
+  como reconhecer "o próprio". O nome de pessoas da equipe e de agentes do CRM não mudou. **O que esta regra não cobre:**
+  o texto livre de uma nota ou de um motivo, se alguém escreveu o nome do token nele.
 - **Só o id e o nome.** O valor do token não é gravado em lugar nenhum (o banco guarda só o hash dele, e o hash não
   sai em resposta alguma).
 - **O servidor grava, o chamador não.** O token vem da autenticação. A chave `sent_by_token` que chegar no `metadata`
