@@ -25,7 +25,17 @@
  *   1. modo `off`                   → `comentarios_desligados`
  *   2. escrito pela própria conta   → `comentario_proprio`. As respostas que o
  *      CRM publica voltam como comentário da conta; sem esta recusa o agente
- *      responderia a si mesmo, em laço.
+ *      responderia a si mesmo, em laço. São TRÊS barreiras, porque a primeira
+ *      sozinha depende de a Meta mandar `from.id` e no mesmo espaço de ids da
+ *      conta (`entry.id`):
+ *        a. `from.id` é a conta (`evento.proprio`, lido em `./webhook.ts`);
+ *        b. `from.username` é o nome de usuário da conta conectada
+ *           (`usuarioDaConta`) — vale quando `from.id` vem ausente ou em outro
+ *           espaço de ids;
+ *        c. o id do comentário é o de uma resposta pública que o CRM gravou
+ *           (`public_reply.id` de outro comentário da organização).
+ *      A (c) depende de a resposta já estar gravada quando o webhook chega;
+ *      por isso ela soma às outras e não as substitui.
  *   3. já recebido                  → `comentario_repetido`. A Meta reentrega o
  *      que não recebe 2xx e, em anúncio, pode notificar o mesmo comentário mais
  *      de uma vez. Quem decide é a chave única `(organization_id, comment_id)`
@@ -84,6 +94,64 @@ export type DesfechoDoComentario =
 export function lerModoDeComentarios(metadata: Record<string, unknown> | null | undefined): ModoDeComentarios {
   const valor = metadata?.[CHAVE_DO_MODO_DE_COMENTARIOS];
   return (MODOS_DE_COMENTARIOS as readonly unknown[]).includes(valor) ? (valor as ModoDeComentarios) : "off";
+}
+
+/** A chave do nome de usuário do Instagram em `channel_sessions.metadata`, gravada ao conectar. */
+export const CHAVE_DO_USUARIO_DO_INSTAGRAM = "instagram_username";
+
+function normalizarUsuario(valor: unknown): string | null {
+  if (typeof valor !== "string") return null;
+  const limpo = valor.trim().replace(/^@/, "").toLowerCase();
+  return /^[a-z0-9._]{1,100}$/.test(limpo) ? limpo : null;
+}
+
+/**
+ * O nome de usuário da conta conectada, em minúsculas e sem `@`. Sai do
+ * metadata (`instagram_username`, gravado ao conectar ou reautorizar) e, em
+ * conexão anterior a essa chave, do nome do canal — que nasce
+ * `instagram · @usuario`. `null` quando não dá para saber: aí a comparação por
+ * nome de usuário simplesmente não acontece.
+ */
+export function usuarioDaConta(sessao: Pick<SessaoDireta, "displayName" | "metadata">): string | null {
+  const doMetadata = normalizarUsuario(sessao.metadata?.[CHAVE_DO_USUARIO_DO_INSTAGRAM]);
+  if (doMetadata) return doMetadata;
+  const doNome = /·\s*@([A-Za-z0-9._]{1,100})\s*$/.exec(sessao.displayName ?? "");
+  return doNome ? normalizarUsuario(doNome[1]) : null;
+}
+
+/**
+ * O comentário é uma resposta que o próprio CRM publicou? Procura o id dele em
+ * `public_reply.id` dos comentários da organização. Falha de leitura NÃO
+ * descarta o comentário (seria perder comentário de cliente por erro de
+ * banco): registra e segue, e as outras duas barreiras continuam valendo.
+ */
+async function ehRespostaPublicadaPeloCrm(
+  db: SupabaseClient,
+  organizationId: string,
+  commentId: string,
+): Promise<boolean> {
+  try {
+    const { data, error } = await db
+      .from("social_comments")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("public_reply->>id", commentId)
+      .limit(1);
+    if (error) {
+      logger.warn("[comentarios] não deu para conferir se o comentário é resposta do próprio CRM", {
+        organization_id: organizationId,
+        erro: error.message,
+      });
+      return false;
+    }
+    return Array.isArray(data) && data.length > 0;
+  } catch (erro) {
+    logger.warn("[comentarios] não deu para conferir se o comentário é resposta do próprio CRM", {
+      organization_id: organizationId,
+      erro: erro instanceof Error ? erro.message : String(erro),
+    });
+    return false;
+  }
 }
 
 /** O que os sistemas de fora recebem em `comment.received`. */
@@ -171,6 +239,11 @@ export async function registrarComentario(
   const modo = lerModoDeComentarios(sessao.metadata);
   if (modo === "off") return "comentarios_desligados";
   if (evento.proprio) return "comentario_proprio";
+  // Segunda barreira do anti-laço: `from.id` ausente ou em outro espaço de ids.
+  const daConta = usuarioDaConta(sessao);
+  if (daConta && normalizarUsuario(evento.autorUsuario) === daConta) return "comentario_proprio";
+  // Terceira: é o id de uma resposta pública que o CRM já gravou.
+  if (await ehRespostaPublicadaPeloCrm(db, sessao.organizationId, evento.commentId)) return "comentario_proprio";
 
   const { data, error } = await db
     .from("social_comments")

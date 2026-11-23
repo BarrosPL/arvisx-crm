@@ -128,9 +128,36 @@ describe("iniciar", () => {
     expect(url.searchParams.get("client_id")).toBe("555");
     expect(url.searchParams.get("redirect_uri")).toBe("https://crm.exemplo.com/auth/meta-social-return");
     expect(url.searchParams.get("scope")).toBe(
+      "pages_show_list,pages_messaging,pages_manage_metadata,instagram_basic,instagram_manage_messages,business_management",
+    );
+    expect(url.searchParams.get("auth_type")).toBe("rerequest");
+    expect(url.searchParams.get("state")).toMatch(/^[A-Za-z0-9_-]+\.[0-9a-f]{64}$/);
+  });
+
+  // Revisão de 20/11, item 2.20: login em duas fases.
+  it("⭐ o login normal NÃO pede as permissões de comentários (nem com `para_comentarios: false`)", async () => {
+    for (const corpo of [{ acao: "iniciar" }, { acao: "iniciar", para_comentarios: false }]) {
+      const r = await chamar(corpo);
+      const escopos = new URL(((await r.json()) as { data: { url: string } }).data.url).searchParams.get("scope")!;
+      expect(escopos).not.toContain("instagram_manage_comments");
+      expect(escopos).not.toContain("pages_read_engagement");
+    }
+  });
+
+  it("⭐ a reautorização para comentários é um login próprio: pede as do login normal mais as duas", async () => {
+    const r = await chamar({ acao: "iniciar", para_comentarios: true });
+    expect(r.status).toBe(200);
+    const url = new URL(((await r.json()) as { data: { url: string } }).data.url);
+    expect(url.searchParams.get("scope")).toBe(
       "pages_show_list,pages_messaging,pages_manage_metadata,instagram_basic,instagram_manage_messages,business_management,instagram_manage_comments,pages_read_engagement",
     );
+    expect(url.searchParams.get("auth_type")).toBe("rerequest");
+    expect(url.searchParams.get("redirect_uri")).toBe("https://crm.exemplo.com/auth/meta-social-return");
     expect(url.searchParams.get("state")).toMatch(/^[A-Za-z0-9_-]+\.[0-9a-f]{64}$/);
+  });
+
+  it("`para_comentarios` que não é booleano é recusado na validação", async () => {
+    expect((await chamar({ acao: "iniciar", para_comentarios: "sim" })).status).toBe(400);
   });
 });
 

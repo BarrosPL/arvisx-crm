@@ -69827,6 +69827,21 @@ create trigger trg_redigir_comentarios_ao_anonimizar
 
 notify pgrst, 'reload schema';
 
+-- ---- Comentários do Instagram: só gerente para cima lê pelo banco (migration 9819) ----
+-- Espelho idempotente da 9819 (o porquê está no cabeçalho da migration): a
+-- política de SELECT de `social_comments` passa a pedir o papel que as rotas e
+-- as ferramentas já pedem (`manager` ou acima), em vez de qualquer membro.
+-- Nenhuma função nasce neste bloco e nenhuma linha muda.
+drop policy if exists tenant_isolation_social_comments_select on public.social_comments;
+create policy tenant_isolation_social_comments_select on public.social_comments
+  for select using (
+    (select public.fn_is_platform_admin())
+    or ((organization_id in (select public.fn_user_org_ids()))
+        and public.fn_role_at_least(organization_id, 'manager'))
+  );
+
+notify pgrst, 'reload schema';
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria

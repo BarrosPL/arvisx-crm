@@ -23,14 +23,19 @@ import { graphVersion } from "@/lib/graph-version";
 import { chamarGraph } from "./graph";
 
 /**
- * As permissões pedidas no diálogo — e as que vão para o App Review.
+ * As permissões pedidas no diálogo do login NORMAL — as de atendimento por
+ * mensagem.
  *
  * `business_management` entra porque páginas de um Gerenciador de Negócios só
  * aparecem em `me/accounts` com ela; sem ela, quem administra a página pelo
  * Business Manager veria a lista vazia e acharia que não tem página.
  *
- * As duas de comentários (`ESCOPOS_DE_COMENTARIOS`) são pedidas junto, mas
- * ninguém é barrado por não tê-las: ver o comentário daquela lista.
+ * As duas de comentários (`ESCOPOS_DE_COMENTARIOS`) NÃO entram aqui, de
+ * propósito (revisão de 20/11/2026, item 2.20). O login é em duas fases: se o
+ * app ainda não tem uma permissão liberada, a Meta pode recusar o diálogo
+ * INTEIRO ("Invalid Scopes"), e pedir as de comentários a todo mundo
+ * derrubaria o login de quem só usa mensagens. Elas só são pedidas no login de
+ * reautorização (`ESCOPOS_DA_REAUTORIZACAO_PARA_COMENTARIOS`).
  */
 export const ESCOPOS_DO_LOGIN = [
   "pages_show_list",
@@ -39,8 +44,6 @@ export const ESCOPOS_DO_LOGIN = [
   "instagram_basic",
   "instagram_manage_messages",
   "business_management",
-  "instagram_manage_comments",
-  "pages_read_engagement",
 ] as const;
 
 /** Sem estas não há atendimento nenhum: recusar no fim, não depois de gravar. */
@@ -55,25 +58,41 @@ export const ESCOPOS_DO_INSTAGRAM = ["instagram_basic", "instagram_manage_messag
  * Meta, login do Facebook: `instagram_basic`, `instagram_manage_comments`,
  * `pages_manage_metadata`, `pages_read_engagement`, `pages_show_list`).
  *
- * OPCIONAIS, e é por isso que NÃO entram em `ESCOPOS_DO_INSTAGRAM`: aquela
- * lista decide se o Instagram conecta, e uma permissão que a Meta ainda não
- * liberou para o app (ou que a pessoa desmarcou) não pode tirar as mensagens
- * de quem só quer mensagens. Sem estas duas, a conexão recebe e responde
- * mensagem como sempre; só os comentários ficam indisponíveis, e a conexão
- * diz isso (`estadoDosComentarios`, em `./store.ts`).
+ * OPCIONAIS, e é por isso que NÃO entram em `ESCOPOS_DO_INSTAGRAM` nem em
+ * `ESCOPOS_DO_LOGIN`: aquelas listas decidem se a conexão acontece, e uma
+ * permissão que a Meta ainda não liberou para o app (ou que a pessoa
+ * desmarcou) não pode tirar as mensagens de quem só quer mensagens. Sem estas
+ * duas, a conexão recebe e responde mensagem como sempre; só os comentários
+ * ficam indisponíveis, e a conexão diz isso (`estadoDosComentarios`, em
+ * `./store.ts`).
  */
 export const ESCOPOS_DE_COMENTARIOS = ["instagram_manage_comments", "pages_read_engagement"] as const;
+
+/**
+ * O que o login de REAUTORIZAÇÃO para comentários pede: tudo do login normal
+ * mais as duas de comentários. É um login próprio, que só começa quando
+ * alguém pede (`urlDoLogin` com `paraComentarios`); o login normal nunca usa
+ * esta lista.
+ */
+export const ESCOPOS_DA_REAUTORIZACAO_PARA_COMENTARIOS = [...ESCOPOS_DO_LOGIN, ...ESCOPOS_DE_COMENTARIOS] as const;
 
 /** O caminho da volta — o MESMO que o dono cadastra no app da Meta. */
 export const CAMINHO_DA_VOLTA = "/auth/meta-social-return";
 
-export function urlDoLogin(entrada: { appId: string; redirectUri: string; estado: string }): string {
+export function urlDoLogin(entrada: {
+  appId: string;
+  redirectUri: string;
+  estado: string;
+  /** Login de reautorização: pede também as permissões de comentários. */
+  paraComentarios?: boolean;
+}): string {
   const url = new URL(`https://www.facebook.com/${graphVersion()}/dialog/oauth`);
   url.searchParams.set("client_id", entrada.appId);
   url.searchParams.set("redirect_uri", entrada.redirectUri);
   url.searchParams.set("state", entrada.estado);
   url.searchParams.set("response_type", "code");
-  url.searchParams.set("scope", ESCOPOS_DO_LOGIN.join(","));
+  const escopos = entrada.paraComentarios === true ? ESCOPOS_DA_REAUTORIZACAO_PARA_COMENTARIOS : ESCOPOS_DO_LOGIN;
+  url.searchParams.set("scope", escopos.join(","));
   // Quem negou uma permissão na primeira vez é perguntado de novo: sem isto o
   // diálogo pula o que foi negado e a reconexão nunca conserta nada.
   url.searchParams.set("auth_type", "rerequest");
@@ -120,20 +139,28 @@ async function permissoesConcedidasNaMeta(token: string, appSecret: string): Pro
   return new Set((r.data ?? []).filter((p) => p.status === "granted").map((p) => p.permission ?? ""));
 }
 
-/** As permissões que a pessoa NÃO concedeu, dentre as pedidas. */
+/**
+ * As permissões que a pessoa NÃO concedeu, dentre as do login normal. As de
+ * comentários não aparecem aqui: são opcionais e a falta delas nunca é recusa.
+ */
 export async function permissoesNegadas(token: string, appSecret: string): Promise<string[]> {
   const concedidas = await permissoesConcedidasNaMeta(token, appSecret);
   return ESCOPOS_DO_LOGIN.filter((e) => !concedidas.has(e));
 }
 
 /**
- * As permissões que a pessoa CONCEDEU, dentre as pedidas. É o que fica gravado
- * na conexão, para ela saber dizer — sem perguntar de novo à Meta — se tem as
- * de comentários.
+ * As permissões que a pessoa CONCEDEU, dentre as que o produto conhece (as do
+ * login normal e as de comentários). É o que fica gravado na conexão, para ela
+ * saber dizer — sem perguntar de novo à Meta — se tem as de comentários.
+ *
+ * A lista é a da reautorização mesmo num login normal: `me/permissions`
+ * devolve TUDO o que a pessoa já concedeu ao app, então quem reautorizou para
+ * comentários e depois reconectou pelo login normal continua com as duas
+ * gravadas.
  */
 export async function escoposConcedidos(token: string, appSecret: string): Promise<string[]> {
   const concedidas = await permissoesConcedidasNaMeta(token, appSecret);
-  return ESCOPOS_DO_LOGIN.filter((e) => concedidas.has(e));
+  return ESCOPOS_DA_REAUTORIZACAO_PARA_COMENTARIOS.filter((e) => concedidas.has(e));
 }
 
 /** O id da pessoa no app (app-scoped). É o que o pedido de exclusão da Meta traz. */

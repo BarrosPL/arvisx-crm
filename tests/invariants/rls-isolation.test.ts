@@ -644,15 +644,6 @@ beforeAll(() => {
         values (v_org, '{"negocio":{"nome":"Invariante"}}'::jsonb)
         on conflict (organization_id) do nothing;
 
-        -- migration 9810: os comentarios do Instagram recebidos pela conexao
-        -- direta. A leitura e org-scoped sem gate de papel, entao o agent
-        -- semeado e controle positivo legitimo; a escrita nao e concedida a
-        -- authenticated (medido em tests/invariants/social-comments.test.ts).
-        insert into public.social_comments
-          (organization_id, channel_session_id, comment_id, text, commented_at)
-        values (v_org, v_sess, 'rls-invariante', 'RLS invariant comment', now())
-        on conflict (organization_id, comment_id) do nothing;
-
         -- migration 0692 (#2041): o historico do rodizio da acao assign_owner.
         -- Semeado pelo ESCRITOR de producao (a funcao), com uma regra cuja fila
         -- e o usuario semeado (agent, elegivel). A leitura e org-scoped sem gate
@@ -899,12 +890,11 @@ export const TABLES = [
   // comerciais). Leitura por organização, sem gate de papel; a escrita exige
   // `manager` e é medida em `tests/invariants/equipe-pronta-perfis.test.ts`.
   "equipe_pronta_perfis",
-  // migration 9810 — os comentários do Instagram recebidos pela conexão direta:
-  // o texto e o nome de usuário de quem comentou numa publicação da empresa.
-  // Leitura por organização, sem gate de papel; só o servidor escreve, e o
-  // vazamento com o MESMO id de comentário nas duas organizações é medido em
+  // ⚠️ `social_comments` (migrations 9810 e 9819) NÃO entra nesta lista: desde
+  // a 9819 a leitura é de gerente para cima e o usuário semeado aqui é `agent`,
+  // então o controle positivo falharia por ACERTO. A prova (dois tenants, os
+  // quatro papéis, o MESMO id de comentário nas duas organizações) vive em
   // `tests/invariants/social-comments.test.ts`.
-  "social_comments",
   // migration 9043 — o segundo telefone da ficha (Spec 31 B1). Leitura por
   // organização; a escrita exige `agent`, o papel semeado aqui.
   "contact_phones",

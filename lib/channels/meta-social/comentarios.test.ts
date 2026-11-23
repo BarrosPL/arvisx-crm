@@ -28,6 +28,7 @@ const h = vi.hoisted(() => ({
   erroDoInsert: null as { code?: string; message: string } | null,
   erroDoAviso: null as { message: string } | null,
   avisoLanca: false,
+  erroDaConferencia: null as { message: string } | null,
 }));
 
 vi.mock("./store", () => ({
@@ -38,7 +39,7 @@ vi.mock("../zernio/ingest", () => ({ ingestZernioInbound: h.ingest }));
 vi.mock("./perfil", () => ({ perfilDoParticipante: vi.fn() }));
 vi.mock("@/lib/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() } }));
 
-import { avisoDoComentario, lerModoDeComentarios, registrarComentario } from "./comentarios";
+import { avisoDoComentario, lerModoDeComentarios, registrarComentario, usuarioDaConta } from "./comentarios";
 import { processarEventosDiretos } from "./ingest";
 import { lerWebhookDireto } from "./webhook";
 
@@ -47,9 +48,21 @@ const db = {
   from: (tabela: string) => {
     if (tabela !== "social_comments") throw new Error(`tabela inesperada: ${tabela}`);
     let linha: Record<string, unknown> | null = null;
+    // A conferência "é resposta que o CRM publicou?": select + eq + limit.
+    const filtros: Record<string, unknown> = {};
     const q = {
       insert: (row: Record<string, unknown>) => ((linha = row), q),
       select: () => q,
+      eq: (coluna: string, valor: unknown) => ((filtros[coluna] = valor), q),
+      limit: async () => {
+        if (h.erroDaConferencia) return { data: null, error: h.erroDaConferencia };
+        const achadas = h.linhas.filter(
+          (l) =>
+            l.organization_id === filtros.organization_id &&
+            (l.public_reply as { id?: string } | null | undefined)?.id === filtros["public_reply->>id"],
+        );
+        return { data: achadas.map((l) => ({ id: l.id })), error: null };
+      },
       single: async () => {
         if (h.erroDoInsert) return { data: null, error: h.erroDoInsert };
         const repetida = h.linhas.some(
@@ -123,6 +136,7 @@ beforeEach(() => {
   h.erroDoInsert = null;
   h.erroDoAviso = null;
   h.avisoLanca = false;
+  h.erroDaConferencia = null;
   h.sessoes.set(IG_A, sessao("org-a", "sessao-a", IG_A, { comentarios_modo: "registrar" }));
   h.sessoes.set(IG_B, sessao("org-b", "sessao-b", IG_B, { comentarios_modo: "real" }));
 });
@@ -257,6 +271,68 @@ describe("o que NÃO vira linha", () => {
     expect(h.avisos).toEqual([]);
   });
 
+  // Revisão de 20/11, item 2.18: a igualdade de id não pode ser a única barreira.
+  it("⭐ `from.id` AUSENTE com o nome de usuário da conta: ignorado (segunda barreira)", async () => {
+    expect(await receber(entregaDaDoc(IG_A, { from: { username: "Loja" } }))).toEqual(["comentario_proprio"]);
+    expect(h.linhas).toEqual([]);
+    expect(h.avisos).toEqual([]);
+  });
+
+  it("⭐ `from.id` em OUTRO espaço de ids com o nome de usuário da conta: ignorado", async () => {
+    expect(await receber(entregaDaDoc(IG_A, { from: { id: "999000111", username: "loja" } }))).toEqual([
+      "comentario_proprio",
+    ]);
+    expect(h.linhas).toEqual([]);
+  });
+
+  it("o nome de usuário gravado no metadata vale mais que o nome do canal (canal renomeado)", async () => {
+    h.sessoes.set(IG_A, {
+      ...sessao("org-a", "sessao-a", IG_A, { comentarios_modo: "registrar", instagram_username: "loja.nova" }),
+      displayName: "Atendimento",
+    });
+    expect(await receber(entregaDaDoc(IG_A, { from: { id: "999000111", username: "loja.nova" } }))).toEqual([
+      "comentario_proprio",
+    ]);
+    expect(await receber(entregaDaDoc(IG_A, { from: { id: "999000111", username: "loja" } }))).toEqual([
+      "comentario_registrado",
+    ]);
+  });
+
+  it("sem nome de usuário conhecido da conta, a comparação por nome não descarta ninguém", async () => {
+    h.sessoes.set(IG_A, { ...sessao("org-a", "sessao-a", IG_A, { comentarios_modo: "registrar" }), displayName: "Página da loja" });
+    expect(await receber(entregaDaDoc(IG_A, { from: { username: "loja" } }))).toEqual(["comentario_registrado"]);
+  });
+
+  it("⭐ o id do comentário é o de uma resposta pública que o CRM gravou: ignorado (terceira barreira)", async () => {
+    h.linhas.push({
+      id: "linha-0",
+      organization_id: "org-a",
+      comment_id: "17800000000000001",
+      public_reply: { id: "17865799348089039", texto: "Olá!", simulada: false },
+    });
+    expect(await receber(entregaDaDoc(IG_A, { from: { id: "999000111", username: "outro.nome" } }))).toEqual([
+      "comentario_proprio",
+    ]);
+    expect(h.linhas).toHaveLength(1);
+    expect(h.avisos).toEqual([]);
+  });
+
+  it("a resposta gravada por OUTRA organização não descarta o comentário desta", async () => {
+    h.linhas.push({
+      id: "linha-0",
+      organization_id: "org-b",
+      comment_id: "17800000000000001",
+      public_reply: { id: "17865799348089039" },
+    });
+    expect(await receber(entregaDaDoc(IG_A))).toEqual(["comentario_registrado"]);
+  });
+
+  it("a conferência da terceira barreira falha: o comentário do cliente NÃO se perde", async () => {
+    h.erroDaConferencia = { message: "banco fora" };
+    expect(await receber(entregaDaDoc(IG_A))).toEqual(["comentario_registrado"]);
+    expect(h.linhas).toHaveLength(1);
+  });
+
   it("⭐ conta sem sessão ativa: ignorado, sem erro e sem gravar", async () => {
     expect(await receber(entregaDaDoc("17840000000000999"))).toEqual(["conta_desconhecida"]);
     expect(h.linhas).toEqual([]);
@@ -319,6 +395,20 @@ describe("falhas", () => {
     await expect(
       registrarComentario(db, h.sessoes.get(IG_A) as SessaoDireta, evento as never),
     ).rejects.toThrow(/social_comments: connection reset/);
+  });
+});
+
+describe("usuarioDaConta", () => {
+  const base = { displayName: null as string | null, metadata: {} as Record<string, unknown> };
+  it("lê do metadata, sem `@` e em minúsculas; cai no nome do canal quando falta", () => {
+    expect(usuarioDaConta({ ...base, metadata: { instagram_username: "@Loja.Oficial" } })).toBe("loja.oficial");
+    expect(usuarioDaConta({ ...base, displayName: "instagram · @Loja_1" })).toBe("loja_1");
+  });
+  it("nome de canal sem `· @usuario` no fim, ou valor estranho no metadata, é `null`", () => {
+    expect(usuarioDaConta({ ...base, displayName: "Página da loja" })).toBeNull();
+    expect(usuarioDaConta({ ...base, displayName: "fale com @loja hoje" })).toBeNull();
+    expect(usuarioDaConta({ ...base, metadata: { instagram_username: 42 } })).toBeNull();
+    expect(usuarioDaConta(base)).toBeNull();
   });
 });
 

@@ -88,6 +88,10 @@ describe("conectarPagina", () => {
       expect(row).not.toHaveProperty("meta_social_token", "page-token");
     }
     expect((h.inserts[1]!.metadata as Record<string, unknown>).social_platform).toBe("instagram");
+    // Revisão de 20/11, item 2.18: o nome de usuário da conta fica no canal do
+    // Instagram (e só nele) para reconhecer o comentário da própria conta.
+    expect(h.inserts[1]!.metadata as Record<string, unknown>).toHaveProperty("instagram_username");
+    expect(h.inserts[0]!.metadata as Record<string, unknown>).not.toHaveProperty("instagram_username");
     expect((h.inserts[0]!.metadata as Record<string, unknown>).meta_user_id).toBe("777");
     expect(h.assinar).toHaveBeenCalledWith("111", "page-token", "s");
     expect(h.updates.at(-1)).toMatchObject({ status: "WORKING" });
