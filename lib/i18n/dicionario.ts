@@ -10108,6 +10108,9 @@ export const DICIONARIO: Traducoes = {
   "Guarda no negócio um arquivo que o cliente já enviou na conversa, para o documento ficar no cartão e não se perder no meio das mensagens.": { es: "Guarda en el negocio un archivo que el cliente ya envió en la conversación, para que el documento quede en la tarjeta y no se pierda entre los mensajes." },
   "Propor a próxima ação do negócio": { es: "Proponer la próxima acción del negocio" },
   "Deixa no cartão do negócio a próxima ação sugerida pelo agente, para uma pessoa da equipe aprovar ou descartar. Nada é executado sozinho.": { es: "Deja en la tarjeta del negocio la próxima acción sugerida por el agente, para que una persona del equipo la apruebe o la descarte. Nada se ejecuta solo." },
+  // ─── Superfície de agente (PR 2): consulta de proposta ───
+  "Consultar proposta comercial": { es: "Consultar propuesta comercial" },
+  "Mostra em que situação está a proposta de um negócio, até quando ela vale, os itens e o valor total, com um acesso temporário ao documento enviado.": { es: "Muestra en qué situación está la propuesta de un negocio, hasta cuándo es válida, los ítems y el valor total, con un acceso temporal al documento enviado." },
   "Listar funis": { es: "Listar embudos" },
   "Criar oportunidade no funil": { es: "Crear oportunidad en el embudo" },
   "Atualizar uma oportunidade": { es: "Actualizar una oportunidad" },
@@ -17821,6 +17824,12 @@ export const DICIONARIO: Traducoes = {
   "Não gerar lembrete quando o cliente tiver compromisso marcado": { es: "No generar recordatorio cuando el cliente tenga un compromiso marcado" },
   "Quando ficar N dias sem mensagem": { es: "Cuando pasen N días sin mensaje" },
   "Quando um lead ficar N dias na mesma etapa": { es: "Cuando un lead lleve N días en la misma etapa" },
+  "Quando um lead perder uma tag": { es: "Cuando un lead pierda una etiqueta" },
+  "Quando um campo do negócio for alterado": { es: "Cuando se modifique un campo del negocio" },
+  "Quando alguém escrever uma nota no negócio": { es: "Cuando alguien escriba una nota en el negocio" },
+  "Quando uma tarefa for criada no negócio": { es: "Cuando se cree una tarea en el negocio" },
+  "Quando um documento for anexado ao negócio": { es: "Cuando se adjunte un documento al negocio" },
+  "Quando uma tarefa for concluída": { es: "Cuando se complete una tarea" },
   "Criar tarefa interna (sem mensagem ao cliente)": { es: "Crear tarea interna (sin mensaje al cliente)" },
   "A tarefa não foi criada: o evento que disparou a regra não trouxe um lead nem um contato para pendurar nela.": {
     es: "La tarea no se creó: el evento que disparó la regla no trajo un lead ni un contacto donde colgarla.",

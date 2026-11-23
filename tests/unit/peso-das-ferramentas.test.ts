@@ -130,6 +130,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "crm_list_lead_attachments": { tokens: 194, motivo: SUPERFICIE_DE_AGENTE },
   "crm_attach_to_lead": { tokens: 428, motivo: SUPERFICIE_DE_AGENTE },
   "crm_set_next_action": { tokens: 233, motivo: SUPERFICIE_DE_AGENTE },
+  "crm_get_proposal": { tokens: 338, motivo: "capacidade nova (superfície de agente, PR 2): o agente consulta status, validade, itens, valor e link do PDF de uma proposta; a descrição lista os status porque o modelo os recebe como estão no banco" },
   "get_lead_context": { tokens: 46, motivo: BASE },
   "send_message": { tokens: 137, motivo: BASE },
   "update_lead_state": { tokens: 240, motivo: BASE },
@@ -145,7 +146,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "schedule_followup (com negócio)": { tokens: 314, motivo: BASE },
 };
 
-const TETO_TOTAL = 32878;
+const TETO_TOTAL = 33216;
 
 const VARIANTE = "schedule_followup (com negócio)";
 

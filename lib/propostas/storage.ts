@@ -21,3 +21,35 @@ export async function salvarPdfDaProposta(
 
   return { path, signedUrl: signed.signedUrl };
 }
+
+/**
+ * Validade do link de CONSULTA do PDF: curta, como a do link de anexo do
+ * negócio. Serve para quem consulta abrir o documento agora, não para circular.
+ */
+export const VALIDADE_DO_LINK_DE_CONSULTA_DO_PDF_S = 60;
+
+/** O caminho que `salvarPdfDaProposta` grava: `<organização>/<proposta>.pdf`. */
+export function caminhoDoPdfDaProposta(orgId: string, propostaId: string): string {
+  return `${orgId}/${propostaId}.pdf`;
+}
+
+/**
+ * Link assinado e curto para LER o PDF já gerado de uma proposta.
+ *
+ * O cliente é service role: só assina quando o caminho gravado é exatamente o
+ * desta proposta nesta organização. Caminho diferente volta sem link, nunca com
+ * o de outra proposta. Falha do Storage também volta `null`: a consulta segue.
+ */
+export async function linkDeConsultaDoPdfDaProposta(
+  admin: SupabaseClient,
+  input: { orgId: string; propostaId: string; pdfPath: string | null },
+): Promise<string | null> {
+  if (!input.pdfPath || input.pdfPath !== caminhoDoPdfDaProposta(input.orgId, input.propostaId)) {
+    return null;
+  }
+  const { data, error } = await admin.storage
+    .from(BUCKET)
+    .createSignedUrl(input.pdfPath, VALIDADE_DO_LINK_DE_CONSULTA_DO_PDF_S);
+  if (error || !data?.signedUrl) return null;
+  return data.signedUrl;
+}

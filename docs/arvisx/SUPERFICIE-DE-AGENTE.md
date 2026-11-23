@@ -13,8 +13,8 @@ servem a tela. Um token de API não entra nelas. A regra é uma só: ela foi ext
 chamada pelos dois lados (`lib/tarefas/servico.ts`, `lib/leads/anexos-do-negocio.ts`,
 `lib/leads/proposta-de-proxima-acao.ts`).
 
-Este documento cobre a parte 1 (tarefas, notas, anexos e próxima ação). Eventos para sistemas externos, consulta de
-proposta e passagem entre colegas vêm nas partes seguintes.
+Este documento cobre a parte 1 (tarefas, notas, anexos e próxima ação) e a parte 2 (eventos para sistemas externos,
+consulta de proposta, fechar e atribuir, passagem entre colegas). A convivência entre humano e IA vem na parte 3.
 
 ## Regras que valem para todas
 
@@ -139,11 +139,99 @@ Em "O que o agente pode fazer", na tela do agente:
 |---|---|
 | Organizar a operação | as quatro de tarefa |
 | Passar para um humano | as duas de nota |
-| Não perder o cliente | as duas de anexo e a de próxima ação |
+| Não perder o cliente | as duas de anexo, a de próxima ação e a consulta de proposta |
 
 Elas não couberam num pacote só: um pacote sozinho não pode passar do teto de ferramentas por agente
 (`TETO_TOOLS_POR_AGENTE`), e "Organizar a operação" já ocupava 22 das 27 vagas. Nenhuma entra em "Vender e mover o
 funil", que é o pacote com que todo agente nasce.
 
-Os papéis da Equipe de IA pronta ainda não usam estas ferramentas. Eles listam ferramenta por ferramenta, e a
-liberação vem numa entrega própria.
+## Consulta de proposta
+
+`crm_get_proposal` lê uma proposta comercial. Só leitura (`mcp:read`, papel `agent`).
+
+- Entrada: `proposal_id` ou `lead_id`, exatamente um. Com `lead_id` vêm as propostas daquele negócio, da mais recente
+  para a mais antiga (até 10).
+- Cada proposta traz número, versão, título, `status`, `valid_until`, `total_cents` e `currency`, condições, prazo,
+  datas de envio e de decisão, e os itens (descrição, quantidade, preço unitário, desconto).
+- `status` é o do banco: `rascunho`, `enviando`, `enviada`, `aceita`, `recusada`, `vencida`, `cancelada`,
+  `substituida`.
+- **O link.** Não existe página pública de proposta: o cliente a recebe como PDF, na conversa. `pdf_url` é um link
+  assinado desse PDF, que vence em 60 segundos, e só existe para proposta que já saiu (nunca para rascunho).
+- Num turno de atendimento, proposta de outro cliente e proposta inexistente recebem a mesma recusa.
+- Some para a organização que desligou propostas.
+
+## Fechar o negócio e atribuir a conversa
+
+As duas já existiam e um token de agente (papel `agent`, escopo `mcp:write`) as alcança:
+
+| Ferramenta | O que faz | Pacote |
+|---|---|---|
+| `crm_close_demand` | Fecha como ganho (`won`) ou perdido (`lost`); na perda o motivo é obrigatório. | Não perder o cliente. É de risco crítico: aparece no pacote para ser marcada à mão, e o botão do pacote não a liga. |
+| `crm_assign_conversation` | Atribui a conversa a um atendente. | Passar para um humano e Atender. |
+
+## Eventos para sistemas externos
+
+Um sistema de fora recebe o que acontece no CRM pela ação "Avisar outro sistema (webhook)" das automações: uma regra
+por evento que ele quer ouvir. O guia de quem recebe, com o corpo, os cabeçalhos e a lista dos eventos, é
+[`docs/integracao/webhooks-de-saida.md`](../integracao/webhooks-de-saida.md).
+
+Gatilhos desta entrega: `lead.tag_removed`, `lead.field_changed`, `lead.note_added`, `lead.task_created`,
+`lead.attachment_added` e `task.completed`. Eles nascem no ponto único de cada escrita
+(`lib/tarefas/servico.ts`, `lib/leads/notas-do-negocio.ts`, `lib/leads/anexos-do-negocio.ts`, o PATCH do negócio e
+`crm_manage_tags`), então valem igual para a tela e para o agente.
+
+Dois nomes pedidos não foram criados porque o fato já tinha gatilho: trocar o responsável é `lead.assigned` e perder o
+negócio é `lead.lost` (com `lost_reason`).
+
+O que a entrega garante, e de onde vem:
+
+| Garantia | Como |
+|---|---|
+| Assinatura | HMAC-SHA256 no cabeçalho `X-Webhook-Signature`, cobrindo a hora, o id da entrega e o corpo. Já existia. |
+| Retentativa | 3 tentativas por entrega, esperando 1 s e 5 s; depois, o botão Reenviar da atividade. Já existia. |
+| Id único | `delivery_id` / `X-Webhook-Delivery`, o mesmo em toda tentativa e no Reenviar. Já existia. |
+| Texto inteiro | Mensagem, nota e tarefa saem completas, lidas da linha na hora do envio. Novo. |
+| Ordem | `happened_at` é a hora do fato. A entrega não garante ordem de chegada. |
+| Organização suspensa | Não envia nada. Já existia; agora tem teste para os eventos novos. |
+
+- **O texto não é copiado para a fila de eventos.** O evento guarda os ids, e a entrega lê o texto da tabela de
+  origem. Assim a anonimização de um contato alcança o que ainda não foi entregue.
+- **`lead.field_changed` leva antes-e-depois só dos campos de valor e de data.** Título, descrição e campos do funil
+  saem pelo nome: o produto não guarda o valor anterior deles em lugar nenhum, de propósito
+  (`lib/leads/valores-audit.ts`).
+- **Ação que fala com o cliente** (enviar WhatsApp, por exemplo) numa regra destes gatilhos não tem a origem do
+  atendimento carimbada pelo banco, como já acontece com `lead.won`, `lead.lost` e `lead.assigned`. Estes gatilhos
+  servem ao webhook e às ações internas.
+
+## Passagem entre colegas (agentes nativos)
+
+`passar_para_colega(papel, motivo, resumo)` é ferramenta interna do motor, não do catálogo MCP. Um agente de um número
+com roteador passa a vez a outro agente do mesmo roteador.
+
+- **Quem é colega.** Os outros agentes do roteador do número. O `papel` é o nome da intenção do membro
+  (`ai_router_members.intent_name`). O motor não conhece papel nenhum pelo nome.
+- **Como se liga.** No roteador: `ai_routers.config.passagem_entre_colegas = true`. Nasce desligada e ainda não tem
+  botão na tela. A ferramenta não usa a lista de ferramentas do agente (que é validada contra o catálogo MCP) nem
+  conta no teto de 27.
+- **O que ela faz.** Atualiza a nota "Resumo do atendimento" da ficha do contato (substitui a anterior, não duplica),
+  fixa o colega como o agente da conversa e registra a passagem no traço do turno.
+- **O colega responde na mesma rodada**, no mesmo job, com o motivo e o resumo na abertura. O cliente não é avisado da
+  troca. Quem passou a vez não envia mais nada naquele turno.
+- **Até o assunto mudar.** O colega fica na conversa enquanto o roteador classificar o assunto dele ou o assunto de
+  quem passou a vez. Uma terceira intenção, com confiança, troca o agente. Vale mesmo com a aderência do roteador
+  desligada.
+- **Limites.** Uma passagem por rodada (o colega não devolve a vez no mesmo job). Se quem passou já tinha enviado
+  mensagem naquele turno, o colega assume na mensagem seguinte. Colega pausado, em modo assistido ou sem versão
+  publicada: a ferramenta recusa e nada muda.
+- **A passagem vale inteira ou não vale.** O colega é conferido antes de qualquer gravação; o resumo e a troca do
+  agente da conversa são gravados na mesma transação.
+- **Se o colega deixar de atender entre a passagem e a resposta** (foi pausado, mudou para o modo assistido ou perdeu
+  a versão publicada nesse intervalo), a passagem é desfeita: a conversa volta para quem passou, que responde ao
+  cliente na mesma rodada, avisado do que houve e sem poder passar a vez de novo. Ele responde com o que souber ou
+  chama a equipe (`request_human_handoff`). O cliente não fica sem resposta e a conversa não fica presa num agente
+  parado.
+- **Agente externo não tem colega no CRM.** A passagem equivalente é `crm_request_human_handoff` mais uma nota com
+  `recipient`.
+
+Os papéis da Equipe de IA pronta ainda não usam a passagem nem as ferramentas novas: a liberação vem numa entrega
+própria.

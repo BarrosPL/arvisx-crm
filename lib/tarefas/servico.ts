@@ -30,6 +30,11 @@ import { z } from "zod";
 
 import type { Actor } from "@/lib/api/handlers/types";
 import { audit } from "@/lib/audit";
+import {
+  EVENTO_TAREFA_CONCLUIDA,
+  EVENTO_TAREFA_CRIADA,
+  emitirEventoDaSuperficie,
+} from "@/lib/automation/eventos-de-saida";
 import type { Db } from "@/lib/db";
 import { registraAtividadeDaTarefa } from "@/lib/tarefas/atividade";
 import { conferirDemanda } from "@/lib/tarefas/demanda";
@@ -236,6 +241,22 @@ export async function criarTarefa(
     actor: portas.ator,
   });
 
+  // O evento para sistemas de fora: só a tarefa presa a um negócio é
+  // "tarefa do negócio". Leva IDs; título e descrição saem na entrega.
+  if (tarefa.lead_id) {
+    await emitirEventoDaSuperficie(supabase, {
+      tipo: EVENTO_TAREFA_CRIADA,
+      organizationId,
+      entidadeId: tarefa.lead_id,
+      payload: {
+        lead_id: tarefa.lead_id,
+        task_id: tarefa.id,
+        ...(tarefa.contact_id ? { contact_id: tarefa.contact_id } : {}),
+      },
+      requestId: portas.auditoria.requestId,
+    });
+  }
+
   return { ok: true, tarefa, fechouAgora: false };
 }
 
@@ -331,6 +352,19 @@ export async function editarTarefa(
       tarefa,
       tipo: "task_completed",
       actor: portas.ator,
+    });
+    // `task.completed`: uma vez, na edição em que a tarefa fechou, venha ela da
+    // tela ou de um agente. A entidade é a TAREFA (ela pode não ter negócio).
+    await emitirEventoDaSuperficie(supabase, {
+      tipo: EVENTO_TAREFA_CONCLUIDA,
+      organizationId,
+      entidadeId: tarefa.id,
+      payload: {
+        task_id: tarefa.id,
+        ...(tarefa.lead_id ? { lead_id: tarefa.lead_id } : {}),
+        ...(tarefa.contact_id ? { contact_id: tarefa.contact_id } : {}),
+      },
+      requestId: portas.auditoria.requestId,
     });
   }
 
