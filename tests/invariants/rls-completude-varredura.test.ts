@@ -419,6 +419,16 @@ const PROVA_PROPRIA: readonly Excecao[] = [
       "`app/api/v1/avisos`, com admin client) lê e grava. Migration 9059, " +
       "issue #1418.",
   },
+  {
+    tabela: "fusoes_de_contatos",
+    razao:
+      "tests/invariants/fusao-de-contatos-registro-e-desfazer.test.ts (migration 9813) — " +
+      "tabela exclusiva do servidor: RLS ligada e NENHUMA policy, anon e authenticated sem " +
+      "privilégio (membro da própria organização, com JWT, recebe `permission denied` na " +
+      "leitura e na escrita), e as três funções recusam `authenticated`. O isolamento entre " +
+      "duas organizações é medido pelas funções: junção e desfazer pedidos com a organização " +
+      "errada não acham nem o contato nem o registro.",
+  },
 ];
 
 /**

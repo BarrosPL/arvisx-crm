@@ -177,6 +177,10 @@ export function bancoEmMemoria(
     const predicados: Predicado[] = [];
     const ordens: Array<{ coluna: string; asc: boolean }> = [];
     let limite: number | null = null;
+    // `range(de, até)` e `select(…, { count: "exact" })`: a varredura paginada de
+    // contatos duplicados prova o fim pela contagem, não pela página curta.
+    let faixa: [number, number] | null = null;
+    let pedirContagem = false;
 
     const comEmbutido = (linha: Linha): Linha => {
       const e = EMBUTIDOS[tabela];
@@ -188,7 +192,11 @@ export function bancoEmMemoria(
       };
     };
 
-    const executar = (): { data: Linha[] | null; error: { code?: string; message: string } | null } => {
+    const executar = (): {
+      data: Linha[] | null;
+      error: { code?: string; message: string } | null;
+      count?: number | null;
+    } => {
       if (operacao === "insert") {
         const novas: Linha[] = (Array.isArray(dados) ? dados : [dados!]).map((d) => {
           const carimbo = agora();
@@ -222,13 +230,18 @@ export function bancoEmMemoria(
           return (x < y ? -1 : x > y ? 1 : 0) * (asc ? 1 : -1);
         });
       }
+      const total = achadas.length;
+      if (faixa !== null) achadas = achadas.slice(faixa[0], faixa[1] + 1);
       if (limite !== null) achadas = achadas.slice(0, limite);
-      return { data: achadas.map(comEmbutido), error: null };
+      return { data: achadas.map(comEmbutido), error: null, count: pedirContagem ? total : null };
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cadeia: any = {
-      select: () => cadeia,
+      select: (_colunas?: string, opcoes?: { count?: string }) => {
+        if (opcoes?.count) pedirContagem = true;
+        return cadeia;
+      },
       insert: (linha: Linha | Linha[]) => {
         operacao = "insert";
         dados = linha;
@@ -301,6 +314,10 @@ export function bancoEmMemoria(
       },
       limit: (n: number) => {
         limite = n;
+        return cadeia;
+      },
+      range: (de: number, ate: number) => {
+        faixa = [de, ate];
         return cadeia;
       },
       maybeSingle: () => {

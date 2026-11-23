@@ -10111,6 +10111,10 @@ export const DICIONARIO: Traducoes = {
   // ─── Superfície de agente (PR 2): consulta de proposta ───
   "Consultar proposta comercial": { es: "Consultar propuesta comercial" },
   "Ler a linha do tempo do negócio": { es: "Leer la línea de tiempo del negocio" },
+  // ─── Ajustes (AJ-3): contatos duplicados ───
+  "Encontrar contatos duplicados": { es: "Encontrar contactos duplicados" },
+  "Mostra os cadastros que parecem ser da mesma pessoa, por telefone, e-mail ou nome parecido, para alguém decidir se junta. Não funciona durante um atendimento: serve para limpar a base.": { es: "Muestra los registros que parecen ser de la misma persona, por teléfono, correo o nombre parecido, para que alguien decida si los une. No funciona durante una atención: sirve para limpiar la base." },
+  "Cadastro de contatos": { es: "Registro de contactos" },
   "Mostra o que aconteceu num negócio ou em todos os negócios de um funil num período: mudança de etapa, de responsável e de marcador, anotações e tarefas, com quem fez cada coisa.": { es: "Muestra lo que ocurrió en un negocio o en todos los negocios de un embudo en un período: cambio de etapa, de responsable y de etiqueta, notas y tareas, con quién hizo cada cosa." },
   "Mostra em que situação está a proposta de um negócio, até quando ela vale, os itens e o valor total, com um acesso temporário ao documento enviado.": { es: "Muestra en qué situación está la propuesta de un negocio, hasta cuándo es válida, los ítems y el valor total, con un acceso temporal al documento enviado." },
   "Listar funis": { es: "Listar embudos" },

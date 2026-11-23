@@ -70,6 +70,11 @@ export const AUDIT_ACTIONS = [
   "contact.anonymized",
   "contact.merge_pending",
   "contact.merged",
+  // A junção com registro (`fn_mesclar_contatos_com_registro`, migration 9813)
+  // guarda o que juntou em `fusoes_de_contatos`; esta é a volta, com o mesmo
+  // registro. Hoje sem emissor: as ferramentas de agente que a gravavam saíram
+  // do MCP (revisão 20/11, item 1.2, Opção A) e as funções do banco ficaram.
+  "contact.merge_undone",
   "contact.aniversario_emitido",
   /**
    * A varredura de data do funil (#989) emitiu o aviso de "faltam N dias". A

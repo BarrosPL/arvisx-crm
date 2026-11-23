@@ -182,6 +182,13 @@ export type ActivityType =
    */
   | "contacts_merged"
   /**
+   * A JUNÇÃO DE DOIS CADASTROS FOI DESFEITA. Emitido por
+   * `fn_desfazer_fusao_de_contatos` (migration 9813) em cada negócio das duas
+   * fichas: é a linha que explica por que o negócio voltou para o contato de
+   * antes. Como em `contacts_merged`, o emissor é SQL e grava o literal.
+   */
+  | "contacts_unmerged"
+  /**
    * O negócio nasceu da TROCA DE FUNIL (`POST /api/v1/leads/[id]/clone`).
    *
    * ⚠️ Não é `lead_created`: aquele diz "Entrou no funil" pela primeira
@@ -349,6 +356,7 @@ export const ACTIVITY_LABELS: Record<ActivityType, string> = {
   // cadastros da mesma pessoa viraram um — e é por isso que este negócio pode
   // ter mudado de contato sem ninguém tê-lo movido.
   contacts_merged: "Contatos duplicados juntados",
+  contacts_unmerged: "Junção de contatos desfeita",
   moved_from_pipeline: "Veio de outro funil",
   proposal_drafted: "Rascunho de proposta criado",
   proposal_sent: "Proposta enviada",

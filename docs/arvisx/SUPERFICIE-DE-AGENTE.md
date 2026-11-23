@@ -15,14 +15,16 @@ chamada pelos dois lados (`lib/tarefas/servico.ts`, `lib/leads/anexos-do-negocio
 
 Este documento cobre a parte 1 (tarefas, notas, anexos e próxima ação), a parte 2 (eventos para sistemas externos,
 consulta de proposta, fechar e atribuir, passagem entre colegas) e os ajustes que o uso real dos agentes externos pediu
-(linha do tempo por MCP, filtros de negócio e autoria no histórico). A convivência entre humano e IA vem na parte 3.
+(linha do tempo por MCP, filtros de negócio, autoria no histórico e contatos duplicados). A convivência entre humano e
+IA vem na parte 3.
 
 ## Regras que valem para todas
 
 - **A organização vem do token**, nunca de um argumento. Nenhuma ferramenta aceita `organization_id`.
 - **Nenhuma fala com o cliente.** Tudo o que elas escrevem é lido pela equipe, dentro do CRM.
 - **Papel mínimo `agent`**, que é o papel de um token de API sem escopo `role:`. Leitura pede o escopo `mcp:read`;
-  escrita pede `mcp:write`.
+  escrita pede `mcp:write`. Nenhuma ferramenta desta página pede papel maior: juntar contatos não é feito por
+  agente (ver [Contatos duplicados](#contatos-duplicados)).
 - **Toda escrita fica na auditoria com o agente como autor**: `actor_api_token_id` é o token, e `metadata` leva
   `via: "mcp"`, o tipo do ator e, no agente nativo, o `agent_id`.
 - **Recusa tem código.** A resposta vem com `permitido: false`, `motivo` (o código) e `mensagem` (o que fazer).
@@ -140,7 +142,7 @@ Em "O que o agente pode fazer", na tela do agente:
 |---|---|
 | Organizar a operação | as quatro de tarefa |
 | Passar para um humano | as duas de nota |
-| Não perder o cliente | as duas de anexo, a de próxima ação, a consulta de proposta e a linha do tempo |
+| Não perder o cliente | as duas de anexo, a de próxima ação, a consulta de proposta, a linha do tempo e as três de contatos duplicados |
 
 Elas não couberam num pacote só: um pacote sozinho não pode passar do teto de ferramentas por agente
 (`TETO_TOOLS_POR_AGENTE`), e "Organizar a operação" já ocupava 22 das 27 vagas. Nenhuma entra em "Vender e mover o
@@ -268,6 +270,78 @@ quem digitou) e `em_nome_de` (um sistema enviou por decisão daquela pessoa; `vi
 A autoria é lida da própria mensagem, como o balão da caixa de entrada lê. **Limite:** a mensagem enviada por token de
 API não guarda o token. Um agente externo distingue com certeza o que foi a equipe, o cliente e a IA do CRM, mas não
 separa a própria fala da de outra integração (as duas saem `sistema` / `integracao`).
+
+## Contatos duplicados
+
+| Ferramenta | O que faz | Papel |
+|---|---|---|
+| `crm_find_duplicate_contacts` | Lista os grupos de contatos que parecem a mesma pessoa. Só leitura. | `agent` |
+
+O agente **acha** duplicados; **juntar é da tela**. A detecção é a da tela de Duplicados
+(`lib/contacts/varredura-de-duplicados.ts`). Não existe ferramenta de agente para juntar contatos nem para desfazer
+uma junção (ver [Juntar e desfazer](#juntar-e-desfazer-não-são-do-agente)).
+
+### Achar
+
+`crm_find_duplicate_contacts` varre os contatos vivos da organização do token. Contato não pertence a um funil: a
+varredura é da base inteira, e cada contato vem com `leads_count`, a soma dos negócios dele em todos os funis.
+
+| Motivo (`reasons`) | Quando |
+|---|---|
+| `telefone` | O mesmo número, com ou sem o nono dígito. |
+| `email` | O mesmo e-mail, sem diferenciar maiúsculas. |
+| `telefone_em_conflito` | A entrada de mensagens achou, para um contato, um número que já era de outro. |
+| `nome_parecido` | Duas palavras raras em comum, ou um nome inteiro dentro do outro. **É sugestão, não prova.** |
+
+- Argumentos: `reason` (lista, para filtrar), `limit` (até 50) e `offset`. A resposta traz `total_groups` e `has_more`.
+- Cada grupo traz `suggested_primary_id`: o contato com atividade mais recente. É sugestão.
+- Cada contato traz `id`, `name`, `phone`, `email`, `leads_count`, `created_at` e `last_activity_at`: os campos de
+  `crm_search_contacts`. CPF, endereço e o que a entrada de mensagens guardou não saem.
+- A varredura alcança os 2.000 contatos mais antigos. Com base maior, `scanned_all` vem `false`.
+- Contato marcado como pessoal, contato de grupo de WhatsApp, contato anonimizado e contato já juntado ficam de fora.
+  O par que alguém dispensou na tela ("não são a mesma empresa") também.
+- Contato de outra organização nunca entra, nem quando o telefone e o e-mail são os mesmos.
+- **Num turno de atendimento a ferramenta recusa** (`fora_do_atendimento`): a lista traz telefone e e-mail de outras
+  pessoas, e a conversa é com uma só. Ela serve ao agente externo e à limpeza da base.
+
+### Juntar e desfazer não são do agente
+
+`crm_merge_contacts` e `crm_undo_contact_merge` existiram no PR AJ-3 e **foram retiradas** do servidor MCP, do
+catálogo e dos pacotes antes do merge (revisão de 20/11, item 1.2, Opção A, decidida pelo dono em 23/11). A tarefa só
+previa a junção por agente com autorização do dono, e o servidor MCP não aplica a marca "operada por pessoa" do
+catálogo: bastava um token de API marcado como "tratado como gerente" com escopo de escrita para unir contatos.
+
+Juntar contatos continua sendo um gesto da tela de Duplicados (`POST /api/v1/contacts/merge`, papel `manager`, sessão
+de usuário), auditado como `contact.merged`. **A junção pela tela não guarda registro e não tem desfazer.**
+
+**O que ficou no banco, sem porta.** A migration 9813 não foi revertida: a tabela `fusoes_de_contatos` e as funções
+`fn_colunas_que_apontam_para_contato`, `fn_mesclar_contatos_com_registro` e `fn_desfazer_fusao_de_contatos` continuam
+instaladas, executáveis só por `service_role`. Nenhum caminho do produto as chama hoje. Os envoltórios em
+`lib/contacts/fusao-de-contatos.ts` (`mesclarContatosComRegistro`, `desfazerFusaoDeContatos`, `registroAbertoDaFusao`)
+ficaram para a tela poder passar a gravar registro. A ação de auditoria `contact.merge_undone` existe no vocabulário e
+não tem emissor.
+
+**As duas funções de junção não recusam as mesmas coisas.** Vale conhecer a diferença antes de ligar a função com
+registro a qualquer porta:
+
+| Caso | `fn_mesclar_contatos` (a tela, hoje) | `fn_mesclar_contatos_com_registro` (sem porta) |
+|---|---|---|
+| Contato anonimizado, nas duas posições | recusa (`contato_principal_indisponivel` / `contato_secundario_indisponivel`) | recusa (as mesmas) |
+| Contato já juntado em outro | recusa (as mesmas) | recusa (as mesmas) |
+| Contato marcado como **pessoal** | **não recusa** | recusa (`fusao_de_contato_pessoal`) |
+| Contato de **grupo** de WhatsApp (`kind` diferente de `person`) | **não recusa** | recusa (`fusao_de_contato_de_grupo`) |
+| Papel de quem chama | confere gerente dentro da função (`insufficient_role`), com a sessão do usuário | não confere papel: é só de `service_role`, e quem chama responde por isso |
+| Pares por chamada | um principal e vários secundários | um par |
+
+A tela de Duplicados também não esconde contato pessoal nem contato de grupo da lista (o recorte `soDaOperacao` da
+varredura é só da leitura por agente). Então um gerente consegue, pela tela, juntar um contato pessoal ou um contato
+de grupo com outro. A regra não foi unificada no banco neste PR (a migration 9822, reservada para isso, não foi
+usada): a porta que recusava saiu, e mudar o que a tela aceita é decisão de produto fora do item.
+
+O desfazer (`fn_desfazer_fusao_de_contatos`) só desfaz junção que tem registro em `fusoes_de_contatos`, recusa quando
+um dos dois contatos foi anonimizado depois (`fusao_de_contato_anonimizado`) e quando outro contato passou a usar o
+telefone, o e-mail ou a identidade de canal do absorvido (`conflito_ao_desfazer_fusao`). As etiquetas não voltam: o
+registro guarda ids e nomes de campo, nunca telefone, e-mail ou etiqueta.
 
 ## Fechar o negócio e atribuir a conversa
 
