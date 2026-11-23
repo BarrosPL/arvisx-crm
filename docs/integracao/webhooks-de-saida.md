@@ -326,6 +326,22 @@ do CRM saber quando ficar calado numa conversa. Os dois eventos trazem o
 - `conversation.ai_resumed` sai quando alguém devolve a conversa ao
   atendimento automático. **Pausa com prazo que vence não gera evento**: a
   hora da volta é o `paused_until` que você já recebeu.
+
+**Como calcular se o seu agente pode falar.** Contar eventos não funciona:
+chegam vários `ai_paused` para uma pausa só (cada resposta de uma pessoa pela
+tela emite outro, com `renewed: true`), e a volta por prazo não tem evento.
+Faça a conta por conversa:
+
+1. guarde só o `ai_paused` mais recente (maior `happened_at`). `renewed: true`
+   não é pausa nova: substitui o prazo anterior;
+2. fique calado enquanto esse evento valer. Ele deixa de valer quando chega um
+   `ai_resumed` posterior, ou quando `paused_until` não é nulo e já passou;
+3. `paused_until: null` (`durable: true`) não vence: só `ai_resumed` libera;
+4. não espere `ai_resumed` para liberar uma pausa com prazo. Compare o relógio
+   com `paused_until`;
+5. na dúvida (evento perdido, reinício), pergunte ao CRM:
+   `crm_get_conversation` devolve o bloco `ai` (`paused`, `until`,
+   `resumes_automatically`), que é sempre o estado do momento.
 - `conversation`: `id`, `contact_id`, `channel_session_id`, `status` e `ai`, o
   estado na hora do envio: `paused`, `human_in_command`, `reason`, `since`,
   `until`, `resumes_automatically` e `detail`. Os valores de `reason` são

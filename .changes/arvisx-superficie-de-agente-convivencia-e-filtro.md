@@ -35,3 +35,16 @@ entre os dois, o segundo agente não responde.
 Há uma migration (9811): um gatilho em `conversations` que grava os dois
 eventos. Não cria tabela nem coluna e não altera dado existente. O
 `update.sh` a aplica sozinho.
+
+Depois da revisão de 20/11, o filtro de entrada passou a errar para o lado de
+responder: o acento distingue as palavras ("para" não é "Pará"), nome próprio
+no meio da frase não casa, e a mensagem que traz um pedido junto da palavra da
+lista vai para o agente (a regra só barra a mensagem com até 3 palavras além
+do termo; o teto é ajustável por categoria com `max_extra_words`). Em número
+com agente em modo assistido, a resposta automática do filtro não é mais
+enviada: a mensagem segue para o agente, e a resposta só sai depois de uma
+pessoa aprovar. A rota de configuração passa a devolver os avisos de falso
+positivo (`entry_filter_warnings`). O guia de webhooks ganhou a conta que o
+agente externo faz para saber se pode falar: pelo `paused_until` do último
+`conversation.ai_paused`, sem esperar `ai_resumed` quando a pausa vence por
+prazo.
