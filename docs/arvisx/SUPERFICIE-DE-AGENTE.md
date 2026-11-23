@@ -150,7 +150,7 @@ novo. Só leitura (`mcp:read`, papel `agent`). Serve ao resumo do dia ou da sema
 | `lead_id` ou `pipeline_id` | Exatamente um. Com `pipeline_id` vêm os negócios do funil, cada linha com `lead_id` e `lead_title`. |
 | `since`, `until` | ISO-8601 com fuso. `since` inclui o instante, `until` não. |
 | `type` | Lista: `etapa`, `responsavel`, `tag`, `campo`, `nota`, `tarefa`, `outro`. Sem ele, vem tudo. |
-| `author` | Lista: `pessoa`, `agente`, `sistema`, `cliente`. |
+| `author` | Lista: `pessoa`, `agente`, `sistema`, `cliente`. Linha com autor `nao_registrado` (a troca de responsável) nunca casa: ver abaixo. |
 | `limit`, `cursor` | Até 100 por página. Repita com o `cursor` enquanto `has_more` for `true`. |
 
 Cada linha traz `kind` (a categoria), `type` (o tipo cru), `label`, `happened_at`, `text` (inteiro, sem corte),
@@ -194,6 +194,15 @@ que são os índices que já existem, e confere por lote quais negócios são do
 idas ao banco por fonte: com filtro que descarta muita linha, a página pode vir menor que o limite (até vazia) com
 `has_more: true`, e o cursor continua de onde a varredura parou. Negócio de contato marcado como pessoal fica de fora.
 
+**O filtro `author` e o autor `nao_registrado`.** `author` aceita só `pessoa`, `agente`, `sistema` e `cliente`. A
+troca de responsável (`lead.assigned`) sai com `author.kind: "nao_registrado"`, que não é um valor do filtro: qualquer
+chamada com `author` deixa essas linhas de fora, e não há como pedir só elas por autor. Quem quer as trocas de
+responsável pede `type: ["responsavel"]` **sem** `author`. O filtro de autor (como o de funil) é aplicado depois da
+busca, dentro do teto de quatro idas ao banco: é o caso em que a página curta ou vazia com `has_more: true` mais
+aparece (por exemplo `type: ["responsavel"]` com `author`, que nunca devolve nada). `has_more: true` com página vazia
+não é fim: repita com o `cursor` até `has_more: false`. O teto de idas ao banco é o que limita o custo da consulta por
+funil e não foi mexido.
+
 ## Filtros de `crm_list_leads`
 
 Além de funil, etapa, status, responsável e motivo de perda:
@@ -211,8 +220,12 @@ Além de funil, etapa, status, responsável e motivo de perda:
   próxima ação aprovada, ligação atendida (`fn_update_last_activity_at`) e mensagem enviada por uma pessoa da equipe
   (`fn_mensagem_do_vendedor_e_atividade`). Ligação que ninguém atendeu não conta, e mensagem do cliente que ninguém
   respondeu também não: o negócio continua "parado".
-- A comparação de tag é exata. A ferramenta procura a grafia pedida e a forma em minúsculas: `VIP` acha `VIP` e `vip`;
-  `vip` acha só `vip`. A tela grava a tag do negócio como foi digitada, e `crm_manage_tags` grava em minúsculas.
+- `tag` e `sem_tag` não diferenciam caixa nas grafias em que uma pessoa escreve o mesmo nome: a pedida, minúsculas,
+  MAIÚSCULAS, Inicial maiúscula e Iniciais Maiúsculas. `vip`, `VIP` e `Vip` acham os mesmos negócios, e
+  `sem_tag: "vip"` deixa de fora quem tem `VIP`. A tela grava a tag do negócio como foi digitada, e `crm_manage_tags`
+  grava em minúsculas. **Limite:** a coluna é uma lista de textos e a consulta compara cada grafia inteira; caixa
+  misturada fora dessas formas (`viP`) só casa se pedida exatamente assim. Fechar esse resto pede uma função no banco
+  (migration), que este PR não tem.
 - Os filtros entram na consulta, antes do limite. O cursor e `has_more` descrevem o conjunto filtrado.
 - O responsável continua saindo só pelo nome (`owner_user_name`), sem e-mail nem telefone.
 

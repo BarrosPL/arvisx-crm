@@ -48,7 +48,8 @@ export const crmListLeadEvents: McpToolDefinition<typeof eventosInputShape> = {
     `\`since\` e janela de até ${JANELA_MAXIMA_DO_FUNIL_DIAS} dias), em ordem cronológica: mudança de etapa, ` +
     "responsável, tag e campo, nota, tarefa e o resto (`outro`), com autor e texto inteiro. Mensagem " +
     "não entra: leia a conversa. Repita com o `cursor` enquanto `has_more` for true (a página pode " +
-    "vir menor que o limite).",
+    "vir menor que o limite, até vazia). Troca de responsável sai com autor `nao_registrado`, que " +
+    "`author` nunca casa.",
   inputSchema: eventosInputShape,
   category: "read",
   requiresRole: "agent",

@@ -51,7 +51,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "crm_get_conversation": { tokens: 228, motivo: BASE },
   "crm_get_conversation_history": { tokens: 225, motivo: "+22 da frase que avisa que cada mensagem traz `author` (cliente, ia, equipe ou sistema) e `channel` (ajustes, AJ-2): sem ela o agente não sabe que pode separar o que a equipe disse do que a IA disse" },
   "crm_get_queue_status": { tokens: 83, motivo: BASE },
-  "crm_list_leads": { tokens: 591, motivo: "+91 de cinco filtros (ajustes, AJ-2): criados desde, na etapa atual desde, sem atividade desde, com tag e sem tag. Os instantes vão como texto sem `.min()`/`.max()` e são conferidos no handler, para não pagar a expressão regular do zod" },
+  "crm_list_leads": { tokens: 602, motivo: "+11 (revisão 20/11, item 2.27): o campo `tag` diz que a comparação ignora caixa, para o modelo não repetir a busca em cada grafia; +91 de cinco filtros (ajustes, AJ-2): criados desde, na etapa atual desde, sem atividade desde, com tag e sem tag. Os instantes vão como texto sem `.min()`/`.max()` e são conferidos no handler, para não pagar a expressão regular do zod" },
   "crm_get_lead": { tokens: 202, motivo: BASE },
   "crm_list_pipelines": { tokens: 63, motivo: BASE },
   "crm_get_pipeline_forecast": { tokens: 263, motivo: BASE },
@@ -131,7 +131,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "crm_attach_to_lead": { tokens: 428, motivo: SUPERFICIE_DE_AGENTE },
   "crm_set_next_action": { tokens: 233, motivo: SUPERFICIE_DE_AGENTE },
   "crm_get_proposal": { tokens: 338, motivo: "capacidade nova (superfície de agente, PR 2): o agente consulta status, validade, itens, valor e link do PDF de uma proposta; a descrição lista os status porque o modelo os recebe como estão no banco" },
-  "crm_list_lead_events": { tokens: 463, motivo: "capacidade nova (ajustes, AJ-2): a linha do tempo de um negócio ou de um funil por MCP, com filtro de período, tipo e autor. A descrição diz o que não entra (mensagem) e que a página pode vir menor que o limite, porque o modelo pararia de paginar numa página curta" },
+  "crm_list_lead_events": { tokens: 487, motivo: "+24 (revisão 20/11, item 2.28): a descrição diz que a página pode vir vazia com `has_more` e que o autor `nao_registrado` da troca de responsável nunca casa o filtro `author`; capacidade nova (ajustes, AJ-2): a linha do tempo de um negócio ou de um funil por MCP, com filtro de período, tipo e autor. A descrição diz o que não entra (mensagem) e que a página pode vir menor que o limite, porque o modelo pararia de paginar numa página curta" },
   "crm_find_duplicate_contacts": { tokens: 201, motivo: "capacidade nova (ajustes, AJ-3): os grupos de contatos que parecem a mesma pessoa. A descrição diz que `nome_parecido` é sugestão e não prova, porque é o motivo que junta gente diferente" },
   "crm_merge_contacts": { tokens: 380, motivo: "capacidade nova (ajustes, AJ-3), só para token tratado como gerente: nunca é montada no turno do agente do CRM (`apenasHumano`), então não pesa no atendimento. Dois ids com `.uuid()` de propósito: id malformado tem de ser recusado antes de chegar à função do banco" },
   "crm_undo_contact_merge": { tokens: 387, motivo: "capacidade nova (ajustes, AJ-3), o desfazer da junção: mesma condição da `crm_merge_contacts` (gerente, fora do turno). A descrição diz que junção feita pela tela não é desfeita, para o agente não tentar" },
@@ -150,7 +150,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "schedule_followup (com negócio)": { tokens: 314, motivo: BASE },
 };
 
-const TETO_TOTAL = 34760;
+const TETO_TOTAL = 34795;
 
 const VARIANTE = "schedule_followup (com negócio)";
 

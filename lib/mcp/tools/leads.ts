@@ -193,7 +193,7 @@ const listInputShape = {
   created_since: z.string().optional().describe("Criados desde (ISO-8601 com fuso)."),
   moved_since: z.string().optional().describe("Na etapa atual desde (idem)."),
   last_activity_before: z.string().optional().describe("Sem atividade desde (idem)."),
-  tag: z.string().optional().describe("Com esta tag."),
+  tag: z.string().optional().describe("Com esta tag (ignora caixa: vip, VIP, Vip)."),
   sem_tag: z.string().optional().describe("Sem esta tag."),
   limit: z.number().int().min(1).max(100).default(20),
   cursor: z.string().optional(),

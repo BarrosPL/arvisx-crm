@@ -88,6 +88,11 @@ function contemOArray(valor: unknown, literal: string): boolean {
   return Array.isArray(valor) && elementosDoArray(literal).every((e) => valor.includes(e));
 }
 
+/** `coluna && literal`, para coluna `text[]`: tem ALGUM dos elementos. */
+function cruzaOArray(valor: unknown, literal: string): boolean {
+  return Array.isArray(valor) && elementosDoArray(literal).some((e) => valor.includes(e));
+}
+
 /** Uma condição do `.or(...)`: `col.eq.x`, `col.gt.x`, `col.lt.x`, `col.in.(a,b)`, `and(...)`. */
 function condicao(texto: string): Predicado {
   if (texto.startsWith("and(") && texto.endsWith(")")) {
@@ -278,12 +283,14 @@ export function bancoEmMemoria(
       // operadores que os handlers usam. Outro operador lança, para o teste não
       // ficar verde porque um filtro foi ignorado.
       filter: (coluna: string, op: string, valor: string) => {
-        if (op !== "cs") throw new Error(`banco em memória: filter(${op}) não previsto`);
-        predicados.push((l) => contemOArray(l[coluna], valor));
+        if (op === "cs") predicados.push((l) => contemOArray(l[coluna], valor));
+        else if (op === "ov") predicados.push((l) => cruzaOArray(l[coluna], valor));
+        else throw new Error(`banco em memória: filter(${op}) não previsto`);
         return cadeia;
       },
       not: (coluna: string, op: string, valor: string) => {
         if (op === "cs") predicados.push((l) => !contemOArray(l[coluna], valor));
+        else if (op === "ov") predicados.push((l) => !cruzaOArray(l[coluna], valor));
         else if (op === "in") {
           // Como no Postgres: `not (null in (...))` é nulo, e a linha não passa.
           const fora = valor.replace(/^\(|\)$/g, "").split(",");
