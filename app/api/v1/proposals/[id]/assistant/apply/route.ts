@@ -7,6 +7,7 @@ import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
 import { requireSupportWrite } from "@/lib/impersonate/support";
 import { aplicarMudancas, mudancaSchema, type EstadoDaProposta } from "@/lib/propostas/assistente";
+import { gravarEdicaoDaProposta } from "@/lib/propostas/gravar-edicao";
 import { resolverItensDaProposta } from "@/lib/propostas/itens";
 import { emitLeadActivity } from "@/lib/leads/activity-emitter";
 import { createClient } from "@/lib/supabase/server";
@@ -88,41 +89,26 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     return fail("validation_failed", t(resolvido.motivo), 422, { requestId });
   }
 
-  const { data: atualizada, error } = await supabase
-    .from("crm_proposals")
-    .update({
+  // Campos, CAS da revisão e troca dos itens numa transação só (migration
+  // 9815): a revisão sobe UMA vez, e a troca dos itens não soma de novo.
+  const gravada = await gravarEdicaoDaProposta(supabase, {
+    orgId: authz.org.orgId,
+    propostaId: id,
+    revisao: parsed.data.revision,
+    campos: {
       titulo: estadoDepois.titulo,
       condicoes: estadoDepois.condicoes,
       valid_until: estadoDepois.valid_until,
       briefing_json: estadoDepois.briefing,
       total_cents: resolvido.totalCents,
       pricing_status: resolvido.pricingStatus,
-      revision: parsed.data.revision + 1,
-    })
-    .eq("organization_id", authz.org.orgId)
-    .eq("id", id)
-    .eq("revision", parsed.data.revision)
-    .select("id, revision")
-    .maybeSingle();
-  if (error || !atualizada) {
+    },
+    itens: resolvido.itens,
+  });
+  if (gravada.tipo !== "ok") {
     return fail("proposal_context_stale", t("A proposta mudou. Gere as sugestões de novo."), 409, { requestId });
   }
-
-  await supabase.from("crm_proposal_items").delete().eq("organization_id", authz.org.orgId).eq("proposal_id", id);
-  if (resolvido.itens.length > 0) {
-    await supabase.from("crm_proposal_items").insert(
-      resolvido.itens.map((it) => ({
-        organization_id: authz.org.orgId,
-        proposal_id: id,
-        product_id: it.product_id,
-        descricao: it.descricao,
-        quantidade: it.quantidade,
-        preco_unitario_cents: it.preco_unitario_cents,
-        desconto_cents: it.desconto_cents,
-        position: it.position,
-      })),
-    );
-  }
+  const atualizada = { revision: gravada.revision };
 
   // D10: proposta órfã (negócio apagado, `lead_id` nulo) segue editável pelo
   // assistente — só não há negócio para registrar atividade nele.

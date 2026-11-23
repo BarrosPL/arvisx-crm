@@ -195,6 +195,21 @@ export function ProposalEditorClient({ id, podeEditar, podeRevisar = false }: { 
     return () => controller.abort();
   }, [buscaProdutos]);
 
+  /**
+   * Gravar o documento (campo, seção, modelo) soma um na revisão do rascunho
+   * no banco (migration 9815). Só a revisão é relida: o que a pessoa digitou e
+   * ainda não salvou fica como está. Se a leitura falhar, a próxima gravação
+   * responde 409 e pede para recarregar, como sempre.
+   */
+  async function relerRevisao(): Promise<void> {
+    try {
+      const res = await apiClient.get<ApiSuccess<Proposta>>(`/api/v1/proposals/${id}`);
+      setProposta((p) => p && { ...p, revision: res.data.revision });
+    } catch {
+      // sem efeito: ver o comentário acima
+    }
+  }
+
   if (!proposta) return <div className="p-6">{t("Carregando…")}</div>;
 
   const total = proposta.itens.reduce((acc, it) => {
@@ -446,6 +461,7 @@ export function ProposalEditorClient({ id, podeEditar, podeRevisar = false }: { 
         emRascunho={proposta.status === "rascunho"}
         versao={versaoDoDocumento}
         onModeloConfirmado={(slug) => setProposta((p) => p && { ...p, template_slug: slug })}
+        onDocumentoGravado={() => void relerRevisao()}
       />
 
       <div className="space-y-2">

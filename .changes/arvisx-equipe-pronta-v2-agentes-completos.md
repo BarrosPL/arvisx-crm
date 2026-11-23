@@ -36,3 +36,10 @@ novo. A pausa que você fez num agente continua valendo.
 
 Migration 9814: duas colunas opcionais em `crm_proposals` para a aprovação da
 proposta. Nenhuma linha existente muda.
+
+Migration 9815: editar o rascunho invalida a aprovação pelo banco. Mexer em um
+item ou no conteúdo da proposta (título, condições, validade, valores, texto do
+documento, modelo) soma um na revisão e derruba a aprovação, mesmo quando a
+escrita não passa pela tela. Salvar a proposta passou a gravar campos e itens
+de uma vez só: se a gravação dos itens falhar, o rascunho não fica mais sem
+itens. Nenhuma linha existente muda.

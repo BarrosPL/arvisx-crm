@@ -114,6 +114,20 @@ function montarMundoDeAplicar(opts: MundoOpts = {}) {
       ];
 
   const supabase = {
+    // `fn_proposta_gravar_edicao` (migration 9815): campos, CAS da revisão e
+    // troca dos itens numa transação. O CAS de verdade é do banco
+    // (tests/invariants/proposta-edicao-invalida-aprovacao.test.ts); aqui o
+    // mundo falso guarda o que a rota mandou gravar.
+    rpc: async (
+      nome: string,
+      args: { p_revisao: number; p_campos: Record<string, unknown>; p_itens: Record<string, unknown>[] },
+    ) => {
+      if (nome !== "fn_proposta_gravar_edicao") throw new Error(`rpc não mockada: ${nome}`);
+      if (args.p_revisao !== revisionAtual) return { data: null, error: null };
+      propostaAtualizada = args.p_campos;
+      itemAtualizado = args.p_itens.length > 0 ? (args.p_itens[0] as Record<string, unknown>) : null;
+      return { data: revisionAtual + 1, error: null };
+    },
     from: (tabela: string) => {
       if (tabela === "crm_proposals") {
         return {

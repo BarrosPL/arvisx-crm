@@ -16056,6 +16056,10 @@ export type Database = {
         Returns: number;
       };
       fn_proposta_aloca_numero: { Args: { p_ano: number; p_org: string }; Returns: number };
+      fn_proposta_gravar_edicao: {
+        Args: { p_campos: Json; p_itens: Json; p_org: string; p_proposta: string; p_revisao: number };
+        Returns: number;
+      };
       fn_proteger_modulo_provisionado: { Args: Record<PropertyKey, never>; Returns: undefined };
       fn_proteger_tabelas_de_organizacao: { Args: Record<PropertyKey, never>; Returns: undefined };
       fn_proximo_numero_de_comanda: { Args: { p_org: string }; Returns: number };

@@ -205,7 +205,22 @@ ela sai é o modo da empresa, `proposta.envio_de_proposta` no perfil
 
 A aprovação são duas colunas de `crm_proposals` (migration 9814),
 `aprovada_em` e `aprovada_na_revisao`, e só vale enquanto a revisão aprovada
-for a atual: editar o rascunho a invalida. Só o servidor grava as duas. **A tela
+for a atual: editar o rascunho a invalida. Só o servidor grava as duas.
+
+Quem garante o "editar invalida" é o banco (migration 9815), não o código das
+rotas: mexer em qualquer item do rascunho (inserir, alterar, apagar) ou em
+qualquer coluna de conteúdo de `crm_proposals` (título, condições, validade,
+total, prazo, pagamento, briefing, seções do documento, modelo, contato,
+negócio, conversa) soma um em `revision` e limpa as duas colunas da aprovação,
+venha a escrita de onde vier (tela, API do banco com a sessão de um atendente,
+servidor). A revisão nunca volta atrás. Uma edição soma um: as rotas gravam
+campos e itens numa transação só (`fn_proposta_gravar_edicao`). O envio em si
+(numerar, entrar em `enviando`, voltar a rascunho quando o canal falha) não
+invalida a aprovação. A lista das colunas de conteúdo fica na função
+`fn_crm_proposals_edicao_sobe_revisao`; coluna nova em `crm_proposals` precisa
+ser classificada, e a cerca
+`tests/invariants/proposta-edicao-invalida-aprovacao.test.ts` reprova a que
+ficar de fora. **A tela
 ainda não tem o botão de aprovar** (ver "O que falta"): até ele existir, no
 modo padrão toda tentativa de envio responde `precisa_aprovacao`.
 
