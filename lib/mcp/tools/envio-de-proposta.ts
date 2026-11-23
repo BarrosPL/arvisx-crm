@@ -50,9 +50,9 @@
  */
 import { z } from "zod";
 
-import { papelDoAgenteDaEquipe } from "@/lib/ai/equipe-pronta/dono-de-etapa";
+import { CHAVE_DE_CONFIG } from "@/lib/ai/equipe-pronta/constantes";
 import { decidirPreGoLiveDoCanalViaSupabase } from "@/lib/ai/elegibilidade/consulta-pre-go-live";
-import { planoLiberaAEquipePronta } from "@/lib/cobranca/equipe-pronta-no-plano";
+import { planoLiberaAEquipeProntaSeLido } from "@/lib/cobranca/equipe-pronta-no-plano";
 import { capacidadesDaOrganizacao } from "@/lib/organizacao/capacidades";
 import { dataIsoNoFuso, fusoDaOrganizacao } from "@/lib/propostas/data-no-fuso";
 import { enviarProposta } from "@/lib/propostas/enviar-proposta";
@@ -115,21 +115,26 @@ async function travaDeFalarComOCliente(
   if (agentId) {
     const { data: agente, error } = await ctx.supabase
       .from("ai_agents")
-      .select("paused_at, archived_at")
+      // `config` vem na MESMA leitura da pausa: é dela que sai "este agente é
+      // da Equipe pronta?", que decide as travas de pausa da equipe e de plano.
+      // Uma segunda leitura que falhasse em silêncio (`papelDoAgenteDaEquipe`
+      // devolve "não é da equipe" no erro) fazia a ferramenta pular as duas e
+      // falar com o cliente (revisão de 20/11, item 2.2). Aqui, leitura que
+      // falha é recusa.
+      .select("paused_at, archived_at, config")
       .eq("organization_id", ctx.organizationId)
       .eq("id", agentId)
       .maybeSingle();
     if (error) return CONSULTA_INDISPONIVEL;
-    const a = agente as { paused_at?: string | null; archived_at?: string | null } | null;
+    const a = agente as { paused_at?: string | null; archived_at?: string | null; config?: unknown } | null;
     if (!a || a.paused_at || a.archived_at) {
       return recusa("equipe_pausada", "este agente está pausado: nada é enviado ao cliente enquanto a pausa durar.");
     }
-    const daEquipe = await papelDoAgenteDaEquipe({
-      supabase: ctx.supabase,
-      organizationId: ctx.organizationId,
-      actor: ctx.actor,
-    });
-    if (daEquipe !== null) {
+    // Marcado como da equipe = a chave existe na config, qualquer que seja o
+    // papel escrito nela: marca com papel ilegível ainda é agente da equipe.
+    const daEquipe =
+      a.config !== null && typeof a.config === "object" && CHAVE_DE_CONFIG in (a.config as Record<string, unknown>);
+    if (daEquipe) {
       const { data: perfil, error: erroDoPerfil } = await ctx.supabase
         .from("equipe_pronta_perfis")
         .select("instalacao")
@@ -140,7 +145,10 @@ async function travaDeFalarComOCliente(
       if (instalacao?.pausa) {
         return recusa("equipe_pausada", "a equipe está pausada: nada é enviado ao cliente enquanto a pausa durar.");
       }
-      if (!(await planoLiberaAEquipePronta(ctx.supabase, ctx.organizationId))) {
+      // Plano que não pôde ser lido NÃO é plano que libera: falha fechada.
+      const liberado = await planoLiberaAEquipeProntaSeLido(ctx.supabase, ctx.organizationId);
+      if (liberado === null) return CONSULTA_INDISPONIVEL;
+      if (!liberado) {
         return recusa("fora_do_plano", "o plano desta empresa não inclui a equipe de IA: nada é enviado.");
       }
     }
