@@ -67,6 +67,19 @@ export const TOOLS_COMERCIO = declararTools([
     capacidade: "propostas",
   },
   {
+    // CRÍTICA: é a única ferramenta de proposta que fala com o cliente. Nunca
+    // entra ligada por pacote; aparece em `reter` para ser marcada à mão.
+    name: "crm_send_proposal",
+    category: "write",
+    rotulo: "Enviar proposta ao cliente",
+    explicacao:
+      "Envia ao cliente, na conversa, a proposta que estava em rascunho. Só sai a proposta que a sua equipe aprovou ou, se a empresa permitir, a que tem só itens do catálogo, com o preço do catálogo e sem desconto.",
+    oQueToca: "Propostas comerciais",
+    risco: "critico",
+    pacotes: ["reter"],
+    capacidade: "propostas",
+  },
+  {
     name: "crm_list_privacy_requests",
     category: "read",
     rotulo: "Ver pedidos de privacidade",

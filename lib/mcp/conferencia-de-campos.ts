@@ -29,6 +29,7 @@ import { estadoEfetivoDaTarefa, TAREFA_DA_CONFERENCIA_DE_CAMPO } from "@/lib/ai/
 import type { DependenciasDoPonto } from "@/lib/ai/decisao/ponto";
 import { settingsDoFunil } from "@/lib/leads/campos-exigidos";
 import {
+  defsDoPadraoDaOrg,
   defsDoPadraoDoFunil,
   mensagemDaRecusa,
   recusasDePadrao,
@@ -118,7 +119,13 @@ export async function mensagensPendentesDoTurno(
  * em que ele vai nascer (`crm_create_lead`, #2297 — ainda não há linha em
  * `crm_leads` para ler).
  */
-export type AlvoDaConferencia = { leadId: string } | { pipelineId: string };
+/**
+ * `contato`: os campos personalizados do CADASTRO (`crm_update_contact`). O
+ * contato não tem funil próprio, então as definições são as de escopo
+ * `contato` de todos os funis da organização — a mesma leitura do
+ * `patchContactHandler`.
+ */
+export type AlvoDaConferencia = { leadId: string } | { pipelineId: string } | { contato: true };
 
 /**
  * O funil da conferência: rótulos (a #2234) e DEFINIÇÕES (o `padrao` da #2730),
@@ -135,6 +142,10 @@ interface FunilDaConferencia {
 async function funilDaConferencia(ctx: McpContext, alvo: AlvoDaConferencia): Promise<FunilDaConferencia> {
   try {
     let settings: unknown;
+    if ("contato" in alvo) {
+      const defs = await defsDoPadraoDaOrg(ctx.supabase, ctx.organizationId, "contato");
+      return { rotulos: new Map(defs.map((c) => [c.key, c.label ?? c.key])), defs };
+    }
     if ("pipelineId" in alvo) {
       // O id vem do ARGUMENTO do modelo, não de uma linha da organização: o
       // filtro de organização aqui é o que impede o rótulo de um funil alheio

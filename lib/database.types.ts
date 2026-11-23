@@ -7391,6 +7391,8 @@ export type Database = {
       crm_proposals: {
         Row: {
           ano: number | null;
+          aprovada_em: string | null;
+          aprovada_na_revisao: number | null;
           briefing_json: Json | null;
           condicoes: string | null;
           contact_id: string | null;
@@ -7435,6 +7437,8 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           ano?: number | null;
+          aprovada_em?: string | null;
+          aprovada_na_revisao?: number | null;
           briefing_json?: Json | null;
           condicoes?: string | null;
           contact_id?: string | null;
@@ -7478,6 +7482,8 @@ export type Database = {
         };
         Update: {
           ano?: number | null;
+          aprovada_em?: string | null;
+          aprovada_na_revisao?: number | null;
           briefing_json?: Json | null;
           condicoes?: string | null;
           contact_id?: string | null;
@@ -15424,6 +15430,10 @@ export type Database = {
         Args: { p_contact: string; p_org: string };
         Returns: number;
       };
+      fn_contato_preencher_campos_personalizados: {
+        Args: { p_campos: Json; p_contato: string; p_org: string };
+        Returns: Json;
+      };
       fn_conversa_remove_trechos_do_rag: {
         Args: { p_conversation: string; p_org: string };
         Returns: number;
@@ -16050,6 +16060,10 @@ export type Database = {
         Returns: number;
       };
       fn_proposta_aloca_numero: { Args: { p_ano: number; p_org: string }; Returns: number };
+      fn_proposta_gravar_edicao: {
+        Args: { p_campos: Json; p_itens: Json; p_org: string; p_proposta: string; p_revisao: number };
+        Returns: number;
+      };
       fn_proteger_modulo_provisionado: { Args: Record<PropertyKey, never>; Returns: undefined };
       fn_proteger_tabelas_de_organizacao: { Args: Record<PropertyKey, never>; Returns: undefined };
       fn_proximo_numero_de_comanda: { Args: { p_org: string }; Returns: number };

@@ -150,6 +150,13 @@ export function ProposalEditorClient({ id, podeEditar, podeRevisar = false }: { 
    * não há "alteração não salva" para falar: o que está na tela veio do servidor.
    */
   const ultimaGravacao = useRef<string | null>(null);
+  /**
+   * A revisão que o último Salvar devolveu. `enviar()` grava e envia na mesma
+   * chamada, e o estado (`proposta.revision`) ainda é o de antes da gravação
+   * dentro dela: o envio precisa da revisão NOVA para dizer ao servidor "envie
+   * exatamente o que acabei de gravar".
+   */
+  const revisaoGravada = useRef<number | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -194,6 +201,21 @@ export function ProposalEditorClient({ id, podeEditar, podeRevisar = false }: { 
 
     return () => controller.abort();
   }, [buscaProdutos]);
+
+  /**
+   * Gravar o documento (campo, seção, modelo) soma um na revisão do rascunho
+   * no banco (migration 9815). Só a revisão é relida: o que a pessoa digitou e
+   * ainda não salvou fica como está. Se a leitura falhar, a próxima gravação
+   * responde 409 e pede para recarregar, como sempre.
+   */
+  async function relerRevisao(): Promise<void> {
+    try {
+      const res = await apiClient.get<ApiSuccess<Proposta>>(`/api/v1/proposals/${id}`);
+      setProposta((p) => p && { ...p, revision: res.data.revision });
+    } catch {
+      // sem efeito: ver o comentário acima
+    }
+  }
 
   if (!proposta) return <div className="p-6">{t("Carregando…")}</div>;
 
@@ -293,6 +315,7 @@ export function ProposalEditorClient({ id, podeEditar, podeRevisar = false }: { 
       // A tabela passa a refletir EXATAMENTE o que foi gravado — a linha
       // descartada some de vez, e `sujo` (que compara com isto) volta a falso.
       ultimaGravacao.current = assinaturaDoRascunho({ ...proposta, itens });
+      revisaoGravada.current = res.data.revision;
       setProposta((p) =>
         p && {
           ...p,
@@ -359,22 +382,32 @@ export function ProposalEditorClient({ id, podeEditar, podeRevisar = false }: { 
     // diferente do que está gravado? Ler o `ref` aqui (evento) é permitido —
     // era a leitura durante o render que o `react-hooks` reprovava.
     const sujo = ultimaGravacao.current !== null && ultimaGravacao.current !== assinaturaDoRascunho(proposta);
+    // A revisão que a pessoa está vendo: a do Salvar que acabou de rodar, ou a
+    // da tela. O servidor recusa o envio (409) se o rascunho não estiver mais
+    // nela — alguém editou enquanto isso, ou outro envio já começou.
+    let revisao = proposta.revision;
     if (sujo) {
+      revisaoGravada.current = null;
       const salvou = await salvar();
       if (!salvou) return;
+      if (revisaoGravada.current !== null) revisao = revisaoGravada.current;
     }
     setSalvando(true);
     setErro(null);
     try {
       await apiClient.post<ApiSuccess<{ id: string; numero: number; ano: number; message_id: string }>>(
         `/api/v1/proposals/${id}/send`,
-        {},
+        typeof revisao === "number" ? { revision: revisao } : {},
       );
       const res = await apiClient.get<ApiSuccess<Proposta>>(`/api/v1/proposals/${id}`);
       ultimaGravacao.current = assinaturaDoRascunho(res.data);
       setProposta(res.data);
     } catch (e) {
-      setErro(t("Não foi possível enviar. Confira se você tem papel de gestor."));
+      setErro(
+        e instanceof ApiError && e.status === 409
+          ? t("A proposta mudou ou já está sendo enviada. Recarregue e confira antes de enviar.")
+          : t("Não foi possível enviar. Confira se você tem papel de gestor."),
+      );
       showApiError(e);
     } finally {
       setSalvando(false);
@@ -446,6 +479,7 @@ export function ProposalEditorClient({ id, podeEditar, podeRevisar = false }: { 
         emRascunho={proposta.status === "rascunho"}
         versao={versaoDoDocumento}
         onModeloConfirmado={(slug) => setProposta((p) => p && { ...p, template_slug: slug })}
+        onDocumentoGravado={() => void relerRevisao()}
       />
 
       <div className="space-y-2">

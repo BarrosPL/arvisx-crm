@@ -172,6 +172,13 @@ export interface ResultadoDaSincronizacao {
      */
     | "fora_do_escopo"
     /**
+     * A etapa de destino tem DONO, e não é este agente (Equipe pronta: cada
+     * etapa da equipe é movida por um papel). Estado legítimo do produto, como
+     * os do primeiro grupo: nada falhou, e o card anda quando o colega certo
+     * assumir. Quem decide é `podeMoverPara`, injetado por quem chama.
+     */
+    | "etapa_de_outro_papel"
+    /**
      * A etapa de destino é de PERDA e o motivo não vem do agente (issue #917).
      *
      * Estado legítimo do produto como os do primeiro grupo — ninguém errou e o
@@ -229,6 +236,13 @@ export async function sincronizaEstagioDoAgente(
      * caminho que ainda não foi migrado, em silêncio.
      */
     escopoDeFunis?: readonly string[];
+    /**
+     * Uma regra a mais sobre o DESTINO, de quem chama. Ausente = sem regra a
+     * mais, e nada muda. É por onde o motor aplica o dono de etapa dos agentes
+     * da Equipe pronta (`lib/ai/equipe-pronta/dono-de-etapa.ts`) sem que este
+     * arquivo conheça papel nenhum.
+     */
+    podeMoverPara?: (alvo: { pipelineId: string; fromStageId: string; toStageId: string }) => Promise<boolean>;
   },
 ): Promise<ResultadoDaSincronizacao> {
   // ⚠️ O erro do SELECT É LIDO, e isso não é zelo: o supabase-js NÃO LANÇA em
@@ -325,6 +339,17 @@ export async function sincronizaEstagioDoAgente(
       // warn-only, sem aviso) e por isso não carregam nome.
       ...(destino.motivo === "perda_sem_motivo" ? { stageName: destino.stageName } : {}),
     };
+  }
+
+  if (
+    input.podeMoverPara !== undefined &&
+    !(await input.podeMoverPara({
+      pipelineId: lead.pipeline_id,
+      fromStageId: lead.stage_id,
+      toStageId: destino.stageId,
+    }))
+  ) {
+    return { moveu: false, motivo: "etapa_de_outro_papel", leadId: lead.id };
   }
 
   // ── A RÉGUA DE CAMPOS OBRIGATÓRIOS (issue #1536) ────────────────────────────

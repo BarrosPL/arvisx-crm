@@ -28,6 +28,11 @@ import { audit } from "@/lib/audit";
 import { nomesDosAtendentesCom } from "@/lib/users/nome-do-atendente";
 import type { McpContext, McpToolDefinition } from "../types";
 import { ApiError } from "@/lib/api/types";
+import {
+  conferirCriacaoDaEquipe,
+  conferirMovimentoDaEquipe,
+  conferirReaberturaDaEquipe,
+} from "@/lib/ai/equipe-pronta/dono-de-etapa";
 
 /**
  * A recusa ÚNICA das leituras de negócio durante um turno: negócio de outro
@@ -325,6 +330,34 @@ export const crmCreateLead: McpToolDefinition<typeof createInputShape> = {
   requiresRole: "agent",
   requiresScope: "mcp:write",
   handler: async (input, ctx) => {
+    // ── EQUIPE PRONTA: um negócio aberto por contato, e cada etapa com dono ──
+    //
+    // Só para agente marcado como da Equipe pronta (a marca é lida do cadastro,
+    // pelo `agent_id` do ator). Token de agente externo e os demais agentes
+    // nativos recebem "segue" e criam como sempre criaram.
+    const daEquipe = await conferirCriacaoDaEquipe(
+      { supabase: ctx.supabase, organizationId: ctx.organizationId, actor: ctx.actor },
+      {
+        pipelineId: input.pipeline_id,
+        stageId: input.stage_id,
+        contactId: input.contact_id ?? ctx.contatoDoTurno ?? null,
+      },
+    );
+    if (daEquipe.tipo === "recusa") return daEquipe.recusa;
+    if (daEquipe.tipo === "ja_existe") {
+      const existente = await getLeadHandler(
+        ctx.supabase,
+        { organization_id: ctx.organizationId, actor: ctx.actor, requestId: ctx.requestId },
+        daEquipe.leadId,
+      );
+      return {
+        lead: existente,
+        ja_existia: true,
+        mensagem:
+          "este contato já tem um negócio aberto neste funil: nenhum outro foi criado. " +
+          "Use este (`lead.id`) e atualize-o com `crm_update_lead`.",
+      };
+    }
     const parsed = createLeadSchema.parse({
       pipeline_id: input.pipeline_id,
       stage_id: input.stage_id,
@@ -513,6 +546,16 @@ export const crmMoveLeadStage: McpToolDefinition<typeof moveInputShape> = {
   requiresRole: "agent",
   requiresScope: "mcp:write",
   handler: async (input, ctx) => {
+    // Dono de etapa (só agente da Equipe pronta; os demais seguem sem mudança).
+    const recusaDaEquipe = await conferirMovimentoDaEquipe(
+      { supabase: ctx.supabase, organizationId: ctx.organizationId, actor: ctx.actor },
+      {
+        leadId: input.lead_id,
+        toStageId: input.to_stage_id,
+        temMotivoDaPerda: (input.lost_reason ?? "").trim() !== "",
+      },
+    );
+    if (recusaDaEquipe) return recusaDaEquipe;
     const lead = await moveLeadHandler(
       ctx.supabase,
       {
@@ -560,6 +603,13 @@ export const crmRetomarLead: McpToolDefinition<typeof retomarInputShape> = {
   requiresRole: "agent",
   requiresScope: "mcp:write",
   handler: async (input, ctx) => {
+    // Reabrir é de quem cuida da retomada (só entre os agentes da Equipe pronta).
+    const recusaDaEquipe = await conferirReaberturaDaEquipe({
+      supabase: ctx.supabase,
+      organizationId: ctx.organizationId,
+      actor: ctx.actor,
+    });
+    if (recusaDaEquipe) return recusaDaEquipe;
     const lead = await retomarLeadHandler(
       ctx.supabase,
       {

@@ -92,6 +92,7 @@ import type { ProviderRegistry } from '../edge/llm/providers';
 import { HANDOFF_REASON_ORCAMENTO } from '../edge/llm/orcamento';
 import { bindingOuNulo } from '../edge/llm/binding-do-ponto';
 import { abreAvisoDoEspelhoRecusado, mirrorLeadStageToCrm } from '../edge/crm/move-lead-stage';
+import { espelhoPodeMoverPara } from '@/lib/ai/equipe-pronta/dono-de-etapa';
 import { insertInboxItem } from '../db/repository';
 import { criarConferidorDeAfirmacoes } from '@/lib/ai/decisao/afirmacao-de-fato';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -5218,6 +5219,20 @@ async function executarTurnoDoAgente(
               leadId,
               toStage: update.transition.to,
               ...(agentConfig !== null ? { pipelineIds: agentConfig.pipelineIds } : {}),
+              // Dono de etapa: só tem efeito para agente da Equipe pronta.
+              ...(agentConfig !== null
+                ? {
+                    podeMoverPara: (alvo: { pipelineId: string; fromStageId: string; toStageId: string }) =>
+                      espelhoPodeMoverPara(
+                        {
+                          supabase: deps.crmCfg.supabase,
+                          organizationId: tenantId,
+                          actor: { type: 'ai_agent', id: agentConfig.agentId, role: 'agent', agent_id: agentConfig.agentId },
+                        },
+                        alvo,
+                      ),
+                  }
+                : {}),
               ...(update.transition.reason !== undefined
                 ? { reason: update.transition.reason }
                 : {}),

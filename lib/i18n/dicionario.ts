@@ -10109,6 +10109,24 @@ export const DICIONARIO: Traducoes = {
   "Propor a próxima ação do negócio": { es: "Proponer la próxima acción del negocio" },
   "Deixa no cartão do negócio a próxima ação sugerida pelo agente, para uma pessoa da equipe aprovar ou descartar. Nada é executado sozinho.": { es: "Deja en la tarjeta del negocio la próxima acción sugerida por el agente, para que una persona del equipo la apruebe o la descarte. Nada se ejecuta solo." },
   // ─── Superfície de agente (PR 2): consulta de proposta ───
+  // ─── Equipe pronta v2: gravar no cadastro e enviar proposta ───
+  "Gravar dado no cadastro do contato": { es: "Guardar un dato en la ficha del contacto" },
+  "Grava direto no cadastro o que a pessoa informou na conversa: nome, e-mail, outro telefone, documento, endereço, data de nascimento e campos personalizados. Só preenche o que está vazio: o que já tem valor não é trocado e fica para a equipe conferir. O documento nunca é mostrado.": { es: "Guarda directamente en la ficha lo que la persona informó en la conversación: nombre, correo, otro teléfono, documento, dirección, fecha de nacimiento y campos personalizados. Solo completa lo que está vacío: lo que ya tiene valor no se cambia y queda para que el equipo lo revise. El documento nunca se muestra." },
+  "Enviar proposta ao cliente": { es: "Enviar propuesta al cliente" },
+  "Envia ao cliente, na conversa, a proposta que estava em rascunho. Só sai a proposta que a sua equipe aprovou ou, se a empresa permitir, a que tem só itens do catálogo, com o preço do catálogo e sem desconto.": { es: "Envía al cliente, en la conversación, la propuesta que estaba en borrador. Solo sale la propuesta que su equipo aprobó o, si la empresa lo permite, la que tiene solo ítems del catálogo, con el precio del catálogo y sin descuento." },
+  // O envio da proposta saiu da rota para `lib/propostas/enviar-proposta.ts`.
+  "Proposta não encontrada.": { es: "Propuesta no encontrada." },
+  "Esta proposta não pode ser enviada neste estado.": { es: "Esta propuesta no puede enviarse en este estado." },
+  "A proposta mudou ou já está sendo enviada. Recarregue e confira antes de enviar.": {
+    es: "La propuesta cambió o ya se está enviando. Recarga y revisa antes de enviar.",
+  },
+  "A proposta não tem itens.": { es: "La propuesta no tiene ítems." },
+  "Nenhuma conversa com este contato para enviar.": { es: "No hay ninguna conversación con este contacto para enviar." },
+  "Fora do horário de envio configurado. Tente novamente mais tarde.": { es: "Fuera del horario de envío configurado. Inténtelo de nuevo más tarde." },
+  "Limite diário de mensagens desta conexão foi atingido.": { es: "Se alcanzó el límite diario de mensajes de esta conexión." },
+  "Passagem entre colegas": { es: "Traspaso entre colegas" },
+  "Os agentes deste roteador passam a vez um para o outro": { es: "Los agentes de este enrutador se pasan el turno entre sí" },
+  "Quando o assunto muda, o agente passa a conversa para o colega certo, com o motivo e um resumo. O cliente não é avisado da troca.": { es: "Cuando el tema cambia, el agente pasa la conversación al colega correcto, con el motivo y un resumen. El cliente no es avisado del cambio." },
   "Consultar proposta comercial": { es: "Consultar propuesta comercial" },
   "Mostra em que situação está a proposta de um negócio, até quando ela vale, os itens e o valor total, com um acesso temporário ao documento enviado.": { es: "Muestra en qué situación está la propuesta de un negocio, hasta cuándo es válida, los ítems y el valor total, con un acceso temporal al documento enviado." },
   "Listar funis": { es: "Listar embudos" },

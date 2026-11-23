@@ -50,6 +50,8 @@ export type DonoDoCampo =
   | "tarefa"
   /** `messages.contact_id`: a mensagem que trouxe o arquivo é da conversa deste contato. */
   | "mensagem"
+  /** `crm_proposals.contact_id`: a proposta é do cliente da conversa. */
+  | "proposta"
   /** Não é registro de cliente: funil, etapa, usuário, fluxo. */
   | "configuracao";
 
@@ -71,6 +73,7 @@ export const ESCOPO_DAS_ESCRITAS: Readonly<Record<string, Readonly<Record<string
 
   // ---- contato e conversa ----
   crm_propose_contact_field: { contact_id: "contato" },
+  crm_update_contact: { contact_id: "contato" },
   crm_create_conversation_draft: { conversation_id: "conversa" },
   crm_assign_conversation: { conversation_id: "conversa", to_user_id: "configuracao" },
   // #3881: a conversa vem do TURNO (o modelo não escolhe em qual conversa
@@ -105,6 +108,8 @@ export const ESCOPO_DAS_ESCRITAS: Readonly<Record<string, Readonly<Record<string
   crm_close_demand: { lead_id: "negocio" },
   crm_propose_reactivation: { lead_id: "negocio" },
   crm_draft_proposal: { lead_id: "negocio", conversation_id: "conversa" },
+  // Fala com o cliente: só a proposta do cliente DESTA conversa.
+  crm_send_proposal: { proposal_id: "proposta" },
   // #3316 — proposta de campo lida num documento: só o card (o proposto entra
   // em `lead_field_proposals`, nunca no card; confirma quem atende na tela).
   crm_propose_lead_fields_from_document: {
@@ -212,6 +217,8 @@ async function campoEhDoContato(
     }
     case "mensagem":
       return existeDoContato(supabase, "messages", organizationId, contato, id);
+    case "proposta":
+      return existeDoContato(supabase, "crm_proposals", organizationId, contato, id);
     case "tarefa": {
       // Duas consultas sempre, exista a tarefa ou não: a da tarefa e a do
       // negócio dela — a resposta não distingue "não existe" de "é de outro

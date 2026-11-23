@@ -323,6 +323,8 @@ export async function mirrorLeadStageToCrm(
     reason?: string;
     /** Funis autorizados na versão publicada; ausente só no caminho legado. */
     pipelineIds?: readonly string[];
+    /** Regra a mais sobre a etapa de destino (dono de etapa); ausente = sem regra. */
+    podeMoverPara?: (alvo: { pipelineId: string; fromStageId: string; toStageId: string }) => Promise<boolean>;
   },
   deps: Deps = {},
 ): Promise<MirrorResult> {
@@ -336,6 +338,7 @@ export async function mirrorLeadStageToCrm(
       contactId: input.leadId,
       passo: input.toStage,
       ...(input.pipelineIds !== undefined ? { escopoDeFunis: input.pipelineIds } : {}),
+      ...(input.podeMoverPara !== undefined ? { podeMoverPara: input.podeMoverPara } : {}),
     });
 
     if (r.moveu || r.motivo === 'ja_esta_la') return { ok: true };
@@ -370,6 +373,11 @@ export async function mirrorLeadStageToCrm(
       ambiguo: {
         reason: 'not_configured',
         detail: 'o contato tem mais de um negócio aberto — nenhum foi movido',
+      },
+      // Estado normal: a etapa é de outro agente do mesmo número. Sem aviso.
+      etapa_de_outro_papel: {
+        reason: 'not_configured',
+        detail: 'a etapa de destino é movida por outro agente da equipe',
       },
       conflito_humano: {
         reason: 'human_conflict',

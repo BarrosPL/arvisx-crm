@@ -19,6 +19,7 @@
  * de nicho, valor em moeda ou hora.
  */
 import type { LeadStage } from "@/lib/agent-engine/agent/lead-state";
+import type { ChaveDeEtapa } from "./etapas";
 
 export const PAPEIS_DA_EQUIPE = ["sdr", "agendamento", "proposta", "recuperador"] as const;
 export type PapelId = (typeof PAPEIS_DA_EQUIPE)[number];
@@ -90,8 +91,8 @@ export interface EtapaDoFunil {
 export interface ContextoDaInstalacao {
   /** O tipo de agenda principal. `null` = a empresa não agenda. */
   agenda: { id: string; slug: string; nome: string } | null;
-  /** O funil da equipe e as etapas marcadas por passo. */
-  funil: { id: string; nome: string; etapas: Partial<Record<PassoDaEquipe, EtapaDoFunil>> } | null;
+  /** O funil da equipe e a etapa real de cada chave (`etapas.ts`). */
+  funil: { id: string; nome: string; etapas: Partial<Record<ChaveDeEtapa, EtapaDoFunil>> } | null;
   /** A fonte "Política comercial e perguntas frequentes". */
   knowledgeSourceIds: readonly string[];
   /** O ponteiro do fluxo de follow-up do Recuperador. */

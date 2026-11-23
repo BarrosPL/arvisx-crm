@@ -134,6 +134,7 @@ function montarMundoDeEnvio(opts: MundoOpts = {}) {
     ano: null,
     versao: 1,
     status: "rascunho",
+    revision: 1,
     titulo: "Proposta de Teste",
     condicoes: "Condições",
     // Relativa ao relógio, nunca fixa. O envio só agenda o retorno se "agora + followupDias"
@@ -245,25 +246,30 @@ function montarMundoDeEnvio(opts: MundoOpts = {}) {
           update: (dados: unknown) => {
             let alvoId: string | null = null;
             let statusFiltro: string | undefined;
-            // Mimetiza o WHERE do Postgres: um `.eq("status", X)` só deixa o
-            // UPDATE valer se a linha ainda estiver naquele status — 0 linhas
-            // afetadas (sem erro) quando não bate, nunca sobrescreve.
+            let revisaoFiltro: number | undefined;
+            // Mimetiza o WHERE do Postgres: um `.eq("status", X)` (ou
+            // `.eq("revision", N)`) só deixa o UPDATE valer se a linha ainda
+            // estiver naquele status e naquela revisão — 0 linhas afetadas (sem
+            // erro) quando não bate, nunca sobrescreve.
             const bateFiltro = (linha: Proposta | undefined) =>
-              statusFiltro === undefined || linha?.status === statusFiltro;
-            const aplicar = () => {
+              (statusFiltro === undefined || linha?.status === statusFiltro) &&
+              (revisaoFiltro === undefined || Number(linha?.revision) === revisaoFiltro);
+            const aplicar = (): boolean => {
               const linha = alvoId ? propostasNoMock[alvoId] : undefined;
-              if (!bateFiltro(linha)) return;
+              if (!bateFiltro(linha)) return false;
               updatesCrmProposals.push({ id: alvoId, dados });
               if (linha) {
                 Object.assign(linha, dados as object);
                 if (alvoId === PROPOSTA_ID) propostaEnviada = { ...linha };
               }
+              return true;
             };
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const cadeia: any = {
               eq(campo: string, valor: unknown) {
                 if (campo === "id") alvoId = valor as string;
                 if (campo === "status") statusFiltro = valor as string;
+                if (campo === "revision") revisaoFiltro = Number(valor);
                 return cadeia;
               },
               select() {
@@ -271,6 +277,12 @@ function montarMundoDeEnvio(opts: MundoOpts = {}) {
                   single: async () => {
                     aplicar();
                     return { data: alvoId ? (propostasNoMock[alvoId] ?? null) : null, error: null };
+                  },
+                  // O compare-and-set da entrada em `enviando`: nulo quando o
+                  // WHERE não casa linha nenhuma.
+                  maybeSingle: async () => {
+                    const casou = aplicar();
+                    return { data: casou && alvoId ? (propostasNoMock[alvoId] ?? null) : null, error: null };
                   },
                 };
               },
@@ -489,9 +501,17 @@ function montarMundoDeEnvio(opts: MundoOpts = {}) {
     get updatesCrmProposals() { return updatesCrmProposals; },
     get atualizacoesDeMensagem() { return atualizacoesDeMensagem; },
     obterProposta(id: string) { return propostasNoMock[id]; },
-    async POST() {
+    async POST(corpo?: unknown) {
       const { POST } = await import("./route");
-      return POST(new NextRequest(`http://localhost/api/v1/proposals/${PROPOSTA_ID}/send`), { params: Promise.resolve({ id: PROPOSTA_ID }) });
+      const pedido =
+        corpo === undefined
+          ? new NextRequest(`http://localhost/api/v1/proposals/${PROPOSTA_ID}/send`)
+          : new NextRequest(`http://localhost/api/v1/proposals/${PROPOSTA_ID}/send`, {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify(corpo),
+            });
+      return POST(pedido, { params: Promise.resolve({ id: PROPOSTA_ID }) });
     },
   };
 }
@@ -605,6 +625,80 @@ describe("POST /api/v1/proposals/[id]/send", () => {
     expect(mundo.numeroFoiAlocado).toBe(false);
     expect(mundo.propostaEnviada?.numero).toBe(42);
     expect(mundo.propostaEnviada?.status).toBe("enviada");
+  });
+
+  // ─── Revisão de 20/11, itens 2.1 e 2.9: a entrada em `enviando` é um
+  // compare-and-set (ainda rascunho, ainda na revisão conferida) ───
+  it("⭐ dois pedidos simultâneos: a proposta sai UMA vez; quem perde a entrada recebe 409 e não envia", async () => {
+    const mundo = montarMundoDeEnvio({ papel: "manager" });
+    const respostas = await Promise.all([mundo.POST(), mundo.POST()]);
+    expect(respostas.map((r) => r.status).sort()).toEqual([200, 409]);
+    expect(mocks.sendMessageHandler).toHaveBeenCalledTimes(1);
+    expect(mocks.alocarNumero).toHaveBeenCalledTimes(1);
+    const recusada = respostas.find((r) => r.status === 409)!;
+    expect(await recusada.json()).toMatchObject({ error: { code: "proposal_context_stale" } });
+  });
+
+  it("⭐ reenvio em dobro depois de uma falha (número já retido): o contador não era guarda, o CAS é", async () => {
+    const mundo = montarMundoDeEnvio({
+      papel: "manager",
+      propostaOriginal: { status: "rascunho", numero: 42, ano: 2026, ultima_falha_envio: "canal desconectado" },
+    });
+    const respostas = await Promise.all([mundo.POST(), mundo.POST()]);
+    expect(respostas.map((r) => r.status).sort()).toEqual([200, 409]);
+    expect(mocks.sendMessageHandler).toHaveBeenCalledTimes(1);
+    expect(mundo.numeroFoiAlocado).toBe(false);
+  });
+
+  it("⭐ a tela manda a revisão que mostrava; rascunho que já está em outra revisão: 409, nada alocado nem enviado", async () => {
+    const mundo = montarMundoDeEnvio({ papel: "manager", propostaOriginal: { revision: 4 } });
+    const res = await mundo.POST({ revision: 3 });
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({ error: { code: "proposal_context_stale" } });
+    expect(mundo.numeroFoiAlocado).toBe(false);
+    expect(mundo.pdfFoiGerado).toBe(false);
+    expect(mundo.mensagemEnviada).toBe(false);
+    expect(mundo.obterProposta(PROPOSTA_ID)?.status).toBe("rascunho");
+  });
+
+  it("revisão esperada igual à atual: envia", async () => {
+    const mundo = montarMundoDeEnvio({ papel: "manager", propostaOriginal: { revision: 4 } });
+    const res = await mundo.POST({ revision: 4 });
+    expect(res.status).toBe(200);
+    expect(mundo.propostaEnviada?.status).toBe("enviada");
+  });
+
+  it("⭐ rascunho editado ENTRE a conferência e a entrada em `enviando`: 409, nada sai (corrida aprovar × editar)", async () => {
+    const mundo = montarMundoDeEnvio({ papel: "manager" });
+    // A edição acontece depois da leitura e das conferências, antes do CAS:
+    // é o banco (migration 9815) quem soma a revisão a cada edição.
+    mocks.checkDailyLimit.mockImplementation(async () => {
+      const linha = mundo.obterProposta(PROPOSTA_ID)!;
+      linha.revision = Number(linha.revision) + 1;
+      return { allowed: true };
+    });
+    const res = await mundo.POST();
+    expect(res.status).toBe(409);
+    expect(mundo.numeroFoiAlocado).toBe(false);
+    expect(mundo.mensagemEnviada).toBe(false);
+    expect(mundo.obterProposta(PROPOSTA_ID)?.status).toBe("rascunho");
+  });
+
+  it("revisão que não é número inteiro positivo no corpo: 422, nada é lido", async () => {
+    const mundo = montarMundoDeEnvio({ papel: "manager" });
+    expect((await mundo.POST({ revision: "3" })).status).toBe(422);
+    expect((await mundo.POST({ revision: 0 })).status).toBe(422);
+    expect(mundo.mensagemEnviada).toBe(false);
+  });
+
+  it("o contador de número falha depois de entrar em `enviando`: volta a rascunho na hora, com o motivo", async () => {
+    const mundo = montarMundoDeEnvio({ papel: "manager" });
+    mocks.alocarNumero.mockRejectedValue(new Error("contador indisponível"));
+    const res = await mundo.POST();
+    expect(res.status).toBe(200);
+    expect(mundo.obterProposta(PROPOSTA_ID)).toMatchObject({ status: "rascunho", ultima_falha_envio: "contador indisponível" });
+    expect(mundo.pdfFoiGerado).toBe(false);
+    expect(mundo.mensagemEnviada).toBe(false);
   });
 
   it("throttle: adiarAteAJanelaAbrir e checkDailyLimit são chamados ANTES de alocar numero/gerar PDF", async () => {
@@ -971,7 +1065,11 @@ describe("P1 — o documento chega ao cliente", () => {
   // recorrer a ele, porque o arquivo que ele produz não tem as seções do
   // modelo, e a proposta nem podia chegar lá (é recusada antes).
   it("o envio não importa mais o gerador legado de PDF", () => {
-    const fonte = readFileSync("app/api/v1/proposals/[id]/send/route.ts", "utf8");
+    // A regra do envio saiu da rota para `lib/propostas/enviar-proposta.ts`
+    // (a ferramenta dos agentes usa a mesma): as duas fontes são lidas.
+    const fonte =
+      readFileSync("app/api/v1/proposals/[id]/send/route.ts", "utf8") +
+      readFileSync("lib/propostas/enviar-proposta.ts", "utf8");
     expect(fonte).not.toMatch(/propostas\/pdf"/);
     expect(fonte).not.toMatch(/renderPropostaPdf\(/);
   });
@@ -979,8 +1077,10 @@ describe("P1 — o documento chega ao cliente", () => {
   // C2: a prévia e o envio montam o PDF pela MESMA função. Duas cópias
   // divergem, e a divergência é invisível na tela.
   it("o PDF do envio sai da função compartilhada com a prévia", () => {
-    const fonte = readFileSync("app/api/v1/proposals/[id]/send/route.ts", "utf8");
+    const fonte = readFileSync("lib/propostas/enviar-proposta.ts", "utf8");
     expect(fonte).toMatch(/montarPdfDaProposta/);
+    // E a rota não monta PDF nenhum por conta própria: chama a função do envio.
+    expect(readFileSync("app/api/v1/proposals/[id]/send/route.ts", "utf8")).toMatch(/enviarProposta\(/);
   });
 
   it("sem modelo confirmado: o PDF legado não é gerado — o cliente nunca recebe o arquivo sem as seções do modelo (C1)", async () => {
