@@ -11,10 +11,19 @@
  * ─── Dois caminhos, uma regra ───────────────────────────────────────────────
  * A TELA (`POST /api/v1/contacts/merge`) chama `fn_mesclar_contatos` com a
  * sessão do usuário, como sempre.
- * O AGENTE (`crm_merge_contacts`) chama `fn_mesclar_contatos_com_registro`
- * (migration 9813), que tira o retrato, chama a MESMA `fn_mesclar_contatos` e
- * grava em `fusoes_de_contatos` o que mudou de ficha. É esse registro que
+ * A JUNÇÃO COM REGISTRO é `fn_mesclar_contatos_com_registro` (migration 9813),
+ * que tira o retrato, chama a MESMA `fn_mesclar_contatos` e grava em
+ * `fusoes_de_contatos` o que mudou de ficha. É esse registro que
  * `fn_desfazer_fusao_de_contatos` lê para voltar atrás.
+ *
+ * ⚠️ Hoje a junção com registro NÃO TEM PORTA. Quem a chamava eram as
+ * ferramentas `crm_merge_contacts` e `crm_undo_contact_merge`, que saíram do MCP
+ * por decisão do dono (revisão 20/11, item 1.2, Opção A, 23/11). As funções do
+ * banco e os envoltórios daqui (`mesclarContatosComRegistro`,
+ * `desfazerFusaoDeContatos`, `registroAbertoDaFusao`) ficaram para a tela poder
+ * passar a usá-los. A diferença de regra entre as duas funções (a com registro
+ * recusa contato pessoal e de grupo; a da tela não) está em
+ * `docs/arvisx/SUPERFICIE-DE-AGENTE.md`, "Contatos duplicados".
  *
  * A organização vem sempre de quem chama (a sessão ou o token).
  */

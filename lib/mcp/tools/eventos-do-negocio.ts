@@ -49,7 +49,8 @@ export const crmListLeadEvents: McpToolDefinition<typeof eventosInputShape> = {
     "responsável, tag e campo, nota, tarefa e o resto (`outro`), com autor (`is_self`: foi " +
     "você) e texto inteiro. Mensagem " +
     "não entra: leia a conversa. Repita com o `cursor` enquanto `has_more` for true (a página pode " +
-    "vir menor que o limite).",
+    "vir menor que o limite, até vazia). Troca de responsável sai com autor `nao_registrado`, que " +
+    "`author` nunca casa.",
   inputSchema: eventosInputShape,
   category: "read",
   requiresRole: "agent",

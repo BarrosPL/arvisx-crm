@@ -15,7 +15,6 @@ import type { Actor, HandlerCtx } from "@/lib/api/handlers/types";
 import { audit } from "@/lib/audit";
 import { normalizarTag } from "@/lib/contacts/tag-normalizada";
 import { traduzir } from "@/lib/i18n/dicionario";
-import { arrayDeUmValorParaOr } from "@/lib/inbox/marcador-da-conversa";
 import { resolveOwnerPatch, type OwnerPatch, type OwnerPatchInput } from "@/lib/leads/owner-patch";
 import { emitLeadActivity, stageChangeReason } from "@/lib/leads/activity-emitter";
 import { listaLegivel } from "@/lib/leads/activity-vocabulary";
@@ -388,18 +387,36 @@ function instanteUtc(iso: string): string {
 }
 
 /**
- * `{"tag"}` — o literal de array do Postgres para `cs` (contém). A tag vai
- * entre aspas, com `"` e `\` escapados: marcador é texto livre e aceita
+ * `{"tag","Tag"}` — o literal de array do Postgres para `ov` (tem alguma). Cada
+ * tag vai entre aspas, com `"` e `\` escapados: marcador é texto livre e aceita
  * vírgula e chave, que sem as aspas virariam separador de elemento.
  */
-function arrayDeUmaTag(tag: string): string {
-  return `{"${tag.replace(/[\\"]/g, (c) => `\\${c}`)}"}`;
+function arrayDeTags(tags: readonly string[]): string {
+  return `{${tags.map((tag) => `"${tag.replace(/[\\"]/g, (c) => `\\${c}`)}"`).join(",")}}`;
 }
 
-/** A tag como foi pedida e, se diferente, na forma normalizada (minúsculas, 40 caracteres). */
+/**
+ * As grafias de caixa em que a tag é procurada (revisão 20/11, item 2.27).
+ *
+ * `crm_leads.tags` é `text[]` e o `ov`/`cs` do PostgREST compara byte a byte: não há
+ * como pedir "sem diferenciar caixa" sem uma função no banco. A tela grava a tag
+ * do negócio como foi digitada e `crm_manage_tags` grava em minúsculas, então o
+ * filtro procura as formas em que uma pessoa escreve o mesmo nome: a pedida, a
+ * normalizada (minúsculas, 40 caracteres), MAIÚSCULAS, Inicial maiúscula e
+ * Iniciais Maiúsculas. Sem isso, `sem_tag: "vip"` devolvia o negócio com "VIP"
+ * como se ele não tivesse a tag.
+ *
+ * LIMITE: caixa misturada fora dessas formas ("viP") só casa se pedida igual.
+ * Está na descrição da ferramenta e em `docs/arvisx/SUPERFICIE-DE-AGENTE.md`.
+ */
 function formasDaTag(tag: string): string[] {
   const pedida = tag.trim();
-  return [...new Set([pedida, normalizarTag(pedida)])].filter((t) => t !== "");
+  const minusculas = pedida.toLowerCase();
+  const inicial = minusculas.replace(/^\p{L}/u, (c) => c.toUpperCase());
+  const iniciais = minusculas.replace(/(^|[^\p{L}\p{N}])(\p{L})/gu, (_, antes: string, c: string) => antes + c.toUpperCase());
+  return [...new Set([pedida, normalizarTag(pedida), minusculas, pedida.toUpperCase(), inicial, iniciais])].filter(
+    (t) => t !== "",
+  );
 }
 
 interface LeadCursor {
@@ -461,17 +478,11 @@ export async function listLeadsHandler(
     );
   }
   // A tag do negócio é gravada como veio pela tela e em minúsculas pelo
-  // `crm_manage_tags`: o filtro casa as duas grafias (`formasDaTag`).
-  if (q.tag) {
-    const formas = formasDaTag(q.tag);
-    query =
-      formas.length === 1
-        ? query.filter("tags", "cs", arrayDeUmaTag(formas[0]!))
-        : query.or(formas.map((f) => `tags.cs.${arrayDeUmValorParaOr(f)}`).join(","));
-  }
-  if (q.sem_tag) {
-    for (const forma of formasDaTag(q.sem_tag)) query = query.not("tags", "cs", arrayDeUmaTag(forma));
-  }
+  // `crm_manage_tags`: o filtro casa as grafias de caixa comuns (`formasDaTag`).
+  // `ov` (o `&&` do Postgres): o negócio tem ALGUMA das grafias. Um filtro só,
+  // fora do `or=`, que o índice GIN de `tags` atende.
+  if (q.tag) query = query.filter("tags", "ov", arrayDeTags(formasDaTag(q.tag)));
+  if (q.sem_tag) query = query.not("tags", "ov", arrayDeTags(formasDaTag(q.sem_tag)));
   // Negócio de pessoal não é listado (spec 21, etapa 12 — leitura exclui):
   // a MESMA primitiva de ids da lista do inbox (`conversations/_handler.ts`),
   // antes do limite, para cursor e `has_more` descreverem o conjunto visível.

@@ -158,12 +158,6 @@ export const ALVO_DE_FUNIL: Record<string, AlvoDeFunil> = {
   // tests/unit/capacidade-alcancavel-pelo-agente.test.ts), então o escopo de
   // funil nunca chega a ser perguntado para ela.
   crm_start_conversation_and_send: "sem_funil",
-  // Juntar contatos e desfazer a junção (ajustes, AJ-3) operam por contato e
-  // mudam o dono de negócios de QUALQUER funil. A barreira é a mesma da linha
-  // de cima: `requiresRole: manager` + `apenasHumano` as tiram do alcance do
-  // agente publicado, então o escopo de funil nunca chega a ser perguntado.
-  crm_merge_contacts: "sem_funil",
-  crm_undo_contact_merge: "sem_funil",
   crm_add_case_note: "sem_funil",
   crm_close_human_case: "sem_funil",
   crm_assign_conversation: "sem_funil",

@@ -137,15 +137,39 @@ describe("crm_list_leads: filtros de tempo", () => {
 });
 
 describe("crm_list_leads: filtros de tag", () => {
-  it("`tag`: casa a grafia pedida e a forma em minúsculas", async () => {
+  it("`tag`: não diferencia caixa nas grafias comuns (revisão 20/11, item 2.27)", async () => {
     expect(ids(await listar({ tag: "VIP" }))).toEqual([L2, L1]);
-    expect(ids(await listar({ tag: "vip" }))).toEqual([L1]);
+    expect(ids(await listar({ tag: "vip" }))).toEqual([L2, L1]);
+    expect(ids(await listar({ tag: "Vip" }))).toEqual([L2, L1]);
     expect(ids(await listar({ tag: " frio " }))).toEqual([L4, L2]);
   });
 
   it("`sem_tag`: fora os que têm a tag, em qualquer das duas grafias", async () => {
     expect(ids(await listar({ sem_tag: "VIP" }))).toEqual([L5, L4, L3]);
     expect(ids(await listar({ sem_tag: "frio" }))).toEqual([L5, L3, L1]);
+  });
+
+  it("⭐ `sem_tag` em minúsculas não devolve quem tem a tag em MAIÚSCULAS (revisão 20/11, item 2.27)", async () => {
+    // O pior caso da revisão: `sem_tag: "vip"` devolvia o negócio com "VIP"
+    // como se ele não tivesse a tag.
+    expect(ids(await listar({ sem_tag: "vip" }))).toEqual([L5, L4, L3]);
+    expect(ids(await listar({ sem_tag: "Vip" }))).toEqual([L5, L4, L3]);
+    expect(ids(await listar({ sem_tag: "FRIO" }))).toEqual([L5, L3, L1]);
+  });
+
+  it("tag de mais de uma palavra: minúsculas, MAIÚSCULAS, Inicial maiúscula e Iniciais Maiúsculas", async () => {
+    const leads = banco.tabelas.crm_leads!;
+    leads.find((l) => l.id === L3)!.tags = ["Cliente Vip"];
+    leads.find((l) => l.id === L4)!.tags = ["Cliente vip"];
+    leads.find((l) => l.id === L5)!.tags = ["CLIENTE VIP"];
+    expect(ids(await listar({ tag: "cliente vip" }))).toEqual([L5, L4, L3]);
+    expect(ids(await listar({ sem_tag: "cliente vip" }))).toEqual([L2, L1]);
+  });
+
+  it("LIMITE documentado: grafia de caixa misturada fora dessas formas só casa se pedida igual", async () => {
+    banco.tabelas.crm_leads!.find((l) => l.id === L3)!.tags = ["viP"];
+    expect(ids(await listar({ tag: "vip" }))).toEqual([L2, L1]);
+    expect(ids(await listar({ tag: "viP" }))).toEqual([L3, L2, L1]);
   });
 
   it("tag com vírgula é um nome só, não uma lista", async () => {

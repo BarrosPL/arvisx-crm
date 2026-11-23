@@ -9,10 +9,10 @@ import { countAs, GOV_AGENT_A, sql } from "./gov-helpers";
  *
  * O que este arquivo executa é o SQL de verdade, contra o Postgres do
  * `scripts/test-db.sh` (baseline aplicado, como o kit self-host instala):
- * `fn_mesclar_contatos_com_registro` e `fn_desfazer_fusao_de_contatos`. A
- * ferramenta (`crm_merge_contacts`, `crm_undo_contact_merge`) é medida em
- * `tests/unit/mcp-contatos-duplicados.test.ts`, com as duas funções trocadas por
- * dublê: papel, recusas e auditoria. Aqui se mede o que o dublê não sabe:
+ * `fn_mesclar_contatos_com_registro` e `fn_desfazer_fusao_de_contatos`. As
+ * ferramentas que as chamavam por MCP saíram (revisão 20/11, item 1.2, Opção A):
+ * `tests/unit/mcp-contatos-duplicados.test.ts` prova a ausência. As funções
+ * ficaram no banco, sem porta, e aqui se mede o que elas fazem:
  *
  *  1. o registro guarda as linhas que mudaram de ficha, e só ids;
  *  2. o desfazer devolve a ficha absorvida e as linhas dela, e a ficha que
