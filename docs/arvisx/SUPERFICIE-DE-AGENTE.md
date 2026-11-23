@@ -223,6 +223,13 @@ com roteador passa a vez a outro agente do mesmo roteador.
 - **Limites.** Uma passagem por rodada (o colega não devolve a vez no mesmo job). Se quem passou já tinha enviado
   mensagem naquele turno, o colega assume na mensagem seguinte. Colega pausado, em modo assistido ou sem versão
   publicada: a ferramenta recusa e nada muda.
+- **A passagem vale inteira ou não vale.** O colega é conferido antes de qualquer gravação; o resumo e a troca do
+  agente da conversa são gravados na mesma transação.
+- **Se o colega deixar de atender entre a passagem e a resposta** (foi pausado, mudou para o modo assistido ou perdeu
+  a versão publicada nesse intervalo), a passagem é desfeita: a conversa volta para quem passou, que responde ao
+  cliente na mesma rodada, avisado do que houve e sem poder passar a vez de novo. Ele responde com o que souber ou
+  chama a equipe (`request_human_handoff`). O cliente não fica sem resposta e a conversa não fica presa num agente
+  parado.
 - **Agente externo não tem colega no CRM.** A passagem equivalente é `crm_request_human_handoff` mais uma nota com
   `recipient`.
 
