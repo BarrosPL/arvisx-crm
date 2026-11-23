@@ -25,7 +25,7 @@ vi.mock("@/lib/users/nome-do-atendente", async (original) => ({
 }));
 
 const { crmListLeadEvents } = await import("@/lib/mcp/tools/eventos-do-negocio");
-const { JANELA_MAXIMA_DO_FUNIL_DIAS, RODADAS_POR_CHAMADA, tiposDeAtividadeDasCategorias, TIPOS_DE_EVENTO } =
+const { AUTORES_DE_EVENTO, JANELA_MAXIMA_DO_FUNIL_DIAS, RODADAS_POR_CHAMADA, tiposDeAtividadeDasCategorias, TIPOS_DE_EVENTO } =
   await import("@/lib/leads/eventos-do-negocio");
 const { ACTIVITY_LABELS } = await import("@/lib/leads/activity-vocabulary");
 const { allTools, getToolByName } = await import("@/lib/mcp/tools");
@@ -464,6 +464,23 @@ describe("⭐ filtros combinados", () => {
       "consent_declined",
       "appointment_scheduled",
     ]);
+  });
+
+  it("⭐ `nao_registrado` não é valor do filtro: a troca de responsável nunca casa `author` (revisão 20/11, item 2.28)", async () => {
+    const semFiltro = tipos(await listar({ lead_id: NEGOCIO_1 }));
+    expect(semFiltro).toContain("lead.assigned");
+
+    for (const autor of AUTORES_DE_EVENTO) {
+      expect(tipos(await listar({ lead_id: NEGOCIO_1, author: [autor] }))).not.toContain("lead.assigned");
+    }
+    expect(tipos(await listar({ lead_id: NEGOCIO_1, author: [...AUTORES_DE_EVENTO] }))).not.toContain("lead.assigned");
+    // Pedir as trocas de responsável é por TIPO, sem `author`.
+    expect(tipos(await listar({ lead_id: NEGOCIO_1, type: ["responsavel"] }))).toEqual(["lead.assigned"]);
+    expect(tipos(await listar({ lead_id: NEGOCIO_1, type: ["responsavel"], author: [...AUTORES_DE_EVENTO] }))).toEqual([]);
+
+    expect(crmListLeadEvents.inputSchema.author.safeParse(["nao_registrado"]).success).toBe(false);
+    expect(crmListLeadEvents.description).toMatch(/nao_registrado/);
+    expect(crmListLeadEvents.description).toMatch(/até vazia/);
   });
 
   it("por período: `since` inclui o instante, `until` exclui", async () => {
