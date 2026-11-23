@@ -177,13 +177,43 @@ describe("crm_close_conversation fecha a conversa", () => {
   });
 });
 
-describe("conversa assumida por uma pessoa (revisão 20/11, item 2.31)", () => {
-  // Decisão do dono registrada no PR #14 (20/11): a ferramenta segue fechando
-  // qualquer conversa aberta da organização, sem trava por atendente humano
-  // responsável. Este teste FIXA a decisão; se ela mudar, ele muda junto com a
-  // descrição e com `docs/arvisx/SUPERFICIE-DE-AGENTE.md`.
-  it("token comum fecha a conversa que tem atendente humano responsável", async () => {
-    conversa(CONVERSA_ABERTA).assigned_to_user_id = "aaaaaaaa-0000-4000-8000-0000000000f1";
+describe("⭐ conversa assumida por uma pessoa (revisão 20/11, item 2.31)", () => {
+  // Decisão do dono em 23/11/2026, que TROCA a de 20/11 registrada no PR #14:
+  // a ferramenta NÃO fecha conversa que uma pessoa assumiu. Vale para todo ator
+  // desta porta (token de qualquer papel e agente nativo); quem fecha conversa
+  // assumida é uma pessoa, pela tela.
+  const HUMANO = "aaaaaaaa-0000-4000-8000-0000000000b7";
+
+  const atores: Array<[string, () => McpContext]> = [
+    ["token de papel comum", () => ctx()],
+    ["token de gerente", () => ctx({ role: "manager", actor: { type: "api_token", id: TOKEN, role: "manager" } })],
+    ["token de administrador", () => ctx({ role: "admin", actor: { type: "api_token", id: TOKEN, role: "admin" } })],
+    [
+      "agente nativo",
+      () =>
+        ctx({
+          role: "ai_operator",
+          actor: { type: "ai_agent", id: "run-1", role: "ai_operator", agent_id: AGENTE_NATIVO },
+          contatoDoTurno: CONTATO_A,
+        }),
+    ],
+  ];
+
+  it.each(atores)("%s: recusa com erro claro, e NADA é alterado nem auditado", async (_nome, montar) => {
+    conversa(CONVERSA_ABERTA).assigned_to_user_id = HUMANO;
+    const antes = structuredClone(conversa(CONVERSA_ABERTA));
+
+    const r = await fechar({ conversation_id: CONVERSA_ABERTA, reason: "cliente sumiu" }, montar());
+
+    expect(r).toMatchObject({ permitido: false, motivo: "conversa_com_humano" });
+    expect(String(r.mensagem)).toMatch(/pessoa da equipe assumiu/);
+    expect(conversa(CONVERSA_ABERTA)).toEqual(antes);
+    expect(rpcs).toEqual([]);
+    expect(h.audit).not.toHaveBeenCalled();
+  });
+
+  it("controle: a MESMA conversa, sem ninguém assumindo, fecha", async () => {
+    expect(conversa(CONVERSA_ABERTA).assigned_to_user_id).toBeNull();
 
     const r = await fechar({ conversation_id: CONVERSA_ABERTA });
 
@@ -192,8 +222,18 @@ describe("conversa assumida por uma pessoa (revisão 20/11, item 2.31)", () => {
     expect(h.audit).toHaveBeenCalledTimes(1);
   });
 
-  it("a descrição avisa o modelo de que a ferramenta não respeita o dono humano", () => {
+  it("conversa assumida que JÁ estava fechada: continua sucesso sem efeito (nada a recusar)", async () => {
+    conversa(CONVERSA_FECHADA).assigned_to_user_id = HUMANO;
+
+    const r = await fechar({ conversation_id: CONVERSA_FECHADA });
+
+    expect(r).toMatchObject({ already_closed: true });
+    expect(rpcs).toEqual([]);
+  });
+
+  it("a descrição diz ao modelo que conversa assumida por uma pessoa não é fechada", () => {
     expect(crmCloseConversation.description).toMatch(/pessoa da equipe assumiu/);
+    expect(crmCloseConversation.description).toMatch(/NÃO fecha/);
   });
 });
 
