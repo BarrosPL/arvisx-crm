@@ -117,6 +117,14 @@ Tabela `social_comments`, uma linha por comentário, única por
 - **Comentário da própria conta é ignorado** — inclusive as respostas que o
   CRM publicar, que a Meta devolve como comentário. Sem isso o agente
   responderia a si mesmo.
+  São três conferências, e qualquer uma basta: (a) `from.id` é a conta
+  (`entry.id`); (b) `from.username` é o nome de usuário da conta conectada
+  (gravado em `metadata.instagram_username` ao conectar; em conexão antiga,
+  lido do nome do canal `instagram · @usuario`), para o caso de `from.id` vir
+  ausente ou em outro espaço de ids; (c) o id do comentário é o de uma
+  resposta pública que o CRM gravou (`public_reply.id` de outro comentário da
+  mesma empresa). A (c) só pega a resposta que já estava gravada quando a
+  notificação chegou; por isso não substitui as outras.
 - **Repetição é absorvida.** A Meta reentrega o que não recebe 2xx e pode
   notificar mais de uma vez o mesmo comentário em anúncio; o segundo é
   recusado pela chave única.

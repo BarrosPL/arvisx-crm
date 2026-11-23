@@ -30,6 +30,7 @@ import { decryptWebhookSecret, encryptWebhookSecret } from "@/lib/webhooks/secre
 import { CHANNEL_PROVIDER_SOCIAL_DIRETO } from "../capabilities";
 import {
   CHAVE_DO_MODO_DE_COMENTARIOS,
+  CHAVE_DO_USUARIO_DO_INSTAGRAM,
   lerModoDeComentarios,
   type ModoDeComentarios,
 } from "./comentarios";
@@ -257,6 +258,11 @@ export async function conectarPagina(db: SupabaseClient, pedido: PedidoDeConexao
       social_platform: alvo.rede,
       meta_page_name: pagina.nome,
       ...(pedido.metaUserId ? { meta_user_id: pedido.metaUserId } : {}),
+      // O nome de usuário da conta: é a segunda barreira contra o CRM responder
+      // ao próprio comentário (`usuarioDaConta`, em `./comentarios.ts`).
+      ...(alvo.rede === "instagram" && pagina.instagram?.username
+        ? { [CHAVE_DO_USUARIO_DO_INSTAGRAM]: pagina.instagram.username }
+        : {}),
       conectado_por: pedido.conectadoPor,
       // O que a pessoa concedeu NESTE login substitui o que estava gravado: é
       // assim que reautorizar passa a liberar os comentários (ou deixa de). O
