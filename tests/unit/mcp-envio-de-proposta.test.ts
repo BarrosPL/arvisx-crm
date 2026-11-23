@@ -18,7 +18,8 @@ import { bancoEmMemoria, type BancoEmMemoria } from "../helpers/banco-em-memoria
 
 const h = vi.hoisted(() => ({
   capacidades: ["propostas"] as string[],
-  planoLibera: true,
+  /** `null` = o plano não pôde ser lido. */
+  planoLibera: true as boolean | null,
   enviar: vi.fn(),
 }));
 vi.mock("@/lib/organizacao/capacidades", async (original) => ({
@@ -26,7 +27,9 @@ vi.mock("@/lib/organizacao/capacidades", async (original) => ({
   capacidadesDaOrganizacao: vi.fn(async () => h.capacidades),
 }));
 vi.mock("@/lib/cobranca/equipe-pronta-no-plano", () => ({
-  planoLiberaAEquipePronta: vi.fn(async () => h.planoLibera),
+  planoLiberaAEquipeProntaSeLido: vi.fn(async () => h.planoLibera),
+  // `travaDaEquipe` (ações internas) segue na falha de leitura; a ferramenta não passa por ela.
+  planoLiberaAEquipePronta: vi.fn(async () => h.planoLibera !== false),
 }));
 vi.mock("@/lib/propostas/enviar-proposta", () => ({ enviarProposta: h.enviar }));
 vi.mock("@/lib/mcp/audit", () => ({ auditMcpToolCall: vi.fn().mockResolvedValue(undefined) }));
@@ -95,6 +98,8 @@ const modo = (m: "apos_aprovacao" | "direto") =>
   Object.assign(banco.tabelas.equipe_pronta_perfis![0]!, { respostas: { proposta: { envio_de_proposta: m } } });
 const chamar = (id = RASCUNHO, c: McpContext = ctx()) =>
   crmSendProposal.handler({ proposal_id: id }, c) as Promise<Record<string, unknown>>;
+/** O turno de atendimento do cliente dono do rascunho (a ponte injeta o contato). */
+const noAtendimento = () => ctx({ contatoDoTurno: CONTATO_A });
 
 beforeEach(() => {
   h.capacidades = ["propostas"];
@@ -160,10 +165,29 @@ describe("crm_send_proposal: a regra da empresa", () => {
     expect(h.enviar).not.toHaveBeenCalled();
   });
 
-  it("⭐ direto: itens do catálogo, preço do catálogo, sem desconto — envia sozinho", async () => {
+  it("⭐ direto: itens do catálogo, preço do catálogo, sem desconto — envia sozinho, no atendimento do cliente", async () => {
     modo("direto");
-    expect(await chamar()).toMatchObject({ enviada: true, autorizada_por: "direto" });
+    expect(await chamar(RASCUNHO, noAtendimento())).toMatchObject({ enviada: true, autorizada_por: "direto" });
     expect(h.enviar).toHaveBeenCalledTimes(1);
+  });
+
+  // Revisão de 20/11, item 2.4: sem turno não há "cliente desta conversa" para
+  // cercar o envio; o que sobra é o alcance da organização inteira.
+  it("⭐ direto FORA de um atendimento (token de integração, rotina sem conversa): não envia, pede aprovação", async () => {
+    modo("direto");
+    const r = await chamar();
+    expect(r).toMatchObject({ permitido: false, motivo: "precisa_aprovacao", porque: "fora_de_atendimento", modo: "direto" });
+    expect(h.enviar).not.toHaveBeenCalled();
+    // O mesmo para o token de integração.
+    const externo = ctx({ actor: { type: "api_token", id: TOKEN_A, role: "agent" } });
+    expect(await chamar(RASCUNHO, externo)).toMatchObject({ motivo: "precisa_aprovacao", porque: "fora_de_atendimento" });
+    expect(h.enviar).not.toHaveBeenCalled();
+  });
+
+  it("fora de um atendimento, a proposta APROVADA continua saindo (uma pessoa a autorizou)", async () => {
+    modo("direto");
+    aprovar();
+    expect(await chamar()).toMatchObject({ enviada: true, autorizada_por: "aprovacao" });
   });
 
   it.each([
@@ -173,7 +197,7 @@ describe("crm_send_proposal: a regra da empresa", () => {
   ])("⭐ direto com %s: volta a pedir aprovação", async (porque, mudanca) => {
     modo("direto");
     Object.assign(banco.tabelas.crm_proposal_items![0]!, mudanca);
-    expect(await chamar()).toMatchObject({ permitido: false, motivo: "precisa_aprovacao", porque, modo: "direto" });
+    expect(await chamar(RASCUNHO, noAtendimento())).toMatchObject({ permitido: false, motivo: "precisa_aprovacao", porque, modo: "direto" });
     expect(h.enviar).not.toHaveBeenCalled();
   });
 
@@ -231,6 +255,32 @@ describe("crm_send_proposal: quem envia e como fica registrado", () => {
     expect(await chamar()).toMatchObject({ permitido: false, motivo: "item_sem_preco" });
     h.enviar.mockResolvedValue({ tipo: "recusa", motivo: "sem_conversa", codigo: "validation_failed", status: 422, mensagem: "x" });
     expect(await chamar()).toMatchObject({ permitido: false, motivo: "sem_canal" });
+  });
+
+  // Revisão de 20/11, itens 2.1 e 2.9: o envio só sai da revisão que a
+  // ferramenta julgou. A corrida em si é medida em
+  // app/api/v1/proposals/[id]/send/route.test.ts, contra `enviarProposta`.
+  it("⭐ passa ao envio a revisão que julgou (a aprovada), para o envio recusar o rascunho que mudou", async () => {
+    aprovar();
+    await chamar();
+    const [, entrada] = h.enviar.mock.calls[0] as [unknown, Record<string, unknown>];
+    expect(entrada.revisaoEsperada).toBe(3);
+  });
+
+  it("⭐ no modo direto a revisão esperada é a que a regra conferiu item a item", async () => {
+    modo("direto");
+    Object.assign(aProposta(), { revision: 8 });
+    await chamar(RASCUNHO, noAtendimento());
+    const [, entrada] = h.enviar.mock.calls[0] as [unknown, Record<string, unknown>];
+    expect(entrada.revisaoEsperada).toBe(8);
+  });
+
+  it("⭐ proposta editada no meio, ou já sendo enviada por outro turno: proposta_mudou, e não diz que enviou", async () => {
+    aprovar();
+    h.enviar.mockResolvedValue({ tipo: "recusa", motivo: "mudou", codigo: "proposal_context_stale", status: 409, mensagem: "x" });
+    const r = await chamar();
+    expect(r).toMatchObject({ permitido: false, motivo: "proposta_mudou" });
+    expect(r.enviada).toBeUndefined();
   });
 });
 
@@ -324,6 +374,65 @@ describe("crm_send_proposal: as travas de falar com o cliente", () => {
   it("⭐ plano que não libera a equipe: o agente da equipe não envia", async () => {
     h.planoLibera = false;
     await travado("fora_do_plano");
+  });
+
+  // ─── Revisão de 20/11, item 2.2: leitura que falha é recusa, não "segue" ───
+  /**
+   * Um cliente em que a leitura de `tabela` falha a partir da N-ésima vez (as
+   * anteriores passam para o banco em memória).
+   */
+  function comFalhaDeLeitura(tabela: string, aPartirDa = 1): McpContext {
+    let leituras = 0;
+    const falha = { data: null, error: { message: "falha simulada" } };
+    const cadeiaQueFalha = () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cadeia falsa do PostgREST
+      const c: any = {};
+      for (const m of ["select", "eq", "in", "order", "limit"]) c[m] = () => c;
+      c.maybeSingle = async () => falha;
+      c.then = (ok: (v: unknown) => unknown) => Promise.resolve(falha).then(ok);
+      return c;
+    };
+    const cliente = {
+      ...banco.cliente,
+      from: (t: string) => {
+        if (t === tabela && ++leituras >= aPartirDa) return cadeiaQueFalha();
+        return banco.cliente.from(t);
+      },
+    };
+    return ctx({ supabase: cliente as never });
+  }
+
+  it("⭐ a marca 'é da equipe' não depende de uma segunda leitura: com a equipe pausada, a falha dela não libera o envio", async () => {
+    // Antes: a pausa do agente era lida numa consulta e o papel em outra, que
+    // engolia o erro e devolvia "não é da equipe". Com a segunda falhando, a
+    // ferramenta pulava a pausa da equipe e o plano, e enviava.
+    aprovar();
+    (banco.tabelas.equipe_pronta_perfis![0]!.instalacao as Record<string, unknown>).pausa = { em: "x", agentes: [AGENTE] };
+    const r = await chamar(RASCUNHO, comFalhaDeLeitura("ai_agents", 2));
+    expect(r).toMatchObject({ permitido: false, motivo: "equipe_pausada" });
+    expect(h.enviar).not.toHaveBeenCalled();
+  });
+
+  it("⭐ a leitura do agente falha: indisponível, e nada sai", async () => {
+    aprovar();
+    expect(await chamar(RASCUNHO, comFalhaDeLeitura("ai_agents"))).toMatchObject({ permitido: false, motivo: "indisponivel" });
+    expect(h.enviar).not.toHaveBeenCalled();
+  });
+
+  it("⭐ a leitura da pausa da equipe falha: indisponível, e nada sai", async () => {
+    aprovar();
+    expect(await chamar(RASCUNHO, comFalhaDeLeitura("equipe_pronta_perfis"))).toMatchObject({
+      permitido: false,
+      motivo: "indisponivel",
+    });
+    expect(h.enviar).not.toHaveBeenCalled();
+  });
+
+  it("⭐ o plano não pôde ser lido: indisponível, e nada sai (no envio ao cliente, falha de leitura não é 'sim')", async () => {
+    aprovar();
+    h.planoLibera = null;
+    expect(await chamar()).toMatchObject({ permitido: false, motivo: "indisponivel" });
+    expect(h.enviar).not.toHaveBeenCalled();
   });
 
   it("a trava de plano e a pausa da equipe são só dos agentes DA EQUIPE", async () => {

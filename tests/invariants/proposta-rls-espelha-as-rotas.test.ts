@@ -141,8 +141,12 @@ describe("aprovação da proposta: só o servidor grava (9814)", () => {
     expect(como(GOV_AGENT_A, `update public.crm_proposals set aprovada_na_revisao = 99 where id = '${RASCUNHO}'`)).toBe("negado");
     expect(como(GOV_AGENT_A, `update public.crm_proposals set aprovada_em = null, aprovada_na_revisao = null where id = '${RASCUNHO}'`)).toBe("negado");
     // Editar o conteúdo continua permitido: quem invalida a aprovação é a revisão que sobe.
+    // Desde a 9815 o banco LIMPA a aprovação quando a revisão muda (antes ela só
+    // ficava desencontrada); a prova inteira está em proposta-edicao-invalida-aprovacao.test.ts.
     expect(como(GOV_AGENT_A, `update public.crm_proposals set titulo = 'editado de novo', revision = revision + 1 where id = '${RASCUNHO}'`)).toBe(1);
-    expect(sql(`select aprovada_na_revisao = revision from public.crm_proposals where id = '${RASCUNHO}';`)).toBe("f");
+    expect(
+      sql(`select coalesce(aprovada_na_revisao = revision, false) from public.crm_proposals where id = '${RASCUNHO}';`),
+    ).toBe("f");
     sql(`update public.crm_proposals set aprovada_em = null, aprovada_na_revisao = null where id = '${RASCUNHO}';`);
   });
 });

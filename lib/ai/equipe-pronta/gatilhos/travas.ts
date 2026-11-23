@@ -27,7 +27,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { decidirPreGoLiveDoCanalViaSupabase } from "@/lib/ai/elegibilidade/consulta-pre-go-live";
-import { planoLiberaAEquipePronta } from "@/lib/cobranca/equipe-pronta-no-plano";
+import { planoLiberaAEquipePronta, planoLiberaAEquipeProntaSeLido } from "@/lib/cobranca/equipe-pronta-no-plano";
 import { instalacaoSchema, type InstalacaoDaEquipe } from "@/lib/schemas/equipe-pronta";
 import { CHAVE_DE_CONFIG } from "../constantes";
 
@@ -159,7 +159,14 @@ export async function travasDeFalarComOCliente(
           trava: trava("equipe_pausada", "a equipe está pausada: nada é enviado ao cliente enquanto a pausa durar."),
         };
       }
-      if (!(await planoLiberaAEquipePronta(supabase, organizationId))) {
+      // Plano que não pôde ser lido NÃO é plano que libera: aqui se decide se
+      // algo é dito ao cliente, e a falha de leitura é recusa (revisão de
+      // 20/11, item 2.2). `travaDaEquipe`, acima, continua seguindo na falha:
+      // ela guarda ações internas (fixar o agente da conversa, criar a tarefa
+      // do ganho), que não falam com ninguém.
+      const liberado = await planoLiberaAEquipeProntaSeLido(supabase, organizationId);
+      if (liberado === null) return { trava: CONSULTA_INDISPONIVEL };
+      if (!liberado) {
         return { trava: trava("fora_do_plano", "o plano desta empresa não inclui a equipe de IA: nada é enviado.") };
       }
     }

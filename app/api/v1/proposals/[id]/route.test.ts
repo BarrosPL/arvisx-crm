@@ -81,7 +81,42 @@ function montarMundoDeEdicao(opts: MundoOpts = {}) {
   ];
   const consultas: Consulta[] = [];
   const inseridos: Linha[] = [];
-  mocks.createClient.mockResolvedValue({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cliente falso, só o que a rota usa
+  const cliente: any = {
+    /**
+     * `fn_proposta_gravar_edicao` (migration 9815): a edição numa transação.
+     * O mundo falso a reproduz pelas MESMAS consultas que a rota fazia em três
+     * chamadas (CAS da revisão, apagar itens, inserir itens), para os casos
+     * abaixo continuarem medindo o que chega ao banco. A atomicidade e a
+     * revisão que sobe uma vez só são medidas com banco de verdade, em
+     * tests/invariants/proposta-edicao-invalida-aprovacao.test.ts.
+     */
+    async rpc(nome: string, args: { p_org: string; p_proposta: string; p_revisao: number; p_campos: Linha; p_itens: Linha[] }) {
+      if (nome !== "fn_proposta_gravar_edicao") throw new Error(`rpc inesperada: ${nome}`);
+      const atualizada = await cliente
+        .from("crm_proposals")
+        .update({ ...args.p_campos, revision: args.p_revisao + 1 })
+        .eq("organization_id", args.p_org)
+        .eq("id", args.p_proposta)
+        .eq("revision", args.p_revisao)
+        .eq("status", "rascunho")
+        .maybeSingle();
+      if (atualizada.error) return { data: null, error: atualizada.error };
+      if (!atualizada.data) return { data: null, error: null };
+      const apagados = await cliente
+        .from("crm_proposal_items")
+        .delete()
+        .eq("organization_id", args.p_org)
+        .eq("proposal_id", args.p_proposta);
+      if (apagados.error) return { data: null, error: apagados.error };
+      if (args.p_itens.length > 0) {
+        const inseridosAgora = await cliente
+          .from("crm_proposal_items")
+          .insert(args.p_itens.map((it) => ({ organization_id: args.p_org, proposal_id: args.p_proposta, ...it })));
+        if (inseridosAgora.error) return { data: null, error: inseridosAgora.error };
+      }
+      return { data: args.p_revisao + 1, error: null };
+    },
     from(tabela: string) {
       // Preço do catálogo (C3): select→eq→eq→eq→maybeSingle. Não entra na
       // lista de `consultas` — é leitura auxiliar, não escrita da edição.
@@ -152,7 +187,8 @@ function montarMundoDeEdicao(opts: MundoOpts = {}) {
       };
       return query;
     },
-  });
+  };
+  mocks.createClient.mockResolvedValue(cliente);
   return {
     consultas,
     inseridos,

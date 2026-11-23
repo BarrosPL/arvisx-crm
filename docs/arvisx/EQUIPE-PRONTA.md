@@ -189,9 +189,24 @@ nota, tarefa e os dados do contato. Os dados do contato entram por
 `crm_update_contact` (nome, e-mail, outro telefone, documento, endereço, data
 de nascimento e campos personalizados), que substitui
 `crm_propose_contact_field` nos quatro papéis. Toda escrita fica na auditoria
-com o agente como autor; a de contato leva o valor anterior de cada campo
-(`contact.updated_by_agent`). O documento (CPF) é validado pelo dígito
+com o agente como autor. O documento (CPF) é validado pelo dígito
 verificador, guardado cifrado e nunca devolvido.
+
+**No cadastro do contato o agente só preenche o que está vazio** (decisão da
+revisão de 20/11, item 2.3). Nome, e-mail, endereço, data de nascimento,
+documento ou campo personalizado que já tem valor não é trocado pelo texto que
+o cliente mandou na conversa: a ferramenta devolve o nome do campo
+(`campos_ja_preenchidos`) e o agente deixa uma tarefa para a equipe conferir.
+Por isso a auditoria da escrita (`contact.updated_by_agent`) leva só os nomes
+dos campos, sem valor nenhum: o anterior era vazio, e desfazer é limpar o
+campo. A primeira versão sobrescrevia e guardava o valor anterior em claro na
+auditoria (que a anonimização não alcança), sem valor anterior para os campos
+personalizados. Os campos personalizados são mesclados no banco (migration
+9820), para duas escritas simultâneas não se apagarem. **Para o dono decidir:**
+se a empresa quiser que o agente também CORRIJA dado existente (o texto do
+papel de Recuperação fala em "corrigir"), isso pede uma confirmação de uma
+pessoa (`crm_propose_contact_field`) ou uma decisão explícita de voltar a
+sobrescrever.
 
 ### Envio de proposta
 
@@ -202,14 +217,36 @@ ela sai é o modo da empresa, `proposta.envio_de_proposta` no perfil
 | Modo | Quando o agente envia |
 |---|---|
 | `apos_aprovacao` (padrão) | só o rascunho que a equipe aprovou |
-| `direto` | sozinho, se todos os itens são do catálogo, com o preço do catálogo, sem desconto e sem condição escrita à mão; fora disso, precisa da aprovação |
+| `direto` | sozinho, se todos os itens são do catálogo, com o preço do catálogo, sem desconto e sem condição escrita à mão; fora disso, precisa da aprovação. Só vale no atendimento do próprio cliente: chamada fora de um turno (token de integração) só envia proposta aprovada |
 
 A aprovação são duas colunas de `crm_proposals` (migration 9814),
 `aprovada_em` e `aprovada_na_revisao`, e só vale enquanto a revisão aprovada
 for a atual: editar o rascunho a invalida. Só o servidor grava as duas, pela
 rota do botão "Aprovar e deixar o agente enviar" (ver "Gatilhos").
 
+Quem garante o "editar invalida" é o banco (migration 9815), não o código das
+rotas: mexer em qualquer item do rascunho (inserir, alterar, apagar) ou em
+qualquer coluna de conteúdo de `crm_proposals` (título, condições, validade,
+total, prazo, pagamento, briefing, seções do documento, modelo, contato,
+negócio, conversa) soma um em `revision` e limpa as duas colunas da aprovação,
+venha a escrita de onde vier (tela, API do banco com a sessão de um atendente,
+servidor). A revisão nunca volta atrás. Uma edição soma um: as rotas gravam
+campos e itens numa transação só (`fn_proposta_gravar_edicao`). O envio em si
+(numerar, entrar em `enviando`, voltar a rascunho quando o canal falha) não
+invalida a aprovação. A lista das colunas de conteúdo fica na função
+`fn_crm_proposals_edicao_sobe_revisao`; coluna nova em `crm_proposals` precisa
+ser classificada, e a cerca
+`tests/invariants/proposta-edicao-invalida-aprovacao.test.ts` reprova a que
+ficar de fora.
+
 O envio é a mesma função da rota da tela (`lib/propostas/enviar-proposta.ts`).
+A proposta só entra em `enviando` por comparação e troca: precisa estar ainda
+em rascunho e ainda na revisão que quem pediu o envio conferiu
+(`revisaoEsperada`: a ferramenta passa a revisão que ela julgou; a tela passa a
+revisão que está mostrando). Dois pedidos ao mesmo tempo (dois turnos do
+agente, dois cliques, o agente e a tela) enviam uma vez só, e quem perde recebe
+`proposta_mudou` (na rota, 409 `proposal_context_stale`). O mesmo vale para o
+rascunho editado entre a conferência e o envio: nada sai.
 Antes dela, a ferramenta recusa quando: o canal está em ensaio e o número não é
 de teste (`modo_ensaio`), uma pessoa assumiu a conversa (`humano_assumiu`), o
 contato pediu para parar (`contato_pediu_para_parar`), o agente ou a equipe

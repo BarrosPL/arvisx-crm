@@ -60,7 +60,12 @@ export type MotivoDaRecusaDoEnvio =
   | "campos_faltando"
   | "sem_conversa"
   | "fora_da_janela"
-  | "limite_diario";
+  | "limite_diario"
+  /**
+   * O rascunho não é mais o que quem pediu o envio conferiu: foi editado
+   * (a revisão subiu) ou outro envio já o tirou de `rascunho`. Nada sai.
+   */
+  | "mudou";
 
 export type ResultadoDoEnvioDaProposta =
   | {
@@ -118,9 +123,24 @@ export async function enviarProposta(
     quem: QuemEnviaAProposta;
     /** Tradutor das frases para quem chamou (a rota passa o do usuário). */
     t: (texto: string) => string;
+    /**
+     * A revisão (`crm_proposals.revision`) que quem chama CONFERIU antes de
+     * pedir o envio: a que a equipe aprovou, a que a regra do envio direto
+     * julgou, ou a que a tela mostrava. Se a proposta não estiver mais nela, o
+     * envio é recusado com `mudou` e nada sai. Sem ela, vale a revisão que esta
+     * função lê no começo (a guarda contra o envio em dobro continua).
+     */
+    revisaoEsperada?: number;
   },
 ): Promise<ResultadoDoEnvioDaProposta> {
   const { orgId, propostaId, requestId, quem, t } = entrada;
+  const recusaPorTerMudado = () =>
+    recusaDoEnvio(
+      "mudou",
+      "proposal_context_stale",
+      409,
+      t("A proposta mudou ou já está sendo enviada. Recarregue e confira antes de enviar."),
+    );
 
   const { data: proposta } = await admin
     .from("crm_proposals")
@@ -137,6 +157,15 @@ export async function enviarProposta(
     decidirVersao(proposta as never);
   } catch {
     return recusaDoEnvio("estado", "proposal_context_stale", 409, t("Esta proposta não pode ser enviada neste estado."));
+  }
+
+  // Tudo o que esta função confere daqui em diante (itens, preço, modelo,
+  // documento) é o conteúdo DESTA revisão. O banco soma a revisão a cada edição
+  // de item ou de conteúdo (migration 9815), então entrar em `enviando` com a
+  // revisão lida aqui prova que o que sai é o que foi conferido.
+  const revisaoLida = Number((proposta as { revision: number | string }).revision);
+  if (entrada.revisaoEsperada !== undefined && entrada.revisaoEsperada !== revisaoLida) {
+    return recusaPorTerMudado();
   }
 
   const { data: itens } = await admin
@@ -257,6 +286,26 @@ export async function enviarProposta(
 
   // ─── Entra em `enviando` e aloca numero (D3+D9) — número reservado ao
   // entrar em `enviando`, não ao confirmar entrega ───
+  //
+  // A ENTRADA é um compare-and-set (revisão de 20/11, itens 2.1 e 2.9): só
+  // entra quem encontra a proposta AINDA em `rascunho` e AINDA na revisão
+  // conferida. Sem isso, dois pedidos simultâneos (dois turnos do agente, dois
+  // cliques, o agente e a tela) passavam os dois pela leitura acima e enviavam
+  // a proposta duas vezes; no reenvio depois de uma falha o número já estava
+  // retido e nem o contador servia de guarda. E quem editasse o rascunho entre
+  // a conferência (a aprovação, a regra do envio direto) e este ponto fazia
+  // sair um conteúdo que ninguém conferiu. Quem perde a corrida não envia.
+  const { data: entrou, error: erroAoEntrar } = await admin
+    .from("crm_proposals")
+    .update({ status: "enviando", ultima_falha_envio: null })
+    .eq("organization_id", orgId)
+    .eq("id", propostaAlvo.id)
+    .eq("status", "rascunho")
+    .eq("revision", revisaoLida)
+    .select("id")
+    .maybeSingle();
+  if (erroAoEntrar || !entrou) return recusaPorTerMudado();
+
   let numeroEAno: { numero: number; ano: number };
   if (propostaAlvo.numero != null && propostaAlvo.ano != null) {
     // Reenvio depois de uma falha anterior (D3): o número já foi reservado e
@@ -264,14 +313,24 @@ export async function enviarProposta(
     // número a cada tentativa e o UPDATE de alocarNumero (que exige
     // `numero is null`) nunca casaria, sempre lançando.
     numeroEAno = { numero: propostaAlvo.numero, ano: propostaAlvo.ano };
-    await admin.from("crm_proposals")
-      .update({ status: "enviando", ultima_falha_envio: null })
-      .eq("organization_id", orgId).eq("id", propostaAlvo.id);
   } else {
-    numeroEAno = await alocarNumero(admin, { orgId: orgId, propostaId: propostaAlvo.id });
-    await admin.from("crm_proposals")
-      .update({ status: "enviando", ultima_falha_envio: null })
-      .eq("organization_id", orgId).eq("id", propostaAlvo.id);
+    // Já em `enviando` (a ordem que `alocarNumero` documenta): só quem ganhou a
+    // entrada gasta número. Se o contador falhar, a proposta não pode ficar
+    // presa em `enviando` até o cron `proposta-travada`: volta a rascunho, com
+    // o motivo, como qualquer outra falha de passo.
+    try {
+      numeroEAno = await alocarNumero(admin, { orgId: orgId, propostaId: propostaAlvo.id });
+    } catch (erro) {
+      const { data: revertida } = await admin
+        .from("crm_proposals")
+        .update({
+          status: "rascunho",
+          ultima_falha_envio: erro instanceof Error ? erro.message : "Falha ao reservar o número da proposta.",
+        })
+        .eq("organization_id", orgId).eq("id", propostaAlvo.id)
+        .select("*").single();
+      return { tipo: "ok", desfecho: "revertida", proposta: revertida };
+    }
   }
 
   const destinatarioNome = rotuloDoContato(contato, t);

@@ -38,9 +38,25 @@
  * da tela: mesma conferência de itens, preço, modelo e documento, mesma janela
  * e limite do canal, mesmo PDF.
  *
+ * A ferramenta passa a `revision` que ela julgou (`revisaoEsperada`): o envio
+ * só entra em `enviando` se o rascunho ainda estiver nessa revisão e ainda for
+ * rascunho. Proposta editada no meio do caminho, ou dois turnos pedindo o
+ * mesmo envio ao mesmo tempo, terminam em `proposta_mudou` para quem perdeu, e
+ * a proposta sai uma vez só.
+ *
  * `organization_id` SEMPRE do contexto. Num turno de atendimento, só proposta
  * do cliente da conversa; proposta de outro cliente e proposta inexistente
  * recebem a mesma recusa.
+ *
+ * ═══ Fora de um atendimento ═══
+ *
+ * Sem `ctx.contatoDoTurno` (token de integração no MCP, rotina sem conversa)
+ * não há cliente da conversa para cercar, e o alcance é o de toda ferramenta do
+ * MCP: qualquer proposta da organização. É de propósito para a proposta
+ * APROVADA (uma pessoa autorizou aquele rascunho). O envio DIRETO, que não tem
+ * pessoa no caminho, só vale dentro do atendimento: fora dele a resposta é
+ * `precisa_aprovacao` com `porque: "fora_de_atendimento"`. As travas de falar
+ * com o cliente valem nos dois casos.
  */
 import { z } from "zod";
 
@@ -129,9 +145,11 @@ export const crmSendProposal: McpToolDefinition<typeof inputShape> = {
   description:
     "ENVIA ao cliente, na conversa, a proposta em rascunho (o PDF). Fala com o cliente. A regra é da " +
     "empresa: ou só envia proposta que a equipe aprovou, ou envia sozinho quando todos os itens são do " +
-    "catálogo, com preço do catálogo e sem desconto. Recusas: `precisa_aprovacao` (avise que está em " +
+    "catálogo, com preço do catálogo e sem desconto (isto só na conversa com o próprio cliente; fora de " +
+    "um atendimento, só a aprovada). Recusas: `precisa_aprovacao` (avise que está em " +
     "revisão e deixe tarefa para a equipe), `proposta_expirada` (prepare outra), `sem_canal`, " +
-    "`modo_ensaio`, `humano_assumiu`, `contato_pediu_para_parar`, `equipe_pausada`. Só diga que enviou " +
+    "`modo_ensaio`, `humano_assumiu`, `contato_pediu_para_parar`, `equipe_pausada`, `proposta_mudou` " +
+    "(foi editada ou já está sendo enviada: consulte antes de repetir). Só diga que enviou " +
     "com `enviada: true`.",
   inputSchema: inputShape,
   category: "write",
@@ -207,6 +225,27 @@ export const crmSendProposal: McpToolDefinition<typeof inputShape> = {
         { porque: decisao.porque, modo: decisao.modo },
       );
     }
+    // FORA DE UM ATENDIMENTO, SÓ A APROVADA (revisão de 20/11, item 2.4).
+    //
+    // A cerca "só a proposta do cliente desta conversa" (`ESCOPO_DAS_ESCRITAS`
+    // e a conferência acima) existe quando há turno: `ctx.contatoDoTurno`.
+    // Quem chama sem turno (token de integração, rotina sem conversa) tem o
+    // alcance de qualquer ferramenta do MCP: a organização inteira. Para a
+    // proposta APROVADA isso é coerente: uma pessoa da equipe olhou aquele
+    // rascunho e disse "pode enviar". O envio DIRETO não tem pessoa nenhuma no
+    // caminho; o que o ancora é a conversa em que o cliente pediu a proposta.
+    // Sem conversa, o modo direto deixaria um chamador de alcance geral mandar
+    // qualquer rascunho de catálogo a qualquer cliente. Então, sem turno, o
+    // modo direto não vale: pede aprovação.
+    if (!ctx.contatoDoTurno && decisao.por !== "aprovacao") {
+      return recusa(
+        "precisa_aprovacao",
+        "fora de um atendimento com o cliente da proposta, só sai a proposta que a equipe aprovou: o envio " +
+          "sem aprovação vale apenas na conversa com o próprio cliente. Deixe uma tarefa para a equipe aprovar " +
+          "e não diga que foi enviada.",
+        { porque: "fora_de_atendimento", modo: decisao.modo },
+      );
+    }
 
     // ── envia: a mesma função da rota da tela ──
     const resultado = await enviarProposta(ctx.supabase, {
@@ -222,9 +261,21 @@ export const crmSendProposal: McpToolDefinition<typeof inputShape> = {
         })(),
       },
       t: (texto) => texto,
+      // A revisão que as regras acima julgaram (a aprovada, ou a que a regra do
+      // envio direto conferiu item a item). Se o rascunho for editado entre a
+      // leitura e o envio, ou se outro turno já estiver enviando, nada sai.
+      revisaoEsperada: Number(proposta.revision),
     });
 
     if (resultado.tipo === "recusa") {
+      if (resultado.motivo === "mudou") {
+        return recusa(
+          "proposta_mudou",
+          "a proposta foi alterada depois de conferida, ou outro pedido já está enviando esta mesma proposta: " +
+            "nada saiu por esta chamada. Consulte a proposta (`crm_get_proposal`) para saber o estado dela antes " +
+            "de dizer qualquer coisa à pessoa; não repita o envio às cegas.",
+        );
+      }
       if (resultado.motivo === "sem_conversa") {
         return recusa("sem_canal", "não há conversa com este contato por onde enviar. Chame uma pessoa da equipe.");
       }

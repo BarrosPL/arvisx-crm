@@ -66,6 +66,19 @@ export async function planoLiberaAEquipePronta(admin: SupabaseClient, orgId: str
 }
 
 /**
+ * A mesma pergunta, para a ação que FALA COM O CLIENTE: aqui a falha de
+ * leitura não vira "sim". `null` = o plano não pôde ser lido, e quem chama
+ * recusa (falha fechada). "Leitura falha = segue" é a régua do motor que
+ * responde e do follow-up; não a da ferramenta que envia uma proposta
+ * (revisão de 20/11, item 2.2).
+ */
+export async function planoLiberaAEquipeProntaSeLido(admin: SupabaseClient, orgId: string): Promise<boolean | null> {
+  const leitura = await lerTelasDoPlano(admin, orgId);
+  if (leitura.tipo === "falha") return null;
+  return planoLiberaParaCron(leitura, DESTINO_DA_EQUIPE_PRONTA);
+}
+
+/**
  * Dos agentes dados, quais NÃO podem agir pelo plano: os da equipe pronta,
  * quando o plano não libera a tela dela. Vazio quando o plano libera, quando
  * nenhum é da equipe, ou quando a leitura falha.

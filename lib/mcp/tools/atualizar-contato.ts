@@ -8,12 +8,33 @@
  * para uma pessoa confirmar, continua existindo e os demais agentes seguem com
  * ela.
  *
+ * ═══ Só preenche o que está VAZIO (revisão de 20/11, item 2.3) ═══
+ *
+ * O agente grava direto o dado que o cadastro NÃO TEM. O campo que já tem
+ * valor não é trocado pelo texto que o cliente mandou na conversa: ele volta
+ * em `campos_ja_preenchidos`, e o agente deixa a conferência para a equipe
+ * (uma tarefa). Vale para os campos de coluna, para o documento e para cada
+ * chave dos campos personalizados. Valor igual ao que já está não é escrita.
+ *
+ * Por quê: a primeira versão sobrescrevia nome e e-mail existentes com o que
+ * viesse na conversa, e para "poder desfazer" guardava o valor anterior em
+ * claro na auditoria, que a anonimização não alcança (e sem valor anterior
+ * para os campos personalizados). Preenchendo só o vazio não há valor anterior
+ * a guardar: desfazer é limpar o campo, e a auditoria leva só os NOMES.
+ *
  * ═══ O que ela reusa ═══
  *
- * A escrita é o `patchContactHandler` da rota `PATCH /api/v1/contacts/[id]`: a
- * mesma régua de campo personalizado, o mesmo tratamento de e-mail repetido
- * (409 com o contato que já tem o dado), os mesmos eventos (`contact.updated`,
- * `contact.phone_added`). Nada disso é reescrito aqui.
+ * A escrita dos campos de coluna e do documento é o `patchContactHandler` da
+ * rota `PATCH /api/v1/contacts/[id]`: o mesmo tratamento de e-mail repetido
+ * (409), os mesmos eventos (`contact.updated`, `contact.phone_added`). Nada
+ * disso é reescrito aqui.
+ *
+ * Os campos personalizados NÃO passam pelo handler: ele SUBSTITUI o mapa (é o
+ * contrato da tela), e ler o mapa, juntar e regravar perde a escrita de quem
+ * gravou ao mesmo tempo. Eles entram por
+ * `fn_contato_preencher_campos_personalizados` (migration 9820), que mescla no
+ * banco com a linha travada e só nas chaves vazias. A régua de formato do campo
+ * (o "padrão" do funil) é a MESMA do handler, conferida aqui antes de gravar.
  *
  * ═══ O documento (CPF) ═══
  *
@@ -28,11 +49,18 @@
  *
  * ═══ Auditoria ═══
  *
- * Uma linha `contact.updated_by_agent`, com o agente como autor e o valor
- * ANTERIOR de cada campo alterado, para a equipe poder desfazer. Campo
- * personalizado sai pelo nome (o valor é dado de titular em texto livre, e a
- * auditoria não é alcançada pela anonimização); o documento sai só como
- * "tinha / passou a ter".
+ * Uma linha `contact.updated_by_agent`, com o agente como autor e os NOMES dos
+ * campos preenchidos. Nenhum valor: nem o que entrou (dado de titular, e a
+ * auditoria não é alcançada pela anonimização), nem o anterior (era vazio, por
+ * construção). É uniforme: coluna, documento, telefone e campo personalizado
+ * saem do mesmo jeito.
+ *
+ * ═══ O outro telefone ═══
+ *
+ * Quando o número não entra, a recusa é UMA só (`telefone_nao_gravado`), seja
+ * porque ele já é de outro contato, seja por qualquer outra falha. Dizer "esse
+ * número já está em outro cadastro" transformava a ferramenta num jeito de
+ * perguntar se um telefone é cliente da empresa.
  *
  * `organization_id` SEMPRE do contexto, nunca do input. Num turno de
  * atendimento, só o contato da conversa.
@@ -44,6 +72,8 @@ import { ApiError } from "@/lib/api/types";
 import { audit } from "@/lib/audit";
 import { canonicalPhoneBR } from "@/lib/channels/phone-variants";
 import { hashCpf } from "@/lib/contacts/cpf";
+import { camposQueMudaram, defsDoPadraoDaOrg, erroDePadrao, recusasDePadrao } from "@/lib/leads/padrao-do-campo";
+import { testaComPrazo } from "@/lib/leads/padrao-do-campo-no-servidor";
 import { perfilDaOrganizacao } from "@/lib/legal/perfil-do-pais";
 import { contactPatchSchemaDoPais, type ContactPatch } from "@/lib/schemas/contacts";
 import { auditoriaDoContexto } from "../ator-do-contexto";
@@ -117,6 +147,15 @@ interface ContatoAntes {
   state: string | null;
 }
 
+/** O cadastro não tem este dado: nulo, ausente ou texto em branco. */
+function vazio(valor: unknown): boolean {
+  return valor === null || valor === undefined || (typeof valor === "string" && valor.trim() === "");
+}
+
+const O_QUE_FAZER_COM_O_PREENCHIDO =
+  "O agente não troca dado que já está no cadastro. Se a pessoa informou um valor diferente, deixe uma tarefa " +
+  "para a equipe conferir e corrigir, e não diga que atualizou.";
+
 /** Data de calendário que existe e não está no futuro. */
 function dataDeNascimentoValida(valor: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) return false;
@@ -129,8 +168,9 @@ export const crmUpdateContact: McpToolDefinition<typeof inputShape> = {
   name: "crm_update_contact",
   description:
     "Grava no cadastro do contato o que a PESSOA informou: nome, e-mail, outro telefone, documento (CPF), " +
-    "data de nascimento, endereço e campos personalizados. Envie só os campos a gravar. Grava direto, com " +
-    "registro do valor anterior. Recusa valor inválido (`email_invalido`, `documento_invalido`, " +
+    "data de nascimento, endereço e campos personalizados. Envie só os campos a gravar. Grava direto, e só " +
+    "PREENCHE campo vazio: o que já tem valor não é trocado e volta em `campos_ja_preenchidos` (deixe tarefa " +
+    "para a equipe). Recusa valor inválido (`email_invalido`, `documento_invalido`, " +
     "`data_invalida`, `telefone_invalido`) dizendo qual. O documento nunca é devolvido: a resposta só diz " +
     "se o cadastro tem um. Nunca grave dado que a pessoa não disse.",
   inputSchema: inputShape,
@@ -207,31 +247,73 @@ export const crmUpdateContact: McpToolDefinition<typeof inputShape> = {
       }
     }
 
-    // ── o que muda de fato ──
+    // ── o que muda de fato: só o que o cadastro NÃO TEM ──
     const patch: ContactPatch = {};
-    const mudancas: Record<string, { old: unknown; new: unknown }> = {};
+    const preenchidos: string[] = [];
+    const jaPreenchidos: string[] = [];
     for (const campo of CAMPOS_DIRETOS) {
       const novo = input[campo as CampoDireto];
       if (novo === undefined || novo === (antes[campo] ?? null)) continue;
+      if (!vazio(antes[campo])) {
+        jaPreenchidos.push(campo);
+        continue;
+      }
       (patch as Record<string, unknown>)[campo] = novo;
-      mudancas[campo] = { old: antes[campo] ?? null, new: novo };
+      preenchidos.push(campo);
     }
+    let mudaDocumento = false;
+    if (input.cpf !== undefined && hashCpf(input.cpf) !== antes.cpf_hash) {
+      if (antes.cpf_hash) jaPreenchidos.push("cpf");
+      else {
+        mudaDocumento = true;
+        patch.cpf = input.cpf;
+      }
+    }
+
     // A IA só grava o que a PESSOA disse: a mesma conferência dos campos do
     // negócio (`crm_update_lead`), com as definições de escopo `contato`. O
     // campo recusado sai da gravação e volta como erro de ensino; os outros
     // campos da mesma chamada seguem.
     const conferencia = await conferirCamposPersonalizados(ctx, { contato: true }, input.custom_fields);
     const personalizados = conferencia.custom_fields ?? input.custom_fields ?? {};
-    // Só as chaves cujo valor muda de fato.
-    const camposPersonalizados = Object.entries(personalizados)
-      .filter(([chave, valor]) => JSON.stringify(valor) !== JSON.stringify((antes.custom_fields ?? {})[chave]))
-      .map(([chave]) => chave);
-    if (camposPersonalizados.length > 0) {
-      // O PATCH da rota SUBSTITUI o mapa; aqui o agente manda só o que muda.
-      patch.custom_fields = { ...(antes.custom_fields ?? {}), ...personalizados };
+    // Candidatas: as chaves com valor a gravar (valor vazio não é dado) que
+    // diferem do que está no cadastro. Quem decide o que entra é o banco, com a
+    // linha travada (`fn_contato_preencher_campos_personalizados`): a leitura
+    // acima pode estar velha quando a gravação acontecer.
+    const candidatas = Object.fromEntries(
+      Object.entries(personalizados).filter(
+        ([chave, valor]) =>
+          !vazio(valor) && JSON.stringify(valor) !== JSON.stringify((antes.custom_fields ?? {})[chave]),
+      ),
+    );
+    if (Object.keys(candidatas).length > 0) {
+      // A régua de formato do campo (o "padrão" do funil), a MESMA do
+      // `patchContactHandler`, julgando só o que muda. Formato recusado derruba
+      // a chamada antes de qualquer gravação, como derrubava pelo handler.
+      const alterados = camposQueMudaram(candidatas, antes.custom_fields);
+      if (Object.keys(alterados).length > 0) {
+        const defs = await defsDoPadraoDaOrg(ctx.supabase, ctx.organizationId, "contato");
+        const recusas = recusasDePadrao(defs, alterados, testaComPrazo);
+        if (recusas.length > 0) {
+          const erro = erroDePadrao(recusas, ctx.requestId);
+          return recusa(erro.code, erro.message);
+        }
+      }
     }
-    const mudaDocumento = input.cpf !== undefined && hashCpf(input.cpf) !== antes.cpf_hash;
-    if (mudaDocumento) patch.cpf = input.cpf;
+
+    // O outro telefone que este MESMO contato já tem não é escrita (e não diz
+    // nada sobre contato de mais ninguém).
+    if (telefoneExtra !== null) {
+      const { data: jaTem, error: erroDaLeitura } = await ctx.supabase
+        .from("contact_phones")
+        .select("id")
+        .eq("organization_id", ctx.organizationId)
+        .eq("contact_id", input.contact_id)
+        .eq("phone_number", telefoneExtra)
+        .limit(1);
+      if (erroDaLeitura) return CONSULTA_INDISPONIVEL;
+      if (((jaTem ?? []) as unknown[]).length > 0) telefoneExtra = null;
+    }
 
     const naoConferidos =
       conferencia.recusados.length > 0
@@ -240,7 +322,16 @@ export const crmUpdateContact: McpToolDefinition<typeof inputShape> = {
             erro_de_ensino: conferencia.recusados.map((r) => r.mensagem).join(" "),
           }
         : {};
-    if (Object.keys(patch).length === 0 && telefoneExtra === null) {
+    const temCandidata = Object.keys(candidatas).length > 0;
+    if (Object.keys(patch).length === 0 && !temCandidata && telefoneExtra === null) {
+      if (jaPreenchidos.length > 0) {
+        return recusa(
+          "campo_ja_preenchido",
+          `nenhum campo foi gravado: ${jaPreenchidos.join(", ")} já ${jaPreenchidos.length === 1 ? "tem" : "têm"} valor ` +
+            `no cadastro. ${O_QUE_FAZER_COM_O_PREENCHIDO}`,
+          { campos_ja_preenchidos: jaPreenchidos, ...naoConferidos },
+        );
+      }
       return recusa(
         conferencia.recusados.length > 0 ? "campo_nao_conferido" : "nada_a_gravar",
         conferencia.recusados.length > 0
@@ -252,9 +343,11 @@ export const crmUpdateContact: McpToolDefinition<typeof inputShape> = {
 
     // ── grava ──
     let documentoGravado = false;
+    let colunasGravadas: string[] = [];
     if (Object.keys(patch).length > 0) {
       // Só com o documento no patch e a cifra indisponível, o handler não tem o
       // que gravar e recusa: o desfecho certo é dizer que o documento não entrou.
+      let gravou = true;
       try {
         await patchContactHandler(
           ctx.supabase,
@@ -268,7 +361,9 @@ export const crmUpdateContact: McpToolDefinition<typeof inputShape> = {
         if (!(soODocumento && err.code === "invalid_request")) {
           return recusa(err.code, err.message);
         }
+        gravou = false;
       }
+      if (gravou) colunasGravadas = preenchidos;
       if (mudaDocumento) {
         const { data: depois } = await ctx.supabase
           .from("contacts")
@@ -280,8 +375,42 @@ export const crmUpdateContact: McpToolDefinition<typeof inputShape> = {
       }
     }
 
+    // Campos personalizados: a mescla é do banco, com a linha travada, e só nas
+    // chaves que ESTÃO vazias na hora da gravação.
+    let camposPersonalizados: string[] = [];
+    let personalizadosNaoGravados = false;
+    if (temCandidata) {
+      const { data: mescla, error: erroDaMescla } = await ctx.supabase.rpc(
+        "fn_contato_preencher_campos_personalizados",
+        { p_org: ctx.organizationId, p_contato: input.contact_id, p_campos: candidatas },
+      );
+      const lido = mescla as { gravados?: unknown; ja_preenchidos?: unknown } | null;
+      if (erroDaMescla || !lido) {
+        personalizadosNaoGravados = true;
+      } else {
+        camposPersonalizados = Array.isArray(lido.gravados) ? lido.gravados.map(String) : [];
+        const ocupados = Array.isArray(lido.ja_preenchidos) ? lido.ja_preenchidos.map(String) : [];
+        jaPreenchidos.push(...ocupados.map((c) => `custom_fields.${c}`));
+        // O handler emite `contact.updated` quando grava as colunas. Quando só
+        // os campos personalizados mudaram, o evento sai daqui: regra de
+        // automação e webhook que ouvem "contato atualizado" não ficam sem ele.
+        if (camposPersonalizados.length > 0 && colunasGravadas.length === 0 && !documentoGravado) {
+          const { error: erroDoEvento } = await ctx.supabase.rpc("emit_event", {
+            p_event_type: "contact.updated",
+            p_entity_kind: "contact",
+            p_entity_id: input.contact_id,
+            p_payload: { fields: ["custom_fields"] },
+            p_metadata: { request_id: ctx.requestId, via: "mcp", actor_type: ctx.actor.type },
+            p_organization_id: ctx.organizationId,
+          });
+          // O evento que falha não desfaz a gravação: o dado já está no cadastro.
+          if (erroDoEvento) console.error("[crm_update_contact] emit_event failed", erroDoEvento.message);
+        }
+      }
+    }
+
     let telefoneGravado = false;
-    let recusaDoTelefone: string | null = null;
+    let telefoneRecusado = false;
     if (telefoneExtra !== null) {
       const { error: erroDoTelefone } = await ctx.supabase.from("contact_phones").insert({
         organization_id: ctx.organizationId,
@@ -290,13 +419,14 @@ export const crmUpdateContact: McpToolDefinition<typeof inputShape> = {
         tipo: "outro",
         origem: "manual",
       });
+      // Uma recusa só: "já é de outro contato" (23505) e qualquer outra falha
+      // respondem igual. A diferença dizia se o número existe em outro cadastro.
       if (!erroDoTelefone) telefoneGravado = true;
-      else if (erroDoTelefone.code === "23505") recusaDoTelefone = "telefone_ja_cadastrado";
-      else recusaDoTelefone = "telefone_nao_gravado";
+      else telefoneRecusado = true;
     }
 
     const gravados = [
-      ...Object.keys(mudancas),
+      ...colunasGravadas.filter((c) => c !== "cpf"),
       ...camposPersonalizados.map((c) => `custom_fields.${c}`),
       ...(documentoGravado ? ["cpf"] : []),
       ...(telefoneGravado ? ["secondary_phone"] : []),
@@ -309,17 +439,13 @@ export const crmUpdateContact: McpToolDefinition<typeof inputShape> = {
         resourceType: "contact",
         resourceId: input.contact_id,
         ...auditoriaDoContexto(ctx, {
+          // Só NOMES de campo, para todos os tipos. Nenhum valor entra: o novo
+          // é dado de titular (e a auditoria não é alcançada pela
+          // anonimização); o anterior era vazio, porque esta ferramenta só
+          // preenche o que não tinha valor. Desfazer é limpar o campo.
           fields: gravados,
-          // O valor anterior de cada campo, para desfazer. O documento nunca
-          // entra em claro; campo personalizado sai pelo nome.
-          changes: {
-            ...mudancas,
-            ...(documentoGravado
-              ? { cpf: { old: antes.cpf_hash ? PROTEGIDO : null, new: PROTEGIDO } }
-              : {}),
-            ...(telefoneGravado ? { secondary_phone: { old: null, new: telefoneExtra } } : {}),
-          },
           custom_fields_changed: camposPersonalizados,
+          valor_anterior: "vazio",
         }),
       });
     }
@@ -331,23 +457,42 @@ export const crmUpdateContact: McpToolDefinition<typeof inputShape> = {
           "Não diga que ficou anotado; avise a equipe.",
       );
     }
-    if (recusaDoTelefone === "telefone_ja_cadastrado") {
-      avisos.push("o outro telefone NÃO foi gravado: esse número já está no cadastro deste ou de outro contato.");
-    } else if (recusaDoTelefone !== null) {
-      avisos.push("o outro telefone NÃO foi gravado agora; tente de novo.");
+    if (telefoneRecusado) {
+      avisos.push(
+        "o outro telefone NÃO foi gravado. Não tente de novo nesta conversa; se o número for importante, deixe " +
+          "uma tarefa para a equipe conferir.",
+      );
     }
+    if (personalizadosNaoGravados) {
+      avisos.push("os campos personalizados NÃO foram gravados agora; tente de novo em instantes.");
+    }
+    if (jaPreenchidos.length > 0) {
+      avisos.push(
+        `${jaPreenchidos.join(", ")} já ${jaPreenchidos.length === 1 ? "tem" : "têm"} valor no cadastro e ` +
+          `${jaPreenchidos.length === 1 ? "não foi alterado" : "não foram alterados"}. ${O_QUE_FAZER_COM_O_PREENCHIDO}`,
+      );
+    }
+    const preenchidosDeAntes = jaPreenchidos.length > 0 ? { campos_ja_preenchidos: jaPreenchidos } : {};
 
     if (gravados.length === 0) {
-      return recusa(
-        mudaDocumento && !documentoGravado ? "documento_nao_gravado" : (recusaDoTelefone ?? "nada_a_gravar"),
-        avisos.join(" "),
-      );
+      const motivo =
+        mudaDocumento && !documentoGravado
+          ? "documento_nao_gravado"
+          : telefoneRecusado
+            ? "telefone_nao_gravado"
+            : personalizadosNaoGravados
+              ? "indisponivel"
+              : jaPreenchidos.length > 0
+                ? "campo_ja_preenchido"
+                : "nada_a_gravar";
+      return recusa(motivo, avisos.join(" "), { ...preenchidosDeAntes, ...naoConferidos });
     }
     return {
       atualizado: true,
       contact_id: input.contact_id,
       campos_gravados: gravados,
       cpf_available: documentoGravado || antes.cpf_hash !== null,
+      ...preenchidosDeAntes,
       ...(avisos.length > 0 ? { avisos } : {}),
       ...naoConferidos,
     };

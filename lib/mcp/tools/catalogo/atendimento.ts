@@ -114,7 +114,7 @@ export const TOOLS_ATENDIMENTO = declararTools([
     category: "write",
     rotulo: "Gravar dado no cadastro do contato",
     explicacao:
-      "Grava direto no cadastro o que a pessoa informou na conversa: nome, e-mail, outro telefone, documento, endereço, data de nascimento e campos personalizados. O valor anterior fica registrado, e o documento nunca é mostrado.",
+      "Grava direto no cadastro o que a pessoa informou na conversa: nome, e-mail, outro telefone, documento, endereço, data de nascimento e campos personalizados. Só preenche o que está vazio: o que já tem valor não é trocado e fica para a equipe conferir. O documento nunca é mostrado.",
     oQueToca: "Cadastro de clientes",
     risco: "atencao",
     pacotes: ["reter"],

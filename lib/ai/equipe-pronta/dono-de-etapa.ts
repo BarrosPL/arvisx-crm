@@ -63,7 +63,28 @@ export const INTENCAO_DO_PAPEL: Readonly<Record<PapelId, string>> = {
   recuperador: "retomada",
 };
 
-/** O papel da Equipe pronta de quem age. `null` = não é agente da equipe. */
+/** O papel da Equipe pronta gravado em `ai_agents.config`. `null` = sem papel válido. */
+function papelNaConfigDoAgente(config: unknown): PapelId | null {
+  if (config === null || typeof config !== "object") return null;
+  const marca = (config as Record<string, unknown>)[CHAVE_DE_CONFIG];
+  if (marca === null || typeof marca !== "object") return null;
+  const papel = (marca as Record<string, unknown>).papel;
+  return typeof papel === "string" && (PAPEIS_DA_EQUIPE as readonly string[]).includes(papel)
+    ? (papel as PapelId)
+    : null;
+}
+
+/**
+ * O papel da Equipe pronta de quem age. `null` = não é agente da equipe.
+ *
+ * ⚠️ FALHA DE LEITURA TAMBÉM DEVOLVE `null` ("segue como agente comum"). Isso
+ * serve às regras de ETAPA deste arquivo: um banco que soluça não pode travar
+ * o funil de quem nem é da equipe. NÃO serve para decidir se algo pode ser
+ * dito ao cliente: ali, "não consegui ler" tem de ser recusa. Quem fala com o
+ * cliente (`crm_send_proposal`) NÃO chama esta função: lê a marca da equipe na
+ * mesma consulta em que lê a pausa do agente e trata o erro como indisponível
+ * (revisão de 20/11, item 2.2).
+ */
 export async function papelDoAgenteDaEquipe(quem: Quem): Promise<PapelId | null> {
   if (quem.actor.type !== "ai_agent" || !quem.actor.agent_id) return null;
   try {
@@ -74,14 +95,7 @@ export async function papelDoAgenteDaEquipe(quem: Quem): Promise<PapelId | null>
       .eq("id", quem.actor.agent_id)
       .maybeSingle();
     if (error || !data) return null;
-    const config = (data as { config?: unknown }).config;
-    if (config === null || typeof config !== "object") return null;
-    const marca = (config as Record<string, unknown>)[CHAVE_DE_CONFIG];
-    if (marca === null || typeof marca !== "object") return null;
-    const papel = (marca as Record<string, unknown>).papel;
-    return typeof papel === "string" && (PAPEIS_DA_EQUIPE as readonly string[]).includes(papel)
-      ? (papel as PapelId)
-      : null;
+    return papelNaConfigDoAgente((data as { config?: unknown }).config);
   } catch {
     return null;
   }

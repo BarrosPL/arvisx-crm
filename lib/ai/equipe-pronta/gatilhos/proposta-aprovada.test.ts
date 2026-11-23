@@ -11,7 +11,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const planoLibera = vi.hoisted(() => vi.fn(async () => true));
-vi.mock("@/lib/cobranca/equipe-pronta-no-plano", () => ({ planoLiberaAEquipePronta: planoLibera }));
+vi.mock("@/lib/cobranca/equipe-pronta-no-plano", () => ({
+  planoLiberaAEquipePronta: planoLibera,
+  // A leitura que falha fechada (`null` = não deu para ler), usada onde se fala com o cliente.
+  planoLiberaAEquipeProntaSeLido: planoLibera,
+}));
 
 const enviarProposta = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/propostas/enviar-proposta", () => ({ enviarProposta }));

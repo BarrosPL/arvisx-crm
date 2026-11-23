@@ -69765,6 +69765,254 @@ revoke execute on function public.fn_crm_proposals_transicao_da_sessao() from pu
 
 notify pgrst, 'reload schema';
 
+-- ---- editar o rascunho invalida a aprovação da proposta (migration 9815) ----
+-- Espelho idempotente da 9815 (o porquê, a ordem dos gatilhos e o que o envio
+-- grava estão no cabeçalho da migration). Dois gatilhos e três funções, sem
+-- coluna nem constraint: nenhuma linha existente muda e não há o que corrigir
+-- antes. `trg_crm_proposals_zz_edicao_sobe_revisao` tem `zz` no nome para rodar
+-- DEPOIS de `trg_crm_proposals_transicao_da_sessao` (ordem alfabética dos
+-- gatilhos BEFORE). Por criar função, este bloco fica ANTES da VARREDURA anon.
+-- ── 1. conteúdo de crm_proposals ──────────────────────────────────────────
+create or replace function public.fn_crm_proposals_edicao_sobe_revisao()
+returns trigger language plpgsql set search_path = public, pg_temp as $$
+declare
+  -- O que o cliente recebe, ou decide para quem e por onde a proposta sai.
+  -- Coluna nova de conteúdo ENTRA AQUI (a cerca
+  -- tests/invariants/proposta-edicao-invalida-aprovacao.test.ts reprova a
+  -- coluna de crm_proposals que ninguém classificou).
+  v_conteudo constant text[] := array['titulo', 'condicoes', 'valid_until', 'total_cents', 'moeda',
+    'prazo_dias_uteis', 'pagamento', 'pricing_status', 'briefing_json', 'resumo_comercial',
+    'secoes_editadas', 'template_slug', 'template_version', 'destinatario_nome', 'version_reason',
+    'lead_id', 'contact_id', 'conversation_id'];
+  v_new jsonb;
+  v_old jsonb;
+  v_marca text;
+begin
+  -- Só o rascunho que continua rascunho. Entrar em `enviando`, voltar dele,
+  -- decidir, vencer e cancelar não são edição.
+  if old.status is distinct from 'rascunho' or new.status is distinct from 'rascunho' then
+    return new;
+  end if;
+
+  v_new := to_jsonb(new);
+  v_old := to_jsonb(old);
+
+  if new.revision < old.revision then
+    -- a revisão nunca volta atrás
+    new.revision := old.revision + 1;
+  elsif new.revision = old.revision
+        and exists (select 1 from unnest(v_conteudo) k where v_new -> k is distinct from v_old -> k) then
+    -- conteúdo mudou e quem escreveu não subiu a revisão: o banco sobe
+    new.revision := old.revision + 1;
+  end if;
+
+  if new.revision is distinct from old.revision then
+    -- A aprovação era de outra revisão. Só fica a que o MESMO comando gravou
+    -- para a revisão nova (o servidor aprovando; a sessão não chega aqui com
+    -- isso, o gatilho de transição já recusou).
+    if new.aprovada_na_revisao is distinct from new.revision then
+      new.aprovada_em := null;
+      new.aprovada_na_revisao := null;
+    end if;
+    -- Marca da transação: os itens gravados a seguir são desta mesma edição.
+    v_marca := coalesce(current_setting('arvisx.proposta_revisao_subida', true), '');
+    if strpos(v_marca, new.id::text) = 0 then
+      perform set_config('arvisx.proposta_revisao_subida', v_marca || ' ' || new.id::text, true);
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+revoke execute on function public.fn_crm_proposals_edicao_sobe_revisao() from public, anon, authenticated;
+
+drop trigger if exists trg_crm_proposals_zz_edicao_sobe_revisao on public.crm_proposals;
+create trigger trg_crm_proposals_zz_edicao_sobe_revisao
+  before update on public.crm_proposals
+  for each row execute function public.fn_crm_proposals_edicao_sobe_revisao();
+
+-- ── 2. itens ──────────────────────────────────────────────────────────────
+create or replace function public.fn_crm_proposal_items_sobe_revisao()
+returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  v_ids uuid[];
+  v_id uuid;
+begin
+  if tg_op = 'INSERT' then
+    v_ids := array[new.proposal_id];
+  elsif tg_op = 'DELETE' then
+    v_ids := array[old.proposal_id];
+  else
+    -- UPDATE que não muda nada não é edição.
+    if to_jsonb(new) = to_jsonb(old) then
+      return null;
+    end if;
+    v_ids := array[old.proposal_id];
+    -- Item levado de uma proposta para outra: as duas mudaram.
+    if new.proposal_id is distinct from old.proposal_id then
+      v_ids := v_ids || new.proposal_id;
+    end if;
+  end if;
+
+  foreach v_id in array v_ids loop
+    -- A revisão desta proposta já subiu nesta transação (a edição pela função
+    -- fn_proposta_gravar_edicao, ou outra linha deste mesmo comando) e ninguém
+    -- a aprovou depois: é a mesma edição, não soma de novo.
+    if strpos(coalesce(current_setting('arvisx.proposta_revisao_subida', true), ''), v_id::text) > 0
+       and not exists (select 1 from public.crm_proposals p where p.id = v_id and p.aprovada_em is not null) then
+      continue;
+    end if;
+    -- Só rascunho. O gatilho de crm_proposals limpa a aprovação e marca a
+    -- transação. Proposta apagada junto (cascata) não casa linha nenhuma.
+    update public.crm_proposals
+       set revision = revision + 1
+     where id = v_id
+       and status = 'rascunho';
+  end loop;
+
+  return null;
+end;
+$$;
+revoke execute on function public.fn_crm_proposal_items_sobe_revisao() from public, anon, authenticated;
+
+drop trigger if exists trg_crm_proposal_items_sobe_revisao on public.crm_proposal_items;
+create trigger trg_crm_proposal_items_sobe_revisao
+  after insert or update or delete on public.crm_proposal_items
+  for each row execute function public.fn_crm_proposal_items_sobe_revisao();
+
+-- ── 3. a edição das rotas, numa transação só ──────────────────────────────
+create or replace function public.fn_proposta_gravar_edicao(
+  p_org uuid,
+  p_proposta uuid,
+  p_revisao bigint,
+  p_campos jsonb,
+  p_itens jsonb
+) returns bigint
+language plpgsql security invoker set search_path = public, pg_temp as $$
+declare
+  v_campos jsonb := coalesce(p_campos, '{}'::jsonb);
+  v_nova bigint;
+begin
+  -- CAS: só o rascunho desta organização, na revisão que quem edita leu. Campo
+  -- ausente de `p_campos` fica como está; `total_cents` e `pricing_status`
+  -- vêm sempre (são recalculados dos itens pelo servidor).
+  update public.crm_proposals p
+     set titulo = case when v_campos ? 'titulo' then v_campos ->> 'titulo' else p.titulo end,
+         condicoes = case when v_campos ? 'condicoes' then v_campos ->> 'condicoes' else p.condicoes end,
+         valid_until = case when v_campos ? 'valid_until' then (v_campos ->> 'valid_until')::date else p.valid_until end,
+         prazo_dias_uteis = case when v_campos ? 'prazo_dias_uteis' then (v_campos ->> 'prazo_dias_uteis')::int else p.prazo_dias_uteis end,
+         pagamento = case when v_campos ? 'pagamento' then v_campos ->> 'pagamento' else p.pagamento end,
+         briefing_json = case when v_campos ? 'briefing_json' then nullif(v_campos -> 'briefing_json', 'null'::jsonb) else p.briefing_json end,
+         total_cents = case when v_campos ? 'total_cents' then (v_campos ->> 'total_cents')::bigint else p.total_cents end,
+         pricing_status = case when v_campos ? 'pricing_status' then v_campos ->> 'pricing_status' else p.pricing_status end,
+         revision = p.revision + 1
+   where p.organization_id = p_org
+     and p.id = p_proposta
+     and p.revision = p_revisao
+     and p.status = 'rascunho'
+  returning p.revision into v_nova;
+
+  if v_nova is null then
+    return null;
+  end if;
+
+  delete from public.crm_proposal_items i
+   where i.organization_id = p_org
+     and i.proposal_id = p_proposta;
+
+  insert into public.crm_proposal_items
+    (organization_id, proposal_id, product_id, descricao, quantidade, preco_unitario_cents, desconto_cents, position)
+  select p_org,
+         p_proposta,
+         (it ->> 'product_id')::uuid,
+         it ->> 'descricao',
+         (it ->> 'quantidade')::numeric,
+         (it ->> 'preco_unitario_cents')::bigint,
+         coalesce((it ->> 'desconto_cents')::bigint, 0),
+         (it ->> 'position')::numeric
+    from jsonb_array_elements(coalesce(p_itens, '[]'::jsonb)) as t(it);
+
+  return v_nova;
+end;
+$$;
+revoke execute on function public.fn_proposta_gravar_edicao(uuid, uuid, bigint, jsonb, jsonb) from public, anon;
+grant execute on function public.fn_proposta_gravar_edicao(uuid, uuid, bigint, jsonb, jsonb) to authenticated, service_role;
+
+comment on function public.fn_proposta_gravar_edicao(uuid, uuid, bigint, jsonb, jsonb) is
+  'Edição do rascunho da proposta numa transação: CAS em revision, campos e troca dos itens. Devolve a revisão nova, ou NULL quando o CAS não casa. Invoker: RLS e gatilho de transição valem para quem chama. Migration 9815.';
+
+notify pgrst, 'reload schema';
+
+-- ---- o agente preenche campo personalizado do contato no banco (migration 9820) ----
+-- Espelho idempotente da 9820 (o porquê está no cabeçalho da migration): uma
+-- função `security invoker`, com EXECUTE só para `service_role`, que mescla em
+-- `contacts.custom_fields` SÓ as chaves vazias, com a linha travada. Sem coluna
+-- nem constraint: nenhuma linha existente muda. Por criar função, este bloco
+-- fica ANTES da VARREDURA anon.
+create or replace function public.fn_contato_preencher_campos_personalizados(
+  p_org uuid,
+  p_contato uuid,
+  p_campos jsonb
+) returns jsonb
+language plpgsql security invoker set search_path = public, pg_temp as $$
+declare
+  v_atual jsonb;
+  v_novos jsonb;
+  v_gravados jsonb;
+  v_ocupados jsonb;
+begin
+  if p_campos is null or jsonb_typeof(p_campos) <> 'object' then
+    return jsonb_build_object('gravados', '[]'::jsonb, 'ja_preenchidos', '[]'::jsonb);
+  end if;
+
+  -- A trava da linha é o que torna a mescla atômica.
+  select coalesce(c.custom_fields, '{}'::jsonb)
+    into v_atual
+    from public.contacts c
+   where c.organization_id = p_org
+     and c.id = p_contato
+     and coalesce(c.is_anonymized, false) = false
+     for update;
+  if not found then
+    return null;
+  end if;
+  if jsonb_typeof(v_atual) <> 'object' then
+    v_atual := '{}'::jsonb;
+  end if;
+
+  select coalesce(jsonb_object_agg(e.key, e.value) filter (where e.vazia), '{}'::jsonb),
+         coalesce(jsonb_agg(e.key order by e.key) filter (where e.vazia), '[]'::jsonb),
+         coalesce(jsonb_agg(e.key order by e.key) filter (where not e.vazia and e.value is distinct from e.atual), '[]'::jsonb)
+    into v_novos, v_gravados, v_ocupados
+    from (
+      select n.key,
+             n.value,
+             v_atual -> n.key as atual,
+             coalesce(v_atual -> n.key, 'null'::jsonb) in ('null'::jsonb, '""'::jsonb) as vazia
+        from jsonb_each(p_campos) n
+       -- valor vazio que veio não é dado a gravar
+       where n.value not in ('null'::jsonb, '""'::jsonb)
+    ) e;
+
+  if v_novos <> '{}'::jsonb then
+    update public.contacts c
+       set custom_fields = v_atual || v_novos,
+           updated_at = now()
+     where c.organization_id = p_org
+       and c.id = p_contato;
+  end if;
+
+  return jsonb_build_object('gravados', v_gravados, 'ja_preenchidos', v_ocupados);
+end;
+$$;
+revoke execute on function public.fn_contato_preencher_campos_personalizados(uuid, uuid, jsonb) from public, anon, authenticated;
+grant execute on function public.fn_contato_preencher_campos_personalizados(uuid, uuid, jsonb) to service_role;
+
+comment on function public.fn_contato_preencher_campos_personalizados(uuid, uuid, jsonb) is
+  'Preenche campos personalizados do contato SÓ onde estão vazios, com a linha travada (sem perder escrita concorrente). Devolve os nomes gravados e os que já tinham outro valor; nunca devolve valor. Invoker. Migration 9820.';
+
+notify pgrst, 'reload schema';
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria

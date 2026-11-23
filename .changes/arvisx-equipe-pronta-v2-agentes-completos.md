@@ -11,8 +11,10 @@ nunca por cima de um agente editado à mão sem confirmação.
 
 - **Gravam direto no CRM** — os dados do contato (nome, e-mail, outro telefone,
   documento, endereço, data de nascimento e campos personalizados) entram no
-  cadastro pela ferramenta nova `crm_update_contact`, com o valor anterior
-  registrado. O documento é validado, guardado cifrado e nunca mostrado.
+  cadastro pela ferramenta nova `crm_update_contact`. Ela só preenche o que
+  está vazio: o dado que já está no cadastro não é trocado pelo que o cliente
+  escreveu na conversa, e o agente deixa uma tarefa para a equipe conferir. O
+  documento é validado, guardado cifrado e nunca mostrado.
 - **Um negócio por contato** — quando um agente da equipe tenta criar negócio
   para quem já tem um aberto no funil, recebe o que existe.
 - **Cada etapa tem um dono** — a instalação cria no funil as etapas da equipe
@@ -36,3 +38,19 @@ novo. A pausa que você fez num agente continua valendo.
 
 Migration 9814: duas colunas opcionais em `crm_proposals` para a aprovação da
 proposta. Nenhuma linha existente muda.
+
+Migration 9815: editar o rascunho invalida a aprovação pelo banco. Mexer em um
+item ou no conteúdo da proposta (título, condições, validade, valores, texto do
+documento, modelo) soma um na revisão e derruba a aprovação, mesmo quando a
+escrita não passa pela tela. Salvar a proposta passou a gravar campos e itens
+de uma vez só: se a gravação dos itens falhar, o rascunho não fica mais sem
+itens. Nenhuma linha existente muda.
+
+Migration 9820: função que preenche campo personalizado do contato no banco, só
+onde está vazio, sem perder o que outra pessoa gravou ao mesmo tempo. Nenhuma
+linha existente muda.
+
+O envio de proposta pelo agente (`crm_send_proposal`) sai uma vez só, mesmo com
+dois pedidos ao mesmo tempo, e só da versão do rascunho que foi conferida. Fora
+de um atendimento (chamada por integração), só a proposta aprovada pela equipe
+é enviada.
