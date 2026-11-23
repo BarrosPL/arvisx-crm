@@ -294,7 +294,9 @@ describe("responder em público", () => {
     const db = montar("real");
     rede.mockResolvedValueOnce(erroDaRede(100, "Invalid parameter"));
     const erro = await recusa(responderEmPublico(db, ORG, COMENTARIO, { text: "Olá!" }, TOKEN));
-    expect([erro.status, erro.code]).toEqual([502, "upstream_unavailable"]);
+    // Revisão de 20/11, item 2.24: recusa definitiva não é indisponibilidade.
+    expect([erro.status, erro.code]).toEqual([422, "recusado_pela_rede"]);
+    expect(erro.details).toMatchObject({ origem: "rede", codigo_da_rede: 100 });
     expect(linha().public_reply).toBeNull();
     expect(linha().estado).toBe("novo");
     expect(h.audit).not.toHaveBeenCalled();
@@ -553,10 +555,191 @@ describe("responder em privado", () => {
     const db = montar("real");
     rede.mockResolvedValueOnce(erroDaRede(551, "indisponível"));
     const erro = await recusa(responderEmPrivado(db, ORG, COMENTARIO, { text: "oi" }, TOKEN));
-    expect(erro.status).toBe(502);
+    expect([erro.status, erro.code]).toEqual([422, "recusado_pela_rede"]);
+    expect(erro.details).toMatchObject({ origem: "rede", codigo_da_rede: 551 });
     expect(linha().private_reply).toBeNull();
     expect(linha().estado).toBe("novo");
     expect(h.ingest).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Revisão de 20/11/2026, item 1.1 (bloqueante). A resposta gravada em modo de
+ * registro é SIMULADA: nada saiu. Ela não pode valer como resposta de verdade
+ * depois que a conexão passa para o modo real — senão o comentário nunca mais
+ * é respondido (e a janela de 7 dias da privada vence com ele preso).
+ */
+describe("resposta simulada não trava a resposta real", () => {
+  const passarParaReal = () => {
+    const sessao = banco.tabelas.channel_sessions!.find((c) => c.id === CANAL)!;
+    sessao.metadata = { ...(sessao.metadata as Record<string, unknown>), comentarios_modo: "real" };
+  };
+
+  it("⭐ pública: registrar → mudar para real → a resposta real é publicada e substitui a simulada", async () => {
+    const db = montar("registrar");
+    await responderEmPublico(db, ORG, COMENTARIO, { text: "ensaio" }, TOKEN);
+    expect(rede).not.toHaveBeenCalled();
+    passarParaReal();
+
+    const r = await responderEmPublico(db, ORG, COMENTARIO, { text: "de verdade" }, TOKEN);
+    expect(rede).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(String(chamadasARede()[0]!.init.body))).toEqual({ message: "de verdade" });
+    expect(r.simulada).toBe(false);
+    expect(r.comment.public_reply).toMatchObject({ id: "17999000111", texto: "de verdade", simulada: false, situacao: "concluida" });
+    expect(r.comment.estado).toBe("respondido");
+  });
+
+  it("⭐ privada: registrar → mudar para real → a mensagem sai e entra na conversa", async () => {
+    const db = montar("registrar");
+    await responderEmPrivado(db, ORG, COMENTARIO, { text: "ensaio", criar_contato: true }, TOKEN);
+    expect(rede).not.toHaveBeenCalled();
+    passarParaReal();
+
+    const r = await responderEmPrivado(db, ORG, COMENTARIO, { text: "de verdade", criar_contato: true }, TOKEN);
+    expect(rede).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(String(chamadasARede()[0]!.init.body))).toEqual({
+      recipient: { comment_id: ID_NA_REDE },
+      message: { text: "de verdade" },
+    });
+    expect(r).toMatchObject({ simulada: false, sem_conversa: null });
+    expect(r.comment.private_reply).toMatchObject({ id: "mid.1", texto: "de verdade", simulada: false, situacao: "concluida" });
+  });
+
+  it("⭐ as duas no mesmo comentário: simuladas em registro, e as duas saem de verdade depois", async () => {
+    const db = montar("registrar");
+    await responderEmPublico(db, ORG, COMENTARIO, { text: "ensaio público" }, TOKEN);
+    await responderEmPrivado(db, ORG, COMENTARIO, { text: "ensaio privado" }, TOKEN);
+    passarParaReal();
+    await responderEmPublico(db, ORG, COMENTARIO, { text: "público" }, TOKEN);
+    await responderEmPrivado(db, ORG, COMENTARIO, { text: "privado" }, TOKEN);
+    expect(rede).toHaveBeenCalledTimes(2);
+    expect(linha().public_reply).toMatchObject({ texto: "público", simulada: false });
+    expect(linha().private_reply).toMatchObject({ texto: "privado", simulada: false });
+  });
+
+  it("⭐ real → real continua 409: a resposta de verdade nunca é substituída", async () => {
+    const db = montar("real");
+    await responderEmPublico(db, ORG, COMENTARIO, { text: "primeira" }, TOKEN);
+    await responderEmPrivado(db, ORG, COMENTARIO, { text: "primeira" }, TOKEN);
+    const publica = await recusa(responderEmPublico(db, ORG, COMENTARIO, { text: "segunda" }, TOKEN));
+    const privada = await recusa(responderEmPrivado(db, ORG, COMENTARIO, { text: "segunda" }, TOKEN));
+    expect([publica.status, publica.code]).toEqual([409, "ja_respondido"]);
+    expect([privada.status, privada.code]).toEqual([409, "ja_respondido_em_privado"]);
+    expect(rede).toHaveBeenCalledTimes(2);
+  });
+
+  it("⭐ real → voltar para registrar: a resposta de verdade continua valendo (409), nada é simulado por cima", async () => {
+    const db = montar("real");
+    await responderEmPublico(db, ORG, COMENTARIO, { text: "de verdade" }, TOKEN);
+    const sessao = banco.tabelas.channel_sessions!.find((c) => c.id === CANAL)!;
+    sessao.metadata = { ...(sessao.metadata as Record<string, unknown>), comentarios_modo: "registrar" };
+    const erro = await recusa(responderEmPublico(db, ORG, COMENTARIO, { text: "ensaio" }, TOKEN));
+    expect([erro.status, erro.code]).toEqual([409, "ja_respondido"]);
+    expect(linha().public_reply).toMatchObject({ texto: "de verdade", simulada: false });
+  });
+
+  it("⭐ em modo de registro, repetir a simulação continua recusado com a resposta existente (nada é regravado)", async () => {
+    const db = montar("registrar");
+    await responderEmPublico(db, ORG, COMENTARIO, { text: "ensaio" }, TOKEN);
+    await responderEmPrivado(db, ORG, COMENTARIO, { text: "ensaio" }, TOKEN);
+    const publica = await recusa(responderEmPublico(db, ORG, COMENTARIO, { text: "outro ensaio" }, TOKEN));
+    const privada = await recusa(responderEmPrivado(db, ORG, COMENTARIO, { text: "outro ensaio" }, TOKEN));
+    expect([publica.status, publica.code]).toEqual([409, "ja_respondido"]);
+    expect((publica.details as { resposta: { texto: string; simulada: boolean } }).resposta).toMatchObject({
+      texto: "ensaio",
+      simulada: true,
+    });
+    expect([privada.status, privada.code]).toEqual([409, "ja_respondido_em_privado"]);
+    expect(linha().public_reply).toMatchObject({ texto: "ensaio", simulada: true });
+    expect(linha().private_reply).toMatchObject({ texto: "ensaio", simulada: true });
+    expect(rede).not.toHaveBeenCalled();
+  });
+
+  it("⭐ privada com a janela de 7 dias vencida continua recusada, com simulada anterior e modo real", async () => {
+    const db = montar("registrar", { commented_at: haDias(6) });
+    await responderEmPrivado(db, ORG, COMENTARIO, { text: "ensaio" }, TOKEN);
+    passarParaReal();
+    linha().commented_at = haDias(8);
+    const erro = await recusa(responderEmPrivado(db, ORG, COMENTARIO, { text: "tarde demais" }, TOKEN));
+    expect([erro.status, erro.code]).toEqual([422, "janela_de_7_dias"]);
+    expect(rede).not.toHaveBeenCalled();
+    expect(linha().private_reply).toMatchObject({ texto: "ensaio", simulada: true });
+  });
+
+  it("⭐ a rede recusa a resposta real: a simulada anterior volta ao registro, e dá para tentar de novo", async () => {
+    const db = montar("registrar");
+    await responderEmPublico(db, ORG, COMENTARIO, { text: "ensaio" }, TOKEN);
+    passarParaReal();
+    rede.mockResolvedValueOnce(erroDaRede(100, "Invalid parameter"));
+    await recusa(responderEmPublico(db, ORG, COMENTARIO, { text: "de verdade" }, TOKEN));
+    expect(linha().public_reply).toMatchObject({ texto: "ensaio", simulada: true, situacao: "concluida" });
+
+    const r = await responderEmPublico(db, ORG, COMENTARIO, { text: "de verdade" }, TOKEN);
+    expect(r.comment.public_reply).toMatchObject({ texto: "de verdade", simulada: false });
+    expect(rede).toHaveBeenCalledTimes(2);
+  });
+
+  it("⭐ duas chamadas reais ao mesmo tempo sobre a simulada: só uma publica", async () => {
+    const db = montar("registrar");
+    await responderEmPublico(db, ORG, COMENTARIO, { text: "ensaio" }, TOKEN);
+    passarParaReal();
+    const desfechos = await Promise.allSettled([
+      responderEmPublico(db, ORG, COMENTARIO, { text: "a" }, TOKEN),
+      responderEmPublico(db, ORG, COMENTARIO, { text: "b" }, TOKEN),
+    ]);
+    expect(desfechos.filter((d) => d.status === "fulfilled")).toHaveLength(1);
+    expect(((desfechos.find((d) => d.status === "rejected") as PromiseRejectedResult).reason as ApiError).status).toBe(409);
+    expect(rede).toHaveBeenCalledTimes(1);
+  });
+
+  it("⭐ a simulada substituída fica na auditoria: a entrada dela existe, e a real diz o que substituiu", async () => {
+    const db = montar("registrar");
+    await responderEmPublico(db, ORG, COMENTARIO, { text: "ensaio" }, TOKEN);
+    const quandoDaSimulada = (linha().public_reply as { quando: string }).quando;
+    passarParaReal();
+    await responderEmPublico(db, ORG, COMENTARIO, { text: "de verdade" }, TOKEN);
+    const entradas = h.audit.mock.calls.map(([e]) => e as { action: string; metadata: Record<string, unknown> });
+    expect(entradas.map((e) => [e.action, e.metadata.simulada])).toEqual([
+      ["social_comment.respondido", true],
+      ["social_comment.respondido", false],
+    ]);
+    expect(entradas[1]!.metadata.substituiu_simulada).toEqual({ quando: quandoDaSimulada });
+    expect(entradas[0]!.metadata).not.toHaveProperty("substituiu_simulada");
+  });
+});
+
+// Revisão de 20/11, item 2.24.
+describe("recusa definitiva da rede × indisponibilidade", () => {
+  it("⭐ a Meta diz que o token expirou (190): 409 canal_indisponivel, com a frase de reconectar", async () => {
+    const db = montar("real");
+    rede.mockResolvedValueOnce(erroDaRede(190, "Error validating access token", 401));
+    const erro = await recusa(responderEmPublico(db, ORG, COMENTARIO, { text: "Olá!" }, TOKEN));
+    expect([erro.status, erro.code]).toEqual([409, "canal_indisponivel"]);
+    expect(erro.message).toMatch(/Reconecte/);
+    expect(linha().public_reply).toBeNull();
+  });
+
+  it("⭐ rede fora (5xx) NÃO vira recusa definitiva: a resposta fica incerta (502)", async () => {
+    const db = montar("real");
+    rede.mockResolvedValueOnce(erroDaRede(2, "Service temporarily unavailable", 503));
+    const erro = await recusa(responderEmPublico(db, ORG, COMENTARIO, { text: "Olá!" }, TOKEN));
+    expect([erro.status, erro.code]).toEqual([502, "resposta_incerta"]);
+  });
+
+  it("⭐ ocultar: recusa definitiva é 422 recusado_pela_rede; rede fora é 502 upstream_unavailable; nada é gravado", async () => {
+    const db = montar("real");
+    rede.mockResolvedValueOnce(erroDaRede(100, "Invalid parameter"));
+    const definitiva = await recusa(ocultarComentario(db, ORG, COMENTARIO, TOKEN));
+    expect([definitiva.status, definitiva.code]).toEqual([422, "recusado_pela_rede"]);
+
+    rede.mockRejectedValueOnce(new Error("timeout"));
+    const fora = await recusa(ocultarComentario(db, ORG, COMENTARIO, TOKEN));
+    expect([fora.status, fora.code]).toEqual([502, "upstream_unavailable"]);
+
+    rede.mockResolvedValueOnce(respostaDaRede({ success: false }));
+    const semConfirmar = await recusa(ocultarComentario(db, ORG, COMENTARIO, TOKEN));
+    expect([semConfirmar.status, semConfirmar.code]).toEqual([502, "upstream_unavailable"]);
+    expect(linha().hidden).toBeNull();
   });
 });
 
@@ -622,6 +805,52 @@ describe("criar contato", () => {
     const denovo = await criarContatoDoComentario(db, ORG, COMENTARIO, {}, TOKEN);
     expect(denovo).toMatchObject({ contact_id: r.contact_id, contato_ja_existia: true });
     expect(banco.tabelas.contacts).toHaveLength(1);
+  });
+
+  // Revisão de 20/11, item 2.23: duas chamadas ao mesmo tempo criavam dois contatos.
+  it("⭐ duas chamadas ao mesmo tempo no MESMO comentário criam UM contato, e as duas devolvem o mesmo", async () => {
+    const db = montar("real");
+    const [a, b] = await Promise.all([
+      criarContatoDoComentario(db, ORG, COMENTARIO, {}, TOKEN),
+      criarContatoDoComentario(db, ORG, COMENTARIO, {}, TOKEN),
+    ]);
+    expect(banco.tabelas.contacts).toHaveLength(1);
+    expect(a.contact_id).toBe(b.contact_id);
+    expect(linha().contact_id).toBe(a.contact_id);
+    expect([a.contato_ja_existia, b.contato_ja_existia].sort()).toEqual([false, true]);
+  });
+
+  it("três chamadas ao mesmo tempo, com funil: um contato só, e o negócio é pedido para ele", async () => {
+    const db = montar("real");
+    banco.tabelas.crm_stages!.push({ id: "etapa-1", organization_id: ORG, pipeline_id: "ffffffff-0000-4000-8000-000000000001", is_archived: false, position: 1 });
+    h.cardAberto.mockResolvedValue(null);
+    h.criarLead.mockResolvedValue({ id: "lead-novo" });
+    const pedidos = [1, 2, 3].map(() =>
+      criarContatoDoComentario(db, ORG, COMENTARIO, { pipeline_id: "ffffffff-0000-4000-8000-000000000001" }, TOKEN),
+    );
+    const r = await Promise.all(pedidos);
+    expect(banco.tabelas.contacts).toHaveLength(1);
+    expect(new Set(r.map((x) => x.contact_id)).size).toBe(1);
+  });
+
+  it("a outra chamada some no meio (não liga o contato): recusa com 409, sem criar um segundo", async () => {
+    const db = montar("real");
+    // Simula a chamada concorrente que tomou a vez e ainda não terminou: a
+    // linha muda entre a leitura e a tomada da vez, e o contato não aparece.
+    // As consultas a `social_comments`, na ordem: ler o comentário, procurar
+    // outro do mesmo autor, tomar a vez. A linha muda antes da terceira.
+    const original = banco.from.bind(banco);
+    let consultas = 0;
+    banco.from = (tabela: string) => {
+      if (tabela === "social_comments" && ++consultas === 3) {
+        linha().updated_at = new Date(Date.now() + 5_000).toISOString();
+      }
+      return original(tabela);
+    };
+    const erro = await recusa(criarContatoDoComentario(db, ORG, COMENTARIO, {}, TOKEN));
+    expect([erro.status, erro.code]).toEqual([409, "contato_em_criacao"]);
+    expect(banco.tabelas.contacts).toHaveLength(0);
+    expect(linha().contact_id).toBeNull();
   });
 
   it("outro comentário do MESMO autor reaproveita o contato; o de outra organização, não", async () => {

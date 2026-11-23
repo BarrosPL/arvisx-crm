@@ -8,6 +8,8 @@
  *   POST { acao: "concluir", estado, erro }  → a recusa, com a frase certa
  *   POST { acao: "conectar", selecao, page_id, redes } → grava as sessões e assina a página
  *   POST { acao: "desconectar", channel_session_id }    → desassina, apaga o token, arquiva
+ *   POST { acao: "iniciar", para_comentarios: true } → o login de REAUTORIZAÇÃO, o único
+ *        que pede as permissões de comentários; a volta é a mesma (concluir, conectar)
  *   POST { acao: "comentarios_modo", channel_session_id, modo } → liga, desliga ou põe em
  *        registro os comentários de UMA conexão do Instagram (off | registrar | real)
  *
@@ -71,7 +73,9 @@ const MARCA_DO_ESTADO = "meta-social";
 const NUMERICO = /^[0-9]{1,40}$/;
 
 const corpoSchema = z.discriminatedUnion("acao", [
-  z.object({ acao: z.literal("iniciar") }).strict(),
+  // `para_comentarios: true` é o login de REAUTORIZAÇÃO: pede também as
+  // permissões de comentários. O login normal (sem a chave) nunca as pede.
+  z.object({ acao: z.literal("iniciar"), para_comentarios: z.boolean().optional() }).strict(),
   z
     .object({
       acao: z.literal("concluir"),
@@ -224,7 +228,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         { organizationId: orgId, userId, profileId: MARCA_DO_ESTADO },
         { segredo: env.INTERNAL_SECRET, agora },
       );
-      return ok({ url: urlDoLogin({ appId: app.appId, redirectUri: volta, estado }) }, { requestId, headers });
+      return ok(
+        {
+          url: urlDoLogin({
+            appId: app.appId,
+            redirectUri: volta,
+            estado,
+            paraComentarios: corpo.para_comentarios === true,
+          }),
+        },
+        { requestId, headers },
+      );
     }
 
     if (corpo.acao === "concluir") {

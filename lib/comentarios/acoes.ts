@@ -28,6 +28,17 @@
  *                        `resposta_incerta`, e só `confirmar_reenvio: true` —
  *                        decisão de quem chama — manda de novo.
  *
+ * ─── Resposta simulada não é resposta ───────────────────────────────────────
+ *
+ * A resposta gravada em modo de registro (`simulada: true`) NÃO saiu. Enquanto
+ * a conexão segue em registro, ela vale como a resposta do comentário (repetir
+ * recebe 409 com ela, e nada é regravado). Quando a conexão passa para `real`,
+ * ela deixa de travar: a resposta real a SUBSTITUI, pelo mesmo UPDATE
+ * condicional (a linha tem de estar como foi lida), e a simulada continua na
+ * auditoria (a entrada dela, mais `substituiu_simulada` na entrada da real).
+ * Se a rede recusar a real, a simulada volta para a coluna. O contrário nunca
+ * acontece: resposta de verdade não é substituída, em modo nenhum.
+ *
  * ─── Sem regra de conteúdo ──────────────────────────────────────────────────
  *
  * O CRM exige texto não vazio e os limites da própria rede (uma resposta, 7
@@ -52,6 +63,7 @@ import {
   identidadeCandidataDoAutor,
   ocultarNaRede,
   publicarRespostaPublica,
+  relogio,
   type FalhaDoEnvio,
 } from "@/lib/channels/meta-social/comentarios-resposta";
 import { sessaoPorId, type SessaoDireta } from "@/lib/channels/meta-social/store";
@@ -297,6 +309,10 @@ type Coluna = "public_reply" | "private_reply";
  * Confere a resposta que já está na coluna. Devolve o que o UPDATE condicional
  * tem de casar: a coluna vazia (`null`) ou a linha exatamente como foi lida
  * (`updated_at`), quando quem chama decidiu repetir uma resposta incerta.
+ *
+ * `simulada` é o terceiro desfecho: a coluna tem uma resposta de modo de
+ * registro, que não saiu. Quem decide o que fazer com ela é o MODO ATUAL do
+ * canal, que só se conhece depois (`resolverSimulada`).
  */
 function conferirRespostaExistente(
   quem: QuemAge,
@@ -304,8 +320,9 @@ function conferirRespostaExistente(
   lida: RespostaPublica | RespostaPrivada | null,
   confirmarReenvio: boolean,
   codigoJaRespondido: string,
-): "vazia" | "repetir" {
+): "vazia" | "repetir" | "simulada" {
   if (cru === null || cru === undefined) return "vazia";
+  if (lida && lida.situacao === "concluida" && lida.simulada) return "simulada";
   if (!lida || lida.situacao === "concluida") {
     throw recusa(quem, 409, codigoJaRespondido, "Este comentário já foi respondido.", { resposta: lida ?? cru });
   }
@@ -323,6 +340,28 @@ function conferirRespostaExistente(
     );
   }
   return "repetir";
+}
+
+/**
+ * A resposta simulada que já está na coluna, diante do modo ATUAL do canal:
+ *
+ *   registrar  continua valendo como a resposta do comentário: 409, com ela;
+ *   real       não trava: a resposta real a substitui. O UPDATE condicional
+ *              casa a linha como foi lida (`repetir`), então duas chamadas ao
+ *              mesmo tempo não publicam as duas.
+ */
+function resolverSimulada(
+  quem: QuemAge,
+  condicao: "vazia" | "repetir" | "simulada",
+  modo: Exclude<ModoDeComentarios, "off">,
+  lida: RespostaPublica | RespostaPrivada | null,
+  codigoJaRespondido: string,
+): { condicao: "vazia" | "repetir"; substituida: RespostaPublica | RespostaPrivada | null } {
+  if (condicao !== "simulada") return { condicao, substituida: null };
+  if (modo === "registrar") {
+    throw recusa(quem, 409, codigoJaRespondido, "Este comentário já foi respondido.", { resposta: lida });
+  }
+  return { condicao: "repetir", substituida: lida };
 }
 
 /** O UPDATE condicional. `false` = outra chamada chegou antes. */
@@ -349,12 +388,24 @@ async function gravar(db: SupabaseClient, linha: Linha, campos: Record<string, u
   if (error) throw new Error(`social_comments: ${error.message}`);
 }
 
-/** A recusa da rede vira a recusa da API — com a frase que a rede justificou. */
+/**
+ * A recusa da rede vira a recusa da API — com a frase que a rede justificou.
+ *
+ * Recusa DEFINITIVA (a rede respondeu "não", 4xx) não é indisponibilidade
+ * (revisão de 20/11/2026, item 2.24): sai como 422 `recusado_pela_rede`, com o
+ * código da rede em `details`, para quem chama saber que repetir igual não
+ * adianta. `upstream_unavailable` (502) fica para quando a rede não respondeu
+ * ou falhou — e, nas respostas, isso é `resposta_incerta`.
+ */
 function recusaDaRede(quem: QuemAge, falha: Exclude<FalhaDoEnvio, { tipo: "incerta" }>): ApiError {
   if (falha.tipo === "limite") return recusa(quem, 429, "rate_limited", falha.frase, { origem: "rede" });
   if (falha.tipo === "sem_credencial") return recusa(quem, 409, "canal_indisponivel", falha.frase);
   if (falha.escopoAusente) return recusa(quem, 422, "escopo_ausente", falha.frase);
-  return recusa(quem, 502, "upstream_unavailable", falha.frase, { origem: "rede" });
+  return recusa(quem, 422, "recusado_pela_rede", falha.frase, {
+    origem: "rede",
+    codigo_da_rede: falha.codigo,
+    subcodigo_da_rede: falha.subcodigo,
+  });
 }
 
 /** A única regra de conteúdo do CRM: o texto não pode ser vazio. */
@@ -386,14 +437,16 @@ export async function responderEmPublico(
 ): Promise<ResultadoDaResposta> {
   textoNaoVazio(quem, entrada.text);
   const linha = await carregar(db, org, id, quem);
-  const condicao = conferirRespostaExistente(
+  const existente = lerRespostaPublica(linha.public_reply);
+  const conferida = conferirRespostaExistente(
     quem,
     linha.public_reply,
-    lerRespostaPublica(linha.public_reply),
+    existente,
     entrada.confirmar_reenvio === true,
     "ja_respondido",
   );
   const { sessao, modo } = await canalAtivo(db, linha, quem);
+  const { condicao, substituida } = resolverSimulada(quem, conferida, modo, existente, "ja_respondido");
   if (linha.ao_vivo) {
     throw recusa(
       quem,
@@ -429,13 +482,18 @@ export async function responderEmPublico(
       await gravar(db, linha, { public_reply: { ...reserva, situacao: "incerta" } });
       throw recusa(quem, 502, "resposta_incerta", r.falha.frase);
     }
-    // A rede disse "não": a reserva sai, e o comentário volta a como estava.
-    await gravar(db, linha, { public_reply: null });
+    // A rede disse "não": a reserva sai, e o comentário volta a como estava —
+    // inclusive com a resposta simulada que a reserva tinha substituído.
+    await gravar(db, linha, { public_reply: substituida ? linha.public_reply : null });
     throw recusaDaRede(quem, r.falha);
   }
 
   await gravarDepoisDeSair(db, linha, { public_reply: simuladaOuConcluida(base, false, r.id), estado: "respondido" });
-  await auditar(quem, org, "social_comment.respondido", linha, { simulada: false, reply_id: r.id });
+  await auditar(quem, org, "social_comment.respondido", linha, {
+    simulada: false,
+    reply_id: r.id,
+    ...(substituida ? { substituiu_simulada: { quando: substituida.quando } } : {}),
+  });
   return { comment: apresentar(await carregar(db, org, id, quem)), simulada: false };
 }
 
@@ -549,10 +607,11 @@ export async function responderEmPrivado(
 ): Promise<ResultadoDaRespostaPrivada> {
   textoNaoVazio(quem, entrada.text);
   const linha = await carregar(db, org, id, quem);
-  const condicao = conferirRespostaExistente(
+  const existente = lerRespostaPrivada(linha.private_reply);
+  const conferida = conferirRespostaExistente(
     quem,
     linha.private_reply,
-    lerRespostaPrivada(linha.private_reply),
+    existente,
     entrada.confirmar_reenvio === true,
     "ja_respondido_em_privado",
   );
@@ -566,6 +625,7 @@ export async function responderEmPrivado(
     );
   }
   const { sessao, modo } = await canalAtivo(db, linha, quem);
+  const { condicao, substituida } = resolverSimulada(quem, conferida, modo, existente, "ja_respondido_em_privado");
   await conferirQueNaoEstaBloqueado(db, linha, sessao, quem);
 
   const base = { texto: entrada.text, quando: new Date().toISOString(), quem: autorDe(quem) };
@@ -612,7 +672,8 @@ export async function responderEmPrivado(
       await gravar(db, linha, { private_reply: { ...reserva, situacao: "incerta" } });
       throw recusa(quem, 502, "resposta_incerta", r.falha.frase);
     }
-    await gravar(db, linha, { private_reply: null });
+    // Como na pública: a simulada que a reserva substituiu volta para a coluna.
+    await gravar(db, linha, { private_reply: substituida ? linha.private_reply : null });
     throw recusaDaRede(quem, r.falha);
   }
 
@@ -664,6 +725,7 @@ export async function responderEmPrivado(
     contact_id: conversa?.contactId ?? null,
     conversation_id: conversa?.conversationId ?? null,
     sem_conversa: semConversa,
+    ...(substituida ? { substituiu_simulada: { quando: substituida.quando } } : {}),
   });
   return {
     comment: apresentar(await carregar(db, org, id, quem)),
@@ -751,6 +813,25 @@ export interface ResultadoDoContato {
  *
  * O negócio reaproveita o card ABERTO do contato naquele funil, pela mesma
  * regra da captação — um comentário a mais não abre um segundo card.
+ *
+ * ─── Duas chamadas ao mesmo tempo criam UM contato ──────────────────────────
+ *
+ * Ler "não tem contato" e depois inserir são dois passos, e entre eles cabe a
+ * segunda chamada (revisão de 20/11/2026, item 2.23). Antes de inserir, a
+ * chamada TOMA A VEZ no comentário: um UPDATE condicional que só casa se a
+ * linha está exatamente como foi lida (`updated_at`) e ainda sem contato. Só
+ * quem casa insere. Quem não casa espera a outra chamada ligar o contato e o
+ * devolve; se o contato não aparecer (a outra morreu no meio), recusa com 409
+ * `contato_em_criacao` — nunca cria um segundo. A vez não deixa trava para
+ * trás: é só a linha ter mudado, e a próxima chamada lê a linha nova.
+ *
+ * O que isto NÃO cobre: dois comentários DIFERENTES do mesmo autor pedindo
+ * contato ao mesmo tempo podem criar dois contatos (a vez é por comentário).
+ * A junção de contatos resolve; fechar isso pede trava no banco por autor.
+ *
+ * O funil e a etapa informados são conferidos por `createLeadHandler`: a
+ * etapa tem de ser da organização de quem chama e do funil informado; sem
+ * etapa, a primeira etapa ativa é procurada dentro da organização.
  */
 export async function criarContatoDoComentario(
   db: SupabaseClient,
@@ -786,8 +867,23 @@ export async function criarContatoDoComentario(
     );
   }
 
-  const jaExistia = contato !== null;
+  let jaExistia = contato !== null;
   let contactId = contato?.id ?? null;
+  if (!contactId && !(await tomarAVezDeCriarContato(db, linha))) {
+    // Outra chamada tomou a vez. O contato é o que ela ligar.
+    const daOutra = await contatoDaOutraChamada(db, org, id, quem);
+    if (daOutra.is_anonymized) {
+      throw recusa(
+        quem,
+        409,
+        "contato_anonimizado",
+        "O contato desta pessoa foi anonimizado a pedido dela. Não é possível criar outro a partir deste comentário.",
+      );
+    }
+    contactId = daOutra.id;
+    jaExistia = true;
+    linha.contact_id = daOutra.id;
+  }
   if (!contactId) {
     const nome = linha.author_username ? `@${linha.author_username}` : null;
     const { data, error } = await db
@@ -854,6 +950,55 @@ export async function criarContatoDoComentario(
     contato_ja_existia: jaExistia,
     lead,
   };
+}
+
+/** Quantas vezes, e de quanto em quanto, quem perdeu a vez espera o contato da outra chamada. */
+const ESPERAS_PELO_CONTATO_DA_OUTRA_CHAMADA = 6;
+const ESPERA_PELO_CONTATO_MS = 250;
+
+/**
+ * Toma a vez de criar o contato deste comentário. `true` = é esta chamada que
+ * cria. O UPDATE só casa se a linha está como foi lida e sem contato; como
+ * todo UPDATE anda o `updated_at`, a segunda chamada (que leu o mesmo
+ * `updated_at`) não casa linha nenhuma.
+ */
+async function tomarAVezDeCriarContato(db: SupabaseClient, linha: Linha): Promise<boolean> {
+  const { data, error } = await db
+    .from("social_comments")
+    .update({ updated_at: new Date().toISOString() })
+    .eq("organization_id", linha.organization_id)
+    .eq("id", linha.id)
+    .eq("updated_at", linha.updated_at)
+    .is("contact_id", null)
+    .select("id");
+  if (error) throw new Error(`social_comments: ${error.message}`);
+  return ((data as { id: string }[] | null) ?? []).length > 0;
+}
+
+/**
+ * O contato que a OUTRA chamada ligou ao comentário. Espera um pouco por ele;
+ * se não aparecer, recusa — criar aqui seria o segundo contato.
+ */
+async function contatoDaOutraChamada(
+  db: SupabaseClient,
+  org: string,
+  id: string,
+  quem: QuemAge,
+): Promise<FichaDoContato> {
+  for (let tentativa = 0; tentativa < ESPERAS_PELO_CONTATO_DA_OUTRA_CHAMADA; tentativa++) {
+    const atual = await carregar(db, org, id, quem);
+    if (atual.contact_id) {
+      const ficha = await contatoVivo(db, org, atual.contact_id);
+      if (ficha) return ficha;
+    }
+    await relogio.esperar(ESPERA_PELO_CONTATO_MS);
+  }
+  throw recusa(
+    quem,
+    409,
+    "contato_em_criacao",
+    "Outra chamada está criando o contato deste comentário agora. Tente de novo em instantes.",
+  );
 }
 
 async function primeiraEtapa(db: SupabaseClient, org: string, pipelineId: string, quem: QuemAge): Promise<string> {

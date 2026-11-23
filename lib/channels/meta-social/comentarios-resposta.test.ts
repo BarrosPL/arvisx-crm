@@ -170,8 +170,24 @@ describe("o desfecho de cada erro", () => {
   it("recusa definitiva volta na hora, com a frase e a marca de escopo", async () => {
     rede.mockResolvedValueOnce(erro(200, "(#200) Requires instagram_manage_comments", 403));
     const r = await publicarRespostaPublica(db, SESSAO, "1", "x");
-    expect(r).toEqual({ ok: false, falha: { tipo: "recusada", frase: FRASE_SEM_ESCOPO_DE_COMENTARIOS, escopoAusente: true } });
+    expect(r).toEqual({
+      ok: false,
+      falha: { tipo: "recusada", frase: FRASE_SEM_ESCOPO_DE_COMENTARIOS, escopoAusente: true, codigo: 200, subcodigo: null },
+    });
     expect(rede).toHaveBeenCalledTimes(1);
+  });
+
+  // Revisão de 20/11, item 2.24.
+  it("⭐ token expirado ou revogado na Meta (190) não é recusa nem rede fora: é falta de credencial", async () => {
+    rede.mockResolvedValueOnce(erro(190, "Error validating access token", 401));
+    const r = await publicarRespostaPublica(db, SESSAO, "1", "x");
+    expect(r).toMatchObject({ ok: false, falha: { tipo: "sem_credencial" } });
+    expect(rede).toHaveBeenCalledTimes(1);
+  });
+
+  it("⭐ ocultar com 200 sem `success` é incerto, não recusa definitiva", async () => {
+    rede.mockResolvedValueOnce(ok({ success: false }));
+    expect(await ocultarNaRede(db, SESSAO, "1")).toMatchObject({ ok: false, falha: { tipo: "incerta" } });
   });
 
   it("`recipient_id` que não é número não é aceito como identidade", async () => {

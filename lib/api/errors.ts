@@ -403,6 +403,10 @@ export const ApiErrorCodes = {
   escopo_ausente: "escopo_ausente", // 422: a conexão não tem a permissão de comentários; reautorizar resolve
   contato_bloqueado: "contato_bloqueado", // 422: a pessoa pediu para não receber mensagens (ou é contato pessoal)
   contato_anonimizado: "contato_anonimizado", // 409: o contato do comentário foi anonimizado a pedido do titular
+  contato_em_criacao: "contato_em_criacao", // 409: outra chamada está criando o contato deste comentário agora
+  // 422: a rede respondeu "não" (recusa definitiva). Não é indisponibilidade:
+  // repetir igual não adianta. `details.codigo_da_rede` traz o código dela.
+  recusado_pela_rede: "recusado_pela_rede",
 
   // 500 / upstream
   internal_error: "internal_error",

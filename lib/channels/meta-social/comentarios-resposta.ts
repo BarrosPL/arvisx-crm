@@ -19,8 +19,11 @@
  *
  * ─── O desfecho tem três formas, e a terceira é a que importa ───────────────
  *
- *   recusada  a Meta respondeu "não": nada saiu, e quem chamou pode corrigir e
- *             tentar de novo;
+ *   recusada  a Meta respondeu "não" (recusa definitiva, 4xx): nada saiu, e
+ *             repetir igual não adianta — quem chamou corrige a causa. Leva o
+ *             código da Meta, para quem chama separar isto de indisponibilidade;
+ *   sem_credencial  o token não existe mais aqui, OU a Meta disse que ele
+ *             expirou ou foi revogado (190/102): só reconectar resolve;
  *   limite    a Meta limitou as chamadas: nada saiu. Aqui (e só aqui) há recuo
  *             e nova tentativa automática, porque repetir é seguro;
  *   incerta   a resposta não chegou, ou veio um erro de servidor: a publicação
@@ -46,7 +49,14 @@ import { identidadeSocial } from "./ingest";
 import { tokenDaSessao, type SessaoDireta } from "./store";
 
 export type FalhaDoEnvio =
-  | { tipo: "recusada"; frase: string; escopoAusente: boolean }
+  | {
+      tipo: "recusada";
+      frase: string;
+      escopoAusente: boolean;
+      /** O código (e o subcódigo) com que a Meta recusou. `null` quando a recusa é nossa (id inválido). */
+      codigo: number | null;
+      subcodigo: number | null;
+    }
   | { tipo: "limite"; frase: string }
   | { tipo: "incerta"; frase: string }
   | { tipo: "sem_credencial"; frase: string };
@@ -73,7 +83,16 @@ function falhaDe(erro: unknown): FalhaDoEnvio {
   if (!(erro instanceof ErroDaGraph)) throw erro;
   if (erro.limiteDeTaxa) return { tipo: "limite", frase: erro.message };
   if (erro.desfechoIncerto) return { tipo: "incerta", frase: FRASE_INCERTA };
-  return { tipo: "recusada", frase: erro.message, escopoAusente: erro.escopoDeComentariosAusente };
+  // Token expirado ou revogado NA META: é a mesma situação de não ter token
+  // aqui — a conexão precisa ser refeita, e não é a rede que está fora.
+  if (erro.tokenInvalido) return { tipo: "sem_credencial", frase: erro.message };
+  return {
+    tipo: "recusada",
+    frase: erro.message,
+    escopoAusente: erro.escopoDeComentariosAusente,
+    codigo: erro.detalhe.code,
+    subcodigo: erro.detalhe.subcode,
+  };
 }
 
 /**
@@ -106,7 +125,13 @@ async function credencial(db: SupabaseClient, sessao: SessaoDireta) {
 const SEM_CREDENCIAL = { ok: false, falha: { tipo: "sem_credencial", frase: FRASE_SEM_CREDENCIAL } } as const;
 const ID_INVALIDO = {
   ok: false,
-  falha: { tipo: "recusada", frase: "O identificador deste comentário não é válido na rede.", escopoAusente: false },
+  falha: {
+    tipo: "recusada",
+    frase: "O identificador deste comentário não é válido na rede.",
+    escopoAusente: false,
+    codigo: null,
+    subcodigo: null,
+  },
 } as const;
 
 /** Publica a resposta PÚBLICA a um comentário. Devolve o id da resposta na rede. */
@@ -172,11 +197,10 @@ export async function ocultarNaRede(
     chamarGraph<{ success?: unknown }>(commentId, { ...cred, corpo: { hide: true } }),
   );
   if (!r.ok) return r;
+  // 200 sem `success`: a Meta não recusou e não confirmou. Não é recusa
+  // definitiva — é não saber. Ocultar é idempotente, então repetir é seguro.
   if (r.corpo.success !== true) {
-    return {
-      ok: false,
-      falha: { tipo: "recusada", frase: "A Meta não confirmou que o comentário foi ocultado.", escopoAusente: false },
-    };
+    return { ok: false, falha: { tipo: "incerta", frase: "A Meta não confirmou que o comentário foi ocultado." } };
   }
   return { ok: true };
 }

@@ -28,10 +28,15 @@ Nada, até alguém ligar. **CONFIRMADO** por teste:
   comentários **desligados**: o comentário que chega é descartado, sem gravar;
 - conexão feita antes desta versão continua recebendo e respondendo mensagens
   sem reautorizar;
-- as duas permissões novas são pedidas no login, mas **não são obrigatórias**:
-  quem não as concede (ou conecta enquanto a Meta ainda não as liberou para o
-  app) conecta e atende mensagens normalmente; só os comentários ficam
-  indisponíveis.
+- o login normal **não pede** as duas permissões novas. O login é em duas
+  fases: conectar (ou reconectar) pede só as permissões de mensagem, as mesmas
+  de antes; as de comentários só são pedidas num login próprio, o de
+  **reautorização para comentários** (seção 3). Assim, se a Meta ainda não
+  liberou as permissões de comentários para o app, o login de quem só usa
+  mensagens não é recusado ("Invalid Scopes");
+- as duas permissões continuam **não obrigatórias**: quem não as concede na
+  reautorização segue conectado e atendendo mensagens; só os comentários
+  ficam indisponíveis.
 
 ## 2. O passo manual no painel da Meta (uma vez, para a instalação inteira)
 
@@ -84,10 +89,32 @@ devolve, em cada conexão do Instagram:
 "comentarios": { "modo": "off", "escopo_concedido": false, "disponivel": false }
 ```
 
-- `escopo_concedido`: a conexão tem as duas permissões. `false` também para
-  conexão feita antes desta versão — para liberar, a pessoa usa o botão
+- `escopo_concedido`: a conexão tem as duas permissões. `false` para conexão
+  feita antes desta versão e para toda conexão feita pelo login normal — para
+  liberar, a pessoa faz a **reautorização para comentários**, pelo botão
   "Reautorizar para comentários" do cartão do Instagram (seção 15);
 - `disponivel`: é do Instagram **e** tem as permissões.
+
+### O login em duas fases
+
+O login normal (`POST /api/v1/channels/meta-social` com `{ "acao": "iniciar" }`)
+pede só as permissões de mensagem. A reautorização para comentários é um login
+próprio, o único que pede `instagram_manage_comments` e `pages_read_engagement`:
+
+```json
+{ "acao": "iniciar", "para_comentarios": true }
+```
+
+A volta é a mesma do login normal (`concluir`, depois `conectar` na mesma
+página). Os dois logins usam `auth_type=rerequest`, então quem negou uma
+permissão antes é perguntado de novo. O que fica gravado na conexão é tudo o
+que a pessoa já concedeu ao app (a Meta devolve o conjunto inteiro), então
+reconectar depois pelo login normal não tira as de comentários. Enquanto não
+há tela, a reautorização é feita por esta chamada; o botão "Reautorizar para
+comentários" vem com a tela e faz exatamente ela.
+
+Decisão registrada (revisão de 20/11/2026, item 2.20): enquanto o dono do
+produto não disser o contrário, vale o login em duas fases.
 
 ## 4. O modo por conexão
 
@@ -117,11 +144,24 @@ Tabela `social_comments`, uma linha por comentário, única por
 (`media_id`, `media_product_type`), o anúncio (`ad_id`, `ad_title`), o autor
 (`author_id`, `author_username`), o texto inteiro, a hora e o estado.
 
+- **Quem lê.** Só o servidor grava. Pela sessão de uma pessoa (a REST do
+  banco), só **gerente para cima** lê: é o mesmo papel que as rotas e as
+  ferramentas de comentários pedem (migration `9819`). Atendente e leitor não
+  leem comentário pelo banco.
+
 - **Não vira contato nem negócio.** Contato nasce quando alguém decide
   responder em privado ou pedir a criação (seção 12).
 - **Comentário da própria conta é ignorado** — inclusive as respostas que o
   CRM publicar, que a Meta devolve como comentário. Sem isso o agente
   responderia a si mesmo.
+  São três conferências, e qualquer uma basta: (a) `from.id` é a conta
+  (`entry.id`); (b) `from.username` é o nome de usuário da conta conectada
+  (gravado em `metadata.instagram_username` ao conectar; em conexão antiga,
+  lido do nome do canal `instagram · @usuario`), para o caso de `from.id` vir
+  ausente ou em outro espaço de ids; (c) o id do comentário é o de uma
+  resposta pública que o CRM gravou (`public_reply.id` de outro comentário da
+  mesma empresa). A (c) só pega a resposta que já estava gravada quando a
+  notificação chegou; por isso não substitui as outras.
 - **Repetição é absorvida.** A Meta reentrega o que não recebe 2xx e pode
   notificar mais de uma vez o mesmo comentário em anúncio; o segundo é
   recusado pela chave única.
@@ -207,8 +247,9 @@ numa.
 ## 8. Como testar sem publicar nada
 
 1. Faça o passo 2 no painel da Meta.
-2. Conecte (ou reconecte) o Instagram aceitando todas as permissões e confira
-   `comentarios.disponivel: true` no `GET`.
+2. Faça a reautorização para comentários (`iniciar` com
+   `para_comentarios: true`), aceitando todas as permissões, conecte a mesma
+   página e confira `comentarios.disponivel: true` no `GET`.
 3. Ponha a conexão em `registrar`.
 4. Com outra conta (testador do app, enquanto o acesso for padrão), comente
    numa publicação. O webhook responde `comentario_registrado`; a linha aparece
@@ -258,8 +299,12 @@ No MCP: `crm_list_comments`, `crm_get_comment`, `crm_reply_comment`,
 `crm_private_reply_comment`, `crm_ignore_comment` e
 `crm_create_contact_from_comment`. Não há ferramenta de ocultar. A recusa volta
 como dado: `{ permitido: false, motivo, mensagem, detalhes? }`, com `motivo`
-igual ao `code` da rota. As duas de resposta são capacidades críticas: nunca
-entram ligadas por pacote.
+igual ao `code` da rota. Nenhuma das seis entra ligada por pacote: as duas de
+resposta são capacidades críticas, e as outras quatro são de marcação manual
+(aparecem no pacote "Não perder o cliente" para marcar uma a uma, e o
+interruptor do pacote não as liga). Motivo: o agente do atendimento nunca
+monta essas ferramentas, e ligadas por arrasto elas só ocupariam vagas do
+teto de capacidades por agente.
 
 ## 11. O que cada resposta garante
 
@@ -273,6 +318,18 @@ entram ligadas por pacote.
 **Uma resposta pública e uma privada por comentário.** A segunda chamada recebe
 409 `ja_respondido` (pública) ou `ja_respondido_em_privado` (privada), com a
 resposta existente em `details.resposta`.
+
+**Resposta simulada não trava a resposta real.** A resposta gravada em modo
+`registrar` não saiu. Enquanto a conexão continua em `registrar`, ela vale como
+a resposta do comentário: repetir devolve o 409 acima, com ela, e nada é
+regravado. Quando a conexão passa para `real`, a mesma chamada **publica** a
+resposta de verdade, que substitui a simulada no comentário; a simulada
+continua na auditoria (a entrada dela, e `metadata.substituiu_simulada` na
+entrada da resposta real). Se a Meta recusar a resposta real, a simulada volta
+para o comentário. Resposta de verdade nunca é substituída: `real` seguido de
+`real` continua 409, e a privada continua limitada a 7 dias. Com simulada
+gravada e a conexão desligada (ou desconectada), a recusa é a da conexão
+(`comentarios_desligados` ou `canal_indisponivel`).
 
 **Erro da Meta não deixa o comentário como respondido.** Se a Meta recusa, a
 resposta não é gravada e o estado não muda; a chamada pode ser repetida depois
@@ -292,15 +349,17 @@ foi feito.
 | `resposta_em_andamento` | 409 | outra chamada está enviando agora |
 | `resposta_incerta` | 502 / 409 | a Meta não confirmou; pode ter saído |
 | `comentarios_desligados` | 409 | a conexão está em `off` |
-| `canal_indisponivel` | 409 | a conexão foi desconectada ou está sem autorização |
+| `canal_indisponivel` | 409 | a conexão foi desconectada ou está sem autorização (inclusive quando a Meta diz que o token expirou ou foi revogado) |
 | `janela_de_7_dias` | 422 | passou o prazo da resposta privada |
 | `comentario_ao_vivo` | 422 | resposta pública ou ocultação em comentário de transmissão ao vivo |
 | `comentario_oculto` | 422 | resposta pública a comentário oculto |
 | `escopo_ausente` | 422 | a conexão não tem a permissão de comentários; reautorizar resolve |
 | `contato_bloqueado` | 422 | a pessoa pediu para não receber mensagens, ou é contato pessoal |
 | `contato_anonimizado` | 409 | o contato do comentário foi anonimizado a pedido do titular |
+| `contato_em_criacao` | 409 | outra chamada está criando o contato deste comentário agora; repetir em instantes devolve o mesmo contato |
 | `rate_limited` | 429 | a Meta limitou as chamadas e não cedeu |
-| `upstream_unavailable` | 502 | a Meta recusou; a frase diz por quê |
+| `recusado_pela_rede` | 422 | a Meta respondeu "não" (recusa definitiva); a frase diz por quê e `details.codigo_da_rede` / `details.subcodigo_da_rede` trazem o código dela. Repetir igual não adianta |
+| `upstream_unavailable` | 502 | a Meta não respondeu ou falhou ao ocultar; nada foi gravado e repetir é seguro |
 
 **Sem regra de conteúdo.** O CRM exige só que o texto não seja vazio. Link,
 preço e tamanho são decisão de quem responde; o limite de tamanho é o da rede.
@@ -335,7 +394,14 @@ privada não é enviada.
 comentário do mesmo autor reaproveita o contato. Com `pipeline_id`, o negócio
 reaproveita o card aberto do contato naquele funil (a mesma regra da captação
 por webhook); sem card aberto, é criado na etapa informada ou na primeira etapa
-ativa do funil.
+ativa do funil. A etapa informada tem de ser da empresa de quem chama e do
+funil informado (404 `not_found` ou 422 `stage_pipeline_mismatch`).
+
+Duas chamadas ao mesmo tempo para o **mesmo** comentário criam um contato só:
+a segunda espera a primeira e devolve o mesmo contato; se a primeira não
+terminar a tempo, a segunda recebe 409 `contato_em_criacao` e nada é criado.
+Dois comentários **diferentes** do mesmo autor, pedidos no mesmo instante,
+ainda podem gerar dois contatos (a junção de contatos resolve).
 
 ## 13. LGPD
 
@@ -344,10 +410,17 @@ O comentário ligado a um contato (`contact_id`) é dado da pessoa.
 - **Anonimização:** quando o contato é anonimizado, o texto do comentário vira
   `(anonimizado)`, o autor e o motivo do ignorar são apagados e o texto das
   duas respostas é redigido. Vale para os comentários ligados ao contato e
-  para os outros comentários do mesmo autor naquela organização. A linha fica
-  (publicação, hora e estado).
-- **Cópia dos dados do titular:** o arquivo entregue traz os mesmos
-  comentários, com o texto e o que foi respondido.
+  para os outros comentários do mesmo autor naquela organização. Desde a
+  migration `9816`, vale também para quem já era contato por mensagem direta
+  e comentou sem que o comentário fosse ligado ao contato: a pessoa é achada
+  pela identidade social (`instagram:<conta>:<id do autor>`, na conta que
+  recebeu o comentário), inclusive pela identidade de uma ficha unida a ela. A
+  ocultação (`hidden`) fica só com quando, quem ocultou e se foi simulada. A
+  linha fica (publicação, hora e estado).
+- **Cópia dos dados do titular:** o arquivo entregue traz os comentários
+  ligados ao contato e os outros do mesmo autor, com o texto e o que foi
+  respondido. Os achados só pela identidade social (o caso da `9816`) ainda
+  não entram na cópia: a anonimização os alcança, a exportação não.
 
 ## 14. O que a documentação da Meta diz sobre responder
 

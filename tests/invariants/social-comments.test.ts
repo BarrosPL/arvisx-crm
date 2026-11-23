@@ -6,13 +6,17 @@ import {
 } from "./cobranca-helpers";
 
 /**
- * OS COMENTÁRIOS DO INSTAGRAM (ArvisX, migration 9810).
+ * OS COMENTÁRIOS DO INSTAGRAM (ArvisX, migrations 9810 e 9819).
  *
  * `social_comments` guarda o que gente de fora escreveu numa publicação: o
- * texto e o nome de usuário de quem comentou. A LEITURA por organização é
- * medida também em `rls-isolation.test.ts`. Este arquivo mede o que aquele não
- * alcança:
+ * texto e o nome de usuário de quem comentou. Desde a 9819 a leitura pela
+ * sessão é de GERENTE PARA CIMA (o mesmo papel das rotas e das ferramentas),
+ * então a tabela não cabe em `rls-isolation.test.ts`, cujo usuário semeado é
+ * `agent`: a prova de isolamento é este arquivo
+ * (`PROVA_PROPRIA` em `rls-completude-varredura.test.ts`). O que se mede:
  *
+ *   0. o PAPEL: gerente e admin leem; agent e viewer leem zero, na própria
+ *      organização (revisão de 20/11, item 2.19);
  *   1. VAZAMENTO nos dois sentidos, com o MESMO id de comentário nas duas
  *      organizações — a chave única é por organização, e é o caso em que um
  *      filtro errado devolveria a linha do vizinho sem ninguém perceber;
@@ -32,6 +36,8 @@ const ORG_B = uuid(P, 2);
 const GERENTE_A = uuid(P, 11);
 const AGENTE_A = uuid(P, 12);
 const GERENTE_B = uuid(P, 13);
+const ADMIN_A = uuid(P, 14);
+const LEITOR_A = uuid(P, 15);
 const CANAL_A = uuid(P, 21);
 const CANAL_B = uuid(P, 22);
 
@@ -51,12 +57,16 @@ beforeAll(() => {
     [GERENTE_A, "gerente-a-9810@invariant.test"],
     [AGENTE_A, "agente-a-9810@invariant.test"],
     [GERENTE_B, "gerente-b-9810@invariant.test"],
+    [ADMIN_A, "admin-a-9810@invariant.test"],
+    [LEITOR_A, "leitor-a-9810@invariant.test"],
   ]);
   criarOrg(ORG_A, "comentarios-a");
   criarOrg(ORG_B, "comentarios-b");
   vincular(GERENTE_A, ORG_A, "manager");
   vincular(AGENTE_A, ORG_A, "agent");
   vincular(GERENTE_B, ORG_B, "manager");
+  vincular(ADMIN_A, ORG_A, "admin");
+  vincular(LEITOR_A, ORG_A, "viewer");
   sql(`${insercaoDeCanal(CANAL_A, ORG_A)} on conflict (id) do nothing;
        ${insercaoDeCanal(CANAL_B, ORG_B)} on conflict (id) do nothing;`);
   sql(`delete from ${T} where organization_id in ('${ORG_A}', '${ORG_B}');`);
@@ -65,13 +75,32 @@ beforeAll(() => {
 });
 
 describe("9810 — leitura dos comentários", () => {
-  it("⭐ cada membro lê os comentários da própria organização e zero da outra", () => {
-    for (const quem of [GERENTE_A, AGENTE_A]) {
+  it("⭐ gerente e admin leem os comentários da própria organização e zero da outra", () => {
+    for (const quem of [GERENTE_A, ADMIN_A]) {
       expect(countAs(quem, `select count(*) from ${T} where organization_id = '${ORG_A}';`)).toBe(1);
       expect(countAs(quem, `select count(*) from ${T} where organization_id = '${ORG_B}';`)).toBe(0);
     }
     expect(countAs(GERENTE_B, `select count(*) from ${T} where organization_id = '${ORG_B}';`)).toBe(1);
     expect(countAs(GERENTE_B, `select count(*) from ${T} where organization_id = '${ORG_A}';`)).toBe(0);
+  });
+
+  it("⭐ 9819 — agent e viewer NÃO leem comentário nenhum, nem da própria organização", () => {
+    // As rotas e as ferramentas exigem gerente; a sessão não pode ler pelo
+    // banco o que a aplicação recusa. O controle de que a linha existe é o
+    // caso acima (o gerente da mesma organização a lê).
+    for (const quem of [AGENTE_A, LEITOR_A]) {
+      expect(countAs(quem, `select count(*) from ${T} where organization_id = '${ORG_A}';`)).toBe(0);
+      expect(countAs(quem, `select count(*) from ${T};`)).toBe(0);
+    }
+  });
+
+  it("9819 — a política de leitura cita o papel mínimo", () => {
+    expect(
+      valor(`select count(*)::text from pg_policies
+              where schemaname = 'public' and tablename = 'social_comments'
+                and policyname = 'tenant_isolation_social_comments_select'
+                and cmd = 'SELECT' and qual like '%fn_role_at_least%manager%';`),
+    ).toBe("1");
   });
 
   it("⭐ procurar pelo id do comentário SEM filtrar a organização não devolve a linha do vizinho", () => {

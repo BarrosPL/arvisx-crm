@@ -21,7 +21,9 @@ só anotada, sem publicar; em modo real ela é publicada. Cada comentário aceit
 uma resposta pública e uma privada; a privada só até 7 dias depois do
 comentário, que é o limite da própria rede. Se a rede recusar, o comentário
 não fica como respondido; se ela não confirmar, a resposta não é repetida
-sozinha.
+sozinha. A resposta anotada em modo de registro não impede a resposta de
+verdade: depois que a conexão passa para o modo real, o comentário pode ser
+respondido, e a anotação anterior fica na auditoria.
 
 A resposta privada enviada fica gravada na conversa do contato, e o que a
 pessoa responder cai no atendimento normal. Comentário continua não virando
@@ -32,5 +34,6 @@ titular (LGPD).
 
 Há três colunas novas na tabela `social_comments`. Quem atualiza pelo kit
 recebe a mudança sozinho; quem aplica as migrações à mão precisa aplicar a
-`9812` antes de subir a versão nova. A tela de comentários chega na versão
+`9812` e a `9816` antes de subir a versão nova (a `9816` faz a anonimização
+alcançar também os comentários de quem já era contato por mensagem direta). A tela de comentários chega na versão
 seguinte. O contrato está em `docs/integracao/comentarios-do-instagram.md`.

@@ -26,6 +26,15 @@
  * `reter`: comentário sem resposta é interessado que esfria. Não `vender` (o
  * pacote com que todo agente nasce, onde cada capacidade a mais consome a folga
  * do teto) nem `organizar` (o mais cheio).
+ *
+ * ═══ Nenhuma entra sozinha pelo pacote ═══
+ *
+ * As duas críticas já não entravam. As outras quatro são `manual` (revisão de
+ * 20/11/2026, item 2.21): o pacote as MOSTRA, para marcar uma a uma, e o
+ * interruptor dele não as liga. Sem isso, ligar "Não perder o cliente" punha
+ * quatro capacidades de comentário na lista do agente — que ele nunca monta
+ * (`apenasHumano`) — gastando quatro vagas do teto por agente. Comentário entra
+ * por decisão de quem configura, nunca por arrasto.
  */
 import { declararTools } from "./tipos";
 
@@ -40,6 +49,7 @@ export const TOOLS_COMENTARIOS = declararTools([
     risco: "seguro",
     pacotes: ["reter"],
     apenasHumano: true,
+    manual: true,
   },
   {
     name: "crm_get_comment",
@@ -51,6 +61,7 @@ export const TOOLS_COMENTARIOS = declararTools([
     risco: "seguro",
     pacotes: ["reter"],
     apenasHumano: true,
+    manual: true,
   },
   {
     name: "crm_reply_comment",
@@ -84,6 +95,7 @@ export const TOOLS_COMENTARIOS = declararTools([
     risco: "atencao",
     pacotes: ["reter"],
     apenasHumano: true,
+    manual: true,
   },
   {
     name: "crm_create_contact_from_comment",
@@ -95,5 +107,6 @@ export const TOOLS_COMENTARIOS = declararTools([
     risco: "atencao",
     pacotes: ["reter"],
     apenasHumano: true,
+    manual: true,
   },
 ]);
