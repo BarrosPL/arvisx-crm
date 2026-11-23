@@ -792,6 +792,106 @@ describe("ocultar", () => {
   });
 });
 
+/**
+ * Mesmo defeito do item 1.1 da revisão de 20/11, na ocultação: a ocultação
+ * gravada em modo de registro (`simulada: true`) NÃO ocultou nada na rede.
+ * Depois de passar a conexão para o modo real, ocultar de novo devolvia
+ * `ja_estava_oculto` sem chamar a rede, e o comentário ficava visível para
+ * sempre.
+ */
+describe("ocultação simulada não trava a ocultação real", () => {
+  const passarPara = (modo: string) => {
+    const sessao = banco.tabelas.channel_sessions!.find((c) => c.id === CANAL)!;
+    sessao.metadata = { ...(sessao.metadata as Record<string, unknown>), comentarios_modo: modo };
+  };
+
+  it("⭐ registrar → mudar para real → ocultar chama a rede e a ocultação real substitui a simulada", async () => {
+    const db = montar("registrar");
+    const ensaio = await ocultarComentario(db, ORG, COMENTARIO, TOKEN);
+    expect(ensaio).toMatchObject({ simulada: true, ja_estava_oculto: false });
+    expect(rede).not.toHaveBeenCalled();
+    passarPara("real");
+
+    const r = await ocultarComentario(db, ORG, COMENTARIO, TOKEN);
+    expect(rede).toHaveBeenCalledTimes(1);
+    const { url, init } = chamadasARede()[0]!;
+    expect(url.pathname.endsWith(`/${ID_NA_REDE}`)).toBe(true);
+    expect(JSON.parse(String(init.body))).toEqual({ hide: true });
+    expect(r).toMatchObject({ simulada: false, ja_estava_oculto: false });
+    expect(r.comment.hidden).toMatchObject({ simulada: false });
+    expect(linha().hidden).toMatchObject({ simulada: false });
+  });
+
+  it("⭐ em modo de registro, repetir a simulação devolve a que já existe, sem rede e sem regravar", async () => {
+    const db = montar("registrar");
+    await ocultarComentario(db, ORG, COMENTARIO, TOKEN);
+    const gravada = structuredClone(linha().hidden);
+    const denovo = await ocultarComentario(db, ORG, COMENTARIO, TOKEN);
+    expect(denovo).toMatchObject({ simulada: true, ja_estava_oculto: true });
+    expect(linha().hidden).toEqual(gravada);
+    expect(rede).not.toHaveBeenCalled();
+    expect(h.audit).toHaveBeenCalledTimes(1);
+  });
+
+  it("⭐ real → voltar para registrar: a ocultação de verdade continua valendo, nada é simulado por cima", async () => {
+    const db = montar("real");
+    await ocultarComentario(db, ORG, COMENTARIO, TOKEN);
+    passarPara("registrar");
+    const denovo = await ocultarComentario(db, ORG, COMENTARIO, TOKEN);
+    expect(denovo).toMatchObject({ simulada: false, ja_estava_oculto: true });
+    expect(linha().hidden).toMatchObject({ simulada: false });
+    expect(rede).toHaveBeenCalledTimes(1);
+  });
+
+  it("⭐ a rede recusa a ocultação real: a simulada continua no registro, e dá para tentar de novo", async () => {
+    const db = montar("registrar");
+    await ocultarComentario(db, ORG, COMENTARIO, TOKEN);
+    const simulada = structuredClone(linha().hidden);
+    passarPara("real");
+    rede.mockResolvedValueOnce(erroDaRede(100));
+    const erro = await recusa(ocultarComentario(db, ORG, COMENTARIO, TOKEN));
+    expect(erro.code).toBe("recusado_pela_rede");
+    expect(linha().hidden).toEqual(simulada);
+
+    const r = await ocultarComentario(db, ORG, COMENTARIO, TOKEN);
+    expect(r).toMatchObject({ simulada: false, ja_estava_oculto: false });
+    expect(rede).toHaveBeenCalledTimes(2);
+  });
+
+  it("⭐ a simulada substituída fica na auditoria: a entrada dela existe, e a real diz o que substituiu", async () => {
+    const db = montar("registrar");
+    await ocultarComentario(db, ORG, COMENTARIO, TOKEN);
+    const quandoDaSimulada = (linha().hidden as { quando: string }).quando;
+    passarPara("real");
+    await ocultarComentario(db, ORG, COMENTARIO, TOKEN);
+    const entradas = h.audit.mock.calls.map(([e]) => e as { action: string; metadata: Record<string, unknown> });
+    expect(entradas.map((e) => [e.action, e.metadata.simulada])).toEqual([
+      ["social_comment.ocultado", true],
+      ["social_comment.ocultado", false],
+    ]);
+    expect(entradas[1]!.metadata.substituiu_simulada).toEqual({ quando: quandoDaSimulada });
+    expect(entradas[0]!.metadata).not.toHaveProperty("substituiu_simulada");
+  });
+
+  it("⭐ com a simulada gravada e a conexão desligada, a recusa é a da conexão (como nas respostas)", async () => {
+    const db = montar("registrar");
+    await ocultarComentario(db, ORG, COMENTARIO, TOKEN);
+    passarPara("off");
+    const erro = await recusa(ocultarComentario(db, ORG, COMENTARIO, TOKEN));
+    expect(erro.code).toBe("comentarios_desligados");
+    expect(rede).not.toHaveBeenCalled();
+  });
+
+  it("⭐ a resposta pública sai depois que a ocultação simulada vira real? Não: comentário oculto de verdade recusa resposta", async () => {
+    const db = montar("registrar");
+    await ocultarComentario(db, ORG, COMENTARIO, TOKEN);
+    passarPara("real");
+    await ocultarComentario(db, ORG, COMENTARIO, TOKEN);
+    const erro = await recusa(responderEmPublico(db, ORG, COMENTARIO, { text: "oi" }, TOKEN));
+    expect(erro.code).toBe("comentario_oculto");
+  });
+});
+
 describe("ignorar", () => {
   it("vira sem_acao com o motivo, sem rede, em qualquer modo do canal — e é auditado", async () => {
     const db = montar(null);

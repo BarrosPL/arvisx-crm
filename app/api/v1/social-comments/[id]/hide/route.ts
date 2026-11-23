@@ -3,6 +3,8 @@
  *
  * Ocultar de novo devolve o que já está gravado (`ja_estava_oculto: true`).
  * Em modo de registro, nada muda na rede e a resposta volta `simulada: true`.
+ * A ocultação simulada não vale em modo real: ali a mesma chamada oculta na
+ * rede e substitui a simulada.
  *
  * Quem pode chamar está em `../../_borda.ts`; a regra, em
  * `lib/comentarios/acoes.ts`.

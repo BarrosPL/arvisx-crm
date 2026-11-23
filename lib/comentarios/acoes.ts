@@ -784,7 +784,17 @@ export async function responderEmPrivado(
 
 // ─── ocultar ────────────────────────────────────────────────────────────────
 
-/** Oculta o comentário na rede. Ocultar de novo devolve o que já está gravado. */
+/**
+ * Oculta o comentário na rede. Ocultar de novo devolve o que já está gravado.
+ *
+ * Ocultação simulada não é ocultação (o mesmo defeito do item 1.1 da revisão
+ * de 20/11, que estava aqui também): a gravada em modo de registro não ocultou
+ * nada. Enquanto a conexão segue em registro ela vale como a ocultação do
+ * comentário; em modo real a rede é chamada e a ocultação real a substitui. A
+ * simulada continua na auditoria (`substituiu_simulada` na entrada da real). Se
+ * a rede recusar, nada é gravado e a simulada fica onde estava. Ocultação de
+ * verdade nunca é substituída.
+ */
 export async function ocultarComentario(
   db: SupabaseClient,
   org: string,
@@ -793,8 +803,9 @@ export async function ocultarComentario(
 ): Promise<ResultadoDaResposta & { ja_estava_oculto: boolean }> {
   const linha = await carregar(db, org, id, quem);
   const existente = lerOcultacao(linha.hidden);
-  if (existente) return { comment: await apresentarUm(db, linha), simulada: existente.simulada, ja_estava_oculto: true };
+  if (existente && !existente.simulada) return { comment: await apresentarUm(db, linha), simulada: false, ja_estava_oculto: true };
   const { sessao, modo } = await canalAtivo(db, linha, quem);
+  if (existente && modo === "registrar") return { comment: await apresentarUm(db, linha), simulada: true, ja_estava_oculto: true };
   if (linha.ao_vivo) {
     throw recusa(quem, 422, "comentario_ao_vivo", "A rede não oculta comentário de transmissão ao vivo.");
   }
@@ -809,7 +820,10 @@ export async function ocultarComentario(
   }
   const ocultacao: Ocultacao = { quando: new Date().toISOString(), quem: autorDe(quem), simulada };
   await gravar(db, linha, { hidden: ocultacao });
-  await auditar(quem, org, "social_comment.ocultado", linha, { simulada });
+  await auditar(quem, org, "social_comment.ocultado", linha, {
+    simulada,
+    ...(existente ? { substituiu_simulada: { quando: existente.quando } } : {}),
+  });
   return { comment: await devolver(db, org, id, quem), simulada, ja_estava_oculto: false };
 }
 
