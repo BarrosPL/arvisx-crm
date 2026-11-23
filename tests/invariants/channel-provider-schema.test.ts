@@ -74,8 +74,14 @@ describe("0087 · o canal da sessão chega ao clone", () => {
     // As três `meta_webhook_override_*` (migration 0311) entraram de propósito: são o
     // desfecho do registro do webhook do número ao conectar o canal oficial. A cerca
     // continua valendo — ela existe para pegar coluna que entrou SEM querer.
+    // As três `meta_social_*` são da conexão direta de rede social, que já está
+    // no baseline da `main`; a lista não tinha sido atualizada, e ninguém viu
+    // porque o CI não rodava esta suíte (revisão de 20/11/2026, item 3.1).
     expect(cols).toEqual([
       "meta_phone_number_id",
+      "meta_social_account_id",
+      "meta_social_page_id",
+      "meta_social_token_encrypted",
       "meta_token_encrypted",
       "meta_waba_id",
       "meta_webhook_override_em",
