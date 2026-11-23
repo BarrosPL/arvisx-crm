@@ -82,7 +82,9 @@ export async function negocioDoContexto(
   const lead = data as NegocioConferido | null;
 
   if (ctx.contatoDoTurno) {
-    if (!lead || lead.contact_id !== ctx.contatoDoTurno) {
+    // Sem diferenciar caixa, como `contatoDoContexto`: o id do turno e o do
+    // banco são o mesmo uuid mesmo quando um deles chega em maiúsculas.
+    if (!lead || lead.contact_id?.toLowerCase() !== ctx.contatoDoTurno.toLowerCase()) {
       return { ok: false, recusa: NEGOCIO_FORA_DA_CONVERSA };
     }
   }
