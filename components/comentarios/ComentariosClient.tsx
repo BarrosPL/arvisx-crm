@@ -381,6 +381,9 @@ export function ComentariosClient({ canalInicial = null }: { canalInicial?: stri
         {comentarios.map((c) => {
           const prazoVencido = Date.parse(c.private_reply_deadline) < lidoEm;
           const oculto = c.hidden !== null;
+          // Como nas respostas: a ocultação simulada não ocultou nada. Com a
+          // conexão em modo real, Ocultar volta a valer e substitui a simulada.
+          const ocultacaoSubstituivel = c.hidden?.simulada === true && c.modo_do_canal === "real";
           // Os botões se repetem em cada cartão: o nome acessível diz de quem
           // é o comentário, para quem navega por leitor de tela.
           const autor = c.author.username ? `@${c.author.username}` : t("Autor não informado");
@@ -476,7 +479,7 @@ export function ComentariosClient({ canalInicial = null }: { canalInicial?: stri
                   variant="outline"
                   data-testid="ocultar-comentario"
                   aria-label={`${t("Ocultar")} — ${autor}`}
-                  disabled={ocupado || oculto}
+                  disabled={ocupado || (oculto && !ocultacaoSubstituivel)}
                   onClick={() => setOcultando(c)}
                 >
                   {t("Ocultar")}

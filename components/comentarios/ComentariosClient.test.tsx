@@ -348,6 +348,37 @@ it("privada simulada + modo real, mas com os 7 dias vencidos: continua desligada
   expect(screen.queryByTestId("simulada-substituivel")).not.toBeInTheDocument();
 });
 
+// O mesmo defeito do item 1.1, na ocultação: a simulada não trava a de verdade.
+it("⭐ ocultação simulada + conexão em modo real: Ocultar volta a ser oferecido e chama a rota", async () => {
+  const oculta = { quando: new Date().toISOString(), quem: QUEM, simulada: true };
+  h.get.mockResolvedValue(pagina(comentario({ modo_do_canal: "real", hidden: oculta })));
+  h.post.mockResolvedValue({ data: { simulada: false } });
+  montar();
+  const ocultar = await screen.findByTestId("ocultar-comentario");
+  expect(ocultar).toBeEnabled();
+  fireEvent.click(ocultar);
+  fireEvent.click(await screen.findByTestId("confirmar-ocultar"));
+  await vi.waitFor(() => expect(h.post).toHaveBeenCalledWith("/api/v1/social-comments/c1/hide", {}));
+  await vi.waitFor(() => expect(h.sucesso).toHaveBeenCalledWith("Comentário ocultado no Instagram."));
+});
+
+it("⭐ ocultação simulada em registro (ou sem modo conhecido) e ocultação de verdade: Ocultar segue desligado", async () => {
+  const casos: [string | null, boolean][] = [
+    ["registrar", true],
+    ["off", true],
+    [null, true],
+    ["real", false],
+  ];
+  for (const [modo, simulada] of casos) {
+    cleanup();
+    h.get.mockResolvedValue(
+      pagina(comentario({ modo_do_canal: modo, hidden: { quando: new Date().toISOString(), quem: QUEM, simulada } })),
+    );
+    montar();
+    expect(await screen.findByTestId("ocultar-comentario")).toBeDisabled();
+  }
+});
+
 // Item 2.25.
 it("⭐ os botões de cada cartão dizem de quem é o comentário no nome acessível", async () => {
   h.get.mockResolvedValue(
