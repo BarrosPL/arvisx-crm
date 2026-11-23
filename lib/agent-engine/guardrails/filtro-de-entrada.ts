@@ -32,10 +32,38 @@
  *
  * ## Como casa
  *
- * Sem acento e sem diferença de maiúsculas. `contains` casa o termo como
- * palavra ou expressão INTEIRA dentro da mensagem (o termo "sala" não casa
- * "salada"); `whole_message` exige que a mensagem inteira seja o termo. Não há
- * expressão regular vinda da configuração: um padrão ruim travaria o worker.
+ * Sem diferença de maiúsculas. `contains` casa o termo como palavra ou
+ * expressão INTEIRA dentro da mensagem (o termo "sala" não casa "salada");
+ * `whole_message` exige que a mensagem inteira seja o termo. Não há expressão
+ * regular vinda da configuração: um padrão ruim travaria o worker.
+ *
+ * ## Onde uma lista de palavras erra, e o que a regra faz a respeito
+ *
+ * Uma lista não entende contexto. A revisão de 20/11 (item 2.29) apontou os
+ * falsos positivos, e a regra passou a errar para o lado de RESPONDER em cada
+ * um — a palavra inteira continua sendo o critério:
+ *
+ *   - **O ACENTO DISTINGUE.** "para" e "Pará", "coco" e "cocô", "sábia" e
+ *     "sabia" são palavras diferentes; tirar o acento antes de comparar fazia
+ *     um termo da lista barrar a palavra comum que só se parece com ele. O
+ *     termo casa como a empresa o escreveu. Quem quer barrar as duas grafias
+ *     (o cliente que digita sem acento) põe as duas na lista.
+ *
+ *   - **NOME PRÓPRIO NÃO CASA.** Palavra com inicial maiúscula no MEIO da
+ *     frase ("falei com a Dra. Pinto", "moro em Rolândia") é nome de gente ou
+ *     de lugar, e não o termo da lista. Em começo de frase, ou na mensagem toda
+ *     em maiúsculas, a caixa não diz nada e o termo casa normalmente. Quem
+ *     escreve tudo em minúsculas não tem essa proteção — é o risco que a tela
+ *     de configuração avisa.
+ *
+ *   - **OFENSA + PEDIDO LEGÍTIMO PASSA.** Em `contains`, a regra só barra a
+ *     mensagem que é pouco mais que o termo: no máximo `max_extra_words`
+ *     palavras além dos termos da lista (padrão
+ *     `PADRAO_DE_PALAVRAS_ALEM_DO_TERMO`). "seu xingo" é barrada; "o atendimento
+ *     foi um xingo, preciso do pedido 123" tem um pedido dentro e vai para o
+ *     modelo. A empresa pode alargar por regra (`max_extra_words: null` = sem
+ *     limite, o comportamento de antes — útil para frase de spam, que costuma
+ *     vir no meio de um texto longo), sabendo do risco.
  *
  * ## Falha para o lado de responder
  *
@@ -61,6 +89,14 @@ export const MAX_TAMANHO_DO_TERMO = 80;
 export const MAX_TAMANHO_DA_RESPOSTA = 500;
 export const MAX_TAMANHO_DO_MARCADOR = 40;
 
+/**
+ * Em `contains`, quantas palavras a mensagem pode ter ALÉM dos termos da lista
+ * e ainda ser barrada. Mais que isso, há conteúdo próprio na mensagem (um
+ * pedido, uma reclamação) e ela vai para o modelo.
+ */
+export const PADRAO_DE_PALAVRAS_ALEM_DO_TERMO = 3;
+export const MAX_PALAVRAS_ALEM_DO_TERMO = 200;
+
 const termoSchema = z.string().trim().min(2).max(MAX_TAMANHO_DO_TERMO);
 
 /**
@@ -70,6 +106,17 @@ const termoSchema = z.string().trim().min(2).max(MAX_TAMANHO_DO_TERMO);
 export const regraDoFiltroSchema = z.object({
   terms: z.array(termoSchema).max(MAX_TERMOS_POR_CATEGORIA).default([]),
   match: z.enum(MODOS_DE_CASAMENTO).default("contains"),
+  /**
+   * Só para `contains`: o teto de palavras além dos termos. `null` = sem
+   * limite (barra a mensagem de qualquer tamanho que contenha o termo).
+   */
+  max_extra_words: z
+    .number()
+    .int()
+    .min(0)
+    .max(MAX_PALAVRAS_ALEM_DO_TERMO)
+    .nullable()
+    .default(PADRAO_DE_PALAVRAS_ALEM_DO_TERMO),
   action: z.enum(ACOES_DO_FILTRO).default("silence"),
   reply: z.string().trim().max(MAX_TAMANHO_DA_RESPOSTA).nullable().default(null),
   tag: z.string().trim().min(1).max(MAX_TAMANHO_DO_MARCADOR).nullable().default(null),
@@ -106,14 +153,17 @@ export function lerFiltroDeEntrada(settings: unknown): FiltroDeEntrada {
   return lido.success ? lido.data : FILTRO_DESLIGADO;
 }
 
-/** Minúsculas, sem acento, espaços em um só. */
+/** Espaços em um só e forma canônica do acento (NFC). A caixa e o acento FICAM. */
+function arrumar(texto: string): string {
+  return texto.normalize("NFC").replace(/\s+/gu, " ").trim();
+}
+
+/**
+ * Minúsculas e espaços em um só. O ACENTO FICA: "para" e "pará" são palavras
+ * diferentes (ver o cabeçalho).
+ */
 export function normalizarParaOFiltro(texto: string): string {
-  return texto
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/gu, "")
-    .replace(/\s+/gu, " ")
-    .trim();
+  return arrumar(texto).toLowerCase();
 }
 
 /** Para `whole_message`: a mensagem sem a pontuação das pontas. */
@@ -121,35 +171,171 @@ function semPontuacaoNasPontas(texto: string): string {
   return texto.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
 }
 
+const LETRA_OU_DIGITO = /[\p{L}\p{N}]/u;
+const LETRA = /\p{L}/u;
+
 /**
- * O termo aparece como palavra ou expressão inteira? A fronteira é "não é
- * letra nem dígito", e não `\b`: `\b` não conhece letra acentuada, e o termo
- * pode começar ou terminar em símbolo.
+ * As posições em que o termo aparece como palavra ou expressão inteira. A
+ * fronteira é "não é letra nem dígito", e não `\b`: `\b` não conhece letra
+ * acentuada, e o termo pode começar ou terminar em símbolo.
  */
-function contemExpressao(mensagem: string, termo: string): boolean {
+function ocorrencias(mensagem: string, termo: string): number[] {
+  const achadas: number[] = [];
   let de = 0;
   for (;;) {
     const i = mensagem.indexOf(termo, de);
-    if (i === -1) return false;
+    if (i === -1) return achadas;
     const antes = i === 0 ? "" : mensagem[i - 1]!;
     const depois = i + termo.length >= mensagem.length ? "" : mensagem[i + termo.length]!;
-    const livre = (c: string) => c === "" || !/[\p{L}\p{N}]/u.test(c);
-    if (livre(antes) && livre(depois)) return true;
+    const livre = (c: string) => c === "" || !LETRA_OU_DIGITO.test(c);
+    if (livre(antes) && livre(depois)) achadas.push(i);
     de = i + 1;
   }
 }
 
+/**
+ * O ponto antes desta posição ENCERRA uma frase, ou é o de uma abreviatura
+ * ("Sr.", "Dra.", "Prof.", "Av.")? Abreviatura: até quatro letras, começando
+ * em maiúscula, coladas no ponto. Errar para "abreviatura" só deixa de barrar.
+ */
+function pontoDeAbreviatura(original: string, posicaoDoPonto: number): boolean {
+  let i = posicaoDoPonto - 1;
+  let letras = 0;
+  while (i >= 0 && LETRA.test(original[i]!)) {
+    letras += 1;
+    i -= 1;
+  }
+  if (letras === 0 || letras > 4) return false;
+  const primeira = original[i + 1]!;
+  return primeira !== primeira.toLowerCase();
+}
+
+/**
+ * A ocorrência é um NOME PRÓPRIO? Inicial maiúscula, o trecho não está todo em
+ * maiúsculas, e não é começo de frase (onde toda palavra leva maiúscula).
+ *
+ * `original` e `minusculas` têm o mesmo tamanho (quem chama confere): o índice
+ * de um vale para o outro.
+ */
+function ehNomeProprio(original: string, minusculas: string, i: number, tamanho: number): boolean {
+  const inicial = original[i]!;
+  if (inicial === minusculas[i]) return false; // começa em minúscula (ou não é letra)
+  const trecho = original.slice(i, i + tamanho);
+  if (trecho === trecho.toUpperCase()) return false; // "XINGO": é grito, não nome
+  // Começo de frase: início da mensagem, ou depois de ". ", "! ", "? ".
+  let j = i - 1;
+  while (j >= 0 && !LETRA_OU_DIGITO.test(original[j]!) && !/[.!?…]/u.test(original[j]!)) j -= 1;
+  if (j < 0) return false;
+  const anterior = original[j]!;
+  if (anterior === "!" || anterior === "?" || anterior === "…") return false;
+  if (anterior === ".") return pontoDeAbreviatura(original, j);
+  return true; // veio depois de outra palavra, no meio da frase
+}
+
+interface MensagemArrumada {
+  /** Com a caixa de quem escreveu. */
+  original: string;
+  minusculas: string;
+  /** `false` quando passar para minúsculas mudou o tamanho: a caixa não é consultada. */
+  alinhadas: boolean;
+}
+
+function arrumarMensagem(mensagem: string): MensagemArrumada {
+  const original = arrumar(mensagem);
+  const minusculas = original.toLowerCase();
+  return { original, minusculas, alinhadas: original.length === minusculas.length };
+}
+
+/** As ocorrências do termo que VALEM: palavra inteira, e não nome próprio. */
+function ocorrenciasQueValem(m: MensagemArrumada, termo: string): number[] {
+  return ocorrencias(m.minusculas, termo).filter(
+    (i) => !(m.alinhadas && ehNomeProprio(m.original, m.minusculas, i, termo.length)),
+  );
+}
+
+/** Quantas palavras a mensagem tem além das ocorrências (que valem) dos termos da regra. */
+function palavrasAlemDosTermos(m: MensagemArrumada, termos: readonly string[]): number {
+  // Por unidade UTF-16, como os índices de `indexOf` — espalhar a string a
+  // partiria por ponto de código e um emoji antes do termo desalinharia tudo.
+  const resto = m.minusculas.split("");
+  for (const termo of termos) {
+    for (const i of ocorrenciasQueValem(m, termo)) {
+      for (let k = i; k < i + termo.length; k += 1) resto[k] = " ";
+    }
+  }
+  return resto.join("").split(/[^\p{L}\p{N}]+/u).filter((p) => p !== "").length;
+}
+
 /** O termo da regra que casa a mensagem, ou `null`. */
 export function termoQueCasa(regra: RegraDoFiltro, mensagem: string): string | null {
-  const texto = normalizarParaOFiltro(mensagem);
-  if (texto === "") return null;
-  const inteira = semPontuacaoNasPontas(texto);
-  for (const cru of regra.terms) {
-    const termo = normalizarParaOFiltro(cru);
-    if (termo.length < 2) continue;
-    if (regra.match === "whole_message" ? inteira === termo : contemExpressao(texto, termo)) return cru;
+  const m = arrumarMensagem(mensagem);
+  if (m.minusculas === "") return null;
+  const termos = regra.terms
+    .map((cru) => ({ cru, termo: normalizarParaOFiltro(cru) }))
+    .filter((t) => t.termo.length >= 2);
+
+  if (regra.match === "whole_message") {
+    const inteira = semPontuacaoNasPontas(m.minusculas);
+    return termos.find((t) => t.termo === inteira)?.cru ?? null;
   }
-  return null;
+
+  const casou = termos.find((t) => ocorrenciasQueValem(m, t.termo).length > 0);
+  if (casou === undefined) return null;
+  // A mensagem que é mais que o termo tem um pedido dentro: vai para o modelo.
+  if (
+    regra.max_extra_words !== null &&
+    palavrasAlemDosTermos(m, termos.map((t) => t.termo)) > regra.max_extra_words
+  ) {
+    return null;
+  }
+  return casou.cru;
+}
+
+/**
+ * Os avisos que a rota de configuração devolve junto do filtro: onde a lista
+ * que a empresa gravou pode calar um cliente. Códigos, não frases — a rota
+ * traduz para o idioma de quem configura.
+ */
+export const AVISOS_DO_FILTRO = [
+  /** Sempre que o filtro está ligado e tem termo: uma lista não entende contexto. */
+  "falso_positivo",
+  /** Alguma regra `contains` sem teto de palavras além do termo. */
+  "sem_limite_de_palavras",
+  /** Alguma regra com termo de uma palavra só, curta — o caso que mais colide. */
+  "termo_curto",
+  /** Alguma regra responde sozinha: em número com agente assistido, não envia. */
+  "resposta_e_modo_assistido",
+] as const;
+export type AvisoDoFiltro = (typeof AVISOS_DO_FILTRO)[number];
+
+/** Uma palavra só, com até este tamanho, é "termo curto" para o aviso. */
+const TAMANHO_DO_TERMO_CURTO = 5;
+
+export function avisosDoFiltro(filtro: FiltroDeEntrada): AvisoDoFiltro[] {
+  if (!filtro.enabled) return [];
+  const regras = CATEGORIAS_DO_FILTRO.flatMap((categoria) => {
+    const regra = filtro.rules[categoria];
+    return regra && regra.terms.length > 0 ? [regra] : [];
+  });
+  if (regras.length === 0) return [];
+  const avisos: AvisoDoFiltro[] = ["falso_positivo"];
+  if (regras.some((r) => r.match === "contains" && r.max_extra_words === null)) {
+    avisos.push("sem_limite_de_palavras");
+  }
+  if (
+    regras.some((r) =>
+      r.terms.some((t) => {
+        const termo = normalizarParaOFiltro(t);
+        return !termo.includes(" ") && termo.length <= TAMANHO_DO_TERMO_CURTO;
+      }),
+    )
+  ) {
+    avisos.push("termo_curto");
+  }
+  if (regras.some((r) => r.action === "reply" && r.reply !== null && r.reply !== "")) {
+    avisos.push("resposta_e_modo_assistido");
+  }
+  return avisos;
 }
 
 export interface BloqueioDoFiltro {

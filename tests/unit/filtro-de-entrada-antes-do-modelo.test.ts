@@ -91,6 +91,13 @@ interface Cenario {
   falas: string[];
   ultimaSaida?: string | null;
   filtroLanca?: boolean;
+  /**
+   * O número tem agente publicado em modo assistido? (a pergunta do dreno).
+   * Padrão `false`: os casos de cima medem o número só com agente automático.
+   */
+  assistidoNoNumero?: boolean;
+  /** A leitura do modo do número falha. */
+  modoLanca?: boolean;
 }
 
 function pool(cenario: Cenario) {
@@ -104,6 +111,10 @@ function pool(cenario: Cenario) {
     if (sql.includes("settings -> 'ai_entry_filter'")) {
       if (cenario.filtroLanca) throw new Error('connection terminated');
       return { rows: [{ filtro: cenario.filtro }] };
+    }
+    if (sql.includes("a.operation_mode = 'assisted'")) {
+      if (cenario.modoLanca) throw new Error('connection terminated');
+      return { rows: [{ available: cenario.assistidoNoNumero === true }] };
     }
     if (sql.includes("m.direction = 'inbound'")) return { rows: cenario.falas.map((body) => ({ body })) };
     if (sql.includes("m.direction = 'outbound'")) {
@@ -138,7 +149,7 @@ beforeEach(() => {
 
 describe('o filtro de entrada barra sem chamar o modelo', () => {
   it('ofensa da lista da empresa: nenhum modelo, a resposta curta sai pela cadeia de envio, a conversa é marcada', async () => {
-    const { p, consultas } = pool({ filtro: FILTRO_DA_EMPRESA, falas: ['seu Xingo de Teste'] });
+    const { p, consultas } = pool({ filtro: FILTRO_DA_EMPRESA, falas: ['seu XINGO DE TESTE'] });
     await rodar(p);
 
     nenhumModeloFoiChamado();
@@ -285,5 +296,77 @@ describe('o filtro de entrada não barra o que não é dele', () => {
     expect(consultas.some((c) => c.sql.includes("settings -> 'ai_entry_filter'"))).toBe(false);
     expect(mocks.beforeSend).not.toHaveBeenCalled();
     nenhumModeloFoiChamado();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Revisão de 20/11, item 2.29: a resposta do filtro respeita o modo assistido.
+// ---------------------------------------------------------------------------
+
+describe('⭐ a resposta do filtro respeita o modo assistido (revisão 20/11, 2.29)', () => {
+  it('regra `reply` num número com agente assistido: NADA sai sozinho, e o turno segue para a pessoa aprovar', async () => {
+    const { p, consultas } = pool({ filtro: FILTRO_DA_EMPRESA, falas: ['seu xingo de teste'], assistidoNoNumero: true });
+    await rodar(p);
+
+    expect(mocks.beforeSend, 'a resposta automática saiu num número assistido').not.toHaveBeenCalled();
+    expect(channelSend).not.toHaveBeenCalled();
+    // O filtro não decidiu: nem marcador, nem traço de turno barrado.
+    expect(consultas.some((c) => c.sql.includes('update conversations') && c.params[2] === 'ofensa')).toBe(false);
+    expect(consultas.some((c) => c.sql.includes('insert into public.agent_turn_traces'))).toBe(false);
+    // O turno seguiu: o agente foi escolhido e o rascunho foi proposto.
+    expect(mocks.bySession).toHaveBeenCalled();
+    expect(mocks.draft).toHaveBeenCalledOnce();
+  });
+
+  it('a pergunta é feita para a organização e o número DO JOB', async () => {
+    const { p, consultas } = pool({ filtro: FILTRO_DA_EMPRESA, falas: ['seu xingo de teste'], assistidoNoNumero: true });
+    await rodar(p);
+    const pergunta = consultas.find((c) => c.sql.includes("a.operation_mode = 'assisted'"));
+    expect(pergunta?.params).toEqual([ids.org, ids.channel]);
+    expect(pergunta?.sql).toContain('a.organization_id = $1');
+  });
+
+  it('regra `silence` num número com agente assistido: continua barrando — não há o que enviar', async () => {
+    const { p, consultas } = pool({
+      filtro: FILTRO_DA_EMPRESA, falas: ['Clique no link de teste agora'], assistidoNoNumero: true,
+    });
+    await rodar(p);
+
+    nenhumModeloFoiChamado();
+    expect(mocks.beforeSend).not.toHaveBeenCalled();
+    expect(consultas.find((c) => c.sql.includes('update conversations'))?.params).toEqual([ids.org, ids.conversation, 'spam']);
+    // Regra de silêncio nem pergunta o modo.
+    expect(consultas.some((c) => c.sql.includes("a.operation_mode = 'assisted'"))).toBe(false);
+  });
+
+  it('sem conseguir ler o modo do número: a resposta automática NÃO sai, e o turno segue', async () => {
+    const { p } = pool({ filtro: FILTRO_DA_EMPRESA, falas: ['seu xingo de teste'], modoLanca: true });
+    await rodar(p);
+
+    expect(mocks.beforeSend).not.toHaveBeenCalled();
+    expect(channelSend).not.toHaveBeenCalled();
+    expect(mocks.draft).toHaveBeenCalledOnce();
+  });
+
+  it('número só com agente automático: a resposta curta sai, como antes', async () => {
+    const { p } = pool({ filtro: FILTRO_DA_EMPRESA, falas: ['seu xingo de teste'], assistidoNoNumero: false });
+    await rodar(p);
+
+    nenhumModeloFoiChamado();
+    expect(mocks.beforeSend).toHaveBeenCalledOnce();
+  });
+});
+
+describe('⭐ ofensa + pedido legítimo, pelo handler (revisão 20/11, 2.29)', () => {
+  it('a reclamação que usa a palavra da lista e traz um pedido vai para o modelo', async () => {
+    const { p, consultas } = pool({
+      filtro: FILTRO_DA_EMPRESA,
+      falas: ['isso foi um xingo de teste, mas eu preciso mesmo é do pedido 123 de volta'],
+    });
+    await rodar(p);
+
+    expect(mocks.draft, 'a reclamação legítima ficou sem resposta').toHaveBeenCalledOnce();
+    expect(mocks.beforeSend).not.toHaveBeenCalled();
+    expect(consultas.some((c) => c.sql.includes('insert into public.agent_turn_traces'))).toBe(false);
   });
 });

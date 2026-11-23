@@ -20,6 +20,19 @@
  *
  * Nada aqui lança. Erro ao ler a configuração ou as mensagens: o filtro não
  * decide nada e o turno segue para o modelo, como seguia antes de ele existir.
+ *
+ * ## A resposta do filtro respeita o MODO ASSISTIDO
+ *
+ * O filtro roda antes de escolher o agente, então não sabe qual agente
+ * responderia. Mas sabe o que o dreno sabe: se o número tem agente publicado em
+ * modo assistido (`numeroTemAgenteAssistido`, a mesma pergunta do `canAssist`
+ * de `edge/crm/drain.ts`). No modo assistido nada vai ao cliente sem uma pessoa
+ * aprovar — e a resposta curta do filtro saía sozinha (revisão de 20/11, item
+ * 2.29). Agora, com regra `reply` num número assim, o filtro NÃO decide: não
+ * envia, não marca, não grava traço, e o turno segue para o agente assistido,
+ * que propõe a resposta para a pessoa aprovar. Regra `silence` não envia nada e
+ * continua barrando igual nos dois modos. Sem conseguir ler o modo, vale o
+ * lado seguro: não envia sozinho.
  */
 import type pg from 'pg';
 
@@ -88,6 +101,34 @@ export interface OpcoesDoFiltroDeEntrada {
 export type DesfechoDoFiltroDeEntrada =
   | { barrou: false }
   | { barrou: true; bloqueio: BloqueioDoFiltro; respostaEnviada: boolean; registro: FerramentaNoTraco };
+
+/**
+ * O número tem agente publicado em modo assistido? A MESMA pergunta que o
+ * dreno faz antes de enfileirar (`canAssist`, `edge/crm/drain.ts`): o agente
+ * publicado direto no número, ou membro/reserva do roteador ativo dele.
+ */
+export async function numeroTemAgenteAssistido(
+  pool: pg.Pool,
+  tenantId: string,
+  channelSessionId: string,
+): Promise<boolean> {
+  const { rows } = await pool.query<{ available: boolean }>(
+    `select exists(
+       select 1 from ai_agents a
+         join ai_agent_versions v on v.organization_id = a.organization_id and v.id = a.published_version_id
+        where a.organization_id = $1 and a.archived_at is null
+          and a.operation_mode = 'assisted' and v.status = 'published'
+          and (v.channel_session_id = $2 or exists(
+            select 1 from ai_routers r
+             where r.organization_id = a.organization_id and r.channel_session_id = $2 and r.is_active
+               and (r.fallback_agent_id = a.id or exists(
+                 select 1 from ai_router_members m
+                  where m.organization_id = r.organization_id and m.router_id = r.id and m.agent_id = a.id))))
+     ) as available`,
+    [tenantId, channelSessionId],
+  );
+  return rows[0]?.available === true;
+}
 
 /** Outra porta do começo do turno decide esta mensagem: pedido de pessoa ou opt-out. */
 function outraPortaDecide(mensagem: string): boolean {
@@ -233,6 +274,26 @@ export async function aplicarFiltroDeEntrada(
       error: err instanceof Error ? err.message.slice(0, 160) : 'erro desconhecido',
     });
     return { barrou: false };
+  }
+
+  // A resposta automática respeita o modo assistido (ver o cabeçalho): num
+  // número com agente assistido, regra `reply` não decide e o turno segue.
+  if (bloqueio.acao === 'reply') {
+    let assistido = true; // sem conseguir ler, não envia sozinho
+    try {
+      assistido = await numeroTemAgenteAssistido(pool, ids.tenantId, ids.channelSessionId);
+    } catch (err) {
+      opts.log.warn('filtro de entrada: modo do número não lido — a resposta automática não sai', {
+        error: err instanceof Error ? err.message.slice(0, 160) : 'erro desconhecido',
+      });
+    }
+    if (assistido) {
+      opts.log.info(
+        'filtro de entrada: regra de resposta num número com agente assistido — nada é enviado sozinho; o turno segue',
+        { categoria: bloqueio.categoria },
+      );
+      return { barrou: false };
+    }
   }
 
   const envio =

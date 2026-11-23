@@ -39,6 +39,7 @@ import { requireRole } from "@/lib/auth/require-role";
 import { atendimentoConfigPatchSchema, routingConfigSchema, validateRequest } from "@/lib/schemas";
 import { mesclarSettingsDeAtendimento } from "@/lib/schemas/routing";
 import { lerFiltroDeEntrada } from "@/lib/agent-engine/guardrails/filtro-de-entrada";
+import { avisosDoFiltroParaQuemConfigura } from "@/lib/atendimento/avisos-do-filtro-de-entrada";
 import { DEFAULT_VISIBILITY_MODE, type VisibilityMode } from "@/lib/auth/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -70,7 +71,16 @@ export async function GET(_req: NextRequest): Promise<Response> {
   const visibility_mode = (settings.visibility_mode as VisibilityMode | undefined) ?? DEFAULT_VISIBILITY_MODE;
   // O filtro de entrada da IA mora ao lado (`settings.ai_entry_filter`) e ainda
   // não tem tela: lê-se e grava-se por esta rota.
-  return ok({ ...routing, visibility_mode, entry_filter: lerFiltroDeEntrada(settings) }, { requestId });
+  const entry_filter = lerFiltroDeEntrada(settings);
+  return ok(
+    {
+      ...routing,
+      visibility_mode,
+      entry_filter,
+      entry_filter_warnings: avisosDoFiltroParaQuemConfigura(entry_filter, authz.user.idioma),
+    },
+    { requestId },
+  );
 }
 
 export async function PATCH(req: NextRequest): Promise<Response> {
@@ -166,6 +176,10 @@ export async function PATCH(req: NextRequest): Promise<Response> {
         visibility_mode ??
         ((currentSettings.visibility_mode as VisibilityMode | undefined) ?? DEFAULT_VISIBILITY_MODE),
       entry_filter: lerFiltroDeEntrada(nextSettings),
+      entry_filter_warnings: avisosDoFiltroParaQuemConfigura(
+        lerFiltroDeEntrada(nextSettings),
+        authz.user.idioma,
+      ),
     },
     { requestId },
   );

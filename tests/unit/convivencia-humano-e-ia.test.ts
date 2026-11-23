@@ -164,7 +164,7 @@ describe("a IA só volta sozinha conforme a configuração da empresa", () => {
     expect(mexendo.routing.screen_reply_silence_minutes).toBeNull();
     expect(mexendo.settings.ai_entry_filter).toEqual({
       enabled: true,
-      rules: { spam: { terms: ["exemplo de teste"], match: "contains", action: "silence", reply: null, tag: "spam" } },
+      rules: { spam: { terms: ["exemplo de teste"], match: "contains", max_extra_words: 3, action: "silence", reply: null, tag: "spam" } },
     });
     // O filtro mora ao lado de `routing`, não dentro dele.
     expect(mexendo.routing).not.toHaveProperty("entry_filter");
