@@ -33,7 +33,7 @@ Todos eram dos dois lados acrescentando no mesmo ponto. Ficaram os dois lados, n
 | `lib/mcp/tools/index.ts` | 3 | Os dois registros de ferramenta ficaram. |
 | `docs/arvisx/SUPERFICIE-DE-AGENTE.md` | 3, 4 | À mão: a frase de abertura passou a citar a parte 3 e os ajustes; no passo 4 ficou a frase nova da Equipe pronta v2, a seção da parte 3 e as seções novas da v2. |
 | `tests/unit/capacidade-alcancavel-pelo-agente.test.ts` | 4 | Os dois lados ficaram. |
-| `app/app/webhooks/_components/RuleEditor.tsx`, `labels.ts`, `lib/schemas/webhooks.ts` | 5 | Os gatilhos de cada pilha ficaram. |
+| `app/app/webhooks/_components/RuleEditor.tsx`, `labels.ts`, `lib/schemas/webhooks.ts` | 5 | Os gatilhos de cada pilha ficaram. Em `webhooks.ts` o gatilho `comment.received` (#12) ficou antes do par `conversation.ai_paused` / `conversation.ai_resumed` (#20): o teste `convivencia-humano-e-ia` exige o par no fim da lista, e a primeira rodada do CI integrado (45398044171) reprovou só por isso. |
 | `tests/invariants/rls-completude-varredura.test.ts` | 5 | As tabelas novas de cada pilha ficaram na lista. |
 
 ## Migrations 9809 a 9820

@@ -115,6 +115,13 @@ export const ENTIDADE_ESPERADA_POR_GATILHO = {
   "lead.attachment_added": "crm_lead",
   // A entidade é a TAREFA: ela pode não estar presa a negócio nenhum.
   "task.completed": "crm_task",
+  // Chegou um comentário numa publicação do Instagram (migration 9810). Quem
+  // emite é `lib/channels/meta-social/comentarios.ts`, depois de gravar a linha
+  // em `social_comments` — e só quando o canal está com os comentários
+  // ligados. A entidade é o próprio comentário: ele NÃO tem contato nem
+  // negócio (nasce sem os dois, por decisão), então a regra enxerga só
+  // `event.*`, e a ação que faz sentido é avisar outro sistema.
+  "comment.received": "social_comment",
   // A convivência entre pessoa e IA (superfície de agente, parte 3): o
   // atendimento automático parou ou voltou NAQUELA conversa. Nascem do gatilho
   // do banco `fn_anunciar_pausa_da_ia` (migration 9811), que olha o estado da
@@ -123,13 +130,6 @@ export const ENTIDADE_ESPERADA_POR_GATILHO = {
   // automático. A entidade é a CONVERSA. Servem para o agente externo obedecer.
   "conversation.ai_paused": "conversation",
   "conversation.ai_resumed": "conversation",
-  // Chegou um comentário numa publicação do Instagram (migration 9810). Quem
-  // emite é `lib/channels/meta-social/comentarios.ts`, depois de gravar a linha
-  // em `social_comments` — e só quando o canal está com os comentários
-  // ligados. A entidade é o próprio comentário: ele NÃO tem contato nem
-  // negócio (nasce sem os dois, por decisão), então a regra enxerga só
-  // `event.*`, e a ação que faz sentido é avisar outro sistema.
-  "comment.received": "social_comment",
 } as const;
 
 export type GatilhoDeAutomacao = keyof typeof ENTIDADE_ESPERADA_POR_GATILHO;
