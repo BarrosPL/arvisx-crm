@@ -305,7 +305,10 @@ export function TemplatesClient() {
           {templates.map((tpl) => (
             <Card key={`${tpl.name}:${tpl.language}`} className="p-4" data-testid="template-card">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-medium">{tpl.name}</span>
+                {/* Nome de modelo não tem espaço (só letras, números e `_`): sem a
+                    quebra em qualquer ponto, um nome comprido empurra a página
+                    para o lado no celular (medido em 375px: main 630/375). */}
+                <span className="min-w-0 max-w-full font-medium [overflow-wrap:anywhere]">{tpl.name}</span>
                 <Badge variant="outline" className="font-mono text-xs">
                   {tpl.language}
                 </Badge>
