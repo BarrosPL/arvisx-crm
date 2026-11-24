@@ -86,7 +86,7 @@ Telas públicas (login, onboarding) não usam a casca: ver `telas/login.html`.
    recebem `class="tabela rolavel"` ou viram lista. A casca já cuida do menu e da barra inferior.
 7. **Sem JavaScript de comportamento** além do `shell.js`. Sem CSS que mude a casca.
 8. Conferir: `node docs/arvisx/prototipo/verificar.mjs <nome>` gera `_shots/<nome>.desktop.png` e
-   `.celular.png`; olhe os dois antes de dar por pronta. Depois `node docs/arvisx/prototipo/montar.mjs`.
+   `_shots/<nome>.celular.png` (pasta fora do git); olhe os dois antes de dar por pronta. Depois `node docs/arvisx/prototipo/montar.mjs`.
 
 Referências prontas: `telas/funil-quadro.html` (kanban), `telas/contatos.html` (tabela),
 `telas/contato-ficha.html` (ficha com coluna lateral), `telas/crm-hub.html` (hub de cartões),
