@@ -88,7 +88,7 @@ describe("produto e preço em euro a partir do plano", () => {
       "POST /checkout/sessions": () => ({ corpo: SESSAO }),
     });
     await adaptador.iniciarAssinatura({ ...assinar, plano: PLANO });
-    expect(doCorpo(chamadas.find((c) => c.rota === "POST /products"))).toEqual({ id: PRODUTO, name: "Essencial", "metadata[plano_id]": PLANO.id });
+    expect(doCorpo(chamadas.find((c) => c.rota === "POST /products"))).toEqual({ id: PRODUTO, name: "Essencial", tax_code: "txcd_10103001", "metadata[plano_id]": PLANO.id });
     expect(doCorpo(chamadas.find((c) => c.rota === "POST /checkout/sessions"))).toMatchObject({
       mode: "subscription",
       customer: CLIENTE,
@@ -115,7 +115,7 @@ describe("produto e preço em euro a partir do plano", () => {
     // Nenhum id de preço circula: cada Checkout leva o seu price_data, nunca `price`.
     expect(checkouts.every((c) => !("line_items[0][price]" in c))).toBe(true);
     const renomes = chamadas.filter((c) => c.rota === `POST /products/${PRODUTO}`).map(doCorpo);
-    expect(renomes.at(-1)).toEqual({ name: "Essencial+", active: "true" });
+    expect(renomes.at(-1)).toEqual({ name: "Essencial+", active: "true", tax_code: "txcd_10103001" });
   });
 
   it("⭐ troca de plano em curso: preço NOVO em eur no mesmo item da assinatura, sem proração", async () => {
