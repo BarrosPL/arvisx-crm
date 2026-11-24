@@ -126,11 +126,16 @@ test("[P0] Asaas: conectar, assinar com CPF/CNPJ, pagar com Pix e cancelar mante
     expect((await documento.inputValue()).replace(/\D/g, ""), "não veio preenchido com o CNPJ do cadastro").toBe(CNPJ);
     await documento.fill(CNPJ.slice(0, 13) + String((Number(CNPJ.slice(13)) + 1) % 10));
     await expect(pB.getByText("Confira o CPF ou CNPJ: os dígitos não batem.")).toBeVisible();
-    await expect(pB.getByRole("button", { name: "Assinar", exact: true })).toBeDisabled();
+    // Sem nada assinado no provedor, o "Assinar" é a escolha do plano em cartões (4c609e77e, 501427bb0):
+    // o botão de confirmar só nasce depois da escolha e leva o nome do plano. É ELE que o documento errado trava.
+    await pB.getByRole("button", { name: `Escolher ${PLANO}`, exact: true }).click();
+    const assinar = pB.getByRole("button", { name: `Assinar ${PLANO}`, exact: true });
+    await expect(assinar).toBeDisabled();
     expect(duble.asaas.clienteDaOrg(orgB), "documento errado chegou ao provedor").toBeNull();
     await pB.screenshot({ path: `${EVIDENCIA}/checkout-asaas-documento.png`, fullPage: true });
     await documento.fill(CNPJ_COM_MASCARA);
-    await pB.getByRole("button", { name: "Assinar", exact: true }).click();
+    await expect(assinar).toBeEnabled();
+    await assinar.click();
     // A fatura do Asaas não devolve o cliente: o sistema fica nesta aba, e a fatura abre noutra, pelo clique.
     const abrirFatura = pB.getByRole("link", { name: "Abrir a fatura" });
     await expect(abrirFatura).toBeVisible();

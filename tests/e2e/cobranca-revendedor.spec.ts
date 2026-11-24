@@ -139,11 +139,26 @@ test("[P0] primeira cobrança: conectar, assinar, atrasar, suspender e voltar so
     pB.setDefaultTimeout(20_000);
     const emailB = uniqueEmail("cobranca");
     await pB.goto("/signup");
+    // Cadastro em dois passos (fe9d5f1db): com plano oferecido, primeiro os cartões, nenhum marcado.
+    // Os dois planos do passo 2 estão ali; a escolha é da pessoa, e é ela que decide o plano em que a empresa nasce.
+    const cartoes = pB.getByTestId("escolha-do-plano");
+    await expect(cartoes).toBeVisible();
+    await expect(cartoes.getByRole("heading", { name: ESSENCIAL, exact: true })).toBeVisible();
+    await expect(cartoes.getByRole("heading", { name: PROFISSIONAL, exact: true })).toBeVisible();
+    await expect(pB.getByLabel("Nome da empresa"), "o formulário apareceu antes da escolha do plano").toHaveCount(0);
+    const testarEssencial = cartoes.getByRole("button", { name: `Testar o ${ESSENCIAL} por 7 dias`, exact: true });
+    await expect(testarEssencial).toBeVisible();
+    // O botão é do cliente (useState): um clique dado antes da hidratação se perde, então repete até o passo 1 sair.
+    await expect(async () => {
+      if (await cartoes.isVisible()) await testarEssencial.click({ timeout: 2_000 });
+      await expect(cartoes).toBeHidden({ timeout: 2_000 });
+    }).toPass({ timeout: 20_000 });
+    await expect(pB.getByTestId("plano-escolhido")).toContainText(`Plano ${ESSENCIAL}`);
     await pB.getByLabel("Nome da empresa").fill(EMPRESA);
     await pB.getByLabel("Email").fill(emailB);
     await pB.getByLabel("Senha", { exact: true }).fill(senha);
     await pB.getByLabel("Confirmar senha").fill(senha);
-    await pB.getByRole("button", { name: "Criar conta" }).click();
+    await pB.getByRole("button", { name: `Criar conta e testar o ${ESSENCIAL}`, exact: true }).click();
     await expect(pB.getByText("Confirme seu e-mail")).toBeVisible();
     const confirmacao = extractAuthConfirmLink(await waitForEmail(emailB, "Confirme seu e-mail"), test.info().project.use.baseURL!);
     // Abrir o link não gasta o token (protege do verificador de links do e-mail): a pessoa aperta "Continuar".
@@ -168,7 +183,11 @@ test("[P0] primeira cobrança: conectar, assinar, atrasar, suspender e voltar so
     await expect(faixa).toBeVisible();
     await faixa.getByRole("link", { name: "Ver o plano" }).click();
     await pB.waitForURL("**/app/settings/billing");
-    await pB.getByRole("button", { name: "Assinar", exact: true }).click();
+    // Sem nada assinado no provedor, o "Assinar" é a escolha do plano em cartões (4c609e77e, 501427bb0):
+    // não há mais botão "Assinar" solto; o de confirmar só nasce depois da escolha e leva o nome do plano.
+    await expect(pB.getByRole("button", { name: "Assinar", exact: true })).toHaveCount(0);
+    await pB.getByRole("button", { name: `Escolher ${ESSENCIAL}`, exact: true }).click();
+    await pB.getByRole("button", { name: `Assinar ${ESSENCIAL}`, exact: true }).click();
     await pB.waitForURL((url) => url.origin === duble!.base && url.pathname.startsWith("/checkout/"));
     await expect(pB.getByRole("heading", { name: "Checkout de teste" })).toBeVisible();
     await expect(pB.getByText(ESSENCIAL)).toBeVisible();
@@ -222,7 +241,9 @@ test("[P0] primeira cobrança: conectar, assinar, atrasar, suspender e voltar so
 
     // ── 6. Upgrade no período pago: só aplica depois de pagar o proporcional ─
     await pB.getByRole("button", { name: "Trocar de plano" }).click();
-    await pB.getByLabel("Novo plano").selectOption(idProfissional);
+    // A troca também é por cartão (501427bb0): a lista "Novo plano" saiu; o plano atual aparece marcado e sem escolha.
+    await expect(pB.getByRole("button", { name: "Seu plano", exact: true })).toBeDisabled();
+    await pB.getByRole("button", { name: `Escolher ${PROFISSIONAL}`, exact: true }).click();
     await pB.getByRole("button", { name: "Confirmar troca" }).click();
     await pB.waitForURL((url) => url.origin === duble!.base && url.pathname.startsWith("/checkout/"));
     await expect(pB.getByRole("heading", { name: "Checkout de teste" })).toBeVisible();
@@ -238,7 +259,7 @@ test("[P0] primeira cobrança: conectar, assinar, atrasar, suspender e voltar so
 
     // ── 7. Downgrade: só agenda a mudança para a próxima renovação ────────────
     await pB.getByRole("button", { name: "Trocar de plano" }).click();
-    await pB.getByLabel("Novo plano").selectOption(idEssencial);
+    await pB.getByRole("button", { name: `Escolher ${ESSENCIAL}`, exact: true }).click();
     await pB.getByRole("button", { name: "Confirmar troca" }).click();
     await expect(pB.getByText(/O novo plano vale a partir de \d{2}\/\d{2}/)).toBeVisible();
     expect(await assinaturaDe(orgB)).toMatchObject({ plano_id: idProfissional, plano_agendado_id: idEssencial });
