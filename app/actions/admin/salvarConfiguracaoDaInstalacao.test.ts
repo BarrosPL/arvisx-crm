@@ -36,8 +36,19 @@ beforeEach(() => {
 });
 
 describe("as chaves da cobrança só se escrevem pela tela de Cobrança", () => {
-  it("controle: a sonda enxerga as seis chaves da cobrança (Stripe e Asaas)", () => {
-    expect(DA_COBRANCA).toHaveLength(7);
+  it("controle: a sonda enxerga as oito chaves da cobrança (régua, modo fiscal, Stripe e Asaas)", () => {
+    // Por nome, e não por contagem: a contagem (7) ficou velha quando o modo fiscal
+    // (COBRANCA_MODO_FISCAL, d851fde5a) entrou no catálogo, e o título já dizia "seis".
+    expect([...DA_COBRANCA].sort()).toEqual([
+      "ASAAS_API_KEY",
+      "ASAAS_WEBHOOK_TOKEN",
+      "COBRANCA_IVA",
+      "COBRANCA_MODO_FISCAL",
+      "COBRANCA_PROVEDOR",
+      "COBRANCA_TOLERANCIA_DIAS",
+      "STRIPE_SECRET_KEY",
+      "STRIPE_WEBHOOK_SECRET",
+    ]);
   });
 
   it.each(DA_COBRANCA)("salvar %s pela ação genérica é recusado sem gravar nem auditar", async (chave) => {
