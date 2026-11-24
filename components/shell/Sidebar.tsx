@@ -168,13 +168,19 @@ export function SidebarContent({
       >
         {(logo || logoEscuro) && !collapsed ? (
           // Sem arte própria para o escuro, preserva a proteção de contraste.
+          // As classes são `dark:` porque, no design "Folha", a barra segue o
+          // tema (`--color-sidebar` é claro no claro e escuro no escuro): o chip
+          // e a arte escura só entram no tema escuro. Enquanto a barra era navy
+          // nos dois temas eles valiam sempre, e ficaram assim depois que ela
+          // clareou — a arte feita para fundo escuro aparecia sobre a barra clara.
+          // Medido por tests/e2e/logo-moldura-no-tema-escuro.spec.ts, casos 2 e 7.
           <div
             className={cn(
               // `min-w-0`: item de flex não encolhe abaixo do `min-width: auto`,
               // que é o valor padrão — sem isso, uma arte própria larga empurra o
               // botão de recolher para fora da barra em vez de encolher.
               "min-w-0 rounded-md",
-              !logoEscuro && "bg-white px-2 py-1 shadow-sm dark:bg-white",
+              !logoEscuro && "dark:bg-white dark:px-2 dark:py-1 dark:shadow-sm",
             )}
           >
             {/* <img> em vez de next/image de propósito: a URL vem de quem hospeda
@@ -199,7 +205,7 @@ export function SidebarContent({
                   // MESMA propriedade no CSS e só um sobrevive — a pegadinha que o
                   // review apontou, e por isso o teto é um único `min()`.
                   "h-7 w-auto max-w-[min(10rem,100%)] object-contain",
-                  logoEscuro && "hidden",
+                  logoEscuro && "dark:hidden",
                 )}
               />
             ) : (
@@ -208,7 +214,7 @@ export function SidebarContent({
               // estourava a barra. Uma linha com reticências, e o nome completo
               // continua no tooltip. `block` porque este wrapper não é flex: inline,
               // o `truncate` não corta e o nome passa por cima do botão.
-              <span className="block min-w-0 truncate text-text" title={nome}>
+              <span className="block min-w-0 truncate text-text dark:hidden" title={nome}>
                 {nome}
               </span>
             )}
@@ -217,7 +223,7 @@ export function SidebarContent({
               <img
                 src={logoEscuro}
                 alt={nome}
-                className="block h-7 w-auto max-w-[min(10rem,100%)] object-contain"
+                className="hidden h-7 w-auto max-w-[min(10rem,100%)] object-contain dark:block"
               />
             ) : null}
           </div>

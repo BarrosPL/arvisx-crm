@@ -358,7 +358,7 @@ function anotar(nome: string, dado: unknown): void {
   fs.writeFileSync(evidencia(nome), JSON.stringify(dado, null, 2) + "\n", "utf8");
 }
 
-/** O cabeçalho da barra lateral: o primeiro filho do `<aside>` (`h-14`, `border-b`). */
+/** O cabeçalho da barra lateral: o primeiro filho do `<aside>` (`h-16` no design "Folha"). */
 function cabecalhoDaBarra(page: Page): Locator {
   return page.locator("aside > div").first();
 }
@@ -530,7 +530,9 @@ test.describe("a moldura do logo no tema escuro", () => {
       "ainda há um <img> na barra — o logo enviado não foi removido, e o caso mediria outra coisa",
     ).toHaveCount(0, { timeout: 15_000 });
 
-    const marca = barra.getByRole("img", { name: "DeskcommCRM" });
+    // O nome é o PADRÃO do produto neste fork (`DEFAULT_APP_NAME` em
+    // `lib/branding.ts`): é ele que o logotipo inline anuncia em `aria-label`.
+    const marca = barra.getByRole("img", { name: "ArvisX CRM" });
     await expect(
       marca,
       "a barra não caiu no ramo `marcaDoProduto` — sem ele não há fronteira para medir",
@@ -589,9 +591,10 @@ test.describe("a moldura do logo no tema escuro", () => {
       `o cabeçalho da barra MUDOU de retângulo entre os temas numa instalação SEM logo ` +
         `enviado — claro=${JSON.stringify(claro)} escuro=${JSON.stringify(escuro)}`,
     ).toEqual(claro);
-    // E ele continua sendo o `h-14` de sempre, no topo: a igualdade acima passaria
-    // se os DOIS tivessem mudado junto.
-    expect(escuro.altura, "o cabeçalho deixou de ser `h-14` (56px)").toBe(56);
+    // E ele continua sendo o `h-16` do design "Folha" (era `h-14`, 56px, até o
+    // commit 7dc2a9a9a), no topo: a igualdade acima passaria se os DOIS tivessem
+    // mudado junto.
+    expect(escuro.altura, "o cabeçalho deixou de ser `h-16` (64px)").toBe(64);
     expect(escuro.y, "o cabeçalho saiu do topo da barra").toBe(0);
   });
 

@@ -93,7 +93,15 @@ export default async function PublicLayout({ children }: { children: React.React
           letra branca. O painel é escuro nos dois temas, como em fachada.css.
         */}
         <section className="fachada-painel relative flex flex-col justify-between gap-6 overflow-hidden bg-[#0f3d45] px-6 py-7 text-white lg:px-14 lg:py-10">
-          <div className="relative z-[1] flex justify-start [&_img]:max-h-12">
+          {/*
+            Sem teto de altura AQUI: o teto do logo de quem hospeda é o do
+            próprio `<img>` (80 px de altura, 192 px de largura — ver o
+            comentário abaixo). Um `[&_img]:max-h-12` neste embrulho vencia o
+            `max-h-20` por especificidade e encolhia o logo do revendedor para
+            48 px sem ninguém ter decidido isso; quem mede é
+            `provarTamanhosNaFachada` em tests/e2e/marca-logo.spec.ts.
+          */}
+          <div className="relative z-[1] flex justify-start">
             {marca.logoUrl || marca.logoDarkUrl ? (
               <div className="flex justify-start">
                 {/*
