@@ -218,24 +218,54 @@ test.describe("navegação agrupada", () => {
    * "20 itens que não cabem" seria recriar o problema em outra forma.
    *
    * Medido por ferramenta, nunca a olho.
+   *
+   * ArvisX, 24/11/2026 (decisão do dono): o desenho "Folha suave" (7dc2a9a9a)
+   * fica como está. Ele deu mais ar ao menu (linha de 28 → 34 px, título de
+   * grupo de 24 → 28 px, cabeçalho de 56 → 64 px) e, com isso, o menu inteiro
+   * deixou de caber em 900 px de altura: cerca de 864 px de conteúdo contra 724
+   * visíveis. A regra antiga ("em 900px o menu não rola") descrevia o desenho
+   * anterior. O que continua valendo, e é o problema original:
+   *   - em 900 px NENHUM grupo fica com o título fora da dobra;
+   *   - em 900 px todo link é alcançável rolando o próprio menu (o último
+   *     entra inteiro na caixa), e a página não ganha rolagem por causa dele;
+   *   - na altura em que o desenho atual cabe (1080 px, a tela de mesa comum)
+   *     o menu inteiro aparece sem rolar. Se um item novo quebrar isso, reprova.
    */
-  test("nenhum grupo fica fora da dobra, e em 900px o menu não rola", async ({ page }) => {
+  test("nenhum grupo fica fora da dobra em 900px, todo link é alcançável, e em 1080px o menu não rola", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await loginAdmin(page);
 
-    const m = await page.evaluate(() => {
-      const nav = document.querySelector('nav[aria-label="Navegação principal"]')!;
-      const r = nav.getBoundingClientRect();
-      return {
-        rola: nav.scrollHeight > Math.round(r.height) + 1,
-        titulosFora: [...nav.querySelectorAll("h2")].filter(
-          (h) => h.getBoundingClientRect().bottom > r.bottom,
-        ).length,
-      };
-    });
+    const medir = () =>
+      page.evaluate(() => {
+        const nav = document.querySelector('nav[aria-label="Navegação principal"]')!;
+        const r = nav.getBoundingClientRect();
+        const links = [...nav.querySelectorAll("a")];
+        nav.scrollTop = nav.scrollHeight;
+        const caixa = nav.getBoundingClientRect();
+        const ultimo = links.at(-1)!.getBoundingClientRect();
+        const ultimoDentro = ultimo.top >= caixa.top - 1 && ultimo.bottom <= caixa.bottom + 1;
+        nav.scrollTop = 0;
+        return {
+          rola: nav.scrollHeight > Math.round(r.height) + 1,
+          titulosFora: [...nav.querySelectorAll("h2")].filter(
+            (h) => h.getBoundingClientRect().bottom > r.bottom,
+          ).length,
+          links: links.length,
+          ultimoDentro,
+          paginaRola: document.documentElement.scrollHeight > window.innerHeight + 1,
+        };
+      });
 
-    expect(m.titulosFora, "grupo inteiro invisível é o problema que viemos resolver").toBe(0);
-    expect(m.rola, "em 900px o menu inteiro tem de caber sem scroll").toBe(false);
+    const em900 = await medir();
+    expect(em900.titulosFora, "grupo inteiro invisível é o problema que viemos resolver").toBe(0);
+    expect(em900.links, "o menu tem de ter links para a medida valer").toBeGreaterThan(0);
+    expect(em900.ultimoDentro, "em 900px o último link tem de ser alcançável rolando o menu").toBe(true);
+    expect(em900.paginaRola, "o menu rola dentro dele; a página não pode rolar por causa do menu").toBe(false);
+
+    await page.setViewportSize({ width: 1280, height: 1080 });
+    const em1080 = await medir();
+    expect(em1080.titulosFora).toBe(0);
+    expect(em1080.rola, "em 1080px o menu inteiro tem de caber sem scroll").toBe(false);
   });
 
   test.describe("mobile", () => {
