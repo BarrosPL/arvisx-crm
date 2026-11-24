@@ -173,8 +173,15 @@ describe("porta 3 — recoverOrganization recusa quem teve o acesso revogado", (
     vi.clearAllMocks();
     vi.resetModules();
     const { createClient } = await import("@/lib/supabase/server");
+    // A pessoa destes casos TEM o e-mail confirmado: desde a auditoria de 11/11
+    // (adc567665) a action recusa `email_nao_confirmado` antes de qualquer outra
+    // porta, e sem este campo os três casos mediam essa recusa, não a porta 3.
     vi.mocked(createClient).mockResolvedValue({
-      auth: { getUser: vi.fn(async () => ({ data: { user: USUARIO } })) },
+      auth: {
+        getUser: vi.fn(async () => ({
+          data: { user: { ...USUARIO, email_confirmed_at: "2026-11-01T12:00:00Z" } },
+        })),
+      },
     } as never);
     const { decidirConviteDoSignup } = await import("@/lib/auth/convite-no-signup");
     vi.mocked(decidirConviteDoSignup).mockReturnValue({ tipo: "provisionar" } as never);
