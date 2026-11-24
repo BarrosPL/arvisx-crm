@@ -611,9 +611,14 @@ test("convite novo: alternar cadastro/login, confirmar no Mailpit e entrar só n
     await expect(page.getByLabel("Email")).toHaveValue(email);
     expect(new URL(page.url()).searchParams.get("next") === `/team/accept-invite/${token}`).toBe(true);
     await page.screenshot({ path: "evidence/lote-bugfixes-01a178b3/convite-02-login-preenchido.png" });
-    await page.getByRole("link", { name: "Criar conta", exact: true }).click();
+    // O /login não oferece cadastro desde c09d28e55, nem a quem chega por convite
+    // (convite-caminhos-de-acesso.test.tsx). Quem alternou para o login volta ao
+    // cadastro pelo navegador, e o convite tem de voltar junto.
+    await expect(page.locator('a[href*="/signup"]')).toHaveCount(0);
+    await page.goBack();
     await expect(page).toHaveURL((url) => url.pathname === "/signup" && url.searchParams.get("invite") === token);
     expect(new URL(page.url()).searchParams.get("invite") === token).toBe(true);
+    await expect(page.getByLabel("Email")).toHaveValue(email);
     await page.getByLabel("Seu nome").fill("Pessoa convidada sintética");
     await page.getByLabel("Senha", { exact: true }).fill(senha);
     await page.getByLabel("Confirmar senha").fill(senha);
