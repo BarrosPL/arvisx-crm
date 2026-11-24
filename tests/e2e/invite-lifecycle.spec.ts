@@ -357,10 +357,21 @@ test.describe("ciclo de vida do convite (ponta a ponta + adversarial)", () => {
     // O token viaja: é ele que faz a conta nova nascer amarrada a este convite
     // em vez de ganhar uma organização própria.
     await expect(page).toHaveURL(new RegExp(`/signup\\?invite=${encodeURIComponent(valid)}`));
+    await expect(page.getByLabel("Email")).toHaveValue(inv.invitee_email);
+
+    // Quem já tem conta sai do cadastro para o login, e o convite vai junto no `next`.
     await page.getByRole("link", { name: "Entrar", exact: true }).click();
     await expect(page).toHaveURL(`/login?next=${encodeURIComponent(`/team/accept-invite/${valid}`)}`);
     await expect(page.getByLabel("Email")).toHaveValue(inv.invitee_email);
-    await page.getByRole("link", { name: "Criar conta", exact: true }).click();
+
+    // O /login NÃO leva de volta ao cadastro, nem com convite no `next` (decisão do
+    // dono, c09d28e55: a tela de entrar não oferece "Criar conta"; o cadastro do
+    // convidado é o botão "Criar minha conta" da página do convite, medido acima).
+    // Até ali esta spec clicava em "Criar conta" no /login para voltar. Hoje a
+    // volta de quem caiu aqui sem ter conta é a tela anterior, e ela tem de
+    // continuar com o convite: token na URL e e-mail do convite no campo.
+    await expect(page.locator('a[href*="/signup"]')).toHaveCount(0);
+    await page.goBack();
     await expect(page).toHaveURL(new RegExp(`/signup\\?invite=${encodeURIComponent(valid)}`));
     await expect(page.getByLabel("Email")).toHaveValue(inv.invitee_email);
   });
