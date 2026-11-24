@@ -69684,6 +69684,94 @@ grant all on public.equipe_pronta_perfis to service_role;
 
 notify pgrst, 'reload schema';
 
+-- ---- a pausa e a retomada da IA viram evento (migration 9811) ----
+-- Espelho idempotente da 9811 (o porquê inteiro está no cabeçalho da migration).
+-- Um gatilho em `conversations` grava `conversation.ai_paused` quando o
+-- atendimento automático para naquela conversa e `conversation.ai_resumed`
+-- quando ele volta, para o agente externo obedecer pelo webhook de saída.
+-- Cria função, então mora ANTES da VARREDURA anon. `create or replace` e
+-- gatilho recriado por nome: reaplicar não duplica nada, e não há dado a
+-- corrigir em quem atualiza.
+create or replace function public.fn_anunciar_pausa_da_ia()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_antes  boolean;
+  v_depois boolean;
+  v_ate    timestamptz;
+begin
+  if coalesce(new.is_group, false) then
+    return new;
+  end if;
+
+  v_antes := (old.bot_silenced_until is not null and old.bot_silenced_until > now())
+             or coalesce(old.assignee_kind, '') = 'user';
+  v_depois := (new.bot_silenced_until is not null and new.bot_silenced_until > now())
+              or coalesce(new.assignee_kind, '') = 'user';
+
+  begin
+    if v_depois and (
+         not v_antes
+         or new.bot_silenced_until is distinct from old.bot_silenced_until
+         or new.assigned_to_user_id is distinct from old.assigned_to_user_id
+       ) then
+      -- Prazo finito no futuro; nulo quando a pausa não tem prazo.
+      v_ate := case
+                 when new.bot_silenced_until is not null
+                  and isfinite(new.bot_silenced_until)
+                  and new.bot_silenced_until > now()
+                 then new.bot_silenced_until
+                 else null
+               end;
+      insert into public.event_log (organization_id, event_type, entity_kind, entity_id, payload)
+      values (new.organization_id, 'conversation.ai_paused', 'conversation', new.id,
+        jsonb_build_object(
+          'conversation_id', new.id,
+          'contact_id', new.contact_id,
+          'channel_session_id', new.channel_session_id,
+          'paused_until', v_ate,
+          'durable', v_ate is null,
+          'human_assigned', new.assigned_to_user_id is not null,
+          'renewed', v_antes
+        ));
+    elsif v_antes and not v_depois then
+      insert into public.event_log (organization_id, event_type, entity_kind, entity_id, payload)
+      values (new.organization_id, 'conversation.ai_resumed', 'conversation', new.id,
+        jsonb_build_object(
+          'conversation_id', new.id,
+          'contact_id', new.contact_id,
+          'channel_session_id', new.channel_session_id
+        ));
+    end if;
+  exception when others then
+    -- O aviso nunca derruba a escrita da conversa: quem assume tem de conseguir
+    -- assumir mesmo que o evento não possa ser gravado.
+    raise warning 'fn_anunciar_pausa_da_ia: evento não gravado (%)', sqlerrm;
+  end;
+
+  return new;
+end;
+$$;
+
+comment on function public.fn_anunciar_pausa_da_ia() is
+  'Gatilho de conversations (migration 9811): grava conversation.ai_paused / conversation.ai_resumed no event_log quando o atendimento automático para ou volta naquela conversa. Lê bot_silenced_until e assignee_kind, a mesma régua do motor. Nunca derruba a escrita que o disparou.';
+
+revoke execute on function public.fn_anunciar_pausa_da_ia() from public, anon, authenticated, service_role;
+
+drop trigger if exists trg_anunciar_pausa_da_ia on public.conversations;
+create trigger trg_anunciar_pausa_da_ia
+  after update on public.conversations
+  for each row
+  when (
+    old.bot_silenced_until is distinct from new.bot_silenced_until
+    or old.assignee_kind is distinct from new.assignee_kind
+    or old.assigned_to_user_id is distinct from new.assigned_to_user_id
+  )
+  execute function public.fn_anunciar_pausa_da_ia();
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria

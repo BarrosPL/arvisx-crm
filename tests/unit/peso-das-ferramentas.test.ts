@@ -48,7 +48,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "crm_get_contact": { tokens: 188, motivo: BASE },
   "crm_propose_contact_field": { tokens: 438, motivo: BASE },
   "crm_list_conversations": { tokens: 283, motivo: BASE },
-  "crm_get_conversation": { tokens: 228, motivo: BASE },
+  "crm_get_conversation": { tokens: 266, motivo: "+38 do bloco `ai` (superfície de agente, PR 3): sem a frase, o agente não sabe que a resposta diz se uma pessoa assumiu a conversa, nem que com `ai.paused` ele não deve responder ao cliente" },
   "crm_get_conversation_history": { tokens: 203, motivo: BASE },
   "crm_get_queue_status": { tokens: 83, motivo: BASE },
   "crm_list_leads": { tokens: 500, motivo: BASE },
@@ -131,6 +131,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "crm_attach_to_lead": { tokens: 428, motivo: SUPERFICIE_DE_AGENTE },
   "crm_set_next_action": { tokens: 233, motivo: SUPERFICIE_DE_AGENTE },
   "crm_close_conversation": { tokens: 261, motivo: "capacidade nova (ajustes, AJ-1): o agente fecha a conversa que ficou sem resposta, sem falar com o cliente; a descrição diz o que ela NÃO fecha (chamado, negócio) para o modelo não a confundir com as duas que já existem; +15 (revisão 20/11, item 2.31): a descrição avisa que ela fecha também a conversa que uma pessoa assumiu, porque a régua de controle da tela não vale para token; +11 (decisão do dono em 23/11, que troca a de 20/11): a descrição passa a dizer que ela NÃO fecha conversa assumida por uma pessoa e que nesse caso recusa" },
+  "crm_get_proposal": { tokens: 338, motivo: "capacidade nova (superfície de agente, PR 2): o agente consulta status, validade, itens, valor e link do PDF de uma proposta; a descrição lista os status porque o modelo os recebe como estão no banco" },
   "get_lead_context": { tokens: 46, motivo: BASE },
   "send_message": { tokens: 137, motivo: BASE },
   "update_lead_state": { tokens: 240, motivo: BASE },
@@ -146,7 +147,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "schedule_followup (com negócio)": { tokens: 314, motivo: BASE },
 };
 
-const TETO_TOTAL = 33139;
+const TETO_TOTAL = 33515;
 
 const VARIANTE = "schedule_followup (com negócio)";
 

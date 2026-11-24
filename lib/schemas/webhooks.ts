@@ -103,6 +103,26 @@ export const ENTIDADE_ESPERADA_POR_GATILHO = {
   // regras do mesmo gatilho com N diferentes disparariam juntas.
   "lead.silent_for": "crm_lead",
   "lead.stage_stale": "crm_lead",
+  // A superfície de agente (`lib/automation/eventos-de-saida.ts`): o que um
+  // sistema de fora escuta sobre o negócio além do que já existia. Emitidos
+  // pela aplicação, no ponto único de cada escrita (tela e agente passam pelo
+  // mesmo). Trocar o responsável é `lead.assigned` e perder é `lead.lost`, que
+  // já estavam aqui: não ganharam um segundo nome.
+  "lead.tag_removed": "crm_lead",
+  "lead.field_changed": "crm_lead",
+  "lead.note_added": "crm_lead",
+  "lead.task_created": "crm_lead",
+  "lead.attachment_added": "crm_lead",
+  // A entidade é a TAREFA: ela pode não estar presa a negócio nenhum.
+  "task.completed": "crm_task",
+  // A convivência entre pessoa e IA (superfície de agente, parte 3): o
+  // atendimento automático parou ou voltou NAQUELA conversa. Nascem do gatilho
+  // do banco `fn_anunciar_pausa_da_ia` (migration 9811), que olha o estado da
+  // linha de `conversations`, então valem para todo caminho que pausa ou
+  // devolve: assumir, responder, pausar, o agente passar o caso, devolver ao
+  // automático. A entidade é a CONVERSA. Servem para o agente externo obedecer.
+  "conversation.ai_paused": "conversation",
+  "conversation.ai_resumed": "conversation",
 } as const;
 
 export type GatilhoDeAutomacao = keyof typeof ENTIDADE_ESPERADA_POR_GATILHO;
@@ -147,6 +167,26 @@ export const GATILHOS_DO_TRIGGER_DE_LEAD = [
  */
 export const ACOES_QUE_REGRAVAM_O_LEAD = ["assign_owner", "create_or_move_lead"] as const;
 
+/**
+ * Os gatilhos que nascem do estado da CONVERSA (`fn_anunciar_pausa_da_ia`,
+ * migration 9811): mudar o dono da conversa grava um `conversation.ai_paused`
+ * novo.
+ */
+export const GATILHOS_DO_TRIGGER_DE_CONVERSA = [
+  "conversation.ai_paused",
+  "conversation.ai_resumed",
+] as const satisfies readonly GatilhoDeAutomacao[];
+
+/**
+ * As ações que trocam o dono da conversa, vetadas nos gatilhos acima pela mesma
+ * razão do veto de #1528: `assign_owner` (com as conversas junto) chama
+ * `fn_conversation_assign`, e `define_sector` pode devolver a conversa à
+ * distribuição. Uma regra só converge (atribuir de novo à mesma pessoa não muda
+ * a linha, e o gatilho não emite), mas duas regras com destinos diferentes se
+ * realimentariam sem fim.
+ */
+export const ACOES_QUE_TROCAM_O_DONO_DA_CONVERSA = ["assign_owner", "define_sector"] as const;
+
 export const MENSAGEM_DO_LACO_DE_LEAD =
   "Neste gatilho a automação não pode atribuir responsável nem mover o lead: a própria mudança dispararia a automação de novo, sem fim.";
 
@@ -183,6 +223,11 @@ export function acoesQueFechamLaco(
   triggerEvent: string | undefined,
   actions: readonly { type: string; config?: Record<string, unknown> }[] | undefined,
 ): string[] {
+  if (triggerEvent && (GATILHOS_DO_TRIGGER_DE_CONVERSA as readonly string[]).includes(triggerEvent)) {
+    return tiposDeAcao(actions).filter((tipo) =>
+      (ACOES_QUE_TROCAM_O_DONO_DA_CONVERSA as readonly string[]).includes(tipo),
+    );
+  }
   if (!triggerEvent || !(GATILHOS_DO_TRIGGER_DE_LEAD as readonly string[]).includes(triggerEvent)) return [];
   const fecham: string[] = [];
   for (const acao of actions ?? []) {

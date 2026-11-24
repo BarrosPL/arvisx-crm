@@ -110,6 +110,39 @@ export async function buildContext(admin: SupabaseClient, row: EventRow): Promis
       // porque o mesmo contexto serve às condições e às ações.
       await hidratarCamposDoFunil(context, admin, org);
     }
+  } else if (row.entity_kind === "crm_task" && row.entity_id) {
+    // `task.completed`: a tarefa traz o negócio e/ou o contato a que está presa.
+    // Tudo lido da linha atual e com o filtro de organização, como os demais.
+    const { data: task } = await admin
+      .from("crm_tasks")
+      .select("id, lead_id, contact_id")
+      .eq("id", row.entity_id)
+      .eq("organization_id", org)
+      .maybeSingle();
+    const tarefa = task as { lead_id?: string | null; contact_id?: string | null } | null;
+    let contactId = tarefa?.contact_id ?? null;
+    if (tarefa?.lead_id) {
+      const { data: lead } = await admin
+        .from("crm_leads")
+        .select("*")
+        .eq("id", tarefa.lead_id)
+        .eq("organization_id", org)
+        .maybeSingle();
+      if (lead) {
+        context.lead = ocultarProvaMetaNaResposta(lead as Record<string, unknown>);
+        contactId = contactId ?? ((lead as { contact_id?: string | null }).contact_id ?? null);
+        await hidratarCamposDoFunil(context, admin, org);
+      }
+    }
+    if (contactId) {
+      const { data: contact } = await admin
+        .from("contacts")
+        .select("*")
+        .eq("id", contactId)
+        .eq("organization_id", org)
+        .maybeSingle();
+      if (contact) context.contact = contact;
+    }
   } else if (row.entity_kind === "contact" && row.entity_id) {
     const { data: contact } = await admin
       .from("contacts")
@@ -140,6 +173,26 @@ export async function buildContext(admin: SupabaseClient, row: EventRow): Promis
         if (contact) context.contact = contact;
       }
     }
+  } else if (row.entity_kind === "conversation" && row.entity_id) {
+    // `conversation.ai_paused` / `conversation.ai_resumed`: a conversa traz o
+    // contato. O id do contato é lido da LINHA da conversa, com o filtro de
+    // organização, e não do payload.
+    const { data: conversa } = await admin
+      .from("conversations")
+      .select("id, contact_id")
+      .eq("id", row.entity_id)
+      .eq("organization_id", org)
+      .maybeSingle();
+    const contactId = (conversa as { contact_id?: string | null } | null)?.contact_id ?? null;
+    if (contactId) {
+      const { data: contact } = await admin
+        .from("contacts")
+        .select("*")
+        .eq("id", contactId)
+        .eq("organization_id", org)
+        .maybeSingle();
+      if (contact) context.contact = contact;
+    }
   } else if (row.entity_kind === "message" && row.entity_id) {
     const contactId = row.payload.contact_id as string | undefined;
     if (contactId) {
@@ -150,6 +203,32 @@ export async function buildContext(admin: SupabaseClient, row: EventRow): Promis
         .eq("organization_id", org)
         .maybeSingle();
       if (contact) context.contact = contact;
+    }
+    // O TEXTO INTEIRO da mensagem (revisão de 20/11, item 2.10). O evento só
+    // traz `body_preview`, os primeiros 280 caracteres (`fn_emit_message_event`):
+    // a condição "Texto da mensagem contém" e o texto das ações liam a prévia, e
+    // a palavra dita depois do caractere 280 nunca disparava a regra. A linha é
+    // lida aqui, com o filtro de organização, como a entrega do webhook faz
+    // (`detalhe-do-evento.ts`).
+    //
+    // O contexto ganha `message.text` e, na CÓPIA do payload que as regras
+    // leem, `body_preview` passa a valer o texto inteiro: é o campo que as
+    // regras já salvas usam (`event.body_preview`), e trocá-lo de nome as
+    // deixaria todas sem casar. A linha do `event_log` não muda: `row.payload`
+    // segue com a prévia, que é o que o corpo do webhook publica com esse nome.
+    //
+    // Mensagem sem texto (mídia, ou já limpa pela anonimização) e falha de
+    // leitura: o contexto fica com a prévia que o evento trouxe.
+    const { data: mensagem } = await admin
+      .from("messages")
+      .select("id, body")
+      .eq("id", row.entity_id)
+      .eq("organization_id", org)
+      .maybeSingle();
+    const texto = (mensagem as { body?: unknown } | null)?.body;
+    if (typeof texto === "string" && texto !== "") {
+      context.message = { text: texto };
+      context.event = { ...row.payload, body_preview: texto };
     }
   }
   return context;

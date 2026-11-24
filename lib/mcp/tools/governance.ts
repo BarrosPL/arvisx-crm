@@ -11,6 +11,7 @@
  * guard INB-06a (assign) e filtro organization_id explícito (tags).
  */
 import { z } from "zod";
+import { EVENTO_TAG_REMOVIDA, emitirEventoDaSuperficie, tagsRemovidas } from "@/lib/automation/eventos-de-saida";
 
 import { observeServiceOrigin } from "@/lib/atendimento/origem";
 import {
@@ -290,6 +291,20 @@ export const crmManageTags: McpToolDefinition<typeof tagsInputShape> = {
           error: emitErr.message,
         });
       }
+    }
+
+    // A outra metade: a tag que o NEGÓCIO deixou de ter. Só negócio — é o
+    // gatilho `lead.tag_removed`; contato e conversa não têm o equivalente.
+    const removidas = input.target_kind === "lead" ? tagsRemovidas(current, nextTags) : [];
+    if (removidas.length > 0) {
+      await emitirEventoDaSuperficie(ctx.supabase, {
+        tipo: EVENTO_TAG_REMOVIDA,
+        organizationId: ctx.organizationId,
+        entidadeId: input.target_id,
+        payload: { lead_id: input.target_id, removed_tags: removidas, tags: nextTags },
+        requestId: ctx.requestId,
+        ator: { ...a.metadataActor, via: "mcp" },
+      });
     }
 
     return { target_kind: input.target_kind, target_id: input.target_id, tags: nextTags };

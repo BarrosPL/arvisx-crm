@@ -26,6 +26,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Actor } from "@/lib/api/handlers/types";
 import { audit } from "@/lib/audit";
+import { EVENTO_ANEXO_ADICIONADO, emitirEventoDaSuperficie } from "@/lib/automation/eventos-de-saida";
 import { emitLeadActivity } from "@/lib/leads/activity-emitter";
 import { camposDoFunil, escopoDoCampo } from "@/lib/leads/campos-do-funil";
 import { settingsDoFunil } from "@/lib/leads/campos-exigidos";
@@ -296,6 +297,24 @@ export async function gravarAnexoDoNegocio(entrada: {
       ...entrada.origem,
     },
   }).catch(() => null);
+
+  // O evento para sistemas de fora: nome, tipo e tamanho do arquivo, nunca o
+  // conteúdo nem link (o link assinado vence em segundos; quem quer baixar
+  // pede por `crm_list_lead_attachments`).
+  await emitirEventoDaSuperficie(supabase, {
+    tipo: EVENTO_ANEXO_ADICIONADO,
+    organizationId,
+    entidadeId: leadId,
+    payload: {
+      lead_id: leadId,
+      attachment_id: attachmentId,
+      field_key: fieldKey,
+      file_name: arquivo.nome,
+      mime_type: arquivo.tipo,
+      file_size: arquivo.tamanho,
+    },
+    requestId: auditoria.requestId,
+  });
 
   return { ok: true, anexo: inserted as LinhaDoAnexo };
 }

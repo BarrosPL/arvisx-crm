@@ -13,8 +13,9 @@ servem a tela. Um token de API não entra nelas. A regra é uma só: ela foi ext
 chamada pelos dois lados (`lib/tarefas/servico.ts`, `lib/leads/anexos-do-negocio.ts`,
 `lib/leads/proposta-de-proxima-acao.ts`).
 
-Este documento cobre a parte 1 (tarefas, notas, anexos e próxima ação). Eventos para sistemas externos, consulta de
-proposta e passagem entre colegas vêm nas partes seguintes.
+Este documento cobre a parte 1 (tarefas, notas, anexos e próxima ação), a parte 2 (eventos para sistemas externos,
+consulta de proposta, fechar e atribuir, passagem entre colegas) e a parte 3 (convivência entre pessoa e IA, e o
+filtro de entrada).
 
 ## Regras que valem para todas
 
@@ -165,11 +166,273 @@ Em "O que o agente pode fazer", na tela do agente:
 |---|---|
 | Organizar a operação | as quatro de tarefa |
 | Passar para um humano | as duas de nota |
-| Não perder o cliente | as duas de anexo e a de próxima ação |
+| Não perder o cliente | as duas de anexo, a de próxima ação e a consulta de proposta |
 
 Elas não couberam num pacote só: um pacote sozinho não pode passar do teto de ferramentas por agente
 (`TETO_TOOLS_POR_AGENTE`), e "Organizar a operação" já ocupava 22 das 27 vagas. Nenhuma entra em "Vender e mover o
 funil", que é o pacote com que todo agente nasce.
 
-Os papéis da Equipe de IA pronta ainda não usam estas ferramentas. Eles listam ferramenta por ferramenta, e a
-liberação vem numa entrega própria.
+## Consulta de proposta
+
+`crm_get_proposal` lê uma proposta comercial. Só leitura (`mcp:read`, papel `agent`).
+
+- Entrada: `proposal_id` ou `lead_id`, exatamente um. Com `lead_id` vêm as propostas daquele negócio, da mais recente
+  para a mais antiga (até 10).
+- Cada proposta traz número, versão, título, `status`, `valid_until`, `total_cents` e `currency`, condições, prazo,
+  datas de envio e de decisão, e os itens (descrição, quantidade, preço unitário, desconto).
+- `status` é o do banco: `rascunho`, `enviando`, `enviada`, `aceita`, `recusada`, `vencida`, `cancelada`,
+  `substituida`.
+- **O link.** Não existe página pública de proposta: o cliente a recebe como PDF, na conversa. `pdf_url` é um link
+  assinado desse PDF, que vence em 60 segundos, e só existe para proposta que já saiu (nunca para rascunho).
+- Num turno de atendimento, proposta de outro cliente e proposta inexistente recebem a mesma recusa.
+- Some para a organização que desligou propostas.
+
+## Fechar o negócio e atribuir a conversa
+
+As duas já existiam e um token de agente (papel `agent`, escopo `mcp:write`) as alcança:
+
+| Ferramenta | O que faz | Pacote |
+|---|---|---|
+| `crm_close_demand` | Fecha como ganho (`won`) ou perdido (`lost`); na perda o motivo é obrigatório. | Não perder o cliente. É de risco crítico: aparece no pacote para ser marcada à mão, e o botão do pacote não a liga. |
+| `crm_assign_conversation` | Atribui a conversa a um atendente. | Passar para um humano e Atender. |
+
+## Eventos para sistemas externos
+
+Um sistema de fora recebe o que acontece no CRM pela ação "Avisar outro sistema (webhook)" das automações: uma regra
+por evento que ele quer ouvir. O guia de quem recebe, com o corpo, os cabeçalhos e a lista dos eventos, é
+[`docs/integracao/webhooks-de-saida.md`](../integracao/webhooks-de-saida.md).
+
+Gatilhos desta entrega: `lead.tag_removed`, `lead.field_changed`, `lead.note_added`, `lead.task_created`,
+`lead.attachment_added` e `task.completed`. Eles nascem no ponto único de cada escrita
+(`lib/tarefas/servico.ts`, `lib/leads/notas-do-negocio.ts`, `lib/leads/anexos-do-negocio.ts`, o PATCH do negócio e
+`crm_manage_tags`), então valem igual para a tela e para o agente.
+
+Dois nomes pedidos não foram criados porque o fato já tinha gatilho: trocar o responsável é `lead.assigned` e perder o
+negócio é `lead.lost` (com `lost_reason`).
+
+O que a entrega garante, e de onde vem:
+
+| Garantia | Como |
+|---|---|
+| Assinatura | HMAC-SHA256 no cabeçalho `X-Webhook-Signature`, cobrindo a hora, o id da entrega e o corpo. Já existia. |
+| Retentativa | 3 tentativas por entrega, esperando 1 s e 5 s; depois, o botão Reenviar da atividade. Já existia. |
+| Id único | `delivery_id` / `X-Webhook-Delivery`, o mesmo em toda tentativa e no Reenviar. Já existia. |
+| Texto inteiro | Mensagem, nota e tarefa saem completas, lidas da linha na hora do envio. Novo. |
+| Ordem | `happened_at` é a hora do fato. A entrega não garante ordem de chegada. |
+| Organização suspensa | Não envia nada. Já existia; agora tem teste para os eventos novos. |
+
+- **O texto não é copiado para a fila de eventos.** O evento guarda os ids, e a entrega lê o texto da tabela de
+  origem. Assim a anonimização de um contato alcança o que ainda não foi entregue.
+- **`lead.field_changed` leva antes-e-depois só dos campos de valor e de data.** Título, descrição e campos do funil
+  saem pelo nome: o produto não guarda o valor anterior deles em lugar nenhum, de propósito
+  (`lib/leads/valores-audit.ts`).
+- **Ação que fala com o cliente** (enviar WhatsApp, por exemplo) numa regra destes gatilhos não tem a origem do
+  atendimento carimbada pelo banco, como já acontece com `lead.won`, `lead.lost` e `lead.assigned`. Estes gatilhos
+  servem ao webhook e às ações internas.
+
+## Passagem entre colegas (agentes nativos)
+
+`passar_para_colega(papel, motivo, resumo)` é ferramenta interna do motor, não do catálogo MCP. Um agente de um número
+com roteador passa a vez a outro agente do mesmo roteador.
+
+- **Quem é colega.** Os outros agentes do roteador do número. O `papel` é o nome da intenção do membro
+  (`ai_router_members.intent_name`). O motor não conhece papel nenhum pelo nome.
+- **Como se liga.** No roteador: `ai_routers.config.passagem_entre_colegas = true`. Nasce desligada e ainda não tem
+  botão na tela. A ferramenta não usa a lista de ferramentas do agente (que é validada contra o catálogo MCP) nem
+  conta no teto de 27.
+- **O que ela faz.** Atualiza a nota "Resumo do atendimento" da ficha do contato (substitui a anterior, não duplica),
+  fixa o colega como o agente da conversa e registra a passagem no traço do turno.
+- **O colega responde na mesma rodada**, no mesmo job, com o motivo e o resumo na abertura. O cliente não é avisado da
+  troca. Quem passou a vez não envia mais nada naquele turno.
+- **Até o assunto mudar.** O colega fica na conversa enquanto o roteador classificar o assunto dele ou o assunto de
+  quem passou a vez. Uma terceira intenção, com confiança, troca o agente. Vale mesmo com a aderência do roteador
+  desligada.
+- **Limites.** Uma passagem por rodada (o colega não devolve a vez no mesmo job). Se quem passou já tinha enviado
+  mensagem naquele turno, o colega assume na mensagem seguinte. Colega pausado, em modo assistido ou sem versão
+  publicada: a ferramenta recusa e nada muda.
+- **A passagem vale inteira ou não vale.** O colega é conferido antes de qualquer gravação; o resumo e a troca do
+  agente da conversa são gravados na mesma transação.
+- **Se o colega deixar de atender entre a passagem e a resposta** (foi pausado, mudou para o modo assistido ou perdeu
+  a versão publicada nesse intervalo), a passagem é desfeita: a conversa volta para quem passou, que responde ao
+  cliente na mesma rodada, avisado do que houve e sem poder passar a vez de novo. Ele responde com o que souber ou
+  chama a equipe (`request_human_handoff`). O cliente não fica sem resposta e a conversa não fica presa num agente
+  parado.
+- **Agente externo não tem colega no CRM.** A passagem equivalente é `crm_request_human_handoff` mais uma nota com
+  `recipient`.
+
+Os papéis da Equipe de IA pronta ainda não usam a passagem nem as ferramentas novas: a liberação vem numa entrega
+própria.
+
+## Convivência entre pessoa e IA
+
+Quando uma pessoa da equipe assume ou responde uma conversa, a IA não responde por cima. Isto já valia para o agente
+nativo antes desta entrega. O que a parte 3 acrescenta é o agente **externo** ficar sabendo, e um prazo que faltava
+ser da empresa.
+
+### O que já existia
+
+| O quê | Onde |
+|---|---|
+| Assumir a conversa pausa a IA sem prazo | `fn_conversation_assign` grava `bot_silenced_until = 'infinity'` |
+| Pausar pela tela, sem trocar o dono | `POST /api/v1/conversations/[id]/pause-ai` |
+| Responder pela tela pausa por um prazo curto, renovado a cada resposta | `app/api/v1/messages/_handler.ts` |
+| Responder pelo celular pausa por um prazo da empresa (padrão 60 min) | `lib/escalacao/atendimento-manual.ts`, `routing.manual_reply_silence_minutes` |
+| "A conversa fica com quem atendeu": responder pela tela assume a conversa | `routing.conversation_stays_with_attendant` |
+| O motor não responde conversa pausada nem conversa com dono humano | `lib/ai/elegibilidade/gate.ts`, lido no drain e no começo de todo turno |
+| Assumir no meio de um turno interrompe o turno | gatilho `trg_interromper_turnos_ao_assumir` |
+| A IA só volta por comando: "Devolver ao automático" ou `#on` pelo celular | `lib/escalacao/retomada.ts` |
+| Ou depois de um prazo da empresa sem sinal de pessoa (padrão: nunca) | `routing.handoff_return_after_minutes`, cron `handoff-devolucao` |
+
+Os prazos ficam em Configurações › Atendimento. O padrão do produto é conservador: depois que alguém assume, a IA não
+volta sozinha.
+
+### O que esta entrega acrescenta
+
+- **O estado por MCP.** `crm_get_conversation` devolve o bloco `ai`.
+- **Dois eventos** para o agente externo obedecer: `conversation.ai_paused` e `conversation.ai_resumed`.
+- **O prazo da resposta pela tela passa a ser da empresa** (`routing.screen_reply_silence_minutes`). Era fixo em
+  5 minutos no código. O padrão continua 5; a faixa é de 5 minutos a 24 horas.
+- **A trava vale para o colega.** Na passagem entre colegas, se uma pessoa assume entre o turno de quem passou a vez e
+  a resposta do colega, o colega não responde.
+
+### O bloco `ai` de `crm_get_conversation`
+
+| Campo | O que diz |
+|---|---|
+| `paused` | A IA não responde esta conversa agora, por causa de uma pessoa ou de uma trava. |
+| `human_in_command` | Uma pessoa é a dona da conversa. |
+| `reason` | Por quê (lista abaixo). `null` quando não está pausada. |
+| `since` | Desde quando. `null` quando o banco não guardou a hora. |
+| `by` | Quem assumiu: `user_id` e `name`. Só em `human_assigned`. |
+| `until` | Quando a pausa acaba sozinha. `null` = não tem prazo. |
+| `resumes_automatically` | `true` = volta sozinha em `until`. `false` = só por comando, ou pelo prazo de devolução da empresa. |
+| `detail` | O motivo escrito na conversa, quando há. |
+
+`reason`:
+
+| Valor | Quando |
+|---|---|
+| `human_assigned` | uma pessoa assumiu a conversa |
+| `human_replied` | uma pessoa respondeu sem assumir; a pausa tem prazo |
+| `human_replied_outside_crm` | uma pessoa respondeu pelo celular e a pausa não tem prazo |
+| `handed_to_team` | pausada sem dono: o agente passou o caso para a equipe |
+| `contact_locked` | a passagem para humano travou o contato inteiro e ninguém assumiu ainda |
+| `contact_always_human` | o contato é marcado como sempre atendimento humano |
+| `contact_opted_out` | o contato pediu para não receber mensagens |
+
+Um agente externo que vai responder um cliente lê `ai.paused` antes. Com `true`, não responde.
+
+Conversa de grupo e conversa encerrada vêm com `paused: false`: ali a IA não atende por outra razão, e devolver ao
+automático não mudaria nada.
+
+### Os eventos `conversation.ai_paused` e `conversation.ai_resumed`
+
+São gatilhos de automação como os outros: uma regra com a ação "Avisar outro sistema (webhook)". O corpo está em
+[`docs/integracao/webhooks-de-saida.md`](../integracao/webhooks-de-saida.md).
+
+- **Nascem no banco**, de um gatilho em `conversations` (migration 9811), e não na aplicação. A pausa tem mais de uma
+  dúzia de caminhos (assumir, pausar, responder, o agente passar o caso, o rodízio entregar), e um deles é o próprio
+  banco. O gatilho olha o estado da linha, então vale para todos.
+- **`ai_paused` sai de novo quando o prazo ou o dono muda**, com `renewed: true`. Cada resposta de uma pessoa renova o
+  prazo, e o prazo anterior deixa de valer.
+- **Pausa com prazo que vence não gera `ai_resumed`**: ninguém escreve na conversa quando o tempo passa. O
+  `paused_until` do último `ai_paused` é a hora da volta. `ai_resumed` sai quando alguém devolve a conversa.
+- **Como o agente externo calcula se pode falar** (revisão de 20/11, item 2.30). Os dois pontos acima querem dizer
+  que contar eventos não funciona: chegam vários `ai_paused` para uma pausa só, e a volta por prazo não tem evento.
+  A conta certa, por conversa:
+  1. guarde só o `ai_paused` mais recente (o de maior `happened_at`). Um `ai_paused` com `renewed: true` não é
+     pausa nova: ele SUBSTITUI o prazo anterior;
+  2. o agente externo fica calado enquanto esse evento valer. Ele deixa de valer quando chega um `ai_resumed`
+     posterior, ou quando `paused_until` não é nulo e já passou;
+  3. `paused_until: null` (`durable: true`) não vence: só um `ai_resumed` libera;
+  4. não espere um `ai_resumed` para liberar uma pausa com prazo: ele não vem. Compare o relógio com `paused_until`;
+  5. na dúvida (evento perdido, reinício do agente), pergunte: `crm_get_conversation` devolve o bloco `ai`, com
+     `paused`, `until` e `resumes_automatically`, que é sempre o estado do momento.
+- **O evento reflete a conversa.** As travas do contato (`contact_locked`, `contact_always_human`,
+  `contact_opted_out`) aparecem no bloco `ai`, lido na hora da entrega, e não geram evento próprio.
+- **Regra destes gatilhos não pode atribuir responsável nem definir setor**: a troca de dono gravaria outro
+  `ai_paused`, e duas regras se realimentariam.
+
+## Filtro de entrada
+
+Ofensa, spam e assunto claramente fora do que a empresa atende podem ser tratados por regra, antes de qualquer modelo.
+A mensagem barrada não gasta token: nem o roteador, que escolhe o agente, é consultado.
+
+- **As listas são da empresa.** O produto não traz palavra nenhuma. Sem lista configurada, o filtro não existe.
+- **Três categorias**, só para organizar as listas e nomear o bloqueio: `offense`, `spam` e `out_of_scope`.
+- **Cada categoria escolhe a ação**: `reply` envia uma resposta curta escrita pela empresa; `silence` não envia nada.
+  Nos dois casos, `tag` grava um marcador na conversa.
+- **A resposta curta passa pelas mesmas travas de todo envio** (opt-out, LGPD, janela de envio, ritmo do número) e
+  não se repete: se a última mensagem que saiu na conversa já é esse texto, o filtro fica em silêncio.
+- **Só barra quando todas as mensagens pendentes do cliente casam uma regra.** Uma mensagem legítima no meio basta
+  para o agente responder. Mensagem sem texto (áudio, imagem) nunca é barrada.
+- **Pedido de pessoa e pedido para parar passam direto**, mesmo com um termo da lista: quem os trata são as regras
+  fixas do produto, que chamam a equipe.
+- **Conversa assumida por uma pessoa nem chega ao filtro.**
+- **A conversa não muda de dono nem de estado.** A mensagem continua na caixa de entrada.
+- **Fica no traço do turno** (`agent_turn_traces`): `abort_reason = filtro_de_entrada` e uma entrada
+  `filtro_de_entrada` com a categoria, a ação, se a resposta saiu, o marcador e o termo da lista que casou. A fala do
+  cliente não entra no traço.
+
+Como casa: sem diferença de maiúsculas. `match: "contains"` (o padrão) casa o termo como palavra ou expressão inteira
+dentro da mensagem: o termo "sala" não casa "salada". `match: "whole_message"` exige que a mensagem inteira seja o
+termo.
+
+### Onde uma lista de palavras erra, e o que o filtro faz
+
+Uma lista não entende contexto. A regra é a palavra inteira, e nos casos abaixo ela erra para o lado de RESPONDER
+(barrar de menos custa uma chamada de modelo; barrar de mais cala um cliente). Decisões da revisão de 20/11, item 2.29:
+
+- **O acento distingue.** "para" e "Pará", "coco" e "cocô" são palavras diferentes: o termo casa como a empresa o
+  escreveu, e não a palavra que só se parece com ele. O custo é conhecido: o cliente que digita sem acento não casa
+  um termo escrito com acento. Quem quer barrar as duas grafias põe as duas na lista.
+- **Nome próprio não casa.** Palavra com inicial maiúscula no meio da frase ("falei com a Dra. Pinto", "sou o João
+  Pinto") é nome de gente ou de lugar. Em começo de frase, ou em caixa alta, a caixa não diz nada e o termo casa.
+  Limite conhecido: nome escrito todo em minúsculas não tem como ser reconhecido.
+- **Termo dentro de outra palavra não casa** ("pinto" não casa "pintor"). Plural também é outra palavra: se quiser
+  barrar os dois, liste os dois.
+- **Ofensa junto de um pedido legítimo vai para o agente.** Em `contains`, a regra só barra a mensagem que é pouco
+  mais que o termo: até `max_extra_words` palavras além dos termos da lista (padrão 3). "Vocês são uma porcaria" é
+  barrada; "o atendimento foi uma porcaria, preciso do pedido 123" tem um pedido dentro e segue para o agente
+  responder. A empresa pode mudar o teto por categoria: `0` barra só o termo sozinho, `null` tira o limite (barra a
+  mensagem de qualquer tamanho que contenha o termo — serve para frase de spam, que costuma vir no meio de um texto
+  longo, e traz de volta o risco de calar uma reclamação).
+- **A resposta automática respeita o modo assistido.** Num número que tem agente publicado em modo assistido (a mesma
+  pergunta que o motor faz antes de enfileirar o turno), regra com `action: "reply"` não decide: nada é enviado
+  sozinho, a conversa não é marcada, e o turno segue para o agente assistido propor a resposta que uma pessoa aprova.
+  Regra `silence` barra igual nos dois modos. Se o modo do número não puder ser lido, a resposta automática não sai.
+- **A rota avisa.** `GET` e `PATCH /api/v1/settings/routing` devolvem `entry_filter_warnings`, uma lista de
+  `{ code, message }` no idioma de quem está logado: `falso_positivo` (sempre que o filtro está ligado e tem termo),
+  `termo_curto` (há termo de uma palavra só, com até 5 letras), `sem_limite_de_palavras` (há regra `contains` com
+  `max_extra_words: null`) e `resposta_e_modo_assistido` (há regra que responde sozinha).
+
+### Como configurar
+
+Ainda não há tela. A configuração mora em `organizations.settings.ai_entry_filter` e é lida e gravada pela rota de
+atendimento, com sessão de gerente ou administrador:
+
+```
+PATCH /api/v1/settings/routing
+{
+  "mode": "manual",
+  "entry_filter": {
+    "enabled": true,
+    "rules": {
+      "offense":      { "terms": ["..."], "action": "reply", "reply": "Vamos manter o respeito.", "tag": "ofensa" },
+      "spam":         { "terms": ["..."], "action": "silence", "tag": "spam" },
+      "out_of_scope": { "terms": ["..."], "match": "whole_message", "action": "silence" }
+    }
+  }
+}
+```
+
+- `mode` é obrigatório na rota (é o modo de distribuição que já vale; `GET` na mesma rota o devolve).
+- `entry_filter` omitido preserva o filtro que já valia. Quando vem, substitui o filtro inteiro.
+- Tetos: 200 termos por categoria, 2 a 80 caracteres por termo, 500 caracteres na resposta, 40 no marcador.
+- `max_extra_words` (por categoria, opcional): inteiro de 0 a 200, ou `null`. Padrão 3. Só vale para `contains`.
+- A resposta traz `entry_filter_warnings`: leia antes de ligar o filtro em produção.
+- O prazo da resposta pela tela vai na mesma rota: `"screen_reply_silence_minutes": 30` (`null` volta ao padrão de 5).
+
+O filtro vale para todo agente nativo da empresa, automático ou assistido, e só para mensagem recebida — com a
+exceção acima: em número com agente assistido, a regra que responde sozinha não decide. Agente externo não passa por
+ele: quem decide o que o agente externo responde é o sistema dele.

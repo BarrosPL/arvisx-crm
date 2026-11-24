@@ -50,6 +50,23 @@ export const TOOLS_COMERCIO = declararTools([
     capacidade: "propostas",
   },
   {
+    // Fica em `reter`, e não em `vender` ao lado das outras duas de proposta:
+    // `vender` é o pacote com que todo agente nasce, e uma capacidade a mais ali
+    // faz nenhuma segunda jornada caber no teto por agente
+    // (`tests/unit/pacote-reserva-vaga-da-critica.test.ts`). Saber em que pé
+    // está a proposta que já saiu é acompanhamento do negócio, como os
+    // documentos e a próxima ação.
+    name: "crm_get_proposal",
+    category: "read",
+    rotulo: "Consultar proposta comercial",
+    explicacao:
+      "Mostra em que situação está a proposta de um negócio, até quando ela vale, os itens e o valor total, com um acesso temporário ao documento enviado.",
+    oQueToca: "Propostas comerciais",
+    risco: "seguro",
+    pacotes: ["reter"],
+    capacidade: "propostas",
+  },
+  {
     name: "crm_list_privacy_requests",
     category: "read",
     rotulo: "Ver pedidos de privacidade",

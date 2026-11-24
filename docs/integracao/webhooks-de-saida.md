@@ -245,3 +245,116 @@ Para migrar:
 3. Passe a deduplicar pelo `X-Webhook-Delivery`.
 4. Pare de ler o `X-Deskcomm-Signature`. Quando ele for removido, as notas da
    versão avisam com antecedência.
+
+## 9. Os eventos de negócio, tarefa, mensagem e conversa
+
+Todo evento abaixo é um gatilho das automações e sai pelo mesmo envelope das
+seções 1 e 2. Em `data` vêm sempre os campos do próprio evento e, quando o
+evento é de um negócio, o objeto `lead` (id, título, situação, funil
+`pipeline_id`, etapa `stage_id`, valor, `tags` atuais, `custom_fields`, motivo
+de ganho e de perda, data de fechamento) e o `contact` (id, nome, e-mail,
+telefone, tags). O `lead` e o `contact` são lidos na hora do envio: mostram o
+negócio como ele está agora.
+
+| Evento | Quando | O que `data` traz além de `lead` e `contact` |
+|---|---|---|
+| `lead.created` | o negócio nasceu | `lead_id` |
+| `lead.stage_changed` | mudou de etapa | a etapa de origem e a de destino, como o evento as grava |
+| `lead.won` | foi ganho | `lead_id`, `value_cents`; o motivo está em `lead.won_reason` |
+| `lead.lost` | foi perdido | `lead_id`, `lost_reason` |
+| `lead.reopened` | foi reaberto | `lead_id` |
+| `lead.assigned` | o responsável mudou | `lead_id`, `owner_kind`; quem é o responsável só com a opção da regra (abaixo) |
+| `lead.tag_added` | ganhou tag | `added_tags`, `tags` |
+| `lead.tag_removed` | perdeu tag | `removed_tags`, `tags` (as que ficaram) |
+| `lead.field_changed` | um campo foi alterado | `fields` (os nomes) e `changes` (abaixo) |
+| `lead.note_added` | alguém escreveu uma nota | `note_id`, `recipient` e `note` (abaixo) |
+| `lead.task_created` | uma tarefa foi criada no negócio | `task_id` e `task` (abaixo) |
+| `lead.attachment_added` | um documento foi anexado | `attachment_id`, `field_key`, `file_name`, `mime_type`, `file_size` |
+| `task.completed` | uma tarefa foi concluída | `task_id`, `lead_id` e `contact_id` quando existem, e `task` |
+| `message.received` | chegou mensagem do cliente | `message_id`, `conversation_id`, `channel_session_id`, `body_preview` e `message` (abaixo) |
+| `message.failed` | uma mensagem não foi entregue | os mesmos de mensagem, mais o erro |
+| `conversation.ai_paused` | o atendimento automático parou numa conversa | `conversation_id`, `contact_id`, `channel_session_id`, `paused_until`, `durable`, `human_assigned`, `renewed` e `conversation` (abaixo) |
+| `conversation.ai_resumed` | o atendimento automático voltou numa conversa | `conversation_id`, `contact_id`, `channel_session_id` e `conversation` |
+
+**Texto inteiro.** `note.text`, `task.description`, `task.result` e
+`message.text` saem completos, sem corte. O `body_preview` de um evento de
+mensagem continua sendo só o começo do texto (até 280 caracteres) e continua
+com esse nome; quem precisa da mensagem inteira lê `message.text`.
+
+Dentro do CRM, as **condições e as ações da regra** leem a mensagem inteira:
+a condição "Texto da mensagem contém" casa uma palavra dita em qualquer ponto
+do texto, não só nos primeiros 280 caracteres. O corte ficou restrito ao
+`body_preview` que o corpo do webhook publica.
+
+- `note`: `id`, `lead_id`, `text`, `author` (`kind`, `id`, `name`),
+  `recipient`, `created_at`.
+- `task`: `id`, `title`, `description`, `due_date`, `priority`, `status`,
+  `kind`, `result`, `lead_id`, `contact_id`, `created_at`, `updated_at`.
+- `message`: `id`, `conversation_id`, `channel_session_id`, `direction`,
+  `type`, `status`, `text`, `media_mime`, `sent_at`.
+
+Esses três objetos são lidos da linha atual na hora do envio. Se a linha não
+existe mais, o objeto não sai; se o texto foi apagado por uma anonimização, ele
+sai com `text: null`. A entrega acontece do mesmo jeito.
+
+**`changes` de `lead.field_changed`.** Uma entrada por campo alterado:
+`{ "field": "value_cents", "old": 1000, "new": 2500 }`. O par `old`/`new` só
+existe nos campos de valor e de data: `value_cents`, `recurring_value_cents`,
+`recurring_period`, `recurring_months`, `currency` e `expected_close_date`.
+Título, descrição e campos do funil saem só pelo nome (`title`,
+`custom_fields.<chave>`), e o valor atual deles está em `lead`. O valor
+anterior desses campos não é guardado pelo CRM. Mudança de tag e de
+responsável não aparece aqui: cada uma tem o seu evento.
+
+**Quem é o responsável.** A identidade de quem atende só sai quando a regra
+marca a opção de incluir o responsável: aí `data.owner` traz o responsável do
+negócio, `task.assigned_to` o da tarefa e `conversation.ai.by` quem assumiu a
+conversa (`id` e `name`). Sem a opção, nenhum deles aparece.
+
+**A pausa e a volta do atendimento automático.** Servem para um agente de fora
+do CRM saber quando ficar calado numa conversa. Os dois eventos trazem o
+`contact` (não trazem `lead`).
+
+- `conversation.ai_paused` sai quando uma pessoa assume, responde ou pausa a
+  conversa, e quando o agente do CRM passa o caso para a equipe.
+  `paused_until` é a hora em que a pausa acaba sozinha, ou `null` quando ela
+  não tem prazo (`durable: true`). `human_assigned` diz se a conversa tem uma
+  pessoa como dona.
+- Ele sai **de novo**, com `renewed: true`, quando o prazo ou o dono muda. Cada
+  resposta de uma pessoa renova o prazo: guarde sempre o `paused_until` do
+  evento mais recente (ordene pelo `happened_at`).
+- `conversation.ai_resumed` sai quando alguém devolve a conversa ao
+  atendimento automático. **Pausa com prazo que vence não gera evento**: a
+  hora da volta é o `paused_until` que você já recebeu.
+
+**Como calcular se o seu agente pode falar.** Contar eventos não funciona:
+chegam vários `ai_paused` para uma pausa só (cada resposta de uma pessoa pela
+tela emite outro, com `renewed: true`), e a volta por prazo não tem evento.
+Faça a conta por conversa:
+
+1. guarde só o `ai_paused` mais recente (maior `happened_at`). `renewed: true`
+   não é pausa nova: substitui o prazo anterior;
+2. fique calado enquanto esse evento valer. Ele deixa de valer quando chega um
+   `ai_resumed` posterior, ou quando `paused_until` não é nulo e já passou;
+3. `paused_until: null` (`durable: true`) não vence: só `ai_resumed` libera;
+4. não espere `ai_resumed` para liberar uma pausa com prazo. Compare o relógio
+   com `paused_until`;
+5. na dúvida (evento perdido, reinício), pergunte ao CRM:
+   `crm_get_conversation` devolve o bloco `ai` (`paused`, `until`,
+   `resumes_automatically`), que é sempre o estado do momento.
+- `conversation`: `id`, `contact_id`, `channel_session_id`, `status` e `ai`, o
+  estado na hora do envio: `paused`, `human_in_command`, `reason`, `since`,
+  `until`, `resumes_automatically` e `detail`. Os valores de `reason` são
+  `human_assigned`, `human_replied`, `human_replied_outside_crm`,
+  `handed_to_team`, `contact_locked`, `contact_always_human` e
+  `contact_opted_out`. Para decidir se responde, confie no `conversation.ai`
+  da entrega mais recente.
+- Conversa de grupo não gera estes eventos.
+
+**Ordem.** A entrega não garante ordem de chegada: uma retentativa, uma
+automação adiada ou um Reenviar chegam depois de eventos mais novos. Ordene
+pelo `happened_at` e, para o estado atual, confie no `lead` da entrega mais
+recente.
+
+**Organização suspensa** não envia entrega nenhuma, e os eventos do período
+não são reenviados quando ela volta.
