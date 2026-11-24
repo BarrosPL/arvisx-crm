@@ -82,13 +82,20 @@ const CONEXAO_POR_PARCEIRO_VISIVEL: boolean = false;
  */
 const EM_HOMOLOGACAO: boolean = false;
 
-export function RedesSociaisClient() {
+/**
+ * `porParceiroVisivel` existe para o teste: o bloco do parceiro continua no
+ * código (ver CONEXAO_POR_PARCEIRO_VISIVEL) e a prova dele não pode apodrecer
+ * enquanto está escondido. A tela não passa a propriedade; vale a constante.
+ */
+export function RedesSociaisClient({
+  porParceiroVisivel = CONEXAO_POR_PARCEIRO_VISIVEL,
+}: { porParceiroVisivel?: boolean } = {}) {
   const t = useT();
   const params = useSearchParams();
   const query = useQuery({
     queryKey: ["social-connections"],
     queryFn: async () => (await apiClient.get<{ data: State }>("/api/v1/channels/social")).data,
-    enabled: CONEXAO_POR_PARCEIRO_VISIVEL,
+    enabled: porParceiroVisivel,
   });
   const state = query.data;
   const [error, setError] = useState<string | null>(null);
@@ -212,11 +219,11 @@ export function RedesSociaisClient() {
           <h2 className="text-lg font-semibold">{t("Facebook / Instagram")}</h2>
           <p className="text-sm text-muted-foreground">
             {t("Conecte o Messenger e o Instagram da sua empresa e receba as mensagens no atendimento.")}
-            {CONEXAO_POR_PARCEIRO_VISIVEL && state?.label ? ` ${state.label}` : null}
+            {porParceiroVisivel && state?.label ? ` ${state.label}` : null}
           </p>
         </div>
         {/* "Atualizar" recarrega só a lista do parceiro; a conexão direta tem a própria consulta. */}
-        {CONEXAO_POR_PARCEIRO_VISIVEL && (
+        {porParceiroVisivel && (
           <Button variant="outline" onClick={() => void load()} disabled={!!busy}>
             {t("Atualizar")}
           </Button>
@@ -243,7 +250,7 @@ export function RedesSociaisClient() {
           (lib/channels/social/catalog.ts). A por parceiro, abaixo, está
           escondida por CONEXAO_POR_PARCEIRO_VISIVEL. */}
       <ConexaoDiretaMeta emHomologacao={EM_HOMOLOGACAO} />
-      {CONEXAO_POR_PARCEIRO_VISIVEL && (
+      {porParceiroVisivel && (
       <>
       <h3 className="pt-2 text-sm font-semibold text-muted-foreground">
         {t("Conexão por parceiro (opcional)")}

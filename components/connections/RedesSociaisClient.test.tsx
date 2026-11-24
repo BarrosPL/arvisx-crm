@@ -13,7 +13,20 @@ beforeEach(() => {
   cleanup();
   vi.clearAllMocks();
 });
+// O bloco do parceiro está escondido do cliente desde 12/11/2026 (b22b7a0f2), mas
+// o código dele continua no produto. Os casos abaixo o montam À VISTA para a prova
+// dele não apodrecer; o primeiro caso mede o que o cliente vê hoje.
 function mount() {
+  render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      <RedesSociaisClient porParceiroVisivel />
+    </QueryClientProvider>,
+  );
+}
+it("como a tela monta hoje: só a conexão direta, sem o bloco do parceiro e sem consultar o parceiro", async () => {
+  h.get.mockResolvedValue({ data: { configured: true, label: "Partner", networks: [], accounts: [] } });
   render(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
@@ -21,7 +34,11 @@ function mount() {
       <RedesSociaisClient />
     </QueryClientProvider>,
   );
-}
+  await screen.findByText("conexão direta");
+  expect(screen.queryByText("Conexão por parceiro (opcional)")).toBeNull();
+  expect(screen.queryByRole("button", { name: "Atualizar" })).toBeNull();
+  expect(h.get).not.toHaveBeenCalled();
+});
 it("shows connected networks and offers inbox only where implemented", async () => {
   h.get.mockResolvedValue({
     data: {
