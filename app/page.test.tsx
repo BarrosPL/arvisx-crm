@@ -24,6 +24,8 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 vi.mock("@/lib/landing/planos", () => ({ planosDaVitrine: async () => cena.vitrine }));
+// Sem requisição não há cabeçalho de idioma para ler: a página sai no padrão, pt-BR.
+vi.mock("@/lib/i18n/idiomaAnonimo", () => ({ idiomaDoVisitante: async () => "pt-BR" }));
 
 import HomePage, { metadata } from "./page";
 import { FRASES_DE_QUEM_CUIDA, QUEM_CUIDA_DOS_AGENTES } from "@/lib/cobranca/quem-cuida-dos-agentes";

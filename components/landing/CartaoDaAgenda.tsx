@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { useT } from "@/hooks/i18n/useT";
 import { AGENDA_EMBED } from "@/lib/landing/links";
 
 /**
@@ -14,13 +15,14 @@ import { AGENDA_EMBED } from "@/lib/landing/links";
  * desmarcar e marcar de novo, como no protótipo.
  */
 export function CartaoDaAgenda() {
+  const t = useT();
   const [confirmado, setConfirmado] = useState(false);
   const [montada, setMontada] = useState(false);
 
   return (
     <div className={confirmado ? "cartao-agenda confirmado" : "cartao-agenda"}>
       <div className="cab">
-        <b id="titulo-agenda">Escolha o melhor horário</b>
+        <b id="titulo-agenda">{t("Escolha o melhor horário")}</b>
         <span>
           <i>30 min</i>
           <i>Google Meet</i>
@@ -38,21 +40,20 @@ export function CartaoDaAgenda() {
             }}
           />
           <span className="longo">
-            Confirmo que a reunião é sobre os <b>Agentes Arvisx</b> (agentes de IA sob medida) e
-            não para suporte ou para conhecer o CRM.
+            {t("Confirmo que a reunião é sobre os")}{" "}<b>Agentes Arvisx</b>{" "}{t("(agentes de IA sob medida) e não para suporte ou para conhecer o CRM.")}
           </span>
           <span className="curto">
-            Reunião sobre os <b>Agentes Arvisx</b>, confirmado.
+            {t("Reunião sobre os")}{" "}<b>Agentes Arvisx</b>{t(", confirmado.")}
           </span>
         </label>
-        <p>Agendamentos fora desse objetivo podem ser cancelados.</p>
+        <p>{t("Agendamentos fora desse objetivo podem ser cancelados.")}</p>
       </div>
       <div className={confirmado ? "agenda on" : "agenda"} id="agenda">
         {montada && (
-          <iframe src={AGENDA_EMBED} title="Horários disponíveis para a reunião" loading="lazy" />
+          <iframe src={AGENDA_EMBED} title={t("Horários disponíveis para a reunião")} loading="lazy" />
         )}
       </div>
-      <div className="bloqueado">Marque a confirmação acima para ver os horários disponíveis.</div>
+      <div className="bloqueado">{t("Marque a confirmação acima para ver os horários disponíveis.")}</div>
     </div>
   );
 }

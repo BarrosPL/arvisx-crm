@@ -2,6 +2,8 @@
 
 import { useSyncExternalStore } from "react";
 
+import { useT } from "@/hooks/i18n/useT";
+
 const CHAVE = "arvisx-crm-aviso-cookies";
 
 /**
@@ -46,18 +48,21 @@ function dispensar() {
 }
 
 export function AvisoDeCookies() {
+  const t = useT();
   // No servidor, "dispensado": o aviso nunca entra no HTML inicial.
   const jaDispensou = useSyncExternalStore(assinar, dispensado, () => true);
   if (jaDispensou) return null;
 
   return (
-    <div className="aviso-cookies visivel" role="region" aria-label="Aviso de cookies">
+    <div className="aviso-cookies visivel" role="region" aria-label={t("Aviso de cookies")}>
       <p>
-        Usamos apenas cookies necessários para o funcionamento do CRM e para lembrar as suas
-        preferências. Nada de rastreamento. <a href="/privacidade-e-cookies">Saiba mais</a>.
+        {t(
+          "Usamos apenas cookies necessários para o funcionamento do CRM e para lembrar as suas preferências. Nada de rastreamento.",
+        )}{" "}
+        <a href="/privacidade-e-cookies">{t("Saiba mais")}</a>.
       </p>
       <button className="btn primario" type="button" onClick={dispensar}>
-        Entendi
+        {t("Entendi")}
       </button>
     </div>
   );

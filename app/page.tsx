@@ -40,6 +40,9 @@ import { archivoDaVitrine } from "@/components/landing/fonte";
 import { InteracoesDaLanding } from "@/components/landing/InteracoesDaLanding";
 import { marcaDaSaida } from "@/lib/branding/saida";
 import { maisCompleto } from "@/lib/cobranca/comparativo";
+import { traduzir } from "@/lib/i18n/dicionario";
+import { idiomaDoVisitante } from "@/lib/i18n/idiomaAnonimo";
+import { IdiomaProvider } from "@/lib/i18n/IdiomaProvider";
 import { CADASTRO_ABERTO, LINKS, OFERTA } from "@/lib/landing/links";
 import { planosDaVitrine, type VitrineDePlanos } from "@/lib/landing/planos";
 import { formatCents } from "@/lib/money";
@@ -84,19 +87,40 @@ export const metadata: Metadata = {
 const ico = { className: "ico", size: "1em", "aria-hidden": true } as const;
 const negrito = { ...ico, weight: "bold" } as const;
 
+/** O tradutor do idioma de quem visita; em português devolve o próprio texto. */
+type Tradutor = (texto: string) => string;
+
+/** Troca cada `{nome}` da frase (já traduzida) pelo valor, que não se traduz: preço, contagem. */
+function comValores(frase: string, valores: Record<string, string | number>): string {
+  return Object.entries(valores).reduce(
+    (texto, [nome, valor]) => texto.split(`{${nome}}`).join(String(valor)),
+    frase,
+  );
+}
+
 // Botão de cadastro: com CADASTRO_ABERTO desligado vira "Lançamento em breve", sem link.
 // `plano`: o botão de um cartão de plano leva a escolha ao cadastro (`?plano=<id>`),
 // que então pula o passo de escolher. Sem ele, quem clicava num plano aqui
 // chegava ao cadastro com outro plano marcado.
-function BotaoDeCadastro({ className, comSeta, plano }: { className: string; comSeta: boolean; plano?: string }) {
+function BotaoDeCadastro({
+  className,
+  comSeta,
+  plano,
+  t,
+}: {
+  className: string;
+  comSeta: boolean;
+  plano?: string;
+  t: Tradutor;
+}) {
   return CADASTRO_ABERTO ? (
     <a className={className} href={plano ? `${LINKS.cadastro}?plano=${encodeURIComponent(plano)}` : LINKS.cadastro}>
-      <span>{OFERTA.cta}</span>
+      <span>{t(OFERTA.cta)}</span>
       {comSeta ? <ArrowRight {...negrito} /> : null}
     </a>
   ) : (
     <span className={`${className} em-breve`} aria-disabled="true">
-      <span>{OFERTA.ctaEmBreve}</span>
+      <span>{t(OFERTA.ctaEmBreve)}</span>
     </span>
   );
 }
@@ -104,14 +128,25 @@ function BotaoDeCadastro({ className, comSeta, plano }: { className: string; com
 const atraso = (d: string) => ({ "--d": d }) as CSSProperties;
 
 /** A resposta de "Quanto custa?", com os preços do cadastro (o mais barato e o mais caro). */
-function textoDoQuantoCusta(v: VitrineDePlanos): string {
-  if (v.planos.length === 0) return `Todos os planos começam com ${OFERTA.trial}.`;
+function textoDoQuantoCusta(v: VitrineDePlanos, t: Tradutor): string {
+  const trial = t(OFERTA.trial);
+  if (v.planos.length === 0) return comValores(t("Todos os planos começam com {trial}."), { trial });
   const precos = v.planos.map((p) => p.preco_cents);
   const moeda = v.planos[0]!.moeda;
   const iva = v.iva ? " + IVA" : "";
   return v.planos.length === 1
-    ? `${formatCents(precos[0]!, moeda)}${iva} por mês, com ${OFERTA.trial}.`
-    : `São ${v.planos.length} planos mensais, de ${formatCents(Math.min(...precos), moeda)} a ${formatCents(Math.max(...precos), moeda)}${iva}, todos com ${OFERTA.trial}.`;
+    ? comValores(t("{preco}{iva} por mês, com {trial}."), {
+        preco: formatCents(precos[0]!, moeda),
+        iva,
+        trial,
+      })
+    : comValores(t("São {n} planos mensais, de {min} a {max}{iva}, todos com {trial}."), {
+        n: v.planos.length,
+        min: formatCents(Math.min(...precos), moeda),
+        max: formatCents(Math.max(...precos), moeda),
+        iva,
+        trial,
+      });
 }
 
 const IMG = "/img/landing";
@@ -128,12 +163,18 @@ export default async function HomePage() {
   // Os planos e o preço vêm do cadastro dos planos (/admin/cobranca), nunca do código.
   const vitrine = await planosDaVitrine();
   const maisCompletoDaVitrine = maisCompleto(vitrine.planos);
-  const quantoCusta = textoDoQuantoCusta(vitrine);
+  // Quem chega aqui não tem sessão (quem tem já foi para o painel): o idioma é o
+  // do navegador, pela mesma função das outras telas públicas. O provider leva
+  // esse idioma aos componentes de cliente da página (o aviso de cookies).
+  const locale = await idiomaDoVisitante(null);
+  const t: Tradutor = (texto) => traduzir(texto, locale);
+  const quantoCusta = textoDoQuantoCusta(vitrine, t);
 
   return (
+    <IdiomaProvider locale={locale}>
     <div className={`lp ${archivoDaVitrine.variable}`}>
       <header className="topo">
-        <a className="marca" href="#inicio" aria-label={`${marca.nome}, início`}>
+        <a className="marca" href="#inicio" aria-label={`${marca.nome}, ${t("início")}`}>
           <Image
             src="/marca/arvisx-crm-escuro.png"
             alt={marca.nome}
@@ -142,19 +183,19 @@ export default async function HomePage() {
             priority
           />
         </a>
-        <nav aria-label="Principal">
-          <a href="#crm">O CRM</a>
-          <a href="#por-dentro">Telas</a>
-          <a href="#chamadas">Chamadas</a>
+        <nav aria-label={t("Principal")}>
+          <a href="#crm">{t("O CRM")}</a>
+          <a href="#por-dentro">{t("Telas")}</a>
+          <a href="#chamadas">{t("Chamadas")}</a>
           <a href="#ia">IA</a>
-          <a href="#plano">Preço</a>
-          <a href="#faq">Perguntas</a>
+          <a href="#plano">{t("Preço")}</a>
+          <a href="#faq">{t("Perguntas")}</a>
         </nav>
         <div className="acoes">
           <a className="btn secundario p" href={LINKS.entrar}>
-            Entrar
+            {t("Entrar")}
           </a>
-          <BotaoDeCadastro className="btn primario p demo" comSeta={false} />
+          <BotaoDeCadastro className="btn primario p demo" comSeta={false} t={t} />
         </div>
       </header>
 
@@ -162,19 +203,18 @@ export default async function HomePage() {
         <section className="hero hero-b">
           <div className="miolo">
             <div className="texto">
-              <p className="eyebrow entra">CRM de atendimento e vendas</p>
+              <p className="eyebrow entra">{t("CRM de atendimento e vendas")}</p>
               <h1 className="entra" style={atraso(".08s")}>
-                Toda a sua operação de vendas e atendimento <em>em um só CRM.</em>
+                {t("Toda a sua operação de vendas e atendimento")}{" "}<em>{t("em um só CRM.")}</em>
               </h1>
               <p className="sub entra" style={atraso(".18s")}>
-                Atendimento, funil, agenda e chamadas de voz e vídeo num só CRM. Três planos, do
-                atendimento à operação inteira com IA.
+                {t("Atendimento, funil, agenda e chamadas de voz e vídeo num só CRM. Três planos, do atendimento à operação inteira com IA.")}
               </p>
               <div className="cta-bloco entra" style={atraso(".28s")}>
-                <BotaoDeCadastro className="btn primario grande" comSeta />
+                <BotaoDeCadastro className="btn primario grande" comSeta t={t} />
                 <div className="cta-info">
-                  <strong>{OFERTA.trial}</strong>
-                  <span>IA a partir do Standard, com as credenciais da sua empresa</span>
+                  <strong>{t(OFERTA.trial)}</strong>
+                  <span>{t("IA a partir do Standard, com as credenciais da sua empresa")}</span>
                 </div>
               </div>
             </div>
@@ -198,7 +238,7 @@ export default async function HomePage() {
                 {/* eslint-disable-next-line @next/next/no-img-element -- captura estática, mesma marcação do protótipo */}
                 <img
                   src={`${IMG}/inbox.webp`}
-                  alt="Caixa de entrada do Arvisx CRM com as conversas da equipe e da IA"
+                  alt={t("Caixa de entrada do Arvisx CRM com as conversas da equipe e da IA")}
                   width={1920}
                   height={1200}
                 />
@@ -206,12 +246,12 @@ export default async function HomePage() {
               <figure className="janela video">
                 {/* eslint-disable-next-line @next/next/no-img-element -- captura estática, mesma marcação do protótipo */}
                 <img src={`${IMG}/chamada-video.webp`} alt="" width={1440} height={900} />
-                <figcaption>Videochamada por link</figcaption>
+                <figcaption>{t("Videochamada por link")}</figcaption>
               </figure>
               <div className="conversa" aria-hidden="true">
                 <div className="msg lead">
                   <div className="miolo-msg">
-                    Oi! Vi o anúncio de vocês. Como funciona e quanto custa?
+                    {t("Oi! Vi o anúncio de vocês. Como funciona e quanto custa?")}
                   </div>
                 </div>
                 <div className="msg digitando">
@@ -223,15 +263,14 @@ export default async function HomePage() {
                 </div>
                 <div className="msg ia">
                   <div className="miolo-msg">
-                    <b>Ana · Atendimento</b>Oi, Marina! Que bom que chegou. Já te explico como
-                    funciona e te passo os valores.
+                    <b>{t("Ana · Atendimento")}</b>{t("Oi, Marina! Que bom que chegou. Já te explico como funciona e te passo os valores.")}
                   </div>
                 </div>
                 <div className="msg toast">
                   <div className="miolo-msg">
                     <i>✓</i>
                     <span>
-                      Conversa na caixa de entrada <em>Vendas · Ana</em>
+                      {t("Conversa na caixa de entrada")}{" "}<em>{t("Vendas · Ana")}</em>
                     </span>
                   </div>
                 </div>
@@ -240,22 +279,22 @@ export default async function HomePage() {
               <span className="orbita o2" aria-hidden="true" />
             </div>
           </div>
-          <ul className="faixa-recursos" aria-label="O que tem no CRM">
+          <ul className="faixa-recursos" aria-label={t("O que tem no CRM")}>
             <li>
               <ChatsCircle {...ico} />
-              Atendimento
+              {t("Atendimento")}
             </li>
             <li>
               <Funnel {...ico} />
-              Funil
+              {t("Funil")}
             </li>
             <li>
               <CalendarBlank {...ico} />
-              Agenda
+              {t("Agenda")}
             </li>
             <li>
               <Phone {...ico} />
-              Chamadas de voz e vídeo
+              {t("Chamadas de voz e vídeo")}
             </li>
           </ul>
         </section>
@@ -263,44 +302,40 @@ export default async function HomePage() {
         <section className="faixa dor claro">
           <div className="miolo">
             <div className="cabeca">
-              <p className="eyebrow">A solução</p>
-              <h2>A venda que estava espalhada em três lugares agora fica em um só.</h2>
+              <p className="eyebrow">{t("A solução")}</p>
+              <h2>{t("A venda que estava espalhada em três lugares agora fica em um só.")}</h2>
             </div>
             <div className="grade">
               <article className="cartao">
                 <span className="ic">
                   <WhatsappLogo {...ico} />
                 </span>
-                <h3>O WhatsApp</h3>
+                <h3>{t("O WhatsApp")}</h3>
                 <p>
-                  As conversas deixam de se misturar numa lista só. Cada uma tem um dono, e a equipe
-                  vê quem respondeu e quem ainda está esperando.
+                  {t("As conversas deixam de se misturar numa lista só. Cada uma tem um dono, e a equipe vê quem respondeu e quem ainda está esperando.")}
                 </p>
               </article>
               <article className="cartao">
                 <span className="ic">
                   <Funnel {...ico} />
                 </span>
-                <h3>O funil no lugar da planilha</h3>
+                <h3>{t("O funil no lugar da planilha")}</h3>
                 <p>
-                  O controle sai da planilha que só uma pessoa entende. Cada cliente tem um cartão
-                  no funil, e a equipe inteira sabe em que pé ele está.
+                  {t("O controle sai da planilha que só uma pessoa entende. Cada cliente tem um cartão no funil, e a equipe inteira sabe em que pé ele está.")}
                 </p>
               </article>
               <article className="cartao">
                 <span className="ic">
                   <FileText {...ico} />
                 </span>
-                <h3>A proposta</h3>
+                <h3>{t("A proposta")}</h3>
                 <p>
-                  A proposta deixa de ser um arquivo solto, montado do zero. Ela sai do cartão do
-                  lead, e o negócio segue acompanhado no funil.
+                  {t("A proposta deixa de ser um arquivo solto, montado do zero. Ela sai do cartão do lead, e o negócio segue acompanhado no funil.")}
                 </p>
               </article>
             </div>
             <p className="virada">
-              <strong>Tudo fica na mesma tela.</strong> Conversa, funil, proposta, agenda e
-              chamadas no mesmo lugar, com a equipe inteira dentro.
+              <strong>{t("Tudo fica na mesma tela.")}</strong>{" "}{t("Conversa, funil, proposta, agenda e chamadas no mesmo lugar, com a equipe inteira dentro.")}
             </p>
           </div>
         </section>
@@ -308,43 +343,41 @@ export default async function HomePage() {
         <section className="faixa painel crm claro alt" id="crm">
           <div className="miolo">
             <div className="cabeca">
-              <p className="eyebrow">O CRM</p>
-              <h2>A empresa inteira em uma tela, do primeiro contato ao faturamento.</h2>
+              <p className="eyebrow">{t("O CRM")}</p>
+              <h2>{t("A empresa inteira em uma tela, do primeiro contato ao faturamento.")}</h2>
               <p>
-                Um produto só, com todas as telas para toda a equipe. Você é o administrador da sua
-                empresa e configura tudo do seu jeito.
+                {t("Um produto só, com todas as telas para toda a equipe. Você é o administrador da sua empresa e configura tudo do seu jeito.")}
               </p>
             </div>
-            <ul className="modulos" aria-label="Módulos do CRM">
-              <li>Caixa de entrada</li>
-              <li>Funis</li>
-              <li>Contatos</li>
-              <li>Tarefas</li>
-              <li>Agenda</li>
-              <li>Chamadas de voz e vídeo</li>
-              <li>Campanhas e prospecção</li>
-              <li>Propostas e produtos</li>
-              <li>Financeiro e faturamento</li>
-              <li>Painel de desempenho</li>
-              <li>Equipe e permissões</li>
+            <ul className="modulos" aria-label={t("Módulos do CRM")}>
+              <li>{t("Caixa de entrada")}</li>
+              <li>{t("Funis")}</li>
+              <li>{t("Contatos")}</li>
+              <li>{t("Tarefas")}</li>
+              <li>{t("Agenda")}</li>
+              <li>{t("Chamadas de voz e vídeo")}</li>
+              <li>{t("Campanhas e prospecção")}</li>
+              <li>{t("Propostas e produtos")}</li>
+              <li>{t("Financeiro e faturamento")}</li>
+              <li>{t("Painel de desempenho")}</li>
+              <li>{t("Equipe e permissões")}</li>
             </ul>
             <div className="inbox-bloco">
               <article className="cartao">
                 <span className="ic">
                   <Tray {...ico} />
                 </span>
-                <h3>Caixa de entrada compartilhada</h3>
+                <h3>{t("Caixa de entrada compartilhada")}</h3>
                 <p>
-                  Todos os números de WhatsApp da empresa na mesma tela. Cada conversa tem um dono,
-                  e a equipe vê quem respondeu e quem ainda está esperando.
+                  {t("Todos os números de WhatsApp da empresa na mesma tela. Cada conversa tem um dono, e a equipe vê quem respondeu e quem ainda está esperando.")}
                 </p>
               </article>
               <article className="cartao">
                 <span className="ic">
                   <Receipt {...ico} />
                 </span>
-                <h3>Propostas e produtos</h3>
-                <p>Monte a proposta a partir do cartão do lead e acompanhe o negócio no funil.</p>
+                <h3>{t("Propostas e produtos")}</h3>
+                <p>{t("Monte a proposta a partir do cartão do lead e acompanhe o negócio no funil.")}</p>
               </article>
             </div>
           </div>
@@ -353,11 +386,11 @@ export default async function HomePage() {
         <section className="faixa carrossel claro" id="por-dentro">
           <div className="miolo">
             <div className="cabeca">
-              <p className="eyebrow">Por dentro</p>
-              <h2>Veja o seu novo CRM em ação.</h2>
-              <p>Capturas reais do Arvisx CRM. Passe os cards ou escolha uma tela.</p>
+              <p className="eyebrow">{t("Por dentro")}</p>
+              <h2>{t("Veja o seu novo CRM em ação.")}</h2>
+              <p>{t("Capturas reais do Arvisx CRM. Passe os cards ou escolha uma tela.")}</p>
             </div>
-            <div className="car-tabs" role="tablist" aria-label="Telas do CRM">
+            <div className="car-tabs" role="tablist" aria-label={t("Telas do CRM")}>
               {SLIDES.map((s, i) => (
                 <button
                   key={s.aba}
@@ -366,7 +399,7 @@ export default async function HomePage() {
                   data-i={i}
                   aria-selected={i === 0 ? "true" : "false"}
                 >
-                  {s.aba}
+                  {t(s.aba)}
                 </button>
               ))}
             </div>
@@ -375,24 +408,24 @@ export default async function HomePage() {
                 className="car-track"
                 id="car-track"
                 tabIndex={0}
-                aria-label="Carrossel de telas do CRM"
+                aria-label={t("Carrossel de telas do CRM")}
               >
                 {SLIDES.map((s, i) => (
                   <article
                     key={s.aba}
                     className={i === 0 ? "slide on" : "slide"}
                     role="tabpanel"
-                    aria-label={s.aba}
+                    aria-label={t(s.aba)}
                   >
                     <div className="slide-info">
                       <span className="slide-n">
-                        {String(i + 1).padStart(2, "0")} / 06 · {s.aba}
+                        {String(i + 1).padStart(2, "0")} / 06 · {t(s.aba)}
                       </span>
-                      <h3>{s.titulo}</h3>
-                      <p>{s.texto}</p>
+                      <h3>{t(s.titulo)}</h3>
+                      <p>{t(s.texto)}</p>
                       <ul>
-                        {s.itens.map((item) => (
-                          <li key={item}>{item}</li>
+                        {s.itens.map((item, j) => (
+                          <li key={item}>{t(s.itens[j]!)}</li>
                         ))}
                       </ul>
                     </div>
@@ -401,12 +434,12 @@ export default async function HomePage() {
                         <i />
                         <i />
                         <i />
-                        <span>{s.aba}</span>
+                        <span>{t(s.aba)}</span>
                       </div>
                       {/* eslint-disable-next-line @next/next/no-img-element -- captura estática, mesma marcação do protótipo */}
                       <img
                         src={`${IMG}/${s.img}`}
-                        alt={s.alt}
+                        alt={t(s.alt)}
                         width={1920}
                         height={1200}
                         loading="lazy"
@@ -417,7 +450,7 @@ export default async function HomePage() {
               </div>
             </div>
             <div className="car-ctl">
-              <button type="button" className="car-btn" id="car-prev" aria-label="Tela anterior">
+              <button type="button" className="car-btn" id="car-prev" aria-label={t("Tela anterior")}>
                 <CaretLeft {...negrito} />
               </button>
               <div className="car-dots" aria-hidden="true">
@@ -425,7 +458,7 @@ export default async function HomePage() {
                   <i key={s.aba} />
                 ))}
               </div>
-              <button type="button" className="car-btn" id="car-next" aria-label="Próxima tela">
+              <button type="button" className="car-btn" id="car-next" aria-label={t("Próxima tela")}>
                 <CaretRight {...negrito} />
               </button>
             </div>
@@ -437,38 +470,36 @@ export default async function HomePage() {
             <div className="cabeca">
               <p className="novo">
                 <Sparkle {...ico} />
-                Novidade
+                {t("Novidade")}
               </p>
-              <h2>Ligue e faça vídeo sem sair da conversa.</h2>
+              <h2>{t("Ligue e faça vídeo sem sair da conversa.")}</h2>
               <p>
-                O atendente fala com o cliente por voz ou vídeo, com o histórico do atendimento ao
-                lado. Menos troca de aplicativo, mais fechamento.
+                {t("O atendente fala com o cliente por voz ou vídeo, com o histórico do atendimento ao lado. Menos troca de aplicativo, mais fechamento.")}
               </p>
             </div>
             <div className="cs">
-              <div className="cs-lista" role="group" aria-label="Recursos de chamada">
+              <div className="cs-lista" role="group" aria-label={t("Recursos de chamada")}>
                 <button
                   type="button"
                   className="cs-item on"
                   data-i="0"
-                  data-rot="Conversa"
+                  data-rot={t("Conversa")}
                   aria-pressed="true"
                 >
                   <span className="cs-ic">
                     <PhoneCall {...ico} />
                   </span>
                   <span className="cs-tx">
-                    <b>Chamada de voz pelo WhatsApp</b>
-                    <small>Liga e atende sem sair do CRM</small>
+                    <b>{t("Chamada de voz pelo WhatsApp")}</b>
+                    <small>{t("Liga e atende sem sair do CRM")}</small>
                     <span className="det">
                       <span className="p">
-                        O atendente liga e atende direto da conversa. O painel da chamada fica
-                        visível enquanto ele navega pelo CRM.
+                        {t("O atendente liga e atende direto da conversa. O painel da chamada fica visível enquanto ele navega pelo CRM.")}
                       </span>
                       <span className="ul">
-                        <span className="li">Botão de ligar dentro da conversa</span>
-                        <span className="li">Painel da chamada sempre à vista</span>
-                        <span className="li">Continue navegando no CRM durante a ligação</span>
+                        <span className="li">{t("Botão de ligar dentro da conversa")}</span>
+                        <span className="li">{t("Painel da chamada sempre à vista")}</span>
+                        <span className="li">{t("Continue navegando no CRM durante a ligação")}</span>
                       </span>
                     </span>
                   </span>
@@ -480,23 +511,22 @@ export default async function HomePage() {
                   type="button"
                   className="cs-item"
                   data-i="1"
-                  data-rot="Videochamada"
+                  data-rot={t("Videochamada")}
                   aria-pressed="false"
                 >
                   <span className="cs-ic">
                     <VideoCamera {...ico} />
                   </span>
                   <span className="cs-tx">
-                    <b>Videochamada por link</b>
-                    <small>O cliente entra pelo navegador</small>
+                    <b>{t("Videochamada por link")}</b>
+                    <small>{t("O cliente entra pelo navegador")}</small>
                     <span className="det">
                       <span className="p">
-                        O atendente clica em “Vídeo” e a sala abre. O cliente entra pelo celular ou
-                        pelo computador, sem baixar app e sem criar conta.
+                        {t("O atendente clica em “Vídeo” e a sala abre. O cliente entra pelo celular ou pelo computador, sem baixar app e sem criar conta.")}
                       </span>
                       <span className="ul">
-                        <span className="li">Link enviado na própria conversa</span>
-                        <span className="li">Sem app e sem cadastro para o cliente</span>
+                        <span className="li">{t("Link enviado na própria conversa")}</span>
+                        <span className="li">{t("Sem app e sem cadastro para o cliente")}</span>
                       </span>
                     </span>
                   </span>
@@ -516,14 +546,14 @@ export default async function HomePage() {
                   </span>
                   <span className="cs-tx">
                     <b>Cold Call</b>
-                    <small>Fila de ligações ativas</small>
+                    <small>{t("Fila de ligações ativas")}</small>
                     <span className="det">
                       <span className="p">
-                        Uma fila de ligações ativas: um lead por vez, usando o discador do aparelho.
+                        {t("Uma fila de ligações ativas: um lead por vez, usando o discador do aparelho.")}
                       </span>
                       <span className="ul">
-                        <span className="li">Um lead por vez, na ordem da fila</span>
-                        <span className="li">Usa o discador do aparelho</span>
+                        <span className="li">{t("Um lead por vez, na ordem da fila")}</span>
+                        <span className="li">{t("Usa o discador do aparelho")}</span>
                       </span>
                     </span>
                   </span>
@@ -537,14 +567,14 @@ export default async function HomePage() {
                   <i />
                   <i />
                   <i />
-                  <span id="cs-rot">Conversa</span>
+                  <span id="cs-rot">{t("Conversa")}</span>
                 </div>
                 <div className="cs-img">
                   <div className="cs-pane on" data-i="0">
                     {/* eslint-disable-next-line @next/next/no-img-element -- captura estática, mesma marcação do protótipo */}
                     <img
                       src={`${IMG}/chamada-conversa.webp`}
-                      alt="Conversa com os botões de ligar e de vídeo"
+                      alt={t("Conversa com os botões de ligar e de vídeo")}
                       width={1440}
                       height={900}
                       loading="lazy"
@@ -554,7 +584,7 @@ export default async function HomePage() {
                     {/* eslint-disable-next-line @next/next/no-img-element -- captura estática, mesma marcação do protótipo */}
                     <img
                       src={`${IMG}/chamada-video.webp`}
-                      alt="Sala de videochamada aberta a partir da conversa"
+                      alt={t("Sala de videochamada aberta a partir da conversa")}
                       width={1440}
                       height={900}
                       loading="lazy"
@@ -564,7 +594,7 @@ export default async function HomePage() {
                     {/* eslint-disable-next-line @next/next/no-img-element -- captura estática, mesma marcação do protótipo */}
                     <img
                       src={`${IMG}/cold-call.webp`}
-                      alt="Fila de ligações do Cold Call"
+                      alt={t("Fila de ligações do Cold Call")}
                       width={1920}
                       height={1200}
                       loading="lazy"
@@ -579,39 +609,36 @@ export default async function HomePage() {
         <section className="faixa crm claro" id="ia">
           <div className="miolo">
             <div className="cabeca">
-              <p className="eyebrow">IA integrada</p>
-              <h2>A IA já mora dentro do CRM.</h2>
+              <p className="eyebrow">{t("IA integrada")}</p>
+              <h2>{t("A IA já mora dentro do CRM.")}</h2>
               <p>
-                Ela trabalha nas mesmas conversas, no mesmo funil e na mesma agenda que a sua
-                equipe.
+                {t("Ela trabalha nas mesmas conversas, no mesmo funil e na mesma agenda que a sua equipe.")}
               </p>
             </div>
             <div className="telas">
               <article className="tela">
                 <div className="texto">
-                  <h3>Agentes que atendem ao lado da equipe</h3>
+                  <h3>{t("Agentes que atendem ao lado da equipe")}</h3>
                   <p>
-                    Você configura agentes no próprio CRM, ensina o que eles precisam saber e define
-                    quando passam a conversa para uma pessoa. A gestão e a configuração dos agentes
-                    são suas.
+                    {t("Você configura agentes no próprio CRM, ensina o que eles precisam saber e define quando passam a conversa para uma pessoa. A gestão e a configuração dos agentes são suas.")}
                   </p>
                   <ul>
-                    <li>Agentes de atendimento no WhatsApp</li>
-                    <li>Base de conhecimento do seu negócio</li>
-                    <li>Passagem para a equipe quando precisa de gente</li>
+                    <li>{t("Agentes de atendimento no WhatsApp")}</li>
+                    <li>{t("Base de conhecimento do seu negócio")}</li>
+                    <li>{t("Passagem para a equipe quando precisa de gente")}</li>
                   </ul>
                 </div>
-                <figure className="janela" data-chip="A IA atende e passa para a equipe">
+                <figure className="janela" data-chip={t("A IA atende e passa para a equipe")}>
                   <div className="barra" aria-hidden="true">
                     <i />
                     <i />
                     <i />
-                    <span>Agente de IA</span>
+                    <span>{t("Agente de IA")}</span>
                   </div>
                   {/* eslint-disable-next-line @next/next/no-img-element -- captura estática, mesma marcação do protótipo */}
                   <img
                     src={`${IMG}/ia-conversa.webp`}
-                    alt="Agente de IA atendendo uma conversa no CRM"
+                    alt={t("Agente de IA atendendo uma conversa no CRM")}
                     width={1920}
                     height={1200}
                     loading="lazy"
@@ -625,31 +652,30 @@ export default async function HomePage() {
         <section className="faixa chaves" id="suas-chaves">
           <div className="miolo">
             <div className="cabeca">
-              <p className="eyebrow">IA com as suas credenciais</p>
-              <h2>Sua IA, suas chaves, seu controle.</h2>
+              <p className="eyebrow">{t("IA com as suas credenciais")}</p>
+              <h2>{t("Sua IA, suas chaves, seu controle.")}</h2>
               <p>
-                A IA do Arvisx CRM funciona com as credenciais da sua empresa. Você conecta as
-                chaves ou os planos de IA que já tem e usa como quiser.
+                {t("A IA do Arvisx CRM funciona com as credenciais da sua empresa. Você conecta as chaves ou os planos de IA que já tem e usa como quiser.")}
               </p>
             </div>
-            <div className="fluxo" aria-label="Como a IA se conecta">
+            <div className="fluxo" aria-label={t("Como a IA se conecta")}>
               <div className="nodo">
-                <b>Suas credenciais</b>
-                <small>Chaves ou planos de IA</small>
+                <b>{t("Suas credenciais")}</b>
+                <small>{t("Chaves ou planos de IA")}</small>
               </div>
               <span className="seta" aria-hidden="true">
                 <ArrowRight {...negrito} />
               </span>
               <div className="nodo destaque">
                 <b>Arvisx CRM</b>
-                <small>Liga a IA às conversas e ao funil</small>
+                <small>{t("Liga a IA às conversas e ao funil")}</small>
               </div>
               <span className="seta" aria-hidden="true">
                 <ArrowRight {...negrito} />
               </span>
               <div className="nodo">
-                <b>Atendimento e agentes</b>
-                <small>No WhatsApp, com a sua equipe</small>
+                <b>{t("Atendimento e agentes")}</b>
+                <small>{t("No WhatsApp, com a sua equipe")}</small>
               </div>
             </div>
             <div className="grade tres-c">
@@ -660,10 +686,9 @@ export default async function HomePage() {
                   </span>
                   <span className="n">01</span>
                 </div>
-                <h3>Você conecta</h3>
+                <h3>{t("Você conecta")}</h3>
                 <p>
-                  Cadastre no CRM as chaves de API ou os planos de IA que a sua empresa já contrata.
-                  Sem programar.
+                  {t("Cadastre no CRM as chaves de API ou os planos de IA que a sua empresa já contrata. Sem programar.")}
                 </p>
               </article>
               <article className="cartao">
@@ -673,10 +698,9 @@ export default async function HomePage() {
                   </span>
                   <span className="n">02</span>
                 </div>
-                <h3>Você usa como quiser</h3>
+                <h3>{t("Você usa como quiser")}</h3>
                 <p>
-                  Escolha onde a IA entra: no atendimento, nas respostas, nos agentes. A decisão é
-                  da sua empresa.
+                  {t("Escolha onde a IA entra: no atendimento, nas respostas, nos agentes. A decisão é da sua empresa.")}
                 </p>
               </article>
               <article className="cartao">
@@ -686,19 +710,17 @@ export default async function HomePage() {
                   </span>
                   <span className="n">03</span>
                 </div>
-                <h3>O consumo é seu</h3>
+                <h3>{t("O consumo é seu")}</h3>
                 <p>
-                  O uso da IA fica na sua conta, com o provedor que você escolheu. Do CRM, você paga
-                  só o plano.
+                  {t("O uso da IA fica na sua conta, com o provedor que você escolheu. Do CRM, você paga só o plano.")}
                 </p>
               </article>
             </div>
             <p className="chaves-nota">
-              Prefere que a Arvisx desenvolva os agentes para a sua operação? Esse é um serviço à
-              parte, os Agentes Arvisx, contratado depois de uma reunião.
+              {t("Prefere que a Arvisx desenvolva os agentes para a sua operação? Esse é um serviço à parte, os Agentes Arvisx, contratado depois de uma reunião.")}
             </p>
             <p className="chaves-link">
-              <a href="#agentes">Conheça os Agentes Arvisx</a>
+              <a href="#agentes">{t("Conheça os Agentes Arvisx")}</a>
             </p>
           </div>
         </section>
@@ -706,53 +728,53 @@ export default async function HomePage() {
         <section className="faixa mais claro alt" id="recursos">
           <div className="miolo">
             <div className="cabeca">
-              <p className="eyebrow">Mais recursos</p>
-              <h2>E o que ajuda a vender mais.</h2>
+              <p className="eyebrow">{t("Mais recursos")}</p>
+              <h2>{t("E o que ajuda a vender mais.")}</h2>
             </div>
             <div className="grade">
               <article className="cartao">
                 <span className="ic">
                   <ClockCountdown {...ico} />
                 </span>
-                <h3>Clientes parados</h3>
-                <p>Veja quem está sem resposta e o próximo passo de cada cliente.</p>
+                <h3>{t("Clientes parados")}</h3>
+                <p>{t("Veja quem está sem resposta e o próximo passo de cada cliente.")}</p>
               </article>
               <article className="cartao">
                 <span className="ic">
                   <CheckSquare {...ico} />
                 </span>
-                <h3>Tarefas e follow-ups</h3>
-                <p>Lembretes e tarefas ligados a cada cliente, com responsável e prazo.</p>
+                <h3>{t("Tarefas e follow-ups")}</h3>
+                <p>{t("Lembretes e tarefas ligados a cada cliente, com responsável e prazo.")}</p>
               </article>
               <article className="cartao">
                 <span className="ic">
                   <MegaphoneSimple {...ico} />
                 </span>
-                <h3>Campanhas e prospecção</h3>
+                <h3>{t("Campanhas e prospecção")}</h3>
                 <p>
-                  Encontre novos contatos, conduza as primeiras abordagens e acompanhe as campanhas.
+                  {t("Encontre novos contatos, conduza as primeiras abordagens e acompanhe as campanhas.")}
                 </p>
               </article>
               <article className="cartao">
                 <span className="ic">
                   <ChartBar {...ico} />
                 </span>
-                <h3>Painel de desempenho</h3>
-                <p>Acompanhe atendimento, funil e resultados da equipe num só painel.</p>
+                <h3>{t("Painel de desempenho")}</h3>
+                <p>{t("Acompanhe atendimento, funil e resultados da equipe num só painel.")}</p>
               </article>
               <article className="cartao">
                 <span className="ic">
                   <Code {...ico} />
                 </span>
-                <h3>API, webhooks e MCP</h3>
-                <p>Conecte o CRM às ferramentas que a sua empresa já usa.</p>
+                <h3>{t("API, webhooks e MCP")}</h3>
+                <p>{t("Conecte o CRM às ferramentas que a sua empresa já usa.")}</p>
               </article>
               <article className="cartao">
                 <span className="ic">
                   <ShieldCheck {...ico} />
                 </span>
-                <h3>Equipe e permissões</h3>
-                <p>Cada pessoa com o seu login e o seu papel, e as ações ficam registradas.</p>
+                <h3>{t("Equipe e permissões")}</h3>
+                <p>{t("Cada pessoa com o seu login e o seu papel, e as ações ficam registradas.")}</p>
               </article>
             </div>
           </div>
@@ -761,29 +783,26 @@ export default async function HomePage() {
         <section className="faixa painel como" id="como-funciona">
           <div className="miolo">
             <div className="cabeca">
-              <p className="eyebrow">Como começa</p>
-              <h2>Três passos, e o seu time já está usando.</h2>
+              <p className="eyebrow">{t("Como começa")}</p>
+              <h2>{t("Três passos, e o seu time já está usando.")}</h2>
             </div>
             <div className="passos">
               <article className="cartao passo">
-                <h3>Crie a sua conta</h3>
+                <h3>{t("Crie a sua conta")}</h3>
                 <p>
-                  Comece o teste grátis e entre como administrador da sua empresa, com acesso
-                  completo ao que o plano oferece.
+                  {t("Comece o teste grátis e entre como administrador da sua empresa, com acesso completo ao que o plano oferece.")}
                 </p>
               </article>
               <article className="cartao passo">
-                <h3>Conecte o WhatsApp</h3>
+                <h3>{t("Conecte o WhatsApp")}</h3>
                 <p>
-                  Conecte o número da empresa e convide a equipe. Usuários e números de WhatsApp são
-                  ilimitados.
+                  {t("Conecte o número da empresa e convide a equipe. Usuários e números de WhatsApp são ilimitados.")}
                 </p>
               </article>
               <article className="cartao passo">
-                <h3>Comece a atender</h3>
+                <h3>{t("Comece a atender")}</h3>
                 <p>
-                  As conversas chegam na caixa de entrada, entram no funil e ficam com o histórico
-                  completo.
+                  {t("As conversas chegam na caixa de entrada, entram no funil e ficam com o histórico completo.")}
                 </p>
               </article>
             </div>
@@ -793,11 +812,11 @@ export default async function HomePage() {
         <section className="faixa plano claro alt" id="plano">
           <div className="miolo">
             <div className="cabeca centro">
-              <p className="eyebrow">Planos</p>
-              <h2>Do atendimento à operação inteira com IA.</h2>
+              <p className="eyebrow">{t("Planos")}</p>
+              <h2>{t("Do atendimento à operação inteira com IA.")}</h2>
               <p>
-                Todos os planos começam com {OFERTA.trial}.
-                {vitrine.iva ? " Preços mensais + IVA." : " Preços mensais."}
+                {t("Todos os planos começam com")}{" "}{t(OFERTA.trial)}.{" "}
+                {vitrine.iva ? t("Preços mensais + IVA.") : t("Preços mensais.")}
               </p>
             </div>
             {vitrine.planos.length > 0 ? (
@@ -811,10 +830,10 @@ export default async function HomePage() {
                       className={`plano-card${destaque ? " destaque" : ""}${plano.inclui_agentes_arvisx ? " agentes" : ""}`}
                     >
                       <div className="pl-selos">
-                        {destaque ? <span className="pl-selo">Mais completo</span> : null}
+                        {destaque ? <span className="pl-selo">{t("Mais completo")}</span> : null}
                         {plano.inclui_agentes_arvisx ? (
                           <span className="pl-selo forte">
-                            <Sparkle {...ico} weight="fill" /> Agentes de IA sob medida
+                            <Sparkle {...ico} weight="fill" />{" "}{t("Agentes de IA sob medida")}
                           </span>
                         ) : null}
                       </div>
@@ -823,18 +842,23 @@ export default async function HomePage() {
                         <strong>{formatCents(plano.preco_cents, plano.moeda)}</strong>
                         <span>
                           {vitrine.iva ? "+ IVA " : ""}
-                          {plano.intervalo === "ano" ? "por ano" : "por mês"}
+                          {plano.intervalo === "ano" ? t("por ano") : t("por mês")}
                         </span>
                       </div>
                       {plano.descricao_curta ? <p className="pl-promessa">{plano.descricao_curta}</p> : null}
                       {plano.para_quem ? <p className="pl-quem">{plano.para_quem}</p> : null}
                       <p className="pl-limites">
-                        {plano.max_canais === null ? "Canais ilimitados" : `Até ${plano.max_canais} canais`} ·{" "}
-                        {plano.max_assentos === null ? "pessoas ilimitadas" : `até ${plano.max_assentos} pessoas`}
+                        {plano.max_canais === null
+                          ? t("Canais ilimitados")
+                          : comValores(t("Até {n} canais"), { n: plano.max_canais })}{" "}
+                        ·{" "}
+                        {plano.max_assentos === null
+                          ? t("pessoas ilimitadas")
+                          : comValores(t("até {n} pessoas"), { n: plano.max_assentos })}
                       </p>
                       {plano.como_funciona ? (
                         <div className="pl-como">
-                          <b>Como funciona</b>
+                          <b>{t("Como funciona")}</b>
                           <p>{plano.como_funciona}</p>
                         </div>
                       ) : null}
@@ -853,10 +877,10 @@ export default async function HomePage() {
                           esse começa pela reunião; os demais, pelo cadastro. */}
                       {plano.inclui_agentes_arvisx ? (
                         <a className="btn primario" href={LINKS.agendar}>
-                          Agendar reunião
+                          {t("Agendar reunião")}
                         </a>
                       ) : (
-                        <BotaoDeCadastro className={`btn ${destaque ? "primario" : "secundario"}`} comSeta={false} plano={plano.id} />
+                        <BotaoDeCadastro className={`btn ${destaque ? "primario" : "secundario"}`} comSeta={false} plano={plano.id} t={t} />
                       )}
                     </li>
                   );
@@ -864,13 +888,13 @@ export default async function HomePage() {
               </ul>
             ) : (
               <div className="planos-vazio">
-                <BotaoDeCadastro className="btn primario grande" comSeta />
+                <BotaoDeCadastro className="btn primario grande" comSeta t={t} />
               </div>
             )}
             {/* O aviso fixo de quem configura os agentes: o mesmo texto do comparativo dos planos. */}
-            <QuemCuidaDosAgentes variante="landing" />
+            <QuemCuidaDosAgentes variante="landing" t={t} />
             <p className="pc-link">
-              <a href="#agentes">Agentes de IA sob medida</a>
+              <a href="#agentes">{t("Agentes de IA sob medida")}</a>
             </p>
           </div>
         </section>
@@ -878,33 +902,30 @@ export default async function HomePage() {
         <section className="faixa ag-arvisx" id="agentes">
           <div className="miolo">
             <div>
-              <p className="eyebrow">Agentes Arvisx · Soluções sob medida</p>
-              <h2>Quer ir além do CRM? Agentes de IA feitos para a sua operação.</h2>
+              <p className="eyebrow">{t("Agentes Arvisx · Soluções sob medida")}</p>
+              <h2>{t("Quer ir além do CRM? Agentes de IA feitos para a sua operação.")}</h2>
               <p className="lede" style={{ marginTop: 16 }}>
-                A nossa equipe entende como o seu negócio funciona e{" "}
-                <strong>desenvolve agentes de IA sob medida</strong>, conectados à sua operação: ao
-                Arvisx CRM ou aos sistemas que você já usa. É um serviço contratado à parte, depois
-                de uma conversa, e não depende de plano.
+                {t("A nossa equipe entende como o seu negócio funciona e")}{" "}
+                <strong>{t("desenvolve agentes de IA sob medida")}</strong>{t(", conectados à sua operação: ao Arvisx CRM ou aos sistemas que você já usa. É um serviço contratado à parte, depois de uma conversa, e não depende de plano.")}
               </p>
             </div>
             <div className="passos">
               <article className="passo">
-                <h3>Você agenda uma reunião de 30 minutos com o time Arvisx</h3>
+                <h3>{t("Você agenda uma reunião de 30 minutos com o time Arvisx")}</h3>
               </article>
               <article className="passo">
-                <h3>Entendemos a sua operação e desenhamos os agentes com você</h3>
+                <h3>{t("Entendemos a sua operação e desenhamos os agentes com você")}</h3>
               </article>
               <article className="passo">
-                <h3>Enviamos a proposta, desenvolvemos e conectamos à sua operação</h3>
+                <h3>{t("Enviamos a proposta, desenvolvemos e conectamos à sua operação")}</h3>
               </article>
             </div>
             <div className="rodape-bloco" data-agentes-arvisx>
               <a className="btn primario" href={LINKS.agendar}>
-                Agendar reunião com o time Arvisx
+                {t("Agendar reunião com o time Arvisx")}
               </a>
               <p className="discreta">
-                O escopo, o prazo e o valor são combinados na proposta. O nome do assistente é o que
-                você quiser, e o agente se apresenta como assistente virtual.
+                {t("O escopo, o prazo e o valor são combinados na proposta. O nome do assistente é o que você quiser, e o agente se apresenta como assistente virtual.")}
               </p>
             </div>
           </div>
@@ -913,11 +934,10 @@ export default async function HomePage() {
         <section className="faixa quem claro" id="para-quem">
           <div className="miolo">
             <div className="cabeca">
-              <p className="eyebrow">Para quem é</p>
-              <h2>Para quem vende serviço por conversa.</h2>
+              <p className="eyebrow">{t("Para quem é")}</p>
+              <h2>{t("Para quem vende serviço por conversa.")}</h2>
               <p>
-                Negócios em que o cliente chega pelo WhatsApp, precisa de orientação e fecha depois
-                de uma proposta.
+                {t("Negócios em que o cliente chega pelo WhatsApp, precisa de orientação e fecha depois de uma proposta.")}
               </p>
             </div>
             <div className="grade">
@@ -925,33 +945,33 @@ export default async function HomePage() {
                 <span className="ic">
                   <GlobeHemisphereWest {...ico} />
                 </span>
-                <h3>Assessorias</h3>
-                <p>Cidadania, vistos, imigração e processos com etapas longas.</p>
+                <h3>{t("Assessorias")}</h3>
+                <p>{t("Cidadania, vistos, imigração e processos com etapas longas.")}</p>
               </article>
               <article className="cartao">
                 <span className="ic">
                   <Scales {...ico} />
                 </span>
-                <h3>Escritórios</h3>
-                <p>Advocacia e contabilidade que atendem e fecham pelo WhatsApp.</p>
+                <h3>{t("Escritórios")}</h3>
+                <p>{t("Advocacia e contabilidade que atendem e fecham pelo WhatsApp.")}</p>
               </article>
               <article className="cartao">
                 <span className="ic">
                   <Briefcase {...ico} />
                 </span>
-                <h3>Consultorias</h3>
-                <p>Negócios que vendem diagnóstico, projeto e acompanhamento.</p>
+                <h3>{t("Consultorias")}</h3>
+                <p>{t("Negócios que vendem diagnóstico, projeto e acompanhamento.")}</p>
               </article>
               <article className="cartao">
                 <span className="ic">
                   <PuzzlePiece {...ico} />
                 </span>
-                <h3>Serviços sob medida</h3>
-                <p>Agências, clínicas e intercâmbio, quando cada cliente é um projeto.</p>
+                <h3>{t("Serviços sob medida")}</h3>
+                <p>{t("Agências, clínicas e intercâmbio, quando cada cliente é um projeto.")}</p>
               </article>
             </div>
             <p style={{ marginTop: 24, color: "var(--apoio)", fontSize: 16, maxWidth: "60ch" }}>
-              Seu nicho não está aqui? Funis, etapas e nomes se ajustam ao seu jeito de vender.
+              {t("Seu nicho não está aqui? Funis, etapas e nomes se ajustam ao seu jeito de vender.")}
             </p>
           </div>
         </section>
@@ -959,76 +979,65 @@ export default async function HomePage() {
         <section className="faixa painel faq claro alt" id="faq">
           <div className="miolo">
             <div className="cabeca">
-              <p className="eyebrow">Perguntas frequentes</p>
-              <h2>O que costumam perguntar antes de fechar.</h2>
+              <p className="eyebrow">{t("Perguntas frequentes")}</p>
+              <h2>{t("O que costumam perguntar antes de fechar.")}</h2>
             </div>
             <div className="lista">
               <details>
-                <summary>Quanto custa?</summary>
+                <summary>{t("Quanto custa?")}</summary>
                 <p>
-                  <span>{quantoCusta}</span> Os Agentes Arvisx são um serviço à parte, orçado na
-                  reunião; nos planos, você configura e gerencia os seus agentes.
+                  <span>{quantoCusta}</span>{" "}{t("Os Agentes Arvisx são um serviço à parte, orçado na reunião; nos planos, você configura e gerencia os seus agentes.")}
                 </p>
               </details>
               <details>
-                <summary>Como funciona o teste grátis?</summary>
+                <summary>{t("Como funciona o teste grátis?")}</summary>
                 <p>
-                  Você começa com <span>{OFERTA.trial}</span> para conhecer o CRM com a sua equipe.
+                  {t("Você começa com")}{" "}<span>{t(OFERTA.trial)}</span>{" "}{t("para conhecer o CRM com a sua equipe.")}
                 </p>
               </details>
               <details>
-                <summary>Preciso saber programar?</summary>
+                <summary>{t("Preciso saber programar?")}</summary>
                 <p>
-                  Não. Você cria a conta, conecta o WhatsApp e começa a usar o CRM. Não exige
-                  programação.
+                  {t("Não. Você cria a conta, conecta o WhatsApp e começa a usar o CRM. Não exige programação.")}
                 </p>
               </details>
               <details>
-                <summary>Existe limite de usuários ou números?</summary>
+                <summary>{t("Existe limite de usuários ou números?")}</summary>
                 <p>
-                  Não há cobrança por usuário nem por número de WhatsApp, dentro do uso justo de uma
-                  empresa por conta.
+                  {t("Não há cobrança por usuário nem por número de WhatsApp, dentro do uso justo de uma empresa por conta.")}
                 </p>
               </details>
               <details>
-                <summary>Como funcionam as chamadas de voz e vídeo?</summary>
+                <summary>{t("Como funcionam as chamadas de voz e vídeo?")}</summary>
                 <p>
-                  A chamada de voz acontece pelo WhatsApp, direto do CRM. Ela usa um segundo
-                  aparelho vinculado ao número, como o WhatsApp Web. A videochamada é por link: o
-                  cliente entra pelo navegador, sem baixar app e sem criar conta.
+                  {t("A chamada de voz acontece pelo WhatsApp, direto do CRM. Ela usa um segundo aparelho vinculado ao número, como o WhatsApp Web. A videochamada é por link: o cliente entra pelo navegador, sem baixar app e sem criar conta.")}
                 </p>
               </details>
               <details>
-                <summary>Funciona com o WhatsApp comum?</summary>
+                <summary>{t("Funciona com o WhatsApp comum?")}</summary>
                 <p>
-                  Sim, por QR code ou pela API oficial da Meta. O QR code é um canal não oficial,
-                  com risco de bloqueio como qualquer ferramenta desse tipo. Na API oficial, os
-                  custos são cobrados pela própria Meta.
+                  {t("Sim, por QR code ou pela API oficial da Meta. O QR code é um canal não oficial, com risco de bloqueio como qualquer ferramenta desse tipo. Na API oficial, os custos são cobrados pela própria Meta.")}
                 </p>
               </details>
               <details>
-                <summary>Como funciona a IA?</summary>
+                <summary>{t("Como funciona a IA?")}</summary>
                 <p>
-                  A IA é integrada ao CRM a partir do plano Standard. Você conecta as suas próprias
-                  chaves ou planos de IA e é responsável por configurar e gerenciar os seus agentes.
-                  O consumo é cobrado pelo seu provedor de IA, nunca pela Arvisx.
+                  {t("A IA é integrada ao CRM a partir do plano Standard. Você conecta as suas próprias chaves ou planos de IA e é responsável por configurar e gerenciar os seus agentes. O consumo é cobrado pelo seu provedor de IA, nunca pela Arvisx.")}
                 </p>
               </details>
               <details>
-                <summary>O que são os Agentes Arvisx?</summary>
+                <summary>{t("O que são os Agentes Arvisx?")}</summary>
                 <p>
-                  São agentes de IA desenvolvidos pela nossa equipe depois de entender a sua
-                  operação, conectados à sua operação, no Arvisx CRM ou em outros sistemas. É um
-                  serviço contratado à parte, por reunião e proposta, e não depende de plano.
+                  {t("São agentes de IA desenvolvidos pela nossa equipe depois de entender a sua operação, conectados à sua operação, no Arvisx CRM ou em outros sistemas. É um serviço contratado à parte, por reunião e proposta, e não depende de plano.")}
                 </p>
               </details>
               <details>
-                <summary>Onde ficam os meus dados?</summary>
-                <p>Cada empresa fica isolada das outras, com registro de ações.</p>
+                <summary>{t("Onde ficam os meus dados?")}</summary>
+                <p>{t("Cada empresa fica isolada das outras, com registro de ações.")}</p>
               </details>
               <details>
-                <summary>Posso cancelar quando quiser?</summary>
-                <p>Sim. Você pode cancelar quando quiser.</p>
+                <summary>{t("Posso cancelar quando quiser?")}</summary>
+                <p>{t("Sim. Você pode cancelar quando quiser.")}</p>
               </details>
             </div>
           </div>
@@ -1040,32 +1049,30 @@ export default async function HomePage() {
           <div className="colunas">
             <div className="marca-col">
               <Image src="/marca/arvisx-crm-escuro.png" alt={marca.nome} width={715} height={85} />
-              <p>Toda a sua operação de vendas e atendimento em um só CRM.</p>
+              <p>{t("Toda a sua operação de vendas e atendimento em um só CRM.")}</p>
             </div>
-            <nav aria-label="Rodapé">
-              <b>Navegue</b>
-              <a href="#crm">O CRM</a>
-              <a href="#chamadas">Chamadas de voz e vídeo</a>
-              <a href="#plano">Preço</a>
+            <nav aria-label={t("Rodapé")}>
+              <b>{t("Navegue")}</b>
+              <a href="#crm">{t("O CRM")}</a>
+              <a href="#chamadas">{t("Chamadas de voz e vídeo")}</a>
+              <a href="#plano">{t("Preço")}</a>
               <a href="#agentes">Agentes Arvisx</a>
-              <a href="#para-quem">Para quem é</a>
-              <a href="#faq">Perguntas frequentes</a>
+              <a href="#para-quem">{t("Para quem é")}</a>
+              <a href="#faq">{t("Perguntas frequentes")}</a>
             </nav>
-            <nav className="legal" aria-label="Legal">
-              <b>Legal</b>
-              <a href={LINKS.termos}>Termos de Serviço</a>
-              <a href={LINKS.privacidade}>Política de Privacidade</a>
-              <a href={LINKS.exclusaoDeDados}>Exclusão de Dados</a>
+            <nav className="legal" aria-label={t("Legal")}>
+              <b>{t("Legal")}</b>
+              <a href={LINKS.termos}>{t("Termos de Serviço")}</a>
+              <a href={LINKS.privacidade}>{t("Política de Privacidade")}</a>
+              <a href={LINKS.exclusaoDeDados}>{t("Exclusão de Dados")}</a>
             </nav>
           </div>
           <div className="base">
             <span>
-              Arvisx CRM — CRM de vendas e atendimento. © 2026 Arvisx AI. Todos os direitos
-              reservados.
+              {t("Arvisx CRM — CRM de vendas e atendimento. © 2026 Arvisx AI. Todos os direitos reservados.")}
             </span>
             <span>
-              Arvisx CRM é um produto da <a href={LINKS.site}>Arvisx AI</a>. O elo inteligente do
-              seu ecossistema.
+              {t("Arvisx CRM é um produto da")}{" "}<a href={LINKS.site}>Arvisx AI</a>{t(". O elo inteligente do seu ecossistema.")}
             </span>
           </div>
         </div>
@@ -1073,6 +1080,7 @@ export default async function HomePage() {
       <AvisoDeCookies />
       <InteracoesDaLanding />
     </div>
+    </IdiomaProvider>
   );
 }
 

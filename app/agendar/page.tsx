@@ -5,7 +5,11 @@ import Link from "next/link";
 import { archivoDaVitrine } from "@/components/landing/fonte";
 import { CartaoDaAgenda } from "@/components/landing/CartaoDaAgenda";
 import { marcaDaSaida } from "@/lib/branding/saida";
+import { traduzir } from "@/lib/i18n/dicionario";
+import { idiomaDoVisitante } from "@/lib/i18n/idiomaAnonimo";
+import { IdiomaProvider } from "@/lib/i18n/IdiomaProvider";
 import { LINKS } from "@/lib/landing/links";
+import { createClient } from "@/lib/supabase/server";
 
 import "./agendar.css";
 
@@ -34,11 +38,23 @@ export const metadata: Metadata = {
 export default async function AgendarPage() {
   // Nome da marca vem do banco (catraca nome-da-marca-nas-telas-vem-do-banco).
   const marca = await marcaDaSaida(null);
+  // Quem tem sessão também abre esta página: vale o idioma salvo no perfil; sem
+  // sessão, o do navegador, pela mesma função das outras telas públicas. O
+  // provider leva esse idioma ao cartão da agenda, que é componente de cliente.
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const locale = await idiomaDoVisitante(
+    (user?.user_metadata?.locale as string | undefined) ?? null,
+  );
+  const t = (texto: string) => traduzir(texto, locale);
 
   return (
+    <IdiomaProvider locale={locale}>
     <div className={`ag ${archivoDaVitrine.variable}`}>
       <header className="topo">
-        <Link className="marca" href="/" aria-label={`${marca.nome}, voltar ao início`}>
+        <Link className="marca" href="/" aria-label={`${marca.nome}, ${t("voltar ao início")}`}>
           <Image
             src="/marca/arvisx-crm-escuro.png"
             alt={marca.nome}
@@ -48,20 +64,17 @@ export default async function AgendarPage() {
           />
         </Link>
         <Link className="btn" href="/">
-          Voltar ao site
+          {t("Voltar ao site")}
         </Link>
       </header>
 
       <main className="pagina">
         <div className="miolo">
           <section className="intro" aria-labelledby="titulo">
-            <span className="eyebrow">Agentes Arvisx · Reunião com o time Arvisx</span>
-            <h1 id="titulo">Quer agentes de IA feitos para a sua operação?</h1>
+            <span className="eyebrow">{t("Agentes Arvisx · Reunião com o time Arvisx")}</span>
+            <h1 id="titulo">{t("Quer agentes de IA feitos para a sua operação?")}</h1>
             <p className="lead">
-              Os Agentes Arvisx são um serviço sob medida, contratado à parte do plano, e ele começa
-              por esta conversa de 30 minutos: entendemos a sua operação e preparamos a proposta.
-              Vale para quem já usa o Arvisx CRM, em qualquer plano, e para quem usa outras
-              ferramentas.
+              {t("Os Agentes Arvisx são um serviço sob medida, contratado à parte do plano, e ele começa por esta conversa de 30 minutos: entendemos a sua operação e preparamos a proposta. Vale para quem já usa o Arvisx CRM, em qualquer plano, e para quem usa outras ferramentas.")}
             </p>
             <div className="fio" aria-hidden="true" />
 
@@ -81,22 +94,20 @@ export default async function AgendarPage() {
                       <path d="M5 12l5 5L20 7" />
                     </svg>
                   </span>
-                  Esta reunião é para
+                  {t("Esta reunião é para")}
                 </h2>
                 <ul>
                   <li>
-                    <b>Quem quer os Agentes Arvisx (serviço sob medida):</b> agentes de IA
-                    desenvolvidos pela nossa equipe
+                    <b>{t("Quem quer os Agentes Arvisx (serviço sob medida):")}</b>{" "}{t("agentes de IA desenvolvidos pela nossa equipe")}
                   </li>
                   <li>
-                    <b>Entender a sua operação</b> antes de qualquer desenvolvimento
+                    <b>{t("Entender a sua operação")}</b>{" "}{t("antes de qualquer desenvolvimento")}
                   </li>
                   <li>
-                    <b>Preparar a proposta:</b> entender a sua operação e definir o que será
-                    desenvolvido
+                    <b>{t("Preparar a proposta:")}</b>{" "}{t("entender a sua operação e definir o que será desenvolvido")}
                   </li>
                   <li>
-                    <b>Combinar o escopo</b> dos agentes e das integrações
+                    <b>{t("Combinar o escopo")}</b>{" "}{t("dos agentes e das integrações")}
                   </li>
                 </ul>
               </div>
@@ -115,34 +126,33 @@ export default async function AgendarPage() {
                       <path d="M6 6l12 12M18 6L6 18" />
                     </svg>
                   </span>
-                  Não é para
+                  {t("Não é para")}
                 </h2>
                 <ul>
                   <li>
-                    <b>Conhecer o CRM ou ver o preço:</b>{" "}
-                    <Link href="/">comece o teste grátis de 7 dias</Link>, sem precisar de reunião.
+                    <b>{t("Conhecer o CRM ou ver o preço:")}</b>{" "}
+                    <Link href="/">{t("comece o teste grátis de 7 dias")}</Link>{t(", sem precisar de reunião.")}
                   </li>
                   <li>
-                    <b>Assinar o Essencial, o Standard ou o Premium:</b> não precisa de reunião.
-                    Nos planos, você configura os seus agentes.
+                    <b>{t("Assinar o Essencial, o Standard ou o Premium:")}</b>{" "}{t("não precisa de reunião. Nos planos, você configura os seus agentes.")}
                   </li>
                   <li>
-                    <b>Suporte e dúvidas de uso:</b> escreva para{" "}
+                    <b>{t("Suporte e dúvidas de uso:")}</b>{" "}{t("escreva para")}{" "}
                     <a href={LINKS.suporte}>suporte@arvisx.com.br</a>.
                   </li>
                 </ul>
               </div>
             </div>
 
-            <div className="traga" aria-label="O que trazer para a reunião">
+            <div className="traga" aria-label={t("O que trazer para a reunião")}>
               <div>
-                <b>O que resolver</b>O atendimento ou o processo em que os agentes vão atuar.
+                <b>{t("O que resolver")}</b>{t("O atendimento ou o processo em que os agentes vão atuar.")}
               </div>
               <div>
-                <b>Seus sistemas</b>As ferramentas que a sua empresa já usa.
+                <b>{t("Seus sistemas")}</b>{t("As ferramentas que a sua empresa já usa.")}
               </div>
               <div>
-                <b>Exemplos reais</b>Uma conversa, uma planilha ou uma tela.
+                <b>{t("Exemplos reais")}</b>{t("Uma conversa, uma planilha ou uma tela.")}
               </div>
             </div>
           </section>
@@ -155,14 +165,15 @@ export default async function AgendarPage() {
 
       <footer className="rodape">
         <div className="linha">
-          <span>© 2026 Arvisx. Todos os direitos reservados.</span>
-          <nav aria-label="Legal">
-            <Link href={LINKS.termos}>Termos de Serviço</Link>
-            <Link href={LINKS.privacidade}>Política de Privacidade</Link>
-            <Link href={LINKS.exclusaoDeDados}>Exclusão de Dados</Link>
+          <span>{t("© 2026 Arvisx. Todos os direitos reservados.")}</span>
+          <nav aria-label={t("Legal")}>
+            <Link href={LINKS.termos}>{t("Termos de Serviço")}</Link>
+            <Link href={LINKS.privacidade}>{t("Política de Privacidade")}</Link>
+            <Link href={LINKS.exclusaoDeDados}>{t("Exclusão de Dados")}</Link>
           </nav>
         </div>
       </footer>
     </div>
+    </IdiomaProvider>
   );
 }

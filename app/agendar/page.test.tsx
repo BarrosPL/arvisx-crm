@@ -7,6 +7,13 @@ vi.mock("next/font/local", () => ({
 vi.mock("@/lib/branding/saida", () => ({
   marcaDaSaida: async () => ({ nome: "Arvisx CRM" }),
 }));
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: async () => ({
+    auth: { getUser: async () => ({ data: { user: null } }) },
+  }),
+}));
+// Sem requisição não há cabeçalho de idioma para ler: a página sai no padrão, pt-BR.
+vi.mock("@/lib/i18n/idiomaAnonimo", () => ({ idiomaDoVisitante: async () => "pt-BR" }));
 
 import AgendarPage, { metadata } from "./page";
 import { AGENDA_EMBED } from "@/lib/landing/links";

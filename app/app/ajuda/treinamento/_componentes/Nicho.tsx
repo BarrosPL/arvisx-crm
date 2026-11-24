@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Route } from "next";
 
 import { FotoAnotada } from "@/components/ajuda/FotoAnotada";
+import { useT } from "@/hooks/i18n/useT";
 import { hrefDaLicao } from "@/lib/ajuda/treinamento/busca";
 import type { NichoDoTreinamento } from "@/lib/ajuda/treinamento/conteudo";
 
@@ -29,13 +30,14 @@ export function ConteudoDoNicho({
   nicho: NichoDoTreinamento;
   licoes: IndiceDeLicoes;
 }) {
+  const t = useT();
   const visiveis = useTelasVisiveis();
 
   return (
     <article className="flex flex-col gap-10">
       <header className="flex flex-col gap-2 border-b pb-5">
         <p className="text-xs font-semibold text-[var(--color-cta-forte)]">
-          Histórias por nicho
+          {t("Histórias por nicho")}
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">{nicho.titulo}</h1>
         <p className="max-w-3xl text-sm text-muted-foreground">{nicho.resumo}</p>
@@ -53,11 +55,11 @@ export function ConteudoDoNicho({
               {j.titulo}
             </h2>
             <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_minmax(0,1fr)]">
-              <dt className="font-medium">Empresa</dt>
+              <dt className="font-medium">{t("Empresa")}</dt>
               <dd className="text-muted-foreground">{j.empresa}</dd>
-              <dt className="font-medium">Contexto</dt>
+              <dt className="font-medium">{t("Contexto")}</dt>
               <dd className="text-muted-foreground">{j.contexto}</dd>
-              <dt className="font-medium">Resultado</dt>
+              <dt className="font-medium">{t("Resultado")}</dt>
               <dd className="text-muted-foreground">{j.resultado}</dd>
             </dl>
             <p className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">{j.nota}</p>
@@ -68,16 +70,16 @@ export function ConteudoDoNicho({
               <li key={c.id} className="flex flex-col gap-3 rounded-xl border bg-card p-4 sm:p-5">
                 <h3 className="flex items-baseline gap-2 text-base font-semibold">
                   <span className="shrink-0 text-sm font-semibold text-[var(--color-cta-forte)]">
-                    {i + 1}. {MOMENTO[c.id] ?? c.id}
+                    {i + 1}. {MOMENTO[c.id] ? t(MOMENTO[c.id] as string) : c.id}
                   </span>
                   <span>{c.titulo}</span>
                 </h3>
                 <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_minmax(0,1fr)]">
-                  <dt className="font-medium">O cliente</dt>
+                  <dt className="font-medium">{t("O cliente")}</dt>
                   <dd>{c.cliente}</dd>
-                  <dt className="font-medium">A operação</dt>
+                  <dt className="font-medium">{t("A operação")}</dt>
                   <dd>{c.operacao}</dd>
-                  <dt className="font-medium">O ganho</dt>
+                  <dt className="font-medium">{t("O ganho")}</dt>
                   <dd>{c.valor}</dd>
                 </dl>
                 <FotoAnotada foto={c.foto} alt={c.titulo} />
@@ -86,7 +88,7 @@ export function ConteudoDoNicho({
           </ol>
 
           <div className="flex flex-col gap-2 rounded-xl border border-dashed p-4 sm:p-5">
-            <h3 className="text-sm font-semibold">Para montar isso no seu CRM</h3>
+            <h3 className="text-sm font-semibold">{t("Para montar isso no seu CRM")}</h3>
             <ul className="flex flex-col gap-2 text-sm">
               {j.montagem.map((ref) => {
                 const modulo = licoes[ref.modulo];
@@ -106,7 +108,7 @@ export function ConteudoDoNicho({
                     ) : (
                       <span className="font-medium">
                         {nome}{" "}
-                        <span className="font-normal text-muted-foreground">(fora do seu menu)</span>
+                        <span className="font-normal text-muted-foreground">{t("(fora do seu menu)")}</span>
                       </span>
                     )}
                     <span className="text-muted-foreground">{ref.porque}</span>

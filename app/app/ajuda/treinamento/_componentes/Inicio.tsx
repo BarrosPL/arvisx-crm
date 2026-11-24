@@ -5,6 +5,7 @@ import type { Route } from "next";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/hooks/i18n/useT";
 import {
   RAIZ_DO_TREINAMENTO,
   hrefDaJornada,
@@ -35,6 +36,7 @@ export function InicioDoTreinamento({
   menu: GrupoComResumo[];
   nichos: { id: string; titulo: string; resumo: string; jornadas: { id: string; titulo: string }[] }[];
 }) {
+  const t = useT();
   const visiveis = useTelasVisiveis();
   const grupos = menuVisivel(menu, visiveis);
   // A busca roda no servidor sobre tudo; aqui sai o que é de tela que a pessoa não vê.
@@ -54,28 +56,29 @@ export function InicioDoTreinamento({
         <div className="relative flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <p className="text-xs font-semibold text-[var(--color-brand)]">
-              Ajuda
+              {t("Ajuda")}
             </p>
-            <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Guia de uso</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">{t("Guia de uso")}</h1>
             <p className="max-w-2xl text-sm text-[var(--color-sidebar-fg)]">
-              Lições passo a passo com a foto de cada tela e os pontos para clicar destacados. Escolha
-              um módulo ao lado, procure uma dúvida ou veja como outras empresas usam o CRM.
+              {t(
+                "Lições passo a passo com a foto de cada tela e os pontos para clicar destacados. Escolha um módulo ao lado, procure uma dúvida ou veja como outras empresas usam o CRM.",
+              )}
             </p>
           </div>
           <form action={RAIZ_DO_TREINAMENTO} method="get" role="search" className="flex max-w-xl gap-2">
             <label htmlFor="busca-do-treinamento" className="sr-only">
-              Buscar no guia de uso
+              {t("Buscar no guia de uso")}
             </label>
             <Input
               id="busca-do-treinamento"
               name="q"
               type="search"
               defaultValue={consulta}
-              placeholder="Ex.: nota interna, agendamento, etiqueta"
+              placeholder={t("Ex.: nota interna, agendamento, etiqueta")}
               className="bg-white text-[var(--color-cta-fg)]"
             />
             <Button type="submit" className="shrink-0">
-              Buscar
+              {t("Buscar")}
             </Button>
           </form>
         </div>
@@ -86,16 +89,16 @@ export function InicioDoTreinamento({
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 id="titulo-resultados" className="text-lg font-semibold">
               {achados.length
-                ? `${achados.length} ${achados.length === 1 ? "resultado" : "resultados"} para “${consulta}”`
-                : `Nada encontrado para “${consulta}”`}
+                ? `${achados.length} ${achados.length === 1 ? t("resultado") : t("resultados")} ${t("para")} “${consulta}”`
+                : `${t("Nada encontrado para")} “${consulta}”`}
             </h2>
             <Link href={RAIZ_DO_TREINAMENTO as Route} className="text-sm underline underline-offset-4">
-              Limpar busca
+              {t("Limpar busca")}
             </Link>
           </div>
           {achados.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              Tente outra palavra, ou procure pelo nome da tela no menu ao lado.
+              {t("Tente outra palavra, ou procure pelo nome da tela no menu ao lado.")}
             </p>
           )}
           <ul className="flex flex-col divide-y rounded-lg border">
@@ -108,7 +111,7 @@ export function InicioDoTreinamento({
                 >
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="rounded-md bg-[var(--color-cta-leve)] px-1.5 py-0.5 text-[11px] font-semibold text-[var(--color-cta-forte)]">
-                      {TIPO[r.tipo]}
+                      {t(TIPO[r.tipo])}
                     </span>
                     <span className="text-sm font-medium">{r.titulo}</span>
                   </span>
@@ -138,7 +141,7 @@ export function InicioDoTreinamento({
                       <span className="flex items-baseline justify-between gap-2">
                         <span className="font-medium">{m.titulo}</span>
                         <span className="shrink-0 text-xs text-muted-foreground">
-                          {m.licoes} {m.licoes === 1 ? "lição" : "lições"}
+                          {m.licoes} {m.licoes === 1 ? t("lição") : t("lições")}
                         </span>
                       </span>
                       <span className="text-sm text-muted-foreground">{m.resumo}</span>
@@ -152,10 +155,12 @@ export function InicioDoTreinamento({
           <section aria-labelledby="titulo-historias" className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
               <h2 id="titulo-historias" className="text-sm font-semibold text-muted-foreground">
-                Histórias por nicho
+                {t("Histórias por nicho")}
               </h2>
               <p className="text-sm text-muted-foreground">
-                Como uma empresa fictícia de cada ramo atende do primeiro contato ao acompanhamento.
+                {t(
+                  "Como uma empresa fictícia de cada ramo atende do primeiro contato ao acompanhamento.",
+                )}
               </p>
             </div>
             <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

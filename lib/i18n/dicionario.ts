@@ -35,6 +35,9 @@ import { entradaDoCatalogo } from "./catalogos";
 import type { Idioma } from "./idiomas";
 import { TEXTOS_AGENDA_CONFIGURACAO } from "./agenda-configuracao";
 import { TEXTOS_AGENDA_SERVICOS } from "./agenda-servicos";
+import { TEXTOS_GUIA_DE_USO } from "./guia-de-uso";
+import { TEXTOS_LANDING } from "./landing";
+import { TEXTOS_LEGAIS } from "./legais";
 
 /** `pt-BR` não aparece: é a chave. Só o que DIFERE precisa de linha. */
 type Traducoes = Record<string, Partial<Record<Exclude<Idioma, "pt-BR">, string>>>;
@@ -323,6 +326,9 @@ export const DICIONARIO: Traducoes = {
   "Só é possível encaminhar mensagens de texto ou mídia.": { es: "Solo se pueden reenviar mensajes de texto o multimedia." },
   ...TEXTOS_AGENDA_SERVICOS,
   ...TEXTOS_AGENDA_CONFIGURACAO,
+  ...TEXTOS_LANDING,
+  ...TEXTOS_LEGAIS,
+  ...TEXTOS_GUIA_DE_USO,
   "Etiquetas de contato interno": { es: "Etiquetas de contacto interno" },
   "Etiquetas de contato da equipe": { es: "Etiquetas de contacto del equipo" },
   "Contato marcado com uma destas etiquetas continua sendo atendido pela IA, é medido pelo clima e não é passado a uma pessoa nem silenciado por isso — o sócio que testa o agente e pede informação a qualquer hora. Também não vira card no funil. Uma etiqueta por linha.":

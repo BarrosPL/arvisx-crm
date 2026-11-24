@@ -8,6 +8,7 @@ import { useState } from "react";
 import type { GrupoDoMenu } from "@/lib/ajuda/treinamento/menu";
 import { menuVisivel } from "@/lib/ajuda/treinamento/menu";
 import { RAIZ_DO_TREINAMENTO, hrefDoModulo, hrefDoNicho } from "@/lib/ajuda/treinamento/busca";
+import { useT } from "@/hooks/i18n/useT";
 import { cn } from "@/lib/utils";
 
 import { useTelasVisiveis } from "./visibilidade";
@@ -33,6 +34,7 @@ export function CascaDoTreinamento({
   nichos: NichoNoMenu[];
   children: React.ReactNode;
 }) {
+  const t = useT();
   const visiveis = useTelasVisiveis();
   const grupos = menuVisivel(menu, visiveis);
   const caminho = usePathname();
@@ -66,19 +68,19 @@ export function CascaDoTreinamento({
           aria-controls="menu-do-treinamento"
           onClick={() => setAberto((v) => !v)}
         >
-          <span>Módulos e histórias</span>
+          <span>{t("Módulos e histórias")}</span>
           <span aria-hidden="true">{aberto ? "▲" : "▼"}</span>
         </button>
         <nav
           id="menu-do-treinamento"
-          aria-label="Módulos do guia de uso"
+          aria-label={t("Módulos do guia de uso")}
           className={cn(
             "mt-2 flex-col gap-5 rounded-lg border p-3 md:mt-0 md:flex",
             aberto ? "flex" : "hidden",
           )}
         >
           <div className="flex flex-col gap-1">
-            {item(RAIZ_DO_TREINAMENTO, "Início e busca")}
+            {item(RAIZ_DO_TREINAMENTO, t("Início e busca"))}
           </div>
           {grupos.map((g) => (
             <div key={g.grupo} className="flex flex-col gap-1">
@@ -88,7 +90,7 @@ export function CascaDoTreinamento({
               <ul className="flex flex-col">
                 {g.modulos.map((m) => (
                   <li key={m.id}>
-                    {item(hrefDoModulo(m.id), m.titulo, `${m.licoes} ${m.licoes === 1 ? "lição" : "lições"}`)}
+                    {item(hrefDoModulo(m.id), m.titulo, `${m.licoes} ${m.licoes === 1 ? t("lição") : t("lições")}`)}
                   </li>
                 ))}
               </ul>
@@ -96,12 +98,12 @@ export function CascaDoTreinamento({
           ))}
           <div className="flex flex-col gap-1">
             <h2 className="px-2.5 text-xs font-semibold text-muted-foreground">
-              Histórias por nicho
+              {t("Histórias por nicho")}
             </h2>
             <ul className="flex flex-col">
               {nichos.map((n) => (
                 <li key={n.id}>
-                  {item(hrefDoNicho(n.id), n.titulo, `${n.jornadas} ${n.jornadas === 1 ? "história" : "histórias"}`)}
+                  {item(hrefDoNicho(n.id), n.titulo, `${n.jornadas} ${n.jornadas === 1 ? t("história") : t("histórias")}`)}
                 </li>
               ))}
             </ul>
