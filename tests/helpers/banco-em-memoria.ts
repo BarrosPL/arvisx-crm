@@ -28,6 +28,10 @@ type Predicado = (linha: Linha) => boolean;
 /** `payload @> filtro`, como o Postgres compara jsonb. */
 function contem(valor: unknown, filtro: unknown): boolean {
   if (filtro === null || typeof filtro !== "object") return valor === filtro;
+  // Array contém array quando cada elemento pedido aparece em algum lugar.
+  if (Array.isArray(filtro)) {
+    return Array.isArray(valor) && filtro.every((f) => valor.some((v) => contem(v, f)));
+  }
   if (valor === null || typeof valor !== "object") return false;
   return Object.entries(filtro as Linha).every(([k, v]) => contem((valor as Linha)[k], v));
 }
@@ -49,13 +53,53 @@ function dividirNoTopo(texto: string): string[] {
   return partes;
 }
 
+/**
+ * Os elementos de um literal de array do Postgres (`{"a","b c"}`), como o
+ * operando de `cs` chega: entre aspas, com `"` e `\` escapados por barra.
+ */
+function elementosDoArray(literal: string): string[] {
+  const miolo = literal.trim().replace(/^\{|\}$/g, "");
+  const elementos: string[] = [];
+  let atual = "";
+  let entreAspas = false;
+  for (let i = 0; i < miolo.length; i++) {
+    const ch = miolo[i]!;
+    if (ch === "\\" && i + 1 < miolo.length) {
+      atual += miolo[++i];
+    } else if (ch === '"') {
+      entreAspas = !entreAspas;
+    } else if (ch === "," && !entreAspas) {
+      elementos.push(atual);
+      atual = "";
+    } else atual += ch;
+  }
+  if (atual !== "" || miolo !== "") elementos.push(atual);
+  return elementos;
+}
+
+/** O valor de um operando do `or=` que veio entre aspas: tira as aspas e o escape. */
+function semAspasDoOr(bruto: string): string {
+  if (!(bruto.startsWith('"') && bruto.endsWith('"'))) return bruto;
+  return bruto.slice(1, -1).replace(/\\(.)/g, "$1");
+}
+
+/** `coluna @> literal`, para coluna `text[]`. */
+function contemOArray(valor: unknown, literal: string): boolean {
+  return Array.isArray(valor) && elementosDoArray(literal).every((e) => valor.includes(e));
+}
+
+/** `coluna && literal`, para coluna `text[]`: tem ALGUM dos elementos. */
+function cruzaOArray(valor: unknown, literal: string): boolean {
+  return Array.isArray(valor) && elementosDoArray(literal).some((e) => valor.includes(e));
+}
+
 /** Uma condição do `.or(...)`: `col.eq.x`, `col.gt.x`, `col.lt.x`, `col.in.(a,b)`, `and(...)`. */
 function condicao(texto: string): Predicado {
   if (texto.startsWith("and(") && texto.endsWith(")")) {
     const todas = dividirNoTopo(texto.slice(4, -1)).map(condicao);
     return (l) => todas.every((p) => p(l));
   }
-  const m = /^([a-z_]+)\.(eq|gt|lt|in|is)\.(.*)$/s.exec(texto);
+  const m = /^([a-z_]+)\.(eq|gt|lt|in|is|cs)\.(.*)$/s.exec(texto);
   if (!m) throw new Error(`banco em memória: condição não entendida em or(): ${texto}`);
   const [, coluna, op, bruto] = m as unknown as [string, string, string, string];
   switch (op) {
@@ -67,6 +111,8 @@ function condicao(texto: string): Predicado {
       return (l) => String(l[coluna]) < bruto;
     case "is":
       return (l) => (bruto === "null" ? l[coluna] === null || l[coluna] === undefined : false);
+    case "cs":
+      return (l) => contemOArray(l[coluna], semAspasDoOr(bruto));
     default: {
       const valores = bruto.replace(/^\(|\)$/g, "").split(",");
       return (l) => valores.includes(String(l[coluna]));
@@ -131,6 +177,10 @@ export function bancoEmMemoria(
     const predicados: Predicado[] = [];
     const ordens: Array<{ coluna: string; asc: boolean }> = [];
     let limite: number | null = null;
+    // `range(de, até)` e `select(…, { count: "exact" })`: a varredura paginada de
+    // contatos duplicados prova o fim pela contagem, não pela página curta.
+    let faixa: [number, number] | null = null;
+    let pedirContagem = false;
 
     const comEmbutido = (linha: Linha): Linha => {
       const e = EMBUTIDOS[tabela];
@@ -142,7 +192,11 @@ export function bancoEmMemoria(
       };
     };
 
-    const executar = (): { data: Linha[] | null; error: { code?: string; message: string } | null } => {
+    const executar = (): {
+      data: Linha[] | null;
+      error: { code?: string; message: string } | null;
+      count?: number | null;
+    } => {
       if (operacao === "insert") {
         const novas: Linha[] = (Array.isArray(dados) ? dados : [dados!]).map((d) => {
           const carimbo = agora();
@@ -176,13 +230,18 @@ export function bancoEmMemoria(
           return (x < y ? -1 : x > y ? 1 : 0) * (asc ? 1 : -1);
         });
       }
+      const total = achadas.length;
+      if (faixa !== null) achadas = achadas.slice(faixa[0], faixa[1] + 1);
       if (limite !== null) achadas = achadas.slice(0, limite);
-      return { data: achadas.map(comEmbutido), error: null };
+      return { data: achadas.map(comEmbutido), error: null, count: pedirContagem ? total : null };
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cadeia: any = {
-      select: () => cadeia,
+      select: (_colunas?: string, opcoes?: { count?: string }) => {
+        if (opcoes?.count) pedirContagem = true;
+        return cadeia;
+      },
       insert: (linha: Linha | Linha[]) => {
         operacao = "insert";
         dados = linha;
@@ -225,6 +284,25 @@ export function bancoEmMemoria(
         predicados.push((l) => contem(l[coluna], filtro));
         return cadeia;
       },
+      // `.filter(col, "cs", '{"a"}')` e `.not(col, "cs" | "in", …)`: só os
+      // operadores que os handlers usam. Outro operador lança, para o teste não
+      // ficar verde porque um filtro foi ignorado.
+      filter: (coluna: string, op: string, valor: string) => {
+        if (op === "cs") predicados.push((l) => contemOArray(l[coluna], valor));
+        else if (op === "ov") predicados.push((l) => cruzaOArray(l[coluna], valor));
+        else throw new Error(`banco em memória: filter(${op}) não previsto`);
+        return cadeia;
+      },
+      not: (coluna: string, op: string, valor: string) => {
+        if (op === "cs") predicados.push((l) => !contemOArray(l[coluna], valor));
+        else if (op === "ov") predicados.push((l) => !cruzaOArray(l[coluna], valor));
+        else if (op === "in") {
+          // Como no Postgres: `not (null in (...))` é nulo, e a linha não passa.
+          const fora = valor.replace(/^\(|\)$/g, "").split(",");
+          predicados.push((l) => l[coluna] != null && !fora.includes(String(l[coluna])));
+        } else throw new Error(`banco em memória: not(${op}) não previsto`);
+        return cadeia;
+      },
       or: (texto: string) => {
         const alternativas = dividirNoTopo(texto).map(condicao);
         predicados.push((l) => alternativas.some((p) => p(l)));
@@ -236,6 +314,10 @@ export function bancoEmMemoria(
       },
       limit: (n: number) => {
         limite = n;
+        return cadeia;
+      },
+      range: (de: number, ate: number) => {
+        faixa = [de, ate];
         return cadeia;
       },
       maybeSingle: () => {

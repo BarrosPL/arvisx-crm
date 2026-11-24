@@ -49,9 +49,9 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "crm_propose_contact_field": { tokens: 438, motivo: BASE },
   "crm_list_conversations": { tokens: 283, motivo: BASE },
   "crm_get_conversation": { tokens: 266, motivo: "+38 do bloco `ai` (superfície de agente, PR 3): sem a frase, o agente não sabe que a resposta diz se uma pessoa assumiu a conversa, nem que com `ai.paused` ele não deve responder ao cliente" },
-  "crm_get_conversation_history": { tokens: 203, motivo: BASE },
+  "crm_get_conversation_history": { tokens: 256, motivo: "+10 (revisão 20/11, item 2.32): a descrição diz que o id e o nome de outro token só saem para gerente, para o agente não tratar o `null` como defeito. +22 da frase que avisa que cada mensagem traz `author` (cliente, ia, agente, equipe ou sistema) e `channel` (ajustes, AJ-2): sem ela o agente não sabe que pode separar o que a equipe disse do que a IA disse. +21 de `agente` e `is_self` (ajustes, AJ-4): sem a frase o agente externo não sabe que a própria fala vem marcada, e a confunde com a de outra integração" },
   "crm_get_queue_status": { tokens: 83, motivo: BASE },
-  "crm_list_leads": { tokens: 500, motivo: BASE },
+  "crm_list_leads": { tokens: 602, motivo: "+11 (revisão 20/11, item 2.27): o campo `tag` diz que a comparação ignora caixa, para o modelo não repetir a busca em cada grafia; +91 de cinco filtros (ajustes, AJ-2): criados desde, na etapa atual desde, sem atividade desde, com tag e sem tag. Os instantes vão como texto sem `.min()`/`.max()` e são conferidos no handler, para não pagar a expressão regular do zod" },
   "crm_get_lead": { tokens: 202, motivo: BASE },
   "crm_list_pipelines": { tokens: 63, motivo: BASE },
   "crm_get_pipeline_forecast": { tokens: 263, motivo: BASE },
@@ -132,6 +132,8 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "crm_set_next_action": { tokens: 233, motivo: SUPERFICIE_DE_AGENTE },
   "crm_close_conversation": { tokens: 261, motivo: "capacidade nova (ajustes, AJ-1): o agente fecha a conversa que ficou sem resposta, sem falar com o cliente; a descrição diz o que ela NÃO fecha (chamado, negócio) para o modelo não a confundir com as duas que já existem; +15 (revisão 20/11, item 2.31): a descrição avisa que ela fecha também a conversa que uma pessoa assumiu, porque a régua de controle da tela não vale para token; +11 (decisão do dono em 23/11, que troca a de 20/11): a descrição passa a dizer que ela NÃO fecha conversa assumida por uma pessoa e que nesse caso recusa" },
   "crm_get_proposal": { tokens: 338, motivo: "capacidade nova (superfície de agente, PR 2): o agente consulta status, validade, itens, valor e link do PDF de uma proposta; a descrição lista os status porque o modelo os recebe como estão no banco" },
+  "crm_list_lead_events": { tokens: 504, motivo: "+10 (revisão 20/11, item 2.32): a descrição diz que o id e o nome de outro token só saem para gerente. +24 (revisão 20/11, item 2.28): a descrição diz que a página pode vir vazia com `has_more` e que o autor `nao_registrado` da troca de responsável nunca casa o filtro `author`; capacidade nova (ajustes, AJ-2): a linha do tempo de um negócio ou de um funil por MCP, com filtro de período, tipo e autor. A descrição diz o que não entra (mensagem) e que a página pode vir menor que o limite, porque o modelo pararia de paginar numa página curta. +7 de `is_self` (ajustes, AJ-4): diz ao agente que a linha feita por ele vem marcada" },
+  "crm_find_duplicate_contacts": { tokens: 201, motivo: "capacidade nova (ajustes, AJ-3): os grupos de contatos que parecem a mesma pessoa. A descrição diz que `nome_parecido` é sugestão e não prova, porque é o motivo que junta gente diferente" },
   "get_lead_context": { tokens: 46, motivo: BASE },
   "send_message": { tokens: 137, motivo: BASE },
   "update_lead_state": { tokens: 240, motivo: BASE },
@@ -147,7 +149,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "schedule_followup (com negócio)": { tokens: 314, motivo: BASE },
 };
 
-const TETO_TOTAL = 33515;
+const TETO_TOTAL = 34375;
 
 const VARIANTE = "schedule_followup (com negócio)";
 

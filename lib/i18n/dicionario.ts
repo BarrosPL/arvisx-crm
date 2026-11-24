@@ -10119,6 +10119,12 @@ export const DICIONARIO: Traducoes = {
   "Fecha a conversa em que o cliente parou de responder, para ela sair da caixa de entrada. Nada é enviado ao cliente, e a conversa reabre sozinha se ele escrever de novo. Conversa que uma pessoa da equipe assumiu não é fechada pelo agente.": { es: "Cierra la conversación en la que el cliente dejó de responder, para que salga de la bandeja de entrada. No se envía nada al cliente, y la conversación se reabre sola si él vuelve a escribir. La conversación que asumió una persona del equipo no la cierra el agente." },
   // ─── Superfície de agente (PR 2): consulta de proposta ───
   "Consultar proposta comercial": { es: "Consultar propuesta comercial" },
+  "Ler a linha do tempo do negócio": { es: "Leer la línea de tiempo del negocio" },
+  // ─── Ajustes (AJ-3): contatos duplicados ───
+  "Encontrar contatos duplicados": { es: "Encontrar contactos duplicados" },
+  "Mostra os cadastros que parecem ser da mesma pessoa, por telefone, e-mail ou nome parecido, para alguém decidir se junta. Não funciona durante um atendimento: serve para limpar a base.": { es: "Muestra los registros que parecen ser de la misma persona, por teléfono, correo o nombre parecido, para que alguien decida si los une. No funciona durante una atención: sirve para limpiar la base." },
+  "Cadastro de contatos": { es: "Registro de contactos" },
+  "Mostra o que aconteceu num negócio ou em todos os negócios de um funil num período: mudança de etapa, de responsável e de marcador, anotações e tarefas, com quem fez cada coisa.": { es: "Muestra lo que ocurrió en un negocio o en todos los negocios de un embudo en un período: cambio de etapa, de responsable y de etiqueta, notas y tareas, con quién hizo cada cosa." },
   "Mostra em que situação está a proposta de um negócio, até quando ela vale, os itens e o valor total, com um acesso temporário ao documento enviado.": { es: "Muestra en qué situación está la propuesta de un negocio, hasta cuándo es válida, los ítems y el valor total, con un acceso temporal al documento enviado." },
   "Listar funis": { es: "Listar embudos" },
   "Criar oportunidade no funil": { es: "Crear oportunidad en el embudo" },

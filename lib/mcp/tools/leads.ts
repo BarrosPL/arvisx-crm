@@ -22,7 +22,9 @@ import {
   retomarLeadHandler,
 } from "@/app/api/v1/leads/_handler";
 import { createLeadSchema, updateLeadSchema } from "@/lib/schemas/leads";
+import { instanteDoArgumento } from "../argumentos-do-agente";
 import { conferirCamposPersonalizados } from "../conferencia-de-campos";
+import { recusa } from "../negocio-do-contexto";
 import { proporCamposDoNegocio } from "@/lib/leads/proposta-de-campos-por-documento";
 import { audit } from "@/lib/audit";
 import { nomesDosAtendentesCom } from "@/lib/users/nome-do-atendente";
@@ -184,14 +186,26 @@ const listInputShape = {
    * `pipeline_id`: sem escopo de funil a lista é a união dos funis da org.
    */
   lost_reason_category: z.string().min(1).max(40).optional(),
+  // Instantes como TEXTO, conferidos no handler: `.datetime()` viraria uma
+  // expressão regular que vai ao modelo em todo passo (`argumentos-do-agente.ts`).
+  // Sem `.min()`/`.max()`: cada um vira uma chave a mais no esquema, e o
+  // handler já recusa o que não é instante e a tag em branco.
+  created_since: z.string().optional().describe("Criados desde (ISO-8601 com fuso)."),
+  moved_since: z.string().optional().describe("Na etapa atual desde (idem)."),
+  last_activity_before: z.string().optional().describe("Sem atividade desde (idem)."),
+  tag: z.string().optional().describe("Com esta tag (ignora caixa: vip, VIP, Vip)."),
+  sem_tag: z.string().optional().describe("Sem esta tag."),
   limit: z.number().int().min(1).max(100).default(20),
   cursor: z.string().optional(),
 };
 
+/** Os três filtros de instante de `crm_list_leads`, na ordem em que são conferidos. */
+const FILTROS_DE_INSTANTE = ["created_since", "moved_since", "last_activity_before"] as const;
+
 export const crmListLeads: McpToolDefinition<typeof listInputShape> = {
   name: "crm_list_leads",
   description:
-    "Lista leads do CRM filtrando por pipeline, stage, status e owner. Cursor base64 para paginação. " +
+    "Lista leads do CRM filtrando por pipeline, stage, status, owner, datas e tag. Cursor base64 para paginação. " +
     "Governança por lead: owner_user_id + owner_user_name (só o nome do dono, sem email/telefone), stage ({ id, name } legível além do stage_id) e tags[]." +
     " Em conversa de atendimento, lista apenas os negócios do contato desta conversa.",
   inputSchema: listInputShape,
@@ -199,6 +213,20 @@ export const crmListLeads: McpToolDefinition<typeof listInputShape> = {
   requiresRole: "agent",
   requiresScope: "mcp:read",
   handler: async (input, ctx) => {
+    const instantes: Partial<Record<(typeof FILTROS_DE_INSTANTE)[number], string>> = {};
+    for (const campo of FILTROS_DE_INSTANTE) {
+      const valor = input[campo];
+      if (valor === undefined) continue;
+      const instante = instanteDoArgumento(campo, valor);
+      if (!instante.ok) return instante.recusa;
+      instantes[campo] = instante.iso;
+    }
+    const tag = input.tag?.trim();
+    const semTag = input.sem_tag?.trim();
+    if (tag === "" || semTag === "") {
+      return recusa("tag_invalida", "`tag` e `sem_tag` pedem o nome de uma tag; em branco não filtra nada.");
+    }
+
     const result = await listLeadsHandler(
       ctx.supabase,
       {
@@ -216,6 +244,9 @@ export const crmListLeads: McpToolDefinition<typeof listInputShape> = {
         // Escopo do turno NA CONSULTA, antes do limite: filtrar a página depois
         // esconderia negócios do próprio cliente que caíssem fora dela.
         contact_id: ctx.contatoDoTurno,
+        ...instantes,
+        tag,
+        sem_tag: semTag,
         limit: input.limit,
         cursor: input.cursor,
       },

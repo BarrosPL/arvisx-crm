@@ -14,17 +14,21 @@ chamada pelos dois lados (`lib/tarefas/servico.ts`, `lib/leads/anexos-do-negocio
 `lib/leads/proposta-de-proxima-acao.ts`).
 
 Este documento cobre a parte 1 (tarefas, notas, anexos e próxima ação), a parte 2 (eventos para sistemas externos,
-consulta de proposta, fechar e atribuir, passagem entre colegas) e a parte 3 (convivência entre pessoa e IA, e o
-filtro de entrada).
+consulta de proposta, fechar e atribuir, passagem entre colegas), a parte 3 (convivência entre pessoa e IA, e o
+filtro de entrada) e os ajustes que o uso real dos agentes externos pediu (linha do tempo por MCP, filtros de
+negócio, autoria no histórico, contatos duplicados e a autoria do que o agente externo faz por token).
 
 ## Regras que valem para todas
 
 - **A organização vem do token**, nunca de um argumento. Nenhuma ferramenta aceita `organization_id`.
 - **Nenhuma fala com o cliente.** Tudo o que elas escrevem é lido pela equipe, dentro do CRM.
 - **Papel mínimo `agent`**, que é o papel de um token de API sem escopo `role:`. Leitura pede o escopo `mcp:read`;
-  escrita pede `mcp:write`.
+  escrita pede `mcp:write`. Nenhuma ferramenta desta página pede papel maior: juntar contatos não é feito por
+  agente (ver [Contatos duplicados](#contatos-duplicados)).
 - **Toda escrita fica na auditoria com o agente como autor**: `actor_api_token_id` é o token, e `metadata` leva
   `via: "mcp"`, o tipo do ator e, no agente nativo, o `agent_id`.
+- **O que o agente externo faz fica com a autoria dele também fora da auditoria**: a mensagem que ele envia e a linha
+  que ele deixa na linha do tempo do negócio guardam o token. Ver [Autoria do agente externo](#autoria-do-agente-externo).
 - **Recusa tem código.** A resposta vem com `permitido: false`, `motivo` (o código) e `mensagem` (o que fazer).
 - **Num turno de atendimento**, o agente nativo só alcança o que é do cliente da conversa. Registro de outro
   cliente e registro inexistente recebem a mesma recusa (`fora_da_conversa`).
@@ -166,7 +170,7 @@ Em "O que o agente pode fazer", na tela do agente:
 |---|---|
 | Organizar a operação | as quatro de tarefa |
 | Passar para um humano | as duas de nota |
-| Não perder o cliente | as duas de anexo, a de próxima ação e a consulta de proposta |
+| Não perder o cliente | as duas de anexo, a de próxima ação, a consulta de proposta, a linha do tempo e as três de contatos duplicados |
 
 Elas não couberam num pacote só: um pacote sozinho não pode passar do teto de ferramentas por agente
 (`TETO_TOOLS_POR_AGENTE`), e "Organizar a operação" já ocupava 22 das 27 vagas. Nenhuma entra em "Vender e mover o
@@ -186,6 +190,238 @@ funil", que é o pacote com que todo agente nasce.
   assinado desse PDF, que vence em 60 segundos, e só existe para proposta que já saiu (nunca para rascunho).
 - Num turno de atendimento, proposta de outro cliente e proposta inexistente recebem a mesma recusa.
 - Some para a organização que desligou propostas.
+
+## Linha do tempo do negócio
+
+`crm_list_lead_events` lê o que aconteceu num negócio, ou em todos os negócios de um funil, do mais antigo para o mais
+novo. Só leitura (`mcp:read`, papel `agent`). Serve ao resumo do dia ou da semana e a "quem mexeu neste negócio".
+
+| Argumento | O que faz |
+|---|---|
+| `lead_id` ou `pipeline_id` | Exatamente um. Com `pipeline_id` vêm os negócios do funil, cada linha com `lead_id` e `lead_title`. |
+| `since`, `until` | ISO-8601 com fuso. `since` inclui o instante, `until` não. |
+| `type` | Lista: `etapa`, `responsavel`, `tag`, `campo`, `nota`, `tarefa`, `outro`. Sem ele, vem tudo. |
+| `author` | Lista: `pessoa`, `agente`, `sistema`, `cliente`. Linha com autor `nao_registrado` (a troca de responsável) nunca casa: ver abaixo. |
+| `limit`, `cursor` | Até 100 por página. Repita com o `cursor` enquanto `has_more` for `true`. |
+
+Cada linha traz `kind` (a categoria), `type` (o tipo cru), `label`, `happened_at`, `text` (inteiro, sem corte),
+`author` (`kind`, `id`, `name` e, em `agente`, `is_self`), `details` e `source`.
+
+**Quem é `agente`.** O agente do CRM (`id` e `name` do cadastro do agente) e o agente externo, que age por token de API
+(`id` e `name` do token, só para quem pode vê-los: ver [Autoria do agente externo](#autoria-do-agente-externo)).
+`is_self: true` quer dizer que a linha foi feita por quem está lendo: o mesmo token ou, no
+agente do CRM, o mesmo agente. O filtro `author: ["agente"]` traz os dois. Mover etapa, editar o negócio, fechar,
+criar e concluir tarefa, anexar e pôr ou tirar tag por token saem todos assim.
+
+**De onde vem cada categoria.** Nada novo é gravado: a ferramenta lê duas fontes que já existiam e as devolve numa
+ordem só.
+
+| Categoria | Fonte (`source`) | O que traz |
+|---|---|---|
+| `etapa` | linha do tempo do card (`timeline`) | Entrada no funil, mudança de etapa, correção de movimento da IA, troca de funil, reabertura e encerramento. `details` leva `from_stage_id` e `to_stage_id`. |
+| `campo` | `timeline` | Edição do negócio. `details.fields` são os **nomes** dos campos alterados. |
+| `nota` | `timeline` | A nota inteira, com o autor e, em `details.recipient`, o destinatário. |
+| `tarefa` | `timeline` | Tarefa criada, concluída ou plano aplicado. `details` leva `task_id`, `due_date` e `priority`. |
+| `outro` | `timeline` | O resto da linha do tempo: agenda, retorno, proposta, passagem para humano, ligação. |
+| `tag` | fila de eventos (`event_log`) | `lead.tag_added` e `lead.tag_removed`, com as tags em `details`. |
+| `responsavel` | `event_log` | `lead.assigned`, com de quem para quem (`from_name`, `to_name`: só o nome). |
+
+As tags e o responsável saem da fila de eventos porque a linha do tempo não sustenta os dois: ela registra "Alterou as
+tags" sem dizer qual (de propósito), e a tag posta por `crm_manage_tags`, em massa ou por automação não gera linha no
+card. Por isso uma edição pela tela que mexe em tag aparece duas vezes, com informações diferentes: uma linha `campo`
+(quem editou, quais campos) e uma linha `tag` (qual tag).
+
+**O que não entra, e por quê.**
+
+- **Mensagem.** Mensagem é da conversa, que é do contato: um contato com dois negócios teria as mesmas mensagens nos
+  dois. Leia a conversa com `crm_get_conversation_history`.
+- **Quem trocou o responsável, na linha `responsavel`.** `lead.assigned` nasce de um gatilho do banco, dentro da
+  gravação do negócio, e o gatilho não sabe quem chamou: sai `author.kind: "nao_registrado"`, também quando foi o
+  agente por token. Quem trocou está na linha `campo` vizinha (`details.fields` com `owner_user_id`), que tem o autor,
+  inclusive o agente externo.
+- **Qual pessoa pôs ou tirou a tag.** A fila de eventos guarda que foi uma pessoa, não qual (`id` e `name` nulos). O
+  agente por token sai com o id e o nome do token, e o agente do CRM, com o id e o nome do agente.
+- **Remoção de tag antiga.** `lead.tag_removed` existe desde a parte 2; remoção anterior só aparece como "Alterou as
+  tags".
+- **O valor anterior de um campo.** O produto não guarda o antes de título, descrição, tags e campos do funil
+  (`lib/leads/valores-audit.ts`). A linha diz o campo, não o valor.
+- **O autor das linhas antigas feitas por token.** Até esta entrega a linha do tempo não guardava o token: a mudança
+  de etapa, a edição e a tarefa feitas por agente externo antes dela continuam `sistema`. Nada foi reescrito. A nota
+  sempre levou o autor.
+
+**Custo.** A consulta por funil exige `since` e aceita janela de até 31 dias. Ela sempre filtra por tipo e por data,
+que são os índices que já existem, e confere por lote quais negócios são do funil. Cada chamada faz no máximo quatro
+idas ao banco por fonte: com filtro que descarta muita linha, a página pode vir menor que o limite (até vazia) com
+`has_more: true`, e o cursor continua de onde a varredura parou. Negócio de contato marcado como pessoal fica de fora.
+
+**O filtro `author` e o autor `nao_registrado`.** `author` aceita só `pessoa`, `agente`, `sistema` e `cliente`. A
+troca de responsável (`lead.assigned`) sai com `author.kind: "nao_registrado"`, que não é um valor do filtro: qualquer
+chamada com `author` deixa essas linhas de fora, e não há como pedir só elas por autor. Quem quer as trocas de
+responsável pede `type: ["responsavel"]` **sem** `author`. O filtro de autor (como o de funil) é aplicado depois da
+busca, dentro do teto de quatro idas ao banco: é o caso em que a página curta ou vazia com `has_more: true` mais
+aparece (por exemplo `type: ["responsavel"]` com `author`, que nunca devolve nada). `has_more: true` com página vazia
+não é fim: repita com o `cursor` até `has_more: false`. O teto de idas ao banco é o que limita o custo da consulta por
+funil e não foi mexido.
+
+## Filtros de `crm_list_leads`
+
+Além de funil, etapa, status, responsável e motivo de perda:
+
+| Filtro | O que faz |
+|---|---|
+| `created_since` | Criados a partir do instante. |
+| `moved_since` | Entraram na etapa **atual** a partir do instante. O negócio recém-criado conta: ele entrou na primeira etapa ao nascer. |
+| `last_activity_before` | Sem movimento desde o instante: a última atividade é anterior a ele, ou o negócio nunca teve atividade e foi criado antes dele. |
+| `tag` | Só os que têm a tag. |
+| `sem_tag` | Só os que não têm a tag. |
+
+- Os instantes são ISO-8601 com fuso.
+- "Atividade" é o que o banco carimba em `last_activity_at` do negócio: turno da IA, nota, edição, mudança de etapa,
+  próxima ação aprovada, ligação atendida (`fn_update_last_activity_at`) e mensagem enviada por uma pessoa da equipe
+  (`fn_mensagem_do_vendedor_e_atividade`). Ligação que ninguém atendeu não conta, e mensagem do cliente que ninguém
+  respondeu também não: o negócio continua "parado".
+- `tag` e `sem_tag` não diferenciam caixa nas grafias em que uma pessoa escreve o mesmo nome: a pedida, minúsculas,
+  MAIÚSCULAS, Inicial maiúscula e Iniciais Maiúsculas. `vip`, `VIP` e `Vip` acham os mesmos negócios, e
+  `sem_tag: "vip"` deixa de fora quem tem `VIP`. A tela grava a tag do negócio como foi digitada, e `crm_manage_tags`
+  grava em minúsculas. **Limite:** a coluna é uma lista de textos e a consulta compara cada grafia inteira; caixa
+  misturada fora dessas formas (`viP`) só casa se pedida exatamente assim. Fechar esse resto pede uma função no banco
+  (migration), que este PR não tem.
+- Os filtros entram na consulta, antes do limite. O cursor e `has_more` descrevem o conjunto filtrado.
+- O responsável continua saindo só pelo nome (`owner_user_name`), sem e-mail nem telefone.
+
+## Quem escreveu cada mensagem do histórico
+
+`crm_get_conversation_history` devolve, em cada mensagem, `author` e `channel` (o canal da conversa: `whatsapp`,
+`instagram`...). `direction` e `sent_via` continuam na resposta.
+
+| `author.kind` | Quando | `id` e `name` |
+|---|---|---|
+| `cliente` | Mensagem recebida. | `id` é o contato. Em grupo, `name` é o participante que falou (`detail: "participante_de_grupo"`). |
+| `ia` | Escrita por um agente de IA do CRM. | O nome gravado na mensagem ou, sem ele, o do cadastro. `id` só sai quando é de um agente desta organização. |
+| `agente` | Enviada por um agente externo, por token de API. | `id` é o id do token e `name` o nome que o administrador deu a ele, para quem pode vê-los (ver [Autoria do agente externo](#autoria-do-agente-externo)); senão `null`. `is_self` diz se o token é o de quem está lendo. |
+| `equipe` | Escrita por uma pessoa. | `id` e o nome da pessoa (nunca e-mail nem telefone). |
+| `sistema` | Ninguém escreveu na hora. | `detail: "automacao"` (texto fixo de regra, follow-up ou lembrete) ou `detail: "integracao"` (mensagem antiga enviada por token, de antes de o envio guardar o token). |
+
+Dois casos de `equipe` têm `detail`: `celular` (saiu do aparelho ligado ao número, fora do CRM, e a mensagem não diz
+quem digitou) e `em_nome_de` (um sistema enviou por decisão daquela pessoa; `via_token` diz qual).
+
+A autoria é lida da própria mensagem, como o balão da caixa de entrada lê. O agente externo separa a própria fala
+(`author.kind: "agente"` com `is_self: true`) da de outra integração (`is_self: false`), da equipe, do cliente e da IA
+do CRM. A mensagem que um token envia **em nome de uma pessoa** continua sendo da pessoa (`equipe`, `em_nome_de`).
+
+## Autoria do agente externo
+
+Um agente externo é um token de API. O que ele faz fica com o token em três lugares:
+
+| Onde | O que é gravado | Quem lê |
+|---|---|---|
+| Auditoria (`api_audit_log`) | `actor_api_token_id`. Já existia. | A tela de auditoria. |
+| Mensagem enviada (`messages.metadata.sent_by_token`) | `token_id` e `token_name`. | `crm_get_conversation_history`. |
+| Linha do tempo do negócio (`crm_lead_activities.payload.autor`) | `{ tipo: "token", id }`, o formato que a nota já usava. | `crm_list_lead_events`. |
+
+- **Quem recebe o id e o nome do token** (revisão de 20/11, item 2.32). O nome do token é texto livre que o
+  administrador digitou na tela de tokens, e o id identifica uma credencial: os dois são dado de administração. A
+  regra é a mesma em `crm_get_conversation_history` e em `crm_list_lead_events` (`lib/mcp/identidade-do-token.ts`):
+
+  | Quem lê | O que recebe de uma mensagem ou linha feita por token |
+  |---|---|
+  | Token com papel `manager` ou `admin`, fora de um turno de atendimento | `id` e `name` de todo token. |
+  | Token comum (papel `agent`), fora de um turno de atendimento | `id` e `name` só do **próprio** token (`is_self: true`). De outro token: `kind: "agente"`, `is_self: false`, `id: null`, `name: null`. |
+  | Qualquer leitor **num turno de atendimento** (contato do turno posto), e o agente do CRM sempre | `kind: "agente"` e `is_self`, com `id: null` e `name: null`, inclusive do próprio token. |
+
+  No turno o modelo está respondendo ao cliente e poderia repetir o nome do token na mensagem; por isso ali não sai de
+  ninguém, nem para papel de gerente. `is_self` sai sempre: o agente externo continua separando a própria fala da de
+  outra integração. O `via_token` de uma mensagem `em_nome_de` (o nome do token que enviou em nome de uma pessoa) segue
+  a regra mais estreita: só para `manager` ou `admin` fora do turno, porque a linha não guarda o id do token e não há
+  como reconhecer "o próprio". O nome de pessoas da equipe e de agentes do CRM não mudou. **O que esta regra não cobre:**
+  o texto livre de uma nota ou de um motivo, se alguém escreveu o nome do token nele.
+- **Só o id e o nome.** O valor do token não é gravado em lugar nenhum (o banco guarda só o hash dele, e o hash não
+  sai em resposta alguma).
+- **O servidor grava, o chamador não.** O token vem da autenticação. A chave `sent_by_token` que chegar no `metadata`
+  de um envio é descartada, e a leitura só a considera em mensagem que saiu por token.
+- **Vale para todo envio por token**, não só pelo MCP: `crm_send_whatsapp_message`, `crm_start_conversation_and_send`
+  e `POST /api/v1/messages` com `Authorization: Bearer` passam pelo mesmo ponto de envio.
+- **O nome é o do cadastro de hoje.** Token renomeado sai com o nome novo. Token apagado sai com o nome gravado no
+  envio (mensagem) ou sem nome (linha do tempo); o id continua.
+- **O agente do CRM não mudou.** Ele já saía como `ia` no histórico e como `agente` na linha do tempo, com o agente. O
+  token dele é o efêmero da rodada, que não identifica ninguém e não é gravado.
+- **A tela não mudou.** A caixa de entrada segue mostrando "Sistema" no balão dessas mensagens, e o card do negócio
+  segue mostrando a linha como do sistema. As colunas de ator da linha do tempo não foram alteradas.
+- **Nada antigo foi reescrito.** Mensagem e linha gravadas antes desta entrega não têm o token: a mensagem continua
+  `sistema` / `integracao` (ou `ia` sem id, no token com escopo `actor:ai_agent`) e a linha continua `sistema`.
+- **Sem coluna nova.** Os dois campos são `jsonb` que já existiam; não houve migration.
+
+## Contatos duplicados
+
+| Ferramenta | O que faz | Papel |
+|---|---|---|
+| `crm_find_duplicate_contacts` | Lista os grupos de contatos que parecem a mesma pessoa. Só leitura. | `agent` |
+
+O agente **acha** duplicados; **juntar é da tela**. A detecção é a da tela de Duplicados
+(`lib/contacts/varredura-de-duplicados.ts`). Não existe ferramenta de agente para juntar contatos nem para desfazer
+uma junção (ver [Juntar e desfazer](#juntar-e-desfazer-não-são-do-agente)).
+
+### Achar
+
+`crm_find_duplicate_contacts` varre os contatos vivos da organização do token. Contato não pertence a um funil: a
+varredura é da base inteira, e cada contato vem com `leads_count`, a soma dos negócios dele em todos os funis.
+
+| Motivo (`reasons`) | Quando |
+|---|---|
+| `telefone` | O mesmo número, com ou sem o nono dígito. |
+| `email` | O mesmo e-mail, sem diferenciar maiúsculas. |
+| `telefone_em_conflito` | A entrada de mensagens achou, para um contato, um número que já era de outro. |
+| `nome_parecido` | Duas palavras raras em comum, ou um nome inteiro dentro do outro. **É sugestão, não prova.** |
+
+- Argumentos: `reason` (lista, para filtrar), `limit` (até 50) e `offset`. A resposta traz `total_groups` e `has_more`.
+- Cada grupo traz `suggested_primary_id`: o contato com atividade mais recente. É sugestão.
+- Cada contato traz `id`, `name`, `phone`, `email`, `leads_count`, `created_at` e `last_activity_at`: os campos de
+  `crm_search_contacts`. CPF, endereço e o que a entrada de mensagens guardou não saem.
+- A varredura alcança os 2.000 contatos mais antigos. Com base maior, `scanned_all` vem `false`.
+- Contato marcado como pessoal, contato de grupo de WhatsApp, contato anonimizado e contato já juntado ficam de fora.
+  O par que alguém dispensou na tela ("não são a mesma empresa") também.
+- Contato de outra organização nunca entra, nem quando o telefone e o e-mail são os mesmos.
+- **Num turno de atendimento a ferramenta recusa** (`fora_do_atendimento`): a lista traz telefone e e-mail de outras
+  pessoas, e a conversa é com uma só. Ela serve ao agente externo e à limpeza da base.
+
+### Juntar e desfazer não são do agente
+
+`crm_merge_contacts` e `crm_undo_contact_merge` existiram no PR AJ-3 e **foram retiradas** do servidor MCP, do
+catálogo e dos pacotes antes do merge (revisão de 20/11, item 1.2, Opção A, decidida pelo dono em 23/11). A tarefa só
+previa a junção por agente com autorização do dono, e o servidor MCP não aplica a marca "operada por pessoa" do
+catálogo: bastava um token de API marcado como "tratado como gerente" com escopo de escrita para unir contatos.
+
+Juntar contatos continua sendo um gesto da tela de Duplicados (`POST /api/v1/contacts/merge`, papel `manager`, sessão
+de usuário), auditado como `contact.merged`. **A junção pela tela não guarda registro e não tem desfazer.**
+
+**O que ficou no banco, sem porta.** A migration 9813 não foi revertida: a tabela `fusoes_de_contatos` e as funções
+`fn_colunas_que_apontam_para_contato`, `fn_mesclar_contatos_com_registro` e `fn_desfazer_fusao_de_contatos` continuam
+instaladas, executáveis só por `service_role`. Nenhum caminho do produto as chama hoje. Os envoltórios em
+`lib/contacts/fusao-de-contatos.ts` (`mesclarContatosComRegistro`, `desfazerFusaoDeContatos`, `registroAbertoDaFusao`)
+ficaram para a tela poder passar a gravar registro. A ação de auditoria `contact.merge_undone` existe no vocabulário e
+não tem emissor.
+
+**As duas funções de junção não recusam as mesmas coisas.** Vale conhecer a diferença antes de ligar a função com
+registro a qualquer porta:
+
+| Caso | `fn_mesclar_contatos` (a tela, hoje) | `fn_mesclar_contatos_com_registro` (sem porta) |
+|---|---|---|
+| Contato anonimizado, nas duas posições | recusa (`contato_principal_indisponivel` / `contato_secundario_indisponivel`) | recusa (as mesmas) |
+| Contato já juntado em outro | recusa (as mesmas) | recusa (as mesmas) |
+| Contato marcado como **pessoal** | **não recusa** | recusa (`fusao_de_contato_pessoal`) |
+| Contato de **grupo** de WhatsApp (`kind` diferente de `person`) | **não recusa** | recusa (`fusao_de_contato_de_grupo`) |
+| Papel de quem chama | confere gerente dentro da função (`insufficient_role`), com a sessão do usuário | não confere papel: é só de `service_role`, e quem chama responde por isso |
+| Pares por chamada | um principal e vários secundários | um par |
+
+A tela de Duplicados também não esconde contato pessoal nem contato de grupo da lista (o recorte `soDaOperacao` da
+varredura é só da leitura por agente). Então um gerente consegue, pela tela, juntar um contato pessoal ou um contato
+de grupo com outro. A regra não foi unificada no banco neste PR (a migration 9822, reservada para isso, não foi
+usada): a porta que recusava saiu, e mudar o que a tela aceita é decisão de produto fora do item.
+
+O desfazer (`fn_desfazer_fusao_de_contatos`) só desfaz junção que tem registro em `fusoes_de_contatos`, recusa quando
+um dos dois contatos foi anonimizado depois (`fusao_de_contato_anonimizado`) e quando outro contato passou a usar o
+telefone, o e-mail ou a identidade de canal do absorvido (`conflito_ao_desfazer_fusao`). As etiquetas não voltam: o
+registro guarda ids e nomes de campo, nunca telefone, e-mail ou etiqueta.
 
 ## Fechar o negócio e atribuir a conversa
 

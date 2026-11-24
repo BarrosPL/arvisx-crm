@@ -70,6 +70,12 @@ export interface OpcoesDoDubleDoHandler {
    * agente entre uma bolha e outra.
    */
   agente?: LinhaDoDuble | null | (() => LinhaDoDuble | null);
+  /**
+   * As linhas de `api_tokens` (de qualquer organização). O envio por token lê
+   * daqui o nome do token, e os filtros SAO aplicados: sem o filtro de
+   * organização, o nome do token de outra organização chegaria à mensagem.
+   */
+  tokensDeApi?: LinhaDoDuble[];
 }
 
 export interface RetornoDoDubleDoHandler {
@@ -366,6 +372,22 @@ export function criarDubleDoHandler(
           },
           maybeSingle: async () => ({
             data: typeof opcoes.agente === "function" ? opcoes.agente() : (opcoes.agente ?? null),
+            error: null,
+          }),
+        };
+        return cadeia;
+      }
+
+      if (tabela === "api_tokens") {
+        const filtros: Array<[string, unknown]> = [];
+        const cadeia = {
+          select: () => cadeia,
+          eq: (coluna: string, valor: unknown) => {
+            filtros.push([coluna, valor]);
+            return cadeia;
+          },
+          maybeSingle: async () => ({
+            data: (opcoes.tokensDeApi ?? []).find((l) => filtros.every(([c, v]) => l[c] === v)) ?? null,
             error: null,
           }),
         };

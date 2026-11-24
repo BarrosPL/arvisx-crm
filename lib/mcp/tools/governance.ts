@@ -262,6 +262,17 @@ export const crmManageTags: McpToolDefinition<typeof tagsInputShape> = {
     if (updateErr) throw new Error(updateErr.message);
 
     const a = actorAudit(ctx);
+    // No EVENTO vai também quem agiu de forma que a linha do tempo saiba nomear
+    // (`lib/leads/eventos-do-negocio.ts`): o agente do CRM pelo agente, o
+    // sistema de fora pelo token. `actor_id` sozinho é o id da execução.
+    const atorDoEvento = {
+      ...a.metadataActor,
+      ...(ctx.actor.type === "ai_agent" && ctx.actor.agent_id
+        ? { agent_id: ctx.actor.agent_id }
+        : ctx.actor.type !== "user"
+          ? { actor_api_token_id: ctx.apiTokenId }
+          : {}),
+    };
     await audit({
       action: TAG_AUDIT_ACTION[input.target_kind],
       actorUserId: a.actorUserId,
@@ -281,7 +292,7 @@ export const crmManageTags: McpToolDefinition<typeof tagsInputShape> = {
         p_entity_kind: eventoDeTag.entityKind,
         p_entity_id: input.target_id,
         p_payload: { added_tags: addedTags, tags: nextTags, service_origin: tagServiceOrigin },
-        p_metadata: { request_id: ctx.requestId, ...a.metadataActor, via: "mcp" },
+        p_metadata: { request_id: ctx.requestId, ...atorDoEvento, via: "mcp" },
         p_organization_id: ctx.organizationId,
       });
       if (emitErr) {
@@ -303,7 +314,7 @@ export const crmManageTags: McpToolDefinition<typeof tagsInputShape> = {
         entidadeId: input.target_id,
         payload: { lead_id: input.target_id, removed_tags: removidas, tags: nextTags },
         requestId: ctx.requestId,
-        ator: { ...a.metadataActor, via: "mcp" },
+        ator: { ...atorDoEvento, via: "mcp" },
       });
     }
 
