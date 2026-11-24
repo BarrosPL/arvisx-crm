@@ -309,11 +309,34 @@ async function subir(page: Page, escopo: Escopo, arquivo: {
  */
 async function removerLogoSeHouver(page: Page, tela: string, escopo: Escopo): Promise<void> {
   await page.goto(tela);
+  // A HIDRATAÇÃO antes do clique — a mesma lição de `subir()`, que este helper
+  // não tinha aprendido. O botão "Remover" vem no HTML do SSR, antes de o React
+  // atar o `onClick`: clique dado nessa janela não dispara requisição nenhuma, e
+  // a restauração morria esperando 15s por um toast sem emissor. É a reprovação
+  // que OSCILAVA no `afterAll` (contexto novo, sem cache de JS, primeira visita
+  // à tela): mesma árvore verde num run e vermelha no seguinte (23/11/2026).
+  await expect(
+    page.locator(`[data-campo-de-logo='${escopo}'][data-hidratado]`),
+    `o campo de logo da camada "${escopo}" não hidratou em ${tela} — clicar em Remover agora não dispara nada`,
+  ).toBeVisible({ timeout: 15_000 });
   const remover = page
     .locator(`[data-campo-de-logo='${escopo}']`)
     .getByRole("button", { name: /^remover$/i });
   if ((await remover.count()) === 0) return;
+  // A resposta é lida para a reprovação DIZER o que houve: sem ela, "o toast não
+  // apareceu" não separa "o clique não saiu" de "o produto recusou" (429 do teto
+  // de trocas, 403 de papel) — e foi essa mudez que deixou a oscilação sem causa
+  // escrita no log.
+  const resposta = page.waitForResponse(
+    (r) => r.url().includes("/api/v1/marca/logo") && r.request().method() === "DELETE",
+    { timeout: 15_000 },
+  );
   await remover.click();
+  const status = (await resposta).status();
+  expect(
+    status,
+    `remover o logo da camada "${escopo}" voltou ${status} (429 = teto de trocas por usuário, ver a NOTA DO TETO no caso (1))`,
+  ).toBe(200);
   await expect(page.getByText(/logo removido/i)).toBeVisible({ timeout: 15_000 });
 }
 
@@ -1306,9 +1329,10 @@ test.describe("o logo subido pela tela chega à tela", () => {
    * trocas/5min por usuário do próprio produto (medido: 429 no trace do run
    * 35095930532).
    *
-   * Um login só, e do `dono`, porque ele é platform admin E `admin` da mesma
-   * organização (`scripts/seed-e2e-credentials.ts:79-84`) — alcança `/admin/marca`
-   * e `/app/settings/marca`.
+   * Eram um login só, do `dono` (platform admin E `admin` da mesma organização,
+   * `scripts/seed-e2e-credentials.ts:79-84`). Hoje são dois: o `dono` limpa a
+   * instalação e o `admin` limpa a empresa — o motivo é o teto de trocas, e está
+   * escrito ao lado do segundo login, abaixo.
    */
   test.afterAll(async ({ browser }) => {
     // O `test.setTimeout` do topo do `describe` vale para os CASOS; um hook nasce
@@ -1327,10 +1351,24 @@ test.describe("o logo subido pela tela chega à tela", () => {
         await pagina.getByRole("button", { name: "Salvar CSS", exact: true }).click();
         await expect(pagina.getByText("CSS personalizado salvo.")).toBeVisible({ timeout: 15_000 });
       }
-      await removerLogoSeHouver(pagina, "/app/settings/marca", "organizacao");
       await removerLogoSeHouver(pagina, "/admin/marca", "instalacao");
     } finally {
       await contexto.close();
+    }
+    // A camada da EMPRESA sai pela mão do `admin`, em contexto próprio, e não mais
+    // pela do `dono` — pela conta da NOTA DO TETO (caso 1). O caso do ícone entrou
+    // depois daquela nota e soma duas trocas do `dono` (subir e remover passam pela
+    // mesma rota e pelo mesmo teto): 1+1+1+1+3+2 = 9 antes deste hook. Removendo
+    // aqui as DUAS camadas, o `dono` fechava o arquivo em 10 ou 11 — o teto inteiro,
+    // sem margem —, e o hook reprovava o ÚLTIMO caso quando o arquivo cabia numa
+    // janela só de 5 min do limitador. O `admin` fecha em 7.
+    const contextoDaEmpresa = await browser.newContext();
+    try {
+      const paginaDaEmpresa = await contextoDaEmpresa.newPage();
+      await entrarNaCamada(paginaDaEmpresa, "organizacao");
+      await removerLogoSeHouver(paginaDaEmpresa, "/app/settings/marca", "organizacao");
+    } finally {
+      await contextoDaEmpresa.close();
     }
   });
 });
