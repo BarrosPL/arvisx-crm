@@ -292,7 +292,9 @@ test.describe("aviso de caso no WhatsApp", () => {
     expect(m.salvar.altura).toBeGreaterThanOrEqual(32);
     expect(m.salvar.x + m.salvar.largura).toBeLessThanOrEqual(m.janela);
     expect(m.rolagemHorizontal, "a tela do aviso não pode rolar para o lado").toBeLessThanOrEqual(0);
-    expect(m.salvar.fonte).toMatch(/Atkinson/i);
+    // A família é a do design "Folha" (Hanken Grotesk, `--font-hanken` em
+    // app/layout.tsx): o next/font a registra com o nome da variável JS.
+    expect(m.salvar.fonte).toMatch(/^hanken\b/i);
     expect(m.salvar.fundo).not.toBe("rgba(0, 0, 0, 0)");
 
     // Em largura de telefone continua sem rolagem lateral.
