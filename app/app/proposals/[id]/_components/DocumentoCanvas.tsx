@@ -84,6 +84,13 @@ export interface DocumentoCanvasProps {
    * continuar mostrando a proposta como se não tivesse.
    */
   onModeloConfirmado?: (slug: string) => void;
+  /**
+   * Chamado depois de QUALQUER gravação do documento (campo, seção, modelo).
+   * Desde a migration 9815 mexer no documento soma um na revisão do rascunho
+   * (e derruba a aprovação): o editor relê a revisão para a próxima gravação
+   * dele não ser recusada como desatualizada.
+   */
+  onDocumentoGravado?: () => void;
 }
 
 const DICA_POR_ONDE: Record<Exclude<Onde, "briefing">, string> = {
@@ -177,7 +184,14 @@ function EditorDeSecao({
   );
 }
 
-export function DocumentoCanvas({ propostaId, podeRevisar = false, emRascunho = false, versao = 0, onModeloConfirmado }: DocumentoCanvasProps) {
+export function DocumentoCanvas({
+  propostaId,
+  podeRevisar = false,
+  emRascunho = false,
+  versao = 0,
+  onModeloConfirmado,
+  onDocumentoGravado,
+}: DocumentoCanvasProps) {
   const t = useT();
   const [doc, setDoc] = useState<Documento | null>(null);
   const [ocupado, setOcupado] = useState(false);
@@ -243,6 +257,7 @@ export function DocumentoCanvas({ propostaId, podeRevisar = false, emRascunho = 
     try {
       await acao();
       setRecarga((n) => n + 1);
+      onDocumentoGravado?.();
       return true;
     } catch (error) {
       showApiError(error);

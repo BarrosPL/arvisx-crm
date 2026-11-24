@@ -134,6 +134,8 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "crm_get_proposal": { tokens: 338, motivo: "capacidade nova (superfície de agente, PR 2): o agente consulta status, validade, itens, valor e link do PDF de uma proposta; a descrição lista os status porque o modelo os recebe como estão no banco" },
   "crm_list_lead_events": { tokens: 504, motivo: "+10 (revisão 20/11, item 2.32): a descrição diz que o id e o nome de outro token só saem para gerente. +24 (revisão 20/11, item 2.28): a descrição diz que a página pode vir vazia com `has_more` e que o autor `nao_registrado` da troca de responsável nunca casa o filtro `author`; capacidade nova (ajustes, AJ-2): a linha do tempo de um negócio ou de um funil por MCP, com filtro de período, tipo e autor. A descrição diz o que não entra (mensagem) e que a página pode vir menor que o limite, porque o modelo pararia de paginar numa página curta. +7 de `is_self` (ajustes, AJ-4): diz ao agente que a linha feita por ele vem marcada" },
   "crm_find_duplicate_contacts": { tokens: 201, motivo: "capacidade nova (ajustes, AJ-3): os grupos de contatos que parecem a mesma pessoa. A descrição diz que `nome_parecido` é sugestão e não prova, porque é o motivo que junta gente diferente" },
+  "crm_update_contact": { tokens: 500, motivo: "capacidade nova (Equipe pronta v2): o agente grava direto no cadastro do contato; são 13 campos opcionais (nome, e-mail, outro telefone, documento, nascimento, sete de endereço e os personalizados), todos como texto simples e conferidos no handler, para não pagar a expressão regular do zod; +32 de dizer que só preenche campo vazio e que o preenchido volta em `campos_ja_preenchidos` (revisão de 20/11, item 2.3): sem a frase o modelo promete ao cliente uma troca que a ferramenta não faz" },
+  "crm_send_proposal": { tokens: 335, motivo: "capacidade nova (Equipe pronta v2): o agente envia a proposta; um argumento só, e a descrição lista as recusas porque é por elas que o modelo decide o que dizer ao cliente; +23 da recusa `proposta_mudou` (revisão de 20/11, itens 2.1 e 2.9): o envio só sai da revisão conferida e uma vez só, e o modelo precisa saber que deve consultar antes de repetir; +19 de dizer que o envio sem aprovação só vale na conversa com o próprio cliente (item 2.4): sem a frase, o chamador de fora de um atendimento só descobriria pela recusa" },
   "get_lead_context": { tokens: 46, motivo: BASE },
   "send_message": { tokens: 137, motivo: BASE },
   "update_lead_state": { tokens: 240, motivo: BASE },
@@ -149,7 +151,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "schedule_followup (com negócio)": { tokens: 314, motivo: BASE },
 };
 
-const TETO_TOTAL = 34375;
+const TETO_TOTAL = 35210;
 
 const VARIANTE = "schedule_followup (com negócio)";
 

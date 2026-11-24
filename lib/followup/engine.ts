@@ -28,6 +28,12 @@ import {
   ERRO_DA_EQUIPE_FORA_DO_PLANO,
   reguaDaEquipeForaDoPlano,
 } from "@/lib/cobranca/equipe-pronta-no-plano";
+import {
+  ERRO_DA_LEITURA_DA_TRAVA,
+  TRAVA_SEM_LEITURA,
+  travaDoFluxoDaEquipe,
+  type TravaDoFluxoDaEquipe,
+} from "@/lib/ai/equipe-pronta/gatilhos/trava-do-fluxo";
 
 import { flowGraphSchema, type FlowGraph, type FlowNode, type ReplySaveTo } from "./graph-schema";
 import { TETO_DE_PASSOS_DO_MOTOR } from "./custo-no-motor";
@@ -222,6 +228,15 @@ export interface AdminClient {
    * libera? (ArvisX, 9808.) Ausente = a pergunta não é feita.
    */
   fluxoDaEquipeForaDoPlano?(orgId: string, pointerId: string): Promise<boolean>;
+  /**
+   * A trava dos fluxos da Equipe de IA pronta que não é de plano: a pausa da
+   * equipe (adia) e o limite de toques de retomada (encerra a inscrição que
+   * acabou de nascer). Ver `lib/ai/equipe-pronta/gatilhos/trava-do-fluxo.ts`.
+   * Ausente = a pergunta não é feita. `null` = segue. Leitura que falha (ou
+   * que lança) ADIA por `ADIAMENTO_POR_LEITURA_MS`: não ler a pausa não é
+   * permissão para enviar.
+   */
+  travaDoFluxoDaEquipe?(enrollment: EnrollmentRow): Promise<TravaDoFluxoDaEquipe>;
   loadFlowPointerName(orgId: string, pointerId: string): Promise<string | null>;
   insertDeadInboxItem(item: { organization_id: string; title: string; body: string; ref_id: string }): Promise<void>;
   /**
@@ -1288,6 +1303,12 @@ async function processEnrollment(
 /** Quanto a inscrição de uma empresa sem o Agente de IA no plano espera para ser reavaliada. */
 export const ADIAMENTO_FORA_DO_PLANO_MS = 6 * 60 * 60 * 1000;
 
+/**
+ * Quanto espera a inscrição cuja trava da Equipe pronta não pôde ser LIDA
+ * (banco que falhou). Curto de propósito: não é a pausa, é a dúvida sobre ela.
+ */
+export const ADIAMENTO_POR_LEITURA_MS = 5 * 60 * 1000;
+
 export async function runFollowupTick(deps: TickDeps, opts?: { limit?: number }): Promise<TickSummary> {
   const summary: TickSummary = { claimed: 0, advanced: 0, scheduled: 0, failed: 0, dead: 0 };
 
@@ -1343,6 +1364,54 @@ export async function runFollowupTick(deps: TickDeps, opts?: { limit?: number })
             next_eval_at: new Date(deps.clock().getTime() + ADIAMENTO_FORA_DO_PLANO_MS).toISOString(),
             claimed_until: null,
             last_error: ERRO_DA_EQUIPE_FORA_DO_PLANO,
+          });
+        } catch {
+          // O lease expira e um tique futuro tenta de novo.
+        }
+        continue;
+      }
+    }
+    // Fluxo da Equipe de IA pronta: a PAUSA adia como o plano; o LIMITE DE
+    // TOQUES encerra a inscrição que acabou de nascer, sem mandar nada, quando
+    // a equipe já retomou este contato depois da última mensagem dele. Falha de
+    // leitura = ADIA por poucos minutos (falha fechada): a leitura que falhou é
+    // a que diria "a equipe está pausada", e seguir aqui é enviar.
+    if (deps.db.travaDoFluxoDaEquipe) {
+      const trava = await deps.db.travaDoFluxoDaEquipe(enrollment).catch(() => TRAVA_SEM_LEITURA);
+      if (trava?.acao === "adiar") {
+        const espera =
+          trava.motivo === ERRO_DA_LEITURA_DA_TRAVA ? ADIAMENTO_POR_LEITURA_MS : ADIAMENTO_FORA_DO_PLANO_MS;
+        try {
+          await deps.db.updateEnrollment(enrollment.id, enrollment.organization_id, {
+            next_eval_at: new Date(deps.clock().getTime() + espera).toISOString(),
+            claimed_until: null,
+            last_error: trava.motivo,
+          });
+        } catch {
+          // O lease expira e um tique futuro tenta de novo.
+        }
+        continue;
+      }
+      if (trava?.acao === "encerrar") {
+        try {
+          const agora = deps.clock().toISOString();
+          // O evento vem antes, e é idempotente pela chave: o dossiê da
+          // inscrição diz por que ela terminou sem mandar nada.
+          await deps.db.insertEnrollmentEvent({
+            organization_id: enrollment.organization_id,
+            enrollment_id: enrollment.id,
+            node_id: enrollment.current_node_id,
+            event_type: "cancelled_by_touch_limit",
+            payload: { reason: trava.motivo, toques: trava.toques },
+            idempotency_key: `${enrollment.current_node_id}:${enrollment.steps_taken}:limite-de-toques`,
+          });
+          await deps.db.updateEnrollment(enrollment.id, enrollment.organization_id, {
+            status: "cancelled",
+            cancel_reason: trava.motivo,
+            next_eval_at: null,
+            claimed_until: null,
+            completed_at: agora,
+            updated_at: agora,
           });
         } catch {
           // O lease expira e um tique futuro tenta de novo.
@@ -1408,6 +1477,9 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
     },
     async fluxoDaEquipeForaDoPlano(orgId, pointerId) {
       return reguaDaEquipeForaDoPlano(admin, orgId, pointerId);
+    },
+    async travaDoFluxoDaEquipe(enrollment) {
+      return travaDoFluxoDaEquipe(admin, enrollment);
     },
     async claimDueEnrollments(limit, leaseSeconds) {
       const { data, error } = await admin.rpc("fn_claim_due_followup_enrollments", {

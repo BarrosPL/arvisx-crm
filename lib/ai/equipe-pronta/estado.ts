@@ -28,8 +28,10 @@ import {
   lerPerfil,
   type AgenteExaminado,
 } from "./instalar";
+import { gatilhosQueFaltam, type GatilhoQueFalta } from "./gatilhos/fluxos";
 import { renderizarAgente } from "./renderizar";
-import { PASSOS_DA_EQUIPE, type PapelId } from "./tipos";
+import { mapaPelasMarcas, type ChaveDeEtapa } from "./etapas";
+import type { PapelId } from "./tipos";
 
 /** O slug do modelo genérico em `lib/propostas/modelos/catalogo-base.ts`. */
 export const MODELO_DE_PROPOSTA = "proposta_comercial";
@@ -85,6 +87,13 @@ export interface EstadoDaEquipe {
   faltam: string[];
   agentes: AgenteNoEstado[];
   atualizacao_disponivel: { papel: PapelId; de: number; para: number; notas: string }[];
+  /**
+   * Os gatilhos que a instalação criaria agora e ainda não existem (equipe
+   * instalada antes deles, ou uma peça que sumiu). Vazio = nada a fazer, e
+   * sempre vazio enquanto a equipe não está instalada. Não entra no checklist:
+   * a falta deles não impede ativar, só pede instalar de novo.
+   */
+  gatilhos_que_faltam: GatilhoQueFalta[];
   checklist: ItemDoChecklist[];
   pode_ativar: boolean;
 }
@@ -245,24 +254,34 @@ async function itemDoFunil(
   if (!instalacao.pipeline_id) {
     return { id: "funil_marcado", ok: false, texto: "Escolha o funil da equipe e instale de novo.", link };
   }
-  const exigidos = [
-    PASSOS_DA_EQUIPE.qualificado,
-    PASSOS_DA_EQUIPE.perdido,
-    ...(perfil.proposta.usa ? [PASSOS_DA_EQUIPE.proposta] : []),
+  // As etapas que a equipe precisa para trabalhar. Depois de instalar com a
+  // versão que cria etapas, todas existem; a instalação anterior tem só as
+  // marcas do funil, e por isso é lida por elas.
+  const exigidas: ChaveDeEtapa[] = [
+    "qualificado",
+    "perdido",
+    ...(perfil.proposta.usa ? (["proposta_enviada"] as const) : []),
   ];
   const { rows } = await db.query(
-    `select agent_stage_hint from crm_stages
-      where organization_id=$1 and pipeline_id=$2 and not is_archived and agent_stage_hint = any($3::text[])`,
-    [orgId, instalacao.pipeline_id, exigidos],
+    `select id, name, agent_stage_hint, is_won, is_lost from crm_stages
+      where organization_id=$1 and pipeline_id=$2 and not is_archived`,
+    [orgId, instalacao.pipeline_id],
   );
-  const marcados = new Set(rows.map((r) => String(r.agent_stage_hint)));
-  const ok = exigidos.every((h) => marcados.has(h));
+  const vivas = rows.map((r) => ({
+    id: String(r.id),
+    name: String(r.name),
+    agent_stage_hint: r.agent_stage_hint === null ? null : String(r.agent_stage_hint),
+    is_won: r.is_won === true,
+    is_lost: r.is_lost === true,
+  }));
+  const mapa = Object.keys(instalacao.etapas).length > 0 ? instalacao.etapas : mapaPelasMarcas(vivas);
+  const ok = exigidas.every((chave) => vivas.some((e) => e.id === mapa[chave]));
   return {
     id: "funil_marcado",
     ok,
     texto: ok
-      ? "O funil tem as etapas da equipe marcadas."
-      : "Marque no funil qual etapa é a de qualificado, a de proposta e a de perdido, para os agentes moverem os negócios.",
+      ? "O funil tem as etapas da equipe."
+      : "Faltam etapas da equipe no funil. Instale de novo: a instalação cria as que faltam, sem mexer nas suas.",
     link,
   };
 }
@@ -297,8 +316,11 @@ export async function lerEstadoDaEquipe(
       knowledge_source_id: null,
       followup_flow_pointer_id: null,
       proposal_template_id: null,
+      etapas: {},
+      etapas_criadas: [],
       tipos_de_agenda_desativados: [],
       agentes: {},
+      gatilhos: { fluxo_de_falta_id: null, fluxo_de_proposta_parada_id: null, regra_de_proposta_parada_id: null },
       roteador_confirmado: null,
       pausa: null,
     };
@@ -363,6 +385,7 @@ export async function lerEstadoDaEquipe(
       atualizacao_disponivel: agentes.flatMap((a) =>
         a.atualizacao_disponivel ? [{ papel: a.papel, ...a.atualizacao_disponivel }] : [],
       ),
+      gatilhos_que_faltam: estado === "instalado" && lido.ok ? gatilhosQueFaltam(lido.perfil, instalacao) : [],
       checklist,
       pode_ativar: estado === "instalado" && checklist.length > 0 && checklist.every((i) => i.ok),
     };

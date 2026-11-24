@@ -147,6 +147,17 @@ const ESCRITA_QUE_E_TRABALHO_DE_ATENDENTE: ReadonlyArray<string> = [
   // Fechar conversa é o gesto de quem atende; a ferramenta usa a MESMA regra
   // da rota (`lib/inbox/fechar-conversa.ts`) e não envia nada ao cliente.
   "crm_close_conversation",
+  // Equipe pronta v2. `PATCH /api/v1/contacts/[id]` exige `agent`: editar a
+  // ficha de um cliente é trabalho de quem atende, e esta ferramenta grava
+  // pelo MESMO handler da rota.
+  "crm_update_contact",
+  // ⚠️ A rota da tela (`POST /api/v1/proposals/[id]/send`) exige `manager`, e
+  // esta NÃO é paridade de papel: é decisão do dono do produto. O agente não
+  // tem papel humano; quem autoriza o envio é o modo da empresa
+  // (`envio_de_proposta`, `lib/propostas/envio-pelo-agente.ts`): por padrão só
+  // sai a proposta que a equipe aprovou. É de risco crítico e não entra por
+  // pacote: o token ou agente só a tem se alguém a marcar à mão.
+  "crm_send_proposal",
 ];
 
 function alcancavelPeloAgente(requiresRole: Role): boolean {

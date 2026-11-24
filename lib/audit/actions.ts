@@ -1494,6 +1494,13 @@ export const AUDIT_ACTIONS = [
   // timeline (`next_action_approved`/`next_action_dismissed`); faltava quem
   // propôs. metadata leva a identidade da proposta (`seq`), nunca o texto.
   "lead.next_action_proposed",
+  // Equipe pronta v2: o agente GRAVOU direto no cadastro do contato
+  // (`crm_update_contact`). metadata leva os campos gravados e o valor ANTERIOR
+  // de cada um (`changes`), para a equipe desfazer. O documento nunca entra em
+  // claro, e campo personalizado sai pelo nome. `resource_id` = o contato.
+  "contact.updated_by_agent",
+  /** Equipe pronta v2: a equipe aprovou o rascunho para o agente de Propostas enviar. */
+  "proposal.aprovada_para_o_agente",
 ] as const;
 
 /** Um código de auditoria. Derivado de `AUDIT_ACTIONS` — não redigite a lista. */

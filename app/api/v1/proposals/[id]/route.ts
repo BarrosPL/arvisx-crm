@@ -7,6 +7,7 @@ import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { requireSupportWrite } from "@/lib/impersonate/support";
+import { gravarEdicaoDaProposta } from "@/lib/propostas/gravar-edicao";
 import { resolverItensDaProposta } from "@/lib/propostas/itens";
 import { propostaItemSchema } from "@/lib/schemas/propostas";
 import { resolverAvisoDeRevisaoSeProntaOuEncerrada } from "@/lib/propostas/aviso-de-revisao";
@@ -127,9 +128,14 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
   if (!resolvido.ok) {
     return fail("validation_failed", t(resolvido.motivo), 422, { requestId });
   }
-  const { data: proposta, error } = await supabase
-    .from("crm_proposals")
-    .update({
+  // Campos, CAS da revisão e troca dos itens numa transação só (migration
+  // 9815): a revisão sobe UMA vez. Em três chamadas, o gatilho que soma a
+  // revisão a cada item gravado faria uma edição valer três.
+  const gravada = await gravarEdicaoDaProposta(supabase, {
+    orgId: authz.org.orgId,
+    propostaId: id,
+    revisao: input.revision,
+    campos: {
       ...(input.titulo !== undefined ? { titulo: input.titulo } : {}),
       ...(input.condicoes !== undefined ? { condicoes: input.condicoes } : {}),
       ...(input.valid_until !== undefined ? { valid_until: input.valid_until } : {}),
@@ -137,17 +143,11 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
       ...(input.pagamento !== undefined ? { pagamento: input.pagamento === "" ? null : input.pagamento } : {}),
       total_cents: resolvido.totalCents,
       pricing_status: resolvido.pricingStatus,
-      revision: input.revision + 1,
-    })
-    .eq("organization_id", authz.org.orgId)
-    .eq("id", id)
-    .eq("revision", input.revision)
-    .eq("status", "rascunho")
-    .select("id, revision")
-    .maybeSingle();
-
-  if (error) return fail("internal_error", t("Falha ao editar a proposta."), 500, { requestId });
-  if (!proposta) {
+    },
+    itens: input.itens.length > 0 ? resolvido.itens : [],
+  });
+  if (gravada.tipo === "falha") return fail("internal_error", t("Falha ao editar a proposta."), 500, { requestId });
+  if (gravada.tipo === "desatualizada") {
     return fail(
       "proposal_context_stale",
       t("A proposta mudou (ou não está mais em rascunho). Recarregue antes de editar."),
@@ -155,29 +155,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
       { requestId },
     );
   }
-
-  const { error: deleteError } = await supabase
-    .from("crm_proposal_items")
-    .delete()
-    .eq("organization_id", authz.org.orgId)
-    .eq("proposal_id", id);
-  if (deleteError) return fail("internal_error", t("Falha ao remover os itens anteriores."), 500, { requestId });
-
-  if (input.itens.length > 0) {
-    const { error: insertError } = await supabase.from("crm_proposal_items").insert(
-      resolvido.itens.map((it) => ({
-        organization_id: authz.org.orgId,
-        proposal_id: id,
-        product_id: it.product_id,
-        descricao: it.descricao,
-        quantidade: it.quantidade,
-        preco_unitario_cents: it.preco_unitario_cents,
-        desconto_cents: it.desconto_cents,
-        position: it.position,
-      })),
-    );
-    if (insertError) return fail("internal_error", t("Falha ao gravar os itens."), 500, { requestId });
-  }
+  const proposta = { revision: gravada.revision };
 
   void resolverAvisoDeRevisaoSeProntaOuEncerrada(supabase, authz.org.orgId, id);
 

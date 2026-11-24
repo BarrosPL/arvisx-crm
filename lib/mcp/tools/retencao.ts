@@ -53,6 +53,7 @@ import { carregaRadarDeRisco } from "@/lib/leads/radar-de-risco";
 import { contatoDoNegocio } from "@/lib/operacao/modelos-de-mensagem";
 import { propoeReativacao } from "@/lib/leads/reactivation";
 import { resolveStageWindow } from "@/lib/leads/risk-radar";
+import { conferirFechamentoDaEquipe } from "@/lib/ai/equipe-pronta/dono-de-etapa";
 import type { McpContext, McpToolDefinition } from "../types";
 
 /** Payload de auditoria a partir do ator do ctx (user humano ou agente). */
@@ -470,6 +471,17 @@ export const crmCloseDemand: McpToolDefinition<typeof encerrarShape> = {
   requiresRole: "agent",
   requiresScope: "mcp:write",
   handler: async (input, ctx) => {
+    // Dono de etapa: entre os agentes da Equipe pronta, o ganho é de quem cuida
+    // da proposta; a perda é de qualquer papel. Os demais agentes não mudam.
+    const recusaDaEquipe = await conferirFechamentoDaEquipe(
+      { supabase: ctx.supabase, organizationId: ctx.organizationId, actor: ctx.actor },
+      {
+        leadId: input.lead_id,
+        desfecho: input.outcome,
+        temMotivoDaPerda: (input.reason ?? "").trim() !== "",
+      },
+    );
+    if (recusaDaEquipe) return { encerrado: false, ...recusaDaEquipe };
     try {
       const { lead, jaEstava } = await encerraDemanda(
         ctx.supabase,

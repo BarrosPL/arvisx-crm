@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
+import { temAgenteDePropostas } from "@/lib/ai/equipe-pronta/gatilhos/tem-agente-de-propostas";
 import { roleAtLeast } from "@/lib/auth/types";
 
 import { ProposalEditorClient } from "./_client";
@@ -21,5 +22,16 @@ export default async function ProposalPage({ params }: { params: Promise<{ id: s
   // O documento só é editável por manager+ — o mesmo papel que a rota PATCH /documento exige.
   const podeRevisar = roleAtLeast(activeOrg.role, "manager") && suporteLiberaEscrita;
 
-  return <ProposalEditorClient id={id} podeEditar={podeEditar} podeRevisar={podeRevisar} />;
+  // "Aprovar e deixar o agente enviar": o mesmo papel de enviar (gestor), e só
+  // onde há um agente de Propostas da Equipe pronta para enviar.
+  const podeAprovarParaOAgente = podeRevisar && (await temAgenteDePropostas(activeOrg.orgId));
+
+  return (
+    <ProposalEditorClient
+      id={id}
+      podeEditar={podeEditar}
+      podeRevisar={podeRevisar}
+      podeAprovarParaOAgente={podeAprovarParaOAgente}
+    />
+  );
 }

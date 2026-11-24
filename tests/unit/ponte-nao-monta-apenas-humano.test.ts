@@ -53,8 +53,8 @@ describe("a ponte do turno respeita `apenasHumano`", () => {
   // parte, e não estufar o "-3" fixo, é o que mantém este teste medindo o
   // filtro cego que ele foi escrito para pegar, e não a soma dos dois efeitos.
   const semModulo = TOOL_CATALOG.filter((t) => t.modulo).length;
-  // Capacidade OPCIONAL da empresa (`capacidade:` no catálogo, hoje as três de
-  // proposta: rascunhar, preparar e consultar) some do turno quando a empresa
+  // Capacidade OPCIONAL da empresa (`capacidade:` no catálogo, hoje as quatro de
+  // proposta: rascunhar, preparar, consultar e enviar) some do turno quando a empresa
   // não a ligou — `contexto()` não passa `capacidadesLigadas`, então
   // `deCapacidadeDesligada` trata todas como desligadas. Contadas à parte pela
   // mesma razão das de módulo: a consulta de proposta (`crm_get_proposal`)

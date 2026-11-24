@@ -49,16 +49,19 @@ describe("os onze blocos", () => {
     expect(p.atendente).toMatchObject({ tom: "profissional", como_chamar: "cliente" });
     // Preço não é informado por mensagem, a menos que a empresa diga que é.
     expect(p.oferta.informa_preco_por_mensagem).toBe(false);
-    // P-03: proposta em uso, sempre rascunho.
-    expect(p.proposta).toEqual({ usa: true, validade_dias: 7 });
+    // P-03: proposta em uso, sempre rascunho. Na v2 o agente envia, e o
+    // padrão é só depois de a equipe aprovar (decisão 2 do dono).
+    expect(p.proposta).toEqual({ usa: true, validade_dias: 7, envio_de_proposta: "apos_aprovacao" });
     // Desconto: nunca, até a empresa dizer outra coisa.
     expect(p.regras.desconto).toEqual({ modo: "nunca" });
-    // P-04: 2 toques, lead frio em 30 dias.
+    // P-04: 2 toques, lead frio em 30 dias. A proposta parada é retomada
+    // depois de 5 dias (gatilho da v2).
     expect(p.recuperacao).toEqual({
       dias_para_esfriar: 3,
       toques_maximos: 2,
       intervalo_dias: 2,
       limite_lead_frio_dias: 30,
+      dias_proposta_parada: 5,
     });
     expect(p.humano.situacoes.length).toBeGreaterThan(0);
     expect(p.ligacoes.pode_ligar).toBe(false);

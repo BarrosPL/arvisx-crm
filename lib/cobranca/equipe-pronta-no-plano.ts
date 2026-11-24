@@ -66,6 +66,19 @@ export async function planoLiberaAEquipePronta(admin: SupabaseClient, orgId: str
 }
 
 /**
+ * A mesma pergunta, para a ação que FALA COM O CLIENTE: aqui a falha de
+ * leitura não vira "sim". `null` = o plano não pôde ser lido, e quem chama
+ * recusa (falha fechada). "Leitura falha = segue" é a régua do motor que
+ * responde e do follow-up; não a da ferramenta que envia uma proposta
+ * (revisão de 20/11, item 2.2).
+ */
+export async function planoLiberaAEquipeProntaSeLido(admin: SupabaseClient, orgId: string): Promise<boolean | null> {
+  const leitura = await lerTelasDoPlano(admin, orgId);
+  if (leitura.tipo === "falha") return null;
+  return planoLiberaParaCron(leitura, DESTINO_DA_EQUIPE_PRONTA);
+}
+
+/**
  * Dos agentes dados, quais NÃO podem agir pelo plano: os da equipe pronta,
  * quando o plano não libera a tela dela. Vazio quando o plano libera, quando
  * nenhum é da equipe, ou quando a leitura falha.
@@ -100,9 +113,10 @@ export async function agentesDaEquipeForaDoPlano(
 }
 
 /**
- * Este fluxo de follow-up é a régua da equipe pronta de uma empresa cujo plano
- * não a libera? É o que adia a inscrição que já estava em andamento quando o
- * plano mudou.
+ * Este fluxo de follow-up é um dos fluxos da equipe pronta (a régua de silêncio
+ * ou um dos fluxos dos gatilhos) de uma empresa cujo plano não a libera? É o
+ * que adia a inscrição que já estava em andamento quando o plano mudou, e a
+ * que um gatilho criou depois dele.
  */
 export async function reguaDaEquipeForaDoPlano(
   admin: SupabaseClient,
@@ -117,8 +131,18 @@ export async function reguaDaEquipeForaDoPlano(
       .eq("organization_id", orgId)
       .maybeSingle();
     if (error || !data) return false;
-    const instalacao = data.instalacao as { followup_flow_pointer_id?: unknown } | null;
-    if (instalacao?.followup_flow_pointer_id !== pointerId) return false;
+    // A régua de silêncio e os dois fluxos dos gatilhos (faltou ao compromisso,
+    // proposta parada): os três são da equipe, e os três param com o plano.
+    const instalacao = data.instalacao as {
+      followup_flow_pointer_id?: unknown;
+      gatilhos?: { fluxo_de_falta_id?: unknown; fluxo_de_proposta_parada_id?: unknown } | null;
+    } | null;
+    const daEquipe = [
+      instalacao?.followup_flow_pointer_id,
+      instalacao?.gatilhos?.fluxo_de_falta_id,
+      instalacao?.gatilhos?.fluxo_de_proposta_parada_id,
+    ];
+    if (!daEquipe.includes(pointerId)) return false;
     return !(await planoLiberaAEquipePronta(admin, orgId));
   } catch {
     return false;
