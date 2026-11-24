@@ -2,9 +2,9 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RedesSociaisClient } from "./RedesSociaisClient";
-const h = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), remove: vi.fn() }));
+const h = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), remove: vi.fn(), query: "" }));
 vi.mock("@/lib/api/client", () => ({ apiClient: { get: h.get, post: h.post, delete: h.remove } }));
-vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams() }));
+vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(h.query) }));
 vi.mock("@/hooks/i18n/useT", () => ({ useT: () => (s: string) => s }));
 vi.mock("./ChannelAiAccess", () => ({ ChannelAiAccess: () => <div>IA pausada</div> }));
 // O cartão da conexão direta tem teste próprio; aqui a régua é a porta por parceiro.
@@ -12,6 +12,7 @@ vi.mock("./ConexaoDiretaMeta", () => ({ ConexaoDiretaMeta: () => <div>conexão d
 beforeEach(() => {
   cleanup();
   vi.clearAllMocks();
+  h.query = "";
 });
 // O bloco do parceiro está escondido do cliente desde 12/11/2026 (b22b7a0f2), mas
 // o código dele continua no produto. Os casos abaixo o montam À VISTA para a prova
@@ -38,6 +39,38 @@ it("como a tela monta hoje: só a conexão direta, sem o bloco do parceiro e sem
   expect(screen.queryByText("Conexão por parceiro (opcional)")).toBeNull();
   expect(screen.queryByRole("button", { name: "Atualizar" })).toBeNull();
   expect(h.get).not.toHaveBeenCalled();
+});
+// O desfecho da volta de `/auth/social-return` (`?connected=1` / `?error=1`). O e2e
+// `redes-sociais-volta-nao-desloga` media o aviso pela tela; com o bloco escondido a
+// tela não o mostra, e a medida dele passa a morar aqui, nos dois sentidos.
+it("a volta da autorização do parceiro diz o desfecho no bloco do parceiro, e só nele", async () => {
+  h.get.mockResolvedValue({ data: { configured: true, label: "Partner", networks: [], accounts: [] } });
+  const concluida = "Autorização concluída. Confira a conta na lista e ative o atendimento, quando disponível.";
+  const recusada = "A autorização não foi concluída. Tente conectar novamente e aceite as permissões necessárias.";
+
+  h.query = "aba=sociais&connected=1";
+  mount();
+  expect((await screen.findByText(concluida)).getAttribute("role")).toBe("status");
+  expect(screen.queryByText(recusada)).toBeNull();
+
+  cleanup();
+  h.query = "aba=sociais&error=1";
+  mount();
+  expect((await screen.findByText(recusada)).getAttribute("role")).toBe("alert");
+  expect(screen.queryByText(concluida)).toBeNull();
+
+  // Como a tela monta hoje (sem a propriedade): o aviso do parceiro não aparece.
+  cleanup();
+  h.query = "aba=sociais&connected=1";
+  render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      <RedesSociaisClient />
+    </QueryClientProvider>,
+  );
+  await screen.findByText("conexão direta");
+  expect(screen.queryByText(concluida)).toBeNull();
 });
 it("shows connected networks and offers inbox only where implemented", async () => {
   h.get.mockResolvedValue({

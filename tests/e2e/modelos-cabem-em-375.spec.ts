@@ -24,26 +24,57 @@
  * idioma). Somados, o `min-content` do formulário passava da largura útil — 343
  * px numa janela de 375 px, com o `p-4` da casca — e o `<main>` passava a rolar.
  *
- * ## As duas abas, e o que "duas" quer dizer aqui
+ * ## Por onde o cliente chega ao formulário hoje
  *
- * A aba do parceiro e a do canal oficial montam o MESMO formulário — o
- * compartilhado em `FormularioDaDefinicao`, que o parceiro abre por
- * `TemplatesParceiroClient` e o canal oficial por `TemplatesClient` (as duas
- * usam `data-formulario-do-modelo` e o mesmo CSS). Esta spec percorre as duas em
- * 375x812 com o formulário ABERTO — não com a lista fechada, que sempre cabe.
+ * O formulário é UM (`FormularioDaDefinicao`, `data-formulario-do-modelo`), e já
+ * teve duas portas em Conexões: a aba do provedor parceiro
+ * (`TemplatesParceiroClient`) e a do canal oficial (`TemplatesClient`). A aba do
+ * parceiro saiu da tela em b22b7a0f2 (decisão do dono, 12/11/2026): `?aba=parceiro`
+ * cai na aba padrão, e nenhum clique leva àquele formulário. A porta que o
+ * cliente tem é **API Oficial (Meta) › Templates da Meta**, e é ela que esta spec
+ * percorre em 375x812 com o formulário ABERTO — criar e editar.
  *
- * Desde que o canal oficial passou a gerenciar modelo pela tela (#3635), "não
- * achei o formulário" deixou de ser um caso legítimo: virou DEFEITO, e o caso
- * fica vermelho. A única ausência aceita é a instalação não ter número oficial
- * conectado — ali não existe formulário nenhum, e o caso se declara PULADO com
- * o motivo, em vez de medir a lista e chamar isso de verde.
+ * (O mesmo componente do parceiro ainda monta na aba opcional do canal parceiro
+ * Graph, que nasce desligada na instalação; a largura dele sozinho é medida em
+ * `components/connections/TemplatesParceiroClient.layout.test.tsx`.)
+ *
+ * ## A conexão oficial é semeada, e por quê
+ *
+ * Sem número oficial conectado a aba mostra "Canal oficial não conectado" e não
+ * existe formulário para medir. Enquanto a aba do parceiro existia, era ela que
+ * garantia a medida no CI, e a do canal oficial se declarava pulada. Com uma
+ * porta só, pular seria a spec inteira ficar sem medir nada. Então o estado é
+ * montado pelo banco, como em `aviso-pelo-numero-oficial.spec.ts`: uma sessão
+ * oficial com conta (WABA) e um modelo espelhado de nome comprido, que é o que
+ * mais empurra a largura no formulário de editar. A tela só LÊ esse estado
+ * (`GET /api/v1/channels/templates` não fala com a Meta), e tudo morre no
+ * `afterAll`.
  *
  * Cada caso imprime a medida, para que um vermelho diga QUANTO passou em vez de
  * só "não cabe".
  */
+import { randomUUID } from "node:crypto";
+
+import { createClient } from "@supabase/supabase-js";
+
+import { carregarEnvLocal } from "../../scripts/lib/env-de-teste";
 import { test, expect, type Page } from "./helpers/test";
 
-import { lerCreds, loginComoAdmin } from "./helpers/login-admin";
+import { lerCreds, loginComoAdmin, type CredsE2E } from "./helpers/login-admin";
+
+type Creds = CredsE2E & { org_id: string };
+
+const SUFIXO = String(Date.now()).slice(-6);
+const SESSAO = randomUUID();
+const MODELO = randomUUID();
+const CONTA = `e2e-conta-375-${SUFIXO}`;
+/** Comprido de propósito: é o nome que aparece na linha "Editando <nome>". */
+const NOME_DO_MODELO = `modelo_e2e_375_com_nome_bem_comprido_para_empurrar_a_largura_${SUFIXO}`;
+
+const env = carregarEnvLocal();
+const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
 
 /**
  * Um login só para todos os casos: dois logins caem na mesma janela TOTP quase
@@ -53,12 +84,6 @@ import { lerCreds, loginComoAdmin } from "./helpers/login-admin";
 test.describe.configure({ timeout: 180_000 });
 
 test.use({ viewport: { width: 375, height: 812 }, hasTouch: true, isMobile: true });
-
-/** As duas abas que montam o formulário. */
-const ABAS = [
-  { aba: "parceiro", rotulo: "parceiro" },
-  { aba: "oficial", rotulo: "canal oficial" },
-] as const;
 
 /**
  * Quanto a tela passa da própria largura, em px: o maior entre os dois lados da
@@ -97,88 +122,100 @@ async function medirEstavel(page: Page) {
   return transbordo(page);
 }
 
-/** O que a aba ofereceu ao abrir: o formulário, ou o motivo de ele não existir. */
-type Abertura =
-  | { formulario: true }
-  | { formulario: false; motivo: "canal-oficial-desconectado" | "sem-criacao" };
-
 /**
- * Abre a aba de modelos e o formulário.
+ * Abre API Oficial (Meta) › Templates da Meta, pela URL que as abas escrevem.
  *
- * Devolve o ESTADO da aba, e não um booleano: desde a #3635 as duas abas têm
- * "Criar modelo", então "não achei o formulário" deixou de ser um caso legítimo
- * e passou a ser defeito. Quem chama decide o que é desculpa aceitável (a
- * instalação não ter número oficial conectado) e o que é regressão.
+ * Com a conexão semeada, "Canal oficial não conectado" não é estado aceitável:
+ * é o seed que não pegou (ou a tela que deixou de ler a sessão), e o caso
+ * reprova dizendo isso em vez de medir uma tela sem formulário.
  */
-async function abrirAba(page: Page, aba: string): Promise<Abertura> {
-  await page.goto(`/app/connections?aba=${aba}&sub=templates`, { waitUntil: "domcontentloaded" });
-  // A tela montou quando a sub-aba "Modelos" está lá: ela existe nas duas abas
-  // mesmo quando a conexão do canal ainda não foi feita (a lista vazia e o
-  // "canal não conectado" convivem com a barra de sub-abas).
+async function abrirModelosDoCanalOficial(page: Page): Promise<void> {
+  await page.goto("/app/connections?aba=oficial&sub=templates", { waitUntil: "domcontentloaded" });
   await page
-    .getByRole("tab", { name: /^(Modelos|Modelos do parceiro|Templates da Meta)$/ })
-    .first()
+    .getByRole("tab", { name: "Templates da Meta", exact: true })
     .waitFor({ state: "visible", timeout: 60_000 });
-
-  // Duas telas possíveis: a aba com o botão que abre o formulário, ou o cartão
-  // que avisa que não há canal oficial conectado — a ÚNICA saída sem form.
-  const criar = page.getByRole("button", { name: /^Criar modelo$/ });
-  const semCanal = page.getByText(/Canal oficial não conectado/);
   await expect(
-    criar.or(semCanal).first(),
-    `a aba "${aba}" não montou: nem "Criar modelo", nem o aviso de canal desconectado`,
+    page.getByTestId("templates-root"),
+    'a aba de modelos do canal oficial não montou com a conexão semeada (diz "Canal oficial não conectado"?)',
   ).toBeVisible({ timeout: 60_000 });
-
-  if ((await semCanal.count()) > 0)
-    return { formulario: false, motivo: "canal-oficial-desconectado" };
-  if ((await criar.count()) === 0) return { formulario: false, motivo: "sem-criacao" };
-
-  await criar.first().click();
-  // A espera é o FORMULÁRIO, não o botão: sem esta linha, um formulário que não
-  // abre deixa o caso medindo a lista e chamando isso de verde.
-  await expect(
-    page.locator("[data-formulario-do-modelo]"),
-    `a aba "${aba}" tem "Criar modelo" e o clique não abriu o formulário`,
-  ).toBeVisible();
-  return { formulario: true };
+  await expect(page.getByText(/Canal oficial não conectado/)).toHaveCount(0);
 }
 
-test("o formulário de modelo não estoura a tela em 375px, nas duas abas", async ({ page }) => {
-  const creds = lerCreds();
-  await loginComoAdmin(page, creds);
+test.describe("o formulário de modelo em 375px", () => {
+  const creds = lerCreds() as Creds;
 
-  for (const { aba, rotulo } of ABAS) {
-    const abertura = await abrirAba(page, aba);
+  test.beforeAll(async () => {
+    const sessao = await admin.from("channel_sessions").insert({
+      id: SESSAO,
+      organization_id: creds.org_id,
+      provider: "meta_cloud",
+      meta_phone_number_id: `e2e-375-${SUFIXO}`,
+      meta_waba_id: CONTA,
+      display_name: `Número oficial 375 E2E ${SUFIXO}`,
+      webhook_secret_encrypted: "\\x00",
+      status: "WORKING",
+    });
+    if (sessao.error) throw sessao.error;
+    // A tela lê a sessão oficial MAIS ANTIGA da organização (`metaSessionForOrg`).
+    // Se outra spec deixou uma para trás, a conta em vigor é a dela, e o modelo
+    // semeado tem de nascer nessa conta para a tela oferecer "Editar".
+    const emVigor = await admin
+      .from("channel_sessions")
+      .select("meta_waba_id")
+      .eq("organization_id", creds.org_id)
+      .eq("provider", "meta_cloud")
+      .is("archived_at", null)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .single();
+    if (emVigor.error) throw emVigor.error;
+    const conta = (emVigor.data as { meta_waba_id: string | null }).meta_waba_id;
+    if (!conta) throw new Error("a sessão oficial em vigor não tem conta (WABA): a aba diria 'não conectado'");
+    const modelo = await admin.from("meta_templates").insert({
+      id: MODELO,
+      organization_id: creds.org_id,
+      // Sem sessão e com a conta em vigor: é a régua de "modelo DESTA conexão"
+      // (`daConexao`), a única que ganha o botão Editar na aba do canal oficial.
+      channel_session_id: null,
+      waba_id: conta,
+      name: NOME_DO_MODELO,
+      language: "pt_BR",
+      status: "APPROVED",
+      category: "UTILITY",
+      components: [
+        { type: "BODY", text: "Olá! Seu pedido saiu para entrega e chega ainda hoje. Qualquer dúvida, é só responder esta mensagem." },
+      ],
+      contract_hash: "",
+    });
+    if (modelo.error) throw modelo.error;
+  });
 
-    if (!abertura.formulario) {
-      test
-        .info()
-        .annotations.push({
-          type: "medida",
-          description: `${rotulo}: NÃO medido (${abertura.motivo})`,
-        });
-      // Ficar sem formulário só é desculpa na aba do canal oficial, e só quando a
-      // instalação não tem número oficial conectado — ali não existe formulário
-      // nenhum para medir, e o caso se declara PULADO com o motivo (nunca verde).
-      // Em qualquer outra aba é regressão: o formulário é o que este caso mede.
-      expect(
-        abertura.motivo,
-        `a aba do ${rotulo} abriu sem "Criar modelo" — o formulário deixou de ser oferecido ali`,
-      ).toBe("canal-oficial-desconectado");
-      test.skip(
-        true,
-        `a aba do ${rotulo} não existe nesta instalação: canal oficial não conectado`,
-      );
-    }
+  test.afterAll(async () => {
+    await admin.from("meta_templates").delete().eq("id", MODELO);
+    await admin.from("channel_sessions").delete().eq("id", SESSAO);
+  });
+
+  test("o formulário de modelo não estoura a tela em 375px, ao criar e ao editar", async ({ page }) => {
+    await loginComoAdmin(page, creds);
+    await abrirModelosDoCanalOficial(page);
+
+    // ── Criar ──────────────────────────────────────────────────────────────
+    await page.getByRole("button", { name: /^Criar modelo$/ }).click();
+    // A espera é o FORMULÁRIO, não o botão: sem esta linha, um formulário que não
+    // abre deixa o caso medindo a lista e chamando isso de verde.
+    await expect(
+      page.locator('[data-formulario-do-modelo="criar"]'),
+      'a aba tem "Criar modelo" e o clique não abriu o formulário',
+    ).toBeVisible();
 
     const { px, detalhe } = await medirEstavel(page);
     test.info().annotations.push({
       type: "medida",
-      description: `${rotulo} (criar): ${detalhe} → ${px}px`,
+      description: `canal oficial (criar): ${detalhe} → ${px}px`,
     });
     expect(
       px,
-      `a aba do ${rotulo} passa da tela em 375px com o formulário aberto — ${detalhe}`,
+      `a aba do canal oficial passa da tela em 375px com o formulário aberto — ${detalhe}`,
     ).toBeLessThanOrEqual(1);
 
     const doFormulario = await page.evaluate(() => {
@@ -187,36 +224,37 @@ test("o formulário de modelo não estoura a tela em 375px, nas duas abas", asyn
     });
     expect(
       doFormulario.scroll,
-      `o formulário da aba do ${rotulo} passa da própria caixa: ${doFormulario.scroll}/${doFormulario.client}`,
+      `o formulário da aba do canal oficial passa da própria caixa: ${doFormulario.scroll}/${doFormulario.client}`,
     ).toBeLessThanOrEqual(doFormulario.client + 1);
-  }
 
-  // O formulário de EDITAR tem um campo a mais (a linha "Editando <nome>") e
-  // nasce preenchido com o texto aprovado — inclusive com nome longo, que é o
-  // caso que mais empurra a largura. Sem modelo espelhado, o caso se declara
-  // pulado em vez de falhar: o que ele mede é o formulário, não o seed.
-  await page.goto("/app/connections?aba=parceiro&sub=templates", { waitUntil: "domcontentloaded" });
-  const primeira = page.locator("ul > li button[aria-expanded]").first();
-  const temModelo = await primeira
-    .waitFor({ state: "visible", timeout: 30_000 })
-    .then(() => true)
-    .catch(() => false);
-  test.skip(!temModelo, "a organização não tem modelo espelhado para editar");
+    // ── Editar ─────────────────────────────────────────────────────────────
+    // O formulário de EDITAR tem um campo a mais (a linha "Editando <nome>") e
+    // nasce preenchido com o texto aprovado — com nome longo, que é o caso que
+    // mais empurra a largura. O modelo é o semeado: sem ele não há o que editar.
+    const cartao = page.getByTestId("template-card").filter({ hasText: NOME_DO_MODELO });
+    await expect(cartao, "o modelo semeado não apareceu na lista do canal oficial").toHaveCount(1);
+    await cartao.getByRole("button", { name: /^Editar$/ }).click();
+    const editar = page.locator('[data-formulario-do-modelo="editar"]');
+    await expect(editar).toBeVisible();
+    await expect(editar).toContainText(NOME_DO_MODELO);
 
-  await primeira.click();
-  await page
-    .getByRole("button", { name: /^Editar$/ })
-    .first()
-    .click();
-  await expect(page.locator('[data-formulario-do-modelo="editar"]')).toBeVisible();
+    const doEditar = await medirEstavel(page);
+    test.info().annotations.push({
+      type: "medida",
+      description: `editar: ${doEditar.detalhe} → ${doEditar.px}px`,
+    });
+    expect(
+      doEditar.px,
+      `o formulário de editar passa da tela — ${doEditar.detalhe}`,
+    ).toBeLessThanOrEqual(1);
 
-  const doEditar = await medirEstavel(page);
-  test.info().annotations.push({
-    type: "medida",
-    description: `editar: ${doEditar.detalhe} → ${doEditar.px}px`,
+    const daCaixaDoEditar = await page.evaluate(() => {
+      const form = document.querySelector<HTMLElement>('[data-formulario-do-modelo="editar"]')!;
+      return { scroll: form.scrollWidth, client: form.clientWidth };
+    });
+    expect(
+      daCaixaDoEditar.scroll,
+      `o formulário de editar passa da própria caixa: ${daCaixaDoEditar.scroll}/${daCaixaDoEditar.client}`,
+    ).toBeLessThanOrEqual(daCaixaDoEditar.client + 1);
   });
-  expect(
-    doEditar.px,
-    `o formulário de editar passa da tela — ${doEditar.detalhe}`,
-  ).toBeLessThanOrEqual(1);
 });

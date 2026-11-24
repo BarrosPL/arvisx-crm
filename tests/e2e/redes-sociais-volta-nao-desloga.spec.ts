@@ -17,6 +17,23 @@ import { lerCreds, loginComoAdmin } from "./helpers/login-admin";
  * navegação a partir do nosso próprio origin, e aí o cookie viaja. A spec segue
  * o DESFECHO — onde a pessoa parou e o que a tela disse —, não o header.
  *
+ * ## As duas pontes, e o que cada uma mostra hoje
+ *
+ * `/auth/social-return` é a volta da conexão POR PARCEIRO. Desde b22b7a0f2
+ * (decisão do dono, 12/11/2026) esse bloco fica escondido na aba "Facebook /
+ * Instagram", e o aviso "Autorização concluída" mora dentro dele: a tela real
+ * não o mostra mais. A ponte continua pública e respondendo (autorizações
+ * antigas e a recuperação do `proxy.ts` ainda caem nela), então o que se mede
+ * dela é o que ela ainda faz: devolve a pessoa LOGADA à aba certa, sem refletir
+ * o `connect_token`. O aviso em si é medido com o bloco montado à vista em
+ * `components/connections/RedesSociaisClient.test.tsx`.
+ *
+ * `/auth/meta-social-return` é a volta da conexão DIRETA pela Meta, a única
+ * porta que o cliente vê. É nela que "mostra o desfecho" é medido: o cartão da
+ * conexão direta conclui a volta com a sessão, limpa a URL e diz o que
+ * aconteceu. O estado usado aqui tem o formato certo e assinatura de ninguém:
+ * a tela tem de RECUSAR em palavras, nunca ficar muda.
+ *
  * O site "de fora" sobe em `127.0.0.1` enquanto o app roda em `localhost`: para
  * o navegador são sites diferentes (porta não conta para SameSite; host conta).
  * Porta 0: o sistema escolhe uma livre, sem colidir com outra spec.
@@ -68,8 +85,45 @@ test("voltar da autorização de rede social não manda para o /login e mostra o
     expect(url).toContain("aba=sociais");
     expect(url, "a ponte refletiu o connect_token na URL").not.toContain("SEGREDO");
 
-    await expect(page.getByText(/Autorização concluída/)).toBeVisible({ timeout: 20_000 });
+    // A aba que abriu é a das redes sociais, com a porta que o cliente vê.
+    await expect(page.getByRole("heading", { name: "Facebook / Instagram", exact: true })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByTestId("conexao-direta-meta")).toBeVisible();
   } finally {
     await new Promise<void>((r) => servidor.close(() => r()));
+  }
+
+  // ── A volta da conexão DIRETA (Meta): a que o cliente percorre hoje ───────
+  // O "Cancelar" da Meta devolve `error=access_denied` com o `state` da ida.
+  const estado = `${"A".repeat(40)}.${"0".repeat(64)}`;
+  const direta = await subirSiteDeFora(
+    `${base}/auth/meta-social-return?state=${estado}&error=access_denied`,
+  );
+  const portaDaDireta = (direta.address() as AddressInfo).port;
+
+  try {
+    await page.goto(`http://127.0.0.1:${portaDaDireta}/`);
+    await page.waitForURL(/\/(app\/connections|login)/, { timeout: 30_000 });
+    expect(
+      page.url(),
+      `depois de voltar da Meta, a pessoa parou em ${page.url()}. Ela ESTAVA logada: ` +
+        "o cookie SameSite=Strict não viajou no salto iniciado de fora.",
+    ).not.toContain("/login");
+
+    // O desfecho, dito pelo cartão da conexão direta. As duas frases são as
+    // recusas que esta volta pode receber, conforme a instalação: sem o app da
+    // Meta cadastrado (o estado do e2e) a rota recusa antes de olhar o estado;
+    // com ele, recusa o estado que não é desta sessão.
+    const desfecho = page.getByTestId("conexao-direta-meta").getByRole("alert");
+    await expect(desfecho).toBeVisible({ timeout: 30_000 });
+    await expect(desfecho).toHaveText(
+      /^(O app da Meta desta instalação ainda não está configurado\. Quem administra a instalação precisa cadastrar o App ID e a chave secreta em Administração › API Oficial da Meta\.|A autorização expirou ou não é desta conta\. Clique em Conectar de novo\.)$/,
+    );
+    // A tela conclui UMA vez e limpa a barra: o estado não fica para um F5.
+    await expect(page).toHaveURL(/\/app\/connections\?aba=sociais$/);
+    expect(page.url()).not.toContain(estado);
+  } finally {
+    await new Promise<void>((r) => direta.close(() => r()));
   }
 });

@@ -139,12 +139,15 @@ test.describe("o wizard monta um funcionário", () => {
     await login(page);
     await page.waitForURL(/\/onboarding\/connect-whatsapp/, { timeout: 30_000 });
 
-    // As três formas que o produto realmente suporta — as mesmas da tela de
+    // As duas formas que o produto oferece ao cliente — as mesmas da tela de
     // Conexões. Antes, o wizard oferecia uma e nem perguntava: a sessão do
-    // canal por código subia sozinha na montagem da tela.
+    // canal por código subia sozinha na montagem da tela. A terceira (contrato
+    // de um provedor parceiro) saiu da escolha por decisão do dono (b22b7a0f2),
+    // junto com a aba dela em Conexões: são duas, e só duas.
     await expect(page.getByTestId("forma-qr")).toBeVisible();
     await expect(page.getByTestId("forma-oficial")).toBeVisible();
-    await expect(page.getByTestId("forma-parceiro")).toBeVisible();
+    await expect(page.locator('[data-testid^="forma-"]')).toHaveCount(2);
+    await expect(page.getByTestId("forma-parceiro")).toHaveCount(0);
 
     // Nenhuma escolha feita: o código não pode estar na tela ainda.
     await expect(page.locator('img[src*="/whatsapp/qr"]')).toHaveCount(0);
