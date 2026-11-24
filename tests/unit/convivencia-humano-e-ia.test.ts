@@ -321,7 +321,7 @@ describe("o agente externo fica sabendo: os dois eventos", () => {
 describe("o gatilho do banco (migration 9811)", () => {
   const raiz = process.cwd();
   const migration = readFileSync(
-    join(raiz, "supabase/migrations/20261120150000_9811_ia_pausada_e_retomada_viram_evento.sql"),
+    join(raiz, "supabase/migrations/20261120150100_9811_ia_pausada_e_retomada_viram_evento.sql"),
     "utf8",
   ).replace(/\r\n/g, "\n");
   const baseline = readFileSync(join(raiz, "supabase/baseline.sql"), "utf8").replace(/\r\n/g, "\n");
@@ -363,6 +363,6 @@ describe("o gatilho do banco (migration 9811)", () => {
 
   it("a migration está na lista do que o deploy aplica depois do baseline", () => {
     const lista = readFileSync(join(raiz, "deploy/arvisx/crm/migracoes-pos-baseline.txt"), "utf8");
-    expect(lista).toContain("20261120150000_9811_ia_pausada_e_retomada_viram_evento.sql");
+    expect(lista).toContain("20261120150100_9811_ia_pausada_e_retomada_viram_evento.sql");
   });
 });

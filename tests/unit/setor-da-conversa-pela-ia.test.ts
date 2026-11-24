@@ -655,7 +655,7 @@ describe("ação de automação: define_sector", () => {
     // acrescentar `sector_id` à cláusula `when`, toda mudança de setor passa a
     // ser gatilho de automação pela porta dos fundos.
     const migration = readFileSync(
-      join(process.cwd(), "supabase/migrations/20261120150000_9811_ia_pausada_e_retomada_viram_evento.sql"),
+      join(process.cwd(), "supabase/migrations/20261120150100_9811_ia_pausada_e_retomada_viram_evento.sql"),
       "utf8",
     ).replace(/\r\n/g, "\n");
     const gatilho = migration.slice(migration.indexOf("create trigger trg_anunciar_pausa_da_ia"));
