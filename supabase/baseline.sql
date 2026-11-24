@@ -74423,6 +74423,83 @@ on conflict (chave) do nothing;
 
 notify pgrst, 'reload schema';
 
+-- ---- tarefa com tipo e resultado (migration 9809) ----
+-- Espelho idempotente da 9809 (o porquê está no cabeçalho da migration): duas
+-- colunas opcionais de texto livre em `crm_tasks` — `kind` (o tipo da tarefa) e
+-- `result` (o que foi feito, escrito por quem concluiu). Nascem nulas e os
+-- CHECKs aceitam nulo: nenhuma linha existente muda e não há o que corrigir
+-- antes de criar a constraint.
+alter table public.crm_tasks
+  add column if not exists kind text;
+
+alter table public.crm_tasks
+  add column if not exists result text;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+     where conname = 'crm_tasks_kind_tamanho'
+       and conrelid = 'public.crm_tasks'::regclass
+  ) then
+    alter table public.crm_tasks
+      add constraint crm_tasks_kind_tamanho
+      check (kind is null or (length(btrim(kind)) > 0 and length(kind) <= 60));
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+     where conname = 'crm_tasks_result_tamanho'
+       and conrelid = 'public.crm_tasks'::regclass
+  ) then
+    alter table public.crm_tasks
+      add constraint crm_tasks_result_tamanho
+      check (result is null or length(result) <= 20000);
+  end if;
+end
+$$;
+
+comment on column public.crm_tasks.kind is
+  'Tipo da tarefa, em texto livre (como a equipe o chama). Sem vocabulário no banco: cada operação tem os seus. Nulo = sem tipo. Migration 9809.';
+comment on column public.crm_tasks.result is
+  'O que foi feito, escrito por quem concluiu a tarefa. Texto inteiro, sem corte. Nulo = sem resultado registrado. Migration 9809.';
+
+notify pgrst, 'reload schema';
+
+-- ---- a nota do negócio: uma por chave de idempotência (migration 9818) ----
+-- Espelho idempotente da 9818 (o porquê está no cabeçalho da migration): índice
+-- único PARCIAL sobre a `Idempotency-Key` que `crm_add_lead_note` grava no
+-- `payload` da nota. Antes do índice, as notas que já estão em dobro são
+-- corrigidas sem apagar nada — a mais antiga fica com a chave, as demais passam
+-- a guardá-la em `idempotency_key_repetida` —, senão o `update.sh` de um banco
+-- com a duplicata pararia aqui. Na segunda passada não há o que corrigir.
+with repetidas as (
+  select id,
+         row_number() over (
+           partition by organization_id, lead_id, payload->>'idempotency_key'
+           order by performed_at, created_at, id
+         ) as ordem
+    from public.crm_lead_activities
+   where type = 'note'
+     and source_module = 'notas'
+     and payload->>'idempotency_key' is not null
+)
+update public.crm_lead_activities a
+   set payload = (a.payload - 'idempotency_key')
+                 || jsonb_build_object('idempotency_key_repetida', a.payload->>'idempotency_key')
+  from repetidas r
+ where r.id = a.id
+   and r.ordem > 1;
+
+create unique index if not exists uq_crm_lead_activities_nota_idempotencia
+  on public.crm_lead_activities (organization_id, lead_id, (payload->>'idempotency_key'))
+  where type = 'note'
+    and source_module = 'notas'
+    and payload->>'idempotency_key' is not null;
+
+comment on index public.uq_crm_lead_activities_nota_idempotencia is
+  'Uma nota do negócio por Idempotency-Key (migration 9818): decide no banco a corrida entre duas chamadas simultâneas de crm_add_lead_note. Parcial — só type=note, source_module=notas, com chave.';
+
 -- ---- empresa suspensa não grava pelo banco (migration 9806): a chamada ----
 -- As funções nasceram antes da VARREDURA anon; aqui, no fim, toda tabela já
 -- existe. A função só cria a policy que falta: na passada de atualização não

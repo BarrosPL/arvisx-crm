@@ -21,6 +21,7 @@ import { fail, ok } from "@/lib/api/wrappers";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/require-role";
 import { emitLeadActivity } from "@/lib/leads/activity-emitter";
+import { lerPropostaDoNegocio } from "@/lib/leads/proposta-de-proxima-acao";
 import { traduzir } from "@/lib/i18n/dicionario";
 
 export const dynamic = "force-dynamic";
@@ -66,22 +67,15 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
   }
   const { decision, approved_seq } = parsed.data;
 
-  // O lead vem pela RLS do caller — é ele que prova a org, nunca o body.
-  const { data: lead, error: leadErr } = await supabase
-    .from("crm_leads")
-    .select("id, organization_id, contact_id, status")
-    .eq("id", leadId)
-    .maybeSingle();
-  if (leadErr) return fail("internal_error", leadErr.message, 500, { requestId });
-  if (!lead) return fail("not_found", t("Lead não encontrado."), 404, { requestId });
-
-  const row = lead as {
-    id: string;
-    organization_id: string;
-    contact_id: string | null;
-    status: string;
-  };
-  if (!row.contact_id) {
+  // O lead vem pela RLS do caller — é ele que prova a org, nunca o body. A
+  // leitura mora em `lib/leads/proposta-de-proxima-acao.ts`, que a ferramenta do
+  // agente também usa (o token de API não entra nesta rota).
+  const leitura = await lerPropostaDoNegocio(supabase, leadId);
+  if (!leitura.ok) {
+    if (leitura.recusa === "falha") return fail("internal_error", leitura.erro, 500, { requestId });
+    if (leitura.recusa === "negocio_nao_encontrado") {
+      return fail("not_found", t("Lead não encontrado."), 404, { requestId });
+    }
     return fail(
       "next_action_absent",
       t("Este negócio não tem contato, então não há proposta do agente."),
@@ -90,30 +84,22 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     );
   }
 
-  const { data: estado, error: estadoErr } = await supabase
-    .from("lead_state")
-    .select("next_action, next_action_seq")
-    .eq("organization_id", row.organization_id)
-    .eq("contact_id", row.contact_id)
-    .maybeSingle();
-  if (estadoErr) return fail("internal_error", estadoErr.message, 500, { requestId });
-
-  const linha = estado as { next_action: string | null; next_action_seq: number } | null;
-  const atual = linha?.next_action?.trim() ?? null;
+  const row = leitura.lead;
+  const atual = leitura.atual;
   if (!atual) {
     return fail("next_action_absent", t("Não há proposta pendente para este negócio."), 409, {
       requestId,
     });
   }
 
-  if (linha!.next_action_seq !== approved_seq) {
+  if (leitura.seq !== approved_seq) {
     // Autorização vencida: quem clicou autorizou OUTRA proposta. Comparar
     // identidade e não texto é o que pega a reescrita com as mesmas palavras.
     return fail(
       "next_action_changed",
       t("A proposta mudou desde que você a leu. Confira a nova antes de decidir."),
       409,
-      { requestId, details: { current_text: atual, current_seq: linha!.next_action_seq } },
+      { requestId, details: { current_text: atual, current_seq: leitura.seq } },
     );
   }
 

@@ -45,7 +45,6 @@ import { requireSupportWrite } from "@/lib/impersonate/support";
 import { randomUUID } from "node:crypto";
 import { type NextRequest } from "next/server";
 
-import { audit } from "@/lib/audit";
 import { ok, fail } from "@/lib/api/wrappers";
 import { requireRole } from "@/lib/auth/require-role";
 import { roleAtLeast } from "@/lib/auth/types";
@@ -54,10 +53,10 @@ import { logger } from "@/lib/logger";
 import type { Actor } from "@/lib/api/handlers/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import type { Conversation } from "@/lib/types/messaging";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { ApiError } from "@/lib/api/types";
 import { exigirControleDaConversa } from "@/lib/inbox/controle-da-conversa";
+import { fecharConversa, lerConversaParaFechar } from "@/lib/inbox/fechar-conversa";
 
 export const dynamic = "force-dynamic";
 
@@ -94,10 +93,12 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
   const t = (texto: string) => traduzir(texto, authz.user.idioma);
   const user = authz.user;
 
-  const { data: visible, error: readError } = await supabase.from("conversations")
-    .select("id, organization_id, assigned_to_user_id, service_revision").eq("id", id)
-    .eq("organization_id", authz.org.orgId).maybeSingle();
-  if (readError) return fail("internal_error", readError.message, 500, { requestId });
+  // A leitura e o fechamento são a regra compartilhada com a ferramenta
+  // `crm_close_conversation` (`lib/inbox/fechar-conversa.ts`); o que fica aqui é
+  // o que é só da tela: papel, controle da conversa e a devolução ao automático.
+  const leitura = await lerConversaParaFechar(supabase, authz.org.orgId, id);
+  if (!leitura.ok) return fail("internal_error", leitura.detalhe, 500, { requestId });
+  const visible = leitura.conversa;
   if (!visible) return fail("not_found", t("Conversa não encontrada."), 404, { requestId });
   try {
     await exigirControleDaConversa(supabase, {
@@ -155,25 +156,22 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
   // quando ele não mandou nenhuma). O CAS da `fn_service_status` (PT409) segue
   // sendo a última palavra: se alguém mexeu na conversa entre a leitura e este
   // UPDATE, a resposta é 409, e não um fechamento por cima de estado alheio.
-  const { data, error } = await createAdminClient().rpc("fn_service_status", {
-    p_org: visible.organization_id, p_conversation: id, p_status: "closed",
-    p_expected: revisaoEsperada,
-  });
-  // PT409: revisão obsoleta (migration 0514). 40001: contato trocou no meio, ou banco anterior à 0514.
-  const conflito = error?.code === "PT409" || error?.code === "40001";
-  if (error) return fail(conflito ? "conflict" : "internal_error",
-    conflito ? t("O atendimento mudou. Atualize e tente novamente.") : error.message,
-    conflito ? 409 : 500, { requestId });
-  const convFechada = data as unknown as Conversation;
-
-  await audit({
-    action: "conversation.closed",
-    actorUserId: user.id,
-    organizationId: convFechada.organization_id,
-    resourceType: "conversation",
-    resourceId: convFechada.id,
+  const fechamento = await fecharConversa({
+    admin: createAdminClient(),
+    conversa: visible,
+    revisaoEsperada,
     requestId,
+    ator: { actorUserId: user.id },
+    // A tela sempre auditou o gesto de fechar, mesmo sobre conversa já fechada.
+    auditarSemMudanca: true,
   });
+  if (!fechamento.ok) {
+    const conflito = fechamento.erro === "conflito";
+    return fail(conflito ? "conflict" : "internal_error",
+      conflito ? t("O atendimento mudou. Atualize e tente novamente.") : fechamento.detalhe,
+      conflito ? 409 : 500, { requestId });
+  }
+  const convFechada = fechamento.conversa;
 
   return ok(devolucao === null ? convFechada : { ...convFechada, devolucao }, { requestId });
 }

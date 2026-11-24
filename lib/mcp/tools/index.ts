@@ -96,6 +96,11 @@ import {
   crmProposeReactivation,
 } from "./retencao";
 import { crmDraftProposal, crmPrepararProposta } from "./propostas";
+import { crmCompleteTask, crmCreateTask, crmListTasks, crmUpdateTask } from "./tarefas";
+import { crmAddLeadNote, crmListLeadNotes } from "./notas-do-negocio";
+import { crmAttachToLead, crmListLeadAttachments } from "./anexos-do-negocio";
+import { crmSetNextAction } from "./proxima-acao";
+import { crmCloseConversation } from "./fechar-conversa";
 
 // Cast via `unknown` porque McpToolDefinition<TInput> nao e covariante
 // em TInput (handler usa TInput em posicao contravariante). Coletar
@@ -148,6 +153,10 @@ export const allTools: ReadonlyArray<McpToolDefinition> = [
   crmListAvailableAttendants,
   crmListHumanCases,
   crmGetHumanCase,
+  // read — acompanhamento do negócio (superfície de agente, PR 1)
+  crmListTasks,
+  crmListLeadNotes,
+  crmListLeadAttachments,
   // write
   // A que consulta E marca numa chamada só vem primeiro: quando o cliente já deu
   // dia e hora, é o caminho curto, e é o que evita o turno morrer no meio (#831).
@@ -185,6 +194,15 @@ export const allTools: ReadonlyArray<McpToolDefinition> = [
   crmCloseHumanCase,
   crmResumeAiAttendance,
   crmDraftProposal,
+  // write — acompanhamento do negócio (superfície de agente, PR 1)
+  crmCreateTask,
+  crmCompleteTask,
+  crmUpdateTask,
+  crmAddLeadNote,
+  crmAttachToLead,
+  crmSetNextAction,
+  // write — fechar a conversa sem falar com o cliente (ajustes, AJ-1)
+  crmCloseConversation,
   // handoff (special)
   crmRequestHumanHandoff,
 ] as unknown as ReadonlyArray<McpToolDefinition>;

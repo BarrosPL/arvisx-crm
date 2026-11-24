@@ -21,6 +21,11 @@ import { normalizarTermoDeBusca, termoSemAcento } from "@/lib/inbox/termo-de-bus
 import { ORDEM_DA_ESPERA, ehAFila } from "@/lib/inbox/comando-da-conversa";
 import { aplicarMarcadores } from "@/lib/inbox/marcador-da-conversa";
 import { exigirControleDaConversa } from "@/lib/inbox/controle-da-conversa";
+import {
+  auditarFechamentoDeConversa,
+  fecharConversa,
+  SEM_TRAVA_DE_REVISAO,
+} from "@/lib/inbox/fechar-conversa";
 
 /**
  * Prepara o termo digitado para viajar dentro de um `or=` do PostgREST.
@@ -608,6 +613,25 @@ export async function patchConversationHandler(
     ? await getConversationHandler(supabase, ctx, conversationId)
     : null;
   if (observed) await exigirControleDaConversa(supabase, ctx, observed);
+  // A régua acima só olha o ator "user". Agente (token ou nativo) não fecha
+  // conversa que uma pessoa assumiu: a mesma recusa da ferramenta
+  // `crm_close_conversation` (revisão 20/11, item 2.31; decisão do dono em
+  // 23/11/2026). Hoje a rota só monta ator "user"; a recusa fica aqui para o
+  // caminho não virar a brecha no dia em que aceitar bearer.
+  if (
+    input.status === "closed" &&
+    observed &&
+    ctx.actor.type !== "user" &&
+    observed.assigned_to_user_id != null
+  ) {
+    throw new ApiError(
+      403,
+      "forbidden",
+      undefined,
+      ctx.requestId,
+      traduzir("Uma pessoa da equipe assumiu esta conversa. Só ela, ou um gerente pela tela, pode encerrá-la.", ctx.idioma ?? "pt-BR"),
+    );
+  }
 
   /**
    * O ATALHO `status='claimed'` PASSA PELA RPC, e não escreve o dono aqui.
@@ -642,7 +666,40 @@ export async function patchConversationHandler(
     }
   }
 
-  if (input.status !== undefined) {
+  const a = actorAuditPayload(ctx.actor);
+  // O autor do fechamento, como este caminho sempre o gravou na auditoria.
+  const atorDoFechamento = {
+    actorUserId: a.actorUserId,
+    metadata: { ...a.metadataActor, status: "closed" },
+  };
+
+  if (input.status === "closed" && observed) {
+    // FECHAR passa pela regra compartilhada (`lib/inbox/fechar-conversa.ts`): a
+    // mesma `fn_service_status`, com a mesma revisão como trava, que a rota
+    // `POST [id]/close` e a ferramenta `crm_close_conversation` usam. O que é
+    // deste caminho fica aqui: a leitura (`getConversationHandler`, com o 404
+    // de contato pessoal), o controle da conversa, os códigos de recusa e o
+    // MOMENTO da auditoria — depois da releitura lá embaixo, como sempre foi.
+    const fechamento = await fecharConversa({
+      admin: createAdminClient(),
+      conversa: { id: conversationId, organization_id: ctx.organization_id, status: observed.status },
+      // A revisão lida vem sempre (`service_revision` está em `SELECT_COLS`); o
+      // tipo é que a deixa opcional. O último termo só mantém o que a chamada
+      // direta fazia nesse caso impossível: não mandar `p_expected`.
+      revisaoEsperada:
+        input.expected_revision ?? observed.service_revision ?? SEM_TRAVA_DE_REVISAO,
+      requestId: ctx.requestId,
+      ator: atorDoFechamento,
+      auditoria: "adiada",
+    });
+    if (!fechamento.ok) {
+      const conflito = fechamento.erro === "conflito";
+      const sumiu = fechamento.codigo === "P0002";
+      throw new ApiError(conflito ? 409 : sumiu ? 404 : 500,
+        conflito ? "conflict" : sumiu ? "not_found" : "internal_error", undefined, ctx.requestId,
+        conflito ? traduzir("O atendimento mudou. Atualize e tente novamente.", ctx.idioma ?? "pt-BR") : fechamento.detalhe);
+    }
+  } else if (input.status !== undefined) {
     const { error: statusError } = await createAdminClient().rpc("fn_service_status", {
       p_org: ctx.organization_id, p_conversation: conversationId, p_status: input.status,
       p_expected: input.expected_revision ?? observed?.service_revision,
@@ -680,17 +737,21 @@ export async function patchConversationHandler(
 
   const conv = data as unknown as Conversation;
 
-  const a = actorAuditPayload(ctx.actor);
-
-  if (input.status !== undefined) {
+  if (input.status === "closed") {
+    // A linha de sempre, na hora de sempre (depois da releitura), pela função
+    // que escreve o `conversation.closed` de todos os caminhos.
+    await auditarFechamentoDeConversa({
+      conversa: { id: conv.id, organization_id: conv.organization_id },
+      requestId: ctx.requestId,
+      ator: atorDoFechamento,
+    });
+  } else if (input.status !== undefined) {
     const action =
       input.status === "claimed"
         ? "conversation.claimed"
-        : input.status === "closed"
-          ? "conversation.closed"
-          : input.status === "archived"
-            ? "conversation.archived"
-            : "conversation.released";
+        : input.status === "archived"
+          ? "conversation.archived"
+          : "conversation.released";
     await audit({
       action,
       actorUserId: a.actorUserId,
