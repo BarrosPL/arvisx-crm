@@ -15,6 +15,11 @@
  * 200 sempre que a assinatura confere, inclusive para evento que não nos
  * interessa: a Meta reentrega o que não recebe 2xx. O desfecho de cada evento
  * vai no corpo, e a falha vai ao log — nunca fica muda.
+ *
+ * O mesmo endereço recebe os comentários do Instagram (campos `comments` e
+ * `live_comments` do objeto `instagram`). Eles passam pela mesma assinatura e
+ * pela mesma busca de sessão; o que acontece depois depende do modo da conexão
+ * (desligado por padrão) e está em `lib/channels/meta-social/comentarios.ts`.
  */
 import { randomUUID } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";

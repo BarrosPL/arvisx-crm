@@ -322,6 +322,18 @@ export const AUDIT_ACTIONS = [
   "channel.social_webhook_ressincronizado",
   "channel.ai_access_updated",
   "channel.acervo_updated",
+  // Comentários do Instagram (migration 9810): alguém mudou o modo de UMA
+  // conexão (off | registrar | real). `real` é o que deixa as respostas saírem
+  // em público, então a troca tem autor e hora.
+  "channel.comentarios_modo_alterado",
+  // Comentários do Instagram (migration 9812): o que alguém — pessoa, agente
+  // ou integração — fez com UM comentário. `metadata.simulada` diz se o canal
+  // estava em modo de registro (nada saiu) ou real (publicado).
+  "social_comment.respondido",
+  "social_comment.respondido_em_privado",
+  "social_comment.ocultado",
+  "social_comment.ignorado",
+  "social_comment.contato_criado",
   // A importação do histórico do número (#999): prévia, início, cancelamento e
   // retomada depois de erro (rotas), e o fim, concluída ou em erro (cron). A
   // rodada que só anda o cursor não audita.

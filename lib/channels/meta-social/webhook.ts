@@ -13,6 +13,31 @@
  * escolhe a organização: só aponta a conta, e a conta só existe numa sessão
  * ativa (índice único entre ativas, migration 9800).
  *
+ * ─── Comentários (só no Instagram) ──────────────────────────────────────────
+ *
+ * Comentário em publicação não vem em `messaging`: vem em `changes`, um item
+ * por comentário, com `field: "comments"` (ou `"live_comments"`, numa
+ * transmissão ao vivo) e o comentário em `value`:
+ *
+ *   { object: "instagram", entry: [ { id: <conta>, time, changes: [ { field,
+ *     value: { id, from: { id, username }, text, media: { id,
+ *     media_product_type }, parent_id? } } ] } ] }
+ *
+ * A documentação da Meta descreve o mesmo comentário de dois jeitos, e a
+ * leitura aceita os dois em vez de apostar num: a referência do campo traz
+ * `value.id`, `value.ad_id` e `value.ad_title`; a página de exemplos traz
+ * `value.comment_id` e o anúncio DENTRO de `value.media`. No login direto do
+ * Instagram o envelope nem tem `changes` (`field` e `value` ficam na própria
+ * entrada) — também é lido.
+ *
+ * O comentário feito pela PRÓPRIA conta (inclusive a resposta que o CRM
+ * publica) volta como evento igual aos outros, com `from.id` = a conta
+ * (`entry.id`). Quem decide o que fazer com ele é a entrada (`./ingest.ts`);
+ * aqui ele só sai marcado (`proprio`). A marca é SÓ essa igualdade: a Meta
+ * também manda `from.self_ig_scoped_id` nesse caso, mas a referência lista o
+ * campo sem dizer quando ele vem, e tratá-lo como "é da conta" arriscaria
+ * descartar comentário de cliente.
+ *
  * Tolerante por construção: evento que não interessa (ou que não tem o mínimo
  * para ser lido) some daqui sem lançar — a rota responde 200 e a Meta não
  * reentrega um corpo que nunca vai melhorar.
@@ -51,6 +76,30 @@ export type EventoDireto =
       mid: string | null;
       ate: string | null;
       quando: string;
+    }
+  | {
+      tipo: "comentario";
+      /** Sempre `instagram`: comentário do Facebook não é lido. */
+      rede: RedeDireta;
+      conta: string;
+      /** O id do comentário na rede — a chave da idempotência. */
+      commentId: string;
+      /** Preenchido quando o comentário é resposta a outro. */
+      parentId: string | null;
+      mediaId: string | null;
+      mediaProductType: string | null;
+      adId: string | null;
+      adTitle: string | null;
+      autorId: string | null;
+      autorUsuario: string | null;
+      /** O texto INTEIRO. `null` quando o comentário não tem texto. */
+      texto: string | null;
+      /** Veio de `live_comments` (transmissão ao vivo). */
+      aoVivo: boolean;
+      /** Escrito pela própria conta — inclusive a resposta que o CRM publicou. */
+      proprio: boolean;
+      /** A hora da notificação: o payload não traz a hora do comentário em si. */
+      quando: string;
     };
 
 const id = z.union([z.string(), z.number()]).transform((v) => String(v));
@@ -78,14 +127,102 @@ const itemSchema = z
     read: z.object({ mid: z.string().optional(), watermark: z.number().optional() }).loose().optional(),
   })
   .loose();
+const comentarioSchema = z
+  .object({
+    id: id.optional(),
+    comment_id: id.optional(),
+    parent_id: id.nullish(),
+    text: z.string().nullish(),
+    ad_id: id.nullish(),
+    ad_title: z.string().nullish(),
+    from: z
+      .object({ id: id.optional(), username: z.string().nullish() })
+      .loose()
+      .nullish(),
+    media: z
+      .object({
+        id: id.optional(),
+        media_product_type: z.string().nullish(),
+        ad_id: id.nullish(),
+        ad_title: z.string().nullish(),
+      })
+      .loose()
+      .nullish(),
+  })
+  .loose();
+const mudancaSchema = z.object({ field: z.string(), value: z.unknown() }).loose();
 const envelopeSchema = z
   .object({
     object: z.string(),
-    entry: z.array(z.object({ id: id, time: z.number().optional(), messaging: z.array(z.unknown()).optional() }).loose()),
+    entry: z.array(
+      z
+        .object({
+          id: id,
+          time: z.number().optional(),
+          messaging: z.array(z.unknown()).optional(),
+          changes: z.array(z.unknown()).optional(),
+          // Login direto do Instagram: sem `changes`, a mudança é a própria entrada.
+          field: z.string().optional(),
+          value: z.unknown().optional(),
+        })
+        .loose(),
+    ),
   })
   .loose();
 
 const SO_DIGITOS = /^[0-9]{1,40}$/;
+/**
+ * Id de comentário, de mídia e de anúncio. Hoje são números, mas a Meta não
+ * promete o formato; o que NÃO pode passar é barra, ponto ou espaço: o id do
+ * comentário vira pedaço do caminho da chamada que responde a ele.
+ */
+const ID_DA_REDE = /^[A-Za-z0-9_-]{1,100}$/;
+const CAMPOS_DE_COMENTARIO = new Set(["comments", "live_comments"]);
+
+function idDaRede(valor: string | null | undefined): string | null {
+  return valor && ID_DA_REDE.test(valor) ? valor : null;
+}
+
+function textoCurto(valor: string | null | undefined, teto: number): string | null {
+  const limpo = (valor ?? "").trim();
+  return limpo ? limpo.slice(0, teto) : null;
+}
+
+/** Uma mudança de `comments`/`live_comments` → o evento. `null` = não é comentário legível. */
+function lerComentario(
+  conta: string,
+  campo: string,
+  valor: unknown,
+  quando: string,
+): Extract<EventoDireto, { tipo: "comentario" }> | null {
+  if (!CAMPOS_DE_COMENTARIO.has(campo)) return null;
+  const lido = comentarioSchema.safeParse(valor);
+  if (!lido.success) return null;
+  const c = lido.data;
+  const commentId = idDaRede(c.id ?? c.comment_id);
+  if (!commentId) return null;
+  const autorId = idDaRede(c.from?.id);
+  // O texto vai inteiro: o corte é defeito conhecido do aviso de mensagem, e
+  // quem decide a resposta precisa do comentário todo.
+  const texto = typeof c.text === "string" && c.text.length > 0 ? c.text : null;
+  return {
+    tipo: "comentario",
+    rede: "instagram",
+    conta,
+    commentId,
+    parentId: idDaRede(c.parent_id),
+    mediaId: idDaRede(c.media?.id),
+    mediaProductType: textoCurto(c.media?.media_product_type, 40),
+    adId: idDaRede(c.ad_id ?? c.media?.ad_id),
+    adTitle: textoCurto(c.ad_title ?? c.media?.ad_title, 500),
+    autorId,
+    autorUsuario: textoCurto(c.from?.username, 100),
+    texto,
+    aoVivo: campo === "live_comments",
+    proprio: autorId === conta,
+    quando,
+  };
+}
 
 function iso(ms: number | undefined): string {
   // Segundos ou milissegundos: a Meta usa ms em `timestamp`, mas o watermark
@@ -127,6 +264,16 @@ export function lerWebhookDireto(corpo: unknown): EventoDireto[] {
   for (const entrada of env.data.entry) {
     const conta = entrada.id;
     if (!SO_DIGITOS.test(conta)) continue;
+    if (rede === "instagram") {
+      const mudancas: unknown[] = [...(entrada.changes ?? [])];
+      if (entrada.field !== undefined) mudancas.push({ field: entrada.field, value: entrada.value });
+      for (const bruta of mudancas) {
+        const mudanca = mudancaSchema.safeParse(bruta);
+        if (!mudanca.success) continue;
+        const comentario = lerComentario(conta, mudanca.data.field, mudanca.data.value, iso(entrada.time));
+        if (comentario) eventos.push(comentario);
+      }
+    }
     for (const bruto of entrada.messaging ?? []) {
       const item = itemSchema.safeParse(bruto);
       if (!item.success) continue;

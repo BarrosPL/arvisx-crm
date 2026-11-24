@@ -113,6 +113,8 @@ export const O_QUE_FICA = {
     "o dado público do negócio dele que originou a abordagem (origem dos dados, art. 19, II)",
   meta_ctwa_click_dispatches:
     "os cliques dele em anúncios que abriram uma conversa, quando foram recebidos e o resultado do envio à plataforma",
+  social_comments:
+    "o que ele comentou nas publicações da empresa e o que lhe foi respondido, em público e em privado",
   cases:
     "que o atendimento dele parou e foi para a equipe: quando, por qual caminho e como terminou (o texto que a IA digitou ao abrir sai: `CAMPOS_DA_EQUIPE`)",
   case_events:

@@ -14,7 +14,16 @@
  *   - pronto → "Conectar" leva ao login do Facebook;
  *   - volta do login (`?meta_estado&meta_code`) → conclui sozinho e mostra as
  *     páginas autorizadas para escolher;
- *   - conectadas → cada conta com pausar, renomear, IA, atendimento e desconectar.
+ *   - conectadas → cada conta com pausar, renomear, IA, atendimento e desconectar;
+ *   - no Instagram → o estado dos COMENTÁRIOS (desligado, registrando, ativo), a
+ *     troca de modo, o aviso de permissão que falta e "Reautorizar para
+ *     comentários".
+ *
+ * Reautorizar é o MESMO login, refeito: a conexão não é apagada, e o modo dos
+ * comentários não muda (quem o grava é só `definirModoDeComentarios`, no
+ * servidor). A tela só lembra, de uma ida à Meta para a volta, qual conta
+ * estava sendo reautorizada — para já deixar marcada a página dela e as redes
+ * que ela já tinha, em vez de oferecer uma conexão nova por engano.
  */
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -35,6 +44,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { useT } from "@/hooks/i18n/useT";
 import { apiClient } from "@/lib/api/client";
 import { canalDesativado } from "@/lib/channels/desativado";
@@ -43,6 +53,14 @@ import { ChannelAiAccess } from "./ChannelAiAccess";
 import { RenomearConexao } from "./RenomearConexao";
 
 type Rede = "facebook" | "instagram";
+type ModoDeComentarios = "off" | "registrar" | "real";
+
+/** O que `GET /api/v1/channels/meta-social` diz dos comentários de uma conexão do Instagram. */
+interface Comentarios {
+  modo: ModoDeComentarios;
+  escopo_concedido: boolean;
+  disponivel: boolean;
+}
 
 interface Conexao {
   id: string;
@@ -52,6 +70,8 @@ interface Conexao {
   display_name: string | null;
   status: string;
   metadata: Record<string, unknown> | null;
+  /** Só nas conexões do Instagram; ausente em servidor anterior aos comentários. */
+  comentarios?: Comentarios | null;
 }
 
 interface Estado {
@@ -74,6 +94,49 @@ interface Escolha {
 }
 
 const ROTULO_DA_REDE: Record<Rede, string> = { facebook: "Facebook Messenger", instagram: "Instagram" };
+
+const MODOS: readonly ModoDeComentarios[] = ["off", "registrar", "real"];
+const ROTULO_DO_MODO: Record<ModoDeComentarios, string> = { off: "Desligado", registrar: "Registrando", real: "Ativo" };
+const SELO_DO_MODO: Record<ModoDeComentarios, "neutral" | "info" | "success"> = {
+  off: "neutral",
+  registrar: "info",
+  real: "success",
+};
+const O_QUE_O_MODO_FAZ: Record<ModoDeComentarios, string> = {
+  off: "Os comentários que chegam são descartados e nada é respondido.",
+  registrar: "Os comentários são guardados. As respostas ficam só anotadas, como simuladas: nada é publicado.",
+  real: "Os comentários são guardados e as respostas são publicadas de verdade no Instagram.",
+};
+
+/**
+ * A reautorização em andamento, guardada só durante a ida à Meta. `sessionStorage`
+ * pode faltar ou lançar (janela privada, dado bloqueado): sem ela a volta do
+ * login funciona como um Conectar comum, e a pessoa escolhe a página à mão.
+ */
+const CHAVE_DA_REAUTORIZACAO = "conexao-direta-reautorizar";
+interface Reautorizacao {
+  conta: string;
+  contasConectadas: string[];
+}
+function guardarReautorizacao(r: Reautorizacao): void {
+  try {
+    window.sessionStorage.setItem(CHAVE_DA_REAUTORIZACAO, JSON.stringify(r));
+  } catch {
+    // Sem armazenamento: segue como um Conectar comum.
+  }
+}
+function retomarReautorizacao(): Reautorizacao | null {
+  try {
+    const cru = window.sessionStorage.getItem(CHAVE_DA_REAUTORIZACAO);
+    window.sessionStorage.removeItem(CHAVE_DA_REAUTORIZACAO);
+    if (!cru) return null;
+    const v = JSON.parse(cru) as Partial<Reautorizacao> | null;
+    if (!v || typeof v.conta !== "string" || !Array.isArray(v.contasConectadas)) return null;
+    return { conta: v.conta, contasConectadas: v.contasConectadas.filter((c): c is string => typeof c === "string") };
+  } catch {
+    return null;
+  }
+}
 
 /** Nome da CONEXÃO (página/conta da Meta), não de contato: primeiro valor preenchido. */
 function nomeDaConexao(c: { display_name?: string | null; pagina?: string | null; conta?: string | null }) {
@@ -102,6 +165,9 @@ export function ConexaoDiretaMeta({ emHomologacao = false }: { emHomologacao?: b
   const [pagina, setPagina] = useState<string>("");
   const [redes, setRedes] = useState<Rede[]>(["facebook", "instagram"]);
   const [desconectando, setDesconectando] = useState<Conexao | null>(null);
+  const [ligandoDeVerdade, setLigandoDeVerdade] = useState<Conexao | null>(null);
+  /** `achou`: a página da conexão reautorizada veio entre as autorizadas. */
+  const [reautorizando, setReautorizando] = useState<{ achou: boolean } | null>(null);
   const concluiu = useRef(false);
 
   const metaEstado = params.get("meta_estado");
@@ -128,6 +194,17 @@ export function ConexaoDiretaMeta({ emHomologacao = false }: { emHomologacao?: b
       })
       .then((r) => {
         setEscolha(r.data);
+        // Volta de "Reautorizar para comentários": a página daquela conta já
+        // vem marcada, só com as redes que ela JÁ tinha — reautorizar não pode
+        // criar, de carona, uma conexão do Messenger que a empresa não pediu.
+        const reautorizacao = retomarReautorizacao();
+        const daConta = reautorizacao ? r.data.paginas.find((p) => p.instagram?.id === reautorizacao.conta) : undefined;
+        if (reautorizacao) setReautorizando({ achou: Boolean(daConta) });
+        if (reautorizacao && daConta) {
+          setPagina(daConta.id);
+          setRedes(reautorizacao.contasConectadas.includes(daConta.id) ? ["facebook", "instagram"] : ["instagram"]);
+          return;
+        }
         const primeira = r.data.paginas[0];
         setPagina(primeira?.id ?? "");
         setRedes(primeira?.instagram ? ["facebook", "instagram"] : ["facebook"]);
@@ -136,16 +213,67 @@ export function ConexaoDiretaMeta({ emHomologacao = false }: { emHomologacao?: b
       .finally(() => setOcupado(null));
   }, [metaEstado, metaCode, metaErro, t]);
 
-  async function iniciar() {
+  /**
+   * Abre o login da Meta. `paraComentarios` é o login de REAUTORIZAÇÃO: o único
+   * que pede as permissões de comentários. O Conectar comum nunca as pede — se
+   * a Meta ainda não as liberou para o app, pedi-las derrubaria o login de quem
+   * só quer mensagens.
+   */
+  async function iniciar(paraComentarios = false) {
     setOcupado("iniciar");
     setErro(null);
     try {
-      const r = await apiClient.post<{ data: { url: string } }>("/api/v1/channels/meta-social", { acao: "iniciar" });
+      const r = await apiClient.post<{ data: { url: string } }>(
+        "/api/v1/channels/meta-social",
+        paraComentarios ? { acao: "iniciar", para_comentarios: true } : { acao: "iniciar" },
+      );
       window.location.assign(r.data.url);
     } catch (e) {
       setErro(e instanceof Error ? e.message : t("Não foi possível abrir a Meta."));
       setOcupado(null);
     }
+  }
+
+  /**
+   * Refaz o login para a conexão ganhar as permissões de comentários. É um
+   * login PRÓPRIO (pede as permissões de comentários, que o Conectar comum não
+   * pede), com a mesma volta do Conectar: a conexão existente é atualizada (não
+   * apagada) e o modo dos comentários fica como estava.
+   */
+  async function reautorizar(conexao: Conexao) {
+    guardarReautorizacao({
+      conta: conexao.conta,
+      contasConectadas: (estado?.conexoes ?? []).map((c) => c.conta),
+    });
+    await iniciar(true);
+  }
+
+  async function mudarModo(conexao: Conexao, modo: ModoDeComentarios) {
+    // Duplo clique na confirmação não manda a troca duas vezes.
+    if (ocupado) return;
+    setOcupado(conexao.id);
+    setErro(null);
+    try {
+      await apiClient.post("/api/v1/channels/meta-social", {
+        acao: "comentarios_modo",
+        channel_session_id: conexao.id,
+        modo,
+      });
+      toast.success(t("Modo dos comentários atualizado."));
+      await query.refetch();
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : t("Não foi possível mudar o modo dos comentários. Tente de novo."));
+    } finally {
+      setLigandoDeVerdade(null);
+      setOcupado(null);
+    }
+  }
+
+  /** Publicar de verdade pede confirmação; desligar e registrar, não. */
+  function escolherModo(conexao: Conexao, modo: ModoDeComentarios) {
+    if (modo === conexao.comentarios?.modo) return;
+    if (modo === "real") setLigandoDeVerdade(conexao);
+    else void mudarModo(conexao, modo);
   }
 
   async function conectar() {
@@ -161,6 +289,7 @@ export function ConexaoDiretaMeta({ emHomologacao = false }: { emHomologacao?: b
       });
       toast.success(t("Conectado. As novas mensagens entram na caixa de entrada."));
       setEscolha(null);
+      setReautorizando(null);
       await query.refetch();
     } catch (e) {
       setErro(e instanceof Error ? e.message : t("Não foi possível concluir a conexão."));
@@ -257,6 +386,13 @@ export function ConexaoDiretaMeta({ emHomologacao = false }: { emHomologacao?: b
             </p>
           ) : (
             <>
+              {reautorizando && (
+                <p role="status" data-testid="aviso-de-reautorizacao" className="text-sm text-muted-foreground">
+                  {reautorizando.achou
+                    ? t("Reautorização: a página desta conexão já está marcada. Confirme para atualizar as permissões. A conexão não é apagada e o modo dos comentários não muda.")
+                    : t("A página desta conexão não veio entre as autorizadas. Clique em Reautorizar de novo e marque a mesma página na Meta.")}
+                </p>
+              )}
               <p className="text-sm font-medium">{t("Qual página você quer conectar?")}</p>
               <div className="flex flex-col gap-2">
                 {escolha.paginas.map((p) => (
@@ -321,7 +457,14 @@ export function ConexaoDiretaMeta({ emHomologacao = false }: { emHomologacao?: b
                 >
                   {ocupado === "conectar" ? t("Conectando…") : t("Conectar")}
                 </Button>
-                <Button variant="outline" disabled={!!ocupado} onClick={() => setEscolha(null)}>
+                <Button
+                  variant="outline"
+                  disabled={!!ocupado}
+                  onClick={() => {
+                    setEscolha(null);
+                    setReautorizando(null);
+                  }}
+                >
                   {t("Cancelar")}
                 </Button>
               </div>
@@ -366,6 +509,58 @@ export function ConexaoDiretaMeta({ emHomologacao = false }: { emHomologacao?: b
                   {t("A Meta não confirmou o recebimento desta conta. Clique em Conectar de novo e escolha a mesma página.")}
                 </p>
               )}
+              {c.rede === "instagram" && c.comentarios && (
+                <div className="flex flex-col gap-2 border-t pt-3" data-testid="comentarios-da-conexao">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-medium">{t("Comentários")}</p>
+                    <Badge variant={SELO_DO_MODO[c.comentarios.modo]} data-testid="estado-dos-comentarios">
+                      {t(ROTULO_DO_MODO[c.comentarios.modo])}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t(O_QUE_O_MODO_FAZ[c.comentarios.modo])}</p>
+                  {!c.comentarios.escopo_concedido && (
+                    <p
+                      role="status"
+                      data-testid="falta-permissao-de-comentarios"
+                      className="rounded-md border border-warning/40 bg-warning-bg p-3 text-sm text-text-muted"
+                    >
+                      {t("Esta conexão ainda não tem a permissão de comentários do Instagram, então a Meta não entrega os comentários nem aceita as respostas. Reautorize e mantenha todas as permissões marcadas. As mensagens continuam funcionando normalmente.")}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap items-end gap-2">
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor={`modo-dos-comentarios-${c.id}`}>{t("Modo dos comentários")}</Label>
+                      <select
+                        id={`modo-dos-comentarios-${c.id}`}
+                        data-testid="modo-dos-comentarios"
+                        className="rounded-md border bg-background p-2 text-sm"
+                        disabled={!!ocupado}
+                        value={c.comentarios.modo}
+                        onChange={(e) => escolherModo(c, e.target.value as ModoDeComentarios)}
+                      >
+                        {MODOS.map((m) => (
+                          <option key={m} value={m}>
+                            {t(ROTULO_DO_MODO[m])}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {!c.comentarios.escopo_concedido && (
+                      <Button
+                        variant="outline"
+                        data-testid="reautorizar-para-comentarios"
+                        disabled={emHomologacao || !!semAppDaMeta || !!ocupado}
+                        onClick={() => void reautorizar(c)}
+                      >
+                        {t("Reautorizar para comentários")}
+                      </Button>
+                    )}
+                    <Button asChild variant="outline">
+                      <Link href={`/app/inbox/comentarios?canal=${c.id}`}>{t("Ver comentários")}</Link>
+                    </Button>
+                  </div>
+                </div>
+              )}
               <ChannelAiAccess channelId={c.id} phoneTesting={false} />
             </div>
           ))}
@@ -384,6 +579,27 @@ export function ConexaoDiretaMeta({ emHomologacao = false }: { emHomologacao?: b
             <AlertDialogCancel>{t("Cancelar")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => desconectando && void desconectar(desconectando)}>
               {t("Desconectar")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!ligandoDeVerdade} onOpenChange={(open) => !open && setLigandoDeVerdade(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("Publicar as respostas de verdade?")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("No modo ativo, toda resposta a comentário feita pela equipe ou por um sistema externo é publicada no Instagram, à vista de todos, e a resposta privada chega como mensagem direta a quem comentou. Para testar sem publicar, use Registrando.")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("Cancelar")}</AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="confirmar-modo-real"
+              disabled={!!ocupado}
+              onClick={() => ligandoDeVerdade && void mudarModo(ligandoDeVerdade, "real")}
+            >
+              {t("Ativar")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

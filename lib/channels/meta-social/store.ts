@@ -28,8 +28,19 @@ import { logger } from "@/lib/logger";
 import { decryptWebhookSecret, encryptWebhookSecret } from "@/lib/webhooks/secrets";
 
 import { CHANNEL_PROVIDER_SOCIAL_DIRETO } from "../capabilities";
+import {
+  CHAVE_DO_MODO_DE_COMENTARIOS,
+  CHAVE_DO_USUARIO_DO_INSTAGRAM,
+  lerModoDeComentarios,
+  type ModoDeComentarios,
+} from "./comentarios";
 import { ErroDaGraph } from "./graph";
-import { assinarAppNaPagina, desassinarAppDaPagina, type PaginaAutorizada } from "./oauth";
+import {
+  ESCOPOS_DE_COMENTARIOS,
+  assinarAppNaPagina,
+  desassinarAppDaPagina,
+  type PaginaAutorizada,
+} from "./oauth";
 import type { RedeDireta } from "./webhook";
 
 export class ErroDaConexaoDireta extends Error {
@@ -124,6 +135,23 @@ export async function sessaoPelaConta(db: SupabaseClient, conta: string): Promis
   return linhas[0] ? paraSessao(linhas[0]) : null;
 }
 
+/**
+ * UMA conexão direta ATIVA desta organização, pelo id. `null` quando não
+ * existe, é de outra organização ou foi desconectada.
+ */
+export async function sessaoPorId(db: SupabaseClient, org: string, sessionId: string): Promise<SessaoDireta | null> {
+  const { data, error } = await db
+    .from("channel_sessions")
+    .select(COLUNAS)
+    .eq("organization_id", org)
+    .eq("id", sessionId)
+    .eq("provider", CHANNEL_PROVIDER_SOCIAL_DIRETO)
+    .is("archived_at", null)
+    .maybeSingle();
+  if (error) throw new ErroDaConexaoDireta("Não foi possível ler a conexão.", 500, "internal_error");
+  return data ? paraSessao(data as LinhaDaSessao) : null;
+}
+
 /** O token da página desta sessão, decifrado. `null` = desconectada ou cifra indisponível. */
 export async function tokenDaSessao(
   db: SupabaseClient,
@@ -160,6 +188,11 @@ export interface PedidoDeConexao {
   /** O id da pessoa no app, para o pedido de exclusão de dados achar a sessão. */
   metaUserId: string | null;
   conectadoPor: string;
+  /**
+   * As permissões que a pessoa concedeu neste login. `null`/ausente = não deu
+   * para perguntar à Meta: a conexão segue, e o que estava gravado fica.
+   */
+  escoposConcedidos?: readonly string[] | null;
 }
 
 export interface ConexaoGravada {
@@ -242,7 +275,17 @@ export async function conectarPagina(db: SupabaseClient, pedido: PedidoDeConexao
       social_platform: alvo.rede,
       meta_page_name: pagina.nome,
       ...(pedido.metaUserId ? { meta_user_id: pedido.metaUserId } : {}),
+      // O nome de usuário da conta: é a segunda barreira contra o CRM responder
+      // ao próprio comentário (`usuarioDaConta`, em `./comentarios.ts`).
+      ...(alvo.rede === "instagram" && pagina.instagram?.username
+        ? { [CHAVE_DO_USUARIO_DO_INSTAGRAM]: pagina.instagram.username }
+        : {}),
       conectado_por: pedido.conectadoPor,
+      // O que a pessoa concedeu NESTE login substitui o que estava gravado: é
+      // assim que reautorizar passa a liberar os comentários (ou deixa de). O
+      // modo de comentários (`comentarios_modo`) NÃO é tocado aqui: ele vem do
+      // metadata existente e só muda por `definirModoDeComentarios`.
+      ...(pedido.escoposConcedidos ? { [CHAVE_DOS_ESCOPOS]: [...pedido.escoposConcedidos] } : {}),
     };
     if (existente) {
       const { error } = await db
@@ -320,6 +363,73 @@ export async function conectarPagina(db: SupabaseClient, pedido: PedidoDeConexao
       .eq("id", g.channelSessionId);
   }
   return gravadas;
+}
+
+/** A chave, em `metadata`, das permissões concedidas no último login. */
+export const CHAVE_DOS_ESCOPOS = "meta_escopos_concedidos";
+
+export interface EstadoDosComentarios {
+  modo: ModoDeComentarios;
+  /**
+   * A conexão tem as permissões de comentários? `false` também para conexão
+   * feita antes de elas serem pedidas: ali elas nunca foram concedidas.
+   */
+  escopo_concedido: boolean;
+  /** Dá para receber e responder comentário por esta conexão (Instagram + permissões). */
+  disponivel: boolean;
+}
+
+/** O estado dos comentários de uma conexão — o que a tela e a API mostram. Pura. */
+export function estadoDosComentarios(sessao: Pick<SessaoDireta, "rede" | "metadata">): EstadoDosComentarios {
+  const gravados = sessao.metadata[CHAVE_DOS_ESCOPOS];
+  const concedidos = new Set(Array.isArray(gravados) ? gravados.filter((e) => typeof e === "string") : []);
+  const escopo = ESCOPOS_DE_COMENTARIOS.every((e) => concedidos.has(e));
+  return {
+    modo: lerModoDeComentarios(sessao.metadata),
+    escopo_concedido: escopo,
+    disponivel: sessao.rede === "instagram" && escopo,
+  };
+}
+
+/**
+ * Muda o modo de comentários de UMA conexão do Instagram.
+ *
+ * Só esta função escreve `comentarios_modo`: conectar e reautorizar preservam
+ * o que estiver gravado. Quem chama é a rota, que confere o papel e audita.
+ * Não exige as permissões de comentários: ligar `registrar` antes de
+ * reautorizar não quebra nada — a Meta só não entrega o que não foi permitido.
+ */
+export async function definirModoDeComentarios(
+  db: SupabaseClient,
+  org: string,
+  sessionId: string,
+  modo: ModoDeComentarios,
+): Promise<{ anterior: ModoDeComentarios; atual: ModoDeComentarios }> {
+  const { data, error } = await db
+    .from("channel_sessions")
+    .select(COLUNAS)
+    .eq("organization_id", org)
+    .eq("id", sessionId)
+    .eq("provider", CHANNEL_PROVIDER_SOCIAL_DIRETO)
+    .is("archived_at", null)
+    .maybeSingle();
+  if (error) throw new ErroDaConexaoDireta("Não foi possível ler a conexão.", 500, "internal_error");
+  const sessao = data ? paraSessao(data as LinhaDaSessao) : null;
+  if (!sessao) throw new ErroDaConexaoDireta("Conexão não encontrada.", 404, "not_found");
+  if (sessao.rede !== "instagram") {
+    throw new ErroDaConexaoDireta("Comentários só existem em conexões do Instagram.", 422, "invalid_request");
+  }
+  const anterior = lerModoDeComentarios(sessao.metadata);
+  if (anterior === modo) return { anterior, atual: modo };
+  const { error: erroAoGravar } = await db
+    .from("channel_sessions")
+    .update({ metadata: { ...sessao.metadata, [CHAVE_DO_MODO_DE_COMENTARIOS]: modo } })
+    .eq("organization_id", org)
+    .eq("id", sessionId);
+  if (erroAoGravar) {
+    throw new ErroDaConexaoDireta("Não foi possível mudar o modo dos comentários. Tente de novo.", 500, "internal_error");
+  }
+  return { anterior, atual: modo };
 }
 
 /**

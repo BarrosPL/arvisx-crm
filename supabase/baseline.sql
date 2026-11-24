@@ -70825,6 +70825,258 @@ comment on function public.fn_contato_preencher_campos_personalizados(uuid, uuid
 
 notify pgrst, 'reload schema';
 
+-- ---- Comentários do Instagram: a tabela que guarda o que chega (migration 9810) ----
+-- Espelho idempotente da 9810 (o porquê está no cabeçalho da migration): a
+-- tabela `social_comments`, uma linha por comentário recebido pela conexão
+-- direta, única por (organization_id, comment_id). RLS: membros leem; só o
+-- servidor escreve, então não há policy de escrita e a trava de empresa
+-- suspensa (9806) não tem o que cobrir aqui. Nenhuma função nasce neste bloco
+-- (o gatilho usa `fn_set_updated_at`).
+create table if not exists public.social_comments (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
+  channel_session_id uuid not null references public.channel_sessions(id) on delete restrict,
+  comment_id text not null,
+  parent_comment_id text,
+  media_id text,
+  media_product_type text,
+  ad_id text,
+  ad_title text,
+  ao_vivo boolean not null default false,
+  author_id text,
+  author_username text,
+  text text,
+  commented_at timestamptz not null,
+  estado text not null default 'novo' check (estado in ('novo', 'ignorado', 'respondido', 'sem_acao')),
+  public_reply jsonb,
+  private_reply jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint social_comments_org_comment_unique unique (organization_id, comment_id)
+);
+
+comment on table public.social_comments is
+  'Comentários recebidos em publicações do Instagram pela conexão direta. Uma linha por comentário, única por (organization_id, comment_id). estado = novo|ignorado|respondido|sem_acao (espelhado em lib/channels/meta-social/comentarios.ts); public_reply e private_reply ficam nulos até existir resposta. Só o servidor escreve. Migration 9810.';
+
+-- A fila de trabalho: "os comentários novos deste canal, do mais recente".
+create index if not exists social_comments_org_estado_quando_idx
+  on public.social_comments (organization_id, estado, commented_at desc);
+
+-- A chave estrangeira do canal, e a lista por canal.
+create index if not exists social_comments_canal_quando_idx
+  on public.social_comments (channel_session_id, commented_at desc);
+
+-- A poda por idade varre pela ponta mais velha, sem organização.
+create index if not exists social_comments_poda_idx
+  on public.social_comments (commented_at);
+
+drop trigger if exists trg_social_comments_updated_at on public.social_comments;
+create trigger trg_social_comments_updated_at
+  before update on public.social_comments
+  for each row execute function public.fn_set_updated_at();
+
+alter table public.social_comments enable row level security;
+
+-- A política de SELECT não nasce aqui: a definição que vale é a do bloco da
+-- migration 9819, logo abaixo (só gerente para cima). Recriar a versão antiga
+-- neste ponto a deixaria em vigor, a cada atualização, até o bloco seguinte rodar.
+
+-- `ALTER DEFAULT PRIVILEGES … GRANT ALL ON TABLES TO anon` do baseline alcança
+-- toda tabela criada depois dele. Sem este revoke, o comentário e quem o
+-- escreveu ficariam legíveis pela anon key, que vai para o browser.
+revoke all on public.social_comments from anon, authenticated;
+grant select on public.social_comments to authenticated;
+grant all on public.social_comments to service_role;
+
+notify pgrst, 'reload schema';
+
+-- ---- Comentários do Instagram: contato, motivo do ignorar, ocultação e LGPD (migration 9812) ----
+-- Espelho idempotente da 9812 (o porquê está no cabeçalho da migration):
+-- `social_comments` ganha `contact_id`, `ignore_reason` e `hidden`, e o gatilho
+-- `trg_redigir_comentarios_ao_anonimizar` apaga texto e autor dos comentários
+-- da pessoa quando o contato é anonimizado. Cria FUNÇÃO, então fica ANTES da
+-- VARREDURA anon. Reaplicar não muda nada: `add column if not exists`,
+-- `create index if not exists`, `create or replace function` e
+-- `drop trigger if exists` + `create trigger`.
+alter table public.social_comments
+  add column if not exists contact_id uuid references public.contacts(id) on delete set null,
+  add column if not exists ignore_reason text,
+  add column if not exists hidden jsonb;
+
+comment on column public.social_comments.contact_id is
+  'O contato ligado ao comentário. Nulo até alguém responder em privado ou pedir a criação do contato. Migration 9812.';
+comment on column public.social_comments.ignore_reason is
+  'Motivo, em texto livre, de quem marcou o comentário como sem ação (estado = sem_acao). Migration 9812.';
+comment on column public.social_comments.hidden is
+  'Nulo até o comentário ser ocultado na rede. Forma (quando, quem, simulada) validada no servidor. Migration 9812.';
+
+-- A lista geral, sem filtro de estado, do mais recente.
+create index if not exists social_comments_org_quando_idx
+  on public.social_comments (organization_id, commented_at desc, id desc);
+
+-- A chave estrangeira do contato (e a exportação do titular).
+create index if not exists social_comments_contato_idx
+  on public.social_comments (organization_id, contact_id)
+  where contact_id is not null;
+
+create or replace function public.fn_redigir_comentarios_ao_anonimizar()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  update public.social_comments
+     set text = case when text is null then null else '(anonimizado)' end,
+         author_id = null,
+         author_username = null,
+         ignore_reason = null,
+         public_reply = case
+           when public_reply is null then null
+           else public_reply || jsonb_build_object('texto', '(anonimizado)')
+         end,
+         private_reply = case
+           when private_reply is null then null
+           else private_reply || jsonb_build_object('texto', '(anonimizado)')
+         end
+   where organization_id = new.organization_id
+     and (
+       contact_id = new.id
+       or author_id in (
+         select s.author_id
+           from public.social_comments s
+          where s.organization_id = new.organization_id
+            and s.contact_id = new.id
+            and s.author_id is not null
+       )
+     );
+  return new;
+end;
+$$;
+
+revoke execute on function public.fn_redigir_comentarios_ao_anonimizar() from public, anon, authenticated;
+grant  execute on function public.fn_redigir_comentarios_ao_anonimizar() to service_role;
+
+drop trigger if exists trg_redigir_comentarios_ao_anonimizar on public.contacts;
+create trigger trg_redigir_comentarios_ao_anonimizar
+  after update of is_anonymized on public.contacts
+  for each row
+  when (new.is_anonymized is true and old.is_anonymized is distinct from true)
+  execute function public.fn_redigir_comentarios_ao_anonimizar();
+
+notify pgrst, 'reload schema';
+
+-- ---- Comentários do Instagram: a anonimização acha a pessoa pela identidade social (migration 9816) ----
+-- Espelho idempotente da 9816 (o porquê está no cabeçalho da migration): o
+-- corpo de `fn_redigir_comentarios_ao_anonimizar` passa a alcançar também os
+-- comentários de quem já era contato por mensagem direta e nunca foi ligado
+-- por `contact_id` (pela identidade social `instagram:<conta>:<author_id>`), e
+-- regrava `hidden` só com os campos conhecidos. Fica DEPOIS do bloco da 9812,
+-- para ser a última definição da função, e ANTES da VARREDURA anon porque cria
+-- função. Reaplicar não muda nada: `create or replace function` e
+-- `drop trigger if exists` + `create trigger`.
+create or replace function public.fn_redigir_comentarios_ao_anonimizar()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_identidades text[];
+begin
+  -- As identidades sociais da pessoa: a do contato (antes e depois da virada)
+  -- e as dos contatos unidos a ele. Só as do Instagram interessam aqui.
+  select coalesce(array_agg(distinct i.identidade), '{}'::text[])
+    into v_identidades
+    from (
+      select old.social_identity as identidade
+      union all
+      select new.social_identity
+      union all
+      select c.social_identity
+        from public.contacts c
+       where c.organization_id = new.organization_id
+         and c.is_merged_into = new.id
+    ) i
+   where i.identidade like 'instagram:%';
+
+  update public.social_comments sc
+     set text = case when sc.text is null then null else '(anonimizado)' end,
+         author_id = null,
+         author_username = null,
+         ignore_reason = null,
+         public_reply = case
+           when sc.public_reply is null then null
+           else sc.public_reply || jsonb_build_object('texto', '(anonimizado)')
+         end,
+         private_reply = case
+           when sc.private_reply is null then null
+           else sc.private_reply || jsonb_build_object('texto', '(anonimizado)')
+         end,
+         hidden = case
+           when sc.hidden is null then null
+           else jsonb_build_object(
+             'quando', sc.hidden -> 'quando',
+             'quem', sc.hidden -> 'quem',
+             'simulada', sc.hidden -> 'simulada'
+           )
+         end
+   where sc.organization_id = new.organization_id
+     and (
+       sc.contact_id = new.id
+       or sc.author_id in (
+         select s.author_id
+           from public.social_comments s
+          where s.organization_id = new.organization_id
+            and s.contact_id = new.id
+            and s.author_id is not null
+       )
+       or (
+         sc.author_id is not null
+         and cardinality(v_identidades) > 0
+         and exists (
+           select 1
+             from public.channel_sessions cs
+            where cs.id = sc.channel_session_id
+              and cs.organization_id = new.organization_id
+              and cs.meta_social_account_id is not null
+              and ('instagram:' || cs.meta_social_account_id || ':' || sc.author_id) = any (v_identidades)
+         )
+       )
+     );
+  return new;
+end;
+$$;
+
+revoke execute on function public.fn_redigir_comentarios_ao_anonimizar() from public, anon, authenticated;
+grant  execute on function public.fn_redigir_comentarios_ao_anonimizar() to service_role;
+
+-- O gatilho é o da 9812; recriá-lo aqui deixa a migration inteira reaplicável
+-- e garante que ele existe em quem aplicar só esta.
+drop trigger if exists trg_redigir_comentarios_ao_anonimizar on public.contacts;
+create trigger trg_redigir_comentarios_ao_anonimizar
+  after update of is_anonymized on public.contacts
+  for each row
+  when (new.is_anonymized is true and old.is_anonymized is distinct from true)
+  execute function public.fn_redigir_comentarios_ao_anonimizar();
+
+notify pgrst, 'reload schema';
+
+-- ---- Comentários do Instagram: só gerente para cima lê pelo banco (migration 9819) ----
+-- Espelho idempotente da 9819 (o porquê está no cabeçalho da migration): a
+-- política de SELECT de `social_comments` passa a pedir o papel que as rotas e
+-- as ferramentas já pedem (`manager` ou acima), em vez de qualquer membro.
+-- Nenhuma função nasce neste bloco e nenhuma linha muda.
+drop policy if exists tenant_isolation_social_comments_select on public.social_comments;
+create policy tenant_isolation_social_comments_select on public.social_comments
+  for select using (
+    (select public.fn_is_platform_admin())
+    or ((organization_id in (select public.fn_user_org_ids()))
+        and public.fn_role_at_least(organization_id, 'manager'))
+  );
+
+notify pgrst, 'reload schema';
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria

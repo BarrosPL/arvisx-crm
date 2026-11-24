@@ -18,6 +18,7 @@ import type { CapacidadeDaOrganizacao } from "@/lib/organizacao/capacidades";
 import { TOOLS_ACOMPANHAMENTO } from "./acompanhamento";
 import { TOOLS_AGENDAMENTO } from "./agendamento";
 import { TOOLS_ATENDIMENTO } from "./atendimento";
+import { TOOLS_COMENTARIOS } from "./comentarios";
 import { TOOLS_COMERCIO } from "./comercio";
 import { TOOLS_CONTATOS_DUPLICADOS } from "./contatos-duplicados";
 import { TOOLS_DADOS_EXTERNOS } from "./dados-externos";
@@ -42,6 +43,7 @@ export const TOOL_CATALOG: ReadonlyArray<McpToolCatalogEntry> = [
   ...TOOLS_GOVERNANCA,
   ...TOOLS_EVOLUCAO,
   ...TOOLS_COMERCIO,
+  ...TOOLS_COMENTARIOS,
   ...TOOLS_DADOS_EXTERNOS,
   ...TOOLS_RECEITAS_EXTERNAS,
   ...TOOLS_HONORARIOS,

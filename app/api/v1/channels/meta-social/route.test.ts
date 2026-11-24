@@ -30,6 +30,8 @@ const h = vi.hoisted(() => ({
   conectar: vi.fn(),
   conexoes: vi.fn(),
   desconectar: vi.fn(),
+  concedidos: vi.fn(),
+  modo: vi.fn(),
 }));
 
 vi.mock("@/lib/env", async (original) => {
@@ -61,6 +63,7 @@ vi.mock("@/lib/channels/meta-social/oauth", async (original) => ({
   tokenDeUsuarioDeLongaDuracao: h.troca,
   paginasDoUsuario: h.paginas,
   permissoesNegadas: h.negadas,
+  escoposConcedidos: h.concedidos,
   idDoUsuarioNoApp: async () => "777",
 }));
 vi.mock("@/lib/channels/meta-social/store", async (original) => ({
@@ -68,6 +71,7 @@ vi.mock("@/lib/channels/meta-social/store", async (original) => ({
   conectarPagina: h.conectar,
   conexoesDiretas: h.conexoes,
   desconectarSessao: h.desconectar,
+  definirModoDeComentarios: h.modo,
 }));
 
 import { GET, POST } from "./route";
@@ -91,6 +95,8 @@ beforeEach(() => {
   h.troca.mockResolvedValue("user-token");
   h.paginas.mockResolvedValue([PAGINA]);
   h.negadas.mockResolvedValue([]);
+  h.concedidos.mockResolvedValue(["instagram_basic", "instagram_manage_comments", "pages_read_engagement"]);
+  h.modo.mockResolvedValue({ anterior: "off", atual: "registrar" });
   h.conexoes.mockResolvedValue([]);
   h.conectar.mockResolvedValue([{ channelSessionId: "s1", rede: "facebook", conta: "111", nome: "Loja", jaExistia: false }]);
 });
@@ -124,7 +130,34 @@ describe("iniciar", () => {
     expect(url.searchParams.get("scope")).toBe(
       "pages_show_list,pages_messaging,pages_manage_metadata,instagram_basic,instagram_manage_messages,business_management",
     );
+    expect(url.searchParams.get("auth_type")).toBe("rerequest");
     expect(url.searchParams.get("state")).toMatch(/^[A-Za-z0-9_-]+\.[0-9a-f]{64}$/);
+  });
+
+  // Revisão de 20/11, item 2.20: login em duas fases.
+  it("⭐ o login normal NÃO pede as permissões de comentários (nem com `para_comentarios: false`)", async () => {
+    for (const corpo of [{ acao: "iniciar" }, { acao: "iniciar", para_comentarios: false }]) {
+      const r = await chamar(corpo);
+      const escopos = new URL(((await r.json()) as { data: { url: string } }).data.url).searchParams.get("scope")!;
+      expect(escopos).not.toContain("instagram_manage_comments");
+      expect(escopos).not.toContain("pages_read_engagement");
+    }
+  });
+
+  it("⭐ a reautorização para comentários é um login próprio: pede as do login normal mais as duas", async () => {
+    const r = await chamar({ acao: "iniciar", para_comentarios: true });
+    expect(r.status).toBe(200);
+    const url = new URL(((await r.json()) as { data: { url: string } }).data.url);
+    expect(url.searchParams.get("scope")).toBe(
+      "pages_show_list,pages_messaging,pages_manage_metadata,instagram_basic,instagram_manage_messages,business_management,instagram_manage_comments,pages_read_engagement",
+    );
+    expect(url.searchParams.get("auth_type")).toBe("rerequest");
+    expect(url.searchParams.get("redirect_uri")).toBe("https://crm.exemplo.com/auth/meta-social-return");
+    expect(url.searchParams.get("state")).toMatch(/^[A-Za-z0-9_-]+\.[0-9a-f]{64}$/);
+  });
+
+  it("`para_comentarios` que não é booleano é recusado na validação", async () => {
+    expect((await chamar({ acao: "iniciar", para_comentarios: "sim" })).status).toBe(400);
   });
 });
 
@@ -150,6 +183,15 @@ describe("concluir", () => {
     const r = await chamar({ acao: "concluir", estado: estado(), code: "codigo-da-meta-123" });
     expect(r.status).toBe(400);
     expect(((await r.json()) as { error: { message: string } }).error.message).toMatch(/permiss/);
+  });
+
+  it("⭐ negar SÓ as permissões de comentários não barra a conexão nem tira o Instagram", async () => {
+    h.negadas.mockResolvedValue(["instagram_manage_comments", "pages_read_engagement"]);
+    const r = await chamar({ acao: "concluir", estado: estado(), code: "codigo-da-meta-123" });
+    expect(r.status).toBe(200);
+    const { data } = (await r.json()) as { data: { instagram_permitido: boolean; paginas: { instagram: unknown }[] } };
+    expect(data.instagram_permitido).toBe(true);
+    expect(data.paginas[0]!.instagram).toEqual({ id: "17840", username: "loja" });
   });
 
   it("sucesso: lista as páginas SEM o token e devolve a seleção lacrada", async () => {
@@ -180,6 +222,21 @@ describe("conectar", () => {
     expect(h.audit).toHaveBeenCalledWith(expect.objectContaining({ action: "channel.connected", organizationId: "org-1" }));
   });
 
+  it("guarda na conexão o que a pessoa concedeu; não conseguir perguntar à Meta não impede conectar", async () => {
+    await chamar({ acao: "conectar", selecao: lacre(), page_id: "111", redes: ["instagram"] });
+    expect(h.concedidos).toHaveBeenCalledWith("user-token", "app-secret");
+    expect(h.conectar).toHaveBeenLastCalledWith(
+      {},
+      expect.objectContaining({
+        escoposConcedidos: ["instagram_basic", "instagram_manage_comments", "pages_read_engagement"],
+      }),
+    );
+    h.concedidos.mockRejectedValue(new Error("a Meta não respondeu"));
+    const r = await chamar({ acao: "conectar", selecao: lacre(), page_id: "111", redes: ["instagram"] });
+    expect(r.status).toBe(200);
+    expect(h.conectar).toHaveBeenLastCalledWith({}, expect.objectContaining({ escoposConcedidos: null }));
+  });
+
   it("lacre de outra organização não abre — isolamento entre organizações", async () => {
     const r = await chamar({ acao: "conectar", selecao: lacre("org-2"), page_id: "111", redes: ["facebook"] });
     expect(r.status).toBe(400);
@@ -201,5 +258,86 @@ describe("desconectar", () => {
     expect(r.status).toBe(200);
     expect(h.desconectar).toHaveBeenCalledWith({}, "org-1", id, "app-secret");
     expect(h.audit).toHaveBeenCalledWith(expect.objectContaining({ action: "channel.social_disconnected" }));
+  });
+});
+
+describe("comentários do Instagram", () => {
+  const ID = "6a0f6a1e-5d7b-4c55-9f4d-6f7a3c1e2b10";
+
+  it("o GET diz o estado dos comentários de cada conexão do Instagram, e só delas", async () => {
+    h.conexoes.mockResolvedValue([
+      { id: "s-fb", rede: "facebook", conta: "111", displayName: "facebook · Loja", status: "WORKING", metadata: {} },
+      {
+        id: "s-antiga",
+        rede: "instagram",
+        conta: "17840",
+        displayName: "instagram · @loja",
+        status: "WORKING",
+        metadata: { social_platform: "instagram" },
+      },
+      {
+        id: "s-nova",
+        rede: "instagram",
+        conta: "17841",
+        displayName: "instagram · @outra",
+        status: "WORKING",
+        metadata: {
+          comentarios_modo: "registrar",
+          meta_escopos_concedidos: ["instagram_manage_comments", "pages_read_engagement"],
+        },
+      },
+    ]);
+    const { data } = (await (await GET()).json()) as { data: { conexoes: Record<string, unknown>[] } };
+    expect(data.conexoes[0]).not.toHaveProperty("comentarios");
+    // Conexão antiga: segue ativa para mensagens, e diz que falta a permissão.
+    expect(data.conexoes[1]).toMatchObject({
+      status: "WORKING",
+      comentarios: { modo: "off", escopo_concedido: false, disponivel: false },
+    });
+    expect(data.conexoes[2]).toMatchObject({
+      comentarios: { modo: "registrar", escopo_concedido: true, disponivel: true },
+    });
+  });
+
+  it("⭐ mudar o modo: na organização da SESSÃO, e auditado com o antes e o depois", async () => {
+    const r = await chamar({ acao: "comentarios_modo", channel_session_id: ID, modo: "registrar" });
+    expect(r.status).toBe(200);
+    expect(((await r.json()) as { data: unknown }).data).toEqual({ modo: "registrar", alterado: true });
+    expect(h.modo).toHaveBeenCalledWith({}, "org-1", ID, "registrar");
+    expect(h.audit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "channel.comentarios_modo_alterado",
+        actorUserId: "admin-1",
+        organizationId: "org-1",
+        resourceType: "channel_session",
+        resourceId: ID,
+        metadata: expect.objectContaining({ de: "off", para: "registrar" }),
+      }),
+    );
+  });
+
+  it("pedir o modo que já está não audita (não houve mudança)", async () => {
+    h.modo.mockResolvedValue({ anterior: "real", atual: "real" });
+    const r = await chamar({ acao: "comentarios_modo", channel_session_id: ID, modo: "real" });
+    expect(((await r.json()) as { data: unknown }).data).toEqual({ modo: "real", alterado: false });
+    expect(h.audit).not.toHaveBeenCalled();
+  });
+
+  it("modo fora do vocabulário é recusado na porta; organização no corpo também", async () => {
+    expect((await chamar({ acao: "comentarios_modo", channel_session_id: ID, modo: "ligado" })).status).toBe(400);
+    expect(
+      (await chamar({ acao: "comentarios_modo", channel_session_id: ID, modo: "real", organization_id: "org-2" })).status,
+    ).toBe(400);
+    expect(h.modo).not.toHaveBeenCalled();
+  });
+
+  it("quem não é admin não muda o modo; e funciona mesmo com o app da Meta sem configurar", async () => {
+    h.role.mockResolvedValue({ ok: false, response: new Response(null, { status: 403 }) });
+    expect((await chamar({ acao: "comentarios_modo", channel_session_id: ID, modo: "off" })).status).toBe(403);
+    expect(h.modo).not.toHaveBeenCalled();
+    h.role.mockResolvedValue({ ok: true, org: { orgId: "org-1", name: "Loja" }, user: { id: "admin-1", idioma: "pt-BR" } });
+    h.app = { appId: null, appSecret: null, verifyToken: null };
+    h.modo.mockResolvedValue({ anterior: "real", atual: "off" });
+    expect((await chamar({ acao: "comentarios_modo", channel_session_id: ID, modo: "off" })).status).toBe(200);
   });
 });

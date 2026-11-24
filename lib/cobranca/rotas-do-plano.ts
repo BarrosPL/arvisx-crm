@@ -268,6 +268,7 @@ export const ROTAS_DE_API: Readonly<Record<string, Classe>> = {
   "/api/v1/tenants": LIVRE, // provisionamento
   "/api/v1/voice": LIVRE, // chamada de voz: casca e Inbox
   "/api/v1/voip": "/app/settings/voip-trunk",
+  "/api/v1/social-comments": LIVRE, // Atendimento: comentário é entrada de conversa, como a mensagem direta. Segue o Inbox e `/api/v1/channels`, que o plano não decide; não há tela própria no catálogo
   "/api/v1/webhook-sources": "/app/webhooks", // a gestão das fontes; só a tela Webhooks consome
   "/api/v1/webhooks": LIVRE, // só ENTRADA (WhatsApp, Meta, cobrança, Nuvemshop): nunca para por plano nem por suspensão. Nenhuma rota de gestão mora aqui (cerca em telas-do-plano-cercas)
 };

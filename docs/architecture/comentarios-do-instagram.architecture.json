@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "diagram_type": "fluxo",
+  "meta": {
+    "titulo": "Comentários do Instagram",
+    "pergunta": "Como um comentário numa publicação do Instagram chega ao CRM, avisa um sistema externo e é respondido por uma pessoa ou por um agente, sem que nada seja publicado por acidente?",
+    "resumo": "O comentário entra pelo webhook único da conexão direta, é gravado só quando a conexão está em modo de registro ou real, e avisa quem escuta por uma automação. Ler e responder têm UMA regra (lib/comentarios/acoes.ts), usada pela tela da equipe, pelas rotas e pelas ferramentas do MCP. O modo da conexão decide se a resposta é publicada ou só anotada como simulada; o que a rede não confirma fica incerto e ninguém repete sozinho."
+  },
+  "lanes": [
+    { "id": "fora", "label": "Fora do CRM" },
+    { "id": "humano", "label": "O que o humano vê" },
+    { "id": "borda", "label": "Borda HTTP e MCP" },
+    { "id": "regra", "label": "Regras" },
+    { "id": "dados", "label": "Banco" }
+  ],
+  "mainPath": ["meta", "webhook", "ingestao", "tabela", "rotas", "acoes", "resposta", "meta"],
+  "nodes": [
+    {
+      "id": "meta",
+      "lane": "fora",
+      "col": 1,
+      "type": "external",
+      "label": "Meta (Graph e webhook do Instagram)",
+      "sublabel": "campos comments e live_comments · replies · hide · resposta privada"
+    },
+    {
+      "id": "externo",
+      "lane": "fora",
+      "col": 4,
+      "type": "external",
+      "label": "Sistema externo (agente)",
+      "sublabel": "recebe comment.received · responde por token marcado como gerente"
+    },
+    {
+      "id": "cartao",
+      "lane": "humano",
+      "col": 1,
+      "type": "frontend",
+      "label": "ConexaoDiretaMeta",
+      "sublabel": "Conexões › Facebook / Instagram · estado, modo, aviso de permissão, Reautorizar · admin"
+    },
+    {
+      "id": "atalho",
+      "lane": "humano",
+      "col": 2,
+      "type": "frontend",
+      "label": "AtalhoDosComentarios",
+      "sublabel": "no Inbox · gerente+ · só com conexão direta"
+    },
+    {
+      "id": "tela",
+      "lane": "humano",
+      "col": 3,
+      "type": "frontend",
+      "label": "/app/inbox/comentarios",
+      "sublabel": "ComentariosClient · lista, filtros, Responder, Responder em privado, Ocultar, Ignorar · simulada e incerta"
+    },
+    {
+      "id": "inbox",
+      "lane": "humano",
+      "col": 4,
+      "type": "frontend",
+      "label": "Inbox",
+      "sublabel": "a resposta privada enviada vira mensagem na conversa do contato"
+    },
+    {
+      "id": "rota_canal",
+      "lane": "borda",
+      "col": 1,
+      "type": "api",
+      "label": "/api/v1/channels/meta-social",
+      "sublabel": "GET estado dos comentários · POST iniciar/concluir/conectar · POST comentarios_modo (admin, auditado)"
+    },
+    {
+      "id": "webhook",
+      "lane": "borda",
+      "col": 2,
+      "type": "api",
+      "label": "POST /api/v1/webhooks/meta-social",
+      "sublabel": "assinatura do app · organização sai da sessão achada pela conta"
+    },
+    {
+      "id": "rotas",
+      "lane": "borda",
+      "col": 3,
+      "type": "api",
+      "label": "/api/v1/social-comments",
+      "sublabel": "listar, ver, reply, private-reply, hide, ignore, criar-contato · sessão de gerente ou token · recusa no idioma da pessoa"
+    },
+    {
+      "id": "mcp",
+      "lane": "borda",
+      "col": 4,
+      "type": "api",
+      "label": "crm_*_comment (MCP)",
+      "sublabel": "seis ferramentas · as de resposta são críticas e ligadas uma a uma"
+    },
+    {
+      "id": "ingestao",
+      "lane": "regra",
+      "col": 2,
+      "type": "regra",
+      "label": "meta-social/comentarios.ts",
+      "sublabel": "modo off descarta · comentário próprio e repetido não entram · emite comment.received"
+    },
+    {
+      "id": "sessao",
+      "lane": "regra",
+      "col": 1,
+      "type": "regra",
+      "label": "meta-social/store.ts",
+      "sublabel": "estadoDosComentarios · definirModoDeComentarios · conectar preserva o modo e regrava os escopos"
+    },
+    {
+      "id": "acoes",
+      "lane": "regra",
+      "col": 3,
+      "type": "regra",
+      "label": "lib/comentarios/acoes.ts",
+      "sublabel": "a regra única: reserva, uma resposta de cada tipo, 7 dias, simulada, incerta"
+    },
+    {
+      "id": "resposta",
+      "lane": "regra",
+      "col": 4,
+      "type": "regra",
+      "label": "meta-social/comentarios-resposta.ts",
+      "sublabel": "as chamadas à Graph · recuo só no limite de taxa · grava a privada na conversa"
+    },
+    {
+      "id": "canal",
+      "lane": "dados",
+      "col": 1,
+      "type": "tabela",
+      "label": "channel_sessions.metadata",
+      "sublabel": "comentarios_modo · meta_escopos_concedidos"
+    },
+    {
+      "id": "tabela",
+      "lane": "dados",
+      "col": 3,
+      "type": "tabela",
+      "label": "social_comments",
+      "sublabel": "único por organização + comment_id · public_reply, private_reply, hidden · 365 dias"
+    },
+    {
+      "id": "automacao",
+      "lane": "dados",
+      "col": 2,
+      "type": "worker",
+      "label": "automação comment.received",
+      "sublabel": "event_log → regra → Avisar outro sistema (webhook de saída)"
+    },
+    {
+      "id": "auditoria",
+      "lane": "dados",
+      "col": 4,
+      "type": "tabela",
+      "label": "api_audit_log",
+      "sublabel": "social_comment.* e channel.comentarios_modo_alterado, com metadata.simulada"
+    }
+  ],
+  "edges": [
+    { "id": "c1", "from": "meta", "to": "webhook", "label": "entrega o comentário (changes[].field comments ou live_comments)" },
+    { "id": "c2", "from": "webhook", "to": "ingestao", "label": "evento tipo comentario; nunca 500 por evento ruim" },
+    { "id": "c3", "from": "ingestao", "to": "canal", "label": "lê o modo da conexão antes de gravar" },
+    { "id": "c4", "from": "ingestao", "to": "tabela", "label": "grava uma linha; a chave única absorve a repetição" },
+    { "id": "c5", "from": "ingestao", "to": "automacao", "label": "emite comment.received com o texto inteiro" },
+    { "id": "c6", "from": "automacao", "to": "externo", "label": "webhook de saída assinado" },
+    { "id": "c7", "from": "externo", "to": "rotas", "label": "Bearer dsk_ marcado como gerente" },
+    { "id": "c8", "from": "externo", "to": "mcp", "label": "as mesmas ações pelas ferramentas" },
+    { "id": "c9", "from": "atalho", "to": "tela", "label": "link do Inbox" },
+    { "id": "c10", "from": "cartao", "to": "tela", "label": "Ver comentários (já filtrado pela conexão)" },
+    { "id": "c11", "from": "tela", "to": "rotas", "label": "lista e ações pela sessão; mostra a frase da recusa como veio" },
+    { "id": "c12", "from": "rotas", "to": "acoes", "label": "só autentica e chama a regra" },
+    { "id": "c13", "from": "mcp", "to": "acoes", "label": "só autentica e chama a regra" },
+    { "id": "c14", "from": "acoes", "to": "tabela", "label": "reserva por UPDATE condicional; desfecho concluída, incerta ou reserva desfeita" },
+    { "id": "c15", "from": "acoes", "to": "canal", "label": "o modo decide: off recusa, registrar simula, real publica" },
+    { "id": "c16", "from": "acoes", "to": "resposta", "label": "só em modo real" },
+    { "id": "c17", "from": "resposta", "to": "meta", "label": "replies, hide e mensagem com recipient.comment_id" },
+    { "id": "c18", "from": "resposta", "to": "inbox", "label": "a privada confirmada entra na conversa do contato" },
+    { "id": "c19", "from": "acoes", "to": "auditoria", "label": "toda escrita, com quem agiu e se foi simulada" },
+    { "id": "c20", "from": "cartao", "to": "rota_canal", "label": "lê o estado; muda o modo; Reautorizar refaz o login" },
+    { "id": "c21", "from": "rota_canal", "to": "sessao", "label": "definirModoDeComentarios · conectarPagina na reautorização" },
+    { "id": "c22", "from": "sessao", "to": "canal", "label": "só definirModoDeComentarios escreve o modo; conectar regrava os escopos" },
+    { "id": "c23", "from": "rota_canal", "to": "auditoria", "label": "channel.comentarios_modo_alterado (de, para)" },
+    { "id": "c24", "from": "rota_canal", "to": "meta", "label": "login do Facebook com auth_type=rerequest" },
+    { "id": "c25", "from": "tabela", "to": "tela", "label": "laço de retorno: a resposta incerta volta à tela, que só reenvia com confirmação" }
+  ],
+  "cards": [
+    {
+      "titulo": "Por que a tela não tem item de menu",
+      "texto": "O menu lateral está no limite medido (tests/e2e/navegacao.spec.ts). A tela mora dentro do Atendimento, em /app/inbox/comentarios, e herda o plano do Inbox. Chega-se por dois atalhos: o do Inbox, que só aparece para gerente e administrador quando a empresa tem a conexão direta, e o botão Ver comentários do cartão do Instagram."
+    },
+    {
+      "titulo": "Reautorizar não apaga nem muda o modo",
+      "texto": "Reautorizar é o mesmo login refeito. conectarPagina atualiza a sessão existente: troca o token, regrava as permissões concedidas e mantém o resto do metadata, inclusive comentarios_modo. A tela guarda, só durante a ida à Meta, qual conta estava sendo reautorizada, para já marcar a página dela e apenas as redes que ela já tinha."
+    },
+    {
+      "titulo": "O laço de retorno",
+      "texto": "Quando a rede não confirma, a resposta fica gravada como incerta e o comentário não vira respondido. A tela mostra o aviso no próprio comentário e o único caminho é o reenvio confirmado por uma pessoa (confirmar_reenvio). Recusa definitiva da rede desfaz a reserva e a pessoa pode tentar de novo depois de corrigir a causa."
+    },
+    {
+      "titulo": "O que mantém isto vivo",
+      "texto": "Sem a permissão de comentários, o cartão avisa e oferece reautorizar. Comentário com mais de 365 dias é podado pela rotina webhook-log-retention. O aviso comment.received é melhor esforço: se falhar, o comentário continua na tela e na listagem da API."
+    }
+  ]
+}

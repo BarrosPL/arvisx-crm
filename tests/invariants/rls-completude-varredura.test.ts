@@ -429,6 +429,16 @@ const PROVA_PROPRIA: readonly Excecao[] = [
       "duas organizações é medido pelas funções: junção e desfazer pedidos com a organização " +
       "errada não acham nem o contato nem o registro.",
   },
+  {
+    tabela: "social_comments",
+    razao:
+      "tests/invariants/social-comments.test.ts — dois tenants reais por JWT, com o " +
+      "MESMO id de comentário nas duas organizações: gerente e admin de A leem a " +
+      "linha de A e 0 de B, gerente de B o espelho, agent e viewer de A leem 0 " +
+      "(leitura de gerente para cima desde a migration 9819: não cabe em TABLES, " +
+      "cujo usuário semeado é agent), e INSERT/UPDATE/DELETE pela sessão e leitura " +
+      "por anon dão permission denied. Migrations 9810 e 9819.",
+  },
 ];
 
 /**

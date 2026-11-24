@@ -220,6 +220,12 @@ export const CURATED_FIELDS: Record<TriggerEvent, CuratedField[]> = {
   // A conversa traz o contato: a condição é sobre QUEM é o contato.
   "conversation.ai_paused": CONTACT_FIELDS,
   "conversation.ai_resumed": CONTACT_FIELDS,
+  // O comentário não tem contato nem negócio: o que dá para filtrar é o que
+  // veio NELE — o texto (inteiro) e a publicação onde foi feito.
+  "comment.received": [
+    { value: "event.text", label: "Texto do comentário", op: "contains" },
+    { value: "event.media_id", label: "Publicação (id)", op: "eq" },
+  ],
 };
 
 export const OP_LABELS: Record<Op, string> = {

@@ -35,6 +35,9 @@ import { allTools } from "@/lib/mcp/tools";
  *  - a soma passa de TETO_TOTAL.
  */
 
+const COMENTARIOS =
+  "capacidade nova (comentários do Instagram, migration 9812): o agente externo lê os comentários e decide responder em público, em privado, ignorar ou criar contato; a descrição precisa dizer os limites da rede (uma resposta, 7 dias, transmissão ao vivo) e o que `simulada` e `resposta_incerta` querem dizer, senão ele repete a resposta";
+
 const BASE = "linha de base, medida quando a cerca nasceu (2026-10-31)";
 
 const SUPERFICIE_DE_AGENTE =
@@ -70,6 +73,12 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "crm_consultar_receita": { tokens: 403, motivo: BASE },
   "crm_list_privacy_requests": { tokens: 248, motivo: BASE },
   "crm_get_prospecting_site_audit": { tokens: 220, motivo: BASE },
+  "crm_list_comments": { tokens: 311, motivo: COMENTARIOS },
+  "crm_get_comment": { tokens: 192, motivo: COMENTARIOS },
+  "crm_reply_comment": { tokens: 281, motivo: COMENTARIOS },
+  "crm_private_reply_comment": { tokens: 311, motivo: COMENTARIOS },
+  "crm_ignore_comment": { tokens: 216, motivo: COMENTARIOS },
+  "crm_create_contact_from_comment": { tokens: 479, motivo: COMENTARIOS },
   "crm_list_stages": { tokens: 255, motivo: BASE },
   "crm_list_tags": { tokens: 111, motivo: BASE },
   "crm_list_message_templates": { tokens: 146, motivo: BASE },
@@ -151,7 +160,7 @@ const TETO: Readonly<Record<string, { tokens: number; motivo: string }>> = {
   "schedule_followup (com negócio)": { tokens: 314, motivo: BASE },
 };
 
-const TETO_TOTAL = 35210;
+const TETO_TOTAL = 37000;
 
 const VARIANTE = "schedule_followup (com negócio)";
 

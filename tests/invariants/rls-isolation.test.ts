@@ -890,6 +890,11 @@ export const TABLES = [
   // comerciais). Leitura por organização, sem gate de papel; a escrita exige
   // `manager` e é medida em `tests/invariants/equipe-pronta-perfis.test.ts`.
   "equipe_pronta_perfis",
+  // ⚠️ `social_comments` (migrations 9810 e 9819) NÃO entra nesta lista: desde
+  // a 9819 a leitura é de gerente para cima e o usuário semeado aqui é `agent`,
+  // então o controle positivo falharia por ACERTO. A prova (dois tenants, os
+  // quatro papéis, o MESMO id de comentário nas duas organizações) vive em
+  // `tests/invariants/social-comments.test.ts`.
   // migration 9043 — o segundo telefone da ficha (Spec 31 B1). Leitura por
   // organização; a escrita exige `agent`, o papel semeado aqui.
   "contact_phones",
