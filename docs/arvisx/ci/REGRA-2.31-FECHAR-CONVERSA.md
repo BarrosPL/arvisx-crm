@@ -237,6 +237,23 @@ Provas (banco de verdade, `pnpm test:db tests/invariants/fechar-conversa-por-age
 
 Os seis casos da 4.3 estão no bloco "conversa assumida por uma pessoa: a regra 2.31 dentro da fn_service_status". O caso 3 (fechar ganha) mostrou um comportamento que já existia e não é desta tarefa: assumir uma conversa já encerrada a reabre como `claimed` e soma outra revisão (7 → 8 no fechar, 9 no assumir). O teste afirma isso como está.
 
+## Tarefa 6.1 (25/11/2026): lacuna 3, a regra mora nos chamadores. Implementada
+
+A regra saiu dos chamadores e mora em dois lugares: o módulo unificado e a função do banco.
+
+- `fecharConversa` recusa, ela mesma, o pedido de agente sobre conversa aberta com responsável (`com_humano`, sem chamar o banco). As conferências que ficaram na ferramenta e no PATCH são só caminho rápido: tirá-las não abre brecha.
+- `origem` é obrigatória no tipo: chamador que esquece não compila.
+- Cerca `tests/unit/fn-service-status-so-pelo-modulo.test.ts`: nenhum arquivo de produção chama `rpc("fn_service_status"` fora do módulo; no módulo existe uma chamada, que manda `p_ator` quando a origem é agente; e a lista de portas que fecham conversa é fechada, com a origem que cada uma declara.
+
+| Chamador | Como passa pela regra | Teste que prova |
+|---|---|---|
+| `app/api/v1/conversations/[id]/close/route.ts` | `fecharConversa` com `origem: "pessoa"` | cerca (tabela de portas); `tests/unit/arquivar-conversa.test.ts` segue verde |
+| `app/api/v1/contacts/[id]/personal/route.ts` | `fecharConversa` com `origem: "pessoa"` | cerca; `app/api/v1/contacts/[id]/personal/route-efeitos.test.ts` segue verde (a chamada ao banco não leva `p_ator`) |
+| `app/api/v1/conversations/_handler.ts` | `fecharConversa` e `mudarEstadoDoAtendimento` com a origem do ator | `tests/unit/patch-fechar-conversa-comportamento.test.ts`, bloco "PATCH de estado terminal: ator que não é pessoa × conversa assumida" |
+| `lib/mcp/tools/fechar-conversa.ts` | `fecharConversa` com `origem: "agente"` | `tests/unit/mcp-fechar-conversa.test.ts` (janela e PGRST202) e o teste de banco acima |
+
+Limite: a cerca lê texto. Uma chamada montada com o nome da função numa variável (`rpc(nome, ...)`) passaria por ela. Não existe nenhuma hoje.
+
 ## Tarefa 6.1 (25/11/2026): lacuna 2, o silêncio do bot. NÃO implementada: tabela e pergunta
 
 Pedido: o agente também recusar quando `bot_silenced_until > now()` e a pausa veio de uma pessoa. Condição do pedido: se não houver como distinguir com segurança "pausa por pessoa" de "silêncio do próprio bot depois do handoff", não implementar e levar a pergunta.

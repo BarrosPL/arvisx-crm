@@ -28,11 +28,17 @@
  *  4. AGENTE NÃO ENCERRA CONVERSA QUE UMA PESSOA ASSUMIU (regra 2.31, decisão do
  *     dono em 23/11/2026). Todo chamador declara a `origem` do pedido
  *     (`"pessoa"` ou `"agente"`), e ela é obrigatória de propósito: quem esquece
- *     não compila. Com `origem: "agente"` o pedido viaja como
- *     `p_ator = 'agente'` e a `fn_service_status` (migration 9824) recusa COM A
- *     LINHA TRAVADA: fecha a janela em que a pessoa assume entre a leitura e o
- *     fechamento. A recusa do banco é `PT403 service_assigned_to_human`.
+ *     não compila. Com `origem: "agente"` a regra vale em dois lugares, e nenhum
+ *     deles é o chamador:
+ *       - aqui, na leitura: conversa aberta com responsável é recusada sem
+ *         chamar o banco (caminho rápido);
+ *       - na `fn_service_status` (`p_ator = 'agente'`, migration 9824), COM A
+ *         LINHA TRAVADA: fecha a janela em que a pessoa assume entre a leitura e
+ *         o fechamento. A recusa do banco é `PT403 service_assigned_to_human`.
  *     Vale para os três estados terminais (`closed`, `resolved`, `archived`).
+ *     A ÚNICA chamada a `fn_service_status` do produto é a de
+ *     `mudarEstadoDoAtendimento`, neste arquivo (cerca:
+ *     `tests/unit/fn-service-status-so-pelo-modulo.test.ts`).
  *
  * Fechar NÃO envia nada ao cliente e não toca em trava de atendimento humano
  * (`contacts.force_human`): a função do banco só carimba o estado do
@@ -238,6 +244,10 @@ export async function auditarFechamentoDeConversa(entrada: {
 export async function fecharConversa(deps: {
   /** Service role: a `fn_service_status` só é executável por ele. */
   admin: Pick<SupabaseClient, "rpc">;
+  /**
+   * A conversa como foi lida. `assigned_to_user_id` é o que alimenta o caminho
+   * rápido da regra 2.31; quem não o leu deixa de fora, e o banco decide.
+   */
   conversa: Pick<ConversaParaFechar, "id" | "organization_id" | "status"> &
     Partial<Pick<ConversaParaFechar, "assigned_to_user_id">>;
   /** De quem é o pedido. Obrigatório: é o que liga a regra 2.31 (item 4 do cabeçalho). */
@@ -251,6 +261,23 @@ export async function fecharConversa(deps: {
   auditoria?: "na_hora" | "adiada";
 }): Promise<DesfechoDoFechamento> {
   const { conversa } = deps;
+
+  // Regra 2.31, caminho rápido: o agente não fecha conversa aberta que uma
+  // pessoa assumiu. Conversa já encerrada segue adiante (repetir o pedido é
+  // sucesso sem efeito, e quem decide é a função). A palavra final é do banco,
+  // com a linha travada: aqui só se poupa a viagem.
+  if (
+    deps.origem === "agente" &&
+    conversa.assigned_to_user_id != null &&
+    !conversaJaEncerrada(conversa.status)
+  ) {
+    return {
+      ok: false,
+      erro: "com_humano",
+      detalhe: "service_assigned_to_human",
+      codigo: CODIGO_CONVERSA_COM_HUMANO,
+    };
+  }
 
   const estado = await mudarEstadoDoAtendimento({
     admin: deps.admin,

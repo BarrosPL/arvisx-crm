@@ -189,8 +189,8 @@ describe("fecharConversa: a recusa carrega o código do banco", () => {
 });
 
 // Tarefa 6.1 (24/11/2026): a regra 2.31 mora AQUI e na função do banco, não nos
-// chamadores. `origem` é obrigatória; com "agente" o módulo manda `p_ator`
-// para o banco recusar a conversa assumida com a linha travada.
+// chamadores. `origem` é obrigatória; com "agente" o módulo recusa a conversa
+// assumida na leitura e manda `p_ator` para o banco recusar com a linha travada.
 describe("fecharConversa: de quem é o pedido (regra 2.31)", () => {
   const PESSOA = "33333333-3333-4333-8333-333333333333";
   const assumida = { ...conversa, status: "claimed", assigned_to_user_id: PESSOA };
@@ -213,6 +213,19 @@ describe("fecharConversa: de quem é o pedido (regra 2.31)", () => {
     ]);
   });
 
+  it("⭐ agente × conversa assumida: `com_humano` sem chamar o banco e sem auditar", async () => {
+    const a = admin();
+    const desfecho = await fecharConversa({ admin: a, conversa: assumida, origem: "agente", ...pedido });
+    expect(desfecho).toEqual({
+      ok: false,
+      erro: "com_humano",
+      detalhe: "service_assigned_to_human",
+      codigo: "PT403",
+    });
+    expect(a.rpc).not.toHaveBeenCalled();
+    expect(audit).not.toHaveBeenCalled();
+  });
+
   it("⭐ agente, a janela: a leitura não viu responsável e o BANCO recusa (PT403) → `com_humano`, sem auditar", async () => {
     const a = admin({ code: "PT403", message: "service_assigned_to_human" });
     const desfecho = await fecharConversa({
@@ -224,6 +237,25 @@ describe("fecharConversa: de quem é o pedido (regra 2.31)", () => {
     expect(desfecho).toMatchObject({ ok: false, erro: "com_humano", codigo: "PT403" });
     expect(a.rpc).toHaveBeenCalledTimes(1);
     expect(audit).not.toHaveBeenCalled();
+  });
+
+  it("agente que não leu o responsável: o módulo não adivinha, quem decide é o banco", async () => {
+    const a = admin();
+    await fecharConversa({ admin: a, conversa, origem: "agente", ...pedido });
+    expect(a.rpc).toHaveBeenCalledTimes(1);
+    expect(a.rpc.mock.calls[0]![1]).toMatchObject({ p_ator: "agente" });
+  });
+
+  it("agente × conversa assumida JÁ encerrada: segue ao banco (repetir é sucesso sem efeito)", async () => {
+    const a = admin();
+    const desfecho = await fecharConversa({
+      admin: a,
+      conversa: { ...assumida, status: "closed" },
+      origem: "agente",
+      ...pedido,
+    });
+    expect(desfecho).toMatchObject({ ok: true, mudou: false });
+    expect(a.rpc).toHaveBeenCalledTimes(1);
   });
 
   it("controle: a PESSOA fecha a conversa assumida", async () => {
