@@ -34,6 +34,7 @@ import {
   PuzzlePiece,
   Receipt,
   Scales,
+  Sparkle,
   ShieldCheck,
   Stack,
   Users,
@@ -101,6 +102,13 @@ export const ADMIN_DESTINATIONS: readonly AdminDestination[] = [
     description: "Incidentes da plataforma e o que foi feito em cada um",
     group: "operacao",
     icon: Warning,
+  },
+  {
+    href: "/admin/chamados",
+    label: "Chamados",
+    description: "Pedidos de ajuda que as empresas abriram pelo assistente, com o diagnóstico anexado",
+    group: "operacao",
+    icon: Sparkle,
   },
   {
     href: "/admin/audit",

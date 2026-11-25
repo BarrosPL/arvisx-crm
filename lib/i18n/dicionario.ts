@@ -20551,6 +20551,26 @@ export const DICIONARIO: Traducoes = {
   "Credenciais de IA": { es: "Credenciales de IA" },
   "Perguntar ao assistente": { es: "Preguntar al asistente" },
   "Tire dúvidas de uso, consulte os dados da sua conta e encontre a tela certa.": { es: "Resuelve dudas de uso, consulta los datos de tu cuenta y encuentra la pantalla correcta." },
+  // O Vix (Tarefa 7): chamados da equipe da plataforma e a chave por empresa.
+  "Chamados do assistente": { es: "Solicitudes del asistente" },
+  "Pedidos de ajuda que as empresas abriram pelo assistente, com o diagnóstico anexado.": { es: "Pedidos de ayuda que las empresas abrieron por el asistente, con el diagnóstico adjunto." },
+  "Pedidos de ajuda que as empresas abriram pelo assistente, com o diagnóstico anexado": { es: "Pedidos de ayuda que las empresas abrieron por el asistente, con el diagnóstico adjunto" },
+  "Chamados": { es: "Solicitudes" },
+  "Filtrar chamados": { es: "Filtrar solicitudes" },
+  "Não foi possível carregar os chamados.": { es: "No fue posible cargar las solicitudes." },
+  "Nenhum chamado neste filtro.": { es: "Ninguna solicitud en este filtro." },
+  "Visto": { es: "Visto" },
+  "Marcar como visto": { es: "Marcar como visto" },
+  "Marcar como resolvido": { es: "Marcar como resuelto" },
+  "Diagnóstico anexado": { es: "Diagnóstico adjunto" },
+  "Assistente ligado para a empresa.": { es: "Asistente activado para la empresa." },
+  "Assistente desligado para a empresa.": { es: "Asistente desactivado para la empresa." },
+  "O assistente tira dúvidas de uso, consulta os dados da empresa com a permissão de quem pergunta e mostra a tela certa. Desligado, o botão dele some de todas as telas para todos da empresa.": { es: "El asistente resuelve dudas de uso, consulta los datos de la empresa con el permiso de quien pregunta y muestra la pantalla correcta. Desactivado, su botón desaparece de todas las pantallas para todos en la empresa." },
+  "O plano da sua empresa não inclui o assistente. A escolha abaixo fica guardada, mas ele só aparece quando o plano o incluir.": { es: "El plan de tu empresa no incluye el asistente. La elección de abajo queda guardada, pero solo aparece cuando el plan lo incluya." },
+  "Ligado para a empresa": { es: "Activado para la empresa" },
+  "Desligado para a empresa": { es: "Desactivado para la empresa" },
+  "Desligar o assistente": { es: "Desactivar el asistente" },
+  "Ligar o assistente": { es: "Activar el asistente" },
 };
 
 /**

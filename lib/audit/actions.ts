@@ -1529,6 +1529,8 @@ export const AUDIT_ACTIONS = [
   "assistente.teto_atingido",
   "assistente.chamado_aberto",
   "assistente.configuracao_alterada",
+  "assistente.chamado_visto",
+  "assistente.chamado_resolvido",
 ] as const;
 
 /** Um código de auditoria. Derivado de `AUDIT_ACTIONS` — não redigite a lista. */

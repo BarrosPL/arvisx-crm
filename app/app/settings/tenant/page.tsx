@@ -13,6 +13,11 @@ import { InboxDaEmpresaForm } from "./_inbox";
 import { TenantForm } from "./_form";
 import { InterfaceDaEmpresaForm } from "./_interface";
 import { camposDoNegocioDosFunis } from "@/lib/leads/compras-do-contato";
+import { configDoVix } from "@/lib/assistente/custo";
+import { empresaDeixouLigado } from "@/lib/assistente/disponibilidade";
+import { pagadorDoVix } from "@/lib/assistente/provedor";
+import { AssistenteDaEmpresa } from "./_assistente";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +66,21 @@ export default async function TenantSettingsPage() {
   const camposDeCompra = camposDoNegocioDosFunis(funis ?? []);
 
   const row = (data ?? null) as OrgRow | null;
+
+  // A chave do assistente por empresa só aparece quando ele está ligado na
+  // instalação. Nunca lança: falha de leitura esconde o cartão, não a tela.
+  let assistente: { ligadoNaEmpresa: boolean; temDireito: boolean } | null = null;
+  try {
+    if ((await pagadorDoVix()) !== "desligado") {
+      const admin = createAdminClient();
+      assistente = {
+        ligadoNaEmpresa: await empresaDeixouLigado(admin, activeOrg.orgId),
+        temDireito: (await configDoVix(admin, activeOrg.orgId)) !== null,
+      };
+    }
+  } catch {
+    assistente = null;
+  }
   const idioma = user.idioma;
   // O bloco lido pela MESMA função que o relatório lê (`art15DoControlador`):
   // o que a tela mostra é o que o PDF vai imprimir, inclusive o `null` de quem
@@ -117,6 +137,9 @@ export default async function TenantSettingsPage() {
         />
       )}
       {row && <InboxDaEmpresaForm initial={row.interface_settings} />}
+      {row && assistente && (
+        <AssistenteDaEmpresa ligadoNaEmpresa={assistente.ligadoNaEmpresa} temDireito={assistente.temDireito} />
+      )}
       {row && <ZonaDePerigoDaOrganizacao displayName={row.display_name} />}
     </div>
   );
