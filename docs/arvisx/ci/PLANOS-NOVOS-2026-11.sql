@@ -15,9 +15,11 @@
 --
 -- ⚠️ TRÊS ESCOLHAS DESTE ARQUIVO QUE O LUCAS PRECISA CONFIRMAR ANTES DE RODAR:
 --
---   1. NOMES. A tarefa chama os planos de 1, 2 e 3 e não dá nome comercial. Os
---      nomes abaixo ("Plano 1", "Plano 2", "Plano 3") são PROVISÓRIOS: troque
---      aqui antes de rodar, ou depois na tela.
+--   1. NOMES. Os planos 1, 2 e 3 chamam-se "Inicial", "Profissional" e
+--      "Escala" (decisão do Lucas em 25/11/2026). São PROVISÓRIOS até ele
+--      confirmar. O nome mora num lugar só, a lista `values` logo abaixo: troque
+--      ali antes de rodar, ou depois na tela. Nada no código lê o nome; quem
+--      identifica o plano é o `id`.
 --   2. `oferecido_ao_cliente = false`. Os planos nascem FORA da vitrine (página
 --      inicial e tela de troca de plano), porque a vitrine lê o banco e mostraria
 --      na hora três cards com nome provisório, sem texto, ao lado dos antigos.
@@ -48,9 +50,9 @@ select v.id, v.nome, v.preco_cents, 'EUR', 'mes',
        v.max_canais, v.max_assentos, v.teto_ia_usd_cents,
        false, false, '{"preset":"completa"}'::jsonb
   from (values
-    ('a7150008-0000-4000-8000-000000000001'::uuid, 'Plano 1', 12990::bigint,  3,  5, 1200),
-    ('a7150008-0000-4000-8000-000000000002'::uuid, 'Plano 2', 19990::bigint,  6, 10, 3200),
-    ('a7150008-0000-4000-8000-000000000003'::uuid, 'Plano 3', 24990::bigint, 12, 25, 6000)
+    ('a7150008-0000-4000-8000-000000000001'::uuid, 'Inicial', 12990::bigint,  3,  5, 1200),
+    ('a7150008-0000-4000-8000-000000000002'::uuid, 'Profissional', 19990::bigint,  6, 10, 3200),
+    ('a7150008-0000-4000-8000-000000000003'::uuid, 'Escala', 24990::bigint, 12, 25, 6000)
   ) as v (id, nome, preco_cents, max_canais, max_assentos, teto_ia_usd_cents)
 on conflict (id) do nothing;
 

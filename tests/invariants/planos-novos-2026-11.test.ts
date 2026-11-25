@@ -70,9 +70,9 @@ describe("planos novos — o script de docs/arvisx/ci", () => {
          from public.cobranca_planos where id in ${NOVOS} order by preco_cents;`,
     ).split("\n");
     expect(linhas).toEqual([
-      "Plano 1|12990|EUR|mes|3|5|1200",
-      "Plano 2|19990|EUR|mes|6|10|3200",
-      "Plano 3|24990|EUR|mes|12|25|6000",
+      "Inicial|12990|EUR|mes|3|5|1200",
+      "Profissional|19990|EUR|mes|6|10|3200",
+      "Escala|24990|EUR|mes|12|25|6000",
     ]);
   });
 
