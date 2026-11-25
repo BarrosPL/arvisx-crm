@@ -2114,65 +2114,73 @@ export async function collectExportData(args: CollectArgs): Promise<ExportPayloa
   // autor; o acesso entrega os mesmos dois conjuntos. Falha não vira relatório
   // que diz que não guardamos nada: sobe.
   // O histórico do assistente dentro do CRM (migrations 9830 e 9831) que cita o
-  // titular. Não há chave para o contato: a busca é pelo que o identifica (nome
-  // com 4+ letras, telefone, e-mail), com teto por tabela. É a mesma lista de
-  // tabelas que o gatilho de anonimização limpa.
+  // titular. Não há chave para o contato: lê-se o histórico da organização (ele
+  // é curto, apagado com 30 dias) e fica o que traz o que identifica o titular
+  // (nome com 4+ letras, telefone, e-mail). A comparação é feita aqui, e não no
+  // filtro da consulta, para o texto do contato nunca virar sintaxe de filtro.
+  // É a mesma lista de tabelas que o gatilho de anonimização limpa.
   const assistente_mencoes: AssistenteMencaoRow[] = [];
-  {
-    const termos = [contact?.display_name, contact?.name, contact?.email, contact?.phone_number]
-      .map((v) => (typeof v === "string" ? v.trim() : ""))
-      .filter((v) => v.length >= 4)
-      // `%`, `_`, vírgula e parênteses têm sentido próprio no filtro: termo com eles fica de fora.
-      .filter((v) => !/[%_,()\\*]/.test(v));
-    const unicos = [...new Set(termos)];
-    const ou = (coluna: string) => unicos.map((v) => `${coluna}.ilike.%${v}%`).join(",");
-    if (unicos.length > 0) {
+  // Uma seção que não carrega não derruba o pedido de acesso inteiro: a falha
+  // vai para o log, como nas outras seções, e o resto do pacote segue.
+  try {
+    const termos = [
+      ...new Set(
+        [contact?.display_name, contact?.name, contact?.email, contact?.phone_number]
+          .map((v) => (typeof v === "string" ? v.trim().toLowerCase() : ""))
+          .filter((v) => v.length >= 4),
+      ),
+    ];
+    const cita = (texto: string | null | undefined): texto is string =>
+      typeof texto === "string" && termos.some((termo) => texto.toLowerCase().includes(termo));
+    if (termos.length > 0) {
+      const TETO = 2000;
       const mensagens = await admin
         .from("assistente_mensagens")
         .select("id, corpo, created_at")
         .eq("organization_id", organizationId)
-        .or(ou("corpo"))
         .order("created_at", { ascending: false })
-        .limit(500);
+        .limit(TETO);
       const cartoes = await admin
         .from("assistente_acoes")
         .select("id, resumo, created_at")
         .eq("organization_id", organizationId)
-        .or(ou("resumo"))
         .order("created_at", { ascending: false })
-        .limit(500);
+        .limit(TETO);
       const conversas = await admin
         .from("assistente_conversas")
         .select("id, titulo, created_at")
         .eq("organization_id", organizationId)
-        .or(ou("titulo"))
         .order("created_at", { ascending: false })
-        .limit(500);
+        .limit(TETO);
       const chamados = await admin
         .from("assistente_chamados")
         .select("id, resumo, created_at")
         .eq("organization_id", organizationId)
-        .or(ou("resumo"))
         .order("created_at", { ascending: false })
-        .limit(500);
+        .limit(TETO);
       for (const falha of [mensagens.error, cartoes.error, conversas.error, chamados.error]) {
         if (falha) {
           logger.warn("[lgpd-export-worker] assistente load failed", { request_id: requestId, error: falha.message });
         }
       }
       for (const m of mensagens.data ?? []) {
-        if (m.corpo) assistente_mencoes.push({ origem: "mensagem", id: m.id, texto: m.corpo, created_at: m.created_at });
+        if (cita(m.corpo)) assistente_mencoes.push({ origem: "mensagem", id: m.id, texto: m.corpo, created_at: m.created_at });
       }
       for (const c of cartoes.data ?? []) {
-        assistente_mencoes.push({ origem: "cartao", id: c.id, texto: c.resumo, created_at: c.created_at });
+        if (cita(c.resumo)) assistente_mencoes.push({ origem: "cartao", id: c.id, texto: c.resumo, created_at: c.created_at });
       }
       for (const c of conversas.data ?? []) {
-        if (c.titulo) assistente_mencoes.push({ origem: "conversa", id: c.id, texto: c.titulo, created_at: c.created_at });
+        if (cita(c.titulo)) assistente_mencoes.push({ origem: "conversa", id: c.id, texto: c.titulo, created_at: c.created_at });
       }
       for (const c of chamados.data ?? []) {
-        assistente_mencoes.push({ origem: "chamado", id: c.id, texto: c.resumo, created_at: c.created_at });
+        if (cita(c.resumo)) assistente_mencoes.push({ origem: "chamado", id: c.id, texto: c.resumo, created_at: c.created_at });
       }
     }
+  } catch (erro) {
+    logger.warn("[lgpd-export-worker] assistente load failed", {
+      request_id: requestId,
+      error: erro instanceof Error ? erro.message : String(erro),
+    });
   }
 
   const social_comments: SocialCommentRow[] = [];
