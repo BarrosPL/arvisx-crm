@@ -1,0 +1,23 @@
+---
+impacto: capacidade_nova
+secao: adicionado
+titulo: Assistente dentro do CRM (Vix), desligado por padrão
+---
+
+O CRM ganhou um assistente que conversa com quem usa o sistema: tira dúvidas de
+uso pela base de ajuda, consulta os dados da própria empresa com a permissão de
+quem pergunta e mostra a tela certa. Ele aparece como um botão fixo em todas as
+telas (atalho Ctrl+J, e uma entrada na busca do Ctrl+K).
+
+**Ele nasce desligado e nada muda para quem não o ligar.** Para ligar, quem
+administra a instalação escolhe, em Painel › Configuração, por onde o assistente
+chama a IA (`VIX_PAGADOR`). Além disso, a empresa só tem o assistente se o plano
+dela tiver um limite de mensagens configurado, ou se a plataforma a marcar como
+liberada sem limite. Nenhum limite vem preenchido.
+
+O assistente só lê. Alterar dados é uma chave separada (Painel › Sistema, "Ações
+do assistente"), também desligada: com ela, o assistente propõe a ação num
+cartão e nada acontece até a pessoa confirmar.
+
+A atualização cria tabelas novas (`assistente_*`) e não altera nenhuma que já
+existia.

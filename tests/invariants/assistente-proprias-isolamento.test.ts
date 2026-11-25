@@ -1,6 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { DependenciasDoExecutor as Deps } from "@/lib/assistente/executor";
+import type { ContextoDoAssistente as Ctx, PapelHumano as Papel } from "@/lib/assistente/tipos";
+
 import { subirPostgrest, type PostgrestEfemero } from "../db/postgrest-efemero";
 import { GOV_AGENT_A, GOV_MANAGER, GOV_ORG, GOV_SESSION, GOV_VIEWER, seedGov, sql } from "./gov-helpers";
 
@@ -28,9 +31,6 @@ vi.mock("@/lib/supabase/admin", () => ({
 const { CAPACIDADES_PROPRIAS } = await import("@/lib/assistente/capacidades/proprias");
 const { executarLeitura, proporEscrita } = await import("@/lib/assistente/executor");
 const { executarConfirmada } = await import("@/lib/assistente/confirmar");
-type Deps = import("@/lib/assistente/executor").DependenciasDoExecutor;
-type Ctx = import("@/lib/assistente/tipos").ContextoDoAssistente;
-type Papel = import("@/lib/assistente/tipos").PapelHumano;
 
 const ORG_B = "b2770000-0000-4000-8000-00000000000b";
 const USER_B = "b2770000-1111-4000-8000-00000000000b";

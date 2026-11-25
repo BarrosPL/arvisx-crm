@@ -2,6 +2,9 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import pg from "pg";
 
+import type { DependenciasDoExecutor as Deps } from "@/lib/assistente/executor";
+import type { ContextoDoAssistente as Ctx, PapelHumano as Papel } from "@/lib/assistente/tipos";
+
 import { subirPostgrest, type PostgrestEfemero } from "../db/postgrest-efemero";
 import { GOV_AGENT_A, GOV_AGENT_B, GOV_ORG, GOV_SESSION, GOV_VIEWER, seedGov, sql } from "./gov-helpers";
 
@@ -27,6 +30,8 @@ import { GOV_AGENT_A, GOV_AGENT_B, GOV_ORG, GOV_SESSION, GOV_VIEWER, seedGov, sq
  * Caminho real: PostgREST, sessão de uma pessoa, RLS.
  */
 
+type ModuloDeDb = { criarPorta: (pool: pg.Pool) => unknown } & Record<string, unknown>;
+
 const PORTA = Number(process.env.TEST_DB_PORT ?? 54329);
 const pool = new pg.Pool({ connectionString: `postgresql://postgres:postgres@127.0.0.1:${PORTA}/postgres`, max: 2 });
 
@@ -38,7 +43,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 // A porta SQL da aplicação (`lib/db`) aponta para o banco do teste: é por ela
 // que o serviço de tarefas confere o responsável.
 vi.mock("@/lib/db", async (original) => {
-  const real = await original<typeof import("@/lib/db")>();
+  const real = await original<ModuloDeDb>();
   return { ...real, portaDaAplicacao: () => real.criarPorta(pool) };
 });
 vi.mock("@/lib/notifications/web_push", () => ({ enviarPushAoUsuario: vi.fn(async () => undefined) }));
@@ -47,9 +52,6 @@ const { CATALOGO } = await import("@/lib/assistente/capacidades");
 const { executarLeitura, proporEscrita } = await import("@/lib/assistente/executor");
 const { executarConfirmada } = await import("@/lib/assistente/confirmar");
 const { FERRAMENTAS_MCP_FORA_DO_VIX } = await import("@/lib/assistente/proibidas");
-type Deps = import("@/lib/assistente/executor").DependenciasDoExecutor;
-type Ctx = import("@/lib/assistente/tipos").ContextoDoAssistente;
-type Papel = import("@/lib/assistente/tipos").PapelHumano;
 
 const ORG_B = "b3770000-0000-4000-8000-00000000000b";
 const USER_B = "b3770000-1111-4000-8000-00000000000b";
