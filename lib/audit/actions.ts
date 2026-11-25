@@ -1513,6 +1513,22 @@ export const AUDIT_ACTIONS = [
   "contact.updated_by_agent",
   /** Equipe pronta v2: a equipe aprovou o rascunho para o agente de Propostas enviar. */
   "proposal.aprovada_para_o_agente",
+  // O Vix, assistente do cliente dentro do CRM (Tarefa 7). O ator é sempre a
+  // PESSOA logada (`actor_user_id`), com `metadata.via = "assistente"` e
+  // `metadata.em_nome_de`: o assistente age em nome dela. O texto da pergunta
+  // nunca entra no metadata, só o tamanho.
+  "assistente.pedido",
+  "assistente.leitura",
+  "assistente.recusa",
+  "assistente.acao_proposta",
+  "assistente.acao_confirmada",
+  "assistente.acao_executada",
+  "assistente.acao_falhou",
+  "assistente.acao_cancelada",
+  "assistente.segredo_bloqueado",
+  "assistente.teto_atingido",
+  "assistente.chamado_aberto",
+  "assistente.configuracao_alterada",
 ] as const;
 
 /** Um código de auditoria. Derivado de `AUDIT_ACTIONS` — não redigite a lista. */
