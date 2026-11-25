@@ -1,4 +1,4 @@
--- manifest: **IA por plano: origem da chave em `llm_calls`, franquia de conversas e ciclo.** `llm_calls.origem_da_chave` (`cliente` | `plataforma` | `assinatura_plataforma`, padrão `plataforma`) diz de quem é a chave que pagou a chamada; `cobranca_planos.franquia_conversas_ia` é o limite de conversas com IA por ciclo. `fn_gasto_de_ia_do_mes` e o gatilho de `ai_budgets` passam a ignorar `assinatura_plataforma`. Funções novas: `fn_ciclo_de_ia`, `fn_ia_do_plano` (teto, franquia, gasto e conversas só da chave da plataforma, no ciclo), `fn_contato_na_franquia` e `fn_cobranca_avisar_uso_de_ia` (aviso de 80% uma vez por ciclo). Nenhum plano e nenhuma assinatura mudam.
+-- manifest: **IA por plano: origem da chave em `llm_calls`, franquia de conversas e ciclo.** `llm_calls.origem_da_chave` (`cliente` | `plataforma` | `assinatura_plataforma` | `assistente_chave_plataforma`, padrão `plataforma`) diz de quem é a chave que pagou a chamada; `cobranca_planos.franquia_conversas_ia` é o limite de conversas com IA por ciclo. `fn_gasto_de_ia_do_mes` e o gatilho de `ai_budgets` passam a ignorar os dois valores do assistente da plataforma (`assinatura_plataforma` e `assistente_chave_plataforma`). Funções novas: `fn_ciclo_de_ia`, `fn_ia_do_plano` (teto, franquia, gasto e conversas só da chave da plataforma, no ciclo), `fn_contato_na_franquia` e `fn_cobranca_avisar_uso_de_ia` (aviso de 80% uma vez por ciclo). Nenhum plano e nenhuma assinatura mudam.
 --
 -- 9825 — IA por plano (Tarefa 8, parte 1). Faixa 98xx, a do fork (ArvisX CRM).
 --
@@ -21,11 +21,18 @@
 -- ═══ O que muda ═══
 --
 -- A. `llm_calls.origem_da_chave` — `cliente` (credencial da organização),
---    `plataforma` (a chave da instalação, que o plano paga) e
---    `assinatura_plataforma` (chamada feita com a ASSINATURA da plataforma, e
---    não com chave de API; hoje só o assistente da plataforma a usa. Não é gasto
---    da empresa — reservado para a Tarefa 7; nada grava esse valor ainda). O
+--    `plataforma` (a chave da instalação, que o plano paga) e os DOIS valores do
+--    assistente da plataforma, que não são gasto da empresa:
+--      · `assinatura_plataforma` — chamada feita com a ASSINATURA da plataforma,
+--        e não com chave de API (grava os tokens reais e `cost_cents = 0`);
+--      · `assistente_chave_plataforma` — o assistente rodando pela CHAVE da
+--        plataforma, como saída quando a assinatura não pode ser usada.
+--    Os dois são reservados para a Tarefa 7; nada grava esses valores ainda. O
 --    login por assinatura que a PRÓPRIA empresa conecta continua sendo `cliente`.
+--
+--    ⚠️ `assistente_chave_plataforma` usa a MESMA chave que `plataforma` e NÃO
+--    conta no teto do plano: quem decide é o valor da coluna, não a chave. O
+--    teto e a franquia do plano somam só `plataforma`.
 --
 --    ⚠️ O PADRÃO É `plataforma`, E É DE PROPÓSITO. Vale para a linha antiga e
 --    para o escritor que esquecer de preencher. A pergunta é "para que lado
@@ -41,7 +48,7 @@
 --    mesma tabela dos outros limites do plano (`max_assentos`, `max_canais`,
 --    `teto_ia_usd_cents`): é atributo do plano, lido junto com eles.
 -- C. `fn_gasto_de_ia_do_mes` e `fn_update_budget_consumption` (o gatilho que
---    soma em `ai_budgets`) ignoram `assinatura_plataforma`. Para `cliente` e `plataforma` a
+--    soma em `ai_budgets`) ignoram os dois valores do assistente. Para `cliente` e `plataforma` a
 --    regra do orçamento da EMPRESA é a de sempre: soma as duas.
 -- D. `fn_ciclo_de_ia(org)` — o período pago da assinatura quando ela tem
 --    `periodo_pago_desde` e `proximo_vencimento`, o plano é mensal e agora está
@@ -66,21 +73,21 @@
 alter table public.llm_calls
   add column if not exists origem_da_chave text not null default 'plataforma';
 
+-- Num bloco só: o update.sh reaplica sem ON_ERROR_STOP e em autocommit, e um
+-- add que falhasse depois do drop solto deixaria a coluna sem guarda. Tirar e
+-- pôr de novo é o que faz o vocabulário poder crescer por reaplicação.
 do $origem$
 begin
-  if not exists (
-    select 1 from pg_constraint
-     where conrelid = 'public.llm_calls'::regclass and conname = 'llm_calls_origem_da_chave_check'
-  ) then
-    alter table public.llm_calls
-      add constraint llm_calls_origem_da_chave_check
-      check (origem_da_chave in ('cliente', 'plataforma', 'assinatura_plataforma'));
-  end if;
+  alter table public.llm_calls
+    drop constraint if exists llm_calls_origem_da_chave_check;
+  alter table public.llm_calls
+    add constraint llm_calls_origem_da_chave_check
+    check (origem_da_chave in ('cliente', 'plataforma', 'assinatura_plataforma', 'assistente_chave_plataforma'));
 end
 $origem$;
 
 comment on column public.llm_calls.origem_da_chave is
-  'De quem é a chave que pagou a chamada (migration 9825): cliente = credencial da organização; plataforma = chave da instalação, que o plano paga; assinatura_plataforma = chamada feita com a assinatura da plataforma (hoje só o assistente dela), que não é gasto da empresa. Padrão plataforma: a origem desconhecida conta no teto do plano. O teto e a franquia do plano somam só plataforma; o orçamento da empresa soma cliente e plataforma; nenhuma soma de limite conta assinatura_plataforma. Par TypeScript: ORIGENS_DA_CHAVE em lib/ai/usage/origem-da-chave.ts.';
+  'De quem é a chave que pagou a chamada (migration 9825): cliente = credencial da organização; plataforma = chave da instalação, que o plano paga; assinatura_plataforma = o assistente da plataforma rodando na assinatura dela; assistente_chave_plataforma = o assistente da plataforma rodando pela chave dela. Nenhum dos dois é gasto da empresa. Padrão plataforma: a origem desconhecida conta no teto do plano. O teto e a franquia do plano somam só plataforma; o orçamento da empresa soma cliente e plataforma; nenhuma soma de limite conta os dois valores do assistente. Par TypeScript: ORIGENS_DA_CHAVE em lib/ai/usage/origem-da-chave.ts.';
 
 -- ── B. a franquia do plano ───────────────────────────────────────────────────
 alter table public.cobranca_planos
@@ -102,7 +109,7 @@ $franquia$;
 comment on column public.cobranca_planos.franquia_conversas_ia is
   'Conversas com IA incluídas no plano por ciclo (migration 9825): contatos distintos atendidos por um agente com a chave da plataforma. Nulo = sem franquia (vale só o teto em dólar). É o limite que o cliente vê; teto_ia_usd_cents é a trava de baixo.';
 
--- ── C. as somas do orçamento da empresa ignoram a assinatura da plataforma ─────────────────
+-- ── C. as somas do orçamento da empresa ignoram o assistente da plataforma ─────────────────
 create or replace function public.fn_gasto_de_ia_do_mes(p_org uuid)
 returns numeric
   language sql
@@ -114,8 +121,8 @@ as $$
     from public.llm_calls
    where organization_id = p_org
      and created_at >= date_trunc('month', now())
-     -- 9825: o que roda na assinatura da plataforma não é gasto da empresa.
-     and origem_da_chave <> 'assinatura_plataforma';
+     -- 9825: o assistente da plataforma (na assinatura ou na chave dela) não é gasto da empresa.
+     and origem_da_chave not in ('assinatura_plataforma', 'assistente_chave_plataforma');
 $$;
 
 revoke execute on function public.fn_gasto_de_ia_do_mes(uuid) from public, anon, authenticated;
@@ -130,8 +137,8 @@ security definer
 set search_path = public
 as $$
 begin
-  -- 9825: o que roda na assinatura da plataforma não soma no orçamento da empresa.
-  if (to_jsonb(new) ->> 'origem_da_chave') = 'assinatura_plataforma' then
+  -- 9825: o assistente da plataforma (na assinatura ou na chave dela) não soma no orçamento da empresa.
+  if (to_jsonb(new) ->> 'origem_da_chave') in ('assinatura_plataforma', 'assistente_chave_plataforma') then
     return new;
   end if;
   insert into public.ai_budgets (organization_id, current_month_consumed_cents)

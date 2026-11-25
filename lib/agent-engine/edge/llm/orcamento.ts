@@ -444,7 +444,8 @@ select (select teto from orc)         as teto,
 //
 // O ORÇAMENTO DA EMPRESA (`ai_budgets`, `SQL_ORCAMENTO` acima) segue a regra de
 // sempre: soma `cliente` e `plataforma`, no mês-calendário. Nenhuma das duas
-// somas conta `assinatura_plataforma`.
+// somas conta os dois valores do assistente da plataforma
+// (`assinatura_plataforma` e `assistente_chave_plataforma`).
 //
 // ⚠️ `lerTetoDoPlano` é o único I/O deste arquivo — mora aqui, ao lado de
 // `SQL_ORCAMENTO`, porque o invariante de banco precisa executar ESTE texto, e o

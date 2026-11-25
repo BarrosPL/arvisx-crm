@@ -12,9 +12,10 @@ import { assinar, chaveDeCobranca, comoAnon, comoServidor, comoUsuario, criarOrg
  * O dublê do pool devolve a linha que o teste quiser; só o banco real diz se as
  * somas contam o que dizem contar. O que este arquivo prova:
  *
- *   1. `llm_calls.origem_da_chave` aceita os três valores, e o padrão é
+ *   1. `llm_calls.origem_da_chave` aceita os quatro valores, e o padrão é
  *      `plataforma` (a origem desconhecida conta no teto do plano);
- *   2. ⭐ linha `assinatura_plataforma` NÃO mexe em nenhuma soma de limite: nem
+ *   2. ⭐ linha do assistente da plataforma (`assinatura_plataforma` e
+ *      `assistente_chave_plataforma`) NÃO mexe em nenhuma soma de limite: nem
  *      no gasto do mês, nem no contador de `ai_budgets`, nem no gasto e nas
  *      conversas do plano — com controle positivo para cada soma;
  *   3. o teto do plano soma SÓ `plataforma`; o orçamento da empresa soma
@@ -106,8 +107,8 @@ beforeAll(() => {
 });
 
 describe("llm_calls.origem_da_chave", () => {
-  it("o CHECK aceita exatamente os três valores do par TypeScript", () => {
-    expect([...ORIGENS_DA_CHAVE]).toEqual(["cliente", "plataforma", "assinatura_plataforma"]);
+  it("o CHECK aceita exatamente os quatro valores do par TypeScript", () => {
+    expect([...ORIGENS_DA_CHAVE]).toEqual(["cliente", "plataforma", "assinatura_plataforma", "assistente_chave_plataforma"]);
     for (const origem of ORIGENS_DA_CHAVE) expect(erroDe(`
       insert into public.llm_calls (organization_id, purpose, provider, model, input_tokens, output_tokens, cost_cents, origem_da_chave)
       values ('${ORG_ISENTA}', 'connection_test', 'anthropic', 'm', 0, 0, 0, '${origem}');`)).toBe("");
@@ -129,8 +130,10 @@ describe("llm_calls.origem_da_chave", () => {
   });
 });
 
-describe("⭐ a assinatura da plataforma não entra em nenhuma soma de limite", () => {
-  it("linha assinatura_plataforma não mexe no gasto do mês, no contador de ai_budgets, nem no gasto e nas conversas do plano", () => {
+describe("⭐ o assistente da plataforma não entra em nenhuma soma de limite", () => {
+  // Os dois valores do assistente: na assinatura da plataforma, e pela chave dela.
+  // O segundo usa a MESMA chave que `plataforma` — e ainda assim não pode contar.
+  it.each(["assinatura_plataforma", "assistente_chave_plataforma"] as const)("linha %s não mexe no gasto do mês, no contador de ai_budgets, nem no gasto e nas conversas do plano", (doAssistente) => {
     // Estado de partida, com as três somas vivas (guarda de vacuidade).
     gravar(ORG, { cents: 50, origem: "plataforma", contato: contato(1) });
     const antes = {
@@ -143,17 +146,21 @@ describe("⭐ a assinatura da plataforma não entra em nenhuma soma de limite", 
     expect(Number(antes.plano.gasto)).toBeGreaterThan(0);
     expect(Number(antes.plano.conversas)).toBe(1);
 
-    // Uma chamada cara, de um contato NOVO, pela assinatura da plataforma.
-    gravar(ORG, { cents: 100000, origem: "assinatura_plataforma", contato: contato(6) });
+    // Uma chamada cara, de um contato NOVO, pelo assistente da plataforma.
+    gravar(ORG, { cents: 100000, origem: doAssistente, contato: contato(6) });
 
-    expect(gastoDoMes(ORG), "o gasto do mês somou a assinatura da plataforma").toBe(antes.doMes);
-    expect(contadorDoOrcamento(ORG), "o contador de ai_budgets somou a assinatura da plataforma").toBe(antes.contador);
+    expect(gastoDoMes(ORG), `o gasto do mês somou ${doAssistente}`).toBe(antes.doMes);
+    expect(contadorDoOrcamento(ORG), `o contador de ai_budgets somou ${doAssistente}`).toBe(antes.contador);
     const depois = iaDoPlano(ORG);
-    expect(depois.gasto, "o gasto do plano somou a assinatura da plataforma").toBe(antes.plano.gasto);
-    expect(depois.conversas, "a franquia contou um contato atendido pela assinatura da plataforma").toBe(antes.plano.conversas);
+    expect(depois.gasto, `o gasto do plano somou ${doAssistente}`).toBe(antes.plano.gasto);
+    expect(depois.conversas, `a franquia contou um contato atendido por ${doAssistente}`).toBe(antes.plano.conversas);
+    expect(
+      valor(comoServidor(`select public.fn_contato_na_franquia('${ORG}', '${contato(6)}')`)),
+      `${doAssistente} pôs o contato na franquia`,
+    ).toBe("f");
   });
 
-  it("o statement do orçamento da empresa (SQL_ORCAMENTO) lê o mesmo gasto, sem a assinatura da plataforma", () => {
+  it("o statement do orçamento da empresa (SQL_ORCAMENTO) lê o mesmo gasto, sem o assistente da plataforma", () => {
     const lido = sql(
       SQL_ORCAMENTO.replace(/\$1/g, `'${ORG}'::uuid`).replace(/\$2/g, `'${AVISO_TITULO}'`).replace(/\$3/g, `'${AVISO_CORPO}'`),
     ).split("|");

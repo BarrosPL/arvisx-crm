@@ -32,11 +32,14 @@ Coluna `text not null`, com `CHECK`. Valores exatos:
 |---|---|---|---|
 | `cliente` | credencial da organização (inclusive o login por assinatura que a própria empresa conecta) | sim | não |
 | `plataforma` | a chave da instalação, que o plano paga | sim | sim |
-| `assinatura_plataforma` | chamada feita com a assinatura da plataforma; hoje só o assistente dela usa | não | não |
+| `assinatura_plataforma` | o assistente da plataforma rodando na assinatura dela (tokens reais, `cost_cents = 0`) | não | não |
+| `assistente_chave_plataforma` | o assistente da plataforma rodando pela chave dela, quando a assinatura não pode ser usada | não | não |
 
 O par TypeScript é `ORIGENS_DA_CHAVE`, em `lib/ai/usage/origem-da-chave.ts`.
-Nada neste repositório grava `assinatura_plataforma` ainda: a coluna e as somas
-ficaram prontas para quem for gravar.
+Os dois últimos são do assistente da plataforma. Nada neste repositório os grava
+ainda: a coluna e as somas ficaram prontas para quem for gravar.
+`assistente_chave_plataforma` usa a mesma chave que `plataforma` e mesmo assim
+não conta no teto do plano: quem decide é o valor da coluna, não a chave.
 
 **O padrão é `plataforma`.** Vale para a linha antiga e para o escritor que não
 informa a origem. Com esse padrão, a chamada de origem desconhecida conta no
@@ -49,7 +52,7 @@ então a empresa que usa a própria chave nunca é parada por linha antiga.
 
 - **Orçamento da empresa** (`ai_budgets`, `fn_gasto_de_ia_do_mes`, o gatilho
   `fn_update_budget_consumption`): a regra de sempre. Soma `cliente` e
-  `plataforma`, no mês-calendário. Ignora `assinatura_plataforma`.
+  `plataforma`, no mês-calendário. Ignora os dois valores do assistente.
 - **Plano** (`fn_ia_do_plano`): soma só `plataforma`, no ciclo.
 
 **Isto inverte uma decisão antiga.** Até a 9825, o teto do plano comparava o

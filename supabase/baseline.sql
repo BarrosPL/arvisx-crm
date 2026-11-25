@@ -13485,8 +13485,8 @@ as $$
     from public.llm_calls
    where organization_id = p_org
      and created_at >= date_trunc('month', now())
-     -- 9825: o que roda na assinatura da plataforma não é gasto da empresa.
-     and origem_da_chave <> 'assinatura_plataforma';
+     -- 9825: o assistente da plataforma (na assinatura ou na chave dela) não é gasto da empresa.
+     and origem_da_chave not in ('assinatura_plataforma', 'assistente_chave_plataforma');
 $$;
 
 comment on function public.fn_gasto_de_ia_do_mes(uuid) is
@@ -71157,21 +71157,21 @@ notify pgrst, 'reload schema';
 alter table public.llm_calls
   add column if not exists origem_da_chave text not null default 'plataforma';
 
+-- Num bloco só: o update.sh reaplica sem ON_ERROR_STOP e em autocommit, e um
+-- add que falhasse depois do drop solto deixaria a coluna sem guarda. Tirar e
+-- pôr de novo é o que faz o vocabulário poder crescer por reaplicação.
 do $origem$
 begin
-  if not exists (
-    select 1 from pg_constraint
-     where conrelid = 'public.llm_calls'::regclass and conname = 'llm_calls_origem_da_chave_check'
-  ) then
-    alter table public.llm_calls
-      add constraint llm_calls_origem_da_chave_check
-      check (origem_da_chave in ('cliente', 'plataforma', 'assinatura_plataforma'));
-  end if;
+  alter table public.llm_calls
+    drop constraint if exists llm_calls_origem_da_chave_check;
+  alter table public.llm_calls
+    add constraint llm_calls_origem_da_chave_check
+    check (origem_da_chave in ('cliente', 'plataforma', 'assinatura_plataforma', 'assistente_chave_plataforma'));
 end
 $origem$;
 
 comment on column public.llm_calls.origem_da_chave is
-  'De quem é a chave que pagou a chamada (migration 9825): cliente = credencial da organização; plataforma = chave da instalação, que o plano paga; assinatura_plataforma = chamada feita com a assinatura da plataforma (hoje só o assistente dela), que não é gasto da empresa. Padrão plataforma: a origem desconhecida conta no teto do plano. O teto e a franquia do plano somam só plataforma; o orçamento da empresa soma cliente e plataforma; nenhuma soma de limite conta assinatura_plataforma. Par TypeScript: ORIGENS_DA_CHAVE em lib/ai/usage/origem-da-chave.ts.';
+  'De quem é a chave que pagou a chamada (migration 9825): cliente = credencial da organização; plataforma = chave da instalação, que o plano paga; assinatura_plataforma = o assistente da plataforma rodando na assinatura dela; assistente_chave_plataforma = o assistente da plataforma rodando pela chave dela. Nenhum dos dois é gasto da empresa. Padrão plataforma: a origem desconhecida conta no teto do plano. O teto e a franquia do plano somam só plataforma; o orçamento da empresa soma cliente e plataforma; nenhuma soma de limite conta os dois valores do assistente. Par TypeScript: ORIGENS_DA_CHAVE em lib/ai/usage/origem-da-chave.ts.';
 
 -- ── B. a franquia do plano ───────────────────────────────────────────────────
 alter table public.cobranca_planos
@@ -71193,7 +71193,7 @@ $franquia$;
 comment on column public.cobranca_planos.franquia_conversas_ia is
   'Conversas com IA incluídas no plano por ciclo (migration 9825): contatos distintos atendidos por um agente com a chave da plataforma. Nulo = sem franquia (vale só o teto em dólar). É o limite que o cliente vê; teto_ia_usd_cents é a trava de baixo.';
 
--- ── C. as somas do orçamento da empresa ignoram a assinatura da plataforma ─────────────────
+-- ── C. as somas do orçamento da empresa ignoram o assistente da plataforma ─────────────────
 -- `fn_gasto_de_ia_do_mes` é criada UMA vez neste arquivo, no bloco da 0159, lá em
 -- cima, já com o corpo desta migration (a régua de gasto é uma só, e uma só
 -- definição: tests/unit/orcamento-uma-regua-de-gasto.test.ts).
@@ -71207,8 +71207,8 @@ security definer
 set search_path = public
 as $$
 begin
-  -- 9825: o que roda na assinatura da plataforma não soma no orçamento da empresa.
-  if (to_jsonb(new) ->> 'origem_da_chave') = 'assinatura_plataforma' then
+  -- 9825: o assistente da plataforma (na assinatura ou na chave dela) não soma no orçamento da empresa.
+  if (to_jsonb(new) ->> 'origem_da_chave') in ('assinatura_plataforma', 'assistente_chave_plataforma') then
     return new;
   end if;
   insert into public.ai_budgets (organization_id, current_month_consumed_cents)
