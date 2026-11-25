@@ -2637,70 +2637,13 @@ export type Database = {
           },
         ];
       };
-      assistente_custos: {
-        Row: {
-          conversa_id: string | null;
-          created_at: string;
-          custo_usd_cents: number;
-          falhou: boolean;
-          id: string;
-          modelo: string;
-          organization_id: string;
-          provedor: string;
-          tokens_de_entrada: number;
-          tokens_de_saida: number;
-          user_id: string | null;
-        };
-        ComputedFields: never;
-        Insert: {
-          conversa_id?: string | null;
-          created_at?: string;
-          custo_usd_cents?: number;
-          falhou?: boolean;
-          id?: string;
-          modelo: string;
-          organization_id: string;
-          provedor: string;
-          tokens_de_entrada?: number;
-          tokens_de_saida?: number;
-          user_id?: string | null;
-        };
-        Update: {
-          conversa_id?: string | null;
-          created_at?: string;
-          custo_usd_cents?: number;
-          falhou?: boolean;
-          id?: string;
-          modelo?: string;
-          organization_id?: string;
-          provedor?: string;
-          tokens_de_entrada?: number;
-          tokens_de_saida?: number;
-          user_id?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "assistente_custos_conversa_id_fkey";
-            columns: ["conversa_id"];
-            isOneToOne: false;
-            referencedRelation: "assistente_conversas";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "assistente_custos_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       assistente_estado_da_empresa: {
         Row: {
           atualizado_por: string | null;
           ligado: boolean;
           modo_padrao: string;
           organization_id: string;
+          sem_limite: boolean;
           updated_at: string;
         };
         ComputedFields: never;
@@ -2709,6 +2652,7 @@ export type Database = {
           ligado?: boolean;
           modo_padrao?: string;
           organization_id: string;
+          sem_limite?: boolean;
           updated_at?: string;
         };
         Update: {
@@ -2716,6 +2660,7 @@ export type Database = {
           ligado?: boolean;
           modo_padrao?: string;
           organization_id?: string;
+          sem_limite?: boolean;
           updated_at?: string;
         };
         Relationships: [
@@ -2789,10 +2734,9 @@ export type Database = {
           ferramentas_por_turno: number;
           id: string;
           limite_de_lote: number;
+          mensagens_por_mes: number | null;
           mensagens_por_minuto: number;
-          pagador: string;
-          plano_id: string | null;
-          teto_mensal_usd_cents: number;
+          plano_id: string;
           updated_at: string;
           updated_by: string | null;
         };
@@ -2802,10 +2746,9 @@ export type Database = {
           ferramentas_por_turno?: number;
           id?: string;
           limite_de_lote?: number;
+          mensagens_por_mes?: number | null;
           mensagens_por_minuto?: number;
-          pagador: string;
-          plano_id?: string | null;
-          teto_mensal_usd_cents: number;
+          plano_id: string;
           updated_at?: string;
           updated_by?: string | null;
         };
@@ -2814,10 +2757,9 @@ export type Database = {
           ferramentas_por_turno?: number;
           id?: string;
           limite_de_lote?: number;
+          mensagens_por_mes?: number | null;
           mensagens_por_minuto?: number;
-          pagador?: string;
-          plano_id?: string | null;
-          teto_mensal_usd_cents?: number;
+          plano_id?: string;
           updated_at?: string;
           updated_by?: string | null;
         };
@@ -2857,6 +2799,64 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "assistente_progresso_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      assistente_usos: {
+        Row: {
+          conversa_id: string | null;
+          created_at: string;
+          falhou: boolean;
+          id: string;
+          modelo: string | null;
+          organization_id: string;
+          pagador: string;
+          provedor: string | null;
+          tokens_de_entrada: number;
+          tokens_de_saida: number;
+          user_id: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          conversa_id?: string | null;
+          created_at?: string;
+          falhou?: boolean;
+          id?: string;
+          modelo?: string | null;
+          organization_id: string;
+          pagador: string;
+          provedor?: string | null;
+          tokens_de_entrada?: number;
+          tokens_de_saida?: number;
+          user_id?: string | null;
+        };
+        Update: {
+          conversa_id?: string | null;
+          created_at?: string;
+          falhou?: boolean;
+          id?: string;
+          modelo?: string | null;
+          organization_id?: string;
+          pagador?: string;
+          provedor?: string | null;
+          tokens_de_entrada?: number;
+          tokens_de_saida?: number;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assistente_usos_conversa_id_fkey";
+            columns: ["conversa_id"];
+            isOneToOne: false;
+            referencedRelation: "assistente_conversas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assistente_usos_organization_id_fkey";
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
@@ -15712,10 +15712,20 @@ export type Database = {
         Returns: Json;
       };
       fn_aplicar_travas_de_suporte: { Args: Record<PropertyKey, never>; Returns: undefined };
-      fn_assistente_gasto_do_mes: { Args: { p_org: string }; Returns: number };
-      fn_assistente_plano_da_org: {
+      fn_assistente_mensagens_do_mes: { Args: { p_org: string }; Returns: number };
+      fn_assistente_config_da_org: {
         Args: { p_org: string };
-        Returns: Database["public"]["Tables"]["assistente_planos"]["Row"][];
+        Returns: {
+          ferramentas_por_turno: number;
+          limite_de_lote: number;
+          mensagens_por_mes: number | null;
+          mensagens_por_minuto: number;
+          origem: string;
+        }[];
+      };
+      fn_assistente_registrar_mensagem: {
+        Args: { p_conversa: string | null; p_limite: number | null; p_org: string; p_pagador: string; p_user: string };
+        Returns: string | null;
       };
       fn_assistente_reservar_acao: {
         Args: { p_acao: string; p_org: string; p_user: string };

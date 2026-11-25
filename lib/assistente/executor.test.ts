@@ -22,10 +22,10 @@ import { capacidade, type Capacidade, type ContextoDoAssistente, type PapelHuman
 const ORG = "11111111-1111-4111-8111-111111111111";
 const USER = "22222222-2222-4222-8222-222222222222";
 
-const execLer = vi.fn(async () => ({ leads: [{ id: "a", title: "Negócio" }] }));
-const execEscrever = vi.fn(async () => ({ feito: true }));
-const execSensivel = vi.fn(async () => ({ feito: true }));
-const execChamado = vi.fn(async () => ({ aberto: true }));
+const execLer = vi.fn(async (..._args: unknown[]) => ({ leads: [{ id: "a", title: "Negócio" }] }));
+const execEscrever = vi.fn(async (..._args: unknown[]) => ({ feito: true }));
+const execSensivel = vi.fn(async (..._args: unknown[]) => ({ feito: true }));
+const execChamado = vi.fn(async (..._args: unknown[]) => ({ aberto: true }));
 
 const ler = capacidade({
   nome: "teste_ler",

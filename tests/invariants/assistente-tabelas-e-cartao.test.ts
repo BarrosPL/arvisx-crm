@@ -25,8 +25,9 @@ import {
  *  3. o cartão de ação (`fn_assistente_reservar_acao`) é reservado uma vez só,
  *     e só pelo usuário e pela organização que o receberam, dentro do prazo.
  *
- * Também: a configuração por plano é só do servidor, o custo só o servidor
- * grava, e nenhuma linha de plano é semeada (plano sem linha = o Vix não responde).
+ * Também: o limite mensal de mensagens (conta e recusa no banco), a
+ * configuração por plano só do servidor, e nenhuma linha de plano semeada
+ * (plano sem linha = o Vix não responde).
  */
 
 const ORG_B = "a7700000-0000-4000-8000-00000000000b";
@@ -34,6 +35,8 @@ const USER_B = "a7700000-1111-4000-8000-00000000000b";
 
 const CONVERSA_DE_A = "a7700000-2222-4000-8000-000000000001";
 const CONVERSA_DE_B = "a7700000-2222-4000-8000-000000000002";
+const PLANO = "a7700000-3333-4000-8000-000000000001";
+const PLANO_SEM_LINHA = "a7700000-3333-4000-8000-000000000002";
 
 const TABELAS_COM_DONO = ["assistente_conversas", "assistente_mensagens", "assistente_acoes"] as const;
 
@@ -96,10 +99,11 @@ beforeAll(() => {
       ('${ORG_B}', '${USER_B}', 'chamado de B');
     insert into public.assistente_estado_da_empresa (organization_id, ligado) values
       ('${GOV_ORG}', true), ('${ORG_B}', false) on conflict do nothing;
-    insert into public.assistente_custos (organization_id, provedor, modelo, custo_usd_cents) values
-      ('${GOV_ORG}', 'anthropic', 'modelo-de-teste', 12.5),
-      ('${GOV_ORG}', 'anthropic', 'modelo-de-teste', 7.5),
-      ('${ORG_B}', 'anthropic', 'modelo-de-teste', 100);
+    insert into public.assistente_usos (organization_id, pagador) values
+      ('${GOV_ORG}', 'teste'), ('${GOV_ORG}', 'teste'), ('${ORG_B}', 'teste');
+    -- Uma mensagem do mês PASSADO: não pode entrar na conta deste mês.
+    insert into public.assistente_usos (organization_id, pagador, created_at)
+      values ('${GOV_ORG}', 'teste', date_trunc('month', now()) - interval '1 second');
   `);
 });
 
@@ -141,8 +145,8 @@ describe("leitura das tabelas do Vix pela sessão", () => {
   });
 
   it("uso do Vix: a empresa lê o próprio e zero da outra; a configuração por plano não é legível", () => {
-    expect(countAs(GOV_MANAGER, `select count(*) from public.assistente_custos where organization_id = '${GOV_ORG}';`)).toBe(2);
-    expect(countAs(GOV_MANAGER, `select count(*) from public.assistente_custos where organization_id = '${ORG_B}';`)).toBe(0);
+    expect(countAs(GOV_MANAGER, `select count(*) from public.assistente_usos where organization_id = '${GOV_ORG}';`)).toBe(3);
+    expect(countAs(GOV_MANAGER, `select count(*) from public.assistente_usos where organization_id = '${ORG_B}';`)).toBe(0);
     expect(() => countAs(GOV_MANAGER, "select count(*) from public.assistente_planos;")).toThrow(/permission denied/);
   });
 
@@ -154,11 +158,11 @@ describe("leitura das tabelas do Vix pela sessão", () => {
 });
 
 describe("a sessão não escreve nas tabelas do Vix", () => {
-  it("inserir conversa, cartão ou custo pela sessão é recusado", () => {
+  it("inserir conversa, cartão ou uso pela sessão é recusado", () => {
     expect(() =>
       writeCountAs(
         GOV_MANAGER,
-        `insert into public.assistente_custos (organization_id, provedor, modelo) values ('${GOV_ORG}', 'x', 'y')`,
+        `insert into public.assistente_usos (organization_id, pagador) values ('${GOV_ORG}', 'forjado')`,
       ),
     ).toThrow(/permission denied/);
     expect(() =>
@@ -182,12 +186,13 @@ describe("a sessão não escreve nas tabelas do Vix", () => {
     ).toThrow(/permission denied/);
   });
 
-  it("a sessão não chama a reserva do cartão nem as funções de custo e plano", () => {
+  it("a sessão não chama a reserva do cartão nem as funções de uso e plano", () => {
     const acao = novoCartao({ org: GOV_ORG, user: GOV_AGENT_A, conversa: CONVERSA_DE_A });
     for (const chamada of [
       `select count(*) from public.fn_assistente_reservar_acao('${GOV_ORG}', '${GOV_AGENT_A}', '${acao}');`,
-      `select public.fn_assistente_gasto_do_mes('${GOV_ORG}');`,
-      `select count(*) from public.fn_assistente_plano_da_org('${GOV_ORG}');`,
+      `select public.fn_assistente_mensagens_do_mes('${GOV_ORG}');`,
+      `select public.fn_assistente_registrar_mensagem('${GOV_ORG}', '${GOV_AGENT_A}', null, 'forjado', null);`,
+      `select count(*) from public.fn_assistente_config_da_org('${GOV_ORG}');`,
     ]) {
       expect(() => countAs(GOV_AGENT_A, chamada)).toThrow(/permission denied/);
     }
@@ -241,41 +246,158 @@ describe("o cartão de ação vale uma vez, para quem o recebeu, dentro do prazo
   });
 });
 
-describe("custo e plano", () => {
-  it("o gasto do mês soma só a própria empresa", () => {
-    const gasto = (org: string) =>
-      Number(lastLine(sql(`set role service_role; select public.fn_assistente_gasto_do_mes('${org}');`)));
-    expect(gasto(GOV_ORG)).toBe(20);
-    expect(gasto(ORG_B)).toBe(100);
+describe("limite de mensagens por mês e plano", () => {
+  const usadasNoMes = (org: string) =>
+    Number(lastLine(sql(`set role service_role; select public.fn_assistente_mensagens_do_mes('${org}');`)));
+  /** Registra uma mensagem como o servidor; devolve o id da linha de uso, ou "BARRADA" quando o limite barrou. */
+  const registrar = (org: string, limite: number | null) =>
+    lastLine(
+      sql(`
+        set role service_role;
+        select coalesce(public.fn_assistente_registrar_mensagem('${org}', null, null, 'teste', ${limite ?? "null"})::text, 'BARRADA');
+      `),
+    );
+
+  it("a contagem do mês é só da própria empresa e não inclui o mês passado", () => {
+    // GOV_ORG tem 3 linhas, uma delas do mês passado.
+    expect(usadasNoMes(GOV_ORG)).toBe(2);
+    expect(usadasNoMes(ORG_B)).toBe(1);
   });
 
-  it("o custo do Vix não entra no orçamento de IA da empresa", () => {
+  it("abaixo do limite a mensagem é registrada (controle positivo); no limite, recusa e NÃO grava", () => {
+    const antes = usadasNoMes(GOV_ORG);
+    expect(registrar(GOV_ORG, antes + 1)).toMatch(/^[0-9a-f-]{36}$/);
+    expect(usadasNoMes(GOV_ORG)).toBe(antes + 1);
+    // Agora a empresa está exatamente no limite: a próxima não passa.
+    expect(registrar(GOV_ORG, antes + 1)).toBe("BARRADA");
+    expect(registrar(GOV_ORG, antes + 1)).toBe("BARRADA");
+    expect(usadasNoMes(GOV_ORG)).toBe(antes + 1);
+  });
+
+  it("limite zero barra tudo; limite nulo é sem limite", () => {
+    const antes = usadasNoMes(ORG_B);
+    expect(registrar(ORG_B, 0)).toBe("BARRADA");
+    expect(usadasNoMes(ORG_B)).toBe(antes);
+    expect(registrar(ORG_B, null)).toMatch(/^[0-9a-f-]{36}$/);
+    expect(registrar(ORG_B, null)).toMatch(/^[0-9a-f-]{36}$/);
+    expect(usadasNoMes(ORG_B)).toBe(antes + 2);
+  });
+
+  it("o limite estourado de uma empresa não barra a outra", () => {
+    const daA = usadasNoMes(GOV_ORG);
+    expect(registrar(GOV_ORG, daA)).toBe("BARRADA");
+    expect(registrar(ORG_B, usadasNoMes(ORG_B) + 1)).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it("o uso do Vix não entra no orçamento de IA da empresa", () => {
     // A tabela é própria justamente para isto: nem `llm_calls` nem `ai_budgets`
-    // recebem linha por causa de um custo do assistente.
+    // recebem linha por causa de uma mensagem do assistente.
     expect(sql(`select count(*) from public.llm_calls where organization_id in ('${GOV_ORG}', '${ORG_B}');`)).toBe("0");
     expect(sql(`select count(*) from public.ai_budgets where organization_id in ('${GOV_ORG}', '${ORG_B}');`)).toBe("0");
   });
 
-  it("nenhuma configuração de plano é semeada: sem linha, a organização não tem plano do Vix", () => {
-    expect(sql("select count(*) from public.assistente_planos;")).toBe("0");
-    expect(
-      lastLine(sql(`set role service_role; select count(*) from public.fn_assistente_plano_da_org('${GOV_ORG}');`)),
-    ).toBe("0");
+  it("limite negativo não entra na configuração", () => {
+    sql(`insert into public.cobranca_planos (id, nome, preco_cents, intervalo) values ('${PLANO}', 'Plano de teste do Vix', 1000, 'mes') on conflict do nothing;`);
+    expect(() =>
+      sql(`insert into public.assistente_planos (plano_id, mensagens_por_mes) values ('${PLANO}', -1);`),
+    ).toThrow(/assistente_planos_limites_check/);
+  });
+});
+
+describe("quem tem o Vix: a marca da plataforma ou o plano com linha, e mais ninguém", () => {
+  /** A configuração como o servidor a lê: "origem:limite", ou "SEM_VIX". */
+  const config = (org: string) =>
+    lastLine(
+      sql(`
+        set role service_role;
+        select coalesce(
+          (select origem || ':' || coalesce(mensagens_por_mes::text, 'sem_limite') || ':' || limite_de_lote
+             from public.fn_assistente_config_da_org('${org}')),
+          'SEM_VIX');
+      `),
+    );
+  const cobranca = (valor: "ligado" | "desligado") =>
+    sql(`
+      insert into public.platform_config (chave, valor, eh_segredo, semeado_do_env)
+        values ('MODULO_COBRANCA', '${valor}', false, false)
+      on conflict (chave) do update set valor = excluded.valor;
+    `);
+  const marca = (org: string, valor: boolean) =>
+    sql(`
+      insert into public.assistente_estado_da_empresa (organization_id, sem_limite) values ('${org}', ${valor})
+      on conflict (organization_id) do update set sem_limite = excluded.sem_limite;
+    `);
+
+  beforeAll(() => {
+    cobranca("ligado");
+    sql(`
+      insert into public.cobranca_planos (id, nome, preco_cents, intervalo) values
+        ('${PLANO}', 'Plano de teste do Vix', 1000, 'mes'),
+        ('${PLANO_SEM_LINHA}', 'Plano sem Vix', 1000, 'mes') on conflict do nothing;
+      delete from public.assistente_planos;
+      delete from public.cobranca_assinaturas where organization_id in ('${GOV_ORG}', '${ORG_B}');
+    `);
+    marca(GOV_ORG, false);
+    marca(ORG_B, false);
   });
 
-  it("com a linha sem plano, a organização sem assinatura a recebe; apagada, volta a não ter", () => {
-    sql(`insert into public.assistente_planos (plano_id, pagador, teto_mensal_usd_cents) values (null, 'plataforma', 500);`);
+  it("nenhuma configuração é semeada e nenhuma organização nasce marcada", () => {
+    expect(sql("select count(*) from public.assistente_planos;")).toBe("0");
+    expect(sql("select count(*) from public.assistente_estado_da_empresa where sem_limite;")).toBe("0");
+  });
+
+  it("sem marca e sem plano: SEM VIX (organização isenta não ganha o assistente sozinha)", () => {
+    expect(config(GOV_ORG)).toBe("SEM_VIX");
+  });
+
+  it("com plano assinado mas SEM linha em assistente_planos: SEM VIX", () => {
+    sql(`insert into public.cobranca_assinaturas (organization_id, plano_id) values ('${GOV_ORG}', '${PLANO_SEM_LINHA}');`);
+    expect(config(GOV_ORG)).toBe("SEM_VIX");
+    sql(`delete from public.cobranca_assinaturas where organization_id = '${GOV_ORG}';`);
+  });
+
+  it("com plano e linha: responde com o limite DO PLANO; a outra empresa, sem plano, continua sem", () => {
+    sql(`
+      insert into public.assistente_planos (plano_id, mensagens_por_mes, limite_de_lote) values ('${PLANO}', 40, 3);
+      insert into public.cobranca_assinaturas (organization_id, plano_id) values ('${GOV_ORG}', '${PLANO}');
+    `);
+    expect(config(GOV_ORG)).toBe("plano:40:3");
+    expect(config(ORG_B)).toBe("SEM_VIX");
+  });
+
+  it("com a cobrança desligada na instalação, o plano não dá Vix a ninguém", () => {
+    cobranca("desligado");
     try {
-      expect(
-        lastLine(
-          sql(`set role service_role; select teto_mensal_usd_cents from public.fn_assistente_plano_da_org('${GOV_ORG}');`),
-        ),
-      ).toBe("500");
+      expect(config(GOV_ORG)).toBe("SEM_VIX");
     } finally {
-      sql("delete from public.assistente_planos;");
+      cobranca("ligado");
     }
-    expect(
-      lastLine(sql(`set role service_role; select count(*) from public.fn_assistente_plano_da_org('${GOV_ORG}');`)),
-    ).toBe("0");
+  });
+
+  it("com a marca: responde SEM limite, tenha plano (vale a marca) ou não tenha", () => {
+    marca(ORG_B, true);
+    expect(config(ORG_B)).toBe("marca:sem_limite:5");
+    marca(GOV_ORG, true);
+    // Com plano e marca, o limite de mensagens é o da marca; o de lote segue o do plano.
+    expect(config(GOV_ORG)).toBe("marca:sem_limite:3");
+    marca(GOV_ORG, false);
+    expect(config(GOV_ORG)).toBe("plano:40:3");
+  });
+
+  it("tirada a marca, a organização sem plano volta a não ter Vix", () => {
+    marca(ORG_B, false);
+    expect(config(ORG_B)).toBe("SEM_VIX");
+  });
+
+  it("a marca é da plataforma: a sessão lê a própria linha e não a escreve, nem o administrador da empresa", () => {
+    marca(ORG_B, false);
+    expect(countAs(USER_B, "select count(*) from public.assistente_estado_da_empresa where sem_limite = false;")).toBe(1);
+    expect(() =>
+      writeCountAs(USER_B, `update public.assistente_estado_da_empresa set sem_limite = true where organization_id = '${ORG_B}'`),
+    ).toThrow(/permission denied/);
+    expect(() =>
+      writeCountAs(USER_B, `insert into public.assistente_estado_da_empresa (organization_id, sem_limite) values ('${ORG_B}', true)`),
+    ).toThrow(/permission denied/);
+    expect(config(ORG_B)).toBe("SEM_VIX");
   });
 });

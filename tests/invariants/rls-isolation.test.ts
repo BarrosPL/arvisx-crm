@@ -694,8 +694,7 @@ beforeAll(() => {
             select c.organization_id, c.user_id, 'rls invariant' from public.assistente_conversas c where c.organization_id = v_org;
           insert into public.assistente_estado_da_empresa (organization_id) values (v_org) on conflict do nothing;
           insert into public.assistente_progresso (organization_id, chave) values (v_org, 'rls_invariant') on conflict do nothing;
-          insert into public.assistente_custos (organization_id, provedor, modelo, custo_usd_cents)
-            values (v_org, 'anthropic', 'rls-invariant', 1);
+          insert into public.assistente_usos (organization_id, pagador) values (v_org, 'rls-invariant');
         end if;
       end loop;
     end
@@ -932,7 +931,7 @@ export const TABLES = [
   "assistente_chamados",
   "assistente_estado_da_empresa",
   "assistente_progresso",
-  "assistente_custos",
+  "assistente_usos",
   // ⚠️ `cobranca_assinaturas` (migration 0583) NÃO entra nesta lista, pelo mesmo
   // motivo de `webhook_lead_captures`: a leitura é só do `admin` e o usuário
   // semeado aqui é `agent`, então o controle positivo falharia por ACERTO. A
