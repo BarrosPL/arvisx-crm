@@ -9969,5 +9969,12 @@
   "Encerrado sem enviar: o limite de retomadas deste contato já foi usado": "Ended without sending: this contact's follow-up limit was already used",
   "a equipe de IA já tinha retomado este contato depois da última mensagem dele": "the AI team had already followed up with this contact after their last message",
   "Dar seguimento ao negócio ganho": "Follow up on the won deal",
-  "Este negócio foi marcado como ganho. Confira o que foi combinado com o cliente e dê seguimento.": "This deal was marked as won. Check what was agreed with the customer and follow up."
+  "Este negócio foi marcado como ganho. Confira o que foi combinado com o cliente e dê seguimento.": "This deal was marked as won. Check what was agreed with the customer and follow up.",
+  "Tipo de negócio": "Type of business",
+  "Escolher um ramo sugere perguntas, situações e regras próprias dele nos próximos passos. Você revisa e muda o que quiser.": "Choosing an industry suggests its own questions, situations and rules in the next steps. You review and change whatever you want.",
+  "Outro (genérico)": "Other (generic)",
+  "Advocacia": "Law firm",
+  "As sugestões deste ramo são um rascunho: ainda não foram validadas com um cliente real. Revise cada uma antes de instalar.": "The suggestions for this industry are a draft: they have not been validated with a real customer yet. Review each one before installing.",
+  "Os agentes deste ramo seguem regras fixas: não prometem resultado, não opinam sobre o caso, não dão orientação jurídica e passam a conversa para a equipe quando há prazo ou urgência.": "Agents in this industry follow fixed rules: they do not promise outcomes, do not give an opinion on the case, do not give legal advice, and hand the conversation to the team when there is a deadline or an urgent matter.",
+  "Etapas sugeridas para o funil:": "Suggested pipeline stages:"
 }

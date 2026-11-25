@@ -18,15 +18,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useT } from "@/hooks/i18n/useT";
+import { PACOTES, pacoteDoTipo, tipoDeNegocioDe } from "@/lib/ai/equipe-pronta/nichos";
 import type { OpcoesDaInstalacao } from "@/lib/ai/equipe-pronta/opcoes";
 import {
   PASSOS_DO_QUESTIONARIO,
+  padroesDoPacote,
   passosComPendencia,
   respostasDoPasso,
   type PassoId,
 } from "@/lib/ai/equipe-pronta/questionario";
 import {
-  SITUACOES_PADRAO_DE_HUMANO,
   salvarPerfilSchema,
   type RascunhoDoPerfil,
 } from "@/lib/schemas/equipe-pronta";
@@ -92,6 +93,11 @@ export function Questionario({
     return Number.isFinite(n) ? n : "";
   };
 
+  // O tipo de negócio escolhido no primeiro passo decide o pacote de nicho, e o
+  // pacote só muda o PADRÃO dos campos que a empresa ainda não respondeu.
+  const pacote = pacoteDoTipo(bloco("negocio").tipo_de_negocio);
+  const padroes = padroesDoPacote(pacote);
+
   async function salvar() {
     setErro(null);
     // Os campos de número e de lista têm padrão na tela: o que a pessoa VIU é o
@@ -100,8 +106,18 @@ export function Questionario({
     if (passo === "regras") {
       comPadroes.humano = {
         ...bloco("humano"),
-        situacoes: lista("humano", "situacoes", SITUACOES_PADRAO_DE_HUMANO).split("\n"),
+        situacoes: lista("humano", "situacoes", padroes.situacoes).split("\n"),
       };
+      // Só com pacote: sem ele o campo segue como sempre, sem padrão na tela.
+      if (pacote) {
+        comPadroes.qualificacao = {
+          ...bloco("qualificacao"),
+          perguntas: lista("qualificacao", "perguntas", padroes.perguntas).split("\n"),
+        };
+      }
+    }
+    if (passo === "recuperacao" && pacote) {
+      comPadroes.faq = { ...bloco("faq"), texto: texto("faq", "texto", padroes.faq) };
     }
     const corpo = respostasDoPasso(passo, comPadroes as RascunhoDoPerfil);
     const conferido = salvarPerfilSchema.safeParse({ respostas: corpo });
@@ -207,6 +223,43 @@ export function Questionario({
                 onChange={(e) => mudar("negocio", { o_que_faz: e.target.value })}
               />
             </Campo>
+            <Campo
+              id="ep-negocio-tipo"
+              rotulo={t("Tipo de negócio")}
+              ajuda={t("Escolher um ramo sugere perguntas, situações e regras próprias dele nos próximos passos. Você revisa e muda o que quiser.")}
+            >
+              <select
+                id="ep-negocio-tipo"
+                className={SELECT}
+                value={tipoDeNegocioDe(bloco("negocio").tipo_de_negocio)}
+                onChange={(e) => mudar("negocio", { tipo_de_negocio: e.target.value })}
+              >
+                <option value="generico">{t("Outro (genérico)")}</option>
+                {Object.values(PACOTES).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {t(p.nome)}
+                  </option>
+                ))}
+              </select>
+            </Campo>
+            {pacote ? (
+              <div
+                className="space-y-1 rounded-md border border-dashed p-3 text-xs text-muted-foreground"
+                data-testid="ep-aviso-do-ramo"
+              >
+                {!pacote.validadoComClienteReal ? (
+                  <p>
+                    {t("As sugestões deste ramo são um rascunho: ainda não foram validadas com um cliente real. Revise cada uma antes de instalar.")}
+                  </p>
+                ) : null}
+                <p>
+                  {t(pacote.resumoDasRegras)}
+                </p>
+                <p>
+                  {t("Etapas sugeridas para o funil:")} {pacote.etapasSugeridas.join(" · ")}
+                </p>
+              </div>
+            ) : null}
             <Campo id="ep-negocio-cidade" rotulo={t("Cidade")}>
               <Input
                 id="ep-negocio-cidade"
@@ -418,7 +471,7 @@ export function Questionario({
               <Textarea
                 id="ep-qualificacao-perguntas"
                 rows={4}
-                value={lista("qualificacao", "perguntas")}
+                value={lista("qualificacao", "perguntas", padroes.perguntas)}
                 onChange={(e) => mudar("qualificacao", { perguntas: e.target.value.split("\n") })}
               />
             </Campo>
@@ -486,7 +539,7 @@ export function Questionario({
               <Textarea
                 id="ep-humano-situacoes"
                 rows={4}
-                value={lista("humano", "situacoes", SITUACOES_PADRAO_DE_HUMANO)}
+                value={lista("humano", "situacoes", padroes.situacoes)}
                 onChange={(e) => mudar("humano", { situacoes: e.target.value.split("\n") })}
               />
             </Campo>
@@ -569,7 +622,7 @@ export function Questionario({
                 id="ep-faq-texto"
                 rows={8}
                 maxLength={20000}
-                value={texto("faq", "texto")}
+                value={texto("faq", "texto", padroes.faq)}
                 onChange={(e) => mudar("faq", { texto: e.target.value })}
               />
             </Campo>

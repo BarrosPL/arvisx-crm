@@ -434,6 +434,39 @@ Subir `versao` de um papel no código faz o `GET` de estado devolver
 `atualizacao_disponivel`, com `notasDaVersao`. Aplicar é instalar de novo.
 Nunca é automático.
 
+## Pacotes de nicho
+
+Os quatro papéis continuam universais e proibidos de citar ramo. O que é próprio
+de um ramo mora em `lib/ai/equipe-pronta/nichos/`, num `PacoteDeNicho`, e entra
+por duas portas só:
+
+1. **Pré-preenche o questionário.** O primeiro passo ("Seu negócio") pergunta o
+   tipo de negócio. Com um ramo escolhido, as perguntas de qualificação, as
+   situações de chamar uma pessoa e o modelo de perguntas frequentes do pacote
+   aparecem como padrão dos campos que a empresa ainda não respondeu. O que ela
+   já respondeu não é trocado, e nada vira resposta antes de ela salvar o passo.
+2. **Complementa o bloco "Esta empresa".** As regras duras e o vocabulário do
+   ramo entram no fim do bloco, na seção "Regras do ramo desta empresa".
+
+Sem ramo ("Outro (genérico)", que é o padrão, e todo perfil gravado antes do
+campo existir), o texto gerado é o de antes, byte a byte.
+
+O pacote não cria agente, não muda ferramenta e não ativa nada: a equipe
+continua nascendo em ensaio. No modelo de perguntas frequentes, o item que a
+empresa deixar com o campo `[PREENCHER: …]` não vai para a base de conhecimento.
+
+Mudar o conteúdo de um pacote muda o que o renderizador gera, e a atualização
+segue a regra de sempre: o agente que está como foi instalado fica
+"desatualizado" e reinstalar o atualiza; o que foi editado à mão faz a
+instalação parar antes de gravar.
+
+Hoje existe um pacote, o de **advocacia**, que é **rascunho, não validado com
+cliente real, a revisar pelo Dr. Renan**. Para acrescentar um ramo: um arquivo
+novo na pasta e uma linha em `nichos/index.ts`.
+
+Quem vigia: `lib/ai/equipe-pronta/nichos/nichos.test.ts` (a cerca "só `nichos/`
+cita ramo", as regras duras no prompt montado, e a atualização).
+
 ## Limites conhecidos
 
 - **Régua em canal oficial**: num canal que exige modelo aprovado fora da

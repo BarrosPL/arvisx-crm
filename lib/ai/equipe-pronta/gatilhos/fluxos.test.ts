@@ -24,6 +24,7 @@ import { perfilSchema } from "@/lib/schemas/equipe-pronta";
 import { createAutomationRuleSchema } from "@/lib/schemas/webhooks";
 
 import { NO_DE_INICIO_DA_ESCADA } from "../constantes";
+import { TERMOS_DE_NICHO_DOS_FLUXOS } from "../nichos/termos-de-nicho";
 import { grafoDaRegua } from "../regua";
 import {
   gatilhoDoFluxoDeFalta,
@@ -49,7 +50,8 @@ const GRAFOS = [
 
 const MOEDA = /R\$|US\$|€|\$\s?\d|\b(?:BRL|EUR|USD)\b|\b\d+(?:[.,]\d+)?\s?(?:reais|real|euros?|d[oó]lar(?:es)?)\b/i;
 const HORA = /\b\d{1,2}\s?h(?:\d{2})?\b|\b\d{1,2}:\d{2}\b|\b\d{1,2}\s?horas?\b|(?:^|\s)às\s+\d{1,2}\b/i;
-const TERMOS_DE_NICHO = ["clínic", "pacient", "consultório", "tratamento", "procedimento", "imóve", "alun", "curso", "advog"];
+// A lista mora em `nichos/termos-de-nicho.ts`, sem mudar um item (fixada em `nichos/nichos.test.ts`).
+const TERMOS_DE_NICHO = TERMOS_DE_NICHO_DOS_FLUXOS;
 
 describe.each(GRAFOS)("o fluxo de %s", (_nome, grafoDe) => {
   it.each([1, 2, 3, 4])("com %i toque(s): passa no schema e no portão de publicação", (toques) => {

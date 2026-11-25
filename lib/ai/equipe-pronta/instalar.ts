@@ -78,6 +78,7 @@ import {
   grafoDoFluxoDePropostaParada,
   regraDePropostaParada,
 } from "./gatilhos/fluxos";
+import { semCamposPorPreencher } from "./nichos";
 import { NOME_DA_REGUA, gatilhoDaRegua, grafoDaRegua } from "./regua";
 import { hashDosCampos, renderizarAgente, situacaoDoAgente, type SituacaoDoAgente } from "./renderizar";
 import {
@@ -212,7 +213,9 @@ export function textoDaBase(perfil: PerfilDoNegocio): string {
   const partes: string[] = [];
   const pagamento = perfil.regras.formas_de_pagamento.trim();
   if (pagamento) partes.push(`## Formas de pagamento\n\n${pagamento}`);
-  const faq = perfil.faq.texto.trim();
+  // O modelo de perguntas de um pacote de nicho traz campos a preencher: o item
+  // que a empresa deixou em branco não vira "conhecimento" do agente.
+  const faq = semCamposPorPreencher(perfil.faq.texto.trim());
   if (faq) partes.push(`## Perguntas frequentes e políticas\n\n${faq}`);
   return partes.join("\n\n");
 }

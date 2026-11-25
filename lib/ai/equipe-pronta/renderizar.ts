@@ -25,6 +25,7 @@ import { createHash } from "node:crypto";
 
 import type { PerfilDoNegocio } from "@/lib/schemas/equipe-pronta";
 import { DEFINICOES_DAS_ETAPAS, ETAPAS_DA_EQUIPE } from "./etapas";
+import { pacoteDoTipo, secaoDoRamo, type PacoteDeNicho } from "./nichos";
 import { REGRAS_COMUNS } from "./papeis/comum";
 import type { CamposDoAgente, ContextoDaInstalacao, PapelDaEquipe } from "./tipos";
 
@@ -133,8 +134,18 @@ function secaoDaRecuperacao(perfil: PerfilDoNegocio, contexto: ContextoDaInstala
 /**
  * O bloco "## Esta empresa". Exportado porque a tela de revisão o mostra, e
  * porque os testes de universalidade provam que é a ÚNICA parte que muda.
+ *
+ * `pacote` é o pacote de nicho do tipo de negócio (`nichos/`), e por padrão sai
+ * da resposta do questionário. Sem pacote — `generico`, ou perfil anterior ao
+ * campo — o bloco é o de sempre, byte a byte: nenhuma instalação existente
+ * passa a aparecer como desatualizada por causa desta camada. Com pacote, as
+ * regras do ramo entram no FIM do bloco, numa seção própria.
  */
-export function blocoEstaEmpresa(perfil: PerfilDoNegocio, contexto: ContextoDaInstalacao): string {
+export function blocoEstaEmpresa(
+  perfil: PerfilDoNegocio,
+  contexto: ContextoDaInstalacao,
+  pacote: PacoteDeNicho | null = pacoteDoTipo(perfil.negocio.tipo_de_negocio),
+): string {
   const partes = [
     TITULO_DE_ESTA_EMPRESA,
     [
@@ -164,6 +175,7 @@ export function blocoEstaEmpresa(perfil: PerfilDoNegocio, contexto: ContextoDaIn
       ? "Ligações: a equipe pode ligar para a pessoa, se ela aceitar."
       : "Ligações: não ofereça ligação. O atendimento é por mensagem.",
     "Serviços, preços, horários, políticas e perguntas frequentes NÃO estão neste texto: consulte o catálogo, a agenda e a base de conhecimento.",
+    ...(pacote ? [secaoDoRamo(pacote)] : []),
   ];
   return partes.join("\n\n");
 }
@@ -189,6 +201,7 @@ export function renderizarAgente(
   papel: PapelDaEquipe,
   perfil: PerfilDoNegocio,
   contexto: ContextoDaInstalacao,
+  pacote: PacoteDeNicho | null = pacoteDoTipo(perfil.negocio.tipo_de_negocio),
 ): CamposDoAgente {
   // A régua de silêncio e os fluxos dos gatilhos: quem os arma é o mesmo papel.
   const fluxos = papel.usaReguaDeFollowup
@@ -198,7 +211,7 @@ export function renderizarAgente(
       ]
     : [];
   return {
-    system_prompt: [papel.prompt, REGRAS_COMUNS, blocoEstaEmpresa(perfil, contexto)].join("\n\n"),
+    system_prompt: [papel.prompt, REGRAS_COMUNS, blocoEstaEmpresa(perfil, contexto, pacote)].join("\n\n"),
     tool_ids: [...papel.toolIds],
     handoff_keywords: semRepetir([...papel.handoffKeywordsPadrao, ...perfil.humano.palavras]).slice(
       0,

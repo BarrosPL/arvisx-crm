@@ -17,8 +17,10 @@
 import type {
   BLOCOS_DO_QUESTIONARIO} from "@/lib/schemas/equipe-pronta";
 import {
+  SITUACOES_PADRAO_DE_HUMANO,
   type RascunhoDoPerfil,
 } from "@/lib/schemas/equipe-pronta";
+import type { PacoteDeNicho } from "./nichos";
 
 export type BlocoDoPerfil = (typeof BLOCOS_DO_QUESTIONARIO)[number] | "onde";
 
@@ -159,6 +161,31 @@ export function respostasDoPasso(passoId: PassoId, formulario: RascunhoDoPerfil)
 export function passosComPendencia(faltam: readonly string[]): PassoId[] {
   const blocos = new Set(faltam.map((caminho) => caminho.split(".")[0]));
   return PASSOS_DO_QUESTIONARIO.filter((p) => p.blocos.some((b) => blocos.has(b))).map((p) => p.id);
+}
+
+/**
+ * O QUE O PACOTE DE NICHO PÕE NA TELA quando a empresa ainda não respondeu.
+ *
+ * É PADRÃO DE CAMPO, não resposta gravada: aparece no passo certo, a pessoa
+ * edita ou apaga, e só vira resposta quando ela salva o passo — a mesma regra
+ * que as situações padrão de "chamar uma pessoa" já seguem. O que a empresa já
+ * respondeu nunca é trocado: o padrão só é lido quando o campo não tem valor.
+ *
+ * Sem pacote (`generico`), devolve exatamente os padrões de hoje.
+ */
+export interface PadroesDoQuestionario {
+  perguntas: readonly string[];
+  situacoes: readonly string[];
+  faq: string;
+}
+
+export function padroesDoPacote(pacote: PacoteDeNicho | null): PadroesDoQuestionario {
+  if (!pacote) return { perguntas: [], situacoes: SITUACOES_PADRAO_DE_HUMANO, faq: "" };
+  return {
+    perguntas: pacote.perguntasDeQualificacao,
+    situacoes: [...SITUACOES_PADRAO_DE_HUMANO, ...pacote.situacoesDeHumano],
+    faq: pacote.faqModelo,
+  };
 }
 
 /** O primeiro passo com pendência — onde a tela abre quando falta algo. */
