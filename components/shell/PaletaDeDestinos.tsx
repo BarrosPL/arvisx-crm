@@ -41,6 +41,12 @@ export interface DestinoDaPaleta {
   /** Id do grupo; a ordem e o rótulo vêm de `grupos`. */
   group: string;
   icon: PhosphorIcon;
+  /**
+   * Quando presente, escolher o item chama isto em vez de navegar. Serve à
+   * entrada que abre o assistente: ela não é uma tela. `href` continua sendo
+   * a chave única do item na lista.
+   */
+  aoEscolher?: () => void;
 }
 
 export interface GrupoDaPaleta {
@@ -184,6 +190,10 @@ function Resultados({
 
   function navegar(destino: DestinoDaPaleta) {
     aoEscolher();
+    if (destino.aoEscolher) {
+      destino.aoEscolher();
+      return;
+    }
     router.push(destino.href);
   }
 

@@ -43,6 +43,8 @@ import { acessoFoiRevogado } from "@/lib/auth/vinculo-revogado";
 import { loadOnboardingState } from "@/app/actions/onboarding/_shared";
 import { boasVindasFeitas, onboardingGuiadoLigado } from "@/lib/onboarding/guia";
 import { GuiaDoOnboarding } from "./_components/guia/GuiaDoOnboarding";
+import { PainelDoVix } from "@/components/assistente/PainelDoVix";
+import { estadoDoVix } from "@/lib/assistente/disponibilidade";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await loadAuthUser();
@@ -308,6 +310,22 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     expiresAt: user.support.expires_at, accessMode: user.support.access_mode,
   } : null;
 
+  // O VIX (assistente): o botão só é montado quando ele está ligado na
+  // instalação, na empresa, e o plano (ou a marca) dá direito. Desligado, o
+  // botão não existe. Nunca lança: erro de leitura = não montar. A primeira
+  // pergunta (a chave da instalação) é uma leitura só, e é a única feita em
+  // toda instalação que nunca ligou o assistente.
+  let vixLigado = false;
+  if (activeOrg) {
+    try {
+      vixLigado = (await estadoDoVix(createAdminClient(), activeOrg.orgId)).ligado;
+    } catch (erro) {
+      logger.warn("vix: estado ilegível no layout — o botão não é montado", {
+        erro: erro instanceof Error ? erro.message : String(erro),
+      });
+    }
+  }
+
   // O CONTRATO DE OCUPAÇÃO DO RODAPÉ (issue #1305) envolve a casca E as peças de
   // voz. O `VoiceCallProvider` desenha o painel de chamada DEPOIS dos children,
   // ou seja: o painel é IRMÃO do `AppShell`, não filho dele. Um provedor por
@@ -323,6 +341,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           {guiaDoOnboarding}
           {children}
         </AppShell>
+        {vixLigado ? <PainelDoVix /> : null}
       </VoiceCallProvider>
     </ProvedorDaOcupacaoDoRodape>
   );

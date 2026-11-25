@@ -4,7 +4,9 @@ import { useMemo } from "react";
 import { useAuth } from "@/hooks/auth/AuthProvider";
 import { useT } from "@/hooks/i18n/useT";
 import { NAV_GROUPS, searchable } from "@/lib/navigation/registry";
-import { PaletaDeDestinos } from "@/components/shell/PaletaDeDestinos";
+import { PaletaDeDestinos, type DestinoDaPaleta } from "@/components/shell/PaletaDeDestinos";
+import { abrirOVix, useVixPresente } from "@/components/assistente/presenca";
+import { Sparkle } from "@/lib/ui/icons";
 
 /**
  * Paleta de navegação (⌘K) do APP DO TENANT.
@@ -46,11 +48,33 @@ export function CommandPalette({
     ],
   );
 
+  // O assistente, quando existe nesta tela, entra na paleta como uma AÇÃO: o
+  // ⌘K é da navegação, e é por aqui que ele também leva ao assistente (que tem
+  // o atalho próprio, ⌘J).
+  const vixPresente = useVixPresente();
+  const destinos = useMemo<readonly DestinoDaPaleta[]>(
+    () =>
+      vixPresente
+        ? [
+            {
+              href: "#assistente",
+              label: "Perguntar ao assistente",
+              description: "Tire dúvidas de uso, consulte os dados da sua conta e encontre a tela certa.",
+              group: "atendimento",
+              icon: Sparkle,
+              aoEscolher: abrirOVix,
+            },
+            ...visiveis,
+          ]
+        : visiveis,
+    [vixPresente, visiveis],
+  );
+
   return (
     <PaletaDeDestinos
       open={open}
       onOpenChange={onOpenChange}
-      destinos={visiveis}
+      destinos={destinos}
       grupos={NAV_GROUPS}
       titulo={t("Buscar telas")}
       rotuloLista={t("Telas")}
