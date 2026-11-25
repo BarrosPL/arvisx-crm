@@ -477,6 +477,14 @@ export interface CaseEventRow {
  * Coletada, mas FORA do `data.json` que o titular recebe: é conversa interna da
  * equipe (doc 103, A — `lib/lgpd/copia-do-titular.ts`).
  */
+/** Um trecho do histórico do assistente dentro do CRM que cita o titular. */
+export interface AssistenteMencaoRow {
+  origem: "mensagem" | "cartao" | "conversa" | "chamado";
+  id: string;
+  texto: string;
+  created_at: string;
+}
+
 export interface CaseChatMessageRow {
   id: string;
   case_id: string;
@@ -799,6 +807,15 @@ export interface ExportPayload {
    * da seção acima: só existe quando há o que entregar.
    */
   social_comments?: SocialCommentRow[];
+  /**
+   * O que a equipe conversou com o ASSISTENTE dentro do CRM e que CITA o
+   * titular (migration 9831). O histórico do assistente é texto livre, sem
+   * chave para o contato: entra aqui o trecho que traz o nome, o telefone ou
+   * o e-mail dele. A anonimização apaga o texto do assistente da empresa
+   * inteira; o acesso entrega só o que o cita. Opcional pelo mesmo motivo de
+   * `social_comments`: ausente quando não há nada.
+   */
+  assistente_mencoes?: AssistenteMencaoRow[];
   /**
    * Casos, linha do tempo do caso e demandas (migration 0280).
    *
@@ -2096,6 +2113,68 @@ export async function collectExportData(args: CollectArgs): Promise<ExportPayloa
   // anonimização redige os comentários ligados ao contato E os outros do MESMO
   // autor; o acesso entrega os mesmos dois conjuntos. Falha não vira relatório
   // que diz que não guardamos nada: sobe.
+  // O histórico do assistente dentro do CRM (migrations 9830 e 9831) que cita o
+  // titular. Não há chave para o contato: a busca é pelo que o identifica (nome
+  // com 4+ letras, telefone, e-mail), com teto por tabela. É a mesma lista de
+  // tabelas que o gatilho de anonimização limpa.
+  const assistente_mencoes: AssistenteMencaoRow[] = [];
+  {
+    const termos = [contact?.display_name, contact?.name, contact?.email, contact?.phone_number]
+      .map((v) => (typeof v === "string" ? v.trim() : ""))
+      .filter((v) => v.length >= 4)
+      // `%`, `_`, vírgula e parênteses têm sentido próprio no filtro: termo com eles fica de fora.
+      .filter((v) => !/[%_,()\\*]/.test(v));
+    const unicos = [...new Set(termos)];
+    const ou = (coluna: string) => unicos.map((v) => `${coluna}.ilike.%${v}%`).join(",");
+    if (unicos.length > 0) {
+      const mensagens = await admin
+        .from("assistente_mensagens")
+        .select("id, corpo, created_at")
+        .eq("organization_id", organizationId)
+        .or(ou("corpo"))
+        .order("created_at", { ascending: false })
+        .limit(500);
+      const cartoes = await admin
+        .from("assistente_acoes")
+        .select("id, resumo, created_at")
+        .eq("organization_id", organizationId)
+        .or(ou("resumo"))
+        .order("created_at", { ascending: false })
+        .limit(500);
+      const conversas = await admin
+        .from("assistente_conversas")
+        .select("id, titulo, created_at")
+        .eq("organization_id", organizationId)
+        .or(ou("titulo"))
+        .order("created_at", { ascending: false })
+        .limit(500);
+      const chamados = await admin
+        .from("assistente_chamados")
+        .select("id, resumo, created_at")
+        .eq("organization_id", organizationId)
+        .or(ou("resumo"))
+        .order("created_at", { ascending: false })
+        .limit(500);
+      for (const falha of [mensagens.error, cartoes.error, conversas.error, chamados.error]) {
+        if (falha) {
+          logger.warn("[lgpd-export-worker] assistente load failed", { request_id: requestId, error: falha.message });
+        }
+      }
+      for (const m of mensagens.data ?? []) {
+        if (m.corpo) assistente_mencoes.push({ origem: "mensagem", id: m.id, texto: m.corpo, created_at: m.created_at });
+      }
+      for (const c of cartoes.data ?? []) {
+        assistente_mencoes.push({ origem: "cartao", id: c.id, texto: c.resumo, created_at: c.created_at });
+      }
+      for (const c of conversas.data ?? []) {
+        if (c.titulo) assistente_mencoes.push({ origem: "conversa", id: c.id, texto: c.titulo, created_at: c.created_at });
+      }
+      for (const c of chamados.data ?? []) {
+        assistente_mencoes.push({ origem: "chamado", id: c.id, texto: c.resumo, created_at: c.created_at });
+      }
+    }
+  }
+
   const social_comments: SocialCommentRow[] = [];
   if (contactId) {
     const COLUNAS_DO_COMENTARIO =
@@ -2638,6 +2717,7 @@ export async function collectExportData(args: CollectArgs): Promise<ExportPayloa
     prospecting_candidates,
     ...(meta_ctwa_click_dispatches.length > 0 ? { meta_ctwa_click_dispatches } : {}),
     ...(social_comments.length > 0 ? { social_comments } : {}),
+    ...(assistente_mencoes.length > 0 ? { assistente_mencoes } : {}),
     cases,
     case_events,
     demandas,

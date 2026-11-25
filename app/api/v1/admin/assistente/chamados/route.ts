@@ -57,7 +57,7 @@ export async function GET(req: NextRequest): Promise<Response> {
   const nomes = new Map<string, { nome: string; slug: string }>();
   if (orgs.length > 0) {
     const { data: empresas } = await admin.from("organizations").select("id, display_name, slug").in("id", orgs);
-    for (const e of empresas ?? []) nomes.set(e.id, { nome: e.display_name ?? e.slug, slug: e.slug });
+    for (const e of empresas ?? []) nomes.set(e.id, { nome: e.display_name, slug: e.slug });
   }
 
   return ok(
