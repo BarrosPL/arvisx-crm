@@ -27,7 +27,7 @@ Como ler as colunas:
 
 `suporte_abrir_chamado` grava só na tabela do próprio assistente e por isso fica disponível mesmo com as ações do assistente desligadas. Continua sendo cartão: só abre no clique.
 
-## 2. Leituras reaproveitadas do MCP que ENTRARAM (23 de 49)
+## 2. Leituras reaproveitadas do MCP que ENTRARAM (25 de 49)
 
 Todas são nível ler, inverso não se aplica, e o teste é `tests/invariants/assistente-leituras-isolamento.test.ts`. Cada uma tem três casos próprios: controle positivo (a pessoa da empresa A lê o dado marcado da empresa A), ataque por id, lista e texto da empresa B, e todo campo de id da entrada apontado para a empresa B.
 
@@ -56,26 +56,27 @@ Todas são nível ler, inverso não se aplica, e o teste é `tests/invariants/as
 | `crm_list_tags` | agent | agent | `/api/v1/tags` (livre) |
 | `crm_list_message_templates` | agent | agent | `/api/v1/message-templates` (livre) |
 | `crm_list_team_members` | agent | agent | `/api/v1/team` (livre; só a leitura) |
+| `crm_get_honorarios_contrato` | **manager** | agent | `/api/v1/honorarios` (tela Honorários) |
+| `crm_list_honorarios_parcelas` | **manager** | agent | `/api/v1/honorarios` (tela Honorários) |
 
-Três ressalvas honestas sobre a força da prova:
+Notas sobre a prova:
 
-- `crm_list_at_risk_leads`, `crm_list_lead_notes` e `crm_list_followups` têm controle positivo **fraco**: o teste confere que a leitura roda e responde pela própria empresa, mas a semente não cria um negócio em risco, uma nota nem um retorno com a marca. O ataque por id da outra empresa é medido (o negócio e o contato da vítima existem), mas não há nota, risco ou retorno da vítima para tentar ler.
+- `crm_list_at_risk_leads`, `crm_list_lead_notes` e `crm_list_followups` tinham controle positivo fraco. Agora a semente cria, nas duas empresas, um negócio parado há 60 dias, uma nota e um retorno agendado, todos com a marca, e o controle positivo exige a marca da própria empresa na resposta.
+- As duas de honorários são dado restrito e entram como `manager`: atendente e leitor são recusados com `papel_insuficiente` (caso "leituras de gerente recusam o atendente e o leitor"). O contrato não tem campo de texto, então a marca é o valor: a resposta de A traz o valor de A e nunca o de B. As tabelas são do módulo de honorários; o teste as cria pela função provisionadora, como numa instância que instalou o módulo. Onde o módulo não está instalado, a leitura devolve a recusa do próprio handler, sem dado (isto **não** tem teste próprio pelo Vix).
 - O papel dos funis (`manager`) vem da tela (`app/api/v1/pipelines/route.ts`), que é mais restrita que o MCP.
 - Nenhuma leitura é oferecida a `viewer`. Onde a tela aceita viewer (contatos, tarefas) e o MCP pede `agent`, ficou `agent`.
 
-## 3. Leituras do MCP que ficaram FORA (26 de 49), e por quê
+## 3. Leituras do MCP que ficaram FORA (24 de 49), e por quê
 
 | Ferramenta MCP | Por que ficou fora |
 |---|---|
-| `crm_get_proposal` | **Depende da chave de serviço**, pela leitura do código: para saber se propostas estão ligadas ela consulta o módulo da instalação em `platform_config`, tabela sem policy que só a chave de serviço lê (`lib/instalacao/modulos.ts`, `lib/organizacao/capacidades.ts`). No teste, com o cliente de sessão, respondeu "propostas desligadas" e o controle positivo reprovou. Ressalva: a semente do teste também não ligava propostas na empresa, então a medição sozinha não separa as duas causas |
-| `crm_preparar_proposta` | **Depende da chave de serviço**, pelo mesmo motivo e com a mesma ressalva |
+| `crm_get_proposal` | **Depende da chave de serviço, medido.** Pergunta se o módulo "propostas" está ligado com o cliente que recebeu; o módulo mora em `platform_config`, que a sessão não lê. Em `tests/invariants/assistente-leituras-que-dependem-da-chave-de-servico.test.ts`, com o módulo LIGADO no banco: a chave de serviço lê "ligado" e a sessão de um gerente lê "desligado" |
+| `crm_preparar_proposta` | **Depende da chave de serviço**, pelo mesmo módulo e pela mesma medida |
+| `crm_query_external_data` | **Depende da chave de serviço, medido.** Dado restrito (só gerente). `abrirAcesso` pergunta pelo módulo "banco_externo" com o cliente que recebeu. No mesmo teste, com o módulo ligado: com a sessão a recusa é `modulo_desligado` antes de olhar a conexão; com a chave de serviço passa dessa porta |
+| `crm_describe_external_data` | **Depende da chave de serviço**, pela mesma porta (`abrirAcesso`) e pela mesma medida |
+| `crm_consultar_receita` | **Depende da chave de serviço**, pela mesma porta (`abrirAcesso`) e pela mesma medida |
 | `crm_list_privacy_requests` | Decisão: LGPD é só pela tela |
 | `crm_get_prospecting_site_audit` | É do turno de atendimento: só responde com o contato da conversa |
-| `crm_query_external_data` | Onda 2. Papel `manager`. Sem prova: precisa de uma conexão de banco externo de verdade no teste |
-| `crm_describe_external_data` | Onda 2, mesmo motivo |
-| `crm_consultar_receita` | Onda 2, mesmo motivo |
-| `crm_get_honorarios_contrato` | Onda 2. Papel `manager`. Sem prova: o módulo de honorários é de tabela e não está instalado no banco do teste |
-| `crm_list_honorarios_parcelas` | Onda 2, mesmo motivo |
 | `crm_list_comments` | Onda 2. Papel `manager`. Sem prova escrita |
 | `crm_get_comment` | Onda 2, mesmo motivo |
 | `crm_find_free_slots` | Onda 2. Sem prova: precisa de agenda com horários configurados |
@@ -96,7 +97,7 @@ Três ressalvas honestas sobre a força da prova:
 
 "Sem prova escrita" quer dizer só isso: o teste de isolamento daquela ferramenta não foi escrito. Numa sonda exploratória (não commitada), as 49 leituras responderam com o cliente de sessão sem erro de permissão, mas responder não é prova de isolamento, e por isso não entraram.
 
-As seis de dado restrito (banco externo, receitas, honorários) estão todas na onda 2 e entram como `manager`. A de LGPD está fora por decisão.
+Das seis leituras de dado restrito, as duas de honorários entraram (como `manager`) e as três de banco externo e receitas ficaram fora porque não funcionam com o cliente de sessão. Para entrarem, a pergunta do módulo precisaria ser feita pelo servidor antes de chamar a ferramenta, o que é mudança no núcleo e não foi feita aqui. A de LGPD está fora por decisão.
 
 ## 4. Escritas de exemplo (2), atrás de chave desligada
 

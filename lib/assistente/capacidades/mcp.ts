@@ -109,6 +109,11 @@ const ONDA_1: readonly LeituraMcp[] = [
   { ferramenta: "crm_list_tags", papelMinimo: "agent", rota: "/api/v1/tags" },
   { ferramenta: "crm_list_message_templates", papelMinimo: "agent", rota: "/api/v1/message-templates" },
   { ferramenta: "crm_list_team_members", papelMinimo: "agent", rota: "/api/v1/team" },
+  // Honorários (dado restrito: só gerente para cima). As tabelas são do módulo
+  // de honorários; onde ele não está instalado a leitura devolve a recusa do
+  // próprio handler, sem dado.
+  { ferramenta: "crm_get_honorarios_contrato", papelMinimo: "manager", rota: "/api/v1/honorarios" },
+  { ferramenta: "crm_list_honorarios_parcelas", papelMinimo: "manager", rota: "/api/v1/honorarios" },
 ];
 
 export const LEITURAS_MCP: readonly Capacidade[] = ONDA_1.map(leituraMcp);

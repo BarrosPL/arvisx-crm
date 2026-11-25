@@ -65,6 +65,7 @@ const A = {
   negocio: "a1770000-6666-4000-8000-000000000001",
   caso: "a1770000-7777-4000-8000-000000000001",
   proposta: "a1770000-8888-4000-8000-000000000001",
+  contrato: "a1770000-9999-4000-8000-000000000001",
 };
 const B = {
   contato: "b1770000-3333-4000-8000-000000000001",
@@ -74,12 +75,16 @@ const B = {
   negocio: "b1770000-6666-4000-8000-000000000001",
   caso: "b1770000-7777-4000-8000-000000000001",
   proposta: "b1770000-8888-4000-8000-000000000001",
+  contrato: "b1770000-9999-4000-8000-000000000001",
 };
 
 const MARCA_A = "PROPRIO-A";
 const MARCA_B = "VITIMA-B";
+// O contrato de honorários não tem campo de texto: a marca é o VALOR.
+const VALOR = { a: 123454321, b: 987654321 } as const;
+const PARCELA = { a: 23454321, b: 87654321 } as const;
 
-function semear(org: string, ids: typeof A, marca: string, sessao: string, slug: string): string {
+function semear(org: string, ids: typeof A, marca: string, sessao: string, slug: "a" | "b"): string {
   return `
     insert into public.contacts (id, organization_id, display_name)
       values ('${ids.contato}', '${org}', '${marca} contato') on conflict do nothing;
@@ -111,6 +116,21 @@ function semear(org: string, ids: typeof A, marca: string, sessao: string, slug:
       values ('${org}', 'VIX-${slug}', '${marca} produto', 100, 10);
     insert into public.message_templates (organization_id, title, body)
       values ('${org}', '${marca} resposta pronta', '${marca} corpo da resposta');
+    -- Contrato de honorários do negócio, com uma parcela (módulo instalado no beforeAll).
+    insert into public.honorarios_contratos (id, organization_id, lead_id, modelo, valor_fixo_cents)
+      values ('${ids.contrato}', '${org}', '${ids.negocio}', 'fixo', ${VALOR[slug]}) on conflict do nothing;
+    insert into public.honorarios_parcelas (organization_id, contrato_id, numero, vencimento, valor_cents)
+      values ('${org}', '${ids.contrato}', 1, current_date + 30, ${PARCELA[slug]});
+    -- Negócio parado há 60 dias: é o que o radar de risco lista.
+    update public.crm_leads set last_activity_at = now() - interval '60 days' where id = '${ids.negocio}';
+    -- Uma nota no negócio.
+    insert into public.crm_lead_activities (organization_id, lead_id, contact_id, source_module, type, reason, payload)
+      values ('${org}', '${ids.negocio}', '${ids.contato}', 'notas', 'note', '${marca} nota do negocio',
+              '{"texto":"${marca} nota do negocio","autor":{"tipo":"humano","nome":"${marca} autor"}}'::jsonb);
+    -- Um retorno agendado para o contato.
+    insert into public.cron_jobs (organization_id, contact_id, kind, job_kind, next_run_at, payload)
+      values ('${org}', '${ids.contato}', 'at', 'followup_turn', now() + interval '2 days',
+              '{"reason":"${marca} retorno combinado","conversation_id":"${ids.conversa}"}'::jsonb);
   `;
 }
 
@@ -149,6 +169,8 @@ async function ler(nome: string, args: Record<string, unknown>, quem = GOV_AGENT
 
 function naoVaza(json: string, contexto: string): void {
   expect(json, `${contexto}: a resposta traz a marca da outra empresa`).not.toContain(MARCA_B);
+  expect(json, `${contexto}: a resposta traz o valor do contrato da outra empresa`).not.toContain(String(VALOR.b));
+  expect(json, `${contexto}: a resposta traz a parcela da outra empresa`).not.toContain(String(PARCELA.b));
   expect(json.toLowerCase(), `${contexto}: a resposta traz o marcador da outra empresa`).not.toContain(
     `${MARCA_B.toLowerCase()}-marcador`,
   );
@@ -183,13 +205,13 @@ const PROVAS: Record<string, Prova> = {
   crm_list_at_risk_leads: {
     papel: "agent",
     proprio: {},
-    espera: (json) => expect(json).toContain('"ok":true'),
+    espera: `${MARCA_A} negocio`,
     ataques: [{}, { pipeline_id: B.funil }],
   },
   crm_list_lead_notes: {
     papel: "agent",
     proprio: { lead_id: A.negocio },
-    espera: (json) => expect(json).toContain(A.negocio),
+    espera: `${MARCA_A} nota do negocio`,
     ataques: [{ lead_id: B.negocio }],
   },
   crm_list_pipelines: {
@@ -279,8 +301,20 @@ const PROVAS: Record<string, Prova> = {
   crm_list_followups: {
     papel: "agent",
     proprio: { lead_id: A.negocio },
-    espera: (json) => expect(json).toContain('"ok":true'),
+    espera: `${MARCA_A} retorno combinado`,
     ataques: [{ lead_id: B.negocio }, { contact_id: B.contato }],
+  },
+  crm_get_honorarios_contrato: {
+    papel: "manager",
+    proprio: { lead_id: A.negocio },
+    espera: String(VALOR.a),
+    ataques: [{ lead_id: B.negocio }],
+  },
+  crm_list_honorarios_parcelas: {
+    papel: "manager",
+    proprio: { contrato_id: A.contrato },
+    espera: String(PARCELA.a),
+    ataques: [{ contrato_id: B.contrato }],
   },
   crm_search_products: {
     papel: "agent",
@@ -317,6 +351,10 @@ const QUEM: Record<PapelHumano, string> = {
 
 beforeAll(async () => {
   seedGov();
+  // As tabelas de honorários são de módulo: nascem pela função provisionadora,
+  // como numa instância que instalou o módulo. Antes de subir o PostgREST, para
+  // entrarem no cache de schema dele.
+  sql("select public.fn_honorarios_provisionar();");
   sql(`
     insert into auth.users (id, email) values ('${USER_B}', 'vix-vitima@invariant.test') on conflict do nothing;
     insert into public.organizations (id, slug, legal_name, display_name)

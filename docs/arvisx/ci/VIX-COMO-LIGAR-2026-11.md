@@ -66,5 +66,24 @@ Para ligar, depois que a 9825 estiver na `main`:
 ## Desligar
 
 - Tudo, para todas as empresas: `VIX_PAGADOR` de volta para `desligado`.
-- Uma empresa: a rota existe (`PATCH /api/v1/assistente/configuracao`, só administrador da empresa, só o campo `ligado`), mas **ainda não há tela** que a chame. Até a tela existir, quem desliga é a plataforma, gravando `ligado = false` na linha da empresa em `assistente_estado_da_empresa`.
+- Uma empresa: o administrador dela desliga em Configurações › Empresa, no cartão "Assistente". O cartão só aparece com o assistente ligado na instalação. A plataforma também pode gravar `ligado = false` na linha da empresa em `assistente_estado_da_empresa`.
 - Só as ações: desligar "Ações do assistente".
+
+## Onde a equipe da plataforma lê os chamados
+
+Painel do administrador da instalação › Chamados (`/admin/chamados`). Lista os chamados que as empresas abriram pelo assistente, com o diagnóstico anexado, e permite marcar como visto e como resolvido. As duas marcações são auditadas na empresa dona do chamado. O texto do chamado não é editável.
+
+## Prazo do histórico e LGPD
+
+- O histórico do assistente (mensagens, cartões, conversas vazias e chamados já resolvidos) é apagado com 30 dias pelo cron `data-retention`. O prazo é a variável `ASSISTENTE_HISTORICO_RETENTION_DAYS`, com piso de 7 dias dentro da função do banco. Chamado aberto não é apagado por idade. A conta do limite do mês (`assistente_usos`) não é apagada.
+- Quando um contato é anonimizado, o texto do assistente da organização dele é apagado inteiro: mensagens e cartões são removidos, e o título das conversas e o texto dos chamados são trocados por um marcador. A regra é larga de propósito, porque o histórico não tem ligação com o contato e apagar por semelhança de texto deixaria passar. **Decisão a confirmar com o Lucas:** se preferir uma regra mais estreita, ela exige guardar, em cada mensagem, de quais contatos ela falou.
+- O que não está coberto: contato apagado por exclusão comum, sem anonimização, não dispara a limpeza.
+
+## Prova pela tela do stream: o que falta
+
+A spec `tests/e2e/assistente-painel-pela-tela.spec.ts` prova pela tela o botão ausente quando desligado, a abertura pelo botão e pelo Ctrl+J, a recusa de chave colada, a frase de indisponível e a chave por empresa. Ela **não** prova a resposta em stream, porque isso exige um modelo que responda e o ambiente do e2e não tem como injetar um:
+
+- o pagador `chave_plataforma` lê `ANTHROPIC_API_KEY` do ambiente do `next start`, e o `.env.e2e` não tem chave de IA (várias specs medem justamente a instalação sem chave);
+- o pagador `assinatura_plataforma` exige uma conta conectada de verdade.
+
+O gancho mínimo, sem código de produto: um dublê HTTP do provedor (nos moldes de `scripts/duble-jev-e2e.mjs`) que responda o formato de stream da API de mensagens, e uma parte do e2e cujo `next start` suba com `ANTHROPIC_BASE_URL` apontando para o dublê e uma `ANTHROPIC_API_KEY` de mentira. A biblioteca do provedor já lê `ANTHROPIC_BASE_URL` do ambiente. O custo é que, nessa parte, as specs deixam de ver o estado "sem chave de IA", então ela precisa ser uma parte só para isso. Não foi feito nesta entrega.

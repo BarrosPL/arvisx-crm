@@ -19,5 +19,11 @@ O assistente só lê. Alterar dados é uma chave separada (Painel › Sistema, "
 do assistente"), também desligada: com ela, o assistente propõe a ação num
 cartão e nada acontece até a pessoa confirmar.
 
+Cada empresa pode desligar o assistente para si em Configurações › Empresa. Os
+pedidos de ajuda abertos pelo assistente aparecem para a equipe da instalação em
+Painel › Chamados. O histórico das conversas com o assistente é apagado com 30
+dias (`ASSISTENTE_HISTORICO_RETENTION_DAYS`), e é apagado inteiro, na empresa,
+quando um contato dela é anonimizado.
+
 A atualização cria tabelas novas (`assistente_*`) e não altera nenhuma que já
 existia.
