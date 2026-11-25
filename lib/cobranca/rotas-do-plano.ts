@@ -172,6 +172,7 @@ export const ROTAS_DE_API: Readonly<Record<string, Classe>> = {
   "/api/v1/ai/usage": "/app/ai/usage",
   "/api/v1/ai/voz": { destino: "/app/ai/agents", tambem: ["/app/ai/providers"] }, // a voz do agente é escolhida em Provedores; o motor lê do banco, não desta rota
   "/api/v1/anuncios": LIVRE, // landing de clique (entrada externa, D-11)
+  "/api/v1/assistente": LIVRE, // o assistente decide o plano por dentro: sem marca nem plano com linha, a rota recusa
   "/api/v1/attendants": LIVRE, // presença: casca
   "/api/v1/audit": "/app/audit",
   "/api/v1/auth": LIVRE,
