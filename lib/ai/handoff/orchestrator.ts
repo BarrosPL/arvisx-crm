@@ -69,7 +69,13 @@ export type HandoffReason =
    * a MESMA constante que o engine grava: dois caminhos param a IA pelo mesmo
    * motivo, e duas grafias fariam quem filtra por uma achar metade das conversas.
    */
-  | "orcamento_de_ia";
+  | "orcamento_de_ia"
+  /**
+   * O PLANO parou a IA (sem teto configurado, teto atingido ou franquia cheia).
+   * Razão própria, de `HANDOFF_REASON_IA_DO_PLANO`: o remédio é pacote extra ou
+   * chave própria, e não o orçamento da empresa.
+   */
+  | "ia_do_plano";
 
 export interface TriggerHandoffInput {
   serviceBoundary?: ServiceBoundary;
@@ -130,6 +136,8 @@ const MOTIVO_DA_PASSAGEM = {
   legal_mention: "legal_mention",
   refund_mention: "refund_mention",
   orcamento_de_ia: "orcamento_de_ia",
+  // A linha da passagem tem CHECK no banco: para ela o plano é "teto de gasto".
+  ia_do_plano: "orcamento_de_ia",
 } satisfies Record<HandoffReason, MotivoDaPassagem>;
 
 function motivoDaPassagem(reason: HandoffReason): MotivoDaPassagem {

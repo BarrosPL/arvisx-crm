@@ -13468,6 +13468,12 @@ notify pgrst, 'reload schema';
 -- `create function` ancorado em início de linha depois dele, e o regex não
 -- distingue definer de invoker. É a mesma dança em dois blocos que a 0158 teve de
 -- fazer: a função aqui, o resto da migration no fim do arquivo.
+-- 9825: a função abaixo passou a ler `llm_calls.origem_da_chave`. A coluna nasce AQUI,
+-- antes dela, porque função `language sql` é conferida ao ser criada; o CHECK e o
+-- resto da 9825 estão no bloco próprio, mais abaixo. Reaplicar não muda nada.
+alter table public.llm_calls
+  add column if not exists origem_da_chave text not null default 'plataforma';
+
 create or replace function public.fn_gasto_de_ia_do_mes(p_org uuid)
 returns numeric
   language sql
@@ -13478,7 +13484,9 @@ as $$
   select coalesce(sum(cost_cents), 0)::numeric
     from public.llm_calls
    where organization_id = p_org
-     and created_at >= date_trunc('month', now());
+     and created_at >= date_trunc('month', now())
+     -- 9825: o que roda na assinatura da plataforma não é gasto da empresa.
+     and origem_da_chave <> 'assinatura_plataforma';
 $$;
 
 comment on function public.fn_gasto_de_ia_do_mes(uuid) is
@@ -71137,6 +71145,229 @@ comment on function public.fn_service_status(uuid,uuid,text,bigint,text) is
 
 revoke execute on function public.fn_service_status(uuid,uuid,text,bigint,text) from public,anon,authenticated;
 grant execute on function public.fn_service_status(uuid,uuid,text,bigint,text) to service_role;
+
+notify pgrst, 'reload schema';
+
+-- ---- IA por plano: origem da chave, franquia de conversas e ciclo (migration 9825) ----
+-- Espelho idempotente da 9825 (o porquê inteiro está no cabeçalho da migration).
+-- Cria função, então mora ANTES da VARREDURA anon; depois do bloco da cobrança
+-- (0583) e do da troca de plano (`periodo_pago_desde`), que ele lê. Redefine
+-- `fn_update_budget_consumption`: é a ÚLTIMA definição dela no arquivo.
+-- ── A. de quem é a chave ─────────────────────────────────────────────────────
+alter table public.llm_calls
+  add column if not exists origem_da_chave text not null default 'plataforma';
+
+do $origem$
+begin
+  if not exists (
+    select 1 from pg_constraint
+     where conrelid = 'public.llm_calls'::regclass and conname = 'llm_calls_origem_da_chave_check'
+  ) then
+    alter table public.llm_calls
+      add constraint llm_calls_origem_da_chave_check
+      check (origem_da_chave in ('cliente', 'plataforma', 'assinatura_plataforma'));
+  end if;
+end
+$origem$;
+
+comment on column public.llm_calls.origem_da_chave is
+  'De quem é a chave que pagou a chamada (migration 9825): cliente = credencial da organização; plataforma = chave da instalação, que o plano paga; assinatura_plataforma = chamada feita com a assinatura da plataforma (hoje só o assistente dela), que não é gasto da empresa. Padrão plataforma: a origem desconhecida conta no teto do plano. O teto e a franquia do plano somam só plataforma; o orçamento da empresa soma cliente e plataforma; nenhuma soma de limite conta assinatura_plataforma. Par TypeScript: ORIGENS_DA_CHAVE em lib/ai/usage/origem-da-chave.ts.';
+
+-- ── B. a franquia do plano ───────────────────────────────────────────────────
+alter table public.cobranca_planos
+  add column if not exists franquia_conversas_ia integer;
+
+do $franquia$
+begin
+  if not exists (
+    select 1 from pg_constraint
+     where conrelid = 'public.cobranca_planos'::regclass and conname = 'cobranca_planos_franquia_conversas_ia_check'
+  ) then
+    alter table public.cobranca_planos
+      add constraint cobranca_planos_franquia_conversas_ia_check
+      check (franquia_conversas_ia is null or franquia_conversas_ia >= 1);
+  end if;
+end
+$franquia$;
+
+comment on column public.cobranca_planos.franquia_conversas_ia is
+  'Conversas com IA incluídas no plano por ciclo (migration 9825): contatos distintos atendidos por um agente com a chave da plataforma. Nulo = sem franquia (vale só o teto em dólar). É o limite que o cliente vê; teto_ia_usd_cents é a trava de baixo.';
+
+-- ── C. as somas do orçamento da empresa ignoram a assinatura da plataforma ─────────────────
+-- `fn_gasto_de_ia_do_mes` é criada UMA vez neste arquivo, no bloco da 0159, lá em
+-- cima, já com o corpo desta migration (a régua de gasto é uma só, e uma só
+-- definição: tests/unit/orcamento-uma-regua-de-gasto.test.ts).
+
+-- O gatilho serve a `llm_calls` e a `ai_invocations` (a tabela antiga, que não
+-- tem a coluna): por isso a leitura é pelo jsonb da linha, e não `new.coluna`.
+create or replace function public.fn_update_budget_consumption()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- 9825: o que roda na assinatura da plataforma não soma no orçamento da empresa.
+  if (to_jsonb(new) ->> 'origem_da_chave') = 'assinatura_plataforma' then
+    return new;
+  end if;
+  insert into public.ai_budgets (organization_id, current_month_consumed_cents)
+  values (new.organization_id, coalesce(new.cost_cents, 0))
+  on conflict (organization_id) do update
+  set current_month_consumed_cents =
+        public.ai_budgets.current_month_consumed_cents
+        + coalesce(new.cost_cents, 0),
+      updated_at = now();
+  return new;
+end;
+$$;
+
+revoke execute on function public.fn_update_budget_consumption() from public, anon, authenticated;
+grant  execute on function public.fn_update_budget_consumption() to service_role;
+
+-- ── D. o ciclo ───────────────────────────────────────────────────────────────
+create or replace function public.fn_ciclo_de_ia(p_org uuid)
+returns table (inicio timestamptz, fim timestamptz, pelo_periodo_pago boolean)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  with pago as (
+    select a.periodo_pago_desde as de, a.proximo_vencimento as ate
+      from public.cobranca_assinaturas a
+      join public.cobranca_planos p on p.id = a.plano_id
+     where a.organization_id = p_org
+       and p.intervalo = 'mes'
+       and a.periodo_pago_desde is not null
+       and a.proximo_vencimento is not null
+       and a.periodo_pago_desde <= now()
+       and now() < a.proximo_vencimento
+  )
+  select coalesce((select de from pago), date_trunc('month', now())),
+         coalesce((select ate from pago), date_trunc('month', now()) + interval '1 month'),
+         exists (select 1 from pago);
+$$;
+
+revoke execute on function public.fn_ciclo_de_ia(uuid) from public, anon, authenticated;
+grant  execute on function public.fn_ciclo_de_ia(uuid) to service_role;
+
+-- ── E. o uso de IA do plano ──────────────────────────────────────────────────
+-- `com_assinatura = false`: cobrança desligada na instalação, ou empresa sem
+-- assinatura (isenta). Aí nada é somado e tudo volta nulo: para elas a IA segue
+-- sem limite de plano, como sempre foi (decisão do dono, 25/11/2026).
+-- `com_assinatura = true` com `teto` nulo é o plano SEM TETO: quem decide o que
+-- fazer com ele é o motor (lib/agent-engine/edge/llm/orcamento.ts).
+create or replace function public.fn_ia_do_plano(p_org uuid)
+returns table (
+  com_assinatura boolean,
+  teto integer,
+  franquia integer,
+  ciclo_inicio timestamptz,
+  ciclo_fim timestamptz,
+  pelo_periodo_pago boolean,
+  gasto numeric,
+  conversas integer
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_teto integer;
+  v_franquia integer;
+  v_inicio timestamptz;
+  v_fim timestamptz;
+  v_pago boolean;
+  v_gasto numeric;
+  v_conversas integer;
+begin
+  if public.fn_cobranca_ligada() then
+    select p.teto_ia_usd_cents, p.franquia_conversas_ia
+      into v_teto, v_franquia
+      from public.cobranca_assinaturas a
+      join public.cobranca_planos p on p.id = a.plano_id
+     where a.organization_id = p_org;
+  end if;
+  if not found then
+    return query select false, null::integer, null::integer, null::timestamptz, null::timestamptz,
+                        null::boolean, null::numeric, null::integer;
+    return;
+  end if;
+
+  select c.inicio, c.fim, c.pelo_periodo_pago into v_inicio, v_fim, v_pago
+    from public.fn_ciclo_de_ia(p_org) c;
+
+  select coalesce(sum(l.cost_cents), 0)::numeric,
+         count(distinct l.contact_id) filter (
+           where l.status = 'ok'
+             and l.contact_id is not null
+             and l.purpose in ('agent_turn', 'followup_turn', 'bot_respond', 'automation_ai_message')
+         )::integer
+    into v_gasto, v_conversas
+    from public.llm_calls l
+   where l.organization_id = p_org
+     and l.origem_da_chave = 'plataforma'
+     and l.created_at >= v_inicio
+     and l.created_at < v_fim;
+
+  return query select true, v_teto, v_franquia, v_inicio, v_fim, v_pago, v_gasto, v_conversas;
+end;
+$$;
+
+revoke execute on function public.fn_ia_do_plano(uuid) from public, anon, authenticated;
+grant  execute on function public.fn_ia_do_plano(uuid) to service_role;
+
+-- ── F. o contato já está na franquia deste ciclo? ────────────────────────────
+create or replace function public.fn_contato_na_franquia(p_org uuid, p_contato uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select p_contato is not null and exists (
+    select 1
+      from public.llm_calls l, public.fn_ciclo_de_ia(p_org) c
+     where l.organization_id = p_org
+       and l.contact_id = p_contato
+       and l.origem_da_chave = 'plataforma'
+       and l.status = 'ok'
+       and l.purpose in ('agent_turn', 'followup_turn', 'bot_respond', 'automation_ai_message')
+       and l.created_at >= c.inicio
+       and l.created_at < c.fim
+  );
+$$;
+
+revoke execute on function public.fn_contato_na_franquia(uuid, uuid) from public, anon, authenticated;
+grant  execute on function public.fn_contato_na_franquia(uuid, uuid) to service_role;
+
+-- ── G. o aviso de 80%, um por ciclo ──────────────────────────────────────────
+-- Deduplica por EXISTÊNCIA no ciclo, e não por estar aberto: fechar o aviso à
+-- mão, ou o uso oscilar em torno de 80%, não abre outro no mesmo ciclo.
+create or replace function public.fn_cobranca_avisar_uso_de_ia(
+  p_org uuid, p_titulo text, p_corpo text, p_desde timestamptz
+) returns boolean
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  perform pg_advisory_xact_lock(hashtextextended(p_org::text, 2284));
+  if exists (select 1 from public.agent_inbox_items
+              where organization_id = p_org and kind = 'cobranca' and ref_kind = 'plano'
+                and created_at >= p_desde) then
+    return false;
+  end if;
+  insert into public.agent_inbox_items (organization_id, kind, severity, title, body, ref_kind, ref_id)
+  values (p_org, 'cobranca', 'warn', p_titulo, p_corpo, 'plano', p_org);
+  return true;
+end;
+$$;
+
+revoke execute on function public.fn_cobranca_avisar_uso_de_ia(uuid, text, text, timestamptz) from public, anon, authenticated;
+grant  execute on function public.fn_cobranca_avisar_uso_de_ia(uuid, text, text, timestamptz) to service_role;
 
 notify pgrst, 'reload schema';
 

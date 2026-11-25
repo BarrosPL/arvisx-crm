@@ -41,6 +41,7 @@ import {
   type OrigemDaTranscricao,
 } from "@/lib/messaging/media/escada-de-transcricao";
 import { TranscriptionTooLargeError, type TranscriptionProvider } from "@/lib/messaging/media/transcription";
+import { origemDaChaveGravada } from "@/lib/ai/usage/origem-da-chave";
 import { logger } from "@/lib/logger";
 import { validarParProvedorModelo } from "@/lib/ai/par-provedor-modelo";
 import { reagirAConclusaoDeDerivacao } from "@/lib/escalacao/handoff-tecnico";
@@ -849,6 +850,9 @@ function buildDeriveDeps(
       return MARCADOR_NAO_LIDA;
     }
     const inicio = Date.now();
+    // A linha de custo da visão diz de quem é a chave que pagou (migration 9825).
+    const registrarVisao = (montar: Parameters<typeof registrarChamadaDeMidia>[2]) =>
+      registrarChamadaDeMidia(admin, orgId, montar, llm.origemDaChave);
     let res: Awaited<ReturnType<typeof generateText>>;
     try {
       res = await generateText({
@@ -870,12 +874,12 @@ function buildDeriveDeps(
         maxOutputTokens: tetoDeSaida(tetoDeSaidaDaOrganizacao(llm.params), undefined),
       });
     } catch (err) {
-      registrarChamadaDeMidia(admin, orgId, () =>
+      registrarVisao(() =>
         linhaDeFalha(err, { purpose: PONTO_VISAO_DE_IMAGEM, provider: llm.provider, model: modelo, inicio }),
       );
       throw err;
     }
-    registrarChamadaDeMidia(admin, orgId, () => {
+    registrarVisao(() => {
       const latency_ms = Date.now() - inicio;
       const uso = {
         inputTokens: res.usage.inputTokens ?? 0,
@@ -1081,6 +1085,12 @@ function registrarChamadaDeMidia(
   admin: ReturnType<typeof createAdminClient>,
   orgId: string,
   montar: () => ChamadaDeMidia | Promise<ChamadaDeMidia>,
+  /**
+   * De quem é a chave que pagou, quando o chamador sabe (a visão sabe; a
+   * transcrição resolve a chave por outro caminho e não informa). Ausente = o
+   * padrão da coluna, `plataforma`: conta no teto do plano.
+   */
+  origemDaChave?: Parameters<typeof origemDaChaveGravada>[0],
 ): void {
   const avisoDeMontagem = (err: unknown) => {
     logger.warn("[media-derive] não consegui montar a linha de custo", {
@@ -1096,6 +1106,7 @@ function registrarChamadaDeMidia(
           status: "ok",
           ...linha,
           provider: provedorDaChamada(linha.provider, linha.model),
+          ...(origemDaChave ? { origem_da_chave: origemDaChaveGravada(origemDaChave) } : {}),
         }),
       ).then(
         ({ error }) => {

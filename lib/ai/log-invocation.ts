@@ -5,6 +5,7 @@
  * return without waiting for the audit insert; failures bubble to logger only.
  */
 
+import type { OrigemDaChave } from "@/lib/ai/usage/origem-da-chave";
 import { normalizarErro } from "@/lib/agent-engine/edge/llm/run-model-call";
 import type { OrigemDaEscolha } from "@/lib/ai/pontos/resolver";
 import { logger } from "@/lib/logger";
@@ -68,6 +69,17 @@ export interface LogInvocationInput {
   provider?: string;
   /** Quem decidiu usar este modelo — a coluna "por que este modelo" da tela de Execuções. */
   origem_da_escolha?: OrigemDaEscolha;
+  /**
+   * De quem é a chave que pagou (`llm_calls.origem_da_chave`, migration 9825).
+   * Ausente = o padrão da coluna, `plataforma`: quem não sabe dizer conta no
+   * teto do plano, que é o lado seguro.
+   */
+  origem_da_chave?: OrigemDaChave;
+  /**
+   * O contato atendido, quando a chamada é o agente falando com alguém. É por
+   * ele que a franquia de conversas do plano conta contatos distintos.
+   */
+  contact_id?: string | null;
   finish_reason?: string | null;
   /**
    * Quando quem chama já tem o código canônico da falha (o Jev devolve o seu).
@@ -112,6 +124,8 @@ export function logInvocation(row: LogInvocationInput): void {
           provider: provedorDaChamada(row.provider, row.model),
           model: row.model,
           origem_da_escolha: row.origem_da_escolha ?? null,
+          ...(row.origem_da_chave ? { origem_da_chave: row.origem_da_chave } : {}),
+          ...(row.contact_id && row.contact_id.trim() !== "" ? { contact_id: row.contact_id } : {}),
           input_tokens: row.prompt_tokens,
           output_tokens: row.completion_tokens,
           cost_cents: row.cost_cents,

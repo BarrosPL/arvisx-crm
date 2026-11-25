@@ -5534,6 +5534,7 @@ export type Database = {
           descricao_curta: string | null;
           destaques: string[] | null;
           fora_do_managed_payments: boolean;
+          franquia_conversas_ia: number | null;
           id: string;
           inclui_agentes_arvisx: boolean;
           interface_settings: Json;
@@ -5560,6 +5561,7 @@ export type Database = {
           descricao_curta?: string | null;
           destaques?: string[] | null;
           fora_do_managed_payments?: boolean;
+          franquia_conversas_ia?: number | null;
           id?: string;
           inclui_agentes_arvisx?: boolean;
           interface_settings?: Json;
@@ -5585,6 +5587,7 @@ export type Database = {
           descricao_curta?: string | null;
           destaques?: string[] | null;
           fora_do_managed_payments?: boolean;
+          franquia_conversas_ia?: number | null;
           id?: string;
           inclui_agentes_arvisx?: boolean;
           interface_settings?: Json;
@@ -10692,6 +10695,7 @@ export type Database = {
           legacy_invocation_id: string | null;
           model: string;
           organization_id: string;
+          origem_da_chave: string;
           origem_da_escolha: string | null;
           output_tokens: number;
           partes_de_midia: number | null;
@@ -10724,6 +10728,7 @@ export type Database = {
           legacy_invocation_id?: string | null;
           model: string;
           organization_id: string;
+          origem_da_chave?: string;
           origem_da_escolha?: string | null;
           output_tokens?: number;
           partes_de_midia?: number | null;
@@ -10755,6 +10760,7 @@ export type Database = {
           legacy_invocation_id?: string | null;
           model?: string;
           organization_id?: string;
+          origem_da_chave?: string;
           origem_da_escolha?: string | null;
           output_tokens?: number;
           partes_de_midia?: number | null;
@@ -15551,8 +15557,16 @@ export type Database = {
       };
       fn_claim_meta_ctwa_click: { Args: { p_click: string; p_org: string }; Returns: Json };
       fn_claim_meta_lead_submitted: { Args: { p_lead: string; p_org: string }; Returns: Json };
+      fn_ciclo_de_ia: {
+        Args: { p_org: string };
+        Returns: { fim: string; inicio: string; pelo_periodo_pago: boolean }[];
+      };
       fn_cobranca_avisar_teto_de_ia: {
         Args: { p_corpo: string; p_org: string; p_titulo: string };
+      fn_cobranca_avisar_uso_de_ia: {
+        Args: { p_corpo: string; p_desde: string; p_org: string; p_titulo: string };
+        Returns: boolean;
+      };
         Returns: boolean;
       };
       fn_cobranca_liberar_suspensoes: { Args: { p_ator: string }; Returns: number };
@@ -15603,6 +15617,7 @@ export type Database = {
         Returns: number;
       };
       fn_contar_mensagem_ignorada: { Args: { p_org: string }; Returns: undefined };
+      fn_contato_na_franquia: { Args: { p_contato: string; p_org: string }; Returns: boolean };
       fn_contato_adicionar_etiquetas: {
         Args: { p_contato: string; p_etiquetas: string[]; p_org: string };
         Returns: Json;
@@ -16087,6 +16102,19 @@ export type Database = {
         Returns: Json;
       };
       fn_honorarios_provisionar: { Args: Record<PropertyKey, never>; Returns: undefined };
+      fn_ia_do_plano: {
+        Args: { p_org: string };
+        Returns: {
+          ciclo_fim: string;
+          ciclo_inicio: string;
+          com_assinatura: boolean;
+          conversas: number;
+          franquia: number;
+          gasto: number;
+          pelo_periodo_pago: boolean;
+          teto: number;
+        }[];
+      };
       fn_is_platform_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
       fn_is_platform_admin_full: { Args: Record<PropertyKey, never>; Returns: boolean };
       fn_lead_adicionar_etiquetas: {

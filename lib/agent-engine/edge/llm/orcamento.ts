@@ -30,8 +30,6 @@
 
 import type pg from 'pg';
 
-import type { RecursoDoPlano } from '@/lib/cobranca/vocabulario';
-
 import type { OrigemDaChaveLlm } from './credentials';
 
 /**
@@ -427,41 +425,144 @@ select (select teto from orc)         as teto,
        (select ja from avisado_antes) as avisado_antes;
 `;
 
-// ═══ O TETO DE IA DO PLANO (spec da cobrança do revendedor §5) ═══
+// ═══ A IA DO PLANO: teto em dólar, franquia em conversas (Tarefa 8, parte 1) ═══
 //
 // Separado de `ai_budgets`: aquele é o orçamento que a ORGANIZAÇÃO escolhe; este
-// é o bolso do DONO da instalação, que vende o plano. Por isso o `modo 'off'` da
-// organização não o desliga, e só a chave da instalação o consulta (decisão D-9:
-// conta o mês inteiro, inclusive BYOK, mas só BLOQUEIA a chave da instalação).
+// é o bolso do DONO da instalação, que vende o plano com a IA incluída. Por isso
+// o `modo 'off'` da organização não o desliga, e só a chave da instalação o
+// consulta.
+//
+// ⚠️ DECISÃO INVERTIDA EM 25/11/2026, E DITA COM TODAS AS LETRAS. Até aqui valia
+// a D-9 da cobrança do revendedor: "conta o mês inteiro, inclusive BYOK, mas só
+// BLOQUEIA a chave da instalação" — o gasto comparado com o teto do plano era o
+// de TODAS as chaves. A partir da migration 9825 o teto do plano soma SÓ as
+// chamadas pagas pela chave da plataforma (`llm_calls.origem_da_chave =
+// 'plataforma'`), e no CICLO da assinatura. Quem traz a própria chave paga o
+// próprio provedor: o que ela gasta não consome o que o plano inclui. O que NÃO
+// mudou: o bloqueio continua valendo só para quem chama com a chave da
+// instalação, e a chave de emergência `off` continua desligando tudo.
+//
+// O ORÇAMENTO DA EMPRESA (`ai_budgets`, `SQL_ORCAMENTO` acima) segue a regra de
+// sempre: soma `cliente` e `plataforma`, no mês-calendário. Nenhuma das duas
+// somas conta `assinatura_plataforma`.
 //
 // ⚠️ `lerTetoDoPlano` é o único I/O deste arquivo — mora aqui, ao lado de
 // `SQL_ORCAMENTO`, porque o invariante de banco precisa executar ESTE texto, e o
 // caminho legado (`workers/ai-response-worker.ts`) importa a decisão e os
 // textos sem poder arrastar o engine.
 
+/**
+ * Por que o plano parou a IA. Três causas, três textos — e o remédio é o mesmo
+ * nas três: falar com a ArvisX ou cadastrar a própria chave.
+ *
+ *   • `plano_sem_teto` — FALHA FECHADA. A empresa tem assinatura num plano sem
+ *     teto de IA em dólar. Antes disso a chave da plataforma seguia SEM LIMITE;
+ *     agora ela não chama o modelo. Não alcança empresa isenta nem instalação
+ *     com a cobrança desligada (decisão do dono, 25/11/2026).
+ *   • `teto_do_plano` — o gasto da chave da plataforma chegou ao teto em dólar.
+ *   • `franquia_do_plano` — a franquia de conversas encheu e este contato ainda
+ *     não está nela. Quem já foi atendido no ciclo continua sendo.
+ */
+export type CausaDoBloqueioDoPlano = 'plano_sem_teto' | 'teto_do_plano' | 'franquia_do_plano';
+
+/**
+ * Razão gravada em `conversations.last_handoff_reason` quando é o PLANO que
+ * para a IA. Distinta de `HANDOFF_REASON_ORCAMENTO` de propósito: lá o remédio é
+ * a própria empresa subir o orçamento dela em Uso de IA; aqui é pacote extra ou
+ * chave própria. Com a mesma razão, o resumo mandava o atendente ao lugar errado.
+ */
+export const HANDOFF_REASON_IA_DO_PLANO = 'ia_do_plano';
+
+/** As duas saídas, numa frase só, para todo texto do plano dizer a mesma coisa. */
+export const SAIDAS_DA_IA_DO_PLANO =
+  'Para a IA voltar: fale com a ArvisX para contratar um pacote extra, ou cadastre uma chave de IA própria em IA › Credenciais.';
+
 export const TITULO_TETO_DO_PLANO = 'O uso de IA do plano acabou';
-export const CORPO_TETO_DO_PLANO =
-  'O uso de IA incluído no plano acabou neste mês. As conversas foram para a equipe. ' +
-  'Troque de plano em Configurações › Plano e cobrança, cadastre uma chave de IA própria ou aguarde o próximo mês.';
+/** O título do aviso quando o plano não tem limite de IA configurado (falha fechada). */
+export const TITULO_PLANO_SEM_TETO = 'A IA incluída no plano não está liberada';
+
+const FOI_PARA_A_EQUIPE = 'A IA parou de responder e as conversas foram para a equipe.';
+
+/** O corpo do aviso da Central, por causa. Sempre com as duas saídas. */
+export const CORPO_DO_BLOQUEIO_DO_PLANO: Record<CausaDoBloqueioDoPlano, string> = {
+  plano_sem_teto: `O plano desta empresa não tem limite de uso de IA configurado, e por isso a IA incluída não foi liberada. ${FOI_PARA_A_EQUIPE} ${SAIDAS_DA_IA_DO_PLANO}`,
+  teto_do_plano: `O uso de IA incluído no plano acabou neste ciclo. ${FOI_PARA_A_EQUIPE} ${SAIDAS_DA_IA_DO_PLANO}`,
+  franquia_do_plano: `As conversas com IA incluídas no plano acabaram neste ciclo. Quem já estava sendo atendido pela IA continua; as conversas novas foram para a equipe. ${SAIDAS_DA_IA_DO_PLANO}`,
+};
+/** Compatibilidade: o corpo do caso de sempre (teto em dólar atingido). */
+export const CORPO_TETO_DO_PLANO = CORPO_DO_BLOQUEIO_DO_PLANO.teto_do_plano;
+
+export const TITULO_DO_BLOQUEIO_DO_PLANO: Record<CausaDoBloqueioDoPlano, string> = {
+  plano_sem_teto: TITULO_PLANO_SEM_TETO,
+  teto_do_plano: TITULO_TETO_DO_PLANO,
+  franquia_do_plano: TITULO_TETO_DO_PLANO,
+};
+
+const RECUSADA = 'chamada recusada antes de sair byte para o provedor';
+const ONDE_VER = '(agent_inbox_items kind=budget_exceeded ref_kind=plano)';
+
 /** Vai para `llm_calls.error_message` e para o `last_error` da fila — a instrução numa linha. */
-export const MOTIVO_TETO_DO_PLANO =
-  'uso de IA incluído no plano da empresa esgotado neste mês — chamada recusada antes de sair byte para o provedor; troque de plano em Configurações › Plano e cobrança, cadastre uma chave de IA própria ou aguarde a virada do mês (agent_inbox_items kind=budget_exceeded ref_kind=plano)';
+export const MOTIVO_DO_BLOQUEIO_DO_PLANO: Record<CausaDoBloqueioDoPlano, string> = {
+  plano_sem_teto: `o plano da empresa não tem limite de IA configurado e a IA incluída não foi liberada — ${RECUSADA}; fale com a ArvisX ou cadastre uma chave de IA própria em IA › Credenciais ${ONDE_VER}`,
+  teto_do_plano: `uso de IA incluído no plano da empresa esgotado neste ciclo — ${RECUSADA}; fale com a ArvisX para um pacote extra ou cadastre uma chave de IA própria em IA › Credenciais ${ONDE_VER}`,
+  franquia_do_plano: `conversas com IA incluídas no plano esgotadas neste ciclo — ${RECUSADA}; fale com a ArvisX para um pacote extra ou cadastre uma chave de IA própria em IA › Credenciais ${ONDE_VER}`,
+};
+/** Compatibilidade: o motivo do caso de sempre (teto em dólar atingido). */
+export const MOTIVO_TETO_DO_PLANO = MOTIVO_DO_BLOQUEIO_DO_PLANO.teto_do_plano;
+
+const ASSUMA = 'o lead NÃO pediu atendimento humano. Assuma a conversa.';
+const DEPOIS = 'Depois, use "Devolver ao automático" no cabeçalho da conversa.';
+
+/**
+ * O que o atendente lê quando assume uma conversa que o PLANO devolveu. Texto
+ * fixo, sem modelo: o desvio existe justamente porque a IA não pode ser chamada.
+ */
+export const RESUMO_DO_HANDOFF_PELO_PLANO: Record<CausaDoBloqueioDoPlano, string> = {
+  plano_sem_teto: `A IA não respondeu porque o plano desta empresa não tem limite de uso de IA configurado — ${ASSUMA} ${SAIDAS_DA_IA_DO_PLANO} ${DEPOIS}`,
+  teto_do_plano: `A IA parou de responder porque o uso de IA incluído no plano acabou neste ciclo — ${ASSUMA} ${SAIDAS_DA_IA_DO_PLANO} ${DEPOIS}`,
+  franquia_do_plano: `A IA não atendeu este contato porque as conversas com IA incluídas no plano acabaram neste ciclo — ${ASSUMA} ${SAIDAS_DA_IA_DO_PLANO} ${DEPOIS}`,
+};
+
+/** Título do item da Central que o handoff pelo plano abre. */
+export const TITULO_DO_HANDOFF_PELO_PLANO = 'IA do plano indisponível — assumir a conversa';
 
 export type VereditoDoPlano =
   | {
       acao: 'seguir';
-      porque: 'chave_de_emergencia' | 'chave_da_organizacao' | 'purpose_isento' | 'sem_teto' | 'abaixo_do_teto';
+      porque:
+        | 'chave_de_emergencia'
+        | 'chave_da_organizacao'
+        | 'purpose_isento'
+        /** Cobrança desligada na instalação, ou empresa sem assinatura (isenta). */
+        | 'sem_assinatura'
+        | 'dentro_do_plano';
     }
-  | { acao: 'bloquear'; porque: 'teto_do_plano' };
+  | { acao: 'bloquear'; porque: CausaDoBloqueioDoPlano };
 
 /**
- * A decisão do teto do plano, pura. Só `chave === 'off'` afrouxa: é o
+ * A decisão da IA do plano, pura. Só `chave === 'off'` afrouxa: é o
  * interruptor único do dono (D-9). `'avisar'` rebaixa o orçamento da org, e o
- * teto do plano não é da org.
+ * plano não é da org.
+ *
+ * A ordem: quem não é alcançado sai primeiro (emergência, chave própria,
+ * diagnóstico e guardrail, empresa sem assinatura); depois a falha fechada do
+ * plano sem teto; depois o teto em dólar; por último a franquia.
  */
 export function decidirTetoDoPlano(e: {
+  /** `false` = cobrança desligada ou empresa isenta: a IA segue como sempre. */
+  comAssinatura: boolean;
   tetoUsdCents: number | null;
+  /** Gasto da chave da PLATAFORMA no ciclo. */
   gastoUsdCents: number;
+  /** `null` = o plano não tem franquia de conversas. */
+  franquiaConversas: number | null;
+  /** Contatos distintos atendidos pela chave da plataforma no ciclo. */
+  conversas: number;
+  /**
+   * O contato desta chamada já foi contado neste ciclo? `null` = a chamada não
+   * tem contato (não é conversa) ou ninguém conseguiu saber: a franquia não a barra.
+   */
+  contatoJaContado: boolean | null;
   origemDaChave: OrigemDaChaveLlm;
   purpose: string;
   chave: ChaveDeOrcamento;
@@ -469,39 +570,39 @@ export function decidirTetoDoPlano(e: {
   if (e.chave === 'off') return { acao: 'seguir', porque: 'chave_de_emergencia' };
   if (e.origemDaChave !== 'chave_da_instalacao') return { acao: 'seguir', porque: 'chave_da_organizacao' };
   if (ehPurposeIsento(e.purpose)) return { acao: 'seguir', porque: 'purpose_isento' };
-  if (e.tetoUsdCents === null) return { acao: 'seguir', porque: 'sem_teto' };
-  if (e.gastoUsdCents < e.tetoUsdCents) return { acao: 'seguir', porque: 'abaixo_do_teto' };
-  return { acao: 'bloquear', porque: 'teto_do_plano' };
+  if (!e.comAssinatura) return { acao: 'seguir', porque: 'sem_assinatura' };
+  if (e.tetoUsdCents === null) return { acao: 'bloquear', porque: 'plano_sem_teto' };
+  if (e.gastoUsdCents >= e.tetoUsdCents) return { acao: 'bloquear', porque: 'teto_do_plano' };
+  if (e.franquiaConversas !== null && e.conversas >= e.franquiaConversas && e.contatoJaContado === false) {
+    return { acao: 'bloquear', porque: 'franquia_do_plano' };
+  }
+  return { acao: 'seguir', porque: 'dentro_do_plano' };
 }
 
-const RECURSO_TETO_DE_IA: RecursoDoPlano = 'ia_usd_cents';
-
 /**
- * Lê o teto e o gasto numa ida, e fecha o item do plano que perdeu a razão.
+ * Lê o plano e o uso numa ida, e fecha o item do plano que perdeu a razão.
  *
- * Parâmetros: `$1` organization_id, `$2` o recurso (`'ia_usd_cents'`).
+ * Parâmetro: `$1` organization_id.
  *
- * Sem teto — a instalação de empresa única, com a cobrança desligada —, o gasto
- * NÃO é somado: essa instalação não paga uma soma de `llm_calls` por chamada por
- * uma capacidade que não usa.
+ * Quem soma é `public.fn_ia_do_plano` (migration 9825): só a chave da
+ * plataforma, no ciclo. Empresa sem assinatura e cobrança desligada voltam com
+ * tudo nulo e NADA é somado — a instalação de empresa única não paga uma soma
+ * de `llm_calls` por chamada por uma capacidade que não usa.
+ *
+ * As duas primeiras colunas são `teto` e `gasto`, nesta ordem: é o que o
+ * invariante `tests/invariants/teto-do-plano.test.ts` lê.
  *
  * LAÇO DE RETORNO: o `budget_exceeded` do PLANO aberto é resolvido quando o gate
- * perdeu a razão de bloquear — gasto abaixo do teto (virou o mês, ou o plano
- * subiu) OU teto nenhum (a empresa ficou isenta, ou o plano perdeu o teto). A
- * mesma régua de `SQL_ORCAMENTO`: sem o caso do teto nulo, o aviso "as conversas
- * foram para a equipe" ficaria aceso para sempre, porque não há outro resolvedor.
- * A cobrança DESLIGADA não chega aqui, salvo a janela do memo (o gate nem roda o
- * statement); quem fecha esse caso é `fn_cobranca_liberar_suspensoes`, no ato de
- * desligar.
+ * perdeu a razão de bloquear — empresa sem assinatura (ficou isenta, ou a
+ * cobrança foi desligada), ou plano COM teto, gasto abaixo dele e franquia com
+ * folga (virou o ciclo, o plano subiu, ou a empresa trocou de plano). O plano
+ * SEM teto com assinatura deixa o item aberto: ali o bloqueio continua valendo.
  */
 export const SQL_TETO_DO_PLANO = `
-with plano as (
-  select public.fn_limite_do_plano($1, $2) as teto
-),
-leitura as (
-  select teto,
-         case when teto is null then null else public.fn_gasto_de_ia_do_mes($1) end as gasto
-    from plano
+with leitura as (
+  select p.teto, p.gasto, p.com_assinatura, p.franquia, p.conversas,
+         p.ciclo_inicio, p.ciclo_fim, p.pelo_periodo_pago
+    from public.fn_ia_do_plano($1) p
 ),
 retrata as (
   update agent_inbox_items set status = 'resolved'
@@ -509,38 +610,99 @@ retrata as (
      and kind = 'budget_exceeded'
      and ref_kind = 'plano'
      and status = 'open'
-     and ((select teto from leitura) is null or (select gasto from leitura) < (select teto from leitura))
+     and (
+       not (select com_assinatura from leitura)
+       or (
+         (select teto from leitura) is not null
+         and (select gasto from leitura) < (select teto from leitura)
+         and ((select franquia from leitura) is null
+              or (select conversas from leitura) < (select franquia from leitura))
+       )
+     )
   returning 1
 )
-select teto, gasto from leitura;
+select teto, gasto, com_assinatura, franquia, conversas, ciclo_inicio, ciclo_fim, pelo_periodo_pago from leitura;
 `;
 
-export type LeituraDoTetoDoPlano =
-  | { tetoUsdCents: number | null; gastoUsdCents: number }
-  | { indisponivel: string };
+/** O contato já foi contado na franquia deste ciclo? `$1` organização, `$2` contato. */
+export const SQL_CONTATO_NA_FRANQUIA = 'select public.fn_contato_na_franquia($1, $2) as ja';
+
+export interface UsoDaIaDoPlano {
+  comAssinatura: boolean;
+  tetoUsdCents: number | null;
+  gastoUsdCents: number;
+  franquiaConversas: number | null;
+  conversas: number;
+  cicloInicio: Date | null;
+  cicloFim: Date | null;
+  /** `true` = o ciclo é o período pago da assinatura; `false` = mês-calendário. */
+  peloPeriodoPago: boolean;
+}
+
+export type LeituraDoTetoDoPlano = UsoDaIaDoPlano | { indisponivel: string };
+
+function causaDaLeitura(err: unknown): string {
+  const codigo = (err as { code?: unknown } | null)?.code;
+  const texto = err instanceof Error ? err.message : String(err);
+  return `${typeof codigo === 'string' ? codigo : 'sem_sqlstate'}: ${texto}`.slice(0, 300);
+}
+
+const dataOuNula = (v: unknown): Date | null =>
+  v instanceof Date ? v : typeof v === 'string' && v !== '' ? new Date(v) : null;
+
+/** A linha de `fn_ia_do_plano` (pelo `pg` ou pelo PostgREST) como o domínio a lê. */
+export function usoDaLinha(linha: Record<string, unknown> | null | undefined): UsoDaIaDoPlano {
+  const numeroOuNulo = (v: unknown) => (v === null || v === undefined ? null : Number(v));
+  return {
+    comAssinatura: linha?.com_assinatura === true,
+    tetoUsdCents: numeroOuNulo(linha?.teto),
+    gastoUsdCents: Number(linha?.gasto ?? 0),
+    franquiaConversas: numeroOuNulo(linha?.franquia),
+    conversas: Number(linha?.conversas ?? 0),
+    cicloInicio: dataOuNula(linha?.ciclo_inicio),
+    cicloFim: dataOuNula(linha?.ciclo_fim),
+    peloPeriodoPago: linha?.pelo_periodo_pago === true,
+  };
+}
 
 /**
- * Nunca lança. Erro → `indisponivel` com o SQLSTATE, e quem chama SEGUE: o teto
- * do plano falhando não pode levar junto o orçamento da org, que é consultado
- * depois, por outro statement.
+ * Nunca lança. Erro → `indisponivel` com o SQLSTATE, e quem chama SEGUE, com
+ * log (decisão do dono, 25/11/2026): a leitura do plano falhando não pode calar
+ * o atendimento de toda empresa, nem levar junto o orçamento da org, que é
+ * consultado depois, por outro statement.
  */
 export async function lerTetoDoPlano(
   db: Pick<pg.Pool, 'query'>,
   organizationId: string,
 ): Promise<LeituraDoTetoDoPlano> {
   try {
-    const { rows } = await db.query<{ teto: number | string | null; gasto: number | string | null }>(
-      SQL_TETO_DO_PLANO,
-      [organizationId, RECURSO_TETO_DE_IA],
-    );
-    const linha = rows[0];
-    return {
-      tetoUsdCents: linha?.teto === null || linha?.teto === undefined ? null : Number(linha.teto),
-      gastoUsdCents: Number(linha?.gasto ?? 0),
-    };
+    const { rows } = await db.query<Record<string, unknown>>(SQL_TETO_DO_PLANO, [organizationId]);
+    return usoDaLinha(rows[0]);
   } catch (err) {
-    const codigo = (err as { code?: unknown } | null)?.code;
-    const texto = err instanceof Error ? err.message : String(err);
-    return { indisponivel: `${typeof codigo === 'string' ? codigo : 'sem_sqlstate'}: ${texto}`.slice(0, 300) };
+    return { indisponivel: causaDaLeitura(err) };
   }
+}
+
+/**
+ * O contato já está na franquia do ciclo? Só é perguntado quando a franquia
+ * encheu — o caminho comum não paga esta ida. Falha de leitura = `null`: sem
+ * saber, a franquia não barra (o teto em dólar continua barrando).
+ */
+export async function lerContatoNaFranquia(
+  db: Pick<pg.Pool, 'query'>,
+  organizationId: string,
+  contactId: string | null | undefined,
+): Promise<boolean | null> {
+  if (!contactId) return null;
+  try {
+    const { rows } = await db.query<{ ja: boolean | null }>(SQL_CONTATO_NA_FRANQUIA, [organizationId, contactId]);
+    return rows[0]?.ja === true;
+  } catch {
+    return null;
+  }
+}
+
+/** A franquia encheu? É a única condição em que vale perguntar pelo contato. */
+export function franquiaCheia(uso: UsoDaIaDoPlano): boolean {
+  return uso.comAssinatura && uso.franquiaConversas !== null && uso.conversas >= uso.franquiaConversas;
 }

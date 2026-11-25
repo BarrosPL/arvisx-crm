@@ -28,13 +28,18 @@ import {
   AVISO_CORPO,
   AVISO_TITULO,
   BLOQUEIO_TITULO,
-  CORPO_TETO_DO_PLANO,
+  CORPO_DO_BLOQUEIO_DO_PLANO,
   corpoDoBloqueio,
   decidirOrcamento,
   decidirTetoDoPlano,
+  franquiaCheia,
+  HANDOFF_REASON_IA_DO_PLANO,
   HANDOFF_REASON_ORCAMENTO,
-  TITULO_TETO_DO_PLANO,
+  TITULO_DO_BLOQUEIO_DO_PLANO,
+  usoDaLinha,
+  type CausaDoBloqueioDoPlano,
 } from "@/lib/agent-engine/edge/llm/orcamento";
+import { origemDaChaveGravada } from "@/lib/ai/usage/origem-da-chave";
 import type { OrigemDaChaveLlm } from "@/lib/agent-engine/edge/llm/credentials";
 import { computeCost } from "@/lib/ai/cost";
 import { silencioVigente } from "@/lib/inbox/comando-da-conversa";
@@ -232,6 +237,8 @@ export async function processMessageReceived(row: EventRow): Promise<ProcessResu
   // são determinísticos e custam ZERO token — não há razão para um teto de GASTO
   // barrá-los. Mesma razão pela qual o guard de modelo-sem-provedor, logo abaixo,
   // também fica depois de G1/G4.
+  const origemDaChave: OrigemDaChaveLlm =
+    resolvido.origem === "padrao" ? "chave_da_instalacao" : "credencial_da_organizacao";
   const veto = await vetoPorTetoDeGasto({
     orgId: ctx.organization_id,
     conversationId: ctx.conversation_id,
@@ -239,7 +246,8 @@ export async function processMessageReceived(row: EventRow): Promise<ProcessResu
     leadId,
     // O teto de IA do PLANO só vincula a chave da instalação (spec cobrança §5):
     // é por isso que a resolução do modelo agora vem antes deste veto.
-    origemDaChave: resolvido.origem === "padrao" ? "chave_da_instalacao" : "credencial_da_organizacao",
+    origemDaChave,
+    contactId: ctx.contact_id,
   });
   if (veto !== null) {
     logger.info("[ai-response-worker] skip", {
@@ -299,6 +307,8 @@ export async function processMessageReceived(row: EventRow): Promise<ProcessResu
       logInvocation({
         organization_id: ctx.organization_id,
         agent_id: ctx.agent.id,
+        contact_id: ctx.contact_id,
+        origem_da_chave: origemDaChaveGravada(origemDaChave),
         conversation_id: ctx.conversation_id,
         message_id: persisted.outbound_message_id,
         invocation_kind: "bot_respond",
@@ -330,6 +340,8 @@ export async function processMessageReceived(row: EventRow): Promise<ProcessResu
     logInvocation({
       organization_id: ctx.organization_id,
       agent_id: ctx.agent.id,
+      contact_id: ctx.contact_id,
+      origem_da_chave: origemDaChaveGravada(origemDaChave),
       conversation_id: ctx.conversation_id,
       message_id: persisted.outbound_message_id,
       invocation_kind: "bot_respond",
@@ -358,6 +370,8 @@ export async function processMessageReceived(row: EventRow): Promise<ProcessResu
     logInvocation({
       organization_id: ctx.organization_id,
       agent_id: ctx.agent.id,
+      contact_id: ctx.contact_id,
+      origem_da_chave: origemDaChaveGravada(origemDaChave),
       conversation_id: ctx.conversation_id,
       message_id: ctx.message_id,
       invocation_kind: "bot_respond",
@@ -423,6 +437,8 @@ async function vetoPorTetoDeGasto(alvo: {
   conversationId: string;
   leadId: string | null;
   origemDaChave: OrigemDaChaveLlm;
+  /** O contato da conversa: é por ele que a franquia do plano sabe quem já foi atendido. */
+  contactId?: string | null;
 }): Promise<SkipDecision | null> {
   const orgId = alvo.orgId;
   let status: BudgetStatus;
@@ -448,10 +464,7 @@ async function vetoPorTetoDeGasto(alvo: {
   // O TETO DE IA DO PLANO vem antes do orçamento da org, e só vincula a chave
   // da instalação (spec cobrança §5).
   if (alvo.origemDaChave === "chave_da_instalacao") {
-    const vetoDoPlano = await vetoPorTetoDoPlano(admin, alvo, {
-      gastoCents: status.current_month_consumed_cents,
-      chave: status.enforcement_env,
-    });
+    const vetoDoPlano = await vetoPorTetoDoPlano(admin, alvo, { chave: status.enforcement_env });
     if (vetoDoPlano !== null) return vetoDoPlano;
   }
 
@@ -556,9 +569,10 @@ async function vetoPorTetoDeGasto(alvo: {
 }
 
 /**
- * O teto de IA do PLANO no caminho legado — espelho do passo (2) de
- * `aplicarOrcamento`. Ler o teto falhou → segue: o orçamento da org continua
- * aplicado logo depois, pelo chamador.
+ * A IA do PLANO no caminho legado — espelho do passo (2) de `aplicarOrcamento`:
+ * a mesma função do banco (`fn_ia_do_plano`, só a chave da plataforma, no
+ * ciclo) e a MESMA decisão pura. Ler o plano falhou → segue, com log: o
+ * orçamento da org continua aplicado logo depois, pelo chamador.
  */
 async function vetoPorTetoDoPlano(
   admin: ReturnType<typeof createAdminClient>,
@@ -568,24 +582,36 @@ async function vetoPorTetoDoPlano(
     conversationId: string;
     leadId: string | null;
     origemDaChave: OrigemDaChaveLlm;
+    contactId?: string | null;
   },
-  leitura: { gastoCents: number; chave: BudgetStatus["enforcement_env"] },
+  leitura: { chave: BudgetStatus["enforcement_env"] },
 ): Promise<SkipDecision | null> {
-  const { data, error } = await admin.rpc("fn_limite_do_plano", {
-    p_org: alvo.orgId,
-    p_recurso: "ia_usd_cents",
-  });
+  const { data, error } = await admin.rpc("fn_ia_do_plano", { p_org: alvo.orgId });
   if (error) {
-    logger.warn("[ai-response] teto do plano não pôde ser lido — a resposta SEGUE sem ele", {
+    logger.warn("[ai-response] a IA do plano não pôde ser lida — a resposta SEGUE sem o limite do plano", {
       organization_id: alvo.orgId,
       causa: `${error.code ?? "sem_sqlstate"}: ${error.message}`,
     });
     return null;
   }
-  const tetoCents = typeof data === "number" ? data : null;
+  const linha = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null | undefined;
+  const uso = usoDaLinha(linha);
+  // O contato só é perguntado quando a franquia encheu.
+  let contatoJaContado: boolean | null = null;
+  if (franquiaCheia(uso) && alvo.contactId) {
+    const { data: ja, error: erroDoContato } = await admin.rpc("fn_contato_na_franquia", {
+      p_org: alvo.orgId,
+      p_contato: alvo.contactId,
+    });
+    contatoJaContado = erroDoContato ? null : ja === true;
+  }
   const veredito = decidirTetoDoPlano({
-    tetoUsdCents: tetoCents,
-    gastoUsdCents: leitura.gastoCents,
+    comAssinatura: uso.comAssinatura,
+    tetoUsdCents: uso.tetoUsdCents,
+    gastoUsdCents: uso.gastoUsdCents,
+    franquiaConversas: uso.franquiaConversas,
+    conversas: uso.conversas,
+    contatoJaContado,
     origemDaChave: alvo.origemDaChave,
     purpose: "agent_turn",
     chave: leitura.chave,
@@ -595,14 +621,15 @@ async function vetoPorTetoDoPlano(
   await abrirItemDeOrcamento(admin, alvo.orgId, {
     kind: "budget_exceeded",
     severity: "critical",
-    title: TITULO_TETO_DO_PLANO,
-    body: CORPO_TETO_DO_PLANO,
+    title: TITULO_DO_BLOQUEIO_DO_PLANO[veredito.porque],
+    body: CORPO_DO_BLOQUEIO_DO_PLANO[veredito.porque],
     refKind: "plano",
   });
   return devolverAoHumanoPorTeto(alvo, {
     source: "teto_do_plano",
-    gastoCents: leitura.gastoCents,
-    tetoCents: tetoCents ?? 0,
+    causaDoPlano: veredito.porque,
+    gastoCents: uso.gastoUsdCents,
+    tetoCents: uso.tetoUsdCents ?? 0,
   });
 }
 
@@ -612,24 +639,38 @@ async function vetoPorTetoDoPlano(
  * veredito — e o alerta aberto, que promete fila humana, mentiria.
  * `triggerHandoff` é o irmão local de `performHumanHandoff` (este worker não
  * pode importar o engine) e nunca lança.
+ *
+ * A RAZÃO muda com quem recusou: o plano grava `ia_do_plano`, o orçamento da
+ * empresa grava `orcamento_de_ia` — o remédio é outro em cada caso.
  */
 async function devolverAoHumanoPorTeto(
   alvo: { serviceBoundary?: ServiceBoundary; orgId: string; conversationId: string; leadId: string | null },
-  teto: { source: "teto_de_gasto" | "teto_do_plano"; gastoCents: number; tetoCents: number },
+  teto: {
+    source: "teto_de_gasto" | "teto_do_plano";
+    causaDoPlano?: CausaDoBloqueioDoPlano;
+    gastoCents: number;
+    tetoCents: number;
+  },
 ): Promise<SkipDecision> {
   await triggerHandoff({
     conversationId: alvo.conversationId,
     serviceBoundary: alvo.serviceBoundary,
     organizationId: alvo.orgId,
-    reason: HANDOFF_REASON_ORCAMENTO,
+    reason: teto.source === "teto_do_plano" ? HANDOFF_REASON_IA_DO_PLANO : HANDOFF_REASON_ORCAMENTO,
     origem: "legado_teto",
     leadId: alvo.leadId,
-    metadata: { source: teto.source, gasto_cents: teto.gastoCents, teto_cents: teto.tetoCents },
+    metadata: {
+      source: teto.source,
+      ...(teto.causaDoPlano ? { causa_do_plano: teto.causaDoPlano } : {}),
+      gasto_cents: teto.gastoCents,
+      teto_cents: teto.tetoCents,
+    },
   });
   logger.warn("[ai-response] resposta recusada pelo teto de gasto — conversa na fila humana", {
     organization_id: alvo.orgId,
     conversation_id: alvo.conversationId,
     fonte: teto.source,
+    causa_do_plano: teto.causaDoPlano ?? null,
     gasto_cents: teto.gastoCents,
     teto_cents: teto.tetoCents,
   });

@@ -51,18 +51,22 @@ import {
   AVISO_CORPO,
   AVISO_TITULO,
   BLOQUEIO_TITULO,
-  CORPO_TETO_DO_PLANO,
+  CORPO_DO_BLOQUEIO_DO_PLANO,
   corpoDoBloqueio,
   decidirOrcamento,
   decidirTetoDoPlano,
+  franquiaCheia,
+  lerContatoNaFranquia,
   lerTetoDoPlano,
-  MOTIVO_TETO_DO_PLANO,
-  TITULO_TETO_DO_PLANO,
+  MOTIVO_DO_BLOQUEIO_DO_PLANO,
+  TITULO_DO_BLOQUEIO_DO_PLANO,
   normalizarModoDeOrcamento,
   LIMIAR_PADRAO_PCT,
   SQL_ORCAMENTO,
+  type CausaDoBloqueioDoPlano,
   type ChaveDeOrcamento,
 } from './orcamento';
+import { origemDaChaveGravada } from '../../../ai/usage/origem-da-chave';
 import { corpoComoObjeto, custoInformadoPeloOpenRouter, custoTerraPorPassos, costCents, gravacaoDeUmaHora } from './pricing';
 import { custoDoModeloForaDoMotor } from './pricing-do-catalogo';
 import { chaveDeOrcamentoDaInstalacao } from '../../../instalacao/comportamento';
@@ -99,11 +103,21 @@ export class LlmBudgetExceededError extends Error {
    * REPONTAMENTO da fila é da onda seguinte; o rótulo entra aqui, com o erro.
    */
   readonly terminal = true;
-  /** `motivo` só muda no teto do PLANO (`MOTIVO_TETO_DO_PLANO`); o padrão é o do orçamento da org. */
+  /**
+   * `null` = quem recusou foi o orçamento da ORGANIZAÇÃO. Não-nulo = foi o
+   * PLANO, e por qual causa. Quem lê é a escolta do turno
+   * (`comHandoffSeOrcamentoAcabar`): a razão do handoff e o resumo que o
+   * atendente lê mudam, porque o remédio é outro (pacote extra ou chave
+   * própria, e não o orçamento da empresa em Uso de IA).
+   */
+  readonly causaDoPlano: CausaDoBloqueioDoPlano | null;
+  /** `motivo` só muda quando é o PLANO que recusa; o padrão é o do orçamento da org. */
   constructor(
     motivo = 'orçamento mensal de IA da organização atingido — chamada recusada antes de sair byte para o provedor; ajuste o teto em Uso de IA › Orçamento, desligue a proteção, ou aguarde a virada do mês (agent_inbox_items kind=budget_exceeded)',
+    causaDoPlano: CausaDoBloqueioDoPlano | null = null,
   ) {
     super(motivo);
+    this.causaDoPlano = causaDoPlano;
   }
 }
 
@@ -464,7 +478,7 @@ export async function aplicarOrcamento(d: EntradaDoGate): Promise<void> {
     return;
   }
 
-  // (2) O TETO DO PLANO, antes do orçamento da org: o `modo 'off'` dela não
+  // (2) A IA DO PLANO, antes do orçamento da org: o `modo 'off'` dela não
   // desliga o que o dono da instalação vende. Só a chave da instalação consulta
   // (a chave própria é paga pela empresa). Consulta PRÓPRIA, e não pendurada em
   // `SQL_CONFIG_COM_ORCAMENTO`: o catch de lá troca para a query legada em
@@ -472,6 +486,12 @@ export async function aplicarOrcamento(d: EntradaDoGate): Promise<void> {
   // levaria junto o orçamento que já existe.
   // Com a cobrança desligada — a instalação de empresa única, quase todas —
   // o statement nem sai: a chave vem do memo de módulos (MEMO_DO_MODULO_MS).
+  //
+  // Três recusas possíveis (`decidirTetoDoPlano`): plano com assinatura e SEM
+  // teto (falha fechada — antes seguia sem limite), teto em dólar atingido, e
+  // franquia de conversas cheia para um contato novo. O que NÃO é recusado, por
+  // decisão do dono (25/11/2026): empresa isenta, cobrança desligada, e a
+  // leitura que falhou — esta segue, com o log abaixo.
   if (d.origemDaChave === 'chave_da_instalacao' && (await cobrancaLigadaComMemo(d.db))) {
     const plano = await lerTetoDoPlano(d.db, d.organizationId);
     if ('indisponivel' in plano) {
@@ -479,24 +499,34 @@ export async function aplicarOrcamento(d: EntradaDoGate): Promise<void> {
         ...comum,
         causa: plano.indisponivel,
       });
-    } else if (
-      decidirTetoDoPlano({
+    } else {
+      // O contato só é perguntado quando a franquia encheu: o caminho comum
+      // não paga esta segunda ida ao banco.
+      const contatoJaContado = franquiaCheia(plano)
+        ? await lerContatoNaFranquia(d.db, d.organizationId, d.input.leadId)
+        : null;
+      const veredito = decidirTetoDoPlano({
+        comAssinatura: plano.comAssinatura,
         tetoUsdCents: plano.tetoUsdCents,
         gastoUsdCents: plano.gastoUsdCents,
+        franquiaConversas: plano.franquiaConversas,
+        conversas: plano.conversas,
+        contatoJaContado,
         origemDaChave: d.origemDaChave,
         purpose: d.purpose,
         chave: d.chave,
-      }).acao === 'bloquear'
-    ) {
-      await recusarPorTeto(d, {
-        refKind: 'plano',
-        titulo: TITULO_TETO_DO_PLANO,
-        corpo: CORPO_TETO_DO_PLANO,
-        erro: new LlmBudgetExceededError(MOTIVO_TETO_DO_PLANO),
-        gastoCents: plano.gastoUsdCents,
-        tetoCents: plano.tetoUsdCents ?? 0,
-        inicio,
       });
+      if (veredito.acao === 'bloquear') {
+        await recusarPorTeto(d, {
+          refKind: 'plano',
+          titulo: TITULO_DO_BLOQUEIO_DO_PLANO[veredito.porque],
+          corpo: CORPO_DO_BLOQUEIO_DO_PLANO[veredito.porque],
+          erro: new LlmBudgetExceededError(MOTIVO_DO_BLOQUEIO_DO_PLANO[veredito.porque], veredito.porque),
+          gastoCents: plano.gastoUsdCents,
+          tetoCents: plano.tetoUsdCents ?? 0,
+          inicio,
+        });
+      }
     }
   }
 
@@ -623,6 +653,7 @@ async function recusarPorTeto(
     provider: d.provider,
     model: d.model,
     origem: d.origem,
+    origemDaChave: d.origemDaChave,
     latencyMs: Date.now() - r.inicio,
     erro: r.erro,
   }).catch(() => {
@@ -728,6 +759,8 @@ async function registrarRecusaDeEnderecoSemChave(d: {
     provider: d.provider,
     model: d.model,
     origem: d.origem,
+    // Esta recusa só existe quando a chave carregada é a da instalação.
+    origemDaChave: 'chave_da_instalacao',
     latencyMs: 0,
     erro,
   }).catch(() => {
@@ -1286,6 +1319,7 @@ export async function runModelCall(db: pg.Pool, cfg: LlmEdgeConfig, input: RunMo
       provider: config.provider,
       model,
       origem: origemDaFalha,
+      origemDaChave: config.origemDaChave,
       latencyMs: Date.now() - startedAt,
       erro: err,
     }).catch(() => {
@@ -1345,6 +1379,7 @@ export async function runModelCall(db: pg.Pool, cfg: LlmEdgeConfig, input: RunMo
         provider: config.provider,
         model,
         origem,
+        origemDaChave: config.origemDaChave,
         latencyMs: Date.now() - startedAt,
         erro: errDaReserva,
       }).catch(() => {});
@@ -1438,9 +1473,9 @@ export async function runModelCall(db: pg.Pool, cfg: LlmEdgeConfig, input: RunMo
         input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, cost_cents, latency_ms,
         status, origem_da_escolha, agent_id,
         passos, entrada_do_primeiro_passo, chars_sistema, chars_ferramentas, chars_mensagens,
-        partes_de_midia, prefixo_hash)
+        partes_de_midia, prefixo_hash, origem_da_chave)
      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'ok', $14, $15,
-        $16, $17, $18, $19, $20, $21, $22)
+        $16, $17, $18, $19, $20, $21, $22, $23)
      returning id`,
     [
       input.tenantId,
@@ -1465,6 +1500,9 @@ export async function runModelCall(db: pg.Pool, cfg: LlmEdgeConfig, input: RunMo
       composicao?.charsMensagens ?? null,
       composicao?.partesDeMidia ?? null,
       composicao?.prefixoHash ?? null,
+      // De quem é a chave que pagou (migration 9825): é por ela que o teto e a
+      // franquia do plano somam só o que a plataforma pagou.
+      origemDaChaveGravada(config.origemDaChave),
     ],
   );
 
@@ -1636,6 +1674,8 @@ async function registrarFalha(
     provider: string;
     model: string;
     origem: string;
+    /** De quem era a chave carregada quando a chamada falhou ou foi recusada. */
+    origemDaChave: OrigemDaChaveLlm;
     latencyMs: number;
     erro: unknown;
   },
@@ -1645,8 +1685,8 @@ async function registrarFalha(
     `insert into llm_calls
        (organization_id, contact_id, job_id, variant_id, purpose, provider, model,
         input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, cost_cents, latency_ms,
-        status, error_code, error_message, http_status, origem_da_escolha, agent_id)
-     values ($1, $2, $3, $4, $5, $6, $7, 0, 0, 0, 0, null, $8, 'erro', $9, $10, $11, $12, $13)`,
+        status, error_code, error_message, http_status, origem_da_escolha, agent_id, origem_da_chave)
+     values ($1, $2, $3, $4, $5, $6, $7, 0, 0, 0, 0, null, $8, 'erro', $9, $10, $11, $12, $13, $14)`,
     [
       d.input.tenantId,
       d.input.leadId ?? null,
@@ -1661,6 +1701,7 @@ async function registrarFalha(
       http_status,
       d.origem,
       d.input.agentId ?? null,
+      origemDaChaveGravada(d.origemDaChave),
     ],
   );
 }

@@ -1,3 +1,4 @@
+import { IaDoPlano } from "@/components/cobranca/IaDoPlano";
 import { Card } from "@/components/ui/card";
 import type { DadosDoPainel } from "@/lib/cobranca/painel";
 import { formatadorDeData } from "@/lib/cobranca/fuso";
@@ -73,14 +74,20 @@ export function PainelDaAssinatura({ dados, idioma }: { dados: DadosDoPainel; id
         <dd data-uso="assentos">{deLimite(String(uso.assentos), limite(p.max_assentos))}</dd>
         <dt>{t("Números conectados")}</dt>
         <dd data-uso="canais">{deLimite(String(uso.canais), limite(p.max_canais))}</dd>
-        <dt>{t("Uso de IA no mês")}</dt>
-        <dd data-uso="ia">
-          {deLimite(
-            usd.format(dados.gastoIaUsdCents / 100),
-            p.teto_ia_usd_cents === null ? null : usd.format(p.teto_ia_usd_cents / 100),
-          )}
-        </dd>
+        {/* Sem a leitura da IA do plano (falhou), fica o gasto do mês, como antes. */}
+        {!dados.iaDoPlano && (
+          <>
+            <dt>{t("Uso de IA no mês")}</dt>
+            <dd data-uso="ia">
+              {deLimite(
+                usd.format(dados.gastoIaUsdCents / 100),
+                p.teto_ia_usd_cents === null ? null : usd.format(p.teto_ia_usd_cents / 100),
+              )}
+            </dd>
+          </>
+        )}
       </dl>
+      {dados.iaDoPlano && <IaDoPlano ia={dados.iaDoPlano} idioma={idioma} fuso={dados.fuso} />}
     </Card>
   );
 }

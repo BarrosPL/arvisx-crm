@@ -29,7 +29,8 @@
 --   preco_cents / moeda      129,90 · 199,90 · 249,90 em EUR
 --   max_canais               3 · 6 · 12
 --   max_assentos             5 · 10 · 25
---   teto_ia_usd_cents        1200 · 3200 · 6000  (US$ 12 · 32 · 60 por mês)
+--   teto_ia_usd_cents        1200 · 3200 · 6000  (US$ 12 · 32 · 60 por ciclo)
+--   franquia_conversas_ia    300 · 800 · 1500    (bloco próprio, mais abaixo)
 --   interface_settings       {"preset":"completa"} = todas as telas, inclusive
 --                            a Equipe pronta (lib/cobranca/telas-do-plano.ts)
 --   textos da vitrine        nulos: escreva em /admin/cobranca antes de publicar
@@ -53,30 +54,31 @@ select v.id, v.nome, v.preco_cents, 'EUR', 'mes',
   ) as v (id, nome, preco_cents, max_canais, max_assentos, teto_ia_usd_cents)
 on conflict (id) do nothing;
 
--- ── FRANQUIA DE CONVERSAS COM IA — DEPENDE DA MIGRATION DA PARTE 1 ───────────
--- 300 · 800 · 1.500 conversas com IA por mês. A coluna da franquia em
--- `cobranca_planos` AINDA NÃO EXISTE: ela nasce na migration da parte 1 da
--- Tarefa 8, que espera decisão do Lucas. O nome usado aqui,
--- `franquia_conversas_ia`, é o PREVISTO; se a parte 1 escolher outro, troque
--- nas duas linhas marcadas com (*).
+-- ── FRANQUIA DE CONVERSAS COM IA (coluna da migration 9825) ──────────────────
+-- 300 · 800 · 1.500 conversas com IA por ciclo. A coluna
+-- `cobranca_planos.franquia_conversas_ia` nasce na migration 9825 (Tarefa 8,
+-- parte 1), que chega ao banco pelo deploy (`update.sh` reaplica o baseline).
 --
--- Enquanto a coluna não existir, este bloco não faz nada e não falha: avisa e
--- segue. Depois que a migration da parte 1 for aplicada, rode o arquivo de novo
--- e a franquia entra. Só preenche plano com a franquia ainda vazia: não
+-- RODE ESTE ARQUIVO DEPOIS DO DEPLOY. Num banco que ainda não recebeu a 9825 o
+-- bloco não falha: avisa que a franquia NÃO foi gravada e segue; é só rodar o
+-- arquivo de novo depois. Só preenche plano com a franquia ainda vazia: não
 -- sobrescreve valor que já foi posto.
+--
+-- ⚠️ SEM A FRANQUIA GRAVADA o plano fica só com o teto em dólar: a IA funciona,
+-- mas a tela mostra as conversas como "sem limite". Confira no SELECT do fim.
 do $franquia$
 begin
   if not exists (
     select 1 from information_schema.columns
      where table_schema = 'public' and table_name = 'cobranca_planos'
-       and column_name = 'franquia_conversas_ia'                              -- (*)
+       and column_name = 'franquia_conversas_ia'
   ) then
-    raise notice 'franquia NÃO gravada: a coluna ainda não existe (migration da parte 1). Rode este arquivo de novo depois dela.';
+    raise notice 'franquia NÃO gravada: a coluna ainda não existe (migration 9825). Rode este arquivo de novo depois do deploy.';
     return;
   end if;
   execute $sql$
     update public.cobranca_planos p
-       set franquia_conversas_ia = v.franquia                                 -- (*)
+       set franquia_conversas_ia = v.franquia
       from (values
         ('a7150008-0000-4000-8000-000000000001'::uuid, 300),
         ('a7150008-0000-4000-8000-000000000002'::uuid, 800),
@@ -88,9 +90,12 @@ end
 $franquia$;
 
 -- ── CONFERIR ─────────────────────────────────────────────────────────────────
+-- `to_jsonb(p) ->> …` em vez do nome da coluna: o SELECT também roda num banco
+-- que ainda não tem a coluna, e aí a franquia sai vazia em vez de dar erro.
 select nome, preco_cents, moeda, max_canais, max_assentos, teto_ia_usd_cents,
+       to_jsonb(p) ->> 'franquia_conversas_ia' as franquia_conversas_ia,
        oferecido_ao_cliente, interface_settings
-  from public.cobranca_planos
+  from public.cobranca_planos p
  where id in ('a7150008-0000-4000-8000-000000000001',
               'a7150008-0000-4000-8000-000000000002',
               'a7150008-0000-4000-8000-000000000003')

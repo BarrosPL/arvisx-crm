@@ -89,7 +89,12 @@ import {
   type ToolSet,
 } from '../edge/llm/run-model-call';
 import type { ProviderRegistry } from '../edge/llm/providers';
-import { HANDOFF_REASON_ORCAMENTO } from '../edge/llm/orcamento';
+import {
+  HANDOFF_REASON_IA_DO_PLANO,
+  HANDOFF_REASON_ORCAMENTO,
+  RESUMO_DO_HANDOFF_PELO_PLANO,
+  TITULO_DO_HANDOFF_PELO_PLANO,
+} from '../edge/llm/orcamento';
 import { bindingOuNulo } from '../edge/llm/binding-do-ponto';
 import { abreAvisoDoEspelhoRecusado, mirrorLeadStageToCrm } from '../edge/crm/move-lead-stage';
 import { espelhoPodeMoverPara } from '@/lib/ai/equipe-pronta/dono-de-etapa';
@@ -1064,17 +1069,25 @@ export async function comHandoffSeOrcamentoAcabar<T>(
     // diz a quem assume que o cliente NÃO pediu uma pessoa — sem isso o
     // atendente responde a um pedido que não houve. Nenhum modelo é chamado
     // aqui, e é o ponto: o motivo do desvio é justamente não haver orçamento.
+    //
+    // QUEM recusou muda o texto e a razão (Tarefa 8): quando é o PLANO, o
+    // remédio é pacote extra ou chave própria, e não o orçamento da empresa em
+    // Uso de IA — com o mesmo resumo, o atendente era mandado ao lugar errado.
+    const peloPlano = err.causaDoPlano;
     const briefing: BriefingDaPassagem = {
       ...doCheckpoint,
-      body: `${RESUMO_DO_HANDOFF_POR_ORCAMENTO}\n\n${doCheckpoint.body}`,
+      body: `${peloPlano ? RESUMO_DO_HANDOFF_PELO_PLANO[peloPlano] : RESUMO_DO_HANDOFF_POR_ORCAMENTO}\n\n${doCheckpoint.body}`,
     };
     await performHumanHandoff(
       ctx.pool,
       { tenantId: ctx.tenantId, leadId: ctx.leadId, conversationId: ctx.conversationId },
       {
-        reason: HANDOFF_REASON_ORCAMENTO,
+        // `last_handoff_reason` é texto aberto, e a razão do plano é própria.
+        // A linha da passagem (`origem`, `motivoCodigo`) tem CHECK no banco e
+        // segue no vocabulário de sempre: para ela as duas são "teto de gasto".
+        reason: peloPlano ? HANDOFF_REASON_IA_DO_PLANO : HANDOFF_REASON_ORCAMENTO,
         conversationSummary: briefing.body,
-        inboxTitle: TITULO_DO_HANDOFF_POR_ORCAMENTO,
+        inboxTitle: peloPlano ? TITULO_DO_HANDOFF_PELO_PLANO : TITULO_DO_HANDOFF_POR_ORCAMENTO,
         passagem: { origem: 'teto_de_gasto', motivoCodigo: 'orcamento_de_ia', briefing },
         avisoAoLead: aviso,
         log: ctx.log,
@@ -1082,6 +1095,7 @@ export async function comHandoffSeOrcamentoAcabar<T>(
     );
     ctx.log.warn('turno interrompido pelo teto de gasto — conversa devolvida à fila humana', {
       lead_avisado: aviso.avisado,
+      quem_recusou: peloPlano ? `plano:${peloPlano}` : 'orcamento_da_organizacao',
     });
     throw err;
   }

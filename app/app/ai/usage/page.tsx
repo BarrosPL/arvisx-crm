@@ -4,6 +4,10 @@ import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { ROLE_RANK } from "@/lib/auth/types";
 import { createClient } from "@/lib/supabase/server";
 import { BudgetCard } from "@/components/ai/BudgetCard";
+import { IaDoPlano } from "@/components/cobranca/IaDoPlano";
+import { Card } from "@/components/ui/card";
+import { lerIaDoPlanoParaATela } from "@/lib/cobranca/ia-do-plano";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getBudgetStatus } from "@/lib/ai/budget/check";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { UsageDashboardClient } from "./_client";
@@ -51,6 +55,10 @@ export default async function AiUsagePage({ searchParams }: PageProps) {
   };
 
   const budget = await getBudgetStatus(activeOrg.orgId);
+  // A IA incluída no plano (franquia e aviso). A organização vem da sessão; a
+  // função do banco só responde ao cliente de serviço. `null` = empresa sem
+  // plano, ou leitura que falhou: o bloco não aparece.
+  const iaDoPlano = await lerIaDoPlanoParaATela(createAdminClient(), activeOrg.orgId);
   const isAdmin = ROLE_RANK[activeOrg.role] >= ROLE_RANK.admin;
   const idioma = user.idioma;
 
@@ -65,6 +73,11 @@ export default async function AiUsagePage({ searchParams }: PageProps) {
           )}
         </p>
       </header>
+      {iaDoPlano ? (
+        <Card className="max-w-xl p-6">
+          <IaDoPlano ia={iaDoPlano} idioma={idioma} fuso={null} />
+        </Card>
+      ) : null}
       <BudgetCard initialData={budget} isAdmin={isAdmin} />
       <UsageDashboardClient agents={agents} initial={initial} />
     </div>

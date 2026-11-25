@@ -8,8 +8,10 @@
  *  2. régua só com o banco para as demais. Quem teve a leitura FALHANDO nesta
  *     rodada não passa pela régua: com o provedor fora, suspender seria decidir
  *     sobre uma linha velha;
- *  3. aviso de 80% do teto de IA do plano, um por empresa por mês (a função
- *     do banco deduplica); de 100% em diante quem fala é o bloqueio do motor.
+ *  3. aviso de 80% da IA incluída no plano — a franquia de conversas ou o teto
+ *     em dólar, o que estiver mais perto do fim —, um por empresa por CICLO (a
+ *     função do banco deduplica); de 100% em diante quem fala é o bloqueio do
+ *     motor. Só conta o que a chave da plataforma pagou (migration 9825).
  * Cada empresa é isolada: a falha de uma vira contagem e log, e a rodada segue.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -120,14 +122,51 @@ export async function rodadaDaCobranca(admin: SupabaseClient, deps: Dependencias
   return resumo;
 }
 
+/**
+ * O texto do aviso de 80%. A franquia em conversas é o que o cliente vê, então
+ * ela vem primeiro; o teto em dólar só é citado quando o plano não tem franquia
+ * ou quando é ele que está perto do fim. Sempre com as duas saídas.
+ */
+export function corpoDoAvisoDeIa(
+  uso: { conversas: number; franquia: number | null; gasto: number; teto: number | null },
+  t: (s: string) => string,
+): string {
+  const saidas = t(
+    "Ao chegar ao limite, a IA para e as conversas passam para a equipe. Para continuar: fale com a ArvisX para contratar um pacote extra, ou cadastre uma chave de IA própria em IA › Credenciais.",
+  );
+  const pelaFranquia =
+    uso.franquia !== null && (uso.teto === null || uso.conversas / uso.franquia >= uso.gasto / uso.teto);
+  if (pelaFranquia && uso.franquia !== null) {
+    return `${t("Neste ciclo a empresa já usou {usadas} de {total} conversas com IA incluídas no plano.")
+      .replace("{usadas}", String(uso.conversas))
+      .replace("{total}", String(uso.franquia))} ${saidas}`;
+  }
+  const pct = uso.teto !== null && uso.teto > 0 ? Math.floor((uso.gasto / uso.teto) * 100) : 0;
+  return `${t("Neste ciclo a empresa já usou {pct}% do uso de IA incluído no plano.").replace("{pct}", String(pct))} ${saidas}`;
+}
+
+/** Quanto do plano já foi usado: o maior entre a franquia e o teto. `null` = o plano não tem limite nenhum. */
+export function fracaoUsadaDoPlano(uso: {
+  conversas: number;
+  franquia: number | null;
+  gasto: number;
+  teto: number | null;
+}): number | null {
+  const partes: number[] = [];
+  if (uso.franquia !== null && uso.franquia > 0) partes.push(uso.conversas / uso.franquia);
+  if (uso.teto !== null && uso.teto > 0) partes.push(uso.gasto / uso.teto);
+  return partes.length === 0 ? null : Math.max(...partes);
+}
+
 async function avisarTetoDeIa(admin: SupabaseClient): Promise<number> {
+  // Plano com teto em dólar OU com franquia de conversas: os dois têm o que avisar.
   const { data: planos, error } = await admin
     .from("cobranca_planos")
-    .select("id, teto_ia_usd_cents")
-    .not("teto_ia_usd_cents", "is", null);
+    .select("id, teto_ia_usd_cents, franquia_conversas_ia")
+    .or("teto_ia_usd_cents.not.is.null,franquia_conversas_ia.not.is.null");
   if (error) throw new Error(`cobranca: planos ilegíveis (${error.code ?? "sem_codigo"})`);
-  const tetoDoPlano = new Map(((planos ?? []) as Array<{ id: string; teto_ia_usd_cents: number }>).map((p) => [p.id, p.teto_ia_usd_cents]));
-  if (tetoDoPlano.size === 0) return 0;
+  const comLimite = new Set(((planos ?? []) as Array<{ id: string }>).map((p) => p.id));
+  if (comLimite.size === 0) return 0;
 
   const comTeto: Array<{ organization_id: string; plano_id: string }> = [];
   let inicioTeto = 0;
@@ -135,7 +174,7 @@ async function avisarTetoDeIa(admin: SupabaseClient): Promise<number> {
     const { data: lote, error: erroDoLote } = await admin
       .from("cobranca_assinaturas")
       .select("organization_id, plano_id")
-      .in("plano_id", [...tetoDoPlano.keys()])
+      .in("plano_id", [...comLimite])
       .order("organization_id", { ascending: true })
       .range(inicioTeto, inicioTeto + PAGE_SIZE - 1);
     if (erroDoLote) throw new Error(`cobranca: assinaturas com teto ilegíveis (${erroDoLote.code ?? "sem_codigo"})`);
@@ -166,27 +205,32 @@ async function avisarTetoDeIa(admin: SupabaseClient): Promise<number> {
   );
 
   let avisos = 0;
-  for (const { organization_id: org, plano_id: plano } of comTeto) {
+  for (const { organization_id: org } of comTeto) {
     const idioma = idiomaDe.get(org);
-    const teto = tetoDoPlano.get(plano);
-    if (idioma === undefined || teto === undefined) continue;
-    const { data: gastoLido, error: erroDoGasto } = await admin.rpc("fn_gasto_de_ia_do_mes", { p_org: org });
-    if (erroDoGasto) {
-      logger.warn("cobranca.gasto_de_ia_ilegivel", { organization_id: org, codigo: erroDoGasto.code ?? null });
+    if (idioma === undefined) continue;
+    // A MESMA leitura do motor (`fn_ia_do_plano`): só a chave da plataforma, no ciclo.
+    const { data: lido, error: erroDoUso } = await admin.rpc("fn_ia_do_plano", { p_org: org });
+    if (erroDoUso) {
+      logger.warn("cobranca.gasto_de_ia_ilegivel", { organization_id: org, codigo: erroDoUso.code ?? null });
       continue;
     }
-    const gasto = Number(gastoLido ?? 0);
-    if (gasto < teto * LIMIAR_DO_AVISO_DE_IA || gasto >= teto) continue;
+    const linha = (Array.isArray(lido) ? lido[0] : lido) as Record<string, unknown> | null | undefined;
+    if (!linha || linha.com_assinatura !== true) continue;
+    const uso = {
+      conversas: Number(linha.conversas ?? 0),
+      franquia: linha.franquia === null || linha.franquia === undefined ? null : Number(linha.franquia),
+      gasto: Number(linha.gasto ?? 0),
+      teto: linha.teto === null || linha.teto === undefined ? null : Number(linha.teto),
+    };
+    const fracao = fracaoUsadaDoPlano(uso);
+    if (fracao === null || fracao < LIMIAR_DO_AVISO_DE_IA || fracao >= 1) continue;
     const t = (s: string) => traduzir(s, idioma);
-    const usd = (centavos: number) => (centavos / 100).toFixed(2);
-    const { data: ganhou, error: erroDoAviso } = await admin.rpc("fn_cobranca_avisar_teto_de_ia", {
+    const { data: ganhou, error: erroDoAviso } = await admin.rpc("fn_cobranca_avisar_uso_de_ia", {
       p_org: org,
       p_titulo: t("O uso de IA do plano chegou a 80%"),
-      p_corpo: t(
-        "Neste mês a empresa já usou US$ {gasto} de US$ {teto} incluídos no plano. Ao chegar ao limite, as conversas passam para a equipe. Para aumentar, troque de plano em Plano e cobrança.",
-      )
-        .replace("{gasto}", usd(gasto))
-        .replace("{teto}", usd(teto)),
+      p_corpo: corpoDoAvisoDeIa(uso, t),
+      // Um aviso por CICLO: a função deduplica pelo que foi aberto desde o início dele.
+      p_desde: String(linha.ciclo_inicio),
     });
     if (erroDoAviso) {
       logger.warn("cobranca.aviso_de_ia_nao_registrado", { organization_id: org, codigo: erroDoAviso.code ?? null });

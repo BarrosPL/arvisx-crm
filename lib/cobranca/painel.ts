@@ -1,3 +1,4 @@
+import { lerIaDoPlanoParaATela, type IaDoPlanoNaTela } from "./ia-do-plano";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { cobraIva, provedorDaInstalacao } from "@/lib/cobranca/configuracao";
@@ -93,6 +94,12 @@ export interface DadosDoPainel {
   uso: UsoDaOrganizacao;
   /** Na moeda de `fn_gasto_de_ia_do_mes` (centavos de dólar), a régua única de gasto. */
   gastoIaUsdCents: number;
+  /**
+   * A IA incluída no plano (migration 9825): franquia usada e total, no ciclo,
+   * contando só a chave da plataforma. Ausente ou `null` = a leitura falhou ou a
+   * empresa não tem plano; aí a tela mostra o gasto do mês, como antes.
+   */
+  iaDoPlano?: IaDoPlanoNaTela | null;
   /** Planos ativos e oferecidos às empresas, do MESMO intervalo, fora o atual (a troca não muda o intervalo), numa moeda que o provedor cobra. */
   planosParaTroca: PlanoParaTroca[];
   /**
@@ -153,7 +160,7 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
     .maybeSingle();
   if (error) throw new Error(`painel da assinatura: leitura falhou (${error.code})`);
 
-  const [planos, uso, gasto, org, daInstalacao, modulos, aguardaContato, iva] = await Promise.all([
+  const [planos, uso, gasto, org, daInstalacao, modulos, aguardaContato, iva, iaDoPlano] = await Promise.all([
     db
       .from("cobranca_planos")
       .select("id, nome, preco_cents, moeda, intervalo, max_assentos, max_canais, teto_ia_usd_cents, arquivado_em, oferecido_ao_cliente, interface_settings, descricao_curta, para_quem, destaques, limites, como_funciona, inclui_agentes_arvisx"),
@@ -166,6 +173,8 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
     // Nunca lança: falha = não promete contato.
     aguardaContatoDaEquipe(db, orgId),
     cobraIva(),
+    // Nunca lança: falha = a tela mostra o gasto do mês, como antes.
+    lerIaDoPlanoParaATela(db, orgId),
   ]);
   if (planos.error || !uso || gasto.error || org.error) throw new Error("painel da assinatura: leitura falhou");
 
@@ -236,6 +245,7 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
       atual: plano ? paraComparar(plano) : null,
     },
     gastoIaUsdCents: Number(gasto.data ?? 0),
+    iaDoPlano,
     fuso: (org.data as { timezone: string | null } | null)?.timezone ?? null,
     checkout: {
       provedor: provedorDoCheckout,

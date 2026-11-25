@@ -23,7 +23,8 @@ import {
  *   1. o script cria os três planos com preço, limites, teto e telas certos;
  *   2. rodar de novo não duplica nem sobrescreve, e não toca em plano antigo
  *      nem na assinatura de ninguém;
- *   3. o bloco da franquia não quebra sem a coluna (que é da parte 1);
+ *   3. a franquia de conversas entra (coluna da migration 9825), e o bloco
+ *      dela não quebra num banco que ainda não tem a coluna;
  *   4. os gatilhos do banco recusam o 4º canal e o 6º usuário do plano 1, com
  *      a mensagem que `lib/cobranca/limites.ts` transforma na frase da tela.
  */
@@ -117,14 +118,32 @@ describe("planos novos — o script de docs/arvisx/ci", () => {
     expect(retrato(PLANO_2)).toBe(depoisDaEdicao);
   });
 
-  it("o bloco da franquia não quebra sem a coluna, que é da parte 1", () => {
-    // Guarda de vacuidade: se a coluna passar a existir, este caso deixa de medir
-    // "sem a coluna" e precisa ser reescrito junto com a migration que a criou.
+  // Este caso media "o bloco não quebra SEM a coluna", quando ela ainda era da
+  // parte 1. A migration 9825 a criou, e o caso passou a medir as duas coisas: a
+  // franquia gravada, e o mesmo arquivo num banco que ainda não tem a coluna.
+  it("⭐ grava a franquia de conversas: 300, 800 e 1.500", () => {
     expect(
-      numero(`select count(*) from information_schema.columns
-               where table_schema = 'public' and table_name = 'cobranca_planos' and column_name = 'franquia_conversas_ia';`),
-    ).toBe(0);
-    expect(erroDe(SCRIPT)).toBe("");
+      sql(`select franquia_conversas_ia from public.cobranca_planos where id in ${NOVOS} order by preco_cents;`).split("\n"),
+    ).toEqual(["300", "800", "1500"]);
+  });
+
+  it("⭐ a franquia que já foi posta à mão não é sobrescrita ao rodar de novo", () => {
+    sql(`update public.cobranca_planos set franquia_conversas_ia = 350 where id = '${PLANO_1}';`);
+    sql(SCRIPT);
+    expect(valor(`select franquia_conversas_ia from public.cobranca_planos where id = '${PLANO_1}';`)).toBe("350");
+    sql(`update public.cobranca_planos set franquia_conversas_ia = 300 where id = '${PLANO_1}';`);
+  });
+
+  it("num banco que ainda não tem a coluna (antes do deploy), o arquivo roda inteiro e avisa, sem falhar", () => {
+    // A coluna sai e volta dentro de UMA transação: o que se mede é o script num
+    // banco sem ela, e o `rollback` devolve o banco como estava.
+    const saida = erroDe(`begin;
+      alter table public.cobranca_planos drop column franquia_conversas_ia;
+      ${SCRIPT}
+      rollback;`);
+    expect(saida).toBe("");
+    // Controle: a coluna voltou, com os valores.
+    expect(valor(`select franquia_conversas_ia from public.cobranca_planos where id = '${PLANO_3}';`)).toBe("1500");
   });
 });
 
