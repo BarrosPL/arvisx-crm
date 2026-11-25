@@ -2,6 +2,8 @@
 
 Tarefa 7. Reconhecimento e desenho, sem código de produto. Base lida: `origin/main` em `402794cc5`, no branch `tarefa-7/vix-fase-1`.
 
+> **Revisão de 25/11/2026:** o Vix passou a rodar na assinatura ChatGPT/Codex da ArvisX, sem chave de API, e o teto em dólar virou limite de mensagens por plano. A seção 9, no fim, substitui as seções 2.8, 2.9 e 2.10 e as decisões D1, D2 e D4.
+
 Este documento afirma coisas sobre o código com `arquivo:linha`. O que está marcado **INFERIDO** saiu de nome, comentário ou prefixo de rota e ainda não foi conferido no corpo do código. O que não foi conferido está dito na seção 8.
 
 Nesta etapa nada foi executado: nem `pnpm install`, nem suíte. Todas as contagens saíram de leitura do código por script (comandos na seção 8).
@@ -539,3 +541,144 @@ git ls-files 'app/api/v1/**/route.ts' | xargs grep -lE 'export (async function|c
 # invariantes
 git ls-files 'tests/invariants/*.test.ts' | wc -l                                                # 610
 ```
+
+## 9. Revisão de 25/11/2026: o Vix roda na assinatura da própria ArvisX
+
+Decisão do Lucas, depois do desenho acima: o Vix não usa chave de API. Ele roda na assinatura ChatGPT/Codex da ArvisX. Esta seção **substitui** o que as seções 2.8 (teto em dólar), 2.9 (chave e modelo), 2.10 (desligar geral) e as decisões D1, D2 e D4 diziam. O resto do desenho (catálogo, níveis, cartões, filtro de segredo, taxa, auditoria, testes de ataque, painel) não muda.
+
+Nada desta seção está implementado. O que já estava no branch do caminho antigo e sai, por commit novo: as colunas `pagador` e `teto_mensal_usd_cents` de `assistente_planos` e a função de gasto em dólar da migration 9830 (ainda não mesclada nem aplicada em lugar nenhum). A variável `VIX_ANTHROPIC_API_KEY`, o módulo `assistente` e o script de tetos em dólar nunca chegaram a ser commitados e foram descartados.
+
+### 9.1 Onde a conta mora
+
+**Como é hoje.** A assinatura é "uma conta ChatGPT por empresa" (cabeçalho de `lib/ai/credenciais/login-codex.ts:1` a `5`, decisão do PR #1672 do upstream, que removeu de propósito a gravação por instalação em `platform_config`). O par de tokens fica na tabela das chaves, `ai_provider_credentials`, com `organization_id` obrigatório, provedor `openai-assinatura` (`lib/ai/pontos/provedores.ts:63`) e o segredo cifrado em AES-GCM nas colunas `api_key_encrypted`, `api_key_iv` e `api_key_tag` (`login-codex.ts:9` a `11`). Quem conecta é o `admin` da empresa, pela tela de Credenciais, com a empresa vinda da sessão (`app/actions/settings/conectarLoginCodex.ts:37` a `43`); não há atalho para administrador da plataforma.
+
+Quem lê o segredo: só código de servidor, com a chave de serviço. As três colunas do segredo não são selecionáveis por `authenticated` (grant por coluna, `supabase/baseline.sql:12939`), e a view da tela não as traz. Os leitores genéricos de credencial recusam esse provedor (`login-codex.ts:16` a `20`). O único leitor é `lerLoginCodex` (`login-codex.ts:129`), que filtra por `organization_id` e devolve `null` com o módulo `login_codex` desligado (linha 134).
+
+**Proposta, que não desfaz o #1672.** A conta do Vix continua sendo a conta de **uma empresa**: uma organização da ArvisX, designada. O administrador dessa organização conecta a assinatura pela tela que já existe. Nenhuma tabela nova, nenhum token gravado por instalação, nenhuma mudança em `login-codex.ts`.
+
+O que muda é um ponto só: um leitor novo, `lib/assistente/provedor/assinatura-da-plataforma.ts`, chama `lerLoginCodexRenovandoSeProxima({ admin, orgId })` (`login-codex.ts:419`) passando a **organização designada** no lugar da organização da sessão. É a primeira vez que o token de uma empresa é usado numa chamada disparada por usuário de outra.
+
+**Como a organização designada é configurada.** Por chave da instalação, `VIX_ORGANIZACAO_DA_CONTA` (uuid), no catálogo de configuração da instalação (`lib/instalacao/catalogo.ts:132`), lida por `valorDaInstalacao` (`lib/instalacao/config.ts:157`) e editada só pelo administrador da plataforma em Painel › Configuração. Nunca vem do modelo, do cliente, de corpo de requisição nem de argumento de capacidade. Sem valor, com uuid inválido, com organização inexistente ou não operante: o Vix fica indisponível.
+
+**O que isso arrisca e como a cerca responde.**
+
+| Risco | Resposta |
+|---|---|
+| Leitura entre empresas de uma credencial | O token nunca sai do servidor. O leitor novo exporta **uma** função, que devolve o modelo já montado (`buildModel`, `lib/ai/runtime/agent.ts:182`) e nada mais: nem o token, nem o e-mail da conta, nem o id da organização designada. Nada disso entra em prompt, resultado de ferramenta, resposta ao painel, auditoria ou log |
+| Outro código passar a ler a conta da organização designada | Cerca (AST): em todo o repositório, só esse arquivo lê `VIX_ORGANIZACAO_DA_CONTA`; em `lib/assistente/**`, só ele importa de `login-codex`; e ele é importado só por `lib/assistente/modelo.ts`. Arquivo novo que quebre uma das três reprova |
+| O cliente escolher a organização | Não há parâmetro: a função não recebe organização. A organização da sessão segue sendo a única usada em leitura e escrita de dado do CRM |
+| A conta ser usada para outra coisa que não chamar o modelo | A função só monta o modelo. A cerca reprova se o arquivo exportar outro símbolo |
+| Limite de uso da assinatura dividido entre todos os clientes | Risco real e sem mitigação técnica completa: uma empresa com muito uso consome a cota de todas. Mitigações: limite de mensagens por plano (9.2), taxa por usuário e por empresa, teto de chamadas de ferramenta por turno |
+| Conta única como ponto de falha | Risco real: conta desconectada, token revogado ou limite estourado derruba o Vix de todos de uma vez. O CRM e os agentes não são afetados (9.4). O aviso de assinatura desconectada que já existe (`lib/ai/credenciais/aviso-da-assinatura.ts`) aparece na Central da organização designada |
+| Disputa com os agentes da própria organização designada | Se essa organização também atende clientes com a mesma assinatura, o Vix e os agentes dela dividem a cota e a linha de token. Recomendo uma organização só para isso, sem agentes (pergunta P2) |
+| Módulo `login_codex` desligado | `lerLoginCodex` devolve `null` e o Vix fica indisponível. O módulo precisa estar ligado na instalação |
+
+### 9.2 Limite de mensagens no lugar do teto em dólar
+
+`assistente_planos` passa a ter, no lugar de `pagador` e `teto_mensal_usd_cents`, a coluna `mensagens_por_mes integer` (nula = sem limite; ver 9.7). As demais (`limite_de_lote`, `mensagens_por_minuto`, `ferramentas_por_turno`) ficam. **Nenhuma linha é semeada.** Plano sem linha = sem Vix (falha fechada, com mensagem amigável).
+
+O que conta como uma mensagem: cada mensagem do usuário que **chegou a chamar o modelo**, tenha a resposta dado certo ou não (é a cota compartilhada que está sendo protegida). Mensagem barrada antes do modelo (filtro de segredo, taxa, limite já atingido, Vix indisponível) não conta.
+
+Onde é contado: na tabela de uso do Vix (hoje `assistente_custos`, que passa a se chamar `assistente_usos`), uma linha por mensagem atendida, com os tokens. Não é contado em `assistente_mensagens`, porque o histórico é apagado com 30 dias e um mês pode ter 31.
+
+Janela: **mês de calendário em UTC** (`date_trunc('month', now())`), a mesma régua de `fn_gasto_de_ia_do_mes` (`supabase/baseline.sql:13471`). Zera no dia 1 às 00:00 UTC, que é 21:00 do dia anterior em Brasília. Se o Lucas preferir o fuso da empresa, muda a função e mais nada.
+
+Ao atingir o limite: o Vix responde a frase fixa e não chama o modelo. O CRM e os agentes de WhatsApp não são tocados; o limite do Vix não lê nem escreve o orçamento de IA da empresa.
+
+### 9.3 A linha em `llm_calls`
+
+A coluna única é da Tarefa 8 (migration 9825, ainda não publicada no branch `tarefa-8/ia-por-plano-e-nichos` quando esta seção foi escrita: o branch tem o script de planos, mas nenhuma migration 98xx). Valor previsto para o Vix: `'assinatura_plataforma'`. O nome da coluna e o valor são conferidos no branch antes de ligar.
+
+A costura continua como combinado: `lib/assistente/custo.ts` grava sempre na tabela de uso do Vix e, com uma chave de troca **desligada**, também a linha em `llm_calls`. Até o PR #30 entrar na `main`, "cada resposta registra o custo em `llm_calls`" **não está cumprido**.
+
+**O que é gravado como custo numa chamada por assinatura.** Proposta: tokens de entrada e de saída reais, e `cost_cents = 0`.
+
+- Por que não nulo: em `llm_calls`, nulo significa "preço desconhecido" (`baseline.sql:6539`), e a tela de orçamento da empresa conta linha com custo nulo como "medição incompleta" (`lib/ai/budget/check.ts:189`). A linha do Vix acenderia esse aviso no cartão do cliente.
+- Por que não estimado: a assinatura é mensalidade fixa. Um valor por token seria um número inventado, e somado em qualquer relatório viraria gasto que não existiu.
+- Por que zero: o custo marginal da chamada é zero de fato. O que mede o uso são os tokens e a contagem de mensagens.
+
+Ressalva: zero só é seguro porque a coluna de origem diz que a linha é de assinatura. Sem a coluna, um zero em `llm_calls` leria como "grátis" sem explicação; por isso o destino fica desligado até ela existir.
+
+Não conferi o que o motor grava hoje para as chamadas por assinatura dos clientes além de que usa a tabela de preço por modelo (`lib/agent-engine/edge/llm/run-model-call.ts:1399`); não mudo isso.
+
+### 9.4 Quando a assinatura falha
+
+Limite de uso, token expirado, sem autorização, erro do provedor ou rede: o Vix responde que está indisponível por ora. **Sem cair para chave de API**, sem tocar nos agentes.
+
+A classificação reaproveita a função pura que já existe, `classificarFalhaDaAssinatura(status, detalhe)` (`lib/ai/pontos/reserva-da-assinatura.ts:165`), que devolve `limite_de_uso`, `token_expirado`, `sem_autorizacao`, `falha_do_provedor`, `erro_de_pedido` ou `rede`. O Vix **não** chama a política de reserva (`decidirQuedaDoProvedor`, mesmo arquivo) nem `chaveDePlataforma`; a cerca reprova o import.
+
+**Renovação: só reaproveita, sem caminho novo.** Hoje ela acontece em dois momentos, os dois em `login-codex.ts`:
+
+1. Antes da chamada: `lerLoginCodexRenovandoSeProxima` (linha 419) lê o par e, se a janela de renovação abriu, renova pelo refresh token antes de devolver. A trava contra duas renovações simultâneas é um `UPDATE` condicional no banco (`renovarComTravaDeBanco`, linha 228), porque app, worker e scheduler são processos separados e o refresh token é rotativo.
+2. No meio da chamada, se o provedor responder 401: `renovarAssinaturaNoTurno` (linha 378) renova uma vez, pela mesma trava, e a chamada é tentada mais uma vez. Segundo 401 é devolvido como está. No motor quem orquestra é `chamarComRetryUnicoEm401` (`lib/ai/pontos/renovacao-da-assinatura.ts:168`).
+
+O Vix chama essas duas funções exportadas com a organização designada e usa `chamarComRetryUnicoEm401`. Não grava token, não fala com o endpoint de renovação e não tem trava própria. Renovação recusada (token revogado) deixa o Vix indisponível até alguém reconectar a conta na organização designada.
+
+Um teste para cada caso, com o modelo simulado devolvendo o erro: 429, 402, 401 que renova e passa, 401 duas vezes, 401 com renovação recusada, 403, 500, sem resposta, e conta ausente. Em todos: resposta fixa de indisponível, nenhuma chave de API lida, nenhuma linha em tabela de agente, e a mensagem do usuário não é contada duas vezes.
+
+### 9.5 Uma chave: ligar, desligar e escolher o pagador
+
+`VIX_PAGADOR`, chave da instalação no mesmo catálogo (`lib/instalacao/catalogo.ts:132`), editada em Painel › Configuração. Valores: `desligado` (o padrão, e o que vale com a chave ausente ou com valor desconhecido) e `assinatura_plataforma`. É a chave geral de desligar o Vix e, ao mesmo tempo, a seleção do pagador.
+
+A costura fica em `lib/assistente/provedor/index.ts`: uma função que lê `VIX_PAGADOR` e devolve o provedor daquele pagador ou "desligado". Hoje só `assinatura_plataforma` é implementado. Um pagador novo depois (por exemplo chave de API da plataforma, ou a credencial da empresa) é um arquivo novo nessa pasta e um valor novo na chave, sem mexer no resto.
+
+Com isso o módulo `assistente` que eu tinha planejado deixa de existir (seria uma segunda chave de desligar). O interruptor das escritas (`assistente_escritas`) continua separado. A chave por empresa (`assistente_estado_da_empresa.ligado`) continua.
+
+Chaves da instalação do Vix, as três no mesmo lugar: `VIX_PAGADOR`, `VIX_ORGANIZACAO_DA_CONTA`, `VIX_MODELO`.
+
+### 9.6 Risco NÃO VERIFICADO: os termos da OpenAI
+
+**Não foi confirmado que os termos da OpenAI permitem atender clientes da ArvisX com uma assinatura da ArvisX.** A página oficial não abriu para o Lucas. **Não tratar como permitido.**
+
+Tentei abrir duas páginas oficiais por ferramenta automática, que devolve um resumo e trechos, não o texto integral; não li os documentos inteiros e isto não é parecer jurídico:
+
+- A documentação do fluxo "Sign in with ChatGPT" que o repositório cita (`lib/ai/catalogo/modelos-da-assinatura.ts:50` a `52`) fala em fazer a inferência "on behalf of the user" e, segundo o resumo, não diz se a assinatura de uma conta pode servir outras pessoas. Ela nomeia os erros `subscription_sharing_usage_limit_exceeded` e `subscription_sharing_usage_unavailable`, sem definir os limites.
+- Os Termos de Uso, segundo o resumo, trazem a frase "You may not share your account credentials or make your account available to anyone else".
+
+Nenhum dos dois trechos autoriza o uso pretendido, e o segundo aponta no sentido contrário. O estado continua **não verificado**. Recomendo que o Lucas confirme com a OpenAI, ou leia os termos do plano contratado, antes de ligar `VIX_PAGADOR` em produção. A chave nasce desligada.
+
+### 9.7 Isenções
+
+Hoje "isenta" não é uma lista de nomes: é a organização **sem linha em `cobranca_assinaturas`** com a cobrança ligada, ou toda organização quando a cobrança está desligada na instalação (`lib/cobranca/telas-do-plano.ts:15`). `voce-na-europa` e `dr-renan-perrotti` são isentas por essa marca.
+
+Proposta para o Vix, sem nome de empresa no código: a função que já resolve a configuração (`fn_assistente_plano_da_org`) devolve, para a organização isenta, a linha de `assistente_planos` com `plano_id` nulo. Se o Lucas criar essa linha com `mensagens_por_mes` nulo, toda organização isenta tem Vix sem limite de mensagens. Se não criar, organização isenta fica sem Vix, como plano sem linha.
+
+Consequência que precisa de decisão: essa linha vale para **toda** organização sem assinatura, não só para as duas. Uma empresa que nasce sem plano (instalação sem plano padrão no cadastro, `lib/cobranca/cadastro.ts:7`) também seria isenta e teria Vix sem limite, na cota compartilhada. Se for para valer só para as duas, é preciso uma marca explícita por organização (pergunta P4).
+
+### 9.8 Modelo (revê a D4)
+
+Pelo caminho que o repositório já usa, a assinatura chama a API de Responses com o token do login (`lib/ai/runtime/agent.ts:209`), e:
+
+- **stream é obrigatório**: "SIWC exige Responses API em streaming e `store: false`" (`lib/agent-engine/edge/llm/run-model-call.ts:1019`). O Vix já é em stream.
+- **ferramentas funcionam**: o agente passa `tools` nesse caminho (`lib/ai/runtime/agent.ts:740`) e o catálogo marca os modelos da assinatura com `supports_tools: true` (`lib/ai/catalogo/modelos-da-assinatura.ts:106`).
+- **não aceita opções de amostragem nem teto de saída** (mesmo comentário, linha 1020). O Vix não pode limitar o tamanho da resposta por parâmetro; o freio do turno fica no número de passos.
+- **a lista de modelos é da conta**, lida de `/v1/models` e espelhada em `ai_provider_credentials.models_available` (`modelos-da-assinatura.ts:58`). Não há id fixo que eu possa escolher no código.
+
+Por isso `VIX_MODELO` não tem padrão: o Lucas escolhe um dos modelos que a conta da organização designada lista (a tela de Credenciais dela mostra). Vazio, ou fora da lista, o Vix fica indisponível. Não testei nenhuma chamada real por esse caminho; os três primeiros pontos saem do código e dos comentários dele.
+
+### 9.9 Riscos, em resumo
+
+1. Termos da OpenAI não verificados (9.6). O mais sério.
+2. Cota da assinatura compartilhada entre todos os clientes; uma empresa pode esgotar para todas.
+3. Conta única: desconexão ou revogação derruba o Vix de todos.
+4. Token de uma organização usado para atender outra: defendido por um leitor único e três cercas, mas é exceção consciente à regra "credencial é da empresa".
+5. Sem teto de saída por parâmetro: resposta longa só é contida pelo número de passos.
+6. A linha em `llm_calls` segue pendente da Tarefa 8.
+
+### 9.10 Perguntas para o Lucas
+
+**Bloqueiam a parte de provedor, conta e limite**
+
+- **P1. Termos.** Confirmar com a OpenAI (ou com os termos do plano contratado) se a assinatura da ArvisX pode atender clientes. Posso implementar com a chave desligada, mas não recomendo ligar sem isso.
+- **P2. Qual organização é a designada.** Uma organização nova, só para a conta do Vix e sem agentes (recomendo), ou uma que já existe? Preciso do identificador para o roteiro de subida; no código ele é só configuração.
+- **P3. Custo zero em `llm_calls`** para chamada por assinatura (9.3), em vez de nulo ou estimado. Depende também de o outro agente aceitar o valor `'assinatura_plataforma'`.
+- **P4. Isentas.** Vix sem limite para toda organização sem assinatura (linha sem plano com limite nulo), ou só para `voce-na-europa` e `dr-renan-perrotti` (exige marca por organização)?
+
+**Sigo com o padrão indicado**
+
+- **P5. Janela do mês:** calendário em UTC.
+- **P6. O que conta como mensagem:** a que chegou ao modelo, com ou sem sucesso.
+- **P7. Uma chave só** (`VIX_PAGADOR`) como liga, desliga e pagador; sai o módulo `assistente`.
+- **P8. `VIX_MODELO` sem padrão:** escolhido na lista da conta; vazio = indisponível.
+- **P9. Números do limite de mensagens por plano:** nenhum é semeado. Quando você definir, entrego como script em `docs/arvisx/ci/`, usando os ids fixos dos três planos novos do script da Tarefa 8 (`a7150008-0000-4000-8000-00000000000{1,2,3}`).
+- **P10. Renomear `assistente_custos` para `assistente_usos`**, já que deixa de guardar dólar.
