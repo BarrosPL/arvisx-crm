@@ -184,8 +184,8 @@ const configuracaoCredencialDeIa = capacidade({
       validation_error: string | null;
     }[];
     return {
-      tem_credencial: linhas.length > 0,
-      credenciais: linhas.map((l) => ({
+      ia_configurada: linhas.length > 0,
+      provedores: linhas.map((l) => ({
         provedor: l.provider,
         nome: l.label,
         ativa: l.is_active,
