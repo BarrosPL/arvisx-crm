@@ -16,8 +16,10 @@ import { randomUUID } from "node:crypto";
 type Linha = Record<string, unknown>;
 
 export interface EstadoDoBanco {
-  /** A configuração do Vix para a organização (marca ou plano), ou `null` = sem Vix. */
-  config: Linha | null;
+  /** Por qual porta a organização tem o Vix (`fn_assistente_acesso_da_org`), ou `null` = não tem. */
+  acesso: "marca" | "assinatura_ativa" | null;
+  /** O registro de uso falha (banco fora): a rota não pode chamar o modelo. */
+  falhaAoRegistrar: boolean;
   /** `ligado` da empresa. `null` = sem linha (ligado). */
   ligadoNaEmpresa: boolean | null;
   usadasNoMes: number;
@@ -29,7 +31,8 @@ export interface EstadoDoBanco {
 
 export function novoBanco(sobre: Partial<EstadoDoBanco> = {}): EstadoDoBanco {
   return {
-    config: { origem: "plano", mensagens_por_mes: 100, limite_de_lote: 5, mensagens_por_minuto: 6, ferramentas_por_turno: 8 },
+    acesso: "assinatura_ativa",
+    falhaAoRegistrar: false,
     ligadoNaEmpresa: null,
     usadasNoMes: 0,
     tabelas: { assistente_conversas: [], assistente_mensagens: [], assistente_acoes: [], assistente_usos: [] },
@@ -141,13 +144,12 @@ export function clienteFalso(banco: EstadoDoBanco) {
   const rpc = async (nome: string, args: Linha) => {
     banco.rpcs.push({ nome, args });
     switch (nome) {
-      case "fn_assistente_config_da_org":
-        return { data: banco.config ? [banco.config] : [], error: null };
+      case "fn_assistente_acesso_da_org":
+        return { data: banco.acesso, error: null };
       case "fn_assistente_mensagens_do_mes":
         return { data: banco.usadasNoMes, error: null };
       case "fn_assistente_registrar_mensagem": {
-        const limite = args.p_limite as number | null;
-        if (limite !== null && banco.usadasNoMes >= limite) return { data: null, error: null };
+        if (banco.falhaAoRegistrar) return { data: null, error: { message: "banco fora" } };
         banco.usadasNoMes += 1;
         const uso = { id: randomUUID(), organization_id: args.p_org, user_id: args.p_user, pagador: args.p_pagador };
         banco.tabelas.assistente_usos!.push(uso);

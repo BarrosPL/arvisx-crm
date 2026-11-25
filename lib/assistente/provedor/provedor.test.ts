@@ -99,7 +99,7 @@ describe("assinatura_plataforma", () => {
     expect(p.disponivel).toBe(true);
     expect(lerLoginCodexRenovandoSeProxima).toHaveBeenCalledWith({ admin, orgId: DESIGNADA });
     expect(buildModel).toHaveBeenCalledWith("openai-assinatura", TOKEN, "modelo-da-conta");
-    expect(p).toMatchObject({ pagador: "assinatura_plataforma", origemDaChave: "assinatura_plataforma", modelo: "modelo-da-conta" });
+    expect(p).toMatchObject({ pagador: "assinatura_plataforma", modelo: "modelo-da-conta" });
   });
 
   it("o que sai da costura não carrega token, e-mail da conta nem a organização designada", async () => {
@@ -183,7 +183,6 @@ describe("chave_plataforma", () => {
     expect(p).toMatchObject({
       disponivel: true,
       pagador: "chave_plataforma",
-      origemDaChave: "assistente_chave_plataforma",
       provedor: "anthropic",
       modelo: "claude-haiku-5-5",
     });

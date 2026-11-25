@@ -33,6 +33,10 @@ vi.mock("@/lib/supabase/admin", async () => {
   return { createAdminClient: () => clienteFalso(estado.banco as never), isServiceRoleConfigured: () => true };
 });
 vi.mock("@/lib/audit", () => ({ audit: vi.fn(async () => undefined) }));
+const instalacaoFalsa = vi.hoisted(() => ({ valores: {} as Record<string, string> }));
+vi.mock("@/lib/instalacao/config", () => ({
+  valorDaInstalacao: vi.fn(async (chave: string) => ({ valor: instalacaoFalsa.valores[chave] ?? null, fonte: "nenhuma" })),
+}));
 vi.mock("@/lib/assistente/provedor", () => ({ pagadorDoVix: vi.fn(), provedorDoVix: vi.fn() }));
 vi.mock("@/lib/instalacao/modulos", async (original) => ({
   ...(await original<Record<string, unknown>>()),
@@ -259,12 +263,12 @@ describe("confirmar", () => {
     expect(estadoDe(id)).toBe("proposta");
   });
 
-  it("organização sem plano nem marca: 403, não executa", async () => {
-    banco.config = null;
+  it("organização sem assinatura ativa nem marca: 403, não executa", async () => {
+    banco.acesso = null;
     const id = cartao();
     const r = await chamar(confirmar, id);
     expect(r.status).toBe(403);
-    expect(await codigo(r)).toBe("assistente_fora_do_plano");
+    expect(await codigo(r)).toBe("assistente_sem_acesso");
     expect(execEscrever()).not.toHaveBeenCalled();
   });
 

@@ -365,6 +365,45 @@ export const CATALOGO_DA_INSTALACAO: readonly ChaveDaInstalacao[] = [
     natureza: "texto",
     controle: "edita",
   },
+  // O freio técnico do assistente (não é limite de plano) e o critério do aviso
+  // de uso para a administração da plataforma. Quem os lê é
+  // `lib/assistente/custo.ts` e `lib/assistente/uso-da-plataforma.ts`.
+  {
+    chave: "VIX_MENSAGENS_POR_MINUTO",
+    rotulo: "Assistente: mensagens por minuto, por pessoa",
+    explicacao:
+      "Freio contra laço ou script, para a conta de IA compartilhada não se esgotar. Não é limite de plano. De 1 a 60; vazio ou inválido vale 6.",
+    grupo: "ia",
+    natureza: "texto",
+    controle: "edita",
+  },
+  {
+    chave: "VIX_TAMANHO_MAXIMO_DA_MENSAGEM",
+    rotulo: "Assistente: tamanho máximo da mensagem",
+    explicacao:
+      "Quantos caracteres uma mensagem para o assistente pode ter. Acima disso a mensagem é recusada antes de chegar à IA. De 100 a 4000; vazio ou inválido vale 2000.",
+    grupo: "ia",
+    natureza: "texto",
+    controle: "edita",
+  },
+  {
+    chave: "VIX_ALERTA_DE_USO_MENSAGENS",
+    rotulo: "Assistente: número de mensagens no mês que acende o aviso",
+    explicacao:
+      "A empresa que passar deste número de mensagens no mês aparece em destaque em Painel › Chamados. É só um aviso: nada é bloqueado. Vazio ou inválido vale 1000.",
+    grupo: "ia",
+    natureza: "texto",
+    controle: "edita",
+  },
+  {
+    chave: "VIX_ALERTA_DE_USO_MULTIPLO",
+    rotulo: "Assistente: quantas vezes acima das outras empresas acende o aviso",
+    explicacao:
+      "A empresa que usar este número de vezes a mediana das empresas no mês aparece em destaque. Só vale com três empresas ou mais usando e a partir de 50 mensagens. Vazio ou inválido vale 5.",
+    grupo: "ia",
+    natureza: "texto",
+    controle: "edita",
+  },
 
   // ── DIAGNÓSTICO: lida no boot de outro processo ───────────────────────────
   {

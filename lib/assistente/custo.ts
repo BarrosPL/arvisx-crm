@@ -7,16 +7,21 @@
  *
  * ═══ QUEM TEM O VIX ═══
  *
- * Duas portas (`fn_assistente_config_da_org`, migration 9830): a organização
- * tem a marca `sem_limite`, que só a plataforma escreve, ou assina um plano
- * com linha em `assistente_planos`. Sem as duas, `configDoVix` devolve `null` e
- * o assistente não responde (falha fechada).
+ * Duas portas (`fn_assistente_acesso_da_org`, migration 9830): a organização
+ * tem a marca `isenta`, que só a plataforma escreve, ou tem assinatura ativa,
+ * em qualquer plano. Sem as duas, `configDoVix` devolve `null` e o assistente
+ * não responde (falha fechada).
  *
- * ═══ O LIMITE É DE MENSAGENS ═══
+ * ═══ NÃO HÁ LIMITE DE MENSAGENS POR PLANO ═══
  *
- * Mensagens por mês de calendário (UTC). Conta a mensagem que CHEGOU ao
- * modelo, com ou sem sucesso; a contagem acontece antes da chamada, no banco,
- * serializada por organização (`fn_assistente_registrar_mensagem`).
+ * O que existe é um FREIO TÉCNICO contra abuso, da instalação e igual para os
+ * dois pagadores: mensagens por minuto por pessoa e tamanho máximo da
+ * mensagem (`freioDoVix`). Ele protege a conta compartilhada de laço ou
+ * script; não é cota comercial.
+ *
+ * Cada mensagem que CHEGA ao modelo vira uma linha de `assistente_usos`
+ * (contagem, tokens e data, nunca texto), gravada antes da chamada. É o que
+ * a administração da plataforma olha para ver o uso por organização.
  *
  * ═══ DOIS DESTINOS DO CUSTO, UMA CHAVE DE TROCA ═══
  *
@@ -45,7 +50,12 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { valorDaInstalacao } from "@/lib/instalacao/config";
 import { logger } from "@/lib/logger";
+
+import type { Pagador } from "./provedor/tipos";
+
+type PagadorLigado = Exclude<Pagador, "desligado">;
 
 /** A chave de troca do segundo destino. Ver o cabeçalho antes de mexer. */
 export const REGISTRAR_EM_LLM_CALLS: boolean = false;
@@ -53,46 +63,92 @@ export const REGISTRAR_EM_LLM_CALLS: boolean = false;
 /** O nome PREVISTO da coluna de origem da chave em `llm_calls`. Confira antes de ligar. */
 export const COLUNA_DA_ORIGEM_DA_CHAVE = "origem_da_chave";
 
-export interface ConfigDoVix {
-  /** Por qual porta a organização tem o assistente. */
-  origem: "marca" | "plano";
-  /** `null` = sem limite de mensagens. */
-  mensagensPorMes: number | null;
-  limiteDeLote: number;
+/**
+ * O VALOR DE ORIGEM QUE O VIX GRAVA, POR PAGADOR. O único mapa, e o único lugar
+ * do produto onde estes valores são escritos (cerca:
+ * `tests/unit/assistente-nao-se-mistura-com-o-plano.test.ts`).
+ *
+ * A coluna de origem é única para toda chamada de IA. O que impede o gasto de
+ * um AGENTE de ser contado como Vix, e o contrário, é isto: o Vix escreve
+ * sempre um valor PRÓPRIO, escolhido aqui pelo pagador, e nunca o valor dos
+ * agentes (`plataforma`) nem o do cliente (`cliente`), nem quando a chave usada
+ * é a mesma da plataforma. E nenhum caminho de agente passa por este arquivo.
+ *
+ * Se a decisão for um valor só para o Vix, troca-se aqui e em mais lugar nenhum.
+ */
+export const ORIGEM_DA_CHAVE_DO_VIX = {
+  assinatura_plataforma: "assinatura_plataforma",
+  chave_plataforma: "assistente_chave_plataforma",
+} as const satisfies Record<PagadorLigado, string>;
+
+/** Valores que pertencem a outros e que o Vix nunca grava. */
+export const ORIGENS_QUE_NAO_SAO_DO_VIX = ["plataforma", "cliente", "assinatura"] as const;
+
+/** Padrões do freio técnico. Valem quando a chave da instalação está vazia ou inválida. */
+export const MENSAGENS_POR_MINUTO_PADRAO = 6;
+export const TAMANHO_MAXIMO_DA_MENSAGEM_PADRAO = 2000;
+/** O teto que nenhuma configuração ultrapassa (é também o do schema da rota). */
+export const TAMANHO_MAXIMO_ABSOLUTO = 4000;
+const MENSAGENS_POR_MINUTO_MAXIMO = 60;
+/** Quantos registros um cartão pode alterar de uma vez. */
+export const LIMITE_DE_LOTE = 5;
+/** Quantas ferramentas o modelo pode chamar num turno. */
+export const FERRAMENTAS_POR_TURNO = 8;
+
+export interface FreioDoVix {
   mensagensPorMinuto: number;
+  tamanhoMaximoDaMensagem: number;
+}
+
+function inteiroEntre(bruto: string | null | undefined, minimo: number, maximo: number, padrao: number): number {
+  const texto = (bruto ?? "").trim();
+  if (!/^\d{1,6}$/.test(texto)) return padrao;
+  const n = Number(texto);
+  return n >= minimo && n <= maximo ? n : padrao;
+}
+
+/**
+ * O freio técnico, lido da configuração da instalação. Valor ausente, que não é
+ * número ou fora da faixa cai no padrão: uma chave mal escrita não desliga o
+ * freio nem o afrouxa.
+ */
+export async function freioDoVix(): Promise<FreioDoVix> {
+  const [porMinuto, tamanho] = await Promise.all([
+    valorDaInstalacao("VIX_MENSAGENS_POR_MINUTO"),
+    valorDaInstalacao("VIX_TAMANHO_MAXIMO_DA_MENSAGEM"),
+  ]);
+  return {
+    mensagensPorMinuto: inteiroEntre(porMinuto.valor, 1, MENSAGENS_POR_MINUTO_MAXIMO, MENSAGENS_POR_MINUTO_PADRAO),
+    tamanhoMaximoDaMensagem: inteiroEntre(tamanho.valor, 100, TAMANHO_MAXIMO_ABSOLUTO, TAMANHO_MAXIMO_DA_MENSAGEM_PADRAO),
+  };
+}
+
+export interface ConfigDoVix extends FreioDoVix {
+  /** Por qual porta a organização tem o assistente. */
+  origem: "marca" | "assinatura_ativa";
+  limiteDeLote: number;
   ferramentasPorTurno: number;
 }
 
 /**
  * A configuração do Vix para a organização, ou `null` quando ela não tem o
- * assistente (sem marca e sem plano com linha) ou a leitura falhou.
+ * assistente (sem marca e sem assinatura ativa) ou a leitura falhou.
  */
 export async function configDoVix(admin: SupabaseClient, orgId: string): Promise<ConfigDoVix | null> {
-  const { data, error } = await admin.rpc("fn_assistente_config_da_org", { p_org: orgId });
+  const { data, error } = await admin.rpc("fn_assistente_acesso_da_org", { p_org: orgId });
   if (error) {
-    logger.warn("vix: configuração da organização ilegível — o assistente não responde", {
+    logger.warn("vix: acesso da organização ilegível — o assistente não responde", {
       organization_id: orgId,
       erro: error.message,
     });
     return null;
   }
-  const linha = (Array.isArray(data) ? data[0] : data) as
-    | {
-        origem?: string;
-        mensagens_por_mes?: number | null;
-        limite_de_lote?: number;
-        mensagens_por_minuto?: number;
-        ferramentas_por_turno?: number;
-      }
-    | null
-    | undefined;
-  if (!linha || (linha.origem !== "marca" && linha.origem !== "plano")) return null;
+  if (data !== "marca" && data !== "assinatura_ativa") return null;
   return {
-    origem: linha.origem,
-    mensagensPorMes: typeof linha.mensagens_por_mes === "number" ? linha.mensagens_por_mes : null,
-    limiteDeLote: linha.limite_de_lote ?? 5,
-    mensagensPorMinuto: linha.mensagens_por_minuto ?? 6,
-    ferramentasPorTurno: linha.ferramentas_por_turno ?? 8,
+    origem: data,
+    limiteDeLote: LIMITE_DE_LOTE,
+    ferramentasPorTurno: FERRAMENTAS_POR_TURNO,
+    ...(await freioDoVix()),
   };
 }
 
@@ -104,34 +160,31 @@ export async function mensagensUsadasNoMes(admin: SupabaseClient, orgId: string)
   return Number.isFinite(n) ? n : null;
 }
 
-export type RegistroDaMensagem =
-  | { ok: true; usoId: string }
-  | { ok: false; motivo: "limite_atingido" | "erro" };
+export type RegistroDaMensagem = { ok: true; usoId: string } | { ok: false; motivo: "erro" };
 
 /**
- * Conta a mensagem ANTES de chamar o modelo. `limite_atingido` = o mês já está
- * no limite e nada foi gravado. Erro de banco também recusa: sem contar, o
- * assistente não chama o modelo (falha fechada).
+ * Registra a mensagem ANTES de chamar o modelo. Não há limite a conferir. Erro
+ * de banco recusa: sem registrar, o assistente não chama o modelo (falha
+ * fechada), e o uso da conta compartilhada nunca fica sem rastro.
  */
 export async function registrarMensagem(
   admin: SupabaseClient,
-  m: { orgId: string; userId: string; conversaId: string | null; pagador: string; limite: number | null },
+  m: { orgId: string; userId: string; conversaId: string | null; pagador: string },
 ): Promise<RegistroDaMensagem> {
   const { data, error } = await admin.rpc("fn_assistente_registrar_mensagem", {
     p_org: m.orgId,
     p_user: m.userId,
     p_conversa: m.conversaId,
     p_pagador: m.pagador,
-    p_limite: m.limite,
   });
-  if (error) {
-    logger.warn("vix: a mensagem não pôde ser contada — o assistente não chama o modelo", {
+  if (error || typeof data !== "string" || data === "") {
+    logger.warn("vix: a mensagem não pôde ser registrada — o assistente não chama o modelo", {
       organization_id: m.orgId,
-      erro: error.message,
+      erro: error?.message ?? "sem id",
     });
     return { ok: false, motivo: "erro" };
   }
-  return typeof data === "string" && data !== "" ? { ok: true, usoId: data } : { ok: false, motivo: "limite_atingido" };
+  return { ok: true, usoId: data };
 }
 
 export interface UsoDeUmaResposta {
@@ -144,8 +197,8 @@ export interface UsoDeUmaResposta {
   falhou: boolean;
   /** Centavos de dólar. Assinatura: zero (mensalidade fixa). */
   custoUsdCents: number;
-  /** O valor deste pagador na coluna de origem da chave de `llm_calls`. */
-  origemDaChave: string;
+  /** Quem pagou. A origem gravada em `llm_calls` sai daqui, por `ORIGEM_DA_CHAVE_DO_VIX`. */
+  pagador: PagadorLigado;
 }
 
 const inteiro = (n: number) => Math.max(0, Math.round(Number.isFinite(n) ? n : 0));
@@ -164,7 +217,7 @@ export function linhaDeLlmCallsDoVix(u: UsoDeUmaResposta): Record<string, unknow
     output_tokens: inteiro(u.tokensDeSaida),
     cost_cents: u.custoUsdCents,
     status: u.falhou ? "erro" : "ok",
-    [COLUNA_DA_ORIGEM_DA_CHAVE]: u.origemDaChave,
+    [COLUNA_DA_ORIGEM_DA_CHAVE]: ORIGEM_DA_CHAVE_DO_VIX[u.pagador],
   };
 }
 

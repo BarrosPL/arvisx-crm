@@ -2,7 +2,7 @@
  * PATCH /api/v1/assistente/configuracao — o administrador da EMPRESA liga ou
  * desliga o Vix para a empresa dele.
  *
- * Só o campo `ligado`. A marca `sem_limite` da mesma tabela é da PLATAFORMA e
+ * Só o campo `ligado`. A marca `isenta` da mesma tabela é da PLATAFORMA e
  * não passa por aqui: o schema é estrito e a gravação nomeia as colunas.
  */
 import { randomUUID } from "node:crypto";

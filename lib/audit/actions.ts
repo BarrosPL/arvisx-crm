@@ -1526,7 +1526,6 @@ export const AUDIT_ACTIONS = [
   "assistente.acao_falhou",
   "assistente.acao_cancelada",
   "assistente.segredo_bloqueado",
-  "assistente.teto_atingido",
   "assistente.chamado_aberto",
   "assistente.configuracao_alterada",
   "assistente.chamado_visto",

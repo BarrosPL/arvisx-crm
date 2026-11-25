@@ -3,7 +3,7 @@
  *
  * O que se mede na rota real:
  *  - só administrador da empresa passa (a recusa de `requireRole` volta como veio);
- *  - o corpo é estrito: a marca `sem_limite`, que é da plataforma, e qualquer
+ *  - o corpo é estrito: a marca `isenta`, que é da plataforma, e qualquer
  *    `organization_id` são recusados com 422 e NADA é gravado;
  *  - a gravação nomeia só `ligado` (nunca a marca) e filtra pela empresa da
  *    sessão;
@@ -89,7 +89,7 @@ describe("quem pode", () => {
 
 describe("o corpo é estrito", () => {
   it.each([
-    ["a marca da plataforma", { ligado: true, sem_limite: true }],
+    ["a marca da plataforma", { ligado: true, isenta: true }],
     ["a empresa no corpo", { ligado: false, organization_id: OUTRA_ORG }],
     ["ligado que não é booleano", { ligado: "sim" }],
     ["corpo vazio", {}],
@@ -110,7 +110,7 @@ describe("a gravação", () => {
     expect(op.tabela).toBe("assistente_estado_da_empresa");
     expect(op.valores.ligado).toBe(false);
     expect(op.valores.atualizado_por).toBe(USER);
-    expect(Object.keys(op.valores)).not.toContain("sem_limite");
+    expect(Object.keys(op.valores)).not.toContain("isenta");
     expect(op.filtros).toEqual([["organization_id", ORG]]);
     expect(vi.mocked(audit).mock.calls).toHaveLength(1);
     expect(JSON.stringify(vi.mocked(audit).mock.calls[0])).toContain("assistente.configuracao_alterada");

@@ -9,7 +9,7 @@
  * daqui: só o modelo montado.
  *
  * O modelo é FIXO. O custo é o real, pela tabela de preços do motor
- * (`pricing.ts`). O limite de mensagens por plano vale igual.
+ * (`pricing.ts`). O freio técnico (mensagens por minuto e tamanho) vale igual.
  *
  * Só é usado quando `VIX_PAGADOR` vale `chave_plataforma`. Não há queda da
  * assinatura para cá.
@@ -23,9 +23,6 @@ const PAGADOR = "chave_plataforma" as const;
 const PROVEDOR = "anthropic";
 /** O modelo do assistente neste pagador. Tem preço na tabela do motor. */
 export const MODELO_DA_CHAVE_DA_PLATAFORMA = "claude-haiku-5-5";
-/** O valor do Vix, neste pagador, na coluna de origem da chave de `llm_calls`. */
-const ORIGEM_DA_CHAVE = "assistente_chave_plataforma";
-
 function classificar(erro: unknown): MotivoDeIndisponibilidade {
   const { status } = statusEDetalheDoErro(erro);
   if (status === null) return "rede";
@@ -41,7 +38,6 @@ export function chaveDaPlataforma(): ProvedorDoVix {
   return {
     disponivel: true,
     pagador: PAGADOR,
-    origemDaChave: ORIGEM_DA_CHAVE,
     provedor: PROVEDOR,
     modelo: MODELO_DA_CHAVE_DA_PLATAFORMA,
     model: buildModel(PROVEDOR, chave, MODELO_DA_CHAVE_DA_PLATAFORMA),

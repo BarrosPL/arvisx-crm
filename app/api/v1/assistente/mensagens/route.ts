@@ -11,14 +11,15 @@
  *
  *  1. sessão, papel (`viewer`), empresa operante: `requireRole`. Empresa
  *     suspensa para aqui, com 403 `org_suspended`;
- *  2. o Vix está ligado na instalação e na empresa, e o plano (ou a marca) dá
- *     direito a ele: `estadoDoVix`. Desligado = 403;
- *  3. taxa por usuário e por empresa: 429, nada gravado;
+ *  2. o Vix está ligado na instalação e na empresa, e a empresa tem acesso
+ *     (assinatura ativa ou a marca da plataforma): `estadoDoVix`. Senão, 403;
+ *  3. FREIO TÉCNICO: tamanho máximo da mensagem (413) e mensagens por minuto,
+ *     por pessoa e por empresa (429). Nada gravado, modelo não chamado;
  *  4. FILTRO DE SEGREDO: mensagem com cara de chave, senha ou código não vai
  *     ao modelo, não entra no histórico, não entra na auditoria nem no log;
  *  5. o provedor do pagador escolhido está pronto: senão, "indisponível";
  *  6. a conversa é DESTE usuário NESTA empresa: senão, 404;
- *  7. o limite de mensagens do mês: contado no banco, antes do modelo.
+ *  7. o registro de uso: gravado no banco antes do modelo (não há limite de mensagens).
  *
  * Só então a mensagem é gravada, o modelo é chamado e a resposta sai em stream.
  *
@@ -45,7 +46,7 @@ import { z } from "zod";
 
 import { checkRateLimit } from "@/lib/ai/dispatcher/rate-limit";
 import { fail, ok } from "@/lib/api/wrappers";
-import { concluirUso, registrarMensagem } from "@/lib/assistente/custo";
+import { TAMANHO_MAXIMO_ABSOLUTO, concluirUso, registrarMensagem } from "@/lib/assistente/custo";
 import { escritasDoVixLigadas, estadoDoVix } from "@/lib/assistente/disponibilidade";
 import { detectarSegredo } from "@/lib/assistente/filtro-de-segredo";
 import { FRASES } from "@/lib/assistente/frases";
@@ -73,7 +74,7 @@ const corpoDoPost = z
     // Gerado no cliente: agrupa pergunta e resposta e é a idempotência do envio.
     turn_id: z.string().uuid(),
     // Texto já transcrito também entra por aqui (`origem_da_entrada`): a voz é fase posterior.
-    texto: z.string().trim().min(1).max(4000),
+    texto: z.string().trim().min(1).max(TAMANHO_MAXIMO_ABSOLUTO),
     origem_da_entrada: z.enum(["texto", "voz_transcrita"]).default("texto"),
     modo: z.enum(MODOS).optional(),
     tela_atual: z.string().trim().startsWith("/app").max(200).optional(),
@@ -118,11 +119,22 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   const estado = await estadoDoVix(admin, org.orgId);
   if (!estado.ligado) {
-    return estado.motivo === "sem_plano"
-      ? fail("assistente_fora_do_plano", t(FRASES.semPlano), 403, { requestId })
+    return estado.motivo === "sem_acesso"
+      ? fail("assistente_sem_acesso", t(FRASES.semAcesso), 403, { requestId })
       : fail("assistente_desligado", t(FRASES.desligado), 403, { requestId });
   }
   const { config } = estado;
+
+  // FREIO TÉCNICO 1: o tamanho da mensagem, da configuração da instalação.
+  // Antes de taxa, de banco e de modelo: mensagem recusada aqui não gasta nada.
+  if (corpo.texto.length > config.tamanhoMaximoDaMensagem) {
+    return fail("assistente_mensagem_longa", t(FRASES.longa), 413, {
+      requestId,
+      details: { maximo: config.tamanhoMaximoDaMensagem },
+    });
+  }
+
+  // FREIO TÉCNICO 2: mensagens por minuto, por pessoa (e um teto por empresa).
 
   const porUsuario = await checkRateLimit(`vix:u:${user.id}`, config.mensagensPorMinuto, JANELA_SEGUNDOS);
   const porEmpresa = await checkRateLimit(
@@ -186,20 +198,20 @@ export async function POST(req: NextRequest): Promise<Response> {
       : fail("internal_error", t(FRASES.naoConseguiu), 500, { requestId });
   }
 
-  // O limite do mês, contado no banco antes do modelo.
+  // O registro de uso, gravado antes do modelo. Não há limite a conferir: sem
+  // conseguir registrar, o assistente não chama o modelo.
   const contada = await registrarMensagem(admin, {
     orgId: org.orgId,
     userId: user.id,
     conversaId: conversa.id,
     pagador: provedor.pagador,
-    limite: config.mensagensPorMes,
   });
   if (!contada.ok) {
-    const frase = contada.motivo === "limite_atingido" ? t(FRASES.limite) : t(FRASES.indisponivel);
-    auditarVix("assistente.teto_atingido", ctx, {
+    const frase = t(FRASES.indisponivel);
+    auditarVix("assistente.recusa", ctx, {
       recursoTipo: "assistente_conversa",
       recursoId: conversa.id,
-      metadata: { motivo: contada.motivo },
+      metadata: { motivo: "uso_nao_registrado" },
     });
     await gravarMensagem(admin, ctx, {
       conversaId: conversa.id,
@@ -209,7 +221,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       erroCodigo: contada.motivo,
     });
     return ok(
-      { tipo: contada.motivo === "limite_atingido" ? "limite_atingido" : "indisponivel", mensagem: frase, conversa_id: conversa.id },
+      { tipo: "indisponivel", mensagem: frase, conversa_id: conversa.id },
       { requestId },
     );
   }
@@ -308,7 +320,7 @@ export async function POST(req: NextRequest): Promise<Response> {
         tokensDeSaida: uso.saida,
         falhou: falha !== null,
         custoUsdCents: provedor.custoUsdCents(uso),
-        origemDaChave: provedor.origemDaChave,
+        pagador: provedor.pagador,
       });
       enviar({ tipo: "fim", conversa_id: conversa.id });
       controller.close();

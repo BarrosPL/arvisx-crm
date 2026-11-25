@@ -54,10 +54,6 @@ interface Item {
   aviso?: boolean;
 }
 
-interface EstadoDoPainel {
-  mensagens_no_mes: number | null;
-  limite_de_mensagens: number | null;
-}
 
 function cabecalhos(): Record<string, string> {
   const aba = orgDaAba();
@@ -168,27 +164,9 @@ export function PainelDoVix() {
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [conversaId, setConversaId] = useState<string | null>(null);
-  const [uso, setUso] = useState<EstadoDoPainel | null>(null);
   const fim = useRef<HTMLDivElement | null>(null);
 
-  const lerUso = useCallback(async () => {
-    try {
-      const r = await fetch("/api/v1/assistente/estado");
-      if (!r.ok) return;
-      const corpo = (await r.json()) as { data?: EstadoDoPainel & { ligado?: boolean } };
-      if (corpo.data?.ligado) {
-        setUso({ mensagens_no_mes: corpo.data.mensagens_no_mes, limite_de_mensagens: corpo.data.limite_de_mensagens });
-      }
-    } catch {
-      /* o uso é informativo: sem ele o painel segue funcionando */
-    }
-  }, []);
-
-  /** Abrir é um gesto da pessoa: é nele que o uso do mês é lido. */
-  const abrirPainel = useCallback(() => {
-    setAberto(true);
-    void lerUso();
-  }, [lerUso]);
+  const abrirPainel = useCallback(() => setAberto(true), []);
 
   useHotkeys("mod+j", () => (aberto ? setAberto(false) : abrirPainel()), { preventDefault: true, enableOnFormTags: true });
 
@@ -305,7 +283,6 @@ export function PainelDoVix() {
       falhar(t("Não consegui concluir a resposta agora. Tente de novo em instantes."));
     } finally {
       setEnviando(false);
-      void lerUso();
     }
   };
 
@@ -419,11 +396,6 @@ export function PainelDoVix() {
           </div>
 
           <footer className="border-t border-border px-4 py-3">
-            {uso && uso.limite_de_mensagens !== null && uso.mensagens_no_mes !== null && (
-              <p className="mb-2 text-[11px] text-text-subtle" data-testid="vix-uso">
-                {t("Mensagens neste mês:")} {uso.mensagens_no_mes} / {uso.limite_de_mensagens}
-              </p>
-            )}
             <div className="flex items-end gap-2">
               <Textarea
                 value={texto}

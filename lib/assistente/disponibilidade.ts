@@ -7,12 +7,12 @@
  *     ausente ou desconhecida vale desligado);
  *  2. a EMPRESA: não desligou o dela (`assistente_estado_da_empresa.ligado`;
  *     sem linha = ligado);
- *  3. o DIREITO: a organização tem a marca `sem_limite` ou um plano com linha
- *     em `assistente_planos` (`configDoVix`).
+ *  3. o ACESSO: a organização tem a marca `isenta`, da plataforma, ou tem
+ *     assinatura ativa, em qualquer plano (`configDoVix`).
  *
  * Desligado nas duas primeiras = o botão some e as rotas recusam. Na terceira,
- * o botão também não aparece, e a rota explica que o plano não inclui o
- * assistente.
+ * o botão também não aparece, e a rota explica que o assistente não está
+ * disponível para a empresa.
  *
  * Quem consome: `app/app/layout.tsx` (não monta o painel) e toda rota de
  * `/api/v1/assistente`. A organização vem SEMPRE da sessão, resolvida por quem
@@ -27,7 +27,7 @@ import { logger } from "@/lib/logger";
 import { configDoVix, type ConfigDoVix } from "./custo";
 import { pagadorDoVix, type Pagador } from "./provedor";
 
-export type MotivoDoVixDesligado = "desligado_na_instalacao" | "desligado_na_empresa" | "sem_plano";
+export type MotivoDoVixDesligado = "desligado_na_instalacao" | "desligado_na_empresa" | "sem_acesso";
 
 export type EstadoDoVix =
   | { ligado: true; pagador: Exclude<Pagador, "desligado">; config: ConfigDoVix }
@@ -55,7 +55,7 @@ export async function estadoDoVix(admin: SupabaseClient, orgId: string): Promise
   if (pagador === "desligado") return { ligado: false, motivo: "desligado_na_instalacao" };
   if (!(await empresaDeixouLigado(admin, orgId))) return { ligado: false, motivo: "desligado_na_empresa" };
   const config = await configDoVix(admin, orgId);
-  if (!config) return { ligado: false, motivo: "sem_plano" };
+  if (!config) return { ligado: false, motivo: "sem_acesso" };
   return { ligado: true, pagador, config };
 }
 

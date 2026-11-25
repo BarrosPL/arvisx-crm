@@ -78,7 +78,6 @@ export function provedorSimulado(
 ): ProvedorPronto {
   return {
     pagador: "assinatura_plataforma",
-    origemDaChave: "assinatura_plataforma",
     provedor: "simulado",
     modelo: "modelo-simulado",
     model: simulado.model,

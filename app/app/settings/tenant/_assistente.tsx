@@ -12,7 +12,7 @@ import { HEADER_ORG_DA_ABA, orgDaAba } from "@/lib/auth/org-da-aba";
 interface Props {
   /** O que a empresa escolheu até agora. Sem escolha gravada, vale ligado. */
   ligadoNaEmpresa: boolean;
-  /** O plano (ou a liberação da plataforma) dá direito ao assistente? */
+  /** A empresa tem assinatura ativa ou a liberação da plataforma? */
   temDireito: boolean;
 }
 
@@ -62,7 +62,7 @@ export function AssistenteDaEmpresa({ ligadoNaEmpresa, temDireito }: Props) {
       </p>
       {!temDireito ? (
         <p className="max-w-2xl text-sm text-muted-foreground" data-testid="assistente-sem-direito">
-          {t("O plano da sua empresa não inclui o assistente. A escolha abaixo fica guardada, mas ele só aparece quando o plano o incluir.")}
+          {t("O assistente não está disponível para a sua empresa agora: ele pede uma assinatura ativa. A escolha abaixo fica guardada para quando estiver.")}
         </p>
       ) : null}
       <div className="flex items-center gap-3">

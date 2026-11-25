@@ -8,7 +8,7 @@
  *     a pessoa clica; no cartão reforçado, o botão só libera com a palavra;
  *  2. o endereço de "abrir tela" vem do evento do servidor; um endereço escrito
  *     no TEXTO da resposta não vira link;
- *  3. respostas que não são stream (segredo bloqueado, limite, indisponível)
+ *  3. respostas que não são stream (segredo bloqueado, freio, indisponível)
  *     aparecem como frase, sem detalhe técnico.
  *
  * O servidor é um `fetch` de mentira. Isto NÃO é a prova pela tela num ambiente
@@ -40,7 +40,7 @@ function sse(eventos: Record<string, unknown>[]): Response {
 const json = (dados: unknown, status = 200) =>
   new Response(JSON.stringify(dados), { status, headers: { "content-type": "application/json" } });
 
-const ESTADO = { data: { ligado: true, mensagens_no_mes: 3, limite_de_mensagens: 40, acoes_ligadas: true } };
+const ESTADO = { data: { ligado: true, mensagens_no_mes: 3, acoes_ligadas: true } };
 
 beforeEach(() => {
   chamadas = [];
@@ -66,13 +66,14 @@ async function abrirEPerguntar(pergunta: string) {
 }
 
 describe("abrir e conversar", () => {
-  it("o painel nasce fechado, abre no botão e mostra o uso do mês", async () => {
+  it("o painel nasce fechado, abre no botão e não mostra contagem nem limite de mensagens", async () => {
     const user = userEvent.setup();
     render(<PainelDoVix />);
     expect(screen.queryByTestId("vix-painel")).toBeNull();
     await user.click(screen.getByTestId("vix-botao"));
     expect(screen.getByTestId("vix-painel")).toBeTruthy();
-    await waitFor(() => expect(screen.getByTestId("vix-uso").textContent).toContain("3 / 40"));
+    expect(screen.queryByTestId("vix-uso")).toBeNull();
+    expect(screen.getByTestId("vix-painel").textContent).not.toMatch(/\d+\s*\/\s*\d+/);
   });
 
   it("envia a pergunta com um turn_id novo e mostra a resposta do stream", async () => {
@@ -194,7 +195,7 @@ describe("respostas que não são stream", () => {
   });
 
   it.each([
-    ["limite do mês", { data: { tipo: "limite_atingido", mensagem: "O limite de mensagens do assistente neste mês foi atingido." } }, 200, "limite de mensagens"],
+    ["mensagem longa", { error: { code: "assistente_mensagem_longa", message: "A mensagem ficou longa demais. Envie um texto mais curto." } }, 413, "longa demais"],
     ["indisponível", { data: { tipo: "indisponivel", mensagem: "O assistente está indisponível no momento." } }, 200, "indisponível no momento"],
     ["taxa", { error: { code: "rate_limited", message: "Muitas mensagens seguidas. Tente de novo em um minuto." } }, 429, "Muitas mensagens seguidas"],
     ["desligado", { error: { code: "assistente_desligado", message: "O assistente está desligado." } }, 403, "está desligado"],
@@ -203,7 +204,7 @@ describe("respostas que não são stream", () => {
     await abrirEPerguntar("oi");
     await waitFor(() => expect(screen.getByTestId("vix-resposta").textContent).toContain(trecho));
     const texto = screen.getByTestId("vix-conversa").textContent ?? "";
-    for (const tecnico of ["rate_limited", "assistente_desligado", "limite_atingido", "undefined", "[object"]) {
+    for (const tecnico of ["rate_limited", "assistente_desligado", "assistente_mensagem_longa", "undefined", "[object"]) {
       expect(texto).not.toContain(tecnico);
     }
   });

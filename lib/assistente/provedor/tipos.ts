@@ -37,8 +37,6 @@ export interface UsoDeTokens {
 
 export interface ProvedorPronto {
   pagador: Exclude<Pagador, "desligado">;
-  /** O valor gravado na coluna de origem da chave de `llm_calls` (quando esse destino for ligado). */
-  origemDaChave: string;
   provedor: string;
   modelo: string;
   model: LanguageModel;

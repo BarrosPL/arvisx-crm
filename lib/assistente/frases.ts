@@ -8,11 +8,10 @@
 export const FRASES = {
   segredo:
     "Isso parece uma chave, senha ou código, e não deve ser colado aqui. Eu não li nem guardei o que você enviou. Para cadastrar uma chave de IA, use a tela de Credenciais. Se o que você colou era uma chave verdadeira, o mais seguro é revogá-la no site do provedor e criar outra.",
-  limite:
-    "O limite de mensagens do assistente neste mês foi atingido. Ele volta no início do próximo mês. O CRM e os seus agentes de atendimento continuam funcionando normalmente.",
   indisponivel:
     "O assistente está indisponível no momento. Tente de novo daqui a pouco. O CRM e os seus agentes de atendimento continuam funcionando normalmente.",
-  semPlano: "O assistente não está incluído no plano da sua empresa.",
+  semAcesso: "O assistente não está disponível para a sua empresa.",
+  longa: "A mensagem ficou longa demais. Envie um texto mais curto.",
   desligado: "O assistente está desligado.",
   taxa: "Muitas mensagens seguidas. Tente de novo em um minuto.",
   naoConseguiu: "Não consegui concluir a resposta agora. Tente de novo em instantes.",

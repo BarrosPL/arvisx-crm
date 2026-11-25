@@ -48,9 +48,6 @@ import { statusEDetalheDoErro, type MotivoDeIndisponibilidade, type ProvedorDoVi
 
 type Admin = ReturnType<typeof createAdminClient>;
 
-/** O valor do Vix na coluna de origem da chave de `llm_calls`. */
-const ORIGEM_DA_CHAVE = "assinatura_plataforma";
-
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const PAGADOR = "assinatura_plataforma" as const;
@@ -86,7 +83,6 @@ export async function assinaturaDaPlataforma(admin: Admin): Promise<ProvedorDoVi
   return {
     disponivel: true,
     pagador: PAGADOR,
-    origemDaChave: ORIGEM_DA_CHAVE,
     provedor: PROVEDOR_POR_ASSINATURA,
     modelo,
     model: buildModel(PROVEDOR_POR_ASSINATURA, tokens.access_token, modelo),

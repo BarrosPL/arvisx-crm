@@ -1,7 +1,13 @@
 import { ChamadosDoAssistente } from "./_client";
+import { UsoDoAssistente } from "./_uso";
 
-export const metadata = { title: "Chamados — Admin Plataforma" };
+export const metadata = { title: "Assistente — Admin Plataforma" };
 
 export default function AdminChamadosPage() {
-  return <ChamadosDoAssistente />;
+  return (
+    <div className="space-y-10">
+      <ChamadosDoAssistente />
+      <UsoDoAssistente />
+    </div>
+  );
 }

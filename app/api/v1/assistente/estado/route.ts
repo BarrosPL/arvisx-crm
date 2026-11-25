@@ -23,7 +23,7 @@ export async function GET(): Promise<Response> {
   const admin = createAdminClient();
   const estado = await estadoDoVix(admin, authz.org.orgId);
   if (!estado.ligado) {
-    return ok({ ligado: false, motivo: estado.motivo === "sem_plano" ? "sem_plano" : "desligado" }, { requestId });
+    return ok({ ligado: false, motivo: estado.motivo === "sem_acesso" ? "sem_acesso" : "desligado" }, { requestId });
   }
   const [usadas, acoes] = await Promise.all([
     mensagensUsadasNoMes(admin, authz.org.orgId),
@@ -33,7 +33,6 @@ export async function GET(): Promise<Response> {
     {
       ligado: true,
       mensagens_no_mes: usadas,
-      limite_de_mensagens: estado.config.mensagensPorMes,
       acoes_ligadas: acoes,
     },
     { requestId },

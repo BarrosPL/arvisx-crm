@@ -27,6 +27,7 @@ import { moduloLigado } from "@/lib/instalacao/modulos";
 import { logger } from "@/lib/logger";
 
 import { clienteFalso, eventosDoStream, novoBanco, type EstadoDoBanco } from "../helpers/banco-falso-do-vix";
+import { FERRAMENTAS_POR_TURNO } from "@/lib/assistente/custo";
 import { modeloRoteirizado, provedorSimulado, type ModeloSimulado, type PassoDoRoteiro } from "../helpers/modelo-simulado-do-vix";
 
 const estado = vi.hoisted(() => ({ banco: null as unknown, execLer: null as unknown, execEscrever: null as unknown }));
@@ -39,6 +40,10 @@ vi.mock("@/lib/supabase/admin", async () => {
   return { createAdminClient: () => criar(estado.banco as never), isServiceRoleConfigured: () => true };
 });
 vi.mock("@/lib/audit", () => ({ audit: vi.fn(async () => undefined) }));
+const instalacao = vi.hoisted(() => ({ valores: {} as Record<string, string> }));
+vi.mock("@/lib/instalacao/config", () => ({
+  valorDaInstalacao: vi.fn(async (chave: string) => ({ valor: instalacao.valores[chave] ?? null, fonte: "nenhuma" })),
+}));
 vi.mock("@/lib/ai/dispatcher/rate-limit", () => ({ checkRateLimit: vi.fn() }));
 vi.mock("@/lib/assistente/provedor", () => ({ pagadorDoVix: vi.fn(), provedorDoVix: vi.fn() }));
 vi.mock("@/lib/instalacao/modulos", async (original) => ({
@@ -161,6 +166,7 @@ const rastro = () =>
 
 beforeEach(() => {
   vi.clearAllMocks();
+  instalacao.valores = {};
   banco = novoBanco();
   estado.banco = banco;
   sessao("agent");
@@ -305,80 +311,132 @@ describe("taxa", () => {
     expect(simulado.chamadas()).toBe(0);
   });
 
-  it("o limite por usuário é o do plano, e os baldes são por usuário e por empresa da sessão", async () => {
-    banco.config = { ...banco.config!, mensagens_por_minuto: 3 };
+  it("o número por minuto vem da configuração da instalação, e os baldes são por usuário e por empresa da sessão", async () => {
+    instalacao.valores.VIX_MENSAGENS_POR_MINUTO = "3";
     await (await pedir({ turn_id: novoTurno(), texto: "oi" })).text();
     expect(vi.mocked(checkRateLimit).mock.calls).toEqual([
       [`vix:u:${USER}`, 3, 60],
       [`vix:o:${ORG}`, 30, 60],
     ]);
   });
+
+  it.each(["", "abc", "0", "9999", "-5"])("chave do freio vazia ou inválida (%s) NÃO desliga o freio: vale o padrão de 6 por minuto", async (valor) => {
+    instalacao.valores.VIX_MENSAGENS_POR_MINUTO = valor;
+    await (await pedir({ turn_id: novoTurno(), texto: "oi" })).text();
+    expect(vi.mocked(checkRateLimit).mock.calls[0]).toEqual([`vix:u:${USER}`, 6, 60]);
+  });
 });
 
-describe("limite de mensagens do mês", () => {
-  it("no limite: o Vix avisa e para; o modelo não é chamado e a contagem não sobe", async () => {
-    banco.usadasNoMes = 100;
+describe("freio técnico: tamanho da mensagem", () => {
+  it("no tamanho máximo, passa (controle positivo)", async () => {
+    const r = await pedir({ turn_id: novoTurno(), texto: "a".repeat(2000) });
+    expect(r.headers.get("content-type")).toContain("text/event-stream");
+    await r.text();
+    expect(simulado.chamadas()).toBe(1);
+  });
+
+  it("um caractere acima do máximo: 413, sem taxa consumida, sem modelo, nada gravado", async () => {
+    const r = await pedir({ turn_id: novoTurno(), texto: "a".repeat(2001) });
+    expect(r.status).toBe(413);
+    expect(((await r.json()) as { error: { code: string } }).error.code).toBe("assistente_mensagem_longa");
+    expect(checkRateLimit).not.toHaveBeenCalled();
+    expect(provedorDoVix).not.toHaveBeenCalled();
+    expect(simulado.chamadas()).toBe(0);
+    expect(banco.escritas).toEqual([]);
+    expect(tabela("assistente_usos")).toHaveLength(0);
+  });
+
+  it("o máximo vem da configuração da instalação", async () => {
+    instalacao.valores.VIX_TAMANHO_MAXIMO_DA_MENSAGEM = "300";
+    expect((await pedir({ turn_id: novoTurno(), texto: "a".repeat(301) })).status).toBe(413);
+    const r = await pedir({ turn_id: novoTurno(), texto: "a".repeat(300) });
+    expect(r.headers.get("content-type")).toContain("text/event-stream");
+    await r.text();
+  });
+
+  it("configuração acima do teto absoluto não vale: 4001 caracteres são recusados de qualquer jeito", async () => {
+    instalacao.valores.VIX_TAMANHO_MAXIMO_DA_MENSAGEM = "999999";
+    const r = await pedir({ turn_id: novoTurno(), texto: "a".repeat(4001) });
+    expect([413, 422]).toContain(r.status);
+    expect(simulado.chamadas()).toBe(0);
+    expect(banco.escritas).toEqual([]);
+  });
+});
+
+describe("não há limite de mensagens por plano", () => {
+  it("com muito uso no mês, a organização com acesso continua respondendo", async () => {
+    banco.usadasNoMes = 100_000;
+    const r = await pedir({ turn_id: novoTurno(), texto: "quantos leads?" });
+    expect(r.headers.get("content-type")).toContain("text/event-stream");
+    await r.text();
+    expect(simulado.chamadas()).toBe(1);
+  });
+
+  it("cada mensagem que chega ao modelo é registrada antes, com a organização e a pessoa da sessão, e sem limite no pedido", async () => {
+    await (await pedir({ turn_id: novoTurno(), texto: "oi" })).text();
+    const registro = banco.rpcs.find((r) => r.nome === "fn_assistente_registrar_mensagem")!;
+    expect(registro.args).toEqual({ p_org: ORG, p_user: USER, p_conversa: expect.any(String), p_pagador: "assinatura_plataforma" });
+    expect(tabela("assistente_usos")).toHaveLength(1);
+  });
+
+  it("se o uso não pôde ser registrado, o modelo NÃO é chamado: a frase é a de indisponível", async () => {
+    banco.falhaAoRegistrar = true;
     const r = await pedir({ turn_id: novoTurno(), texto: "quantos leads?" });
     expect(r.status).toBe(200);
     const corpo = (await r.json()) as { data: { tipo: string; mensagem: string } };
-    expect(corpo.data.tipo).toBe("limite_atingido");
+    expect(corpo.data.tipo).toBe("indisponivel");
     expect(corpo.data.mensagem).toContain("agentes de atendimento continuam");
     expect(simulado.chamadas()).toBe(0);
-    expect(banco.usadasNoMes).toBe(100);
     expect(tabela("assistente_usos")).toHaveLength(0);
-    expect(acoesAuditadas()).toContain("assistente.teto_atingido");
   });
 
-  it("estourar o limite não toca nada dos agentes: o dublê do banco estoura se a rota sair das tabelas do assistente", async () => {
-    banco.usadasNoMes = 100;
-    await (await pedir({ turn_id: novoTurno(), texto: "quantos leads?" })).json();
-    expect(new Set(banco.escritas.map((e) => e.tabela))).toEqual(new Set(["assistente_conversas", "assistente_mensagens"]));
+  it.each(["assinatura_plataforma", "chave_plataforma"] as const)(
+    "o Vix não aciona a falha fechada de 'plano sem teto': com o pagador %s responde normalmente, sem ler plano nem orçamento",
+    async (pagador) => {
+      // A organização tem acesso por assinatura ativa. O plano dela (com ou sem
+      // teto de IA) não é lido em lugar nenhum: o dublê do banco estoura se a
+      // rota sair das tabelas e funções do assistente.
+      simulado = modeloRoteirizado([{ texto: "Você tem 3 negócios abertos." }]);
+      vi.mocked(provedorDoVix).mockResolvedValue({ disponivel: true, ...provedorSimulado(simulado, { pagador }) });
+      const r = await pedir({ turn_id: novoTurno(), texto: "quantos negócios?" });
+      expect(r.headers.get("content-type")).toContain("text/event-stream");
+      expect(await r.text()).toContain("3 negócios abertos");
+      expect(simulado.chamadas()).toBe(1);
+      expect(banco.rpcs.map((x) => x.nome).every((n) => n.startsWith("fn_assistente_"))).toBe(true);
+      expect(banco.escritas.every((e) => e.tabela.startsWith("assistente_"))).toBe(true);
+      expect(tabela("assistente_usos")[0]).toMatchObject({ pagador });
+    },
+  );
+
+  it("a rota só toca tabelas e funções do assistente", async () => {
+    await (await pedir({ turn_id: novoTurno(), texto: "quantos leads?" })).text();
+    expect(banco.escritas.every((e) => e.tabela.startsWith("assistente_"))).toBe(true);
     expect(banco.rpcs.map((r) => r.nome).every((n) => n.startsWith("fn_assistente_"))).toBe(true);
-  });
-
-  it("uma abaixo do limite: responde, e a seguinte para", async () => {
-    banco.usadasNoMes = 99;
-    const primeira = await pedir({ turn_id: novoTurno(), texto: "primeira" });
-    expect(primeira.headers.get("content-type")).toContain("text/event-stream");
-    await primeira.text();
-    modelo([{ texto: "não devia responder" }]);
-    const segunda = await pedir({ turn_id: novoTurno(), texto: "segunda" });
-    expect(((await segunda.json()) as { data: { tipo: string } }).data.tipo).toBe("limite_atingido");
-    expect(simulado.chamadas()).toBe(0);
-  });
-
-  it("o limite passado ao banco é o do plano da organização da sessão", async () => {
-    banco.config = { ...banco.config!, mensagens_por_mes: 40 };
-    await (await pedir({ turn_id: novoTurno(), texto: "oi" })).text();
-    const registro = banco.rpcs.find((r) => r.nome === "fn_assistente_registrar_mensagem")!;
-    expect(registro.args).toMatchObject({ p_org: ORG, p_user: USER, p_limite: 40, p_pagador: "assinatura_plataforma" });
   });
 });
 
-describe("quem tem o Vix: plano com linha ou marca; sem os dois, recusa", () => {
-  it("organização sem plano com linha e sem marca: 403, modelo não chamado, nada gravado", async () => {
-    banco.config = null;
+describe("quem tem o Vix: assinatura ativa ou marca; sem as duas, recusa", () => {
+  it("organização sem assinatura ativa e sem marca: 403, modelo não chamado, nada gravado", async () => {
+    banco.acesso = null;
     const r = await pedir({ turn_id: novoTurno(), texto: "oi" });
     expect(r.status).toBe(403);
-    expect(((await r.json()) as { error: { code: string } }).error.code).toBe("assistente_fora_do_plano");
+    expect(((await r.json()) as { error: { code: string } }).error.code).toBe("assistente_sem_acesso");
     expect(simulado.chamadas()).toBe(0);
     expect(provedorDoVix).not.toHaveBeenCalled();
     expect(banco.escritas).toEqual([]);
   });
 
-  it("a configuração é pedida ao banco com a organização da SESSÃO", async () => {
+  it("o acesso é perguntado ao banco com a organização da SESSÃO", async () => {
     await (await pedir({ turn_id: novoTurno(), texto: "oi" })).text();
-    expect(banco.rpcs.find((r) => r.nome === "fn_assistente_config_da_org")!.args).toEqual({ p_org: ORG });
+    expect(banco.rpcs.find((r) => r.nome === "fn_assistente_acesso_da_org")!.args).toEqual({ p_org: ORG });
   });
 
-  it("com a marca (sem limite): responde, e o limite passado ao banco é nulo, mesmo com muito uso", async () => {
-    banco.config = { origem: "marca", mensagens_por_mes: null, limite_de_lote: 5, mensagens_por_minuto: 6, ferramentas_por_turno: 8 };
-    banco.usadasNoMes = 100_000;
+  it.each(["assinatura_ativa", "marca"] as const)("com acesso por %s: responde", async (porta) => {
+    banco.acesso = porta;
     const r = await pedir({ turn_id: novoTurno(), texto: "oi" });
     expect(r.headers.get("content-type")).toContain("text/event-stream");
     await r.text();
     expect(simulado.chamadas()).toBe(1);
-    expect(banco.rpcs.find((x) => x.nome === "fn_assistente_registrar_mensagem")!.args.p_limite).toBeNull();
   });
 });
 
@@ -547,12 +605,12 @@ describe("provedor indisponível ou falhando", () => {
 });
 
 describe("limite de chamadas de ferramenta por turno", () => {
-  it("o modelo pede leituras sem parar: executa até o limite do plano e a resposta fecha", async () => {
-    banco.config = { ...banco.config!, ferramentas_por_turno: 2 };
+  it("o modelo pede leituras sem parar: executa até o teto do turno e a resposta fecha", async () => {
+    // O teto é fixo no código (`FERRAMENTAS_POR_TURNO`), não vem de plano.
     modelo(Array.from({ length: 30 }, () => ({ ferramentas: [{ nome: "teste_ler", args: {} }, { nome: "teste_ler", args: {} }] })));
     const eventos = await eventosDoStream(await pedir({ turn_id: novoTurno(), texto: "pesquise tudo" }));
-    expect(execLer().mock.calls.length).toBe(2);
-    expect(simulado.chamadas()).toBeLessThanOrEqual(4);
+    expect(execLer().mock.calls.length).toBe(FERRAMENTAS_POR_TURNO);
+    expect(simulado.chamadas()).toBeLessThanOrEqual(FERRAMENTAS_POR_TURNO + 2);
     expect(eventos.at(-1)?.tipo).toBe("fim");
   });
 });

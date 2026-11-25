@@ -73,8 +73,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const admin = createAdminClient();
   const estado = await estadoDoVix(admin, org.orgId);
   if (!estado.ligado) {
-    return estado.motivo === "sem_plano"
-      ? fail("assistente_fora_do_plano", t(FRASES.semPlano), 403, { requestId })
+    return estado.motivo === "sem_acesso"
+      ? fail("assistente_sem_acesso", t(FRASES.semAcesso), 403, { requestId })
       : fail("assistente_desligado", t(FRASES.desligado), 403, { requestId });
   }
 

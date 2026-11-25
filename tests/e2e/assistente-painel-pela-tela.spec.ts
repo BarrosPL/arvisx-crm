@@ -130,7 +130,7 @@ test("assistente: desligado some, ligado abre, chave colada é recusada, e a emp
 
     const marca = await db
       .from("assistente_estado_da_empresa")
-      .upsert({ organization_id: orgId, ligado: true, sem_limite: true }, { onConflict: "organization_id" });
+      .upsert({ organization_id: orgId, ligado: true, isenta: true }, { onConflict: "organization_id" });
     if (marca.error) throw marca.error;
 
     await expect(async () => {
@@ -176,10 +176,10 @@ test("assistente: desligado some, ligado abre, chave colada é recusada, e a emp
     await cartao.getByTestId("assistente-trocar").click();
     await expect(cartao.getByTestId("assistente-estado")).toHaveText("Desligado para a empresa");
     await expect(page.getByTestId("vix-botao")).toHaveCount(0);
-    const gravado = await db.from("assistente_estado_da_empresa").select("ligado, sem_limite").eq("organization_id", orgId).single();
+    const gravado = await db.from("assistente_estado_da_empresa").select("ligado, isenta").eq("organization_id", orgId).single();
     if (gravado.error) throw gravado.error;
     // A empresa desligou; a liberação da plataforma não foi tocada pela tela.
-    expect(gravado.data).toEqual({ ligado: false, sem_limite: true });
+    expect(gravado.data).toEqual({ ligado: false, isenta: true });
     const recusaDaEmpresa = await page.request.post("/api/v1/assistente/mensagens", {
       data: { turn_id: randomUUID(), texto: "oi" },
     });

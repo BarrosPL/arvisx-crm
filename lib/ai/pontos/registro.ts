@@ -759,7 +759,7 @@ export const PONTOS_DE_IA: readonly PontoDeIa[] = [
     emissor: "lib/assistente/custo.ts",
     fixo: {
       razao:
-        "O assistente usa a IA da plataforma, com um limite de mensagens próprio por plano. Ele não usa a chave da sua empresa nem gasta o orçamento de IA dos seus agentes, então não há o que escolher aqui.",
+        "O assistente usa a IA da plataforma. Ele não usa a chave da sua empresa nem gasta o orçamento de IA dos seus agentes, então não há o que escolher aqui.",
     },
     sintomaDeFalha:
       "O assistente avisa que está indisponível no momento; o CRM e os agentes de atendimento seguem funcionando normalmente.",
