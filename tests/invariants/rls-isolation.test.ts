@@ -674,6 +674,29 @@ beforeAll(() => {
             (organization_id, preview_run_id, conversation_id, contact_id, is_dry_run, status, messages_sent)
           values (v_org, 'rls-invariant-' || v_org::text, v_conv, v_contact, true, 'completed', 0);
         end if;
+
+        -- migration 9830 — as tabelas do Vix (assistente do cliente). Conversa,
+        -- mensagem e cartão são do USUÁRIO: a policy exige a organização e o
+        -- dono, então a linha semeada é do próprio membro desta organização.
+        -- O segundo eixo (colega da mesma empresa lê zero; a sessão não escreve)
+        -- é medido em tests/invariants/assistente-tabelas-e-cartao.test.ts.
+        if not exists (select 1 from public.assistente_conversas where organization_id = v_org) then
+          insert into public.assistente_conversas (organization_id, user_id, titulo)
+            select v_org, uo.user_id, 'rls invariant' from public.user_organizations uo
+             where uo.organization_id = v_org limit 1;
+          insert into public.assistente_mensagens (organization_id, conversa_id, user_id, turn_id, autor, corpo)
+            select c.organization_id, c.id, c.user_id, gen_random_uuid(), 'usuario', 'rls invariant probe'
+              from public.assistente_conversas c where c.organization_id = v_org;
+          insert into public.assistente_acoes (organization_id, conversa_id, user_id, capacidade, nivel, resumo, expira_em)
+            select c.organization_id, c.id, c.user_id, 'teste.escrever', 'escrever', 'rls invariant', now() + interval '1 hour'
+              from public.assistente_conversas c where c.organization_id = v_org;
+          insert into public.assistente_chamados (organization_id, user_id, resumo)
+            select c.organization_id, c.user_id, 'rls invariant' from public.assistente_conversas c where c.organization_id = v_org;
+          insert into public.assistente_estado_da_empresa (organization_id) values (v_org) on conflict do nothing;
+          insert into public.assistente_progresso (organization_id, chave) values (v_org, 'rls_invariant') on conflict do nothing;
+          insert into public.assistente_custos (organization_id, provedor, modelo, custo_usd_cents)
+            values (v_org, 'anthropic', 'rls-invariant', 1);
+        end if;
       end loop;
     end
     $seed$;
@@ -898,6 +921,18 @@ export const TABLES = [
   // migration 9043 — o segundo telefone da ficha (Spec 31 B1). Leitura por
   // organização; a escrita exige `agent`, o papel semeado aqui.
   "contact_phones",
+  // migration 9830 — as tabelas do Vix (assistente do cliente). Conversa,
+  // mensagem, cartão e chamado são lidos pelo DONO (a semente grava a linha do
+  // próprio membro); estado, progresso e uso são lidos por organização. A
+  // escrita é só do servidor, e isso, o colega da mesma empresa e o cartão que
+  // vale uma vez são medidos em `tests/invariants/assistente-tabelas-e-cartao.test.ts`.
+  "assistente_conversas",
+  "assistente_mensagens",
+  "assistente_acoes",
+  "assistente_chamados",
+  "assistente_estado_da_empresa",
+  "assistente_progresso",
+  "assistente_custos",
   // ⚠️ `cobranca_assinaturas` (migration 0583) NÃO entra nesta lista, pelo mesmo
   // motivo de `webhook_lead_captures`: a leitura é só do `admin` e o usuário
   // semeado aqui é `agent`, então o controle positivo falharia por ACERTO. A

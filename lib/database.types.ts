@@ -2464,6 +2464,406 @@ export type Database = {
           },
         ];
       };
+      assistente_acoes: {
+        Row: {
+          capacidade: string;
+          confirmada_em: string | null;
+          conversa_id: string;
+          created_at: string;
+          entrada: NonNullable<Json>;
+          erro: string | null;
+          estado: string;
+          executada_em: string | null;
+          expira_em: string;
+          id: string;
+          itens: NonNullable<Json>;
+          nivel: string;
+          organization_id: string;
+          quantidade: number;
+          resultado: Json | null;
+          resumo: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          capacidade: string;
+          confirmada_em?: string | null;
+          conversa_id: string;
+          created_at?: string;
+          entrada?: NonNullable<Json>;
+          erro?: string | null;
+          estado?: string;
+          executada_em?: string | null;
+          expira_em: string;
+          id?: string;
+          itens?: NonNullable<Json>;
+          nivel: string;
+          organization_id: string;
+          quantidade?: number;
+          resultado?: Json | null;
+          resumo: string;
+          user_id: string;
+        };
+        Update: {
+          capacidade?: string;
+          confirmada_em?: string | null;
+          conversa_id?: string;
+          created_at?: string;
+          entrada?: NonNullable<Json>;
+          erro?: string | null;
+          estado?: string;
+          executada_em?: string | null;
+          expira_em?: string;
+          id?: string;
+          itens?: NonNullable<Json>;
+          nivel?: string;
+          organization_id?: string;
+          quantidade?: number;
+          resultado?: Json | null;
+          resumo?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assistente_acoes_conversa_id_fkey";
+            columns: ["conversa_id"];
+            isOneToOne: false;
+            referencedRelation: "assistente_conversas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assistente_acoes_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      assistente_chamados: {
+        Row: {
+          conversa_id: string | null;
+          created_at: string;
+          diagnostico: NonNullable<Json>;
+          estado: string;
+          id: string;
+          organization_id: string;
+          resumo: string;
+          updated_at: string;
+          user_id: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          conversa_id?: string | null;
+          created_at?: string;
+          diagnostico?: NonNullable<Json>;
+          estado?: string;
+          id?: string;
+          organization_id: string;
+          resumo: string;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          conversa_id?: string | null;
+          created_at?: string;
+          diagnostico?: NonNullable<Json>;
+          estado?: string;
+          id?: string;
+          organization_id?: string;
+          resumo?: string;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assistente_chamados_conversa_id_fkey";
+            columns: ["conversa_id"];
+            isOneToOne: false;
+            referencedRelation: "assistente_conversas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assistente_chamados_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      assistente_conversas: {
+        Row: {
+          arquivada_em: string | null;
+          created_at: string;
+          id: string;
+          modo: string;
+          organization_id: string;
+          tela_de_origem: string | null;
+          titulo: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          arquivada_em?: string | null;
+          created_at?: string;
+          id?: string;
+          modo?: string;
+          organization_id: string;
+          tela_de_origem?: string | null;
+          titulo?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          arquivada_em?: string | null;
+          created_at?: string;
+          id?: string;
+          modo?: string;
+          organization_id?: string;
+          tela_de_origem?: string | null;
+          titulo?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assistente_conversas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      assistente_custos: {
+        Row: {
+          conversa_id: string | null;
+          created_at: string;
+          custo_usd_cents: number;
+          falhou: boolean;
+          id: string;
+          modelo: string;
+          organization_id: string;
+          provedor: string;
+          tokens_de_entrada: number;
+          tokens_de_saida: number;
+          user_id: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          conversa_id?: string | null;
+          created_at?: string;
+          custo_usd_cents?: number;
+          falhou?: boolean;
+          id?: string;
+          modelo: string;
+          organization_id: string;
+          provedor: string;
+          tokens_de_entrada?: number;
+          tokens_de_saida?: number;
+          user_id?: string | null;
+        };
+        Update: {
+          conversa_id?: string | null;
+          created_at?: string;
+          custo_usd_cents?: number;
+          falhou?: boolean;
+          id?: string;
+          modelo?: string;
+          organization_id?: string;
+          provedor?: string;
+          tokens_de_entrada?: number;
+          tokens_de_saida?: number;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assistente_custos_conversa_id_fkey";
+            columns: ["conversa_id"];
+            isOneToOne: false;
+            referencedRelation: "assistente_conversas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assistente_custos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      assistente_estado_da_empresa: {
+        Row: {
+          atualizado_por: string | null;
+          ligado: boolean;
+          modo_padrao: string;
+          organization_id: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          atualizado_por?: string | null;
+          ligado?: boolean;
+          modo_padrao?: string;
+          organization_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          atualizado_por?: string | null;
+          ligado?: boolean;
+          modo_padrao?: string;
+          organization_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assistente_estado_da_empresa_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      assistente_mensagens: {
+        Row: {
+          autor: string;
+          conversa_id: string;
+          corpo: string | null;
+          created_at: string;
+          erro_codigo: string | null;
+          id: string;
+          organization_id: string;
+          origem_da_entrada: string;
+          turn_id: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          autor: string;
+          conversa_id: string;
+          corpo?: string | null;
+          created_at?: string;
+          erro_codigo?: string | null;
+          id?: string;
+          organization_id: string;
+          origem_da_entrada?: string;
+          turn_id: string;
+          user_id: string;
+        };
+        Update: {
+          autor?: string;
+          conversa_id?: string;
+          corpo?: string | null;
+          created_at?: string;
+          erro_codigo?: string | null;
+          id?: string;
+          organization_id?: string;
+          origem_da_entrada?: string;
+          turn_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assistente_mensagens_conversa_id_fkey";
+            columns: ["conversa_id"];
+            isOneToOne: false;
+            referencedRelation: "assistente_conversas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assistente_mensagens_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      assistente_planos: {
+        Row: {
+          created_at: string;
+          ferramentas_por_turno: number;
+          id: string;
+          limite_de_lote: number;
+          mensagens_por_minuto: number;
+          pagador: string;
+          plano_id: string | null;
+          teto_mensal_usd_cents: number;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          ferramentas_por_turno?: number;
+          id?: string;
+          limite_de_lote?: number;
+          mensagens_por_minuto?: number;
+          pagador: string;
+          plano_id?: string | null;
+          teto_mensal_usd_cents: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          ferramentas_por_turno?: number;
+          id?: string;
+          limite_de_lote?: number;
+          mensagens_por_minuto?: number;
+          pagador?: string;
+          plano_id?: string | null;
+          teto_mensal_usd_cents?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assistente_planos_plano_id_fkey";
+            columns: ["plano_id"];
+            isOneToOne: false;
+            referencedRelation: "cobranca_planos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      assistente_progresso: {
+        Row: {
+          chave: string;
+          conferido_por: string;
+          feito_em: string;
+          organization_id: string;
+          user_id: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          chave: string;
+          conferido_por?: string;
+          feito_em?: string;
+          organization_id: string;
+          user_id?: string | null;
+        };
+        Update: {
+          chave?: string;
+          conferido_por?: string;
+          feito_em?: string;
+          organization_id?: string;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assistente_progresso_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       attendant_availability: {
         Row: {
           capacity: number;
@@ -15312,6 +15712,15 @@ export type Database = {
         Returns: Json;
       };
       fn_aplicar_travas_de_suporte: { Args: Record<PropertyKey, never>; Returns: undefined };
+      fn_assistente_gasto_do_mes: { Args: { p_org: string }; Returns: number };
+      fn_assistente_plano_da_org: {
+        Args: { p_org: string };
+        Returns: Database["public"]["Tables"]["assistente_planos"]["Row"][];
+      };
+      fn_assistente_reservar_acao: {
+        Args: { p_acao: string; p_org: string; p_user: string };
+        Returns: Database["public"]["Tables"]["assistente_acoes"]["Row"][];
+      };
       fn_appointment_change: {
         Args: { p_id: string; p_org: string; p_patch: Json; p_revision: number };
         Returns: Json;
