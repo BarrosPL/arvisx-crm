@@ -24,6 +24,12 @@ export interface VoiceAgentConfig {
    * Credenciais pra esta org, ou env OPENAI_API_KEY do servidor.
    */
   apiKey: string;
+  /**
+   * De quem é a `apiKey` (`llm_calls.origem_da_chave`, migration 9825):
+   * `cliente` quando veio da credencial da organização, `plataforma` quando
+   * caiu no `.env` do servidor.
+   */
+  origemDaChave: "cliente" | "plataforma";
 }
 
 /**
@@ -36,7 +42,9 @@ export interface VoiceAgentConfig {
  * chaves cadastradas e nenhuma escolha explícita, variar sozinho no dia em que
  * alguém cadastra uma segunda é pior que sempre usar a mesma.
  */
-async function resolverChaveOpenAiDaVoz(organizationId: string): Promise<string> {
+async function resolverChaveOpenAiDaVoz(
+  organizationId: string,
+): Promise<{ apiKey: string; origemDaChave: "cliente" | "plataforma" }> {
   try {
     const admin = createAdminClient();
     const { data } = await admin
@@ -51,18 +59,21 @@ async function resolverChaveOpenAiDaVoz(organizationId: string): Promise<string>
       .maybeSingle();
 
     if (data) {
-      return decryptKey({
-        ciphertext: byteaToBuffer(data.api_key_encrypted),
-        iv: byteaToBuffer(data.api_key_iv),
-        tag: byteaToBuffer(data.api_key_tag),
-      });
+      return {
+        apiKey: decryptKey({
+          ciphertext: byteaToBuffer(data.api_key_encrypted),
+          iv: byteaToBuffer(data.api_key_iv),
+          tag: byteaToBuffer(data.api_key_tag),
+        }),
+        origemDaChave: "cliente",
+      };
     }
   } catch {
     // Decrypt falhou ou a query deu erro -- cai pro .env abaixo, log já
     // aconteceu no INFO deste arquivo se aplicável; não vale a pena arriscar
     // ecoar detalhe de credencial no log do worker.
   }
-  return process.env.OPENAI_API_KEY ?? "";
+  return { apiKey: process.env.OPENAI_API_KEY ?? "", origemDaChave: "plataforma" };
 }
 
 export async function getActiveVoiceAgent(organizationId: string): Promise<VoiceAgentConfig | null> {
@@ -92,6 +103,6 @@ export async function getActiveVoiceAgent(organizationId: string): Promise<Voice
     voiceModel: cfg.voice_model,
     ragTopK: cfg.rag_top_k,
     ragSimilarityThreshold: cfg.rag_similarity_threshold,
-    apiKey: await resolverChaveOpenAiDaVoz(organizationId),
+    ...(await resolverChaveOpenAiDaVoz(organizationId)),
   };
 }

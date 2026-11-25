@@ -187,8 +187,8 @@ export async function registrarFollowupDoJev(
        )
        insert into public.llm_calls
          (organization_id, contact_id, job_id, purpose, provider, model,
-          input_tokens, output_tokens, cost_cents, latency_ms, status, origem_da_escolha)
-       values ($1, $2, $3, 'followup_classify', 'typesafe', $4, $5, $6, $7, $8, 'ok', 'jev_observacao')`,
+          input_tokens, output_tokens, cost_cents, latency_ms, status, origem_da_chave, origem_da_escolha)
+       values ($1, $2, $3, 'followup_classify', 'typesafe', $4, $5, $6, $7, $8, 'ok', 'cliente', 'jev_observacao')`,
       [
         entrada.organizationId,
         entrada.contactId,

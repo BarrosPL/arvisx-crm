@@ -277,6 +277,8 @@ interface ActiveAudioSocketCall {
   callRowId: string;
   organizationId: string;
   agentId: string;
+  /** De quem é a chave que abriu a sessão: vai para `llm_calls.origem_da_chave`. */
+  origemDaChave?: "cliente" | "plataforma";
   contactId: string | null;
   answeredAt: string;
   transcript: { speaker: string; text: string; ts: string }[];
@@ -327,6 +329,7 @@ async function finalizeAudioSocketCall(uuid: string) {
     linhaDaLigacao({
       organizationId: call.organizationId,
       agentId: call.agentId,
+      origemDaChave: call.origemDaChave,
       contactId: call.contactId,
       modelo: sessao.modelo,
       uso: sessao.uso,
@@ -459,6 +462,7 @@ export async function handleAudioSocketConnection(socket: net.Socket, uuid: stri
     callRowId: callRow.id,
     organizationId: callRow.organization_id,
     agentId: agent.id,
+    origemDaChave: agent.origemDaChave,
     contactId: (callRow.contact_id as string | null | undefined) ?? null,
     answeredAt,
     transcript: [],

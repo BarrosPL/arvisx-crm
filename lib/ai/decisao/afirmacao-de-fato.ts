@@ -37,6 +37,7 @@ import { scrubMessage } from "@/lib/sentry/scrub";
 import type { createAdminClient } from "@/lib/supabase/admin";
 
 import { MODELO_DO_JEV, type FalhaDaDecisao, type Pergunta, type Resposta } from "./cliente";
+import { ORIGEM_DA_CHAVE_DO_JEV } from "./origem";
 import { lerConfigDoJev, type EstadoDaTarefa } from "./config";
 import { podeTentar, registrarFalha, registrarSucesso } from "./disjuntor";
 import { decidirNoPonto, type DependenciasDoPonto } from "./ponto";
@@ -383,6 +384,7 @@ async function gravarCusto(
     agent_id: e.agentId,
     purpose: AFIRMACAO_DE_FATO.purpose,
     provider: "typesafe",
+    origem_da_chave: ORIGEM_DA_CHAVE_DO_JEV,
     model: `typesafe/${r.modelo}`,
     input_tokens: r.uso.tokensDeEntrada,
     output_tokens: r.uso.tokensDeSaida,
@@ -412,6 +414,7 @@ async function gravarFalha(admin: Admin, e: EntradaDaConferenciaDeFato, falha: F
     agent_id: e.agentId,
     purpose: AFIRMACAO_DE_FATO.purpose,
     provider: "typesafe",
+    origem_da_chave: ORIGEM_DA_CHAVE_DO_JEV,
     model: `typesafe/${MODELO_DO_JEV}`,
     input_tokens: 0,
     output_tokens: 0,

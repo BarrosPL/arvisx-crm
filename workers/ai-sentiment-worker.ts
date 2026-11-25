@@ -29,6 +29,7 @@ import { podeGastarComIa } from "@/lib/ai/budget/pode-gastar";
 import { computeCost } from "@/lib/ai/cost";
 import { avisarNaCentral, fecharAvisoDoJev } from "@/lib/ai/decisao/aviso";
 import { MODELO_DO_JEV } from "@/lib/ai/decisao/cliente";
+import { ORIGEM_DA_CHAVE_DO_JEV } from "@/lib/ai/decisao/origem";
 import { medirClima, type ClimaMedido } from "@/lib/ai/decisao/clima";
 import { lerConfigDoJev } from "@/lib/ai/decisao/config";
 import { falhasSeguidas } from "@/lib/ai/decisao/disjuntor";
@@ -403,6 +404,7 @@ export async function processSentiment(event: EventRow): Promise<SentimentResult
         logInvocation({
           ...comum,
           provider: "typesafe",
+          origem_da_chave: ORIGEM_DA_CHAVE_DO_JEV,
           model: `typesafe/${clima.modelo}`,
           origem_da_escolha: decidiu ? "jev" : "jev_observacao",
           prompt_tokens: clima.tokensDeEntrada,
@@ -437,6 +439,7 @@ export async function processSentiment(event: EventRow): Promise<SentimentResult
         logInvocation({
           ...comum,
           provider: "typesafe",
+          origem_da_chave: ORIGEM_DA_CHAVE_DO_JEV,
           model: `typesafe/${MODELO_DO_JEV}`,
           origem_da_escolha: "jev",
           prompt_tokens: 0,
@@ -511,6 +514,8 @@ export async function processSentiment(event: EventRow): Promise<SentimentResult
             // carimbaria `openrouter` num id de modelo de provedor personalizado
             // (issue #3098).
             provider: resolvido.provider,
+            // A mesma régua do worker de resposta: origem `padrao` é a chave da instalação.
+            origem_da_chave: resolvido.origem === "padrao" ? "plataforma" : "cliente",
             model: resolvido.modelId,
             prompt_tokens: 0,
             completion_tokens: 0,
@@ -529,6 +534,8 @@ export async function processSentiment(event: EventRow): Promise<SentimentResult
             // trazer barra sem ser da OpenRouter — o provedor personalizado da
             // empresa serve `qwen/qwen3.8-27b`, e o palpite diria `openrouter`.
             provider: resolvido.provider,
+            // A mesma régua do worker de resposta: origem `padrao` é a chave da instalação.
+            origem_da_chave: resolvido.origem === "padrao" ? "plataforma" : "cliente",
             model: resolvido.modelId,
             prompt_tokens: medido.promptTokens,
             completion_tokens: medido.completionTokens,

@@ -205,8 +205,8 @@ export async function registrarManipulacaoDoJev(pool: pg.Pool, r: RegistroDaMani
        )
        insert into public.llm_calls
          (organization_id, contact_id, job_id, purpose, provider, model,
-          input_tokens, output_tokens, cost_cents, latency_ms, status, origem_da_escolha)
-       values ($1, $13, $6, 'jailbreak_detect', 'typesafe', $14, $15, $16, $17, $12, 'ok', $18)`,
+          input_tokens, output_tokens, cost_cents, latency_ms, status, origem_da_chave, origem_da_escolha)
+       values ($1, $13, $6, 'jailbreak_detect', 'typesafe', $14, $15, $16, $17, $12, 'ok', 'cliente', $18)`,
       [
         r.organizationId,
         TAREFA_DA_MANIPULACAO.id,

@@ -63,25 +63,29 @@ chave da instalação, e `AI_BUDGET_ENFORCEMENT=off` continua desligando tudo.
 
 ### Quem grava em `llm_calls`
 
-| Escritor | Chave que usa | O que grava |
-|---|---|---|
-| O motor, sucesso e falha (`lib/agent-engine/edge/llm/run-model-call.ts`) | a que o resolvedor carregou | `cliente` ou `plataforma` |
-| A recusa do motor por teto ou por endereço (`run-model-call.ts`) | a que estava carregada | `cliente` ou `plataforma` |
-| Worker legado, três linhas de `bot_respond` (`workers/ai-response-worker.ts`, por `logInvocation`) | a do ponto resolvido | `cliente` ou `plataforma`, e o contato |
-| Visão de imagem (`workers/media-derive-worker.ts`) | a que o resolvedor carregou | `cliente` ou `plataforma` |
-| Transcrição de áudio (`workers/media-derive-worker.ts`) | não rastreada nesta entrega | padrão, `plataforma` |
-| Sentimento, quatro linhas (`workers/ai-sentiment-worker.ts`, por `logInvocation`) | não rastreada | padrão, `plataforma` |
-| Sessão de voz (`workers/voice-agent/index.ts`, por `registrarChamadaDeIa`) | não rastreada | padrão, `plataforma` |
-| Síntese de voz (`lib/agent-engine/edge/crm/send-voice.ts`) | não rastreada | padrão, `plataforma` |
-| Conferência de fato, duas linhas (`lib/ai/decisao/afirmacao-de-fato.ts`) | não rastreada | padrão, `plataforma` |
-| Conferência de campo, duas linhas (`lib/ai/decisao/campo-do-negocio.ts`) | não rastreada | padrão, `plataforma` |
-| Pedidos do cliente, duas linhas (`lib/ai/decisao/pedidos.ts`) | não rastreada | padrão, `plataforma` |
+Todo escritor informa a origem. Quem vigia é
+`tests/unit/llm-calls-todo-escritor-diz-a-origem-da-chave.test.ts`, que acha
+todo ponto do produto que grava na tabela e reprova o que não informar.
 
-"Não rastreada" quer dizer que não segui de onde vem a chave daquele caminho.
-Essas linhas caem no padrão e contam no gasto do plano. Nenhuma delas conta
-como conversa, porque nenhuma usa um ponto de conversa. `logInvocation` e
-`registrarChamadaDeIa` já aceitam `origem_da_chave`: classificar um caminho é
-passar o valor.
+| Escritor | De onde vem a chave | O que grava |
+|---|---|---|
+| O motor: sucesso, falha e recusa (`lib/agent-engine/edge/llm/run-model-call.ts`) | `resolveOrgLlmConfig`: credencial da organização, senão o `.env` | `cliente` ou `plataforma` |
+| Worker legado, três linhas de `bot_respond` (`workers/ai-response-worker.ts`) | `resolverModeloDoPonto`: origem `padrao` é o `.env` | `cliente` ou `plataforma`, e o contato |
+| Sentimento, a IA de sempre, duas linhas (`workers/ai-sentiment-worker.ts`) | o mesmo `resolverModeloDoPonto` | `cliente` ou `plataforma` |
+| Sentimento, o Jev, duas linhas (`workers/ai-sentiment-worker.ts`) | credencial da organização | `cliente` |
+| O Jev: pedidos, conferência de fato e de campo, roteador, manipulação, urgência, follow-up e a linha de falha (`lib/ai/decisao/`, doze gravações) | sempre a credencial da organização, nunca o `.env` (`destinoDasTarefas`, em `lib/ai/decisao/ponto.ts`) | `cliente` |
+| Visão de imagem (`workers/media-derive-worker.ts`) | `resolveOrgLlmConfig` | `cliente` ou `plataforma` |
+| Transcrição pelo serviço da instalação (`TRANSCRIPTION_API_KEY`) | o `.env` | `plataforma` |
+| Transcrição pela OpenAI, pela OpenRouter ou pelo modelo de conversa | `resolveOrgLlmConfig` do provedor do degrau | `cliente` ou `plataforma` |
+| Transcrição pela ElevenLabs escolhida no painel | credencial da organização | `cliente` |
+| Sessão de voz (`workers/voice-agent/index.ts`) | `lib/ai/agents.ts`: credencial OpenAI da organização, senão `OPENAI_API_KEY` | `cliente` ou `plataforma` |
+| Síntese de voz (`lib/agent-engine/edge/crm/send-voice.ts`) | credencial da organização: a ElevenLabs não tem chave de instalação | `cliente` |
+
+Um caso continua caindo no padrão da coluna (`plataforma`): a linha da
+transcrição quando o degrau escolhido não anotou a origem. Só acontece se a
+escada devolver um degrau que o resolvedor não chegou a resolver, o que o código
+de hoje não faz; o padrão está lá para o degrau que alguém acrescentar sem
+anotar. `logInvocation` e `registrarChamadaDeIa` aceitam `origem_da_chave`.
 
 ## O ciclo
 

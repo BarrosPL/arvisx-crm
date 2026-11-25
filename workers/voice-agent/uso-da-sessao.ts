@@ -111,6 +111,8 @@ export function linhaDaLigacao(entrada: {
   uso: UsoDaSessao;
   duracaoMs: number;
   erro: { message: string; status?: number } | null;
+  /** De quem é a chave que abriu a sessão (`getActiveVoiceAgent`). */
+  origemDaChave?: "cliente" | "plataforma";
 }): ChamadaDeIa {
   return {
     organization_id: entrada.organizationId,
@@ -125,5 +127,6 @@ export function linhaDaLigacao(entrada: {
     cost_cents: null,
     latency_ms: entrada.duracaoMs,
     erro: entrada.erro,
+    ...(entrada.origemDaChave ? { origem_da_chave: entrada.origemDaChave } : {}),
   };
 }

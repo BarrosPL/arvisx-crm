@@ -235,8 +235,8 @@ async function registrarCobertura(pool: pg.Pool, entrada: EntradaDoRoteador, fal
     await pool.query(
       `insert into public.llm_calls
          (organization_id, contact_id, job_id, purpose, provider, model,
-          input_tokens, output_tokens, cost_cents, latency_ms, status, error_code, http_status, origem_da_escolha)
-       values ($1, $2, $3, 'intent_router', 'typesafe', $4, 0, 0, 0, $5, 'erro', $6, $7, 'reserva_do_jev')`,
+          input_tokens, output_tokens, cost_cents, latency_ms, status, error_code, http_status, origem_da_chave, origem_da_escolha)
+       values ($1, $2, $3, 'intent_router', 'typesafe', $4, 0, 0, 0, $5, 'erro', $6, $7, 'cliente', 'reserva_do_jev')`,
       [
         entrada.organizationId,
         entrada.contactId,
@@ -305,8 +305,8 @@ export async function registrarRoteadorDoJev(pool: pg.Pool, r: RegistroDoRoteado
   ];
   const insertDoCusto = `insert into public.llm_calls
        (organization_id, contact_id, job_id, purpose, provider, model,
-        input_tokens, output_tokens, cost_cents, latency_ms, status, origem_da_escolha)
-     values ($1, $2, $3, 'intent_router', 'typesafe', $4, $5, $6, $7, $8, 'ok', $9)`;
+        input_tokens, output_tokens, cost_cents, latency_ms, status, origem_da_chave, origem_da_escolha)
+     values ($1, $2, $3, 'intent_router', 'typesafe', $4, $5, $6, $7, $8, 'ok', 'cliente', $9)`;
   try {
     if (r.observacao === null) {
       await pool.query(insertDoCusto, custo);
