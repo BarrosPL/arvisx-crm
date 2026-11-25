@@ -125,7 +125,9 @@ describe("llm_calls grava passos e composição do pedido", () => {
     });
 
     expect(inserts).toHaveLength(1);
-    expect(params).toHaveLength(22);
+    // 23 desde a migration 9825: o último é a origem da chave, DEPOIS dos sete
+    // desta entrega, cujas posições não mudaram.
+    expect(params).toHaveLength(23);
     expect(params[15]).toBe(2); // passos
     expect(params[16]).toBe(1000); // entrada do 1º passo, como o provedor informou
     expect(params[17]).toBe(SISTEMA.length); // chars_sistema
@@ -133,6 +135,7 @@ describe("llm_calls grava passos e composição do pedido", () => {
     expect(params[19]).toBe("oi".length); // chars_mensagens
     expect(params[20]).toBe(0); // partes_de_midia
     expect(params[21]).toMatch(/^[0-9a-f]{64}$/); // prefixo_hash
+    expect(["cliente", "plataforma"]).toContain(params[22]); // origem_da_chave
 
     // A soma dos passos segue sendo o total gravado, e o custo não mudou de posição.
     expect(params[7]).toBe(2100);
