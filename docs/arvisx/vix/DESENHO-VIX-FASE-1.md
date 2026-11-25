@@ -682,3 +682,35 @@ Por isso `VIX_MODELO` não tem padrão: o Lucas escolhe um dos modelos que a con
 - **P8. `VIX_MODELO` sem padrão:** escolhido na lista da conta; vazio = indisponível.
 - **P9. Números do limite de mensagens por plano:** nenhum é semeado. Quando você definir, entrego como script em `docs/arvisx/ci/`, usando os ids fixos dos três planos novos do script da Tarefa 8 (`a7150008-0000-4000-8000-00000000000{1,2,3}`).
 - **P10. Renomear `assistente_custos` para `assistente_usos`**, já que deixa de guardar dólar.
+
+## 10. Regra final de 25/11/2026 (substitui o que conflitar acima)
+
+As seções anteriores registram o caminho. Onde elas falarem em teto em dólar, limite de mensagens por plano, `assistente_planos` ou marca `sem_limite`, vale o que está aqui.
+
+### 10.1 Dois controles de IA que não se misturam
+
+- O limite de IA do plano (franquia e teto em dólar) é dos **agentes dos clientes**, na chave da plataforma. Não é desta entrega.
+- O **Vix não tem limite por plano**. Ele tem um freio técnico contra abuso e um aviso interno de uso.
+
+O Vix não é item de plano: não lê preço, teto de IA nem franquia, e não passa pelo portão de orçamento dos agentes. A chamada ao modelo sai de `lib/assistente/turno.ts` direto, pelos dois pagadores.
+
+### 10.2 Quem tem o Vix
+
+Organização com assinatura ativa, em qualquer plano, ou com a marca `isenta`, que só a plataforma grava. Sem uma das duas, não responde. As réguas de "ativa" e os dois pontos a confirmar estão em `docs/arvisx/ci/VIX-COMO-LIGAR-2026-11.md`, Passo 3.
+
+### 10.3 Freio técnico e aviso de uso
+
+Mensagens por minuto por pessoa e tamanho máximo da mensagem, na configuração da instalação, iguais para os dois pagadores. O uso por organização aparece só para a administração da plataforma, com destaque de quem destoa. Valores propostos e critério no mesmo roteiro.
+
+### 10.4 A origem na coluna única
+
+A coluna de origem é a mesma para toda chamada de IA. O Vix grava sempre um valor próprio, escolhido pelo pagador num mapa único (`ORIGEM_DA_CHAVE_DO_VIX`, em `lib/assistente/custo.ts`), e nunca o valor dos agentes nem o do cliente, nem quando usa a mesma chave da plataforma. Só esse arquivo escreve esses valores. Se a decisão for um valor só para o Vix, troca-se no mapa.
+
+O registro em `llm_calls` continua desligado até a coluna existir na `main` (ver a seção 9.3 e o roteiro).
+
+### 10.5 O que mais mudou desde a seção 9
+
+- O histórico é apagado com 30 dias, e anonimizar um contato apaga o texto do assistente da organização (migration 9831).
+- O chamado tem leitor: a equipe da plataforma, em Painel › Chamados.
+- A chave por empresa tem tela: Configurações › Empresa.
+- Catálogo: 25 leituras do MCP. A segunda onda fica para outro PR.

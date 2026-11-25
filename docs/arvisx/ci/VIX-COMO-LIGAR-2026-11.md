@@ -10,7 +10,7 @@ Quatro condições, todas necessárias. Faltou uma, o assistente não responde e
 
 1. A instalação escolheu um pagador (`VIX_PAGADOR` diferente de `desligado`).
 2. A empresa não desligou o assistente (linha de `assistente_estado_da_empresa`; sem linha vale ligado).
-3. A empresa tem direito: o plano dela tem linha em `assistente_planos`, ou ela tem a marca `sem_limite`.
+3. A empresa tem acesso: tem assinatura ativa, em qualquer plano (novo ou antigo), ou tem a marca `isenta`, que só a plataforma grava.
 4. O pagador escolhido está utilizável (conta conectada, modelo definido, ou a chave do servidor presente).
 
 ## Passo 1: escolher o pagador
@@ -37,14 +37,43 @@ Vazio ou qualquer outro texto vale `desligado`.
 
 O código lê essa conta num lugar só, `lib/assistente/provedor/assinatura-da-plataforma.ts`, e a organização vem sempre da chave da instalação, nunca de quem está perguntando.
 
-## Passo 3: quem tem direito
+## Passo 3: quem tem acesso
 
-Rodar `docs/arvisx/ci/VIX-LIMITES-E-MARCA-2026-11.sql`. O cabeçalho dele traz os dois comandos:
+**Não há limite de mensagens por plano.** O plano não decide nada sobre o assistente: ele não lê preço, teto de IA nem franquia.
 
-- limite de mensagens por mês para cada um dos três planos novos (os números são decisão do Lucas e não estão escritos em lugar nenhum);
-- marca "sem limite" para uma organização, pelo slug dela.
+Tem o assistente a organização com uma das duas:
 
-Plano sem linha não tem o Vix. Isso vale para os planos antigos: quem estiver neles fica sem o assistente até alguém configurar o plano ou marcar a organização. Confirmar se é esse o desejado.
+- **Assinatura ativa**, em qualquer plano. "Ativa" usa as réguas que a cobrança já tem:
+  - a empresa está operante (`organizations.status = 'active'`, a régua de `lib/organizacao/operante.ts`, função `ehOperante`): empresa suspensa não tem assistente;
+  - a assinatura não está devendo: `fn_cobranca_suspender_se_devendo` (em `supabase/baseline.sql`) chama de devendo os estados `em_atraso` e `cancelada`. Sobram `trial` e `ativa`;
+  - a cobrança está ligada na instalação. Com ela desligada, só a marca dá o assistente.
+- **A marca `isenta`**, por organização. Só a plataforma grava, com `docs/arvisx/ci/VIX-MARCA-DE-ISENTA-2026-11.sql`, uma vez por organização, pelo slug. Nenhuma organização nasce marcada e nenhum nome está escrito no código.
+
+Dois pontos para confirmar com o Lucas: o período de teste (`trial`) conta como assinatura ativa, e a assinatura em atraso perde o assistente já no atraso, antes de a empresa ser suspensa.
+
+## O freio técnico (não é limite de plano)
+
+Protege a conta de IA compartilhada de laço ou script. Vale igual para os dois pagadores. Fica em Painel › Configuração:
+
+| Chave | O que faz | Padrão proposto | Faixa |
+|---|---|---|---|
+| `VIX_MENSAGENS_POR_MINUTO` | Mensagens por minuto, por pessoa. A empresa inteira tem dez vezes isso | 6 | 1 a 60 |
+| `VIX_TAMANHO_MAXIMO_DA_MENSAGEM` | Caracteres por mensagem. Acima disso a mensagem é recusada antes de chegar à IA | 2000 | 100 a 4000 |
+
+Chave vazia, que não é número ou fora da faixa vale o padrão: escrever errado não desliga o freio nem o afrouxa. Também são fixos no código: 8 ferramentas por turno e 5 registros por cartão.
+
+## O uso por organização, para a administração da plataforma
+
+Painel do administrador da instalação › Chamados, na seção "Uso do assistente neste mês": mensagens, pessoas, tokens e falhas por empresa, do maior uso para o menor. Só contagem, tokens e data; a tabela de uso não guarda texto de mensagem.
+
+A empresa que destoa aparece em destaque. É só um aviso, nada é bloqueado. O critério proposto, ajustável em Painel › Configuração:
+
+| Chave | Critério | Padrão proposto |
+|---|---|---|
+| `VIX_ALERTA_DE_USO_MENSAGENS` | A empresa passou deste número de mensagens no mês | 1000 |
+| `VIX_ALERTA_DE_USO_MULTIPLO` | A empresa usou este número de vezes a mediana das empresas no mês. Só vale com três empresas ou mais usando e a partir de 50 mensagens | 5 |
+
+A empresa lê o próprio uso (contagem e tokens); o de outra empresa, não.
 
 ## Passo 4 (opcional): ações do assistente
 

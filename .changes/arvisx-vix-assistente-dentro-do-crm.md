@@ -11,9 +11,11 @@ telas (atalho Ctrl+J, e uma entrada na busca do Ctrl+K).
 
 **Ele nasce desligado e nada muda para quem não o ligar.** Para ligar, quem
 administra a instalação escolhe, em Painel › Configuração, por onde o assistente
-chama a IA (`VIX_PAGADOR`). Além disso, a empresa só tem o assistente se o plano
-dela tiver um limite de mensagens configurado, ou se a plataforma a marcar como
-liberada sem limite. Nenhum limite vem preenchido.
+chama a IA (`VIX_PAGADOR`). Além disso, a empresa só tem o assistente se tiver
+assinatura ativa, em qualquer plano, ou se a plataforma a marcar como isenta.
+Não há limite de mensagens por plano: há um freio contra abuso (mensagens por
+minuto e tamanho da mensagem), ajustável em Painel › Configuração, e a
+administração da instalação vê o uso por empresa em Painel › Chamados.
 
 O assistente só lê. Alterar dados é uma chave separada (Painel › Sistema, "Ações
 do assistente"), também desligada: com ela, o assistente propõe a ação num
