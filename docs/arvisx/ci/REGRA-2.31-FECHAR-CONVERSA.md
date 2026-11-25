@@ -1,5 +1,7 @@
 # Regra 2.31: a IA não fecha conversa que uma pessoa assumiu (levantamento de 24/11/2026)
 
+> **Atualização de 25/11/2026 (Tarefa 6.1).** O levantamento abaixo é o retrato de 24/11 e fica como estava. O que mudou depois está no fim do arquivo, nas seções "Tarefa 6.1": a lacuna 1 (janela de corrida) e a lacuna 3 do fim desta página (a regra mora nos chamadores), implementadas, e a lacuna 2 (silêncio do bot), não implementada, com tabela e pergunta. As citações `arquivo:linha` do levantamento são das pontas dos PRs de 24/11 e não foram renumeradas.
+
 Levantamento só de leitura no repo `C:\Users\lcsin\Desktop\arvisx-crm`: nada foi executado (nenhum teste, build ou typecheck), nada foi editado, `git fetch origin` feito uma vez. Refs lidas: main `f48146edb`; #14 `d3a64c15a`; #17 `306f82b8f`; #19 `4f2c9a292`; #21 `e81137ba6`; #23 `5979905be`; #20 `bdcd5e15b`; #18 `d520367b3`; #22 `36269338e`; #24 `0c0a8e155`.
 
 ## Achados principais
@@ -211,3 +213,26 @@ O que falta:
 - `workers/agent-worker` e `workers/voice-agent` entraram só pelos greps, sem leitura arquivo a arquivo.
 - Gatilhos AFTER de `conversations` quanto a locks.
 - Comportamento real em execução: nada foi rodado.
+
+## Tarefa 6.1 (25/11/2026): lacuna 1, a janela de corrida. Implementada (migration 9824)
+
+O desenho da seção 4.3 foi implementado como está, com três diferenças, todas declaradas:
+
+1. **Sem `begin`/`commit` explícitos na migration.** A 4.3 os sugeria porque eu não tinha verificado se o aplicador roda cada arquivo em transação. Roda: `deploy/arvisx/crm/init.sh`, linha 42, usa `psql -1`. A doutrina do repo (CLAUDE.md, "Migrations & Banco", item 3) proíbe `BEGIN`/`COMMIT` explícito, e nenhuma das 98xx tem. O `drop` e o `create` valem juntos pela transação do aplicador.
+2. **Sem linha nova no `supabase/migrations/MANIFEST.md`.** A 4.3 o listava. O repo mudou a regra: a descrição vai na linha `-- manifest:` do próprio arquivo, e `tests/unit/manifest-x-migrations.test.ts` reprova migration descrita nos dois lugares. Nenhuma 98xx está no MANIFEST.md.
+3. **`p_ator` nulo também é `invalid_actor`.** A 4.3 só conferia `not in ('pessoa','agente')`, que com `null` não dispara. Nulo explícito passaria como pessoa; agora é recusado.
+
+O que entrou:
+
+- `supabase/migrations/20261124120000_9824_agente_nao_fecha_conversa_assumida.sql`, com o espelho no `supabase/baseline.sql` (antes da VARREDURA anon), a linha no fim de `deploy/arvisx/crm/migracoes-pos-baseline.txt` e `p_ator?` nos Args de `lib/database.types.ts`.
+- `lib/inbox/fechar-conversa.ts`: campo `origem: "pessoa" | "agente"` obrigatório em `fecharConversa`; erro novo `"com_humano"`; função `mudarEstadoDoAtendimento`, a única chamada do produto à `fn_service_status`.
+- `lib/mcp/tools/fechar-conversa.ts`: passa `origem: "agente"`; `com_humano` vira `conversa_com_humano`. A conferência na leitura fica como caminho rápido.
+- `app/api/v1/conversations/_handler.ts`: os dois ramos (o de `closed` e o dos outros estados) derivam a origem do ator (`origemDoAtor(ctx.actor)`, só `user` é pessoa) e respondem 403 para `com_humano`. Isso fecha a lacuna "`archived` e `resolved` fora da guarda do PATCH" do levantamento. Observação: `resolved` não está no schema do PATCH (`lib/schemas/messaging.ts`, `conversationStatusSchema`), então pela rota ele morre em 422 antes; a guarda cobre o ramo assim mesmo.
+- **Imagem nova com banco antigo:** o agente recebe `PGRST202` e o módulo devolve `falha`. A ferramenta responde `indisponivel`; o PATCH, 500. Não existe segunda chamada sem `p_ator`.
+
+Provas (banco de verdade, `pnpm test:db tests/invariants/fechar-conversa-por-agente.test.ts`, Postgres 15 descartável, em 25/11/2026):
+
+- **Antes** (código e baseline do `5cda875b2`, só com os casos novos no teste): `Tests 13 failed | 6 passed (19)`. O caso 1 falha com a conversa FECHADA pelo agente: a ferramenta devolveu `status: "closed"`, `already_closed: false` para uma conversa que a pessoa tinha acabado de assumir.
+- **Depois** (com a migration no baseline e o código novo): `Tests 19 passed (19)`, com `install ok` e `update ok (zero erro na re-aplicação)`.
+
+Os seis casos da 4.3 estão no bloco "conversa assumida por uma pessoa: a regra 2.31 dentro da fn_service_status". O caso 3 (fechar ganha) mostrou um comportamento que já existia e não é desta tarefa: assumir uma conversa já encerrada a reabre como `claimed` e soma outra revisão (7 → 8 no fechar, 9 no assumir). O teste afirma isso como está.
