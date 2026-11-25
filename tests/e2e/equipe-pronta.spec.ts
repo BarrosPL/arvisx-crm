@@ -164,6 +164,16 @@ test("[P0] Equipe de IA pronta: Premium instala pelo questionário; Standard nã
       await expect(page.getByTestId("ep-passo-negocio")).toBeVisible();
       await page.getByLabel("Nome da empresa").fill(EMPRESA);
       await page.getByLabel("O que a empresa faz").fill("Conserto e manutenção de bicicletas.");
+
+      // A pergunta "tipo de negócio" (Tarefa 8): começa no genérico, sem aviso de
+      // ramo; escolher um ramo mostra que as sugestões são rascunho.
+      const tipo = page.getByLabel("Tipo de negócio");
+      await expect(tipo).toHaveValue("generico");
+      await expect(page.getByTestId("ep-aviso-do-ramo")).toHaveCount(0);
+      await tipo.selectOption({ label: "Advocacia" });
+      await expect(page.getByTestId("ep-aviso-do-ramo")).toContainText("ainda não foram validadas com um cliente real");
+      await foto(page, "00-questionario-tipo-de-negocio");
+
       await page.getByTestId("ep-salvar").click();
       await expect(page.getByTestId("ep-passo-atendente")).toBeVisible();
 
@@ -172,6 +182,7 @@ test("[P0] Equipe de IA pronta: Premium instala pelo questionário; Standard nã
       await expect(page.getByTestId("ep-passo-atendente")).toBeVisible();
       await page.getByTestId("ep-ir-negocio").click();
       await expect(page.getByLabel("Nome da empresa")).toHaveValue(EMPRESA);
+      await expect(page.getByLabel("Tipo de negócio")).toHaveValue("advocacia");
       await page.getByTestId("ep-ir-atendente").click();
     });
 
@@ -184,6 +195,11 @@ test("[P0] Equipe de IA pronta: Premium instala pelo questionário; Standard nã
       await expect(page.getByTestId("ep-passo-regras")).toBeVisible();
       // Com os três obrigatórios respondidos, nenhum passo fica marcado como "falta".
       await expect(page.locator('[data-testid^="ep-pendente-"]')).toHaveCount(0);
+      // O ramo escolhido no primeiro passo pré-preenche este: as perguntas de
+      // qualificação e as situações de chamar uma pessoa já vêm sugeridas.
+      await expect(page.locator("#ep-qualificacao-perguntas")).toHaveValue(/Sobre qual área do direito é o seu assunto/);
+      await expect(page.locator("#ep-qualificacao-perguntas")).toHaveValue(/Você já tem advogado cuidando deste assunto\?/);
+      await expect(page.locator("#ep-humano-situacoes")).toHaveValue(/A pessoa pede opinião sobre o caso ou orientação jurídica/);
     });
 
     await test.step("os passos opcionais passam com os padrões, e o último pede o telefone de teste", async () => {
@@ -205,6 +221,10 @@ test("[P0] Equipe de IA pronta: Premium instala pelo questionário; Standard nã
       const texto = page.getByTestId("ep-texto-sdr").locator("pre");
       await expect(texto).toContainText(EMPRESA);
       await expect(texto).toContainText("Bia");
+      // O pacote do ramo entra no fim do texto do agente, com as regras duras.
+      await expect(texto).toContainText("### Regras do ramo desta empresa");
+      await expect(texto).toContainText("Nunca prometa resultado, chance de ganhar nem prazo de decisão de um caso.");
+      await expect(texto).toContainText("Sobre qual área do direito é o seu assunto");
       await foto(page, "02-revisao");
     });
 
@@ -226,6 +246,9 @@ test("[P0] Equipe de IA pronta: Premium instala pelo questionário; Standard nã
       expect(noBanco.every((x) => x.published_version_id !== null), "há agente sem versão publicada").toBe(true);
       const perfil = await db.from("equipe_pronta_perfis").select("estado, modo").eq("organization_id", a.org).single();
       expect(perfil.data).toEqual({ estado: "instalado", modo: "ensaio" });
+      // O ramo foi gravado, e a equipe do ramo nasce em ENSAIO como qualquer outra.
+      const respostas = await db.from("equipe_pronta_perfis").select("respostas").eq("organization_id", a.org).single();
+      expect((respostas.data?.respostas as { negocio?: { tipo_de_negocio?: string } }).negocio?.tipo_de_negocio).toBe("advocacia");
       // Ensaio é do canal: só o telefone de teste fala com a IA.
       const acesso = await db.from("channel_sessions").select("metadata").eq("id", canal).single();
       expect(JSON.stringify(acesso.data?.metadata ?? {})).toContain("5511999990000");

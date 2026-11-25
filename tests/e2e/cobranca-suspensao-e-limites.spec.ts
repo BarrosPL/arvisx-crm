@@ -16,6 +16,14 @@
  *      atravessa o PostgREST real: 409 plan_limit_reached (os testes de rota
  *      usam dublê; só aqui o PT402 passa pelo PostgREST);
  *   5. Billing mostra o teste grátis e o uso 1 de 1;
+ *   5b. a IA incluída no plano, nas DUAS telas (Plano e cobrança e Uso de IA):
+ *       plano sem teto diz que a IA não foi liberada; com teto e franquia, as
+ *       conversas usadas e o total, o aviso a 80% e o de esgotada, com as duas
+ *       saídas; e a conversa paga pela chave do cliente não gasta a franquia
+ *       (Tarefa 8, migration 9825). As linhas de `llm_calls` são semeadas pelo
+ *       service role: não há provedor de IA no CI, então o que se mede aqui é
+ *       o que a pessoa LÊ, pela função do banco de verdade — não o bloqueio do
+ *       motor, que é medido em `tests/unit/orcamento-gate-executa-o-veredito`;
  *   6. B é suspensa por cobrança (pela função, como a régua da PR 3a fará) e o
  *      dono dá prazo pelo card: B volta na hora;
  *   7. suspensa de novo, o dono desliga a chave em /admin/sistema, que avisa
@@ -190,6 +198,63 @@ test("o dono cria o plano, os limites valem pela tela, e prazo e desligar a chav
     await expect(pB.getByText(/^Teste grátis até /)).toBeVisible();
     await expect(pB.locator('[data-uso="assentos"]')).toHaveText("1 de 1");
     await pB.screenshot({ path: `${EVIDENCIA}/billing-teste-gratis.png`, fullPage: true });
+
+    // ── 5b. A IA incluída no plano, nas duas telas ──────────────────────────
+    const TELAS_DA_IA = ["/app/settings/billing", "/app/ai/usage"] as const;
+    const conversas = pB.locator('[data-uso="conversas-com-ia"]');
+    const avisoDaIa = pB.locator("[data-aviso-da-ia-do-plano]");
+    const SAIDAS = "fale com a ArvisX para contratar um pacote extra, ou cadastre uma chave de IA própria em IA › Credenciais";
+    /** Uma conversa com IA: um contato novo, atendido por um agente, paga por `origem`. */
+    const atender = async (n: number, origem: "plataforma" | "cliente") => {
+      const contato = await inserir("contacts", {
+        organization_id: orgB, display_name: `Contato IA ${n} ${sufixo}`, phone_number: `+55119${String(Date.now()).slice(-7)}${n}`,
+      });
+      const linha = await db.from("llm_calls").insert({
+        organization_id: orgB, contact_id: contato, purpose: "agent_turn", provider: "anthropic", model: "claude-haiku-5-5",
+        input_tokens: 100, output_tokens: 20, cost_cents: 1, latency_ms: 100, status: "ok", origem_da_chave: origem,
+      });
+      if (linha.error) throw linha.error;
+    };
+
+    // O plano criado pela tela não tem teto de IA: a IA incluída não está liberada.
+    for (const tela of TELAS_DA_IA) {
+      await pB.goto(tela);
+      await expect(pB.locator('[data-ia-do-plano="sem_teto"]'), `${tela}: sem o bloco da IA do plano`).toBeVisible();
+      await expect(avisoDaIa).toContainText("a IA incluída não foi liberada");
+      await expect(avisoDaIa).toContainText(SAIDAS);
+    }
+    await pB.screenshot({ path: `${EVIDENCIA}/ia-do-plano-sem-teto.png`, fullPage: true });
+
+    // Com teto e franquia de 5 conversas. Quatro contatos atendidos = 80%.
+    const comLimite = await db.from("cobranca_planos").update({ teto_ia_usd_cents: 1200, franquia_conversas_ia: 5 }).eq("id", planoId);
+    if (comLimite.error) throw comLimite.error;
+    for (let n = 1; n <= 4; n++) await atender(n, "plataforma");
+    for (const tela of TELAS_DA_IA) {
+      await pB.goto(tela);
+      await expect(conversas, `${tela}: franquia usada e total`).toHaveText("4 de 5");
+      await expect(avisoDaIa).toHaveAttribute("data-aviso-da-ia-do-plano", "perto_do_fim");
+      await expect(avisoDaIa).toContainText(SAIDAS);
+      // Medida, não olho: o bloco cabe na largura.
+      expect(await pB.evaluate(() => document.body.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
+    }
+    await pB.screenshot({ path: `${EVIDENCIA}/ia-do-plano-uso-de-ia-80.png`, fullPage: true });
+
+    // Conversa paga pela chave do CLIENTE não gasta a franquia.
+    await atender(5, "cliente");
+    await pB.goto("/app/settings/billing");
+    await expect(conversas).toHaveText("4 de 5");
+
+    // A quinta pela chave da plataforma enche a franquia.
+    await atender(6, "plataforma");
+    for (const tela of TELAS_DA_IA) {
+      await pB.goto(tela);
+      await expect(conversas).toHaveText("5 de 5");
+      await expect(avisoDaIa).toHaveAttribute("data-aviso-da-ia-do-plano", "esgotada");
+      await expect(avisoDaIa).toContainText("As conversas novas vão para a equipe.");
+      await expect(avisoDaIa).toContainText(SAIDAS);
+    }
+    await pB.goto("/app/settings/billing");
+    await pB.screenshot({ path: `${EVIDENCIA}/ia-do-plano-billing-esgotada.png`, fullPage: true });
 
     // ── 6. Suspensa por cobrança; o dono dá prazo e B volta ─────────────────
     await suspenderPorCobranca(orgB, dono.id);
