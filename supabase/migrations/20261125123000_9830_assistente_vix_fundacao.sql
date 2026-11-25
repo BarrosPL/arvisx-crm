@@ -1,4 +1,4 @@
--- manifest: **Fundação do Vix, o assistente do cliente dentro do CRM (Tarefa 7, Fase 1).** Oito tabelas `assistente_*`: conversas e mensagens por usuário, cartões de ação (escrita só no clique), estado e progresso por empresa, chamados, o registro de uso do Vix e o limite mensal de mensagens por plano. Leitura pela sessão só do que é do próprio usuário; toda escrita é do servidor. `fn_assistente_reservar_acao` troca o cartão de `proposta` para `confirmada` uma vez só; `fn_assistente_registrar_mensagem` conta a mensagem e recusa a que passa do limite do mês. Nenhuma linha de configuração é semeada: plano sem linha em `assistente_planos` = o Vix não responde.
+-- manifest: **Fundação do Vix, o assistente do cliente dentro do CRM (Tarefa 7, Fase 1).** Sete tabelas `assistente_*`: conversas e mensagens por usuário, cartões de ação (escrita só no clique), estado e progresso por empresa, chamados e o registro de uso. Leitura pela sessão só do que é do próprio usuário; toda escrita é do servidor. `fn_assistente_reservar_acao` troca o cartão de `proposta` para `confirmada` uma vez só. `fn_assistente_acesso_da_org` decide quem tem o assistente: organização com a marca `isenta` (da plataforma) ou com assinatura ativa, em qualquer plano. Não há limite de mensagens por plano e nada é semeado.
 --
 -- 9830 — fundação do Vix (assistente do cliente).
 --
@@ -22,49 +22,51 @@
 -- 2. `assistente_acoes`: os cartões. `entrada` é o argumento já validado da
 --    capacidade; `itens` é o que será alterado, como o usuário viu.
 -- 3. `assistente_estado_da_empresa`: a chave de ligar e desligar por empresa
---    (sem linha = ligado; o que decide antes é a instalação e o plano) e a
---    MARCA `sem_limite`: a organização tem o assistente sem limite de
---    mensagens, com ou sem plano. A marca é da PLATAFORMA: a sessão só lê, a
---    rota da empresa não a escreve, e nenhuma linha nasce marcada.
+--    (sem linha = ligado; o que decide antes é a instalação e o acesso) e a
+--    MARCA `isenta`: a organização tem o assistente mesmo sem assinatura.
+--    A marca é da PLATAFORMA: a sessão só lê, a rota da empresa não a
+--    escreve, e nenhuma linha nasce marcada.
 -- 4. `assistente_progresso`: o que já foi feito na conta, base do modo
 --    onboarding (tarefa futura). Só a estrutura nasce aqui.
 -- 5. `assistente_chamados`: pedido de ajuda para a equipe da plataforma, com o
 --    diagnóstico anexado.
 -- 6. `assistente_usos`: uma linha por mensagem do usuário que CHEGOU ao modelo,
---    com os tokens. É nela que o limite mensal é contado. Não guarda dinheiro:
---    o assistente roda numa assinatura, de mensalidade fixa. Não é `llm_calls`
---    de propósito: gravar lá hoje somaria no orçamento de IA da empresa
---    (gatilho `trg_llm_calls_budget`) e na régua `fn_gasto_de_ia_do_mes`, que
+--    com os tokens. Só contagem, tokens e data: NUNCA texto de mensagem. É o
+--    que a plataforma olha para ver o uso por organização. Não guarda
+--    dinheiro. Não é `llm_calls` de propósito: gravar lá hoje somaria no
+--    orçamento de IA da empresa (gatilho `trg_llm_calls_budget`) e na régua
+--    `fn_gasto_de_ia_do_mes`, que
 --    pausam os agentes de WhatsApp. A aplicação fala com esta tabela por um
 --    módulo só (`lib/assistente/custo.ts`).
--- 7. `assistente_planos`: o limite de mensagens por mês e os limites de taxa e
---    de lote, por plano. Da INSTALAÇÃO, sem `organization_id`, como
---    `cobranca_planos`. `mensagens_por_mes` nulo = sem limite. NENHUMA linha é
---    semeada.
--- 8. `fn_assistente_reservar_acao`, `fn_assistente_registrar_mensagem`,
---    `fn_assistente_mensagens_do_mes`, `fn_assistente_config_da_org`: só o
---    `service_role` executa. Quem chama é a rota, com usuário e organização da
---    SESSÃO.
+-- 7. `fn_assistente_reservar_acao`, `fn_assistente_registrar_mensagem`,
+--    `fn_assistente_mensagens_do_mes`, `fn_assistente_acesso_da_org`,
+--    `fn_assistente_uso_do_mes`: só o `service_role` executa. Quem chama é a
+--    rota, com usuário e organização da SESSÃO.
 --
 -- ═══ Quem tem o assistente ═══
 --
--- Duas portas, e só duas (`fn_assistente_config_da_org`):
---   * a organização tem a marca `sem_limite`: responde, sem limite de mensagens;
---   * a organização assina um plano que tem linha em `assistente_planos`, com a
---     cobrança ligada: responde, com o limite daquele plano.
--- Sem marca e sem plano com linha, o assistente não responde. Não existe linha
--- "para quem não tem plano": organização isenta só tem assistente pela marca.
+-- Duas portas, e só duas (`fn_assistente_acesso_da_org`):
+--   * a organização tem a marca `isenta`, que só a plataforma escreve;
+--   * a organização tem ASSINATURA ATIVA, em qualquer plano, novo ou antigo.
+-- Sem uma das duas, o assistente não responde.
 --
--- ═══ O mês do limite ═══
+-- "Ativa" usa as duas réguas que a cobrança já tem, sem inventar uma terceira:
+--   * a organização está OPERANTE (`organizations.status = 'active'`, a régua
+--     de `lib/organizacao/operante.ts`): empresa suspensa não tem assistente;
+--   * a assinatura NÃO está devendo: `fn_cobranca_suspender_se_devendo` chama
+--     de devendo o estado `em_atraso` ou `cancelada`. Sobram `trial` e `ativa`.
+-- E a cobrança precisa estar ligada na instalação (`fn_cobranca_ligada`): com
+-- ela desligada ninguém tem assinatura que valha, e só a marca dá o assistente.
 --
--- Mês de CALENDÁRIO em UTC (`date_trunc('month', now())`), a mesma régua de
--- `fn_gasto_de_ia_do_mes`. Conta a mensagem que chegou ao modelo, tenha a
--- resposta dado certo ou não; a que foi barrada antes não conta.
+-- NÃO há limite de mensagens por plano. O freio contra abuso (mensagens por
+-- minuto e tamanho da mensagem) é configuração da instalação, na aplicação.
 --
--- ═══ O que NÃO muda ═══
+-- ═══ O que NÃO muda, e o que o assistente NÃO lê ═══
 --
--- `llm_calls`, `ai_budgets`, `fn_gasto_de_ia_do_mes`, `cobranca_planos` e o
--- resto da cobrança: intocados.
+-- `llm_calls`, `ai_budgets`, `fn_gasto_de_ia_do_mes` e todo o resto da cobrança
+-- ficam como estão. O assistente não é item de plano: não lê preço, teto de IA
+-- nem franquia de plano nenhum. Da cobrança ele lê só a EXISTÊNCIA e o ESTADO da
+-- assinatura da organização.
 
 create table if not exists public.assistente_conversas (
   id uuid primary key default gen_random_uuid(),
@@ -168,8 +170,8 @@ create index if not exists idx_assistente_acoes_conversa
 create table if not exists public.assistente_estado_da_empresa (
   organization_id uuid primary key references public.organizations(id) on delete cascade,
   ligado boolean not null default true,
-  -- Marca da PLATAFORMA: assistente sem limite de mensagens para esta organização.
-  sem_limite boolean not null default false,
+  -- Marca da PLATAFORMA: esta organização tem o assistente mesmo sem assinatura.
+  isenta boolean not null default false,
   modo_padrao text not null default 'suporte',
   atualizado_por uuid references auth.users(id) on delete set null,
   updated_at timestamptz not null default now()
@@ -182,7 +184,7 @@ alter table public.assistente_estado_da_empresa
   check (modo_padrao in ('suporte', 'consultor', 'onboarding'));
 
 comment on table public.assistente_estado_da_empresa is
-  'A chave de ligar e desligar o Vix por empresa (sem linha = ligado) e a marca sem_limite, que só a plataforma escreve: assistente sem limite de mensagens para a organização. Migration 9830.';
+  'A chave de ligar e desligar o Vix por empresa (sem linha = ligado) e a marca isenta, que só a plataforma escreve: a organização tem o assistente mesmo sem assinatura. Migration 9830.';
 
 create table if not exists public.assistente_progresso (
   organization_id uuid not null references public.organizations(id) on delete cascade,
@@ -242,40 +244,10 @@ create table if not exists public.assistente_usos (
 );
 
 comment on table public.assistente_usos is
-  'Uma linha por mensagem do usuário que chegou ao modelo do Vix, com os tokens. É onde o limite mensal de mensagens é contado. A empresa lê o próprio uso; só o servidor grava. Migration 9830.';
+  'Uma linha por mensagem do usuário que chegou ao modelo do Vix, com os tokens. Só contagem, tokens e data: nunca texto de mensagem. A empresa lê o próprio uso; só o servidor grava. Migration 9830.';
 
 create index if not exists idx_assistente_usos_org_tempo
   on public.assistente_usos (organization_id, created_at);
-
-create table if not exists public.assistente_planos (
-  id uuid primary key default gen_random_uuid(),
-  plano_id uuid not null references public.cobranca_planos(id) on delete cascade,
-  -- Mensagens do assistente por mês de calendário (UTC). Nulo = sem limite.
-  mensagens_por_mes integer,
-  limite_de_lote integer not null default 5,
-  mensagens_por_minuto integer not null default 6,
-  ferramentas_por_turno integer not null default 8,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  updated_by uuid
-);
-
-alter table public.assistente_planos
-  drop constraint if exists assistente_planos_limites_check;
-alter table public.assistente_planos
-  add constraint assistente_planos_limites_check
-  check (
-    (mensagens_por_mes is null or mensagens_por_mes >= 0)
-    and limite_de_lote between 1 and 50
-    and mensagens_por_minuto between 1 and 60
-    and ferramentas_por_turno between 1 and 30
-  );
-
-comment on table public.assistente_planos is
-  'Limite mensal de mensagens e limites de taxa e de lote do Vix, por plano. Da INSTALAÇÃO, sem organization_id: RLS ligada sem policy, só o service_role. mensagens_por_mes nulo = sem limite. Nenhuma linha é semeada: plano sem linha = o Vix não responde (salvo a marca sem_limite da organização). Migration 9830.';
-
-create unique index if not exists assistente_planos_um_por_plano
-  on public.assistente_planos (plano_id);
 
 -- ---- RLS e privilégios ----
 
@@ -286,7 +258,6 @@ alter table public.assistente_estado_da_empresa enable row level security;
 alter table public.assistente_progresso enable row level security;
 alter table public.assistente_chamados enable row level security;
 alter table public.assistente_usos enable row level security;
-alter table public.assistente_planos enable row level security;
 
 drop policy if exists tenant_isolation_assistente_conversas_select on public.assistente_conversas;
 create policy tenant_isolation_assistente_conversas_select on public.assistente_conversas
@@ -333,7 +304,6 @@ revoke all on public.assistente_estado_da_empresa from public, anon, authenticat
 revoke all on public.assistente_progresso from public, anon, authenticated;
 revoke all on public.assistente_chamados from public, anon, authenticated;
 revoke all on public.assistente_usos from public, anon, authenticated;
-revoke all on public.assistente_planos from public, anon, authenticated;
 
 grant select on public.assistente_conversas to authenticated;
 grant select on public.assistente_mensagens to authenticated;
@@ -350,7 +320,6 @@ grant select, insert, update, delete on public.assistente_estado_da_empresa to s
 grant select, insert, update, delete on public.assistente_progresso to service_role;
 grant select, insert, update, delete on public.assistente_chamados to service_role;
 grant select, insert, update, delete on public.assistente_usos to service_role;
-grant select, insert, update, delete on public.assistente_planos to service_role;
 
 -- ---- funções (só o servidor) ----
 
@@ -402,90 +371,94 @@ comment on function public.fn_assistente_mensagens_do_mes(uuid) is
 revoke execute on function public.fn_assistente_mensagens_do_mes(uuid) from public, anon, authenticated;
 grant execute on function public.fn_assistente_mensagens_do_mes(uuid) to service_role;
 
--- Conta a mensagem ANTES de chamar o modelo, e recusa a que passa do limite.
--- A trava por organização serializa duas mensagens simultâneas: sem ela, as
--- duas leriam a mesma contagem e a última vaga do mês seria usada duas vezes.
--- Devolve o id da linha de uso, ou NULO quando o limite do mês já foi atingido.
--- `p_limite` nulo = sem limite.
+-- Registra a mensagem ANTES de chamar o modelo e devolve o id da linha de uso.
+-- Não há limite de mensagens: a função só grava. Sem conseguir gravar, a
+-- aplicação não chama o modelo (falha fechada).
 create or replace function public.fn_assistente_registrar_mensagem(
   p_org uuid,
   p_user uuid,
   p_conversa uuid,
-  p_pagador text,
-  p_limite integer
+  p_pagador text
 ) returns uuid
-language plpgsql
+language sql
 volatile
 security invoker
 set search_path = ''
 as $$
-declare
-  v_id uuid;
-begin
-  perform pg_advisory_xact_lock(hashtextextended('assistente_usos:' || p_org::text, 0));
-  if p_limite is not null and public.fn_assistente_mensagens_do_mes(p_org) >= p_limite then
-    return null;
-  end if;
   insert into public.assistente_usos (organization_id, user_id, conversa_id, pagador)
   values (p_org, p_user, p_conversa, p_pagador)
-  returning id into v_id;
-  return v_id;
-end;
+  returning id;
 $$;
 
-comment on function public.fn_assistente_registrar_mensagem(uuid, uuid, uuid, text, integer) is
-  'Registra uma mensagem do Vix que vai chegar ao modelo e devolve o id da linha de uso; devolve nulo, sem gravar, quando o limite do mês (p_limite) já foi atingido. p_limite nulo = sem limite. Serializada por organização. Só o service_role executa. Migration 9830.';
+comment on function public.fn_assistente_registrar_mensagem(uuid, uuid, uuid, text) is
+  'Registra uma mensagem do Vix que vai chegar ao modelo e devolve o id da linha de uso. Não aplica limite. Só o service_role executa. Migration 9830.';
 
-revoke execute on function public.fn_assistente_registrar_mensagem(uuid, uuid, uuid, text, integer) from public, anon, authenticated;
-grant execute on function public.fn_assistente_registrar_mensagem(uuid, uuid, uuid, text, integer) to service_role;
+revoke execute on function public.fn_assistente_registrar_mensagem(uuid, uuid, uuid, text) from public, anon, authenticated;
+grant execute on function public.fn_assistente_registrar_mensagem(uuid, uuid, uuid, text) to service_role;
 
--- A configuração do Vix que vale para a organização. Duas portas: a marca
--- `sem_limite` (da plataforma) ou o plano assinado com linha em
--- `assistente_planos`. Sem nenhuma das duas, devolve nada, e a aplicação não
--- responde (falha fechada). Com a marca, o limite de mensagens é nulo; os
--- limites de lote e de taxa vêm do plano, se houver, ou do padrão da tabela.
-create or replace function public.fn_assistente_config_da_org(p_org uuid)
+-- Quem tem o assistente. Duas portas: a marca `isenta` (da plataforma) ou a
+-- assinatura ativa, em qualquer plano. Devolve por qual porta a organização
+-- entra, ou NULO quando por nenhuma, e a aplicação não responde (falha fechada).
+-- As réguas de "ativa" estão no cabeçalho.
+create or replace function public.fn_assistente_acesso_da_org(p_org uuid)
+returns text
+language sql
+stable
+security invoker
+set search_path = ''
+as $$
+  select case
+    when exists (
+      select 1 from public.assistente_estado_da_empresa e
+       where e.organization_id = p_org and e.isenta
+    ) then 'marca'
+    when public.fn_cobranca_ligada() and exists (
+      select 1
+        from public.cobranca_assinaturas a
+        join public.organizations o on o.id = a.organization_id
+       where a.organization_id = p_org
+         and a.estado not in ('em_atraso', 'cancelada')
+         and o.status = 'active'
+    ) then 'assinatura_ativa'
+    else null
+  end;
+$$;
+
+comment on function public.fn_assistente_acesso_da_org(uuid) is
+  'Por qual porta a organização tem o Vix: marca (isenta, da plataforma) ou assinatura_ativa (assinatura que não está devendo, organização operante, cobrança ligada), em qualquer plano. Nulo = não tem. Só o service_role executa. Migration 9830.';
+
+revoke execute on function public.fn_assistente_acesso_da_org(uuid) from public, anon, authenticated;
+grant execute on function public.fn_assistente_acesso_da_org(uuid) to service_role;
+
+-- O uso do mês de calendário corrente (UTC), por organização, para a
+-- administração da PLATAFORMA. Só contagem e tokens.
+create or replace function public.fn_assistente_uso_do_mes()
 returns table (
-  origem text,
-  mensagens_por_mes integer,
-  limite_de_lote integer,
-  mensagens_por_minuto integer,
-  ferramentas_por_turno integer
+  organization_id uuid,
+  mensagens integer,
+  tokens_de_entrada bigint,
+  tokens_de_saida bigint,
+  falhas integer,
+  usuarios integer
 )
 language sql
 stable
 security invoker
 set search_path = ''
 as $$
-  with marca as (
-    select 1
-      from public.assistente_estado_da_empresa e
-     where e.organization_id = p_org
-       and e.sem_limite
-  ), plano as (
-    select p.mensagens_por_mes, p.limite_de_lote, p.mensagens_por_minuto, p.ferramentas_por_turno
-      from public.cobranca_assinaturas a
-      join public.assistente_planos p on p.plano_id = a.plano_id
-     where a.organization_id = p_org
-       and public.fn_cobranca_ligada()
-     limit 1
-  )
-  select 'marca'::text,
-         null::integer,
-         coalesce((select limite_de_lote from plano), 5),
-         coalesce((select mensagens_por_minuto from plano), 6),
-         coalesce((select ferramentas_por_turno from plano), 8)
-   where exists (select 1 from marca)
-  union all
-  select 'plano'::text, pl.mensagens_por_mes, pl.limite_de_lote, pl.mensagens_por_minuto, pl.ferramentas_por_turno
-    from plano pl
-   where not exists (select 1 from marca);
+  select u.organization_id,
+         count(*)::integer,
+         coalesce(sum(u.tokens_de_entrada), 0)::bigint,
+         coalesce(sum(u.tokens_de_saida), 0)::bigint,
+         (count(*) filter (where u.falhou))::integer,
+         count(distinct u.user_id)::integer
+    from public.assistente_usos u
+   where u.created_at >= date_trunc('month', now())
+   group by u.organization_id;
 $$;
 
-comment on function public.fn_assistente_config_da_org(uuid) is
-  'A configuração do Vix para a organização: origem marca (sem_limite, limite de mensagens nulo) ou plano (a linha de assistente_planos do plano assinado, com a cobrança ligada). Sem marca e sem plano com linha, devolve nada e o Vix não responde. Só o service_role executa. Migration 9830.';
+comment on function public.fn_assistente_uso_do_mes() is
+  'Uso do Vix no mês de calendário corrente (UTC), por organização: mensagens, tokens, falhas e pessoas. Para a administração da plataforma. Só o service_role executa. Migration 9830.';
 
-revoke execute on function public.fn_assistente_config_da_org(uuid) from public, anon, authenticated;
-grant execute on function public.fn_assistente_config_da_org(uuid) to service_role;
-
-notify pgrst, 'reload schema';
+revoke execute on function public.fn_assistente_uso_do_mes() from public, anon, authenticated;
+grant execute on function public.fn_assistente_uso_do_mes() to service_role;

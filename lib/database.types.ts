@@ -2652,27 +2652,27 @@ export type Database = {
       assistente_estado_da_empresa: {
         Row: {
           atualizado_por: string | null;
+          isenta: boolean;
           ligado: boolean;
           modo_padrao: string;
           organization_id: string;
-          sem_limite: boolean;
           updated_at: string;
         };
         ComputedFields: never;
         Insert: {
           atualizado_por?: string | null;
+          isenta?: boolean;
           ligado?: boolean;
           modo_padrao?: string;
           organization_id: string;
-          sem_limite?: boolean;
           updated_at?: string;
         };
         Update: {
           atualizado_por?: string | null;
+          isenta?: boolean;
           ligado?: boolean;
           modo_padrao?: string;
           organization_id?: string;
-          sem_limite?: boolean;
           updated_at?: string;
         };
         Relationships: [
@@ -2736,51 +2736,6 @@ export type Database = {
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      assistente_planos: {
-        Row: {
-          created_at: string;
-          ferramentas_por_turno: number;
-          id: string;
-          limite_de_lote: number;
-          mensagens_por_mes: number | null;
-          mensagens_por_minuto: number;
-          plano_id: string;
-          updated_at: string;
-          updated_by: string | null;
-        };
-        ComputedFields: never;
-        Insert: {
-          created_at?: string;
-          ferramentas_por_turno?: number;
-          id?: string;
-          limite_de_lote?: number;
-          mensagens_por_mes?: number | null;
-          mensagens_por_minuto?: number;
-          plano_id: string;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Update: {
-          created_at?: string;
-          ferramentas_por_turno?: number;
-          id?: string;
-          limite_de_lote?: number;
-          mensagens_por_mes?: number | null;
-          mensagens_por_minuto?: number;
-          plano_id?: string;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "assistente_planos_plano_id_fkey";
-            columns: ["plano_id"];
-            isOneToOne: false;
-            referencedRelation: "cobranca_planos";
             referencedColumns: ["id"];
           },
         ];
@@ -15725,23 +15680,25 @@ export type Database = {
       };
       fn_aplicar_travas_de_suporte: { Args: Record<PropertyKey, never>; Returns: undefined };
       fn_assistente_mensagens_do_mes: { Args: { p_org: string }; Returns: number };
-      fn_assistente_config_da_org: {
-        Args: { p_org: string };
-        Returns: {
-          ferramentas_por_turno: number;
-          limite_de_lote: number;
-          mensagens_por_mes: number | null;
-          mensagens_por_minuto: number;
-          origem: string;
-        }[];
-      };
+      fn_assistente_acesso_da_org: { Args: { p_org: string }; Returns: string | null };
       fn_assistente_registrar_mensagem: {
-        Args: { p_conversa: string | null; p_limite: number | null; p_org: string; p_pagador: string; p_user: string };
+        Args: { p_conversa: string | null; p_org: string; p_pagador: string; p_user: string };
         Returns: string | null;
       };
       fn_assistente_reservar_acao: {
         Args: { p_acao: string; p_org: string; p_user: string };
         Returns: Database["public"]["Tables"]["assistente_acoes"]["Row"][];
+      };
+      fn_assistente_uso_do_mes: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          falhas: number;
+          mensagens: number;
+          organization_id: string;
+          tokens_de_entrada: number;
+          tokens_de_saida: number;
+          usuarios: number;
+        }[];
       };
       fn_appointment_change: {
         Args: { p_id: string; p_org: string; p_patch: Json; p_revision: number };
