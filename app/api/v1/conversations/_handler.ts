@@ -23,7 +23,10 @@ import { aplicarMarcadores } from "@/lib/inbox/marcador-da-conversa";
 import { exigirControleDaConversa } from "@/lib/inbox/controle-da-conversa";
 import {
   auditarFechamentoDeConversa,
+  conversaJaEncerrada,
   fecharConversa,
+  mudarEstadoDoAtendimento,
+  origemDoAtor,
   SEM_TRAVA_DE_REVISAO,
 } from "@/lib/inbox/fechar-conversa";
 
@@ -613,24 +616,34 @@ export async function patchConversationHandler(
     ? await getConversationHandler(supabase, ctx, conversationId)
     : null;
   if (observed) await exigirControleDaConversa(supabase, ctx, observed);
-  // A régua acima só olha o ator "user". Agente (token ou nativo) não fecha
+  // A régua acima só olha o ator "user". Agente (token ou nativo) não encerra
   // conversa que uma pessoa assumiu: a mesma recusa da ferramenta
   // `crm_close_conversation` (revisão 20/11, item 2.31; decisão do dono em
   // 23/11/2026). Hoje a rota só monta ator "user"; a recusa fica aqui para o
   // caminho não virar a brecha no dia em que aceitar bearer.
-  if (
-    input.status === "closed" &&
-    observed &&
-    ctx.actor.type !== "user" &&
-    observed.assigned_to_user_id != null
-  ) {
-    throw new ApiError(
+  //
+  // Vale para os TRÊS estados que encerram (`closed`, `resolved`, `archived`),
+  // e esta conferência é só o caminho rápido: a regra mora em
+  // `lib/inbox/fechar-conversa.ts` e na `fn_service_status` (`p_ator`,
+  // migration 9824), que recusa com a linha travada (`com_humano`, mais abaixo).
+  const origem = origemDoAtor(ctx.actor);
+  const conversaComHumano = () =>
+    new ApiError(
       403,
       "forbidden",
       undefined,
       ctx.requestId,
       traduzir("Uma pessoa da equipe assumiu esta conversa. Só ela, ou um gerente pela tela, pode encerrá-la.", ctx.idioma ?? "pt-BR"),
     );
+  if (
+    input.status !== undefined &&
+    conversaJaEncerrada(input.status) &&
+    observed &&
+    origem === "agente" &&
+    !conversaJaEncerrada(observed.status) &&
+    observed.assigned_to_user_id != null
+  ) {
+    throw conversaComHumano();
   }
 
   /**
@@ -682,7 +695,13 @@ export async function patchConversationHandler(
     // MOMENTO da auditoria — depois da releitura lá embaixo, como sempre foi.
     const fechamento = await fecharConversa({
       admin: createAdminClient(),
-      conversa: { id: conversationId, organization_id: ctx.organization_id, status: observed.status },
+      conversa: {
+        id: conversationId,
+        organization_id: ctx.organization_id,
+        status: observed.status,
+        assigned_to_user_id: observed.assigned_to_user_id ?? null,
+      },
+      origem,
       // A revisão lida vem sempre (`service_revision` está em `SELECT_COLS`); o
       // tipo é que a deixa opcional. O último termo só mantém o que a chamada
       // direta fazia nesse caso impossível: não mandar `p_expected`.
@@ -693,6 +712,7 @@ export async function patchConversationHandler(
       auditoria: "adiada",
     });
     if (!fechamento.ok) {
+      if (fechamento.erro === "com_humano") throw conversaComHumano();
       const conflito = fechamento.erro === "conflito";
       const sumiu = fechamento.codigo === "P0002";
       throw new ApiError(conflito ? 409 : sumiu ? 404 : 500,
@@ -700,15 +720,25 @@ export async function patchConversationHandler(
         conflito ? traduzir("O atendimento mudou. Atualize e tente novamente.", ctx.idioma ?? "pt-BR") : fechamento.detalhe);
     }
   } else if (input.status !== undefined) {
-    const { error: statusError } = await createAdminClient().rpc("fn_service_status", {
-      p_org: ctx.organization_id, p_conversation: conversationId, p_status: input.status,
-      p_expected: input.expected_revision ?? observed?.service_revision,
+    // Os outros estados (`archived` e `resolved` inclusive) passam pela MESMA
+    // porta do módulo, com a mesma origem: agente que tenta arquivar ou
+    // resolver conversa assumida recebe a recusa do banco (`com_humano`).
+    const estado = await mudarEstadoDoAtendimento({
+      admin: createAdminClient(),
+      organizationId: ctx.organization_id,
+      conversationId,
+      status: input.status,
+      revisaoEsperada: input.expected_revision ?? observed?.service_revision,
+      origem,
     });
-    // PT409: revisão obsoleta (migration 0514). 40001: contato trocou no meio, ou banco anterior à 0514.
-    const conflito = statusError?.code === "PT409" || statusError?.code === "40001";
-    if (statusError) throw new ApiError(conflito ? 409 : statusError.code === "P0002" ? 404 : 500,
-      conflito ? "conflict" : statusError.code === "P0002" ? "not_found" : "internal_error", undefined, ctx.requestId,
-      conflito ? traduzir("O atendimento mudou. Atualize e tente novamente.", ctx.idioma ?? "pt-BR") : statusError.message);
+    if (!estado.ok) {
+      if (estado.erro === "com_humano") throw conversaComHumano();
+      const conflito = estado.erro === "conflito";
+      const sumiu = estado.codigo === "P0002";
+      throw new ApiError(conflito ? 409 : sumiu ? 404 : 500,
+        conflito ? "conflict" : sumiu ? "not_found" : "internal_error", undefined, ctx.requestId,
+        conflito ? traduzir("O atendimento mudou. Atualize e tente novamente.", ctx.idioma ?? "pt-BR") : estado.detalhe);
+    }
   }
   if (input.tags !== undefined) {
     update.tags = input.tags;

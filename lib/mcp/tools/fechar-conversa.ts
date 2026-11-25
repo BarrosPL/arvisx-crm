@@ -30,10 +30,16 @@
  *    Decisão do dono em 23/11/2026, que troca a de 20/11 registrada no PR #14
  *    (revisão 20/11, item 2.31).
  *
- *    LIMITE CONHECIDO: a conferência é feita na leitura. Assumir a conversa não
- *    mexe em `service_revision`, então, se uma pessoa assumir no instante entre
- *    a leitura e a `fn_service_status`, o fechamento ainda passa. Fechar essa
- *    janela pede a condição dentro da função do banco (migration).
+ *    A conferência daqui (na leitura) é só o caminho rápido. A regra mora em
+ *    `lib/inbox/fechar-conversa.ts` (`origem: "agente"`) e na
+ *    `fn_service_status` (`p_ator = 'agente'`, migration 9824), que recusa COM A
+ *    LINHA TRAVADA: se uma pessoa assumir no instante entre a leitura e o
+ *    fechamento, o banco responde `PT403` e a ferramenta devolve a mesma recusa
+ *    `conversa_com_humano`.
+ *
+ *    BANCO ANTERIOR À 9824 (imagem nova, banco antigo): a função de 5
+ *    argumentos não existe e o PostgREST responde PGRST202. A ferramenta
+ *    devolve `indisponivel` e NÃO fecha. Não há volta ao caminho antigo.
  */
 import { z } from "zod";
 
@@ -155,6 +161,7 @@ export const crmCloseConversation: McpToolDefinition<typeof inputShape> = {
     const fechamento = await fecharConversa({
       admin: ctx.supabase,
       conversa,
+      origem: "agente",
       revisaoEsperada: conversa.service_revision,
       requestId: a.requestId,
       ator: {
@@ -165,6 +172,8 @@ export const crmCloseConversation: McpToolDefinition<typeof inputShape> = {
     });
 
     if (!fechamento.ok) {
+      // A pessoa assumiu entre a leitura daqui e a função do banco.
+      if (fechamento.erro === "com_humano") return CONVERSA_COM_HUMANO;
       if (fechamento.erro !== "conflito") {
         return recusa("indisponivel", "não consegui fechar a conversa agora; tente de novo em instantes.");
       }

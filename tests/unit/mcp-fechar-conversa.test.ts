@@ -89,6 +89,16 @@ async function rpc(fn: string, args: Record<string, unknown>) {
     (l) => l.id === args.p_conversation && l.organization_id === args.p_org,
   );
   if (!c) return { data: null, error: { code: "P0002", message: "service_not_found" } };
+  // Migration 9824: com `p_ator = 'agente'`, estado terminal sobre conversa
+  // aberta e assumida é recusado, antes da trava de revisão.
+  if (
+    args.p_ator === "agente" &&
+    TERMINAIS.includes(String(args.p_status)) &&
+    !TERMINAIS.includes(String(c.status)) &&
+    c.assigned_to_user_id != null
+  ) {
+    return { data: null, error: { code: "PT403", message: "service_assigned_to_human" } };
+  }
   if (args.p_expected != null && c.service_revision !== args.p_expected) {
     return { data: null, error: { code: "PT409", message: "service_stale" } };
   }
@@ -157,7 +167,15 @@ describe("crm_close_conversation fecha a conversa", () => {
     expect(rpcs).toEqual([
       {
         fn: "fn_service_status",
-        args: { p_org: ORG_A, p_conversation: CONVERSA_ABERTA, p_status: "closed", p_expected: 3 },
+        // `p_ator: "agente"` em TODA chamada desta porta (migration 9824): é o
+        // que faz o banco recusar a conversa assumida com a linha travada.
+        args: {
+          p_org: ORG_A,
+          p_conversation: CONVERSA_ABERTA,
+          p_status: "closed",
+          p_expected: 3,
+          p_ator: "agente",
+        },
       },
     ]);
     expect(conversa(CONVERSA_ABERTA)).toMatchObject({ status: "closed", service_revision: 4 });
@@ -229,6 +247,44 @@ describe("⭐ conversa assumida por uma pessoa (revisão 20/11, item 2.31)", () 
 
     expect(r).toMatchObject({ already_closed: true });
     expect(rpcs).toEqual([]);
+  });
+
+  // Tarefa 6.1, lacuna 1: a janela entre a leitura e a função do banco.
+  it("⭐ a pessoa assume ENTRE a leitura e o banco: a recusa do banco vira `conversa_com_humano`", async () => {
+    const PESSOA = "aaaaaaaa-0000-4000-8000-0000000000f1";
+    antesDoBanco = () => {
+      Object.assign(conversa(CONVERSA_ABERTA), { assigned_to_user_id: PESSOA, status: "claimed" });
+    };
+
+    const r = await fechar({ conversation_id: CONVERSA_ABERTA });
+
+    expect(r).toMatchObject({ permitido: false, motivo: "conversa_com_humano" });
+    // A leitura viu a conversa livre (por isso chegou ao banco), e foi o banco que recusou.
+    expect(rpcs).toHaveLength(1);
+    expect(rpcs[0]!.args).toMatchObject({ p_ator: "agente", p_expected: 3 });
+    expect(conversa(CONVERSA_ABERTA)).toMatchObject({
+      status: "claimed",
+      assigned_to_user_id: PESSOA,
+      service_revision: 3,
+      service_closed_at: null,
+    });
+    expect(h.audit).not.toHaveBeenCalled();
+  });
+
+  it("⭐ banco anterior à 9824 (PGRST202): `indisponivel`, UMA chamada, e nenhuma volta ao caminho sem `p_ator`", async () => {
+    erroDoBanco = {
+      code: "PGRST202",
+      message:
+        "Could not find the function public.fn_service_status(p_ator, p_conversation, p_expected, p_org, p_status) in the schema cache",
+    };
+
+    const r = await fechar({ conversation_id: CONVERSA_ABERTA });
+
+    expect(r).toMatchObject({ permitido: false, motivo: "indisponivel" });
+    expect(rpcs).toHaveLength(1);
+    expect(rpcs.every((c) => c.args.p_ator === "agente")).toBe(true);
+    expect(conversa(CONVERSA_ABERTA)).toMatchObject({ status: "open", service_revision: 3 });
+    expect(h.audit).not.toHaveBeenCalled();
   });
 
   it("a descrição diz ao modelo que conversa assumida por uma pessoa não é fechada", () => {

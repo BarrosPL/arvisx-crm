@@ -315,6 +315,115 @@ describe("PATCH status=closed: ator que não é pessoa × conversa assumida", ()
     const res = await patch({ status: "closed" });
     expect(res.status).toBe(200);
     expect(estado.rpcsAdmin.map((r) => r.fn)).toEqual(["fn_service_status"]);
+    // Pessoa não manda `p_ator`: vale o default da função (a chamada de antes da 9824).
+    expect(estado.rpcsAdmin[0]!.args).not.toHaveProperty("p_ator");
+  });
+});
+
+// Tarefa 6.1 (24/11/2026). Lacuna 3 do levantamento: `archived` e `resolved`
+// ficavam fora da guarda (ela só olhava `closed`). Lacuna 1: a pessoa pode
+// assumir entre a leitura deste caminho e a função do banco, e então quem
+// recusa é o banco (`PT403`, migration 9824).
+describe("PATCH de estado terminal: ator que não é pessoa × conversa assumida (os três estados e a janela)", () => {
+  const AGENTE = {
+    organization_id: ORG,
+    actor: { type: "ai_agent" as const, id: "run-1", role: "agent" as const, api_token_id: TOKEN },
+    requestId: "req-1",
+  };
+  const tentar = async (status: "closed" | "resolved" | "archived") => {
+    const { patchConversationHandler } = await import("@/app/api/v1/conversations/_handler");
+    // `resolved` não está no schema do PATCH (`conversationStatusSchema`): pela
+    // rota ele morre em 422. O handler é chamado direto aqui para provar que,
+    // mesmo se o schema um dia o aceitar, o ramo dele passa pela regra.
+    return patchConversationHandler(clienteDaSessao(), AGENTE, CONVERSA, { status: status as never }).then(
+      () => null,
+      (e: unknown) => e as { status: number; code: string; message: string },
+    );
+  };
+
+  it.each(["closed", "resolved", "archived"] as const)(
+    "⭐ %s sobre conversa assumida: 403, sem chamar o banco e sem auditar",
+    async (status) => {
+      const erro = await tentar(status);
+
+      expect(erro).toMatchObject({ status: 403, code: "forbidden" });
+      expect(erro!.message).toMatch(/pessoa da equipe assumiu/);
+      expect(estado.rpcsAdmin).toEqual([]);
+      expect(estado.atualizacoes).toEqual([]);
+      expect(auditorias()).toEqual([]);
+    },
+  );
+
+  it.each(["closed", "resolved", "archived"] as const)(
+    "⭐ %s, a janela: a leitura viu a conversa livre e o BANCO recusa (PT403) → 403, sem auditar",
+    async (status) => {
+      estado.linha = { ...LINHA, assigned_to_user_id: null };
+      estado.erroRpc = { code: "PT403", message: "service_assigned_to_human" };
+
+      const erro = await tentar(status);
+
+      expect(erro).toMatchObject({ status: 403, code: "forbidden" });
+      expect(erro!.message).toMatch(/pessoa da equipe assumiu/);
+      expect(estado.rpcsAdmin).toEqual([
+        {
+          fn: "fn_service_status",
+          args: { p_org: ORG, p_conversation: CONVERSA, p_status: status, p_expected: 7, p_ator: "agente" },
+        },
+      ]);
+      expect(auditorias()).toEqual([]);
+    },
+  );
+
+  it.each(["resolved", "archived"] as const)(
+    "controle: %s sobre conversa SEM responsável passa, e a chamada leva `p_ator: 'agente'`",
+    async (status) => {
+      estado.linha = { ...LINHA, assigned_to_user_id: null };
+
+      expect(await tentar(status)).toBeNull();
+
+      expect(estado.rpcsAdmin.map((r) => r.args.p_ator)).toEqual(["agente"]);
+    },
+  );
+
+  it("conversa assumida que JÁ está encerrada: o agente repete o pedido sem recusa (quem decide é o banco)", async () => {
+    estado.linha = { ...LINHA, status: "closed" };
+
+    expect(await tentar("closed")).toBeNull();
+
+    expect(estado.rpcsAdmin.map((r) => r.args.p_ator)).toEqual(["agente"]);
+  });
+
+  it("agente reabrindo (`open`) conversa assumida não é encerrar: a guarda não se aplica", async () => {
+    expect(await tentar("open" as never)).toBeNull();
+    expect(estado.rpcsAdmin.map((r) => r.args)).toEqual([
+      { p_org: ORG, p_conversation: CONVERSA, p_status: "open", p_expected: 7, p_ator: "agente" },
+    ]);
+  });
+
+  it("banco anterior à 9824 (PGRST202): 500, sem segunda chamada sem `p_ator`", async () => {
+    estado.linha = { ...LINHA, assigned_to_user_id: null };
+    estado.erroRpc = { code: "PGRST202", message: "Could not find the function public.fn_service_status" };
+
+    const erro = await tentar("closed");
+
+    expect(erro).toMatchObject({ status: 500, code: "internal_error" });
+    expect(estado.rpcsAdmin).toHaveLength(1);
+    expect(estado.rpcsAdmin[0]!.args.p_ator).toBe("agente");
+    expect(auditorias()).toEqual([]);
+  });
+
+  it("controle: a PESSOA arquiva a conversa que assumiu, pela rota, sem `p_ator`", async () => {
+    const res = await patch({ status: "archived" });
+    expect(res.status).toBe(200);
+    expect(estado.rpcsAdmin.map((r) => r.args)).toEqual([
+      { p_org: ORG, p_conversation: CONVERSA, p_status: "archived", p_expected: 7 },
+    ]);
+  });
+
+  it("`resolved` não entra pela rota: o schema do PATCH recusa (422) antes de qualquer efeito", async () => {
+    const res = await patch({ status: "resolved" });
+    expect(res.status).toBe(422);
+    expect(estado.rpcsAdmin).toEqual([]);
   });
 });
 
