@@ -163,15 +163,20 @@ describe("/ — landing v3", () => {
 
   it("⭐ a landing não diz mais que a IA depende das credenciais do cliente nem que começa no Standard", async () => {
     const { container } = await montar();
-    // Só o que a Tarefa 8 trocou: o hero, a seção da IA e a pergunta "Como funciona a IA?".
-    // O aviso "Quem cuida dos agentes de IA" fica de fora de propósito: ele descreve os
-    // planos vendidos hoje e é decisão pendente (ver o PR).
+    // O que a Tarefa 8 trocou: o hero, a seção da IA, a pergunta "Como funciona a IA?" e,
+    // por decisão do Lucas em 25/11/2026, o aviso "Quem cuida dos agentes de IA", para os
+    // dois não se contradizerem.
     const hero = container.querySelector(".hero")!.textContent!;
     const secao = container.querySelector("#suas-chaves")!.textContent!;
     const faq = container.querySelector("#faq")!.textContent!;
-    // Guarda de vacuidade: os três trechos existem e têm texto.
-    for (const trecho of [hero, secao, faq]) expect(trecho.length).toBeGreaterThan(100);
-    for (const trecho of [hero, secao, faq]) {
+    const aviso = container.querySelector("#plano [data-quem-cuida-dos-agentes]")!.textContent!;
+    // Guarda de vacuidade: os quatro trechos existem e têm texto.
+    for (const trecho of [hero, secao, faq, aviso]) expect(trecho.length).toBeGreaterThan(100);
+    for (const antiga of [/não tem agentes de IA na plataforma/, /começa no Standard/, /conecta a sua credencial de IA/, /nunca pela Arvisx/]) {
+      expect(aviso).not.toMatch(antiga);
+    }
+    expect(aviso).toMatch(/A IA vem incluída, com uma franquia mensal de conversas com IA/);
+    for (const trecho of [hero, secao, faq, aviso]) {
       for (const antiga of [
         /com as credenciais da sua empresa/,
         /a partir do (plano )?Standard/,

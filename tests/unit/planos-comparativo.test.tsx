@@ -274,17 +274,30 @@ describe("quem cuida dos agentes de IA, no comparativo", () => {
     // serviço à parte Agentes Arvisx, para qualquer plano, por reunião e proposta
     // — e só o item dele fala em reunião.
     const itens = QUEM_CUIDA_DOS_AGENTES.itens.map((i) => ({ id: i.id as string, planos: i.planos as string, texto: i.texto as string }));
-    expect(itens.map((i) => i.id)).toEqual(["essencial", "standard_e_premium", "agentes_arvisx"]);
+    expect(itens.map((i) => i.id)).toEqual(["todos_os_planos", "chave_propria", "agentes_arvisx"]);
     const porPlano = Object.fromEntries(itens.map((i) => [i.id, i.texto]));
     expect(itens[2]!.planos).toBe("Agentes Arvisx (à parte)");
     expect(porPlano.agentes_arvisx).toMatch(/^Em qualquer plano, quem quiser agentes de IA desenvolvidos pela Arvisx contrata o serviço à parte, depois de uma reunião: /);
     expect(porPlano.agentes_arvisx).toMatch(/envia a proposta e desenvolve os agentes sob medida, conectados à sua operação\.$/);
-    for (const id of ["essencial", "standard_e_premium"]) expect(porPlano[id]).not.toMatch(/reunião/);
-    expect(porPlano.standard_e_premium).toMatch(/A Arvisx só desenvolve soluções personalizadas pelo serviço à parte Agentes Arvisx\.$/);
-    // Os agentes da Arvisx não dependem do CRM nem do plano: o Essencial só não tem a IA DA PLATAFORMA.
-    expect(porPlano.essencial).toBe(
-      "O Essencial não tem agentes de IA na plataforma: a IA dentro do CRM começa no Standard. Agentes desenvolvidos pela Arvisx podem ser contratados à parte, pelo serviço Agentes Arvisx.",
+    for (const id of ["todos_os_planos", "chave_propria"]) expect(porPlano[id]).not.toMatch(/reunião/);
+    // 25/11/2026 (Tarefa 8): a IA vem incluída em TODOS os planos, com franquia mensal, e a
+    // chave própria é opcional. O aviso deixou de dizer que o Essencial não tem IA, que a IA
+    // começa no Standard e que o consumo é sempre do provedor do cliente.
+    expect(porPlano.todos_os_planos).toMatch(/^A IA vem incluída, com uma franquia mensal de conversas com IA, e você é responsável /);
+    expect(porPlano.chave_propria).toBe(
+      "Se preferir, a sua empresa cadastra a própria chave de IA. Com ela, o consumo é cobrado pelo seu provedor de IA e não gasta a franquia do plano.",
     );
+    expect(QUEM_CUIDA_DOS_AGENTES.consumo).toMatch(/^Quando a franquia do mês acaba, a IA para e as conversas seguem com a sua equipe/);
+    const aviso = FRASES_DE_QUEM_CUIDA.join(" ");
+    for (const antiga of [
+      /não tem agentes de IA na plataforma/,
+      /começa no Standard/,
+      /conecta a sua credencial de IA/,
+      /nunca pela Arvisx/,
+      /Essencial|Standard|Premium/,
+    ]) {
+      expect(aviso).not.toMatch(antiga);
+    }
     expect(FRASES_DE_QUEM_CUIDA.join(" ")).not.toMatch(/integrad[oa]s ao/);
     // O aviso fixo não cita o plano que saiu, não promete quantidade nem dá preço.
     expect(FRASES_DE_QUEM_CUIDA.join(" ")).not.toMatch(/Equipe Completa|único plano|\d+ agentes|€/);
