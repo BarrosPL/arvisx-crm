@@ -236,3 +236,57 @@ Provas (banco de verdade, `pnpm test:db tests/invariants/fechar-conversa-por-age
 - **Depois** (com a migration no baseline e o código novo): `Tests 19 passed (19)`, com `install ok` e `update ok (zero erro na re-aplicação)`.
 
 Os seis casos da 4.3 estão no bloco "conversa assumida por uma pessoa: a regra 2.31 dentro da fn_service_status". O caso 3 (fechar ganha) mostrou um comportamento que já existia e não é desta tarefa: assumir uma conversa já encerrada a reabre como `claimed` e soma outra revisão (7 → 8 no fechar, 9 no assumir). O teste afirma isso como está.
+
+## Tarefa 6.1 (25/11/2026): lacuna 2, o silêncio do bot. NÃO implementada: tabela e pergunta
+
+Pedido: o agente também recusar quando `bot_silenced_until > now()` e a pausa veio de uma pessoa. Condição do pedido: se não houver como distinguir com segurança "pausa por pessoa" de "silêncio do próprio bot depois do handoff", não implementar e levar a pergunta.
+
+**Conclusão: hoje não há como distinguir com segurança.** Nada de código mudou para esta lacuna. O que foi lido está abaixo. Linhas do branch `tarefa-6.1/agente-nao-fecha-conversa-assumida` (base `integracao/2026-11-23`, `5cda875b2`).
+
+### Achado que muda a pergunta
+
+O botão de pausar a IA (`POST /api/v1/conversations/[id]/pause-ai`) nunca deixa a conversa sem responsável: se ninguém é dono, ele faz o claim para quem clicou antes de gravar o silêncio (`app/api/v1/conversations/[id]/pause-ai/route.ts`, o claim na linha 103, o silêncio na linha 130). Logo, conversa pausada pela tela tem `assigned_to_user_id` preenchido, e a regra 2.31 que já existe (agora também no banco, migration 9824) a cobre. O caso "pausada por pessoa, sem `assigned_to_user_id`" só nasce por outros caminhos, os da tabela.
+
+### Quem grava `bot_silenced_until` (todos os escritores achados)
+
+Varredura: `grep -rnE 'bot_silenced_until( =|:) '` em `app lib workers scripts` (sem testes) e `grep -n bot_silenced_until supabase/baseline.sql`.
+
+| # | Quem grava (arquivo:linha) | Quem é | Valor | `last_handoff_at` | `last_handoff_reason` | Fica com `assigned_to_user_id`? | Classe |
+|---|---|---|---|---|---|---|---|
+| 1 | `fn_conversation_assign`, claim e transfer (`supabase/baseline.sql:68792-68797`) | pessoa (tela, MCP de transferência, automação) | `infinity` | não toca | não toca | sim | pessoa. **Já coberta** pela 2.31 |
+| 2 | `pause-ai/route.ts:130` | pessoa, botão da tela | `infinity` | não toca | `"Automático pausado pelo atendente"` (constante, linha 49) | sim, sempre (claim na linha 103) | pessoa. **Já coberta** pela 2.31 |
+| 3 | `fn_conversation_assign`, release (`baseline.sql:68794-68796`) | pessoa soltando a conversa | `null` se `last_handoff_at` é nulo; senão MANTÉM o que estava | não toca | não toca | não | herda a classe do silêncio anterior (linhas 5 a 9) |
+| 4 | reabertura com dono (`baseline.sql:55096`, `keep_owner`) | sistema, quando o cliente escreve em conversa encerrada que tinha dono | `infinity` | não toca | não toca | sim | pessoa. **Já coberta** |
+| 5 | handoff do agente nativo (`lib/agent-engine/agent/human-handoff.ts:462-467`) | o próprio bot | `infinity` | `now()` | **texto livre escrito pelo modelo** (`opts.reason`; dito também em `lib/escalacao/handoff-tecnico.ts:23`) | não (status vira `pending`) | bot |
+| 6 | `triggerHandoff` (`lib/ai/handoff/orchestrator.ts:291-298`), usado pela ferramenta MCP de handoff e pelo motor | bot ou agente externo | `infinity` | agora | `input.reason` (vocabulário do orquestrador; `orcamento_de_ia` em `lib/agent-engine/edge/llm/orcamento.ts:93`) | não (`pending`) | bot |
+| 7 | envio pela tela ou em nome de uma pessoa (`app/api/v1/messages/_handler.ts:1626-1633`, `extendBotSilence`) | pessoa | finito (janela deslizante da empresa, 5 min por padrão) | não toca | **não toca** | só se já tinha | pessoa, **sem marca nenhuma** |
+| 8 | resposta pelo celular, fora do CRM (`lib/escalacao/atendimento-manual.ts:261-267`) | pessoa | finito (60 min por padrão) ou `infinity` quando o agente aceita comando de celular (`lib/waha/ingest.ts:1842-1847`) | agora | `"Atendimento manual pelo canal (resposta fora do CRM)"` (constante, linha 169) | não | pessoa |
+| 9 | comando `#off` pelo celular (`lib/waha/ingest.ts:1814-1819`) | pessoa | `infinity` | agora | `"Comando #off enviado pelo celular"` (constante, `atendimento-manual.ts:176`) | não | pessoa |
+| 10 | ligação de voz (`lib/wacalls/events-bridge.ts:77-90`) | pessoa em ligação | agora + 2 h | `now()` | `"Ligação de voz em andamento"` (constante, linha 51) | não | pessoa |
+| 11 | devolução ao automático (`lib/escalacao/retomada.ts:241-246`), fechar sem handoff (`fn_service_status`), fim da ligação (`events-bridge.ts:100-106`) | pessoa, cron ou sistema | `null` | `null` | `null` | n/a | limpa o silêncio |
+
+### Por que isso não distingue com segurança
+
+1. **Não existe coluna que diga quem causou o silêncio.** O único marcador é `last_handoff_reason`, um texto. Nas linhas 8, 9 e 10 ele é uma constante de pessoa. Na linha 5 é texto livre do modelo. Na linha 7 (pessoa respondeu pela tela sem assumir) não é gravado: fica o que estava antes, inclusive o motivo de um handoff antigo do bot.
+2. **"Silêncio finito é de pessoa" é coincidência, não contrato.** Hoje todo valor finito vem de pessoa (linhas 7, 8, 10) e todo handoff do bot grava `infinity`. Nenhum teste nem constraint prende isso. E o inverso não vale: `infinity` sem responsável pode ser bot (5, 6) ou pessoa (8 durável, 9).
+3. **Um silêncio de bot pode esconder uma pessoa.** Exemplo: a pessoa responde pelo celular (linha 8, 60 min), e dentro dessa hora um agente externo chama a ferramenta de handoff (linha 6). O valor vira `infinity` e o motivo vira o do handoff. A conversa passa a parecer "silêncio do bot", com uma pessoa atendendo há minutos.
+4. **A regra precisa valer no banco também** (é o que a parte 1 fez para o responsável). Levar a comparação de texto para dentro da `fn_service_status` duplicaria no SQL quatro frases em português que moram em constantes TypeScript: mudar uma frase num arquivo abriria a brecha sem nenhum teste acusar.
+5. O produto já faz UMA comparação dessas, só para escolher o rótulo da tela (`lib/inbox/comando-da-conversa.ts:286`). Errar ali troca um texto; errar aqui fecha a conversa de quem está atendendo.
+
+O erro que importa é o da direção perigosa: classificar pausa de pessoa como silêncio de bot (o agente fecha). Os pontos 1 e 3 produzem exatamente esse erro.
+
+### Pergunta para o Lucas
+
+Como o agente deve tratar conversa SEM responsável e com `bot_silenced_until > now()`?
+
+- **A. Recusar sempre que houver silêncio vigente, venha de quem vier.** Mesmo código de recusa (`conversa_com_humano`). É a única opção segura sem mexer em schema: um termo a mais na `fn_service_status` (`c.bot_silenced_until > now()`) e no caminho rápido do módulo. Custo: o agente também deixa de fechar a conversa que o próprio bot escalou e ninguém pegou (a fila, `pending`). Ele volta a poder fechar quando alguém devolver a conversa ao automático ou quando o prazo do silêncio vencer. Pergunta embutida: o agente DEVE poder fechar uma conversa que está na fila esperando uma pessoa? Se a resposta for não, a opção A resolve tudo e ainda corrige isso.
+- **B. Coluna nova que diz quem causou o silêncio** (por exemplo `bot_silenced_by`, com CHECK `'pessoa' | 'bot'`), gravada pelos escritores das linhas 1 a 10, e a regra lendo essa coluna. É o que o pedido descreve, feito do jeito seguro. Custo: migration (9825), mexer em cerca de 9 pontos de escrita (2 deles em SQL do upstream), e as conversas já silenciadas no dia do deploy ficam sem marca (teriam de cair na opção A até o silêncio delas acabar).
+- **C. Deixar como está.** O agente segue fechando conversa silenciada sem responsável. Fica escrito como limite conhecido.
+
+Minha recomendação: A agora (pequena, segura, mesma migration de função), e B só se aparecer um caso real em que o agente precise fechar a fila que o bot escalou.
+
+### O que não foi feito nesta lacuna
+
+- Nenhum código e nenhum teste: a instrução era não implementar sem distinção segura. A tabela acima saiu de leitura, não de execução.
+- Não li `workers/voice-agent` nem os adapters de canal fora de `lib/waha` (só os greps os alcançaram). Se outro canal chamar `pausarIaPorAtendimentoManual` com um `motivo` próprio, ele entra na classe da linha 8.
+- Não verifiquei se o agente nativo chega a ter turno em conversa silenciada (o levantamento de 24/11 também não).
