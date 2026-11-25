@@ -1463,10 +1463,17 @@ jobs:
       # a lista de contatos a 390px, com toque emulado e login `agent`. Semeia
       # dois contatos pelo service role e os apaga no fim; não depende de WAHA
       # nem de vizinha. PREVISÃO, não medida: ~1 min de caso.
+      # `assistente-painel-pela-tela` entrou em 2026-11-25 (Tarefa 7): o assistente
+      # desligado sem botão, ligado abrindo pelo botão e pelo Ctrl+J, chave colada
+      # recusada e a chave por empresa. Não depende de WAHA nem de modelo de IA
+      # (mede justamente a instalação SEM chave). Liga `VIX_PAGADOR` em
+      # `platform_config` durante a spec e o remove no fim. PREVISÃO, não medida:
+      # ~1 min de caso.
       SPECS_PARTE_6: >-
         agenda-google-meet.spec.ts
         agenda-presenca-recuperacao.spec.ts
         app-no-celular.spec.ts
+        assistente-painel-pela-tela.spec.ts
         cobranca-desligada.spec.ts
         cobranca-link-pelo-dono.spec.ts
         cobranca-suspensao-e-limites.spec.ts
