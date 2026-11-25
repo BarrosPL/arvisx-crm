@@ -77,6 +77,8 @@ import {
   RETENCAO_FILA_DIAS_PADRAO,
   RETENCAO_FILA_DIAS_PISO,
   RETENCAO_MIDIA_DIAS_PISO,
+  RETENCAO_HISTORICO_DO_ASSISTENTE_DIAS_PADRAO,
+  RETENCAO_HISTORICO_DO_ASSISTENTE_DIAS_PISO,
   RETENCAO_OBSERVACOES_DO_JEV_DIAS_PADRAO,
   RETENCAO_OBSERVACOES_DO_JEV_DIAS_PISO,
   RETENCAO_PASSAGEM_DIAS_PADRAO,
@@ -147,6 +149,10 @@ export interface ResultadoDaRetencao {
   prospeccao_tem_resto: boolean;
   /** A observação do Jev vencida — rótulos, sem texto de cliente (migration 0421). */
   observacoes_do_jev_apagadas: number;
+  /** O histórico do assistente (Vix) vencido: mensagens, cartões, conversas vazias e chamados resolvidos (migration 9831). */
+  historico_do_assistente_apagado: number;
+  lotes_historico_do_assistente: number;
+  historico_do_assistente_tem_resto: boolean;
   lotes_observacoes_do_jev: number;
   observacoes_do_jev_tem_resto: boolean;
   /** O rascunho sugerido por integração já vencido (migration 0419, issue #1686). */
@@ -220,6 +226,7 @@ export interface ResultadoDaRetencao {
   retencao_aviso_de_caso_dias: number;
   retencao_prospeccao_dias: number;
   retencao_observacoes_do_jev_dias: number;
+  retencao_historico_do_assistente_dias: number;
   retencao_candidatos_do_golden_dias: number;
   /** Avisos de configuração — nunca ausentes em silêncio quando existem. */
   avisos: string[];
@@ -249,6 +256,7 @@ export interface PodaDb {
       | "fn_expurgar_avisos_de_agendamento_vencidos"
       | "fn_expurgar_prospeccao_vencida"
       | "fn_expurgar_observacoes_do_jev"
+      | "fn_expurgar_historico_do_assistente"
       | "fn_expurgar_candidatos_do_golden"
       | "fn_expurgar_telemetria_de_ia_vencida"
       | "fn_expurgar_ritmo_de_envio_vencido"
@@ -318,6 +326,7 @@ async function drenar(
     | "fn_expurgar_avisos_de_agendamento_vencidos"
     | "fn_expurgar_prospeccao_vencida"
     | "fn_expurgar_observacoes_do_jev"
+    | "fn_expurgar_historico_do_assistente"
     | "fn_expurgar_candidatos_do_golden"
     | "fn_expurgar_telemetria_de_ia_vencida"
     | "fn_expurgar_ritmo_de_envio_vencido"
@@ -498,6 +507,7 @@ export async function podarHistorico(
     CASE_ALERT_RETENTION_DAYS?: string;
     PROSPECCAO_RETENTION_DAYS?: string;
     JEV_OBSERVACOES_RETENTION_DAYS?: string;
+    ASSISTENTE_HISTORICO_RETENTION_DAYS?: string;
     DRAFT_RETENTION_DAYS?: string;
     GOLDEN_CANDIDATES_RETENTION_DAYS?: string;
     AI_TELEMETRY_RETENTION_DAYS?: string;
@@ -547,6 +557,11 @@ export async function podarHistorico(
     piso: RETENCAO_PROSPECCAO_DIAS_PISO,
   });
 
+  const historicoDoAssistente = interpretarRetencao(ambiente.ASSISTENTE_HISTORICO_RETENTION_DAYS, {
+    chave: "ASSISTENTE_HISTORICO_RETENTION_DAYS",
+    padrao: RETENCAO_HISTORICO_DO_ASSISTENTE_DIAS_PADRAO,
+    piso: RETENCAO_HISTORICO_DO_ASSISTENTE_DIAS_PISO,
+  });
   const observacoesDoJev = interpretarRetencao(ambiente.JEV_OBSERVACOES_RETENTION_DAYS, {
     chave: "JEV_OBSERVACOES_RETENTION_DAYS",
     padrao: RETENCAO_OBSERVACOES_DO_JEV_DIAS_PADRAO,
@@ -633,6 +648,9 @@ export async function podarHistorico(
   // Nona poda: as observações do Jev (0421). Padrão 90 / piso 30, a janela da
   // concordância que o cartão mostra — o piso mora no CORPO da função.
   const observacoesDrenadas = await executarDreno(falhas, "fn_expurgar_observacoes_do_jev", () => drenar(db, "fn_expurgar_observacoes_do_jev", observacoesDoJev.dias), zerado);
+  // O histórico do assistente dentro do CRM (migration 9831): texto de conversa
+  // que pode citar contato, guardado por 30 dias.
+  const historicoDoAssistenteDrenado = await executarDreno(falhas, "fn_expurgar_historico_do_assistente", () => drenar(db, "fn_expurgar_historico_do_assistente", historicoDoAssistente.dias), zerado);
   // Décima poda: o rascunho sugerido por integração já VENCIDO (migration 0419,
   // issue #1686). A única que não passa pelo `rpc` — a tabela 0419 não tem
   // função de expurgo, e o corte (`expires_at` + prazo) nasce em TypeScript,
@@ -678,6 +696,9 @@ export async function podarHistorico(
     avisos_de_agendamento_apagados: avisosDeAgendamento.apagadas,
     prospeccao_apagada: prospeccaoDrenada.apagadas,
     observacoes_do_jev_apagadas: observacoesDrenadas.apagadas,
+    historico_do_assistente_apagado: historicoDoAssistenteDrenado.apagadas,
+    lotes_historico_do_assistente: historicoDoAssistenteDrenado.lotes,
+    historico_do_assistente_tem_resto: historicoDoAssistenteDrenado.temResto,
     candidatos_do_golden_apagados: candidatosDrenados.apagadas,
     lotes_fila: jobs.lotes,
     lotes_auditoria: linhas.lotes,
@@ -734,6 +755,7 @@ export async function podarHistorico(
     retencao_aviso_de_caso_dias: avisoDeCaso.dias,
     retencao_prospeccao_dias: prospeccao.dias,
     retencao_observacoes_do_jev_dias: observacoesDoJev.dias,
+    retencao_historico_do_assistente_dias: historicoDoAssistente.dias,
     retencao_rascunho_dias: rascunho.dias,
     retencao_candidatos_do_golden_dias: candidatosDoGolden.dias,
     retencao_midia_dias: RETENCAO_MIDIA_DIAS_PISO,
@@ -746,6 +768,7 @@ export async function podarHistorico(
       avisoDeCaso.aviso,
       prospeccao.aviso,
       observacoesDoJev.aviso,
+      historicoDoAssistente.aviso,
       rascunho.aviso,
       candidatosDoGolden.aviso,
       telemetriaDeIa.aviso,
@@ -796,6 +819,7 @@ export function houveEfeito(resultado: ResultadoDaRetencao): boolean {
     // A nona, pela mesma razão: poda que apagou sem deixar trilha é
     // encolhimento silencioso.
     resultado.observacoes_do_jev_apagadas > 0 ||
+    resultado.historico_do_assistente_apagado > 0 ||
     // A décima, pela mesma razão das nove anteriores: uma rodada que só apagou
     // rascunho vencido apagaria linhas e não deixaria registro. E esta é a
     // única que apaga TEXTO escrito para uma pessoa — silenciar aqui seria
@@ -882,6 +906,7 @@ async function handle(req: NextRequest): Promise<Response> {
       CASE_ALERT_RETENTION_DAYS: env.CASE_ALERT_RETENTION_DAYS,
       PROSPECCAO_RETENTION_DAYS: env.PROSPECCAO_RETENTION_DAYS,
       JEV_OBSERVACOES_RETENTION_DAYS: env.JEV_OBSERVACOES_RETENTION_DAYS,
+      ASSISTENTE_HISTORICO_RETENTION_DAYS: env.ASSISTENTE_HISTORICO_RETENTION_DAYS,
       DRAFT_RETENTION_DAYS: env.DRAFT_RETENTION_DAYS,
       GOLDEN_CANDIDATES_RETENTION_DAYS: env.GOLDEN_CANDIDATES_RETENTION_DAYS,
       AI_TELEMETRY_RETENTION_DAYS: env.AI_TELEMETRY_RETENTION_DAYS,

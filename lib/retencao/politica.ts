@@ -212,6 +212,22 @@ export const RETENCAO_OBSERVACOES_DO_JEV_DIAS_PADRAO = 90;
 export const RETENCAO_OBSERVACOES_DO_JEV_DIAS_PISO = 30;
 
 /**
+ * 30 dias para o HISTÓRICO DO ASSISTENTE dentro do CRM (tabelas `assistente_*`,
+ * migration 9831): mensagens, cartões de ação, conversas que ficaram vazias e
+ * chamados já resolvidos.
+ *
+ * O texto é livre e pode citar nome ou assunto de contato; o histórico só
+ * existe para a pessoa retomar uma conversa recente. `assistente_usos` não
+ * entra: não guarda texto e é a conta do limite do mês.
+ *
+ * Quem aplica é `fn_expurgar_historico_do_assistente` (9831), em lotes pelo
+ * cron `data-retention`, com o piso no CORPO da função, como as irmãs.
+ */
+export const RETENCAO_HISTORICO_DO_ASSISTENTE_DIAS_PADRAO = 30;
+/** Piso de 7 dias: abaixo disso a conversa da semana some antes de a pessoa voltar a ela. */
+export const RETENCAO_HISTORICO_DO_ASSISTENTE_DIAS_PISO = 7;
+
+/**
  * 30 dias para o RASCUNHO SUGERIDO POR INTEGRAÇÃO já vencido
  * (`conversation_drafts`, migration 0419 / issue #1611; expurgo pedido na #1686).
  *

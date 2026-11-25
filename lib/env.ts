@@ -564,6 +564,12 @@ const schema = z.object({
    */
   JEV_OBSERVACOES_RETENTION_DAYS: z.string().optional().default(""),
   /**
+   * Idade, em dias, a partir da qual o histórico do assistente dentro do CRM
+   * (mensagens, cartões, chamados resolvidos) é apagado. Texto cru como as
+   * irmãs acima; quem interpreta é `lib/retencao/politica.ts`. Padrão 30, piso 7.
+   */
+  ASSISTENTE_HISTORICO_RETENTION_DAYS: z.string().optional().default(""),
+  /**
    * Rascunho sugerido por integração JÁ VENCIDO (`conversation_drafts`,
    * migration 0419, issue #1686). `z.string()` pela MESMA razão das irmãs
    * acima — quem interpreta é `lib/retencao/politica.ts`, onde lixo resolve

@@ -2548,9 +2548,13 @@ export type Database = {
           estado: string;
           id: string;
           organization_id: string;
+          resolvido_em: string | null;
+          resolvido_por: string | null;
           resumo: string;
           updated_at: string;
           user_id: string | null;
+          visto_em: string | null;
+          visto_por: string | null;
         };
         ComputedFields: never;
         Insert: {
@@ -2560,9 +2564,13 @@ export type Database = {
           estado?: string;
           id?: string;
           organization_id: string;
+          resolvido_em?: string | null;
+          resolvido_por?: string | null;
           resumo: string;
           updated_at?: string;
           user_id?: string | null;
+          visto_em?: string | null;
+          visto_por?: string | null;
         };
         Update: {
           conversa_id?: string | null;
@@ -2571,9 +2579,13 @@ export type Database = {
           estado?: string;
           id?: string;
           organization_id?: string;
+          resolvido_em?: string | null;
+          resolvido_por?: string | null;
           resumo?: string;
           updated_at?: string;
           user_id?: string | null;
+          visto_em?: string | null;
+          visto_por?: string | null;
         };
         Relationships: [
           {
@@ -16291,6 +16303,10 @@ export type Database = {
         Returns: number;
       };
       fn_expurgar_nonces_de_oauth: {
+        Args: { p_limite?: number; p_retencao_dias?: number };
+        Returns: number;
+      };
+      fn_expurgar_historico_do_assistente: {
         Args: { p_limite?: number; p_retencao_dias?: number };
         Returns: number;
       };

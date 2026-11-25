@@ -22,6 +22,8 @@ import {
   RETENCAO_PASSAGEM_DIAS_PADRAO,
   RETENCAO_FILA_DIAS_PISO,
   RETENCAO_MIDIA_DIAS_PISO,
+  RETENCAO_HISTORICO_DO_ASSISTENTE_DIAS_PADRAO,
+  RETENCAO_HISTORICO_DO_ASSISTENTE_DIAS_PISO,
   RETENCAO_OBSERVACOES_DO_JEV_DIAS_PADRAO,
   RETENCAO_OBSERVACOES_DO_JEV_DIAS_PISO,
   RETENCAO_PROSPECCAO_DIAS_PADRAO,
@@ -342,6 +344,21 @@ describe("podarHistorico — o laço de lotes", () => {
     expect(r.avisos).toEqual([expect.stringContaining("JEV_OBSERVACOES_RETENTION_DAYS")]);
   });
 
+  it("o histórico do assistente: 30 dias por padrão, e o knob abaixo do piso sobe para 7 com aviso", async () => {
+    const semKnob = bancoQueDevolve({ fila: [0], auditoria: [0] });
+    await podarHistorico(semKnob.db, {});
+    expect(semKnob.chamadas.find((c) => c.nome === "fn_expurgar_historico_do_assistente")?.dias).toBe(
+      RETENCAO_HISTORICO_DO_ASSISTENTE_DIAS_PADRAO,
+    );
+    const { db, chamadas } = bancoQueDevolve({ fila: [0], auditoria: [0] });
+    const r = await podarHistorico(db, { ASSISTENTE_HISTORICO_RETENTION_DAYS: "1" });
+    expect(chamadas.find((c) => c.nome === "fn_expurgar_historico_do_assistente")?.dias).toBe(
+      RETENCAO_HISTORICO_DO_ASSISTENTE_DIAS_PISO,
+    );
+    expect(r.retencao_historico_do_assistente_dias).toBe(RETENCAO_HISTORICO_DO_ASSISTENTE_DIAS_PISO);
+    expect(r.avisos).toEqual([expect.stringContaining("ASSISTENTE_HISTORICO_RETENTION_DAYS")]);
+  });
+
   it("um dreno que falha é NOMEADO e as irmãs seguem — a rodada não é tudo-ou-nada (#2508)", async () => {
     // Antes, o primeiro erro abortava a rodada: as podas seguintes não rodavam,
     // a retomada de anonimização era pulada e o que já tinha sido apagado sumia
@@ -375,9 +392,10 @@ describe("podarHistorico — o laço de lotes", () => {
     };
     const r = await podarHistorico(db, {});
 
-    // 18 drenos: 16 pelo rpc (o 15º é o aviso de agendamento, 0753; o 16º é o
-    // traço do turno, 0778) + a mídia + a décima poda (o DELETE do admin).
-    expect(r.falhas).toHaveLength(18);
+    // 19 drenos: 17 pelo rpc (o 15º é o aviso de agendamento, 0753; o 16º é o
+    // traço do turno, 0778; o 17º é o histórico do assistente, 9831) + a mídia
+    // + a décima poda (o DELETE do admin).
+    expect(r.falhas).toHaveLength(19);
     expect(r.falhas.some((f) => f.includes("conversation_drafts"))).toBe(true);
     expect(r.falhas.some((f) => f.includes("fn_enfileirar_midia_vencida"))).toBe(true);
     expect(r.jobs_apagados).toBe(0);
@@ -431,8 +449,8 @@ describe("podarHistorico — o laço de lotes", () => {
     };
     const r = await podarHistorico(db, {});
 
-    // Só os 16 drenos do rpc falham nesta rodada (mídia e rascunhos vão bem).
-    expect(r.falhas).toHaveLength(16);
+    // Só os 17 drenos do rpc falham nesta rodada (mídia e rascunhos vão bem).
+    expect(r.falhas).toHaveLength(17);
     for (const f of r.falhas) expect(f.length).toBeLessThanOrEqual(300);
   });
 });
@@ -589,6 +607,11 @@ describe("houveEfeito — as duas direções", () => {
     lotes_observacoes_do_jev: 0,
     observacoes_do_jev_tem_resto: false,
     retencao_observacoes_do_jev_dias: RETENCAO_OBSERVACOES_DO_JEV_DIAS_PADRAO,
+    // O histórico do assistente dentro do CRM (migration 9831).
+    historico_do_assistente_apagado: 0,
+    lotes_historico_do_assistente: 0,
+    historico_do_assistente_tem_resto: false,
+    retencao_historico_do_assistente_dias: RETENCAO_HISTORICO_DO_ASSISTENTE_DIAS_PADRAO,
     // Décima poda (issue #1686): o rascunho sugerido por integração vencido.
     rascunhos_apagados: 0,
     lotes_rascunhos: 0,
@@ -654,6 +677,7 @@ describe("houveEfeito — as duas direções", () => {
 
   it("...e apagou observação do Jev vencida → TAMBÉM audita (0421)", () => {
     expect(houveEfeito({ ...base, observacoes_do_jev_apagadas: 1 })).toBe(true);
+    expect(houveEfeito({ ...base, historico_do_assistente_apagado: 1 })).toBe(true);
   });
 
   it("...e apagou rascunho vencido → TAMBÉM audita (issue #1686)", () => {
