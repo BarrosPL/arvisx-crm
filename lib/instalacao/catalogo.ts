@@ -332,6 +332,40 @@ export const CATALOGO_DA_INSTALACAO: readonly ChaveDaInstalacao[] = [
       "É uma chave de assinatura, não uma configuração: trocá-la invalida a conferência dos documentos já assinados. Fica no arquivo de instalação.",
   },
 
+  // ── O assistente dentro do CRM (Tarefa 7) ──
+  //
+  // Três chaves, e a primeira é a que liga, desliga e escolhe quem paga. Quem as
+  // lê é `lib/assistente/provedor/`. Nenhuma é segredo: a conta e a chave de IA
+  // moram onde sempre moraram (a credencial da organização designada e a chave
+  // de plataforma do servidor).
+  {
+    chave: "VIX_PAGADOR",
+    rotulo: "Assistente dentro do CRM: ligado e quem paga",
+    explicacao:
+      "Liga o assistente e escolhe por onde ele chama a IA. Valores: desligado (o padrão), assinatura_plataforma (a assinatura conectada na organização designada) ou chave_plataforma (a chave de IA do servidor). Vazio ou qualquer outro valor vale desligado.",
+    grupo: "ia",
+    natureza: "texto",
+    controle: "edita",
+  },
+  {
+    chave: "VIX_ORGANIZACAO_DA_CONTA",
+    rotulo: "Assistente: organização dona da assinatura",
+    explicacao:
+      "O identificador da organização em que a assinatura do assistente foi conectada, em IA › Credenciais. Só vale com o pagador assinatura_plataforma. Use uma organização só para isso, sem agentes.",
+    grupo: "ia",
+    natureza: "texto",
+    controle: "edita",
+  },
+  {
+    chave: "VIX_MODELO",
+    rotulo: "Assistente: modelo da assinatura",
+    explicacao:
+      "O modelo que o assistente usa na assinatura, escolhido entre os que a conta da organização designada lista. Vazio, o assistente fica indisponível nesse pagador.",
+    grupo: "ia",
+    natureza: "texto",
+    controle: "edita",
+  },
+
   // ── DIAGNÓSTICO: lida no boot de outro processo ───────────────────────────
   {
     chave: "AGENT_DISPATCH_CONSUMER",

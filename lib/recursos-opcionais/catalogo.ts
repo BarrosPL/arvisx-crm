@@ -162,6 +162,10 @@ const TEXTO_DO_MODULO: Record<ModuloOpcional, { nome: string; oQueFaz: string }>
     nome: "Cold Call (fila de ligações)",
     oQueFaz: "Uma fila para ligar para uma lista de leads, um por vez, com roteiro e o resultado de cada ligação movendo o lead no funil.",
   },
+  assistente_escritas: {
+    nome: "Ações do assistente",
+    oQueFaz: "O assistente pode propor ações em cartões, e cada uma só acontece quando a pessoa confirma.",
+  },
 };
 
 /**

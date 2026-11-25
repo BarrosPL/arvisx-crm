@@ -360,6 +360,14 @@ export const MODULOS_NA_TELA: ReadonlyArray<{
     descricao:
       "Ligado, cada empresa ganha no CRM a tela Cold Call: um funil próprio, a importação da lista e a ligação para um lead por vez, pelo canal de voz quando ele está pareado ou pelo discador do aparelho. Quem pediu para não ser incomodado, contato pessoal e contato anonimizado não recebem ligação. Desligado, a tela e o menu somem.",
   },
+  {
+    modulo: "assistente_escritas",
+    id: "modulo-assistente-escritas",
+    rotulo: "Ações do assistente",
+    descricao:
+      "Ligado, o assistente dentro do CRM pode propor ações em cartões, como adicionar uma etiqueta ou criar uma tarefa, e cada uma só acontece quando a pessoa confirma. Desligado, o assistente só consulta e orienta. Só tem efeito com o assistente ligado em Configuração.",
+    foraDoMenu: "Não cria porta no menu do CRM: os cartões aparecem dentro da conversa com o assistente.",
+  },
 ];
 
 /**

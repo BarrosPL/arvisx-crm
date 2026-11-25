@@ -749,6 +749,25 @@ export const PONTOS_DE_IA: readonly PontoDeIa[] = [
       "O sistema erra a hora de resumir a conversa: resume cedo demais e perde contexto, ou tarde demais e a resposta é recusada.",
     registraEm: "nenhum",
   },
+  {
+    id: "assistente_vix",
+    rotulo: "Assistente dentro do CRM",
+    oQueFaz:
+      "Conversa com quem usa o CRM: tira dúvidas de uso, consulta os dados da própria empresa e ajuda a encontrar a tela certa.",
+    papel: "melhorar",
+    exige: { tools: true },
+    emissor: "lib/assistente/custo.ts",
+    fixo: {
+      razao:
+        "O assistente usa a IA da plataforma, com um limite de mensagens próprio por plano. Ele não usa a chave da sua empresa nem gasta o orçamento de IA dos seus agentes, então não há o que escolher aqui.",
+    },
+    sintomaDeFalha:
+      "O assistente avisa que está indisponível no momento; o CRM e os agentes de atendimento seguem funcionando normalmente.",
+    // O uso do assistente é gravado em tabela própria (`assistente_usos`)
+    // enquanto a linha em `llm_calls` espera a coluna de origem da chave: ver
+    // o cabeçalho de `lib/assistente/custo.ts`. Vira "llm_calls" na troca.
+    registraEm: "nenhum",
+  },
 ] as const;
 
 /** Índice por id, para quem resolve um binding. */
