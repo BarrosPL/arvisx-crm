@@ -82,7 +82,7 @@ A 9824 (Tarefa 6.1) não depende de nenhuma das doze e nenhuma depende dela. Ela
 - Dois comentários de coluna e `notify pgrst`.
 - **Só aditiva: sim.** Os CHECKs só olham as colunas novas e aceitam nulo.
 - **Voltar só a imagem:** nada acontece. O app antigo não grava essas colunas (a tabela da main, baseline linha 18481, não as tem).
-- **Lock:** `ADD COLUMN` sem default não reescreve a tabela. `ADD CONSTRAINT CHECK` valida a tabela inteira sob `ACCESS EXCLUSIVE`. O tamanho de `crm_tasks` em produção, não verifiquei.
+- **Lock:** `ADD COLUMN` sem default não reescreve a tabela. `ADD CONSTRAINT CHECK` valida a tabela inteira sob `ACCESS EXCLUSIVE`. `crm_tasks` tinha 0 linhas em produção em 24/11/2026 (medido pelo Hermes, por leitura): a validação é desprezível.
 - **Dependência:** nenhuma. A 9817 depende dela.
 
 ### 9810 `20261120150000_9810_comentarios_do_instagram.sql` (PR #12)
@@ -143,7 +143,7 @@ A 9824 (Tarefa 6.1) não depende de nenhuma das doze e nenhuma depende dela. Ela
 - O `revoke` da linha 117 repete o da main (linha 40561). O trigger `trg_crm_proposals_transicao_da_sessao` não é recriado.
 - **Só aditiva: não** (função substituída), mas sem mudança visível para o app antigo.
 - **Voltar só a imagem:** nada quebra. Aprovações já gravadas ficam no banco e o app antigo as ignora.
-- **Lock:** `ADD COLUMN` curto em `crm_proposals`; o CHECK valida a tabela inteira sob `ACCESS EXCLUSIVE`. Tamanho da tabela em produção, não verifiquei.
+- **Lock:** `ADD COLUMN` curto em `crm_proposals`; o CHECK valida a tabela inteira sob `ACCESS EXCLUSIVE`. `crm_proposals` tinha 0 linhas em produção em 24/11/2026 (medido pelo Hermes, por leitura): a validação é desprezível.
 - **Dependência:** nenhuma. A 9815 depende dela.
 
 ### 9815 `20261123100015_9815_editar_o_rascunho_invalida_a_aprovacao.sql` (PR #22) **NÃO reversível só com a imagem**
@@ -178,7 +178,7 @@ A 9824 (Tarefa 6.1) não depende de nenhuma das doze e nenhuma depende dela. Ela
 - **Só aditiva: não.** Há backfill e restrição de unicidade.
 - **Na primeira aplicação em produção o UPDATE não deve achar linha:** a coluna `kind` nasce na 9809, no mesmo deploy, toda nula. Isso deixa de valer se a 9809 subir antes, em outro deploy, com o app novo criando tarefas.
 - **Voltar só a imagem:** nada acontece. O app antigo não grava `kind` (0 ocorrências de `dar_seguimento` em `lib` e `app` da main), então o índice nunca o recusa.
-- **Lock:** `CREATE UNIQUE INDEX` sem CONCURRENTLY segura as escritas em `crm_tasks` enquanto varre a tabela. CONCURRENTLY não cabe no `psql -1`. Tamanho da tabela em produção, não verifiquei.
+- **Lock:** `CREATE UNIQUE INDEX` sem CONCURRENTLY segura as escritas em `crm_tasks` enquanto varre a tabela. CONCURRENTLY não cabe no `psql -1`. Tamanho real: `crm_tasks` tinha 0 linhas em produção em 24/11/2026 (medido pelo Hermes, por leitura). A varredura do índice é desprezível. O risco de lock só existe se esse número mudar muito antes do deploy.
 - **Dependência:** 9809, obrigatória.
 
 ### 9818 `20261123121800_9818_nota_do_negocio_uma_por_chave.sql` (PR #13)
@@ -189,7 +189,7 @@ A 9824 (Tarefa 6.1) não depende de nenhuma das doze e nenhuma depende dela. Ela
 - **Só aditiva: não.** Há backfill e restrição de unicidade.
 - **Na primeira aplicação em produção o UPDATE não deve achar linha:** não achei na main quem grave `source_module = 'notas'` (grep em `lib` e `app`). Não é prova completa.
 - **Voltar só a imagem:** nada acontece, pelo mesmo motivo.
-- **Lock: o mais pesado do lote.** `CREATE UNIQUE INDEX` sem CONCURRENTLY segura INSERT, UPDATE e DELETE em `crm_lead_activities` (a linha do tempo de todos os negócios) durante a varredura inteira. O UPDATE anterior também varre a tabela. Tamanho em produção, não verifiquei. Meça antes: `select pg_size_pretty(pg_total_relation_size('public.crm_lead_activities')), (select count(*) from public.crm_lead_activities);`
+- **Lock: o mais pesado do lote.** `CREATE UNIQUE INDEX` sem CONCURRENTLY segura INSERT, UPDATE e DELETE em `crm_lead_activities` (a linha do tempo de todos os negócios) durante a varredura inteira. O UPDATE anterior também varre a tabela. Tamanho real: `crm_lead_activities` tinha 3.484 linhas em produção em 24/11/2026 (medido pelo Hermes, por leitura). Com esse tamanho a varredura é desprezível. O risco de lock só existe se esse número mudar muito antes do deploy. Para conferir de novo na hora: `select pg_size_pretty(pg_total_relation_size('public.crm_lead_activities')), (select count(*) from public.crm_lead_activities);`
 - **Dependência:** nenhuma.
 
 ### 9819 `20261123101900_9819_comentarios_leitura_so_de_gerente.sql` (PR #12)
@@ -507,7 +507,7 @@ Elas não precisam de reversão para o app antigo funcionar. Apagar `social_comm
 ## Riscos principais, em ordem
 
 1. **9815 com a imagem antiga:** o segundo salvar de uma proposta dá 409 até recarregar. Voltar a imagem exige a reversão da 9815.
-2. **9818 e 9817:** índice único sem CONCURRENTLY, dentro de uma transação, com escritas paradas em `crm_lead_activities` e `crm_tasks` durante a varredura. Meça as tabelas e suba fora do horário de pico.
+2. **9818 e 9817:** índice único sem CONCURRENTLY, dentro de uma transação, com escritas paradas em `crm_lead_activities` e `crm_tasks` durante a varredura. Tamanho medido pelo Hermes em 24/11/2026, por leitura na produção: `crm_tasks` 0 linhas, `crm_proposals` 0, `crm_lead_activities` 3.484. Com esses números a varredura dos dois índices únicos (9817 e 9818) é desprezível. O risco de lock existe só se esses números mudarem muito antes do deploy; nesse caso meça de novo e suba fora do horário de pico.
 3. **`init.sh` não derruba o deploy** em falha de migration ou de backup. O app novo pode subir em schema parcial. Leia o log do `init` ("FALHOU:" ou "backup falhou").
 4. **A lista final não existe em ponta nenhuma.** Os merges vão conflitar em `migracoes-pos-baseline.txt` e em `baseline.sql`. Confira a ordem obrigatória acima no resultado.
 5. **Timestamp repetido** entre 9810 e 9811 (`20261120150000`).
@@ -515,7 +515,7 @@ Elas não precisam de reversão para o app antigo funcionar. Apagar `social_comm
 
 ## O que não verifiquei
 
-- Tamanho de `crm_tasks`, `crm_proposals` e `crm_lead_activities` em produção, e portanto a duração real dos locks.
+- A duração real dos locks. O tamanho das tabelas foi medido depois, pelo Hermes, em 24/11/2026, por leitura na produção (`crm_tasks` 0 linhas, `crm_proposals` 0, `crm_lead_activities` 3.484); a duração não foi cronometrada.
 - Qualquer execução: as migrations, as reversões e a dedução do 409 da 9815.
 - Se o `ci.yml` chama o checador de colisão.
 - Se o app antigo apaga `channel_sessions` com DELETE.
@@ -525,7 +525,7 @@ Elas não precisam de reversão para o app antigo funcionar. Apagar `social_comm
 
 ## 6.3 Roteiro de teste de fumaça pós-deploy
 
-Para quem acabou de subir a imagem nova em produção. Tudo abaixo foi LIDO no código das pontas dos PRs #12 a #24 (`git show <ponta>:<arquivo>`), em 24/11/2026. Nada foi executado. Onde o código não confirmou um detalhe, está escrito "(a confirmar)".
+Para quem acabou de subir a imagem nova em produção. Tudo abaixo foi LIDO no código das pontas dos PRs #12 a #24 (`git show <ponta>:<arquivo>`), em 24/11/2026. Nada foi executado. Em 25/11/2026 os pontos em aberto foram relidos no worktree de integração (citações `integ`). O que só a produção responde está marcado "só em produção" (1 ponto: a assinatura do campo de comentários no painel da Meta, passo 9). Onde o código não confirmava um detalhe, estava escrito "(a confirmar)". Eram 12 pontos; os 12 foram fechados com arquivo e linha, e o que apareceu no meio do caminho (passo 8d, se o "Assumir" preenche `last_handoff_at`) também. Não sobrou nenhum: um grep por essa expressão acha só esta linha.
 
 Abreviações das pontas usadas nas citações:
 
@@ -534,6 +534,7 @@ Abreviações das pontas usadas nas citações:
 - `ep-b` = `origin/equipe-pronta-v2/pr-b-gatilhos` (#24, carrega #13, #15, #22).
 - `ig-c` = `origin/instagram-comentarios/pr-c-tela` (#18, carrega #12 e #16).
 - `pr-3` = `origin/superficie-agente/pr-3-convivencia-e-filtro` (#20, carrega #13 e #15).
+- `integ` = o worktree de integração, branch `tarefa-6.1/agente-nao-fecha-conversa-assumida`, lido em 25/11/2026. As citações marcadas `integ` fecharam os pontos que estavam em aberto; os números de linha são desse worktree.
 
 ### Preparação (uma vez)
 
@@ -541,7 +542,7 @@ Abreviações das pontas usadas nas citações:
 - `$BASE` é o endereço do CRM (`https://crm.arvisx.com.br`).
 - `$TOKEN` é um token de API `dsk_...` (tabela `api_tokens`) com os escopos `mcp:read` e `mcp:write`. Sem escopo `role:`, ele vale como papel `agent` (`lib/mcp/auth.ts`, linhas 10 a 14, ponta `aj-4`).
 - `$TOKEN_GERENTE` é um segundo token com `mcp:read`, `mcp:write` e `role:manager`. Só os comentários do Instagram o exigem (`app/api/v1/social-comments/_borda.ts`, linhas 44 e 74 a 80, ponta `ig-c`).
-- O caminho de cliques para criar o token na tela: (a confirmar).
+- O caminho de cliques para criar o token na tela: entre como administrador, abra "API Tokens" em `/app/settings/api-tokens` (`lib/navigation/catalogo.ts`, linhas 1169 a 1175, `minRole: "admin"`, `integ`) e clique em "Criar token" (`app/app/settings/api-tokens/_components/ApiTokensClient.tsx`, linha 136, `integ`). No diálogo "Criar novo token" (linha 210), dê um nome e marque os escopos `mcp:read` e `mcp:write`; para o `$TOKEN_GERENTE`, marque também `role:manager` (linhas 44 a 51). O valor `dsk_...` aparece uma vez só: copie na hora.
 - O MCP mora em `POST $BASE/api/mcp` (`app/api/mcp/route.ts`, linhas 42 a 85). O caminho passa pelo proxy sem sessão (`lib/auth/public-paths.ts`, linha 104) e a rota confere o bearer. O transporte é sem sessão (linha 62), exige `Accept` com `application/json` e `text/event-stream` (SDK 1.32.2, `webStandardStreamableHttp.js`, linhas 467 a 472) e responde em SSE, com o JSON na linha `data:`.
 - Função de apoio para os passos por MCP (bash):
 
@@ -556,7 +557,7 @@ mcp() { # mcp '<corpo JSON-RPC>' [idempotency-key]
 }
 ```
 
-- Se o servidor recusar `tools/list` ou `tools/call` sem um `initialize` antes: (a confirmar; o transporte aceita, linha 738 do mesmo arquivo do SDK, mas a camada do servidor MCP não foi lida). Nesse caso mande primeiro `{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"fumaca","version":"1"}}}`.
+- Não é preciso `initialize` antes de `tools/list` ou `tools/call`. A rota cria o transporte sem gerador de sessão (`app/api/mcp/route.ts`, linha 62, `integ`). Sem ele, o SDK não valida sessão nem exige inicialização (SDK 1.32.2, `server/webStandardStreamableHttp.js`, linhas 737 a 742). O protocolo entrega o pedido ao handler do método sem conferir inicialização (`shared/protocol.js`, linhas 288 e 289), e `tools/list` e `tools/call` são handlers registrados direto (`server/mcp.js`, linhas 117 e 150). É leitura de código, não foi executado. Se mesmo assim vier recusa, mande primeiro `{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"fumaca","version":"1"}}}`.
 - Toda ferramenta devolve o resultado em `.result.structuredContent` e em `.result.content[0].text` (`lib/mcp/server.ts`, linhas 136 a 139). Recusa de regra vem como resultado normal, com `permitido: false`, `motivo` e `mensagem` (`lib/mcp/negocio-do-contexto.ts`, linhas 33 a 39). Erro lançado (escopo, papel, validação) vem com `.result.isError: true` (`lib/mcp/server.ts`, linhas 153 a 156).
 
 ### Passo 0. Conferir o log do `init` e o registro das migrations
@@ -606,7 +607,7 @@ O que prova: o contêiner novo subiu, fala com o banco e o proxy de autenticaç�
 
 O que fazer: abra `$BASE/login` numa janela anônima e entre com um usuário gerente ou administrador da organização de teste.
 
-Resultado esperado: a tela sai do `/login` e abre o app em `/app/...` sem erro. A página exata de chegada: (a confirmar). No menu aparecem "Propostas" (`/app/proposals`), "Webhooks" (`/app/webhooks`) e "Audit Log" (`/app/audit`), conforme `lib/navigation/catalogo.ts` (linhas 425, 840 e 976, pontas `ep-b` e `pr-3`).
+Resultado esperado: a tela sai do `/login` e abre o app em `/app/...` sem erro. A página de chegada: o formulário manda para o `next` da URL ou, sem ele, para `/app` (`components/auth/LoginForm.tsx`, linha 40, `integ`), e `/app` redireciona para `/app/inbox` quando o Inbox está entre as telas visíveis da pessoa; senão para a primeira tela visível não essencial; senão para `/app/settings/profile` (`app/app/page.tsx`, linhas 7 a 13; `lib/navigation/interface.ts`, linhas 280 a 286, `integ`). Conta com MFA passa antes por `/login/mfa` (`LoginForm.tsx`, linha 47). No menu aparecem "Propostas" (`/app/proposals`), "Webhooks" (`/app/webhooks`) e "Audit Log" (`/app/audit`), conforme `lib/navigation/catalogo.ts` (linhas 425, 840 e 976, pontas `ep-b` e `pr-3`).
 
 O que prova: GoTrue, cookie de sessão e o carregamento da organização funcionam com a imagem nova.
 
@@ -614,15 +615,21 @@ O que prova: GoTrue, cookie de sessão e o carregamento da organização funcion
 
 Não existe `POST /api/v1/leads` com bearer: em `lib/auth/public-paths.ts` só `/api/v1/leads/<uuid>` (linha 150, atualizar) passa pelo proxy sem sessão; `/api/v1/leads` e `/api/v1/tasks` respondem `401 unauthenticated` a um token (`proxy.ts`, linhas 109 a 124). O próprio `docs/arvisx/SUPERFICIE-DE-AGENTE.md` (linhas 10 a 14, ponta `aj-4`) diz que o token entra pelo MCP. Então a criação é pela ferramenta `crm_create_lead` (`lib/mcp/tools/leads.ts`, linhas 318 a 357).
 
+O negócio de teste nasce COM contato. A criação de proposta do passo 8a recusa negócio sem contato: `422 validation_failed`, "Este negócio não tem um contato vinculado. Vincule um contato antes de criar a proposta." (`app/api/v1/proposals/route.ts`, linhas 94 a 100, `integ`). `crm_create_lead` aceita o contato no parâmetro `contact_id`, um UUID opcional (`lib/mcp/tools/leads.ts`, linha 328, `integ`). Nenhuma ferramenta do MCP cria contato do zero (a única que cria é `crm_create_contact_from_comment`), então o contato de teste precisa existir antes. A busca abaixo diz se ele existe. Se ela voltar vazia, crie pela tela: menu "Contatos" (`/app/contacts`), botão "Novo contato" (`app/app/contacts/_client.tsx`, linha 260, `integ`), com o `<número do Lucas>`.
+
 ```bash
+mcp '{"jsonrpc":"2.0","id":100,"method":"tools/call","params":{"name":"crm_search_contacts","arguments":{"query":"<número do Lucas>"}}}'
+# copie o contacts[].id do contato de teste para $CONTATO (se o número não casar, busque pelo nome)
 mcp '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"crm_list_pipelines","arguments":{}}}'
 # copie um pipelines[].id para $FUNIL
 mcp '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"crm_list_stages","arguments":{"pipeline_id":"'$FUNIL'"}}}'
-# copie o id da primeira etapa para $ETAPA
-mcp '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"crm_create_lead","arguments":{"pipeline_id":"'$FUNIL'","stage_id":"'$ETAPA'","title":"TESTE FUMACA 2026-11","source":"teste_fumaca"}}}'
+# copie etapas[0].id (a primeira etapa) para $ETAPA
+mcp '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"crm_create_lead","arguments":{"pipeline_id":"'$FUNIL'","stage_id":"'$ETAPA'","contact_id":"'$CONTATO'","title":"TESTE FUMACA 2026-11","source":"teste_fumaca"}}}'
 ```
 
-Resultado esperado: HTTP `200` nas três. A primeira traz `structuredContent.pipelines[]` com `id` e `name` (`lib/mcp/tools/pipelines.ts`, linhas 33 a 45). A terceira traz `structuredContent.lead.id` (`leads.ts`, linhas 411 e 412). Guarde em `$LEAD`. O formato exato da resposta de `crm_list_stages`: (a confirmar; a ferramenta está em `lib/mcp/tools/operacao.ts`, linha 79). Se a etapa exigir campo obrigatório, a recusa é `required_fields_missing`: escolha outra etapa.
+Resultado esperado: HTTP `200` nas quatro. A busca traz `structuredContent.contacts[]` com `id`, `name` e `phone` (`lib/mcp/tools/contacts.ts`, linhas 66 a 68 e 127 a 131, `integ`). `crm_list_pipelines` traz `structuredContent.pipelines[]` com `id` e `name` (`lib/mcp/tools/pipelines.ts`, linhas 33 a 45). `crm_list_stages` traz `structuredContent.etapas[]`, na ordem do quadro e sem as arquivadas, cada uma com `id`, `name`, `slug`, `position`, `is_won`, `is_lost`, `win_probability`, `avisar_na_central`, `expected_duration_hours`, `last_change_actor_kind` e `last_change_at` (`lib/mcp/tools/operacao.ts`, linhas 90 a 96; `lib/leads/stage-operations.ts`, linhas 124 e 131 a 148, `integ`). A criação traz `structuredContent.lead.id` (`leads.ts`, linhas 411 e 412). Guarde o id em `$LEAD`. O contato entra no negócio pelo `contact_id` do pedido (`leads.ts`, linha 397, `integ`). Se a etapa exigir campo obrigatório, a recusa é `required_fields_missing`: escolha outra etapa.
+
+Quem depende desse contato: o passo 8a (sem ele a proposta não nasce), o 8c e o 8d (a proposta copia o `contact_id` do negócio, `app/api/v1/proposals/route.ts`, linha 145, `integ`, e é por ele que o agente acha a conversa para enviar). Token de fora não cai na regra "um negócio aberto por contato" da Equipe pronta (`leads.ts`, linhas 364 a 368, `integ`), então repetir o roteiro com o mesmo contato cria outro negócio sem recusa.
 
 Sem token: `curl -sS -X POST "$BASE/api/mcp" -H 'Content-Type: application/json' -d '{}'` responde `401` com `error.code` `-32001` (`lib/mcp/auth.ts`, linha 225).
 
@@ -743,7 +750,7 @@ Se a consulta devolver a função de 4 parâmetros (a 9824 não entrou) e a imag
 
 ### Passo 8. Proposta: salvar duas vezes, consultar por agente e aprovar pela tela (PRs #15, #22, #24; migrations 9814 e 9815)
 
-8a. Criar o rascunho: menu "Propostas" (`/app/proposals`), botão "Nova proposta" (`app/app/proposals/_client.tsx`, linha 81, ponta `ep-b`), ligada ao negócio "TESTE FUMACA 2026-11", com um item e um modelo confirmado. Se a tela exige contato no negócio para criar a proposta: (a confirmar). Se exigir, use um contato de teste SEM conversa aberta.
+8a. Criar o rascunho: menu "Propostas" (`/app/proposals`), botão "Nova proposta" (`app/app/proposals/_client.tsx`, linha 81, ponta `ep-b`), ligada ao negócio "TESTE FUMACA 2026-11", com um item e um modelo confirmado. A criação exige contato no negócio: sem ele a rota responde `422 validation_failed`, "Este negócio não tem um contato vinculado. Vincule um contato antes de criar a proposta." (`app/api/v1/proposals/route.ts`, linhas 94 a 100, `integ`). O negócio do passo 3 já tem o contato de teste (`<número do Lucas>`). Nunca use contato de cliente real.
 
 8b. Salvar DUAS vezes seguidas, sem recarregar: mude o título, clique em "Salvar" (`app/app/proposals/[id]/_client.tsx`, linha 880); mude o título de novo, clique em "Salvar".
 
@@ -757,14 +764,32 @@ O que prova: o app novo e a 9815 estão coerentes. O 409 no segundo salvar é a 
 mcp '{"jsonrpc":"2.0","id":11,"method":"tools/call","params":{"name":"crm_get_proposal","arguments":{"lead_id":"'$LEAD'"}}}'
 ```
 
-Resultado esperado: a proposta do negócio com `status: "rascunho"`, `total_cents`, os itens e sem `pdf_url` (rascunho nunca tem link; `docs/arvisx/SUPERFICIE-DE-AGENTE.md`, linhas 157 a 164, ponta `aj-4`). O nome da chave de topo da resposta: (a confirmar em `lib/mcp/tools/consulta-de-proposta.ts`).
+Resultado esperado: a proposta do negócio com `status: "rascunho"`, `total_cents`, os itens e sem `pdf_url` (rascunho nunca tem link; `docs/arvisx/SUPERFICIE-DE-AGENTE.md`, linhas 157 a 164, ponta `aj-4`). Chaves de topo da resposta com `lead_id`: `lead_id`, `proposals[]` (da mais recente para a mais antiga) e `has_more` (`lib/mcp/tools/consulta-de-proposta.ts`, linhas 260 a 264, `integ`). Com `proposal_id` a chave é `proposal`, um objeto só (linha 241). Em cada proposta, `pdf_url` vem `null` no rascunho (linhas 166, 167 e 202).
 
-8d. Aprovar pela tela. ATENÇÃO: aprovar faz o agente de Propostas ENVIAR o PDF ao cliente na mesma chamada (`lib/ai/equipe-pronta/gatilhos/proposta-aprovada.ts`, linhas 233 a 236). Só faça com o negócio de teste, sem conversa de cliente real.
+8d. Aprovar pela tela. ATENÇÃO: aprovar faz o agente de Propostas ENVIAR o PDF ao cliente na mesma chamada (`lib/ai/equipe-pronta/gatilhos/proposta-aprovada.ts`, linhas 233 a 236). Só faça com o negócio de teste, cujo contato é o `<número do Lucas>`: se houver conversa com esse número e nenhuma trava segurar, o PDF chega nesse telefone.
 
 - O botão "Aprovar e deixar o agente enviar" (`_client.tsx`, linha 834) só aparece para gestor em organização com o agente de Propostas da Equipe pronta instalado (`app/app/proposals/[id]/page.tsx`, linha 27). Sem a equipe instalada o botão não existe: isso é o esperado, e a aprovação fica fora do roteiro.
 - Com o botão: clique nele.
 
-Resultado esperado: `POST /api/v1/proposals/<id>/approve` responde `200` com `data.envio.enviada: false` e uma frase que começa por "Aprovada." Para negócio sem conversa, a frase esperada é "Aprovada. O agente não enviou porque não há conversa ou WhatsApp conectado por onde enviar." (motivo `sem_canal`, linhas 113 e 114); qual trava responde primeiro num negócio sem contato: (a confirmar). Abaixo dos botões aparece "Aprovada para o agente enviar. Editar a proposta desfaz a aprovação." (`_client.tsx`, linha 819). No banco:
+Resultado esperado: `POST /api/v1/proposals/<id>/approve` responde `200`. A aprovação é gravada antes de qualquer trava (`proposta-aprovada.ts`, linhas 200 a 231, `integ`), então ela vale mesmo quando nada é enviado. O campo `data.envio` depende do estado do contato de teste. A trava "sem contato" (`lib/ai/equipe-pronta/gatilhos/travas.ts`, linha 175, `integ`) não ocorre neste roteiro, porque a proposta sempre tem contato (passo 3). As travas respondem nesta ordem, e a primeira que pegar encerra (`proposta-aprovada.ts`, linhas 254 a 275; `travas.ts`, linhas 133 a 293, `integ`):
+
+1. Sem agente de Propostas instalado: `sem_agente` (`proposta-aprovada.ts`, linha 261).
+2. Validade vencida: `proposta_expirada` (linha 265).
+3. Agente pausado ou arquivado, ou equipe pausada: `equipe_pausada` (`travas.ts`, linhas 142 a 161). Plano sem a equipe: `fora_do_plano` (linha 169).
+4. Contato pessoal: `contato_pessoal` (linha 197). Contato bloqueado: `contato_pediu_para_parar` (linha 200). Contato de atendimento humano: `humano_assumiu` (linha 208).
+5. Nenhuma conversa com o contato: `sem_canal` (linha 234).
+6. Alguma conversa do contato com a IA silenciada: `humano_assumiu` (linhas 249 a 261).
+7. Canal da conversa fora de `WORKING`: `sem_canal` (linha 272).
+8. Canal em ensaio e número fora dos números de teste: `modo_ensaio` (linha 286).
+9. Passou por todas: o envio roda, e ainda pode recusar por janela, limite diário ou proposta incompleta (`proposta-aprovada.ts`, linhas 306 a 325).
+
+Os desfechos esperados com o contato de teste, todos aceitáveis:
+
+- O `<número do Lucas>` nunca conversou com a organização: `data.envio.enviada: false`, motivo `sem_canal`, frase "Aprovada. O agente não enviou porque não há conversa ou WhatsApp conectado por onde enviar." (linhas 113 e 114).
+- O passo 7 foi feito com esse número: existe conversa. O "Assumir" do 7b grava `bot_silenced_until = 'infinity'` (`app/api/v1/conversations/[id]/claim/route.ts`, linha 13, `integ`). O fechar do 7c só limpa esse silêncio quando `last_handoff_at` é nulo (`supabase/baseline.sql`, linha 45655, função `fn_service_status`, `integ`); o "Assumir" NÃO preenche `last_handoff_at`: o UPDATE de `fn_conversation_assign` grava dono, `status`, `bot_silenced_until` e canal, e só LÊ `last_handoff_at` (`supabase/baseline.sql`, linhas 68775 a 68807, `integ`). Então, numa conversa que nunca teve handoff nem resposta pelo celular, o fechar do 7c limpa o silêncio e este desfecho não acontece (vale o seguinte). Ele só acontece se a conversa já tinha `last_handoff_at` (o agente escalou antes, ou alguém respondeu pelo celular ou por ligação). Com o silêncio ainda gravado, o esperado é `enviada: false`, motivo `humano_assumiu`, frase "Aprovada. O agente não enviou porque uma pessoa da equipe assumiu esta conversa. Use o botão Enviar ao cliente." (linhas 105 a 108).
+- Conversa sem silêncio, canal conectado e fora do ensaio: `enviada: true` (ou `em_fila: true`) e o PDF chega ao `<número do Lucas>`. A proposta sai de rascunho, e o resto do 8d (editar e ver a aprovação cair) não se aplica.
+
+Abaixo dos botões aparece "Aprovada para o agente enviar. Editar a proposta desfaz a aprovação." (`_client.tsx`, linha 819). No banco:
 
 ```sql
 select revision, aprovada_em, aprovada_na_revisao from public.crm_proposals where id = '<PROPOSTA>';
@@ -790,7 +815,7 @@ curl -sS -w '\n%{http_code}\n' -X POST "$BASE/api/v1/webhooks/meta-social" -H 'C
 ```
 
 - A primeira responde `200` com `{"data":[...],"meta":{"cursor":...,"has_more":false}}` (`app/api/v1/social-comments/route.ts`, linhas 29 a 33). Isso prova que a tabela `social_comments` (9810, 9812) existe e que o caminho aceita bearer (`lib/auth/public-paths.ts`, linhas 223 a 225, ponta `ig-c`).
-- A segunda, com token sem `role:manager`, é recusada com o código `forbidden_role` (`lib/api/auth-dual.ts`, linha 125). O status HTTP exato, que vem do erro: (a confirmar; o esperado é `403`).
+- A segunda, com token sem `role:manager`, é recusada com o código `forbidden_role` (`lib/api/auth-dual.ts`, linha 125). O status HTTP é `403`: a rota repassa o `httpStatus` do erro, e a recusa de papel nasce com `403` (`lib/mcp/auth.ts`, linhas 275 a 283, `integ`). A mensagem é "Role 'agent' insufficient (required: 'manager')." Token sem o escopo `mcp:read` recebe o mesmo `403 forbidden_role` (linhas 285 a 289; `auth-dual.ts`, linhas 118 a 126).
 - A terceira responde `401` com código `unauthorized` e mensagem `invalid_signature` (`app/api/v1/webhooks/meta-social/route.ts`, linha 55). Por isso não dá para injetar um comentário falso sem o segredo do app da Meta.
 - Na tela: `$BASE/app/inbox/comentarios` abre para gerente ou administrador com o título "Comentários" e, sem comentário, a frase "Nenhum comentário por aqui." (`components/comentarios/ComentariosClient.tsx`, linha 373). Para papel menor, redireciona para `/app/inbox` (`app/app/inbox/comentarios/page.tsx`, linha 42).
 - No `tools/list` do passo 6 aparecem as seis `crm_*comment*`.
@@ -802,7 +827,7 @@ O que só dá para provar COM a Meta real (conta do Instagram conectada, permiss
 - "Ocultar" nesse modo só anota: o diálogo diz "Com a conexão em modo de registro, a ocultação fica só anotada e nada muda no Instagram." (linha 619).
 - No código: `simulada = modo === "registrar"` e a Meta não é chamada (`lib/comentarios/acoes.ts`, linhas 510 a 516). Com a conta em Desligado, responder devolve `409 comentarios_desligados` (linha 345).
 - NÃO passe para "Ativo" no teste de fumaça: nesse modo a resposta é publicada à vista de todos.
-- Se o comentário não chegar com a conta em Registrando, o primeiro suspeito é a assinatura do campo no painel da Meta, não o deploy: (a confirmar em produção).
+- Se o comentário não chegar com a conta em Registrando, o primeiro suspeito é a assinatura do campo no painel da Meta, não o deploy. A assinatura do campo de comentários fica no painel da Meta, fora do código: só em produção.
 
 O que prova: recebimento, tela e o modo de registro funcionam sem publicar nada. Ao terminar, devolva o modo ao que estava.
 
@@ -832,7 +857,7 @@ O que prova: a tela e o estado da equipe carregam com o código novo, o modo nã
 O que fazer:
 
 1. Tenha um receptor HTTPS público que VOCÊ controla e que mostre o corpo recebido. Endereço interno é recusado pela trava anti-SSRF (`lib/automation/actions/call-webhook.ts`, linha 5, ponta `pr-3`). Se usar um serviço público de captura de requisições, só mande os registros de teste deste roteiro.
-2. Menu "Webhooks" (`/app/webhooks`), aba das automações (nome da aba: (a confirmar)), botão "Nova automação" (`app/app/webhooks/_components/RulesTab.tsx`, linha 99).
+2. Menu "Webhooks" (`/app/webhooks`), aba "Automações" (`app/app/webhooks/_components/WebhooksClient.tsx`, linha 52, `integ`; o link direto é `/app/webhooks?aba=automacoes`, linha 12), botão "Nova automação" (`app/app/webhooks/_components/RulesTab.tsx`, linha 99).
 3. Gatilho: "Quando alguém escrever uma nota no negócio" (`app/app/webhooks/_components/labels.ts`, linha 79; evento `lead.note_added`, `lib/schemas/webhooks.ts`, linha 113). Ação: "Avisar outro sistema (webhook)" (`labels.ts`, linha 98), com a URL do receptor. Salve e deixe ativa.
 4. Grave uma nota NOVA no negócio de teste: repita o passo 4 com outro texto e outra `Idempotency-Key`.
 
@@ -862,7 +887,11 @@ select action, actor_api_token_id is not null as por_token, count(*)
  group by 1, 2 order by 1;
 ```
 
-Resultado esperado: `lead.note_added` por token (passos 4 e 11; `lib/mcp/tools/notas-do-negocio.ts`, linha 183), `crm_task.created` e `crm_task.updated` por token (passo 5; `lib/tarefas/servico.ts`, linhas 226 e 338), `conversation.closed` uma vez por token (7a) e uma vez por pessoa (7c), `proposal.aprovada_para_o_agente` (8d, se feito; `proposta-aprovada.ts`, linha 223) e `channel.comentarios_modo_alterado` (passo 9, se o modo foi trocado). A nota repetida do passo 4 e a recusa do passo 7b NÃO geram essas linhas. A tabela é `api_audit_log` (`lib/audit/index.ts`, linha 84); o nome da coluna de data (`created_at`) e se a tela `/app/audit` mostra as chamadas de ferramenta do MCP: (a confirmar).
+Resultado esperado: `lead.note_added` por token (passos 4 e 11; `lib/mcp/tools/notas-do-negocio.ts`, linha 183), `crm_task.created` e `crm_task.updated` por token (passo 5; `lib/tarefas/servico.ts`, linhas 226 e 338), `conversation.closed` uma vez por token (7a) e uma vez por pessoa (7c), `proposal.aprovada_para_o_agente` (8d, se feito; `proposta-aprovada.ts`, linha 223) e `channel.comentarios_modo_alterado` (passo 9, se o modo foi trocado). A nota repetida do passo 4 e a recusa do passo 7b NÃO geram essas linhas. A tabela é `api_audit_log` (`lib/audit/index.ts`, linha 84) e a coluna de data é `created_at` (`lib/database.types.ts`, linha 2262, `integ`).
+
+A tela `/app/audit` mostra as chamadas de ferramenta do MCP. Cada chamada, com sucesso ou erro (`lib/mcp/server.ts`, linhas 120 e 144, `integ`), grava uma linha `mcp.tool_called`, com `resource_type` igual a `mcp_tool` e o nome da ferramenta em `metadata.tool_name` (`lib/mcp/audit.ts`, linhas 81 e 104 a 113, `integ`), e a listagem não filtra ação (`app/api/v1/audit/route.ts`, linhas 41 a 55, `integ`). Na tela, escreva `mcp.tool` em "Ação contém" (`app/app/audit/_client.tsx`, linha 72). O ator aparece como `token:` mais 8 caracteres (linha 144). A coluna Metadata corta em 80 caracteres (linhas 30 a 35), então o nome da ferramenta pode não caber: no banco, use `metadata->>'tool_name'`.
+
+Entre como ADMINISTRADOR para ver a tela com dados. O menu e a rota aceitam gerente (`lib/navigation/catalogo.ts`, linha 982; `route.ts`, linha 21), mas a rota lê com o cliente da sessão (linha 40) e a policy `audit_log_select` só deixa ler quem é admin da organização ou admin da plataforma (`supabase/baseline.sql`, linha 4064, `integ`). Um gerente vê "Nenhum log no período." (`_client.tsx`, linha 129). Isso é dedução da leitura da policy, não foi executado.
 
 12c. Evento da 9811, depois do "Assumir" do passo 7b:
 
@@ -872,7 +901,7 @@ select event_type, created_at from public.event_log
  order by created_at desc limit 5;
 ```
 
-Resultado esperado: ao menos uma linha `conversation.ai_paused` na hora do teste. Os nomes das colunas de `event_log`: (a confirmar).
+Resultado esperado: ao menos uma linha `conversation.ai_paused` na hora do teste. As colunas de `event_log` são `id`, `organization_id`, `event_type`, `entity_kind`, `entity_id`, `payload`, `metadata`, `consumed_by`, `attempts`, `last_error`, `next_attempt_at`, `status`, `created_at` e `updated_at` (`supabase/baseline.sql`, linhas 1554 a 1568; `lib/database.types.ts`, linhas 8267 a 8283, `integ`). A consulta acima usa `event_type` e `created_at`, que existem.
 
 O que prova: o caminho quente (receber e enviar mensagem) segue de pé com o gatilho novo em `conversations`, e toda escrita do roteiro ficou com autoria.
 
