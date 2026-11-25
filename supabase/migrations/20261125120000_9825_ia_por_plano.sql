@@ -50,6 +50,8 @@
 -- C. `fn_gasto_de_ia_do_mes` e `fn_update_budget_consumption` (o gatilho que
 --    soma em `ai_budgets`) ignoram os dois valores do assistente. Para `cliente` e `plataforma` a
 --    regra do orçamento da EMPRESA é a de sempre: soma as duas.
+--    O recomputo do contador (o baseline o refaz a cada atualização) ganha uma
+--    última palavra com o mesmo filtro (bloco C2).
 -- D. `fn_ciclo_de_ia(org)` — o período pago da assinatura quando ela tem
 --    `periodo_pago_desde` e `proximo_vencimento`, o plano é mensal e agora está
 --    dentro do período; mês-calendário nos demais casos (teste grátis, plano
@@ -154,6 +156,34 @@ $$;
 
 revoke execute on function public.fn_update_budget_consumption() from public, anon, authenticated;
 grant  execute on function public.fn_update_budget_consumption() to service_role;
+
+-- ── C2. o recomputo do contador, que também precisa conhecer a origem ────────
+-- O gatilho acima não é o único que escreve em `ai_budgets`. O baseline ATRIBUI
+-- o contador a partir de `llm_calls` em dois lugares (blocos das migrations 0035
+-- e 0140), sem filtro de origem, e o baseline é reaplicado a cada atualização.
+-- Sem esta última palavra, o deploy seguinte devolvia ao orçamento da EMPRESA
+-- tudo o que o assistente da plataforma gastou no mês (medido em
+-- tests/invariants/ia-por-plano.test.ts: de 188 para 400188), e os agentes dela
+-- podiam parar por um gasto que não é dela.
+-- É o mesmo recomputo da 0140 (atribui, não incrementa; conta cada linha uma
+-- vez), com o filtro de origem. Vem depois dos outros dois no arquivo, então é
+-- ele que vale. Não mexi nos blocos antigos: a coluna nasce depois deles.
+insert into public.ai_budgets (organization_id, current_month_consumed_cents)
+select o.id,
+       coalesce((select sum(c.cost_cents) from public.llm_calls c
+                 where c.organization_id = o.id
+                   and c.created_at >= date_trunc('month', now())
+                   and c.origem_da_chave not in ('assinatura_plataforma', 'assistente_chave_plataforma')), 0)
+     + coalesce((select sum(i.cost_cents) from public.ai_invocations i
+                 where i.organization_id = o.id
+                   and i.created_at >= date_trunc('month', now())
+                   and not exists (
+                     select 1 from public.llm_calls c2 where c2.legacy_invocation_id = i.id
+                   )), 0)
+from public.organizations o
+on conflict (organization_id) do update
+set current_month_consumed_cents = excluded.current_month_consumed_cents,
+    updated_at = now();
 
 -- ── D. o ciclo ───────────────────────────────────────────────────────────────
 create or replace function public.fn_ciclo_de_ia(p_org uuid)

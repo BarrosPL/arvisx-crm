@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { SQL_ORCAMENTO, SQL_TETO_DO_PLANO, AVISO_CORPO, AVISO_TITULO } from "@/lib/agent-engine/edge/llm/orcamento";
@@ -174,6 +176,33 @@ describe("⭐ o assistente da plataforma não entra em nenhuma soma de limite", 
     expect(gastoDoMes(ORG)).toBe(antes.doMes + 11);
     expect(contadorDoOrcamento(ORG)).toBe(antes.contador + 11);
     expect(Number(iaDoPlano(ORG).gasto)).toBe(antes.plano + 11);
+  });
+
+  it("⭐ reaplicar o baseline não devolve o assistente ao orçamento da empresa: os recomputos de ai_budgets, na ordem do arquivo", () => {
+    // O gatilho não é o único que escreve no contador. O baseline ATRIBUI o
+    // contador a partir de `llm_calls` (blocos das migrations 0035 e 0140), e o
+    // baseline é reaplicado a cada atualização. Sem filtro de origem ali, o
+    // deploy seguinte devolvia ao orçamento da empresa tudo o que o assistente
+    // da plataforma gastou no mês, e os agentes dela podiam parar por isso.
+    const baseline = readFileSync(join(process.cwd(), "supabase", "baseline.sql"), "utf8");
+    const recomputos =
+      baseline.match(
+        /^insert into public\.ai_budgets \(organization_id, current_month_consumed_cents\)\nselect o\.id,[\s\S]*?\nfrom public\.organizations o\non conflict \(organization_id\) do update\nset current_month_consumed_cents = excluded\.current_month_consumed_cents,\n    updated_at = now\(\);/gm,
+      ) ?? [];
+    // Guarda de vacuidade: o padrão acha os recomputos (os dois antigos, pelo menos).
+    expect(recomputos.length).toBeGreaterThanOrEqual(2);
+
+    gravar(ORG, { cents: 70, origem: "plataforma" });
+    gravar(ORG, { cents: 100000, origem: "assinatura_plataforma" });
+    gravar(ORG, { cents: 100000, origem: "assistente_chave_plataforma" });
+    const gasto = gastoDoMes(ORG);
+    expect(gasto).toBeGreaterThan(0);
+
+    for (const recomputo of recomputos) sql(recomputo);
+
+    expect(contadorDoOrcamento(ORG), "o recomputo do baseline somou o assistente da plataforma no orçamento da empresa").toBe(gasto);
+    // E quem dá a última palavra é o recomputo da 9825, que conhece a origem.
+    expect(recomputos.at(-1)).toMatch(/origem_da_chave/);
   });
 
   it("⭐ linha cliente soma no orçamento da EMPRESA (a regra de sempre) e NÃO soma no teto do plano", () => {

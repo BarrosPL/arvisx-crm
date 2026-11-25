@@ -175,3 +175,50 @@ describe("quem repassa a linha por um registrador comum também informa a origem
     expect([...ORIGENS_DA_CHAVE]).toEqual(["cliente", "plataforma", "assinatura_plataforma", "assistente_chave_plataforma"]);
   });
 });
+
+/**
+ * GASTO DE AGENTE NÃO VIRA GASTO DO ASSISTENTE (reforço do Lucas, 25/11/2026).
+ *
+ * As somas de limite ignoram os dois valores do assistente da plataforma. Então o
+ * erro que falha em silêncio é o inverso: um caminho de AGENTE gravar um desses
+ * valores e sair do teto do plano e do orçamento da empresa sem ninguém ver.
+ * Duas travas: o tipo (a conversão do resolvedor só devolve `cliente` ou
+ * `plataforma`, caso acima) e esta varredura, que não deixa os dois literais
+ * aparecerem em código do produto fora de onde nascem e da área do assistente.
+ */
+describe("os valores do assistente da plataforma só existem onde nascem e na área do assistente", () => {
+  const DO_ASSISTENTE = ["assinatura_plataforma", "assistente_chave_plataforma"] as const;
+  const PERMITIDO = (arquivo: string) => arquivo === "lib/ai/usage/origem-da-chave.ts" || arquivo.startsWith("lib/assistente/");
+  const ehComentario = (linha: string) => /^\s*(\/\/|\*|\/\*)/.test(linha);
+
+  function usosForaDoLugar(fontes: { arquivo: string; fonte: string }[]): string[] {
+    return fontes.flatMap(({ arquivo, fonte }) =>
+      PERMITIDO(arquivo)
+        ? []
+        : fonte
+            .split("\n")
+            .map((linha, i) => ({ linha, n: i + 1 }))
+            .filter(({ linha }) => !ehComentario(linha) && DO_ASSISTENTE.some((v) => linha.includes(v)))
+            .map(({ n }) => `${arquivo}:${n}`),
+    );
+  }
+
+  it("nenhum arquivo do produto fora desses dois lugares escreve um valor do assistente", () => {
+    const fontes = [...RAIZES, "components"].flatMap((r) => arquivos(r)).map((arquivo) => ({ arquivo, fonte: readFileSync(join(RAIZ, arquivo), "utf8") }));
+    // Guarda de vacuidade: a varredura leu o produto e achou o arquivo onde os valores nascem.
+    expect(fontes.length).toBeGreaterThan(1000);
+    const origem = fontes.find((f) => f.arquivo === "lib/ai/usage/origem-da-chave.ts");
+    expect(origem && DO_ASSISTENTE.every((v) => origem.fonte.includes(v))).toBe(true);
+    expect(usosForaDoLugar(fontes)).toEqual([]);
+  });
+
+  it("controle: a varredura reprova um escritor de agente que grave o valor do assistente, e não se engana com comentário", () => {
+    expect(
+      usosForaDoLugar([
+        { arquivo: "workers/exemplo.ts", fonte: 'const linha = {\n  origem_da_chave: "assinatura_plataforma",\n};' },
+        { arquivo: "lib/exemplo.ts", fonte: "// o valor `assistente_chave_plataforma` não é gravado aqui\nconst x = 1;" },
+        { arquivo: "lib/assistente/custo.ts", fonte: 'const origem = "assistente_chave_plataforma";' },
+      ]),
+    ).toEqual(["workers/exemplo.ts:2"]);
+  });
+});

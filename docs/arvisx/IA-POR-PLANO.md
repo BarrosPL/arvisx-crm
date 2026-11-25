@@ -61,6 +61,24 @@ D-9 da cobrança do revendedor). Agora ele soma só o que a chave da plataforma
 pagou. O que não mudou: o bloqueio continua valendo só para quem chama com a
 chave da instalação, e `AI_BUDGET_ENFORCEMENT=off` continua desligando tudo.
 
+### Todo lugar que soma `llm_calls` para teto, pausa ou orçamento
+
+Varredura de 25/11/2026: `grep -n "sum(" supabase/baseline.sql` nas linhas que leem `llm_calls`, e `grep -rn 'from("llm_calls")' app lib workers`.
+
+| Onde | Para que serve | Filtro de origem |
+|---|---|---|
+| `fn_gasto_de_ia_do_mes` | A régua do orçamento da EMPRESA: é ela que o motor lê para pausar (`SQL_ORCAMENTO`, `lib/ai/budget/check.ts`, `pode-gastar.ts`) | Ignora `assinatura_plataforma` e `assistente_chave_plataforma`. Soma `cliente` e `plataforma` |
+| `fn_update_budget_consumption` (gatilho de `llm_calls`) | Incrementa o contador `ai_budgets.current_month_consumed_cents` | Ignora os dois valores do assistente. Soma `cliente` e `plataforma` |
+| Recomputo de `ai_budgets` no baseline (blocos das migrations 0035 e 0140) | Atribui o contador a partir de `llm_calls`, a cada reaplicação do baseline | **Não tinham filtro.** Corrigido: a 9825 dá a última palavra com um recomputo que ignora os dois valores do assistente (bloco C2). Os dois antigos ficaram como eram, porque a coluna nasce depois deles no arquivo |
+| `fn_ia_do_plano`, gasto | Teto em dólar do PLANO (motor, worker legado, rodada do aviso de 80%, telas) | Só `plataforma` |
+| `fn_ia_do_plano`, conversas | Franquia do PLANO | Só `plataforma` |
+| `fn_contato_na_franquia` | Diz se o contato já está na franquia do ciclo | Só `plataforma` |
+| `fn_cobranca_avisar_uso_de_ia` | Aviso de 80% | Não soma: recebe o que a rodada leu de `fn_ia_do_plano` |
+| `fn_uso_de_ia` (tela Uso de IA) | Relatório de uso por dia e por ponto. Não pausa nem limita nada | **Sem filtro, e não mexi.** Enquanto nada gravar os valores do assistente, não muda nada. Quando o assistente passar a gravar em `llm_calls`, as chamadas dele apareceriam no relatório da empresa: tratar antes de ligar essa gravação |
+| `lib/ai/budget/check.ts:186` | Conta linhas `ok` sem preço, para o aviso de "medição incompleta" | Não é soma de gasto. O assistente grava `cost_cents = 0`, não nulo, então não acende o aviso |
+
+O que impede gasto de agente de ser contado como do assistente (o erro que falha em silêncio): os caminhos de agente tiram a origem de `origemDaChaveGravada`, cujo tipo só devolve `cliente` ou `plataforma`, e a cerca `tests/unit/llm-calls-todo-escritor-diz-a-origem-da-chave.test.ts` reprova qualquer arquivo do produto, fora de `lib/ai/usage/origem-da-chave.ts` e de `lib/assistente/`, que escreva um dos dois valores do assistente.
+
 ### Quem grava em `llm_calls`
 
 Todo escritor informa a origem. Quem vigia é
