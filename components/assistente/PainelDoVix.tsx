@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useT } from "@/hooks/i18n/useT";
 import { HEADER_ORG_DA_ABA, orgDaAba } from "@/lib/auth/org-da-aba";
 import { PaperPlaneTilt, Sparkle, X } from "@/lib/ui/icons";
+import { randomId } from "@/lib/random-id";
 import { cn } from "@/lib/utils";
 
 import { EVENTO_ABRIR_O_VIX, definirVixPresente } from "./presenca";
@@ -213,7 +214,7 @@ export function PainelDoVix() {
   const enviar = async () => {
     const pergunta = texto.trim();
     if (pergunta === "" || enviando) return;
-    const turno = crypto.randomUUID();
+    const turno = randomId();
     const chaveDaResposta = `${turno}:assistente`;
     setTexto("");
     setEnviando(true);
