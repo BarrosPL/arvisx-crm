@@ -148,7 +148,7 @@ export function ChamadosDoAssistente() {
               <p className="mt-3 whitespace-pre-wrap text-sm">{c.resumo}</p>
               <details className="mt-3">
                 <summary className="cursor-pointer text-xs text-muted-foreground">{t("Diagnóstico anexado")}</summary>
-                <pre className="mt-2 max-h-80 overflow-auto rounded bg-muted p-3 text-xs" data-testid="chamado-diagnostico">
+                <pre className="mt-2 max-h-80 overflow-auto rounded-md bg-muted p-3 text-xs" data-testid="chamado-diagnostico">
                   {JSON.stringify(c.diagnostico, null, 2)}
                 </pre>
               </details>
