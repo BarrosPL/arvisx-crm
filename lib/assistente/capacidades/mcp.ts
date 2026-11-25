@@ -100,8 +100,9 @@ const ONDA_1: readonly LeituraMcp[] = [
   { ferramenta: "crm_list_human_cases", papelMinimo: "agent", rota: "/api/v1/ai/cases" },
   { ferramenta: "crm_get_human_case", papelMinimo: "agent", rota: "/api/v1/ai/cases" },
   // Retornos e catálogo. `crm_get_proposal` NÃO entra: para saber se propostas
-  // estão ligadas ela lê `platform_config`, que só a chave de serviço alcança;
-  // com o cliente de sessão responde sempre "propostas desligadas".
+  // estão ligadas ela consulta o módulo da instalação em `platform_config`,
+  // que só a chave de serviço lê; com o cliente de sessão a resposta é
+  // "propostas desligadas". Ver `docs/arvisx/vix/CAPACIDADES-VIX-FASE-1.md`.
   { ferramenta: "crm_list_followups", papelMinimo: "agent", rota: "/api/v1/ai/followups" },
   { ferramenta: "crm_search_products", papelMinimo: "agent", rota: "/api/v1/products" },
   // Organização.

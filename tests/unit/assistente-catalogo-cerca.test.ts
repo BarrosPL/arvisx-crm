@@ -13,8 +13,9 @@
  *     MCP proibida ou que não seja de leitura;
  *  5. leitura não tem `preparar`; escrita tem, e declara o inverso;
  *  6. quem executa escrita confirmada é UM arquivo, a rota de confirmação;
- *  7. o código do assistente não alcança chave de IA de ninguém nem a política
- *     de reserva, e só usa a chave de serviço nos arquivos listados, com motivo.
+ *  7. o código do assistente não lê credencial de IA de empresa nenhuma, e só
+ *     usa a chave de serviço nos arquivos listados, com motivo. (O provedor
+ *     tem cerca própria: `assistente-provedor-cerca.test.ts`.)
  *
  * Lê o catálogo de verdade (importa o módulo) para as regras de 1 a 5, e o
  * código-fonte para as de 6 e 7.
@@ -186,13 +187,12 @@ describe("quem pode executar e o que o assistente alcança", () => {
     expect(culpados).toEqual([]);
   });
 
-  it("o assistente não alcança chave de IA de ninguém nem a política de reserva", () => {
+  it("o assistente não lê credencial de IA de empresa nem variável de chave do ambiente", () => {
+    // Quem alcança a conta da assinatura e a chave de plataforma tem cerca
+    // própria: `tests/unit/assistente-provedor-cerca.test.ts`.
     const PROIBIDO = [
-      "chaveDePlataforma",
       "resolveOrgLlmConfig",
       "loadCredential",
-      "decidirQuedaDoProvedor",
-      "reservaDaAssinatura",
       "ANTHROPIC_API_KEY",
       "OPENAI_API_KEY",
       "OPENROUTER_API_KEY",
@@ -215,7 +215,8 @@ describe("quem pode executar e o que o assistente alcança", () => {
     };
     const usam = arquivosTs("lib/assistente")
       .filter((a) => !ehTeste(a))
-      .filter((a) => ler(a).includes("createAdminClient"));
+      // Só a CHAMADA conta: importar o tipo do cliente não usa a chave.
+      .filter((a) => /createAdminClient\(/.test(ler(a)));
     expect(usam.filter((a) => !COM_MOTIVO[a])).toEqual([]);
   });
 });
