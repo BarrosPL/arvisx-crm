@@ -24,7 +24,15 @@
  *     por cima de estado alheio. A única exceção tem nome
  *     (`SEM_TRAVA_DE_REVISAO`) e um só caminho a escolhe: o marcar como pessoal;
  *  3. o fechamento entra na auditoria como `conversation.closed`, com quem
- *     fechou (pessoa ou token), escrita por `auditarFechamentoDeConversa`.
+ *     fechou (pessoa ou token), escrita por `auditarFechamentoDeConversa`;
+ *  4. AGENTE NÃO ENCERRA CONVERSA QUE UMA PESSOA ASSUMIU (regra 2.31, decisão do
+ *     dono em 23/11/2026). Todo chamador declara a `origem` do pedido
+ *     (`"pessoa"` ou `"agente"`), e ela é obrigatória de propósito: quem esquece
+ *     não compila. Com `origem: "agente"` o pedido viaja como
+ *     `p_ator = 'agente'` e a `fn_service_status` (migration 9824) recusa COM A
+ *     LINHA TRAVADA: fecha a janela em que a pessoa assume entre a leitura e o
+ *     fechamento. A recusa do banco é `PT403 service_assigned_to_human`.
+ *     Vale para os três estados terminais (`closed`, `resolved`, `archived`).
  *
  * Fechar NÃO envia nada ao cliente e não toca em trava de atendimento humano
  * (`contacts.force_human`): a função do banco só carimba o estado do
@@ -75,6 +83,82 @@ export async function lerConversaParaFechar(
   return { ok: true, conversa: (data as ConversaParaFechar | null) ?? null };
 }
 
+/**
+ * DE QUEM É O PEDIDO. `"pessoa"`: alguém da equipe, pela tela (sessão de
+ * usuário). `"agente"`: todo o resto (token de API, agente nativo no turno,
+ * sistema). Na dúvida é `"agente"`: é o lado que recusa.
+ */
+export type OrigemDoPedido = "pessoa" | "agente";
+
+/** A origem a partir do ator de uma rota: só `user` é pessoa. */
+export function origemDoAtor(ator: { type: string }): OrigemDoPedido {
+  return ator.type === "user" ? "pessoa" : "agente";
+}
+
+/** O código com que a `fn_service_status` recusa o agente (migration 9824). */
+export const CODIGO_CONVERSA_COM_HUMANO = "PT403" as const;
+
+export type RecusaDoEstado = {
+  ok: false;
+  /**
+   * `conflito`: a revisão não bate (PT409) ou o contato trocou no meio (40001).
+   * `com_humano`: o pedido é de agente e uma pessoa assumiu a conversa.
+   * `falha`: qualquer outro erro, INCLUSIVE a função de 5 argumentos não existir
+   * no banco (PGRST202, imagem nova com banco anterior à 9824). Para o agente
+   * isso é falha fechada: não existe segunda tentativa sem `p_ator`.
+   */
+  erro: "conflito" | "com_humano" | "falha";
+  detalhe: string;
+  /**
+   * O código que o banco devolveu (`P0002` = a conversa não existe nesta
+   * organização). Quem responde por HTTP decide o status com ele; `null`
+   * quando o erro veio sem código.
+   */
+  codigo: string | null;
+};
+
+export type DesfechoDoEstado = { ok: true; conversa: Conversation } | RecusaDoEstado;
+
+/**
+ * A ÚNICA chamada do produto à `fn_service_status`.
+ *
+ * `origem: "agente"` viaja como `p_ator = 'agente'` e a função recusa estado
+ * terminal sobre conversa assumida. `origem: "pessoa"` não manda o parâmetro:
+ * vale o default da função, e a chamada é a mesma de antes da 9824 (funciona em
+ * banco que ainda não recebeu a migration).
+ */
+export async function mudarEstadoDoAtendimento(deps: {
+  /** Service role: a `fn_service_status` só é executável por ele. */
+  admin: Pick<SupabaseClient, "rpc">;
+  organizationId: string;
+  conversationId: string;
+  status: string;
+  /** A revisão vista por quem pediu; `undefined` = não conferir. */
+  revisaoEsperada: number | undefined;
+  origem: OrigemDoPedido;
+}): Promise<DesfechoDoEstado> {
+  const { data, error } = await deps.admin.rpc("fn_service_status", {
+    p_org: deps.organizationId,
+    p_conversation: deps.conversationId,
+    p_status: deps.status,
+    // Sem trava, o parâmetro nem viaja: o default da função (`null`) é "não conferir".
+    ...(deps.revisaoEsperada === undefined ? {} : { p_expected: deps.revisaoEsperada }),
+    ...(deps.origem === "agente" ? { p_ator: "agente" } : {}),
+  });
+  if (error) {
+    // PT409: revisão obsoleta (migration 0514). 40001: contato trocou no meio, ou banco anterior à 0514.
+    const conflito = error.code === "PT409" || error.code === "40001";
+    const comHumano = error.code === CODIGO_CONVERSA_COM_HUMANO;
+    return {
+      ok: false,
+      erro: comHumano ? "com_humano" : conflito ? "conflito" : "falha",
+      detalhe: error.message,
+      codigo: error.code ?? null,
+    };
+  }
+  return { ok: true, conversa: data as unknown as Conversation };
+}
+
 /** Quem fechou, para a auditoria. Token e pessoa nunca juntos na mesma coluna. */
 export interface AtorDoFechamento {
   /** `auth.users.id` de quem fechou pela tela; `null` quando foi um agente. */
@@ -92,17 +176,7 @@ export type DesfechoDoFechamento =
       /** `false` = já estava fechada: nada mudou no banco. */
       mudou: boolean;
     }
-  | {
-      ok: false;
-      erro: "conflito" | "falha";
-      detalhe: string;
-      /**
-       * O código que o banco devolveu (`P0002` = a conversa não existe nesta
-       * organização). Quem responde por HTTP decide o status com ele; `null`
-       * quando o erro veio sem código.
-       */
-      codigo: string | null;
-    };
+  | RecusaDoEstado;
 
 /**
  * FECHAR SEM TRAVA DE REVISÃO — a exceção à regra 2, com nome para aparecer em
@@ -164,7 +238,10 @@ export async function auditarFechamentoDeConversa(entrada: {
 export async function fecharConversa(deps: {
   /** Service role: a `fn_service_status` só é executável por ele. */
   admin: Pick<SupabaseClient, "rpc">;
-  conversa: Pick<ConversaParaFechar, "id" | "organization_id" | "status">;
+  conversa: Pick<ConversaParaFechar, "id" | "organization_id" | "status"> &
+    Partial<Pick<ConversaParaFechar, "assigned_to_user_id">>;
+  /** De quem é o pedido. Obrigatório: é o que liga a regra 2.31 (item 4 do cabeçalho). */
+  origem: OrigemDoPedido;
   /** A revisão que quem pediu o fechamento viu, ou a exceção nomeada. */
   revisaoEsperada: number | typeof SEM_TRAVA_DE_REVISAO;
   requestId: string;
@@ -174,28 +251,21 @@ export async function fecharConversa(deps: {
   auditoria?: "na_hora" | "adiada";
 }): Promise<DesfechoDoFechamento> {
   const { conversa } = deps;
-  const { data, error } = await deps.admin.rpc("fn_service_status", {
-    p_org: conversa.organization_id,
-    p_conversation: conversa.id,
-    p_status: "closed",
-    // Sem trava, o parâmetro nem viaja: o default da função (`null`) é "não conferir".
-    ...(deps.revisaoEsperada === SEM_TRAVA_DE_REVISAO ? {} : { p_expected: deps.revisaoEsperada }),
+
+  const estado = await mudarEstadoDoAtendimento({
+    admin: deps.admin,
+    organizationId: conversa.organization_id,
+    conversationId: conversa.id,
+    status: "closed",
+    revisaoEsperada: deps.revisaoEsperada === SEM_TRAVA_DE_REVISAO ? undefined : deps.revisaoEsperada,
+    origem: deps.origem,
   });
-  if (error) {
-    // PT409: revisão obsoleta (migration 0514). 40001: contato trocou no meio, ou banco anterior à 0514.
-    const conflito = error.code === "PT409" || error.code === "40001";
-    return {
-      ok: false,
-      erro: conflito ? "conflito" : "falha",
-      detalhe: error.message,
-      codigo: error.code ?? null,
-    };
-  }
+  if (!estado.ok) return estado;
 
   const mudou = conversa.status !== "closed";
   if (deps.auditoria !== "adiada" && (mudou || deps.auditarSemMudanca)) {
     await auditarFechamentoDeConversa({ conversa, requestId: deps.requestId, ator: deps.ator });
   }
 
-  return { ok: true, conversa: data as unknown as Conversation, mudou };
+  return { ok: true, conversa: estado.conversa, mudou };
 }

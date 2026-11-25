@@ -71077,6 +71077,69 @@ create policy tenant_isolation_social_comments_select on public.social_comments
 
 notify pgrst, 'reload schema';
 
+-- ---- agente não fecha conversa que uma pessoa assumiu (migration 9824) ----
+-- Espelho idempotente da 9824 (o porquê inteiro está no cabeçalho da migration).
+-- `fn_service_status` ganha `p_ator` ('pessoa' por padrão, 'agente' para a
+-- ferramenta e para ator que não é pessoa): agente pedindo estado terminal sobre
+-- conversa aberta com responsável recebe `PT403 service_assigned_to_human`, com
+-- a linha travada. Fica DEPOIS dos blocos da 0222 e da 0514, que recriam a
+-- função de 4 argumentos a cada aplicação: este bloco a derruba e deixa só a de
+-- 5, para ser a última definição. Cria função, então mora ANTES da VARREDURA
+-- anon. Reaplicar termina no mesmo estado; nenhuma linha muda.
+-- Novo parâmetro muda a assinatura: sem o drop nasceria uma SOBRECARGA, e o
+-- PostgREST não escolhe entre as duas com 4 argumentos nomeados.
+-- Precedente de drop por troca de assinatura: migration 9103.
+drop function if exists public.fn_service_status(uuid,uuid,text,bigint);
+
+create or replace function public.fn_service_status(
+  p_org uuid, p_conversation uuid, p_status text,
+  p_expected bigint default null,
+  p_ator text default 'pessoa')
+returns public.conversations language plpgsql security definer set search_path=public as $$
+declare c public.conversations; terminal boolean; pre_contact uuid;
+begin
+ if p_status not in ('closed','resolved','archived','open','pending','ai_handling','claimed') then
+  raise exception 'invalid_status' using errcode='22023'; end if;
+ if p_ator is null or p_ator not in ('pessoa','agente') then
+  raise exception 'invalid_actor' using errcode='22023'; end if;
+ select * into c from public.conversations where id=p_conversation and organization_id=p_org;
+ if not found then raise exception 'service_not_found' using errcode='P0002'; end if;
+ pre_contact:=c.contact_id;
+ perform public.fn_service_lock(p_org,c.contact_id);
+ select * into c from public.conversations where id=p_conversation and organization_id=p_org for no key update;
+ if c.contact_id is distinct from pre_contact then raise exception 'service_contact_changed' using errcode='40001'; end if;
+ terminal := p_status in ('closed','resolved','archived');
+ -- Regra 2.31, conferida COM A LINHA TRAVADA. Conversa já encerrada não recusa:
+ -- repetir o pedido continua sendo sucesso sem efeito.
+ if p_ator='agente' and terminal
+    and c.status not in ('closed','resolved','archived')
+    and c.assigned_to_user_id is not null then
+   raise exception 'service_assigned_to_human' using errcode='PT403';
+ end if;
+ if p_expected is not null and c.service_revision<>p_expected then raise exception 'service_stale' using errcode='PT409'; end if;
+ if c.status=p_status then return c; end if;
+ update public.conversations set status=p_status,status_changed_at=clock_timestamp(),
+   service_revision=service_revision+case when terminal or c.status in ('closed','resolved','archived') then 1 else 0 end,
+   service_closed_at=case when terminal then clock_timestamp() else service_closed_at end,
+   service_started_at=case when c.status in ('closed','resolved','archived') and not terminal then clock_timestamp() else service_started_at end,
+   bot_silenced_until=case when terminal and last_handoff_at is null then null else bot_silenced_until end,
+   current_demanda_id=case when c.status in ('closed','resolved','archived') and not terminal then null else current_demanda_id end
+  where id=c.id and organization_id=p_org returning * into c;
+ if terminal then
+   update public.demandas set proximo_passo=coalesce(proximo_passo,'Revisar atendimento e registrar o desfecho da demanda')
+    where organization_id=p_org and id=c.current_demanda_id and fechada_em is null;
+ end if;
+ return c;
+end; $$;
+
+comment on function public.fn_service_status(uuid,uuid,text,bigint,text) is
+  'Porta única do estado do atendimento. p_ator (migration 9824): ''pessoa'' (default, a tela) ou ''agente''. Agente pedindo estado terminal sobre conversa aberta com assigned_to_user_id preenchido recebe PT403 service_assigned_to_human, conferido com a linha travada.';
+
+revoke execute on function public.fn_service_status(uuid,uuid,text,bigint,text) from public,anon,authenticated;
+grant execute on function public.fn_service_status(uuid,uuid,text,bigint,text) to service_role;
+
+notify pgrst, 'reload schema';
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria

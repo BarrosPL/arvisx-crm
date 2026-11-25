@@ -16486,7 +16486,7 @@ export type Database = {
       fn_service_observe: { Args: { p_contact: string; p_org: string }; Returns: Json };
       fn_service_observe_command: { Args: { p_contact: string; p_org: string }; Returns: Json };
       fn_service_status: {
-        Args: { p_conversation: string; p_expected?: number; p_org: string; p_status: string };
+        Args: { p_ator?: string; p_conversation: string; p_expected?: number; p_org: string; p_status: string };
         Returns: {
           active_agent_set_at: string | null;
           active_ai_agent_id: string | null;

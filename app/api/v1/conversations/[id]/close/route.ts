@@ -159,6 +159,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
   const fechamento = await fecharConversa({
     admin: createAdminClient(),
     conversa: visible,
+    // Sessão de usuário (`requireRole`): é uma pessoa fechando pela tela.
+    origem: "pessoa",
     revisaoEsperada,
     requestId,
     ator: { actorUserId: user.id },

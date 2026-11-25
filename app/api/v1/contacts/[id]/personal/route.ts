@@ -400,6 +400,8 @@ export async function POST(_req: NextRequest, ctx: Context): Promise<Response> {
     const fechamento = await fecharConversa({
       admin,
       conversa: conversaDoContato,
+      // Decisão de gerente pela tela (`requireRole("manager")`).
+      origem: "pessoa",
       revisaoEsperada: SEM_TRAVA_DE_REVISAO,
       requestId,
       ator: atorDoFechamento,

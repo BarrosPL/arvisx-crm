@@ -20,6 +20,7 @@ Os números de linha das migrations são do próprio arquivo, na ponta indicada.
 | 9818 nota única por chave | #13 | Não (UPDATE e índice único) | Não | Sim | **Índice único sem CONCURRENTLY em `crm_lead_activities`** (o mais pesado do lote) | nada |
 | 9819 comentários só para gerente | #12 | Não (policy trocada, mais restrita) | Não | Sim | `ACCESS EXCLUSIVE` curto em `social_comments` | 9810 |
 | 9820 preencher campo personalizado | #22 | Sim | Não | Sim | Nenhum | nada |
+| 9824 agente não fecha conversa assumida (Tarefa 6.1, PR à parte) | Tarefa 6.1 | Não (função `fn_service_status` trocada: `drop` da de 4 argumentos e `create` da de 5) | Não (o app antigo manda 4 argumentos nomeados e cai no default `'pessoa'`) | Sim. O contrário é que pede atenção: imagem NOVA com banco SEM a 9824 deixa o agente sem fechar conversa nenhuma (falha fechada) | Só catálogo, por instantes. Nenhuma tabela varrida nem reescrita | nada |
 
 Única migration que NÃO volta só com a imagem: **9815**. Se a imagem do app voltar com ela aplicada, é preciso rodar a reversão da seção 6.2.
 
@@ -67,6 +68,8 @@ Consequências exatas para este lote:
 - Em banco NOVO a ordem também decide o estado final, porque a lista inteira roda depois do baseline: se a 9810 rodar depois da 9819, a policy aberta volta; se a 9812 rodar depois da 9816, o corpo antigo da função volta.
 
 Sugestão que cumpre tudo: 9809, 9810, 9811, 9812, 9813, 9814, 9815, 9816, 9817, 9818, 9819, 9820.
+
+A 9824 (Tarefa 6.1) não depende de nenhuma das doze e nenhuma depende dela. Ela vai no fim da lista, depois da 9820 (é onde está em `deploy/arvisx/crm/migracoes-pos-baseline.txt` no branch da Tarefa 6.1).
 
 ## 6.1 Uma por uma
 
@@ -203,6 +206,21 @@ Sugestão que cumpre tudo: 9809, 9810, 9811, 9812, 9813, 9814, 9815, 9816, 9817,
 - **Só aditiva: sim.**
 - **Voltar só a imagem:** nada acontece. O app antigo não a chama.
 - **Lock:** nenhum.
+- **Dependência:** nenhuma.
+
+### 9824 `20261124120000_9824_agente_nao_fecha_conversa_assumida.sql` (Tarefa 6.1, PR à parte)
+
+Escrita em 25/11/2026. Diferente das doze acima, esta foi EXECUTADA: `pnpm test:db tests/invariants/fechar-conversa-por-agente.test.ts` num Postgres 15 descartável (baseline em modo install e em modo update, 19 casos verdes). Os números de linha são do arquivo no branch `tarefa-6.1/agente-nao-fecha-conversa-assumida`.
+
+- `drop function if exists public.fn_service_status(uuid,uuid,text,bigint)` e `create or replace` da mesma função com um quinto parâmetro, `p_ator text default 'pessoa'`. Com `p_ator = 'agente'`, pedido de `closed`, `resolved` ou `archived` sobre conversa aberta e com `assigned_to_user_id` preenchido é recusado com `PT403 service_assigned_to_human`, depois do `select ... for no key update` (linha travada). O resto do corpo é o da 0514. EXECUTE só para `service_role`. Termina com `notify pgrst, 'reload schema'`.
+- **Só aditiva: não.** Troca a assinatura de uma função que o app chama. Nenhuma tabela, coluna, índice ou linha muda.
+- **Banco novo com o app antigo:** a tela e a ferramenta antigas mandam 4 argumentos nomeados, que casam com a função de 5 pelo default. Comportamento igual ao de hoje (a ferramenta antiga segue só com a conferência na leitura). As duas chamadas SQL internas, posicionais com 4 argumentos (`supabase/baseline.sql`, linhas 19954 e 52673), seguem resolvendo.
+- **App novo com banco antigo (sem a 9824):** a tela funciona, porque pessoa não manda `p_ator`. O agente manda `p_ator` e o PostgREST responde `PGRST202` (função não encontrada): `crm_close_conversation` devolve `indisponivel` e NÃO fecha. É falha fechada de propósito; não existe volta ao caminho antigo. Consequência prática: se a 9824 falhar no `init` e a imagem nova subir, o agente para de fechar conversa até a migration entrar.
+- **Voltar só a imagem:** funciona, sem reverter o banco.
+- **Lock:** `drop function` e `create function` pegam lock só no catálogo. Nenhuma tabela é varrida. Em execução, a condição nova roda sob o advisory lock e o row lock que a função já pegava: nenhum lock novo. NÃO medido em produção.
+- **Janela do PostgREST:** entre o commit da migration e o PostgREST recarregar o schema (`notify pgrst`), uma chamada pode pegar o cache antigo. Como o app antigo e a tela nova mandam 4 argumentos, e a função de 5 aceita 4, o efeito esperado é nenhum. NÃO testado contra um PostgREST de verdade (os testes de banco falam direto com o Postgres).
+- **Reaplicar:** termina no mesmo estado (uma função só, de 5 parâmetros). Conferido pelo modo update do `test:db` e pelo caso "existe UMA função só".
+- **No `baseline.sql`:** o bloco fica antes da VARREDURA anon. Os blocos antigos (0222 e 0514) recriam a função de 4 argumentos a cada aplicação do baseline, e o bloco da 9824 a derruba em seguida. No `update.sh` do kit (sem transação) há um instante com as duas sobrecargas. A produção do fork não reaplica o baseline (o `init.sh` usa a lista), então isso não a alcança.
 - **Dependência:** nenhuma.
 
 ## 6.2 Reversões propostas
@@ -431,6 +449,57 @@ commit;
 
 O UPDATE devolve a chave ao lugar, mas a ordem das chaves dentro do `jsonb` não é garantida igual (jsonb não guarda ordem; o valor é o mesmo). Se a migration não alterou linha ao aplicar, pule o UPDATE.
 
+### 9824 NÃO TESTADO (só se quiser a função antiga de volta; a imagem antiga não precisa)
+
+Com a imagem ANTERIOR no ar, não reverta: ela funciona com a função de 5 parâmetros. Reverter com a imagem NOVA no ar deixa o agente sem fechar conversa (`PGRST202`, falha fechada); a tela segue funcionando.
+
+```sql
+begin;
+set lock_timeout = '5s';
+drop function if exists public.fn_service_status(uuid,uuid,text,bigint,text);
+
+-- Corpo da migration 0514 (`supabase/baseline.sql`, bloco "a recusa permanente
+-- do atendimento não pede repetição"), sem mudança.
+create or replace function public.fn_service_status(p_org uuid,p_conversation uuid,p_status text,p_expected bigint default null)
+returns public.conversations language plpgsql security definer set search_path=public as $$
+declare c public.conversations; terminal boolean; pre_contact uuid;
+begin
+ if p_status not in ('closed','resolved','archived','open','pending','ai_handling','claimed') then
+  raise exception 'invalid_status' using errcode='22023'; end if;
+ select * into c from public.conversations where id=p_conversation and organization_id=p_org;
+ if not found then raise exception 'service_not_found' using errcode='P0002'; end if;
+ pre_contact:=c.contact_id;
+ perform public.fn_service_lock(p_org,c.contact_id);
+ select * into c from public.conversations where id=p_conversation and organization_id=p_org for no key update;
+ if c.contact_id is distinct from pre_contact then raise exception 'service_contact_changed' using errcode='40001'; end if;
+ if p_expected is not null and c.service_revision<>p_expected then raise exception 'service_stale' using errcode='PT409'; end if;
+ if c.status=p_status then return c; end if;
+ terminal := p_status in ('closed','resolved','archived');
+ update public.conversations set status=p_status,status_changed_at=clock_timestamp(),
+   service_revision=service_revision+case when terminal or c.status in ('closed','resolved','archived') then 1 else 0 end,
+   service_closed_at=case when terminal then clock_timestamp() else service_closed_at end,
+   service_started_at=case when c.status in ('closed','resolved','archived') and not terminal then clock_timestamp() else service_started_at end,
+   bot_silenced_until=case when terminal and last_handoff_at is null then null else bot_silenced_until end,
+   current_demanda_id=case when c.status in ('closed','resolved','archived') and not terminal then null else current_demanda_id end
+  where id=c.id and organization_id=p_org returning * into c;
+ if terminal then
+   update public.demandas set proximo_passo=coalesce(proximo_passo,'Revisar atendimento e registrar o desfecho da demanda')
+    where organization_id=p_org and id=c.current_demanda_id and fechada_em is null;
+ end if;
+ return c;
+end; $$;
+
+revoke execute on function public.fn_service_status(uuid,uuid,text,bigint) from public,anon,authenticated;
+grant execute on function public.fn_service_status(uuid,uuid,text,bigint) to service_role;
+
+delete from public.arvisx_migracoes_aplicadas
+ where nome = '20261124120000_9824_agente_nao_fecha_conversa_assumida.sql';
+notify pgrst, 'reload schema';
+commit;
+```
+
+Tire também a linha da 9824 de `deploy/arvisx/crm/migracoes-pos-baseline.txt` no checkout, senão o próximo deploy a reaplica. Esta reversão NÃO foi executada (a aplicação da 9824 foi; a volta, não).
+
 ### Aditivas (9809, 9810, 9813, 9820)
 
 Elas não precisam de reversão para o app antigo funcionar. Apagar `social_comments` (reversão do cabeçalho da 9810, linha 62) ou `fusoes_de_contatos` apaga dado recebido e o registro que permite desfazer junções: **não há reversão segura** depois que o app novo gravou nelas.
@@ -498,7 +567,7 @@ Resultado esperado no log, com as mensagens reais do script:
 
 - `[init] schema ja existe: pulando baseline` (linha 15).
 - `[init] backup do banco em /backup/antes-migracoes-<data>.dump` (linha 37).
-- Doze linhas `[init] aplicando <arquivo>` (linha 41), uma para cada migration de 9809 a 9820.
+- Doze linhas `[init] aplicando <arquivo>` (linha 41), uma para cada migration de 9809 a 9820. Se o PR da Tarefa 6.1 subir junto, são treze: a última é `20261124120000_9824_agente_nao_fecha_conversa_assumida.sql` (e a consulta abaixo devolve 13 linhas).
 - `[init] fim das migracoes` (linha 48).
 - `[init] trava de empresa suspensa: <n> policies novas` (linha 61).
 - NÃO pode aparecer `[init] FALHOU: <arquivo> (parei aqui; as seguintes ficam pendentes)` (linha 45), nem `[init] backup falhou; nao migrei nada` (linha 50), nem `[init] AVISO: nao consegui conferir a trava de empresa suspensa` (linha 63).
@@ -659,7 +728,18 @@ Resultado esperado: `permitido: false` e `motivo: "conversa_com_humano"` (linhas
 
 Resultado esperado: a conversa fecha (rota `POST /api/v1/conversations/[id]/close`, que chama o mesmo `lib/inbox/fechar-conversa.ts`).
 
-O que prova: a regra de 23/11 (agente não fecha conversa assumida) está no ar, e o caminho da tela não regrediu com a unificação do #17. Limite conhecido, escrito no próprio arquivo (linhas 33 a 36): se a pessoa assumir no instante entre a leitura e o fechamento, o fechamento ainda passa.
+O que prova: a regra de 23/11 (agente não fecha conversa assumida) está no ar, e o caminho da tela não regrediu com a unificação do #17. Limite conhecido, escrito no próprio arquivo (linhas 33 a 36): se a pessoa assumir no instante entre a leitura e o fechamento, o fechamento ainda passa. Esse limite vale só SEM a Tarefa 6.1. Com a migration 9824 e a imagem da Tarefa 6.1, a função do banco recusa com a linha travada (`PT403`) e a ferramenta devolve o mesmo `conversa_com_humano`. A janela não dá para provocar à mão pela tela; a prova dela é o teste de banco `tests/invariants/fechar-conversa-por-agente.test.ts` (casos 1, 2 e 3).
+
+7d (só com a Tarefa 6.1 no ar). Confira no banco que existe uma função só, com 5 parâmetros:
+
+```sql
+select pg_get_function_identity_arguments(p.oid)
+  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+ where n.nspname = 'public' and p.proname = 'fn_service_status';
+-- esperado: 1 linha: p_org uuid, p_conversation uuid, p_status text, p_expected bigint, p_ator text
+```
+
+Se a consulta devolver a função de 4 parâmetros (a 9824 não entrou) e a imagem for a da Tarefa 6.1, o 7a devolve `motivo: "indisponivel"` em vez de fechar: é a falha fechada da seção 6.1, e o conserto é aplicar a 9824, não voltar a imagem.
 
 ### Passo 8. Proposta: salvar duas vezes, consultar por agente e aprovar pela tela (PRs #15, #22, #24; migrations 9814 e 9815)
 
@@ -814,7 +894,7 @@ Como voltar:
 1. Reimplante a imagem anterior (`APP_IMAGE` da main `f48146edb`).
 2. **Rode a reversão da 9815 da seção 6.2.** Sem ela, o editor de proposta da imagem antiga dá `409` no segundo salvar (seção 6.1, 9815). É a única migration do lote que não volta só com a imagem.
 3. Tire a linha da 9815 de `deploy/arvisx/crm/migracoes-pos-baseline.txt` no checkout, ou volte o checkout. A lista vem do checkout, não da imagem: se a linha ficar, o próximo deploy reaplica a 9815 (regras da seção 6.2).
-4. As outras 11 migrations podem ficar aplicadas com a imagem antiga (tabela-resumo). Com a 9811 no banco, `event_log` segue recebendo `conversation.ai_paused` e `conversation.ai_resumed`.
+4. As outras 11 migrations podem ficar aplicadas com a imagem antiga (tabela-resumo), e a 9824 também, se tiver subido (seção 6.1, 9824). Com a 9811 no banco, `event_log` segue recebendo `conversation.ai_paused` e `conversation.ai_resumed`.
 5. Repita os passos 1, 2, 8b e 12a com a imagem antiga.
 
 ### Limpeza do teste
