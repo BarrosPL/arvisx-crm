@@ -4,47 +4,8 @@ secao: adicionado
 titulo: O agente externo fica sabendo quando uma pessoa assume a conversa, e a empresa pode barrar mensagens por regra antes da IA
 ---
 
-Duas coisas novas na convivência entre a equipe e a IA.
+- **O agente externo sabe ficar calado:** `crm_get_conversation` informa se a IA está pausada e quem assumiu, e dois gatilhos novos (`conversation.ai_paused`, `conversation.ai_resumed`) saem pelo webhook das automações.
+- **Prazo de silêncio:** depois que alguém responde pela tela, a IA se cala por um prazo (padrão 5 minutos); ajuste `screen_reply_silence_minutes` pela rota de atendimento (sem campo na tela).
+- **Filtro de entrada:** a empresa cadastra termos de ofensa, spam e assunto fora do escopo; a mensagem que casar não vai a modelo nenhum e recebe uma resposta curta da empresa, ou nada. Nasce desligado e sem lista, só pela rota de atendimento (`docs/arvisx/SUPERFICIE-DE-AGENTE.md`). Só barra mensagem com até 3 palavras além do termo e, com agente assistido, a resposta do filtro não sai.
 
-- **O agente de fora do CRM sabe quando ficar calado.** O agente do próprio
-  CRM já não respondia por cima de quem assume ou responde uma conversa. Quem
-  atende por um sistema externo passa a saber também, de dois jeitos:
-  `crm_get_conversation` diz se a IA está pausada naquela conversa, por quê,
-  desde quando e quem assumiu; e há dois gatilhos novos nas automações,
-  "Quando o atendimento automático for pausado numa conversa"
-  (`conversation.ai_paused`) e "Quando o atendimento automático voltar numa
-  conversa" (`conversation.ai_resumed`), que saem pela ação "Avisar outro
-  sistema (webhook)".
-- **Prazo de silêncio da empresa para a resposta pela tela.** Depois que
-  alguém responde pela tela, a IA fica calada por um prazo. Era fixo em 5 minutos. O padrão continua 5; quem quiser outro
-  prazo ajusta `screen_reply_silence_minutes` pela rota de atendimento (ainda
-  sem campo na tela). Os outros prazos, em Configurações › Atendimento, não
-  mudaram.
-- **Filtro de entrada.** A empresa pode cadastrar listas de termos para
-  ofensa, spam e assunto fora do que ela atende. A mensagem que casar não é
-  enviada a modelo nenhum: sai uma resposta curta escrita pela empresa, ou
-  nada, e a conversa pode ganhar um marcador. Nasce desligado e sem lista: o
-  produto não traz palavra nenhuma. Mensagem que pede uma pessoa ou pede para
-  parar continua sendo tratada como antes. Ainda não tem tela; a configuração
-  é pela rota de atendimento e está descrita em
-  `docs/arvisx/SUPERFICIE-DE-AGENTE.md`.
-
-Na passagem entre agentes do mesmo número, se uma pessoa assume a conversa
-entre os dois, o segundo agente não responde.
-
-Há uma migration (9811): um gatilho em `conversations` que grava os dois
-eventos. Não cria tabela nem coluna e não altera dado existente. O
-`update.sh` a aplica sozinho.
-
-Depois da revisão de 20/11, o filtro de entrada passou a errar para o lado de
-responder: o acento distingue as palavras ("para" não é "Pará"), nome próprio
-no meio da frase não casa, e a mensagem que traz um pedido junto da palavra da
-lista vai para o agente (a regra só barra a mensagem com até 3 palavras além
-do termo; o teto é ajustável por categoria com `max_extra_words`). Em número
-com agente em modo assistido, a resposta automática do filtro não é mais
-enviada: a mensagem segue para o agente, e a resposta só sai depois de uma
-pessoa aprovar. A rota de configuração passa a devolver os avisos de falso
-positivo (`entry_filter_warnings`). O guia de webhooks ganhou a conta que o
-agente externo faz para saber se pode falar: pelo `paused_until` do último
-`conversation.ai_paused`, sem esperar `ai_resumed` quando a pausa vence por
-prazo.
+Migration 9811: gatilho em `conversations`, sem tabela ou dado alterado.
