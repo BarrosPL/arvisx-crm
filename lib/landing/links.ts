@@ -13,6 +13,8 @@
 export const OFERTA = {
   trial: "7 dias de teste grátis",
   cta: "Começar o teste grátis",
+  /** O teste não pede cartão de crédito (confirmado pelo dono em 27/11/2026). */
+  semCartao: "Sem cartão de crédito",
   /** Texto dos botões de cadastro enquanto `CADASTRO_ABERTO` for false. */
   ctaEmBreve: "Lançamento em breve",
 } as const;

@@ -64,7 +64,7 @@ import "./landing.css";
  */
 export const dynamic = "force-dynamic";
 
-const TITULO = "Arvisx CRM | Toda a sua operação de vendas e atendimento em um só CRM";
+const TITULO = "Arvisx CRM | Seu WhatsApp vendendo sozinho. Sua equipe só fecha.";
 
 export const metadata: Metadata = {
   title: TITULO,
@@ -163,6 +163,9 @@ export default async function HomePage() {
   // Os planos e o preço vêm do cadastro dos planos (/admin/cobranca), nunca do código.
   const vitrine = await planosDaVitrine();
   const maisCompletoDaVitrine = maisCompleto(vitrine.planos);
+  // Com exatamente três planos oferecidos, o do meio é o "Mais escolhido" (o que guia a escolha).
+  const ofertados = vitrine.planos.filter((p) => !p.inclui_agentes_arvisx);
+  const maisEscolhidoDaVitrine = ofertados.length === 3 ? ofertados[1]!.id : null;
   // Quem chega aqui não tem sessão (quem tem já foi para o painel): o idioma é o
   // do navegador, pela mesma função das outras telas públicas. O provider leva
   // esse idioma aos componentes de cliente da página (o aviso de cookies).
@@ -203,18 +206,19 @@ export default async function HomePage() {
         <section className="hero hero-b">
           <div className="miolo">
             <div className="texto">
-              <p className="eyebrow entra">{t("CRM de atendimento e vendas")}</p>
+              <p className="eyebrow entra">{t("Black Friday · Equipe de IA pronta em todos os planos")}</p>
               <h1 className="entra" style={atraso(".08s")}>
-                {t("Toda a sua operação de vendas e atendimento")}{" "}<em>{t("em um só CRM.")}</em>
+                {t("Seu WhatsApp vendendo sozinho.")}{" "}<em>{t("Sua equipe só fecha.")}</em>
               </h1>
               <p className="sub entra" style={atraso(".18s")}>
-                {t("Atendimento, funil, agenda e chamadas de voz e vídeo num só CRM. Três planos, do atendimento à operação inteira com IA.")}
+                {t("A IA atende, qualifica e agenda no WhatsApp a qualquer hora. Sua equipe entra só para fechar.")}{" "}
+                {t("Atendimento, funil, agenda e chamadas de voz e vídeo num só CRM.")}
               </p>
               <div className="cta-bloco entra" style={atraso(".28s")}>
                 <BotaoDeCadastro className="btn primario grande" comSeta t={t} />
                 <div className="cta-info">
                   <strong>{t(OFERTA.trial)}</strong>
-                  <span>{t("IA incluída em todos os planos, com franquia mensal")}</span>
+                  <span>{t(OFERTA.semCartao)}. {t("Equipe de IA pronta, incluída em todos os planos.")}</span>
                 </div>
               </div>
             </div>
@@ -297,6 +301,50 @@ export default async function HomePage() {
               {t("Chamadas de voz e vídeo")}
             </li>
           </ul>
+        </section>
+
+        <section className="faixa painel bf" id="black-friday">
+          <div className="miolo">
+            <div className="cabeca">
+              <p className="eyebrow">{t("Black Friday · por tempo limitado")}</p>
+              <h2>{t("A Equipe de IA pronta agora vem em todos os planos.")}</h2>
+              <p>
+                {t("Quatro agentes já escritos para o seu negócio, instalados em minutos pelo próprio CRM, sem custo a mais no plano. Quem contratar durante a promoção mantém a Equipe pronta.")}
+              </p>
+            </div>
+            <ol className="bf-fluxo" aria-label={t("Como a IA atende à noite")}>
+              <li><b>{t("22h")}</b><span>{t("O cliente chama no WhatsApp")}</span></li>
+              <li><b>{t("Na hora")}</b><span>{t("A IA responde, tira dúvidas e qualifica")}</span></li>
+              <li><b>{t("Em seguida")}</b><span>{t("Marca a conversa na agenda")}</span></li>
+              <li><b>{t("De manhã")}</b><span>{t("Sua equipe só chega para fechar")}</span></li>
+            </ol>
+            <div className="grade bf-agentes">
+              <article className="cartao">
+                <span className="ic"><ChatsCircle {...ico} /></span>
+                <h3>{t("Atendimento")}</h3>
+                <p>{t("Responde, tira dúvidas e qualifica o contato no WhatsApp.")}</p>
+              </article>
+              <article className="cartao">
+                <span className="ic"><CalendarBlank {...ico} /></span>
+                <h3>{t("Agendamento")}</h3>
+                <p>{t("Marca, confirma e remarca pela agenda do CRM.")}</p>
+              </article>
+              <article className="cartao">
+                <span className="ic"><FileText {...ico} /></span>
+                <h3>{t("Propostas")}</h3>
+                <p>{t("Envia a proposta que a sua equipe aprovou, uma vez só.")}</p>
+              </article>
+              <article className="cartao">
+                <span className="ic"><ClockCountdown {...ico} /></span>
+                <h3>{t("Recuperação de vendas")}</h3>
+                <p>{t("Retoma quem parou de responder e quem faltou ao compromisso.")}</p>
+              </article>
+            </div>
+            <div className="bf-rodape">
+              <BotaoDeCadastro className="btn primario grande" comSeta t={t} />
+              <p>{t("Tudo nasce em ensaio: só os telefones de teste falam com os agentes até você ativar.")}</p>
+            </div>
+          </div>
         </section>
 
         <section className="faixa dor claro">
@@ -815,14 +863,15 @@ export default async function HomePage() {
               <p className="eyebrow">{t("Planos")}</p>
               <h2>{t("Do atendimento à operação inteira com IA.")}</h2>
               <p>
-                {t("Todos os planos começam com")}{" "}{t(OFERTA.trial)}.{" "}
+                {t("Todos os planos começam com")}{" "}{t(OFERTA.trial)}, {t(OFERTA.semCartao).toLowerCase()}.{" "}
                 {vitrine.iva ? t("Preços mensais + IVA.") : t("Preços mensais.")}
               </p>
             </div>
             {vitrine.planos.length > 0 ? (
               <ul className="planos-grade">
                 {vitrine.planos.map((plano) => {
-                  const destaque = plano.id === maisCompletoDaVitrine;
+                  const escolhido = plano.id === maisEscolhidoDaVitrine;
+                  const destaque = escolhido || (maisEscolhidoDaVitrine === null && plano.id === maisCompletoDaVitrine);
                   return (
                     <li
                       key={plano.id}
@@ -830,7 +879,8 @@ export default async function HomePage() {
                       className={`plano-card${destaque ? " destaque" : ""}${plano.inclui_agentes_arvisx ? " agentes" : ""}`}
                     >
                       <div className="pl-selos">
-                        {destaque ? <span className="pl-selo">{t("Mais completo")}</span> : null}
+                        {escolhido ? <span className="pl-selo forte">{t("Mais escolhido")}</span> : null}
+                        {plano.id === maisCompletoDaVitrine ? <span className="pl-selo">{t("Mais completo")}</span> : null}
                         {plano.inclui_agentes_arvisx ? (
                           <span className="pl-selo forte">
                             <Sparkle {...ico} weight="fill" />{" "}{t("Agentes de IA sob medida")}
@@ -845,6 +895,11 @@ export default async function HomePage() {
                           {plano.intervalo === "ano" ? t("por ano") : t("por mês")}
                         </span>
                       </div>
+                      {!plano.inclui_agentes_arvisx ? (
+                        <p className="pl-bf">
+                          <Sparkle {...ico} weight="fill" />{" "}{t("Black Friday: Equipe de IA pronta incluída")}
+                        </p>
+                      ) : null}
                       {plano.descricao_curta ? <p className="pl-promessa">{plano.descricao_curta}</p> : null}
                       {plano.para_quem ? <p className="pl-quem">{plano.para_quem}</p> : null}
                       <p className="pl-limites">
@@ -992,7 +1047,7 @@ export default async function HomePage() {
               <details>
                 <summary>{t("Como funciona o teste grátis?")}</summary>
                 <p>
-                  {t("Você começa com")}{" "}<span>{t(OFERTA.trial)}</span>{" "}{t("para conhecer o CRM com a sua equipe.")}
+                  {t("Você começa com")}{" "}<span>{t(OFERTA.trial)}</span>{" "}{t("para conhecer o CRM com a sua equipe.")}{" "}{t(OFERTA.semCartao)}.
                 </p>
               </details>
               <details>

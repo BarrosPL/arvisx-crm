@@ -63,7 +63,7 @@ describe("/ — landing v3", () => {
   it("sem sessão: a promessa da hero, como no protótipo aprovado", async () => {
     await montar();
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Toda a sua operação de vendas e atendimento em um só CRM.",
+      "Seu WhatsApp vendendo sozinho. Sua equipe só fecha.",
     );
   });
 
@@ -71,9 +71,9 @@ describe("/ — landing v3", () => {
     expect(CADASTRO_ABERTO).toBe(true);
     const { container } = await montar();
     expect(screen.queryByText(OFERTA.ctaEmBreve)).toBeNull();
-    // topo + hero + Essencial, Standard e Premium
+    // topo + hero + faixa da Black Friday + Essencial, Standard e Premium
     // (o botão de cada plano leva a escolha junto: `/signup?plano=<id>`)
-    expect(container.querySelectorAll(`a[href="${LINKS.cadastro}"]`)).toHaveLength(2);
+    expect(container.querySelectorAll(`a[href="${LINKS.cadastro}"]`)).toHaveLength(3);
     expect(container.querySelectorAll(`a[href^="${LINKS.cadastro}?plano="]`)).toHaveLength(TRES.length);
     for (const card of container.querySelectorAll("[data-plano]")) {
       const links = within(card as HTMLElement).getAllByRole("link");
@@ -158,7 +158,7 @@ describe("/ — landing v3", () => {
   it("⭐ o hero diz que a IA vem incluída em todos os planos, com franquia mensal", async () => {
     const { container } = await montar();
     const hero = container.querySelector(".hero") as HTMLElement;
-    expect(within(hero).getByText("IA incluída em todos os planos, com franquia mensal")).toBeTruthy();
+    expect(within(hero).getByText(/Equipe de IA pronta, incluída em todos os planos\./)).toBeTruthy();
   });
 
   it("⭐ a landing não diz mais que a IA depende das credenciais do cliente nem que começa no Standard", async () => {
@@ -235,7 +235,7 @@ describe("/ — landing v3", () => {
     expect(String(metadata.description)).toMatch(/Três planos, do atendimento à operação inteira com IA/);
     expect(String(metadata.description)).toMatch(/Agentes de IA sob medida são um serviço à parte, os Agentes Arvisx\./);
     expect(String(metadata.openGraph?.description)).toMatch(/Três planos/);
-    expect(container.querySelector(".hero")!.textContent).toMatch(/Três planos, do\s+atendimento à operação inteira com IA\./);
+    expect(container.querySelector("#plano")!.textContent).toMatch(/Do atendimento à operação inteira com IA\./);
     expect(container.querySelector("#ia")!.textContent).toMatch(/A gestão e a configuração dos agentes são suas\./);
     expect(container.querySelector("#suas-chaves")!.textContent).toMatch(
       /Esse é um serviço à\s+parte, os Agentes Arvisx, contratado depois de uma reunião\./,
@@ -287,6 +287,23 @@ describe("/ — landing v3", () => {
     await montar();
     expect(screen.getAllByText(OFERTA.trial).length).toBeGreaterThan(0);
     expect(screen.getByText(/São 3 planos mensais, de 59,90\s€ a 199,90\s€ \+ IVA/)).toBeTruthy();
+  });
+
+  it("⭐ Black Friday: a Equipe de IA pronta aparece no topo, numa faixa própria e em cada plano; o do meio é o mais escolhido", async () => {
+    const { container } = await montar();
+    expect(container.querySelector(".hero")!.textContent).toMatch(/Black Friday · Equipe de IA pronta em todos os planos/);
+    const faixa = container.querySelector("#black-friday") as HTMLElement;
+    expect(faixa).toBeTruthy();
+    for (const agente of ["Atendimento", "Agendamento", "Propostas", "Recuperação de vendas"]) {
+      expect(within(faixa).getByText(agente)).toBeTruthy();
+    }
+    expect(faixa.textContent).toMatch(/Quem contratar durante a promoção mantém a Equipe pronta/);
+    const cards = [...container.querySelectorAll("[data-plano]")] as HTMLElement[];
+    for (const c of cards) expect(within(c).getByText("Black Friday: Equipe de IA pronta incluída")).toBeTruthy();
+    expect(within(cards[1]!).getByText("Mais escolhido")).toBeTruthy();
+    expect(within(cards[0]!).queryByText("Mais escolhido")).toBeNull();
+    expect(within(cards[2]!).queryByText("Mais escolhido")).toBeNull();
+    expect(container.querySelector("#plano")!.textContent).toMatch(/Sem cartão de crédito|sem cartão de crédito/);
   });
 
   it("o carrossel tem as seis telas e a primeira começa selecionada", async () => {
