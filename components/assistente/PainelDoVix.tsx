@@ -59,6 +59,29 @@ function Onda({ rotulo }: { rotulo: string }) {
   );
 }
 
+type EstadoDoNucleo = "parado" | "pensando" | "ouvindo" | "falando";
+
+/** O núcleo animado do Vix (estilo "Jarvis"): só enfeite, o aviso em texto é o de `Onda`. */
+function Nucleo({ estado }: { estado: EstadoDoNucleo }) {
+  return (
+    <div className="vix-nucleo" data-estado={estado} data-testid="vix-nucleo" aria-hidden>
+      <span className="eco" />
+      <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeLinecap="round">
+        <g className="anel anel-1" strokeWidth="2.2" opacity="0.9">
+          <circle cx="50" cy="50" r="46" strokeDasharray="38 18 6 18" />
+        </g>
+        <g className="anel anel-2" strokeWidth="1.6" opacity="0.75">
+          <circle cx="50" cy="50" r="38" strokeDasharray="4 9" />
+        </g>
+        <g className="anel anel-3" strokeWidth="2.6" opacity="0.6">
+          <circle cx="50" cy="50" r="30" strokeDasharray="22 40" />
+        </g>
+      </svg>
+      <span className="miolo" />
+    </div>
+  );
+}
+
 interface Cartao {
   id: string;
   nivel: "escrever" | "sensivel";
@@ -489,6 +512,9 @@ export function PainelDoVix() {
           </header>
 
           <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4" data-testid="vix-conversa">
+            <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-1 flex justify-center bg-gradient-to-b from-surface via-surface to-transparent pb-2 pt-3">
+              <Nucleo estado={ouvindo ? "ouvindo" : falando ? "falando" : enviando ? "pensando" : "parado"} />
+            </div>
             {itens.length === 0 &&
               (estado?.implantacaoPendente ? (
                 <div className="text-[13px] text-muted-foreground" data-testid="vix-boas-vindas">

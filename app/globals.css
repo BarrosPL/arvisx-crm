@@ -1759,3 +1759,134 @@ html {
     transform: scaleY(0.7);
   }
 }
+
+/* ───── Núcleo do Vix (estilo "Jarvis") ─────
+   Um núcleo que brilha e três anéis de arcos girando em sentidos e ritmos
+   diferentes. O estado muda o ritmo: parado (respira devagar), pensando
+   (anéis rápidos), ouvindo (núcleo pulsa e abre um anel) e falando (núcleo
+   batendo como voz). É só enfeite: o aviso em texto fica ao lado (aria-hidden
+   aqui). Com movimento reduzido tudo fica PARADO, só o brilho muda por estado. */
+@keyframes vix-giro {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes vix-respira {
+  0%,
+  100% {
+    transform: scale(0.92);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
+@keyframes vix-bate {
+  0%,
+  100% {
+    transform: scale(0.85);
+  }
+  20% {
+    transform: scale(1.18);
+  }
+  45% {
+    transform: scale(0.95);
+  }
+  70% {
+    transform: scale(1.1);
+  }
+}
+@keyframes vix-eco {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+.vix-nucleo {
+  --vix-cor: var(--color-cta, #1d8a99);
+  --vix-giro: 14s;
+  position: relative;
+  width: 84px;
+  height: 84px;
+  flex: none;
+  color: var(--vix-cor);
+}
+.vix-nucleo[data-estado="pensando"] {
+  --vix-giro: 3.2s;
+}
+.vix-nucleo[data-estado="ouvindo"] {
+  --vix-giro: 7s;
+}
+.vix-nucleo[data-estado="falando"] {
+  --vix-giro: 5s;
+}
+.vix-nucleo svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.vix-nucleo .anel {
+  transform-origin: 50% 50%;
+  animation: vix-giro var(--vix-giro) linear infinite;
+}
+.vix-nucleo .anel-2 {
+  animation-duration: calc(var(--vix-giro) * 0.7);
+  animation-direction: reverse;
+}
+.vix-nucleo .anel-3 {
+  animation-duration: calc(var(--vix-giro) * 1.6);
+}
+.vix-nucleo .miolo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 35% 35%, #fff 0%, var(--vix-cor) 45%, transparent 75%);
+  box-shadow:
+    0 0 14px 2px var(--vix-cor),
+    0 0 34px 6px color-mix(in srgb, var(--vix-cor) 45%, transparent);
+  animation: vix-respira 3.6s ease-in-out infinite;
+}
+.vix-nucleo[data-estado="pensando"] .miolo {
+  animation-duration: 1s;
+}
+.vix-nucleo[data-estado="ouvindo"] .miolo {
+  animation: vix-respira 1.4s ease-in-out infinite;
+}
+.vix-nucleo[data-estado="falando"] .miolo {
+  animation: vix-bate 0.9s ease-in-out infinite;
+}
+.vix-nucleo .eco {
+  position: absolute;
+  inset: 22px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--vix-cor);
+  opacity: 0;
+}
+.vix-nucleo[data-estado="ouvindo"] .eco,
+.vix-nucleo[data-estado="falando"] .eco {
+  animation: vix-eco 1.6s ease-out infinite;
+}
+.vix-nucleo[data-estado="falando"] .eco {
+  animation-duration: 1.1s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vix-nucleo .anel,
+  .vix-nucleo .miolo,
+  .vix-nucleo .eco {
+    animation: none !important;
+  }
+  .vix-nucleo[data-estado="parado"] .miolo {
+    opacity: 0.8;
+  }
+}

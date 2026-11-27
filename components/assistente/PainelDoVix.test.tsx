@@ -240,6 +240,13 @@ describe("uma conversa só, sem escolher modo", () => {
     expect(painel.textContent).not.toMatch(/Primeiros passos/);
     expect(within(painel).queryByRole("group", { name: "Modo do assistente" })).toBeNull();
   });
+
+  it("mostra o núcleo animado do Vix, parado enquanto ninguém falou nada", async () => {
+    const user = userEvent.setup();
+    render(<PainelDoVix />);
+    await user.click(screen.getByTestId("vix-botao"));
+    expect(screen.getByTestId("vix-nucleo")).toHaveAttribute("data-estado", "parado");
+  });
 });
 
 describe("conta nova: o Vix recebe a pessoa", () => {
