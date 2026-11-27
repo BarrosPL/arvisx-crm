@@ -30,7 +30,7 @@ Vazio ou qualquer outro texto vale `desligado`.
 ## Passo 2 (só para `hermes`): o perfil e as duas chaves
 
 1. Criar no Hermes o perfil `vix-crm`, isolado: sem ferramentas, sem terminal, sem arquivos, sem memória, sem canal público e com chave própria (`API_SERVER_KEY`) que abre só esse perfil. Este passo é nosso, feito do lado do Hermes; o código do CRM não cria nem altera nada lá.
-2. Em Painel › Configuração, gravar `VIX_HERMES_URL` (o endereço https do perfil, terminando em `/p/vix-crm`) e `VIX_HERMES_SEGREDO` (a chave desse perfil). Falta uma das duas, ou o endereço não é https (http só em máquina local): o assistente fica indisponível.
+2. Em Painel › Configuração, gravar `VIX_HERMES_URL` (o endereço https do perfil, terminando em `/p/vix-crm`) e `VIX_HERMES_SEGREDO` (a chave desse perfil). Falta uma das duas, ou o endereço não é https (http só dentro da rede interna, como `http://arvisx_hermes-agent:8643/p/vix-crm`): o assistente fica indisponível.
 3. Só então `VIX_PAGADOR = hermes`.
 
 O código lê as duas chaves num lugar só, `lib/assistente/provedor/hermes.ts`, e o endereço e o segredo nunca vêm de quem está perguntando.

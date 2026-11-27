@@ -80,7 +80,11 @@ export class RespostaInvalidaDoHermes extends ErroDoHermes {
   }
 }
 
-/** Valida a URL do Hermes: https, ou http só em máquina local. Devolve a base sem barra final, ou null. */
+/**
+ * Valida a URL do Hermes: https, ou http só dentro da rede privada (máquina local ou nome de serviço
+ * interno, que não tem ponto, como `arvisx_hermes-agent`). Um nome com ponto exige https.
+ * Devolve a base sem barra final, ou null.
+ */
 export function urlDoHermesValida(bruta: string): string | null {
   let u: URL;
   try {
@@ -88,7 +92,11 @@ export function urlDoHermesValida(bruta: string): string | null {
   } catch {
     return null;
   }
-  const local = u.hostname === "localhost" || u.hostname === "127.0.0.1" || u.hostname === "[::1]";
+  const local =
+    u.hostname === "localhost" ||
+    u.hostname === "127.0.0.1" ||
+    u.hostname === "[::1]" ||
+    /^[a-z0-9_-]+$/i.test(u.hostname);
   if (u.protocol !== "https:" && !(u.protocol === "http:" && local)) return null;
   if (u.username !== "" || u.password !== "" || u.search !== "" || u.hash !== "") return null;
   return u.toString().replace(/\/+$/, "");

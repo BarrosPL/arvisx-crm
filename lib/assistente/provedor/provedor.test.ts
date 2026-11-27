@@ -89,7 +89,7 @@ describe("hermes", () => {
   it.each([
     ["sem endereço", (): void => { config.VIX_HERMES_URL = ""; }],
     ["endereço que não é uma URL", (): void => { config.VIX_HERMES_URL = "hermes sem url"; }],
-    ["endereço http fora da máquina local", (): void => { config.VIX_HERMES_URL = "http://hermes.exemplo.test/p/vix-crm"; }],
+    ["endereço http com nome público", (): void => { config.VIX_HERMES_URL = "http://hermes.exemplo.test/p/vix-crm"; }],
     ["endereço com usuário e senha embutidos", (): void => { config.VIX_HERMES_URL = "https://u:s@hermes.exemplo.test/p/vix-crm"; }],
     ["endereço com parâmetros na URL", (): void => { config.VIX_HERMES_URL = "https://hermes.exemplo.test/p/vix-crm?x=1"; }],
     ["sem segredo", (): void => { config.VIX_HERMES_SEGREDO = ""; }],

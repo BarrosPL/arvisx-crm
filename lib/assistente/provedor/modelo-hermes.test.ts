@@ -315,10 +315,11 @@ describe("urlDoHermesValida", () => {
     ["  https://h.exemplo.test/p/vix-crm  ", "https://h.exemplo.test/p/vix-crm"],
     ["http://localhost:8642/p/vix-crm", "http://localhost:8642/p/vix-crm"],
     ["http://127.0.0.1:8642/p/vix-crm", "http://127.0.0.1:8642/p/vix-crm"],
+    ["http://arvisx_hermes-agent:8643/p/vix-crm", "http://arvisx_hermes-agent:8643/p/vix-crm"],
   ])("aceita %s", (entrada, esperado) => expect(urlDoHermesValida(entrada)).toBe(esperado));
 
   it.each([
-    "", "não é url", "http://h.exemplo.test/p/vix-crm", "ftp://h.exemplo.test", "https://u:s@h.exemplo.test/p",
+    "", "não é url", "http://h.exemplo.test/p/vix-crm", "http://10.0.0.5:8643/p/vix-crm", "http://exemplo.com.br/p/vix-crm", "ftp://h.exemplo.test", "https://u:s@h.exemplo.test/p",
     "https://h.exemplo.test/p?x=1", "https://h.exemplo.test/p#x", "javascript:alert(1)",
   ])("recusa %j", (entrada) => expect(urlDoHermesValida(entrada)).toBeNull());
 });

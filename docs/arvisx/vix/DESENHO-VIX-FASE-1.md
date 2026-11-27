@@ -741,7 +741,7 @@ O `api_server` do Hermes só executa as ferramentas do **próprio perfil** (`_ge
 | Pedido em excesso | No máximo 4 por resposta; o laço já tem 8 ferramentas por turno | idem |
 | O Hermes alcançar o CRM | O modelo não importa banco, sessão, cliente de serviço nem leitor de credencial; só `hermes.ts` o importa e só o índice importa `hermes.ts` | `assistente-provedor-cerca.test.ts` |
 | Chave do Hermes vazar | Só no cabeçalho de autorização; sem log; erros sem URL nem corpo; a chamada não segue redirecionamento | `modelo-hermes.test.ts`, cerca e `provedor.test.ts` |
-| Endereço do Hermes apontar para outro lugar | Só https (http só em máquina local), sem usuário, senha, parâmetros ou fragmento | `urlDoHermesValida` |
+| Endereço do Hermes apontar para outro lugar | Só https (http só na rede interna: máquina local ou nome de serviço sem ponto), sem usuário, senha, parâmetros ou fragmento | `urlDoHermesValida` |
 | Resposta gigante ou travada | Teto de 256 KB e prazo de 90 s | `modelo-hermes.test.ts` |
 | Hermes cair ou responder lixo | Frase fixa "indisponível por ora"; sem queda para outro pagador e sem nova tentativa | `turno.test.ts`, `provedor.test.ts` |
 | Assinatura ChatGPT voltar pela porta dos fundos | Nada em `lib/assistente` importa `login-codex`; `VIX_ORGANIZACAO_DA_CONTA` não existe | cerca |
