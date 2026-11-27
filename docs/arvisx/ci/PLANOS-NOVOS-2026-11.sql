@@ -15,10 +15,10 @@
 --
 -- ⚠️ TRÊS ESCOLHAS DESTE ARQUIVO QUE O LUCAS PRECISA CONFIRMAR ANTES DE RODAR:
 --
---   1. NOMES. Os planos 1, 2 e 3 chamam-se "Inicial", "Profissional" e
---      "Escala" (decisão do Lucas em 25/11/2026). São PROVISÓRIOS até ele
---      confirmar. O nome mora num lugar só, a lista `values` logo abaixo: troque
---      ali antes de rodar, ou depois na tela. Nada no código lê o nome; quem
+--   1. NOMES E PREÇOS. Os planos 1, 2 e 3 chamam-se "Start", "Growth" e
+--      "Scale", a 147,90 · 247,90 · 347,90 EUR (decisão do Lucas em 27/11/2026,
+--      confirmada; este arquivo já rodou em produção nessa data). O nome mora num
+--      lugar só, a lista `values` logo abaixo. Nada no código lê o nome; quem
 --      identifica o plano é o `id`.
 --   2. `oferecido_ao_cliente = false`. Os planos nascem FORA da vitrine (página
 --      inicial e tela de troca de plano), porque a vitrine lê o banco e mostraria
@@ -28,7 +28,7 @@
 --      sem plano padrão, 14 (o padrão da coluna).
 --
 -- O que cada coluna recebe:
---   preco_cents / moeda      129,90 · 199,90 · 249,90 em EUR
+--   preco_cents / moeda      147,90 · 247,90 · 347,90 em EUR
 --   max_canais               3 · 6 · 12
 --   max_assentos             5 · 10 · 25
 --   teto_ia_usd_cents        1200 · 3200 · 6000  (US$ 12 · 32 · 60 por ciclo)
@@ -50,9 +50,9 @@ select v.id, v.nome, v.preco_cents, 'EUR', 'mes',
        v.max_canais, v.max_assentos, v.teto_ia_usd_cents,
        false, false, '{"preset":"completa"}'::jsonb
   from (values
-    ('a7150008-0000-4000-8000-000000000001'::uuid, 'Inicial', 12990::bigint,  3,  5, 1200),
-    ('a7150008-0000-4000-8000-000000000002'::uuid, 'Profissional', 19990::bigint,  6, 10, 3200),
-    ('a7150008-0000-4000-8000-000000000003'::uuid, 'Escala', 24990::bigint, 12, 25, 6000)
+    ('a7150008-0000-4000-8000-000000000001'::uuid, 'Start', 14790::bigint,  3,  5, 1200),
+    ('a7150008-0000-4000-8000-000000000002'::uuid, 'Growth', 24790::bigint,  6, 10, 3200),
+    ('a7150008-0000-4000-8000-000000000003'::uuid, 'Scale', 34790::bigint, 12, 25, 6000)
   ) as v (id, nome, preco_cents, max_canais, max_assentos, teto_ia_usd_cents)
 on conflict (id) do nothing;
 
