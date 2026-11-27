@@ -27,13 +27,37 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useT } from "@/hooks/i18n/useT";
 import { HEADER_ORG_DA_ABA, orgDaAba } from "@/lib/auth/org-da-aba";
-import { PaperPlaneTilt, Sparkle, X } from "@/lib/ui/icons";
+import { Microphone, PaperPlaneTilt, Sparkle, SpeakerHigh, SpeakerSlash, Stop, X } from "@/lib/ui/icons";
 import { randomId } from "@/lib/random-id";
 import { cn } from "@/lib/utils";
 
 import { EVENTO_ABRIR_O_VIX, definirVixPresente } from "./presenca";
+import { falar, idiomaDaFala, ouvir, pararDeFalar, podeFalar, podeOuvir, type Escuta } from "./voz";
 
-type Modo = "suporte" | "consultor";
+const CHAVE_RESPOSTA_EM_VOZ = "vix:resposta-em-voz";
+const chaveDasBoasVindas = (orgId: string | undefined) => `vix:boas-vindas:${orgId ?? "-"}`;
+
+/** O que o painel precisa saber da conta para receber quem acabou de chegar. */
+interface EstadoDoPainel {
+  implantacaoPendente: boolean;
+  primeiraVez: boolean;
+}
+
+/** O indicador de que o Vix está pensando ou ouvindo: barras em onda (parado, com movimento reduzido). */
+function Onda({ rotulo }: { rotulo: string }) {
+  return (
+    <span role="status" aria-label={rotulo} className="inline-flex items-center gap-2 text-muted-foreground">
+      <span className="vix-onda" aria-hidden>
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+      </span>
+      <span>{rotulo}</span>
+    </span>
+  );
+}
 
 interface Cartao {
   id: string;
@@ -159,7 +183,13 @@ function CartaoDeAcao({
 export function PainelDoVix() {
   const t = useT();
   const [aberto, setAberto] = useState(false);
-  const [modo, setModo] = useState<Modo>("suporte");
+  const [estado, setEstado] = useState<EstadoDoPainel | null>(null);
+  const [respostaEmVoz, setRespostaEmVoz] = useState(false);
+  const [ouvindo, setOuvindo] = useState(false);
+  const [falando, setFalando] = useState(false);
+  const [erroDeVoz, setErroDeVoz] = useState<string | null>(null);
+  const escuta = useRef<Escuta | null>(null);
+  const idiomaDaVoz = idiomaDaFala(typeof document !== "undefined" ? document.documentElement.lang : null);
   const [itens, setItens] = useState<Item[]>([]);
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -184,14 +214,110 @@ export function PainelDoVix() {
     fim.current?.scrollIntoView?.({ block: "end" });
   }, [itens]);
 
+  // A preferência da pessoa: ler a resposta em voz alta ou só mostrar o texto.
+  useEffect(() => {
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- lê a preferência salva no aparelho (só existe no navegador)
+      setRespostaEmVoz(window.localStorage.getItem(CHAVE_RESPOSTA_EM_VOZ) === "1");
+    } catch {
+      /* sem armazenamento: fica em texto */
+    }
+    return () => {
+      escuta.current?.parar();
+      pararDeFalar();
+    };
+  }, []);
+
+  // Quem acabou de criar a conta é recebido: o painel abre sozinho, UMA vez por aparelho e empresa,
+  // e o Vix começa pelo negócio da pessoa. Sem `primeira_vez` (já conversou) ou com a conta pronta, fica quieto.
+  useEffect(() => {
+    let vivo = true;
+    void fetch("/api/v1/assistente/estado", { headers: cabecalhos() })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((corpo: { data?: { ligado?: boolean; primeira_vez?: boolean; implantacao?: { completa: boolean } | null } } | null) => {
+        const d = corpo?.data;
+        if (!vivo || !d?.ligado) return;
+        const e = { implantacaoPendente: d.implantacao ? !d.implantacao.completa : false, primeiraVez: d.primeira_vez === true };
+        setEstado(e);
+        if (!e.implantacaoPendente || !e.primeiraVez) return;
+        const chave = chaveDasBoasVindas(orgDaAba()?.orgId);
+        try {
+          if (window.localStorage.getItem(chave)) return;
+          window.localStorage.setItem(chave, "1");
+        } catch {
+          return; // sem armazenamento não dá para lembrar: não abre sozinho a cada tela
+        }
+        setAberto(true);
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
+  const escolherResposta = (emVoz: boolean) => {
+    setRespostaEmVoz(emVoz);
+    if (!emVoz) {
+      pararDeFalar();
+      setFalando(false);
+    }
+    try {
+      window.localStorage.setItem(CHAVE_RESPOSTA_EM_VOZ, emVoz ? "1" : "0");
+    } catch {
+      /* a escolha vale só nesta sessão */
+    }
+  };
+
+  const pararFala = () => {
+    pararDeFalar();
+    setFalando(false);
+  };
+
+  const falarMicrofone = () => {
+    if (ouvindo) {
+      escuta.current?.parar();
+      return;
+    }
+    pararFala();
+    setErroDeVoz(null);
+    const e = ouvir(idiomaDaVoz, {
+      aoParcial: (parcial) => setTexto(parcial),
+      aoFinal: (final) => {
+        setTexto("");
+        void enviar(final, "voz_transcrita");
+      },
+      aoFalhar: (motivo) =>
+        setErroDeVoz(
+          motivo === "not-allowed" || motivo === "service-not-allowed"
+            ? t("O microfone está bloqueado. Libere o acesso ao microfone no navegador para falar com o Vix.")
+            : motivo === "no-speech"
+              ? t("Não ouvi nada. Tente de novo.")
+              : t("Não consegui ouvir agora. Você pode digitar."),
+        ),
+      aoFim: () => {
+        setOuvindo(false);
+        escuta.current = null;
+      },
+    });
+    if (!e) {
+      setErroDeVoz(t("Este navegador não permite falar com o Vix. Você pode digitar."));
+      return;
+    }
+    escuta.current = e;
+    setOuvindo(true);
+  };
+
   const mudarCartao = (id: string, mudanca: Partial<Cartao>) =>
     setItens((atuais) =>
       atuais.map((item) => ({ ...item, cartoes: item.cartoes.map((c) => (c.id === id ? { ...c, ...mudanca } : c)) })),
     );
 
-  const enviar = async () => {
-    const pergunta = texto.trim();
+  const enviar = async (falado?: string, origem: "texto" | "voz_transcrita" = "texto") => {
+    const pergunta = (falado ?? texto).trim();
     if (pergunta === "" || enviando) return;
+    pararFala();
+    setErroDeVoz(null);
+    let respostaCompleta = "";
     const turno = randomId();
     const chaveDaResposta = `${turno}:assistente`;
     setTexto("");
@@ -212,7 +338,8 @@ export function PainelDoVix() {
         body: JSON.stringify({
           turn_id: turno,
           texto: pergunta,
-          modo,
+          origem_da_entrada: origem,
+          ...(respostaEmVoz && podeFalar() ? { resposta_em_voz: true } : {}),
           ...(conversaId ? { conversa_id: conversaId } : {}),
           ...(typeof window !== "undefined" && window.location.pathname.startsWith("/app")
             ? { tela_atual: window.location.pathname.slice(0, 200) }
@@ -261,6 +388,7 @@ export function PainelDoVix() {
           if (evento.tipo === "inicio" && typeof evento.conversa_id === "string") setConversaId(evento.conversa_id);
           if (evento.tipo === "texto" && typeof evento.texto === "string") {
             const pedaco = evento.texto;
+            respostaCompleta += pedaco;
             naResposta((item) => ({ ...item, texto: item.texto + pedaco }));
           }
           if (evento.tipo === "cartao" && evento.cartao && typeof evento.cartao === "object") {
@@ -284,9 +412,15 @@ export function PainelDoVix() {
     } finally {
       setEnviando(false);
     }
+    // Quem escolheu ouvir: a resposta é lida ao fim, na voz mais natural que o aparelho tiver.
+    if (respostaEmVoz && podeFalar() && respostaCompleta.trim() !== "") {
+      setFalando(true);
+      falar(respostaCompleta, idiomaDaVoz, () => setFalando(false));
+    }
   };
 
   const novaConversa = () => {
+    pararFala();
     setItens([]);
     setConversaId(null);
   };
@@ -321,46 +455,59 @@ export function PainelDoVix() {
               <p className="text-[14px] font-semibold text-text">Vix</p>
               <p className="truncate text-[12px] text-muted-foreground">{t("Assistente do CRM")}</p>
             </div>
+            {podeFalar() && (
+              <button
+                type="button"
+                data-testid="vix-resposta-em-voz"
+                aria-pressed={respostaEmVoz}
+                aria-label={respostaEmVoz ? t("Parar de ler as respostas em voz alta") : t("Ler as respostas em voz alta")}
+                title={respostaEmVoz ? t("O Vix responde em voz. Clique para só texto.") : t("O Vix responde em texto. Clique para ouvir.")}
+                onClick={() => escolherResposta(!respostaEmVoz)}
+                className={cn(
+                  "rounded-md p-1.5 hover:bg-surface-elevated",
+                  respostaEmVoz ? "text-cta" : "text-muted-foreground hover:text-text",
+                )}
+              >
+                {respostaEmVoz ? <SpeakerHigh size={16} aria-hidden /> : <SpeakerSlash size={16} aria-hidden />}
+              </button>
+            )}
             <Button size="sm" variant="ghost" onClick={novaConversa} disabled={enviando || itens.length === 0}>
               {t("Nova conversa")}
             </Button>
             <button
               type="button"
               aria-label={t("Fechar o assistente")}
-              onClick={() => setAberto(false)}
+              onClick={() => {
+                escuta.current?.parar();
+                pararFala();
+                setAberto(false);
+              }}
               className="rounded-md p-1.5 text-muted-foreground hover:bg-surface-elevated hover:text-text"
             >
               <X size={16} aria-hidden />
             </button>
           </header>
 
-          <div className="flex items-center gap-1 border-b border-border px-4 py-2 text-[12px]" role="group" aria-label={t("Modo do assistente")}>
-            {(["suporte", "consultor"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                aria-pressed={modo === m}
-                onClick={() => setModo(m)}
-                className={cn(
-                  "rounded-full px-3 py-1",
-                  modo === m ? "bg-cta-leve font-medium text-text" : "text-muted-foreground hover:text-text",
-                )}
-              >
-                {m === "suporte" ? t("Suporte") : t("Consultor")}
-              </button>
-            ))}
-            <span className="ml-1 rounded-full px-3 py-1 text-text-subtle" aria-disabled="true">
-              {t("Primeiros passos (em breve)")}
-            </span>
-          </div>
-
           <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4" data-testid="vix-conversa">
-            {itens.length === 0 && (
-              <div className="text-[13px] text-muted-foreground">
-                <p className="text-text">{t("Oi! Sou o Vix. Posso tirar dúvidas de uso, consultar os dados da sua conta e mostrar a tela certa.")}</p>
-                <p className="mt-2">{t("Nunca cole chave, senha ou código aqui: isso é feito pela tela de Credenciais.")}</p>
-              </div>
-            )}
+            {itens.length === 0 &&
+              (estado?.implantacaoPendente ? (
+                <div className="text-[13px] text-muted-foreground" data-testid="vix-boas-vindas">
+                  <p className="text-text">
+                    {t("Oi! Eu sou o Vix e vou te ajudar a deixar o seu CRM pronto, do zero até atender os seus clientes.")}
+                  </p>
+                  <p className="mt-2 text-text">
+                    {t("Para começar: me conta o que a sua empresa faz e por onde os seus clientes chegam até você hoje?")}
+                  </p>
+                  <p className="mt-2">{t("Você pode escrever ou clicar no microfone e falar.")}</p>
+                </div>
+              ) : (
+                <div className="text-[13px] text-muted-foreground">
+                  <p className="text-text">
+                    {t("Oi! Sou o Vix. Pergunte como usar o sistema, peça para eu olhar os dados da sua conta ou me diga o que você quer melhorar.")}
+                  </p>
+                  <p className="mt-2">{t("Nunca cole chave, senha ou código aqui: isso é feito pela tela de Credenciais.")}</p>
+                </div>
+              ))}
             {itens.map((item) => (
               <div key={item.chave} className={cn("flex", item.autor === "usuario" ? "justify-end" : "justify-start")}>
                 <div
@@ -372,7 +519,7 @@ export function PainelDoVix() {
                   )}
                 >
                   {item.texto === "" && item.cartoes.length === 0 ? (
-                    <span className="text-muted-foreground">{t("Pensando...")}</span>
+                    <Onda rotulo={t("Pensando...")} />
                   ) : (
                     <p className="whitespace-pre-wrap break-words">{item.texto}</p>
                   )}
@@ -396,6 +543,24 @@ export function PainelDoVix() {
           </div>
 
           <footer className="border-t border-border px-4 py-3">
+            {(ouvindo || falando || erroDeVoz) && (
+              <div className="mb-2 flex items-center justify-between gap-2 text-[12px]" data-testid="vix-voz-estado">
+                {ouvindo ? (
+                  <Onda rotulo={t("Ouvindo... pode falar")} />
+                ) : falando ? (
+                  <>
+                    <Onda rotulo={t("Falando...")} />
+                    <Button size="sm" variant="ghost" onClick={pararFala} aria-label={t("Parar de falar")}>
+                      <Stop size={14} aria-hidden />
+                    </Button>
+                  </>
+                ) : (
+                  <p role="alert" className="text-muted-foreground">
+                    {erroDeVoz}
+                  </p>
+                )}
+              </div>
+            )}
             <div className="flex items-end gap-2">
               <Textarea
                 value={texto}
@@ -412,6 +577,20 @@ export function PainelDoVix() {
                 rows={2}
                 className="min-h-[44px] flex-1 resize-none"
               />
+              {podeOuvir() && (
+                <Button
+                  size="sm"
+                  variant={ouvindo ? "default" : "outline"}
+                  data-testid="vix-microfone"
+                  aria-pressed={ouvindo}
+                  onClick={falarMicrofone}
+                  disabled={enviando}
+                  aria-label={ouvindo ? t("Parar de ouvir") : t("Falar com o Vix")}
+                  title={ouvindo ? t("Parar de ouvir") : t("Falar com o Vix")}
+                >
+                  <Microphone size={16} aria-hidden />
+                </Button>
+              )}
               <Button size="sm" onClick={() => void enviar()} disabled={enviando || texto.trim() === ""} aria-label={t("Enviar")}>
                 <PaperPlaneTilt size={16} aria-hidden />
               </Button>

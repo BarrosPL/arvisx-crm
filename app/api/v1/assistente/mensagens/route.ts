@@ -50,6 +50,7 @@ import { TAMANHO_MAXIMO_ABSOLUTO, concluirUso, registrarMensagem } from "@/lib/a
 import { escritasDoVixLigadas, estadoDoVix } from "@/lib/assistente/disponibilidade";
 import { detectarSegredo } from "@/lib/assistente/filtro-de-segredo";
 import { FRASES } from "@/lib/assistente/frases";
+import { descreverImplantacao, lerImplantacao } from "@/lib/assistente/implantacao";
 import { montarPrompt } from "@/lib/assistente/prompt";
 import { provedorDoVix } from "@/lib/assistente/provedor";
 import { abrirConversa, auditarVix, dependenciasReais, gravarMensagem, historicoCurto } from "@/lib/assistente/servidor";
@@ -76,7 +77,11 @@ const corpoDoPost = z
     // Texto já transcrito também entra por aqui (`origem_da_entrada`): a voz é fase posterior.
     texto: z.string().trim().min(1).max(TAMANHO_MAXIMO_ABSOLUTO),
     origem_da_entrada: z.enum(["texto", "voz_transcrita"]).default("texto"),
+    // O painel não escolhe mais o modo (quem decide é o servidor). O campo continua aceito,
+    // e ignorado, para uma aba aberta com a versão anterior não receber 422.
     modo: z.enum(MODOS).optional(),
+    // A resposta será lida em voz alta: o Vix escreve como se fala.
+    resposta_em_voz: z.boolean().optional(),
     tela_atual: z.string().trim().startsWith("/app").max(200).optional(),
   })
   .strict();
@@ -168,9 +173,14 @@ export async function POST(req: NextRequest): Promise<Response> {
     return ok({ tipo: "indisponivel", mensagem: t(FRASES.indisponivel) }, { requestId });
   }
 
+  // A implantação (o que a empresa já montou) só acompanha quem pode montar: o administrador.
+  // Enquanto faltar passo, o Vix conduz como consultor de implantação; depois, é o mesmo Vix.
+  const implantacao = papel === "admin" ? await lerImplantacao(admin, org.orgId).catch(() => null) : null;
+  const emImplantacao = implantacao !== null && !implantacao.completa;
+
   const conversa = await abrirConversa(admin, ctx, {
     conversaId: corpo.conversa_id,
-    modo: corpo.modo,
+    modo: emImplantacao ? "onboarding" : "consultor",
     telaDeOrigem: corpo.tela_atual ?? null,
     titulo: corpo.texto,
   });
@@ -240,9 +250,10 @@ export async function POST(req: NextRequest): Promise<Response> {
     { role: "user", content: corpo.texto },
   ];
   const system = montarPrompt({
-    modo: conversa.modo,
     papel,
     idioma: user.idioma,
+    implantacao: emImplantacao && implantacao ? descreverImplantacao(implantacao) : null,
+    respostaEmVoz: corpo.resposta_em_voz === true,
     nomeDoUsuario: user.full_name,
     telaAtual: corpo.tela_atual ?? null,
     podePropor: escritasLigadas && RANK_DO_PAPEL[papel] >= RANK_DO_PAPEL.agent,

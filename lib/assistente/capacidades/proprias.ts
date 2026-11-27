@@ -27,13 +27,80 @@ export const TESTE_DAS_PROPRIAS = "tests/invariants/assistente-proprias-isolamen
 
 const DESTINOS = NAV_CATALOG as readonly NavMetadata[];
 
+const semAcento = (s: string): string =>
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+/** Palavras de ligação: a busca da ajuda exige TODOS os termos, e elas nunca estão nos títulos. */
+const PALAVRAS_DE_LIGACAO = new Set(
+  "a o as os um uma uns umas de da do das dos em no na nos nas por pelo pela para pra com sem que e ou eu me meu minha meus minhas seu sua como qual quais onde quando quero preciso posso fazer faco faço ter tenho tem vou ser esta está sao são isso isto mais muito aqui la lá".split(
+    " ",
+  ),
+);
+
+function combinacoes<T>(itens: readonly T[], tamanho: number): T[][] {
+  if (tamanho === 0) return [[]];
+  if (itens.length < tamanho) return [];
+  const [primeiro, ...resto] = itens as [T, ...T[]];
+  return [...combinacoes(resto, tamanho - 1).map((c) => [primeiro, ...c]), ...combinacoes(resto, tamanho)];
+}
+
+/**
+ * A busca da ajuda exige todos os termos. Uma pergunta inteira ("como eu conecto
+ * o WhatsApp da minha empresa") nunca casa, e o Vix responderia "a ajuda não
+ * trouxe nada". Tenta a consulta como veio; sem resultado, tira as palavras de
+ * ligação; sem resultado, junta o que cada palavra-chave achou, ordenado por
+ * quantas palavras casaram.
+ */
+function buscarNaAjuda(indice: ReturnType<typeof indiceDeBusca>, consulta: string, limite: number) {
+  const direto = buscar(indice, consulta, limite);
+  if (direto.length > 0) return direto;
+  const chaves = semAcento(consulta)
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 3 && !PALAVRAS_DE_LIGACAO.has(w))
+    // Radical: "conecto" e "conectar" são a mesma busca.
+    .map((w) => (w.length >= 7 ? w.slice(0, 6) : w));
+  if (chaves.length === 0) return [];
+  const sem = buscar(indice, chaves.join(" "), limite);
+  if (sem.length > 0) return sem;
+  // Tira uma palavra por vez (a mais genérica costuma ser a que atrapalha), do maior grupo para o menor.
+  for (let tamanho = chaves.length - 1; tamanho >= 2; tamanho--) {
+    const achados = new Map<string, ReturnType<typeof buscar>[number]>();
+    for (const grupo of combinacoes(chaves, tamanho)) {
+      for (const r of buscar(indice, grupo.join(" "), limite)) if (!achados.has(r.href)) achados.set(r.href, r);
+    }
+    if (achados.size > 0) return [...achados.values()].slice(0, limite);
+  }
+  const pontos = new Map<string, { r: ReturnType<typeof buscar>[number]; n: number; melhor: number }>();
+  for (const w of chaves) {
+    buscar(indice, w, 20).forEach((r, posicao) => {
+      const atual = pontos.get(r.href);
+      if (atual) {
+        atual.n += 1;
+        atual.melhor = Math.min(atual.melhor, posicao);
+      } else pontos.set(r.href, { r, n: 1, melhor: posicao });
+    });
+  }
+  return [...pontos.values()]
+    .sort((a, b) => b.n - a.n || a.melhor - b.melhor)
+    .slice(0, limite)
+    .map((x) => x.r);
+}
+
 // ───────────────────────────── ajuda ─────────────────────────────
+
+const MAXIMO_DE_LICOES = 3;
+const MAXIMO_DE_PASSOS = 8;
+const MAXIMO_DO_TEXTO_DO_PASSO = 700;
 
 /** Dúvida de uso: busca no treinamento do produto (`content/ajuda-curso/`). */
 const ajudaBuscar = capacidade({
   nome: "ajuda_buscar",
   descricao:
-    "Busca na base de ajuda do produto (o treinamento em Ajuda › Treinamento) as lições e os passos que respondem a uma dúvida de USO. Devolve título, onde fica, um trecho e o link da lição. Use antes de explicar como se faz algo no CRM; não invente passo a passo.",
+    "Busca na ajuda do produto as lições que respondem a uma dúvida de USO. Passe PALAVRAS-CHAVE curtas (ex.: conexões whatsapp, criar agente), não a pergunta inteira; se vier vazio, tente outras palavras. Devolve o PASSO A PASSO já escrito, com o nome dos menus e dos botões como o usuário os vê. Responda com esse conteúdo, nas suas palavras. Nunca mande o usuário procurar nem ler a ajuda, e nunca cite endereços.",
   nivel: "ler",
   papelMinimo: "viewer",
   rotaDaTela: null,
@@ -42,16 +109,37 @@ const ajudaBuscar = capacidade({
   teste: "lib/assistente/capacidades/proprias.test.ts",
   origem: { tipo: "propria" },
   executar: async ({ consulta }) => {
-    const achados = buscar(indiceDeBusca(treinamento()), consulta, 6);
-    return {
-      resultados: achados.map((r) => ({
-        titulo: r.titulo,
-        onde: r.caminho,
-        trecho: r.trecho,
-        link: r.href,
-        ...(r.tela ? { tela: r.tela } : {}),
-      })),
-    };
+    const dados = treinamento();
+    const achados = buscarNaAjuda(indiceDeBusca(dados), consulta, 12);
+    const vistas = new Set<string>();
+    const licoes: unknown[] = [];
+    const historias: { titulo: string; resumo: string }[] = [];
+    for (const r of achados) {
+      if (r.tipo === "historia") {
+        if (historias.length < 2) historias.push({ titulo: r.titulo, resumo: r.trecho });
+        continue;
+      }
+      if (!r.ids || licoes.length >= MAXIMO_DE_LICOES) continue;
+      const chave = `${r.ids.modulo}/${r.ids.licao}`;
+      if (vistas.has(chave)) continue;
+      vistas.add(chave);
+      const modulo = dados.modulos.find((m) => m.id === r.ids?.modulo);
+      const licao = modulo?.licoes.find((l) => l.id === r.ids?.licao);
+      if (!modulo || !licao) continue;
+      licoes.push({
+        licao: licao.titulo,
+        objetivo: licao.objetivo,
+        // O nome do item de menu, como a pessoa lê, e não o endereço.
+        tela_no_menu: DESTINOS.find((d) => d.href === modulo.tela)?.label ?? modulo.titulo,
+        passos: licao.passos.slice(0, MAXIMO_DE_PASSOS).map((p) => ({
+          passo: p.titulo,
+          o_que_fazer: p.texto.slice(0, MAXIMO_DO_TEXTO_DO_PASSO),
+          ...(p.dica ? { dica: p.dica.slice(0, 300) } : {}),
+          ...(p.aviso ? { aviso: p.aviso.slice(0, 300) } : {}),
+        })),
+      });
+    }
+    return { licoes, ...(historias.length ? { historias_de_clientes: historias } : {}) };
   },
 });
 
@@ -65,17 +153,34 @@ const ajudaBuscar = capacidade({
 const telasApontar = capacidade({
   nome: "telas_apontar",
   descricao:
-    "Confere se uma tela do CRM existe e se ESTE usuário pode abri-la, e devolve o nome e o endereço para o painel mostrar o botão de abrir. `href` é o endereço da tela (ex.: /app/ai/credentials). Use sempre que for mandar o usuário a uma tela; nunca escreva um endereço que esta capacidade não devolveu.",
+    "Confere se uma tela do CRM existe e se ESTE usuário pode abri-la, e faz o painel mostrar o botão de abrir. Passe em `nome` o NOME da tela como aparece no menu do sistema (ex.: Conexões, Agentes, Credenciais de IA); NUNCA um endereço. Use sempre que for levar o usuário a uma tela. Se o nome não existir, a resposta traz `parecidas` com os nomes certos.",
   nivel: "ler",
   papelMinimo: "viewer",
   rotaDaTela: null,
-  entrada: z.object({ href: z.string().trim().startsWith("/app").max(200) }),
+  entrada: z.object({
+    nome: z.string().trim().min(2).max(80).optional(),
+    // Só para o código e os testes: o modelo não conhece endereços e passa o `nome`.
+    href: z.string().trim().startsWith("/app").max(200).optional(),
+  }),
   temInverso: "nao_se_aplica",
   teste: "lib/assistente/capacidades/proprias.test.ts",
   origem: { tipo: "propria" },
-  executar: async ({ href }, ctx) => {
-    const destino = DESTINOS.find((d) => d.href === href);
-    if (!destino) return { existe: false, motivo: "tela_desconhecida" };
+  executar: async ({ nome, href }, ctx) => {
+    const procurado = nome ? semAcento(nome) : null;
+    const destino = href
+      ? DESTINOS.find((d) => d.href === href)
+      : procurado
+        ? (DESTINOS.find((d) => semAcento(d.label) === procurado) ??
+          DESTINOS.find((d) => semAcento(d.label).includes(procurado)))
+        : undefined;
+    if (!destino) {
+      const parecidas = procurado
+        ? DESTINOS.filter((d) => procurado.split(" ").some((w) => w.length >= 3 && semAcento(d.label).includes(w)))
+            .slice(0, 6)
+            .map((d) => d.label)
+        : [];
+      return { existe: false, motivo: "tela_desconhecida", ...(parecidas.length ? { parecidas } : {}) };
+    }
     if (destino.minRole && !roleAtLeast(ctx.papel, destino.minRole)) {
       return { existe: true, pode_abrir: false, motivo: "papel_insuficiente", nome: destino.label };
     }

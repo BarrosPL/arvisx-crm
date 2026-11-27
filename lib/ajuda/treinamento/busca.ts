@@ -29,6 +29,8 @@ export interface EntradaDeBusca {
   href: string;
   /** Tela do módulo; ausente em história (vale para todos). */
   tela?: string;
+  /** De qual módulo e lição vem (ausente em história): o Vix lê a lição inteira por aqui. */
+  ids?: { modulo: string; licao: string };
   /** Texto e peso: título pesa mais que corpo. */
   campos: [string, number][];
 }
@@ -39,6 +41,7 @@ export interface ResultadoDaBusca {
   caminho: string;
   href: string;
   tela?: string;
+  ids?: { modulo: string; licao: string };
   trecho: string;
 }
 
@@ -57,6 +60,7 @@ export function indiceDeBusca(dados: Treinamento): EntradaDeBusca[] {
         caminho: m.titulo,
         href: hrefDaLicao(m.id, l.id),
         tela: m.tela,
+        ids: { modulo: m.id, licao: l.id },
         campos: [
           [l.titulo, 5],
           // O trecho sai do primeiro campo depois do título: o objetivo lê melhor que as palavras-chave.
@@ -72,6 +76,7 @@ export function indiceDeBusca(dados: Treinamento): EntradaDeBusca[] {
           caminho: `${m.titulo} › ${l.titulo} › Passo ${i + 1}`,
           href: hrefDoPasso(m.id, l.id, p.id),
           tela: m.tela,
+          ids: { modulo: m.id, licao: l.id },
           campos: [
             [p.titulo, 4],
             [p.texto, 1],
@@ -156,6 +161,7 @@ export function buscar(
       caminho: entrada.caminho,
       href: entrada.href,
       ...(entrada.tela ? { tela: entrada.tela } : {}),
+      ...(entrada.ids ? { ids: entrada.ids } : {}),
       trecho: trecho(entrada, termos),
     }));
 }

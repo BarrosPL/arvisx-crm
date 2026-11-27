@@ -83,7 +83,7 @@ describe("abrir e conversar", () => {
     expect(envio.corpo.texto).toBe("quantos leads hoje?");
     expect(String(envio.corpo.turn_id)).toMatch(/^[0-9a-f-]{36}$/);
     // O painel não manda empresa nem usuário: quem sabe é a sessão.
-    expect(Object.keys(envio.corpo).sort()).toEqual(["modo", "texto", "turn_id"].sort());
+    expect(Object.keys(envio.corpo).sort()).toEqual(["origem_da_entrada", "texto", "turn_id"].sort());
   });
 
   it("a segunda pergunta segue na mesma conversa", async () => {
@@ -226,5 +226,141 @@ describe("respostas que não são stream", () => {
     responder = () => sse([{ tipo: "inicio", conversa_id: "c1" }, { tipo: "indisponivel", mensagem: "O assistente está indisponível no momento." }, { tipo: "fim" }]);
     await abrirEPerguntar("oi");
     await waitFor(() => expect(screen.getByTestId("vix-resposta").textContent).toContain("indisponível no momento"));
+  });
+});
+
+describe("uma conversa só, sem escolher modo", () => {
+  it("não há botões de Suporte, Consultor nem Primeiros passos: abre e é só falar", async () => {
+    const user = userEvent.setup();
+    render(<PainelDoVix />);
+    await user.click(screen.getByTestId("vix-botao"));
+    const painel = screen.getByTestId("vix-painel");
+    expect(within(painel).queryByText("Suporte")).toBeNull();
+    expect(within(painel).queryByText("Consultor")).toBeNull();
+    expect(painel.textContent).not.toMatch(/Primeiros passos/);
+    expect(within(painel).queryByRole("group", { name: "Modo do assistente" })).toBeNull();
+  });
+});
+
+describe("conta nova: o Vix recebe a pessoa", () => {
+  const estadoNovo = (extra: Record<string, unknown>) => ({
+    data: { ligado: true, mensagens_no_mes: 0, acoes_ligadas: false, ...extra },
+  });
+  const comEstado = (estado: unknown) =>
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => (String(url).endsWith("/estado") ? json(estado) : json({}))),
+    );
+  beforeEach(() => window.localStorage.clear());
+
+  it("primeira vez com a conta por montar: abre sozinho e começa pelo negócio da pessoa", async () => {
+    comEstado(estadoNovo({ primeira_vez: true, implantacao: { completa: false, feitos: 0, total: 6 } }));
+    render(<PainelDoVix />);
+    await waitFor(() => expect(screen.getByTestId("vix-painel")).toBeTruthy());
+    expect(screen.getByTestId("vix-boas-vindas").textContent).toMatch(/o que a sua empresa faz/);
+  });
+
+  it("abre sozinho UMA vez só: ao voltar, fica fechado", async () => {
+    comEstado(estadoNovo({ primeira_vez: true, implantacao: { completa: false, feitos: 0, total: 6 } }));
+    const { unmount } = render(<PainelDoVix />);
+    await waitFor(() => expect(screen.getByTestId("vix-painel")).toBeTruthy());
+    unmount();
+    render(<PainelDoVix />);
+    await new Promise((r) => setTimeout(r, 30));
+    expect(screen.queryByTestId("vix-painel")).toBeNull();
+  });
+
+  it.each([
+    ["já conversou antes", { primeira_vez: false, implantacao: { completa: false, feitos: 1, total: 6 } }],
+    ["conta já pronta", { primeira_vez: true, implantacao: { completa: true, feitos: 6, total: 6 } }],
+    ["não é administrador (sem implantação)", { primeira_vez: false, implantacao: null }],
+  ])("%s: não abre sozinho", async (_nome, extra) => {
+    comEstado(estadoNovo(extra));
+    render(<PainelDoVix />);
+    await new Promise((r) => setTimeout(r, 30));
+    expect(screen.queryByTestId("vix-painel")).toBeNull();
+  });
+});
+
+describe("voz", () => {
+  type Ev = { results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> };
+  let reconhecimento: { onresult: ((e: Ev) => void) | null; onend: (() => void) | null } | null;
+
+  function simularFala(frase: string) {
+    reconhecimento!.onresult!({ results: [Object.assign([{ transcript: frase }], { isFinal: true })] });
+    reconhecimento!.onend!();
+  }
+
+  beforeEach(() => {
+    window.localStorage.clear();
+    reconhecimento = null;
+    class Falso {
+      lang = "";
+      continuous = false;
+      interimResults = false;
+      onresult: ((e: Ev) => void) | null = null;
+      onerror: (() => void) | null = null;
+      onend: (() => void) | null = null;
+      constructor() {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        reconhecimento = this;
+      }
+      start() {}
+      stop() {}
+      abort() {}
+    }
+    vi.stubGlobal("webkitSpeechRecognition", Falso);
+    Object.defineProperty(window, "webkitSpeechRecognition", { value: Falso, configurable: true });
+  });
+
+  it("sem suporte do navegador, não há botão de microfone (só texto)", async () => {
+    Object.defineProperty(window, "webkitSpeechRecognition", { value: undefined, configurable: true });
+    const user = userEvent.setup();
+    render(<PainelDoVix />);
+    await user.click(screen.getByTestId("vix-botao"));
+    expect(screen.queryByTestId("vix-microfone")).toBeNull();
+  });
+
+  it("falou: a frase vai como voz transcrita, e o texto entra na conversa", async () => {
+    const user = userEvent.setup();
+    render(<PainelDoVix />);
+    await user.click(screen.getByTestId("vix-botao"));
+    await user.click(screen.getByTestId("vix-microfone"));
+    expect(screen.getByTestId("vix-voz-estado").textContent).toMatch(/Ouvindo/);
+    simularFala("quero conectar o meu whatsapp");
+    await waitFor(() => expect(chamadas.some((c) => c.url.endsWith("/mensagens"))).toBe(true));
+    const envio = chamadas.find((c) => c.url.endsWith("/mensagens"))!;
+    expect(envio.corpo).toMatchObject({ texto: "quero conectar o meu whatsapp", origem_da_entrada: "voz_transcrita" });
+    expect(envio.corpo.resposta_em_voz).toBeUndefined(); // a pessoa não pediu resposta em voz
+    await waitFor(() => expect(screen.getByTestId("vix-resposta").textContent).toContain("Olá."));
+  });
+
+  it("com a resposta em voz ligada: avisa o servidor e lê a resposta em voz alta", async () => {
+    const falado: string[] = [];
+    vi.stubGlobal("speechSynthesis", {
+      getVoices: () => [],
+      cancel: vi.fn(),
+      speak: (u: { text: string; onend: (() => void) | null }) => {
+        falado.push(u.text);
+        u.onend?.();
+      },
+    });
+    vi.stubGlobal("SpeechSynthesisUtterance", class { constructor(public text: string) {} onend: (() => void) | null = null; onerror = null; lang = ""; voice = null; rate = 1; pitch = 1; });
+    Object.defineProperty(window, "speechSynthesis", { value: globalThis.speechSynthesis, configurable: true });
+    const user = userEvent.setup();
+    render(<PainelDoVix />);
+    await user.click(screen.getByTestId("vix-botao"));
+    await user.click(screen.getByTestId("vix-resposta-em-voz"));
+    expect(window.localStorage.getItem("vix:resposta-em-voz")).toBe("1");
+    await user.type(screen.getByLabelText("Mensagem para o assistente"), "oi");
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+    await waitFor(() => expect(falado).toEqual(["Olá."]));
+    expect(chamadas.find((c) => c.url.endsWith("/mensagens"))!.corpo.resposta_em_voz).toBe(true);
+  });
+
+  it("enquanto o Vix pensa, mostra o indicador animado", async () => {
+    responder = () => new Response(new ReadableStream({ start() {} }), { headers: { "content-type": "text/event-stream" } });
+    await abrirEPerguntar("oi");
+    await waitFor(() => expect(within(screen.getByTestId("vix-resposta")).getByRole("status").textContent).toMatch(/Pensando/));
   });
 });

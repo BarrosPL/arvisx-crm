@@ -53,26 +53,48 @@ beforeEach(() => {
 });
 
 describe("ajuda_buscar", () => {
-  it("devolve lições da base do treinamento, com link para dentro de /app/ajuda", async () => {
-    const r = (await cap("ajuda_buscar").executar({ consulta: "credenciais" } as never, ctx())) as {
-      resultados: { titulo: string; link: string; trecho: string }[];
-    };
-    expect(r.resultados.length).toBeGreaterThan(0);
-    expect(r.resultados.length).toBeLessThanOrEqual(6);
-    for (const item of r.resultados) expect(item.link.startsWith("/app/ajuda/treinamento")).toBe(true);
+  type Retorno = {
+    licoes: { licao: string; tela_no_menu: string; passos: { passo: string; o_que_fazer: string }[] }[];
+  };
+  const buscarAjuda = (consulta: string) =>
+    cap("ajuda_buscar").executar({ consulta } as never, ctx()) as Promise<Retorno>;
+
+  it("devolve o passo a passo da lição, com o nome do menu e não o endereço", async () => {
+    const r = await buscarAjuda("credenciais");
+    expect(r.licoes.length).toBeGreaterThan(0);
+    expect(r.licoes.length).toBeLessThanOrEqual(3);
+    for (const l of r.licoes) {
+      expect(l.passos.length).toBeGreaterThan(0);
+      expect(l.tela_no_menu.startsWith("/")).toBe(false);
+    }
+  });
+
+  it("nada do que volta para o modelo é endereço de tela ou link", async () => {
+    const r = await buscarAjuda("agente");
+    expect(JSON.stringify(r)).not.toMatch(/\/app\//);
   });
 
   it("busca sem resultado devolve lista vazia, não inventa", async () => {
-    const r = (await cap("ajuda_buscar").executar({ consulta: "zzqqxxyy inexistente" } as never, ctx())) as {
-      resultados: unknown[];
-    };
-    expect(r.resultados).toEqual([]);
+    const r = await buscarAjuda("zzqqxxyy inexistente");
+    expect(r.licoes).toEqual([]);
   });
 });
 
 describe("telas_apontar", () => {
   const apontar = (href: string, papel: PapelHumano = "viewer") =>
     cap("telas_apontar").executar({ href } as never, ctx(papel)) as Promise<Record<string, unknown>>;
+
+  it("acha a tela pelo NOME do menu, sem acento e sem diferenciar maiúsculas", async () => {
+    const r = (await cap("telas_apontar").executar({ nome: "conexoes" } as never, ctx("admin"))) as Record<string, unknown>;
+    expect(r).toMatchObject({ existe: true, pode_abrir: true, nome: "Conexões" });
+  });
+
+  it("nome que não existe: devolve nomes parecidos, não inventa tela", async () => {
+    const r = (await cap("telas_apontar").executar({ nome: "Conexões secretas do sistema" } as never, ctx("admin"))) as Record<string, unknown>;
+    expect(r.existe === false || r.pode_abrir !== undefined).toBe(true);
+    const nada = (await cap("telas_apontar").executar({ nome: "zzqqxx" } as never, ctx("admin"))) as Record<string, unknown>;
+    expect(nada).toEqual({ existe: false, motivo: "tela_desconhecida" });
+  });
 
   it("tela do catálogo que a pessoa alcança: devolve o endereço do catálogo", async () => {
     const r = await apontar("/app/inbox");
