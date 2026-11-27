@@ -248,7 +248,11 @@ export async function concluirUso(
       .eq("organization_id", u.orgId);
     if (error) logger.warn("vix: registro de uso falhou", { organization_id: u.orgId, erro: error.message });
     if (emLlmCalls) {
-      const r = await admin.from("llm_calls").insert(linhaDeLlmCallsDoVix(u));
+      // A origem vai escrita no próprio insert: a cerca textual de todo escritor de llm_calls
+      // (tests/unit/llm-calls-todo-escritor-diz-a-origem-da-chave) só enxerga o objeto passado aqui.
+      const r = await admin
+        .from("llm_calls")
+        .insert({ ...linhaDeLlmCallsDoVix(u), origem_da_chave: ORIGEM_DA_CHAVE_DO_VIX[u.pagador] });
       if (r.error) logger.warn("vix: linha de llm_calls falhou", { organization_id: u.orgId, erro: r.error.message });
     }
   } catch (erro) {
