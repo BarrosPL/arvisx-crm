@@ -77,7 +77,7 @@ export function provedorSimulado(
   sobre: Partial<ProvedorPronto> = {},
 ): ProvedorPronto {
   return {
-    pagador: "assinatura_plataforma",
+    pagador: "hermes",
     provedor: "simulado",
     modelo: "modelo-simulado",
     model: simulado.model,

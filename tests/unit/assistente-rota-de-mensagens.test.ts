@@ -170,7 +170,7 @@ beforeEach(() => {
   banco = novoBanco();
   estado.banco = banco;
   sessao("agent");
-  vi.mocked(pagadorDoVix).mockResolvedValue("assinatura_plataforma");
+  vi.mocked(pagadorDoVix).mockResolvedValue("hermes");
   vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, count: 1, limit: 6, window_sec: 60 });
   vi.mocked(moduloLigado).mockResolvedValue(true);
   vi.mocked(recusaForaDoPlano).mockResolvedValue(null);
@@ -375,7 +375,7 @@ describe("não há limite de mensagens por plano", () => {
   it("cada mensagem que chega ao modelo é registrada antes, com a organização e a pessoa da sessão, e sem limite no pedido", async () => {
     await (await pedir({ turn_id: novoTurno(), texto: "oi" })).text();
     const registro = banco.rpcs.find((r) => r.nome === "fn_assistente_registrar_mensagem")!;
-    expect(registro.args).toEqual({ p_org: ORG, p_user: USER, p_conversa: expect.any(String), p_pagador: "assinatura_plataforma" });
+    expect(registro.args).toEqual({ p_org: ORG, p_user: USER, p_conversa: expect.any(String), p_pagador: "hermes" });
     expect(tabela("assistente_usos")).toHaveLength(1);
   });
 
@@ -390,7 +390,7 @@ describe("não há limite de mensagens por plano", () => {
     expect(tabela("assistente_usos")).toHaveLength(0);
   });
 
-  it.each(["assinatura_plataforma", "chave_plataforma"] as const)(
+  it.each(["hermes", "chave_plataforma"] as const)(
     "o Vix não aciona a falha fechada de 'plano sem teto': com o pagador %s responde normalmente, sem ler plano nem orçamento",
     async (pagador) => {
       // A organização tem acesso por assinatura ativa. O plano dela (com ou sem
@@ -569,11 +569,11 @@ describe("turno repetido", () => {
 
 describe("provedor indisponível ou falhando", () => {
   it("provedor indisponível antes da chamada: frase fixa, mensagem NÃO contada, nada gravado", async () => {
-    vi.mocked(provedorDoVix).mockResolvedValue({ disponivel: false, pagador: "assinatura_plataforma", motivo: "sem_conta" });
+    vi.mocked(provedorDoVix).mockResolvedValue({ disponivel: false, pagador: "hermes", motivo: "sem_hermes" });
     const r = await pedir({ turn_id: novoTurno(), texto: "oi" });
     const corpo = (await r.json()) as { data: { tipo: string; mensagem: string } };
     expect(corpo.data.tipo).toBe("indisponivel");
-    expect(corpo.data.mensagem).not.toContain("sem_conta");
+    expect(corpo.data.mensagem).not.toContain("sem_hermes");
     expect(banco.usadasNoMes).toBe(0);
     expect(banco.escritas).toEqual([]);
   });

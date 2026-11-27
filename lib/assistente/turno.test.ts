@@ -239,7 +239,7 @@ describe("limite de chamadas de ferramenta por turno", () => {
 describe("falha do provedor: indisponível, sem outro caminho", () => {
   const classificar = (erro: unknown) => {
     const status = (erro as { statusCode?: number }).statusCode;
-    return status === 429 ? ("limite_de_uso" as const) : status === 401 ? ("token_expirado" as const) : ("falha_do_provedor" as const);
+    return status === 429 ? ("limite_de_uso" as const) : status === 401 ? ("sem_autorizacao" as const) : ("falha_do_provedor" as const);
   };
 
   it.each([
@@ -257,51 +257,20 @@ describe("falha do provedor: indisponível, sem outro caminho", () => {
     expect(JSON.stringify(resultado) + escrito).not.toContain("10.1.2.3");
   });
 
-  it("401 com renovação: renova UMA vez, tenta de novo com o modelo novo e responde", async () => {
-    const novo = modeloRoteirizado([{ texto: "Respondi depois de renovar." }]);
-    const renovar = vi.fn(async () => novo.model);
-    const { resultado, simulado } = await rodar([{ erro: { status: 401 } }], {
-      provedor: (b) => ({ ...b, classificarFalha: classificar, renovarApos401: renovar }),
-    });
-    expect(renovar).toHaveBeenCalledTimes(1);
-    expect(simulado.chamadas()).toBe(1);
-    expect(novo.chamadas()).toBe(1);
-    expect(resultado.falha).toBeUndefined();
-    expect(resultado.texto).toBe("Respondi depois de renovar.");
-  });
-
-  it("401 duas vezes: uma renovação só, e encerra indisponível", async () => {
-    const novo = modeloRoteirizado([{ erro: { status: 401 } }, { texto: "não devia chegar aqui" }]);
-    const renovar = vi.fn(async () => novo.model);
-    const { resultado } = await rodar([{ erro: { status: 401 } }], {
-      provedor: (b) => ({ ...b, classificarFalha: classificar, renovarApos401: renovar }),
-    });
-    expect(renovar).toHaveBeenCalledTimes(1);
-    expect(novo.chamadas()).toBe(1);
-    expect(resultado.falha).toBe("token_expirado");
-  });
-
-  it("401 com renovação recusada: não tenta de novo", async () => {
-    const renovar = vi.fn(async () => null);
-    const { resultado, simulado } = await rodar([{ erro: { status: 401 } }, { texto: "não devia" }], {
-      provedor: (b) => ({ ...b, classificarFalha: classificar, renovarApos401: renovar }),
+  it("401 não renova nem tenta de novo: uma chamada só, e encerra com o motivo", async () => {
+    const { resultado, simulado, escrito } = await rodar([{ erro: { status: 401 } }, { texto: "não devia chegar aqui" }], {
+      provedor: (b) => ({ ...b, classificarFalha: classificar }),
     });
     expect(simulado.chamadas()).toBe(1);
-    expect(resultado.falha).toBe("token_expirado");
+    expect(resultado.falha).toBe("sem_autorizacao");
+    expect(escrito).toBe("");
   });
 
-  it("429 não dispara renovação", async () => {
-    const renovar = vi.fn(async () => null);
-    await rodar([{ erro: { status: 429 } }], { provedor: (b) => ({ ...b, classificarFalha: classificar, renovarApos401: renovar }) });
-    expect(renovar).not.toHaveBeenCalled();
-  });
-
-  it("erro sem status (rede): encerra, sem renovar", async () => {
-    const renovar = vi.fn(async () => null);
-    const { resultado } = await rodar([{ erro: {} }], {
-      provedor: (b) => ({ ...b, classificarFalha: () => "rede", renovarApos401: renovar }),
+  it("erro sem status (rede): encerra, sem tentar de novo", async () => {
+    const { resultado, simulado } = await rodar([{ erro: {} }, { texto: "não devia" }], {
+      provedor: (b) => ({ ...b, classificarFalha: () => "rede" }),
     });
-    expect(renovar).not.toHaveBeenCalled();
+    expect(simulado.chamadas()).toBe(1);
     expect(resultado.falha).toBe("rede");
   });
 

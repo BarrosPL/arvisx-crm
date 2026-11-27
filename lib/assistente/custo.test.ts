@@ -53,7 +53,7 @@ const USO: UsoDeUmaResposta = {
   tokensDeSaida: 56,
   falhou: false,
   custoUsdCents: 0,
-  pagador: "assinatura_plataforma",
+  pagador: "hermes",
 };
 
 function bancoEspiao(opcoes: { erroNoUpdate?: boolean; lancar?: boolean } = {}) {
@@ -152,7 +152,7 @@ describe("registrar nunca derruba a conversa", () => {
 });
 
 describe("registrar a mensagem antes do modelo (não há limite a conferir)", () => {
-  const entrada = { orgId: USO.orgId, userId: "33333333-3333-4333-8333-333333333333", conversaId: null, pagador: "assinatura_plataforma" };
+  const entrada = { orgId: USO.orgId, userId: "33333333-3333-4333-8333-333333333333", conversaId: null, pagador: "hermes" };
   const comRpc = (resposta: { data: unknown; error: { message: string } | null }) => {
     const rpc = vi.fn(async (..._args: unknown[]) => resposta);
     return { admin: { rpc } as unknown as SupabaseClient, rpc };
@@ -165,7 +165,7 @@ describe("registrar a mensagem antes do modelo (não há limite a conferir)", ()
       p_org: entrada.orgId,
       p_user: entrada.userId,
       p_conversa: null,
-      p_pagador: "assinatura_plataforma",
+      p_pagador: "hermes",
     });
   });
 

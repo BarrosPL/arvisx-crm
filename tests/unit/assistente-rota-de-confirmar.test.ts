@@ -141,7 +141,7 @@ beforeEach(() => {
   banco = novoBanco();
   estado.banco = banco;
   sessao("agent");
-  vi.mocked(pagadorDoVix).mockResolvedValue("assinatura_plataforma");
+  vi.mocked(pagadorDoVix).mockResolvedValue("hermes");
   vi.mocked(moduloLigado).mockResolvedValue(true);
 });
 
@@ -256,7 +256,7 @@ describe("confirmar", () => {
     const id = cartao();
     vi.mocked(pagadorDoVix).mockResolvedValue("desligado");
     expect((await chamar(confirmar, id)).status).toBe(403);
-    vi.mocked(pagadorDoVix).mockResolvedValue("assinatura_plataforma");
+    vi.mocked(pagadorDoVix).mockResolvedValue("hermes");
     banco.ligadoNaEmpresa = false;
     expect((await chamar(confirmar, id)).status).toBe(403);
     expect(execEscrever()).not.toHaveBeenCalled();

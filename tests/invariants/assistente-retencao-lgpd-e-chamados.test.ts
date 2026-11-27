@@ -104,7 +104,7 @@ describe("prazo do histórico", () => {
     resolvidoVelho = chamado(GOV_ORG, GOV_AGENT_A, "resolvido", "40 days");
     resolvidoNovo = chamado(GOV_ORG, GOV_AGENT_A, "resolvido", "3 days");
     sql(`insert into public.assistente_usos (organization_id, user_id, pagador, created_at)
-         values ('${GOV_ORG}', '${GOV_AGENT_A}', 'assinatura_plataforma', now() - interval '40 days');`);
+         values ('${GOV_ORG}', '${GOV_AGENT_A}', 'hermes', now() - interval '40 days');`);
   });
 
   it("a sessão não chama o expurgo, nem o administrador da empresa", () => {

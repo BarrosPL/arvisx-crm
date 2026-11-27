@@ -342,27 +342,27 @@ export const CATALOGO_DA_INSTALACAO: readonly ChaveDaInstalacao[] = [
     chave: "VIX_PAGADOR",
     rotulo: "Assistente dentro do CRM: ligado e quem paga",
     explicacao:
-      "Liga o assistente e escolhe por onde ele chama a IA. Valores: desligado (o padrão), assinatura_plataforma (a assinatura conectada na organização designada) ou chave_plataforma (a chave de IA do servidor). Vazio ou qualquer outro valor vale desligado.",
+      "Liga o assistente e escolhe por onde ele chama a IA. Valores: desligado (o padrão), hermes (o assistente raciocina no Hermes, pela assinatura da plataforma) ou chave_plataforma (a chave de IA do servidor). Vazio ou qualquer outro valor vale desligado.",
     grupo: "ia",
     natureza: "texto",
     controle: "edita",
   },
   {
-    chave: "VIX_ORGANIZACAO_DA_CONTA",
-    rotulo: "Assistente: organização dona da assinatura",
+    chave: "VIX_HERMES_URL",
+    rotulo: "Assistente: endereço do perfil no Hermes",
     explicacao:
-      "O identificador da organização em que a assinatura do assistente foi conectada, em IA › Credenciais. Só vale com o pagador assinatura_plataforma. Use uma organização só para isso, sem agentes.",
+      "O endereço (https) do perfil do assistente no Hermes, terminando em /p/vix-crm. Só vale com o pagador hermes. Vazio ou fora do formato, o assistente fica indisponível nesse pagador.",
     grupo: "ia",
     natureza: "texto",
     controle: "edita",
   },
   {
-    chave: "VIX_MODELO",
-    rotulo: "Assistente: modelo da assinatura",
+    chave: "VIX_HERMES_SEGREDO",
+    rotulo: "Assistente: chave do perfil no Hermes",
     explicacao:
-      "O modelo que o assistente usa na assinatura, escolhido entre os que a conta da organização designada lista. Vazio, o assistente fica indisponível nesse pagador.",
+      "A chave que o CRM usa para falar com o perfil do assistente no Hermes. Abre só esse perfil. Nunca aparece em tela, log ou resposta.",
     grupo: "ia",
-    natureza: "texto",
+    natureza: "segredo",
     controle: "edita",
   },
   // O freio técnico do assistente (não é limite de plano) e o critério do aviso

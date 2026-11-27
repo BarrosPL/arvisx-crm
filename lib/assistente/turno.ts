@@ -18,9 +18,8 @@
  * recebe recusa, e o laço para no passo seguinte) e, no stream, uma cauda
  * retida para o filtro de segredo alcançar uma chave que chegue em pedaços.
  *
- * Falha do provedor: sem queda para outro pagador. No 401 da assinatura,
- * renova UMA vez pelo caminho que já existe e tenta mais uma; qualquer outro
- * erro encerra com o motivo classificado. Nada de mensagem técnica sai daqui.
+ * Falha do provedor: sem queda para outro pagador e sem nova tentativa; o erro
+ * encerra o turno com o motivo classificado. Nada de mensagem técnica sai daqui.
  */
 import { stepCountIs, streamText, tool, type LanguageModel, type ModelMessage, type ToolSet } from "ai";
 
@@ -28,7 +27,6 @@ import { embrulharComoDado } from "./dado-nao-confiavel";
 import { capacidadesOferecidas, executarLeitura, proporEscrita, type DependenciasDoExecutor } from "./executor";
 import { mascararSegredos } from "./filtro-de-segredo";
 import type { MotivoDeIndisponibilidade, ProvedorPronto } from "./provedor/tipos";
-import { statusEDetalheDoErro } from "./provedor/tipos";
 import type { ContextoDoAssistente, Modo } from "./tipos";
 
 /** Quantos caracteres do fim ficam retidos até o filtro de segredo poder vê-los inteiros. */
@@ -163,7 +161,6 @@ export async function rodarTurno(e: EntradaDoTurno): Promise<ResultadoDoTurno> {
         tools: ferramentas,
         // Um passo a mais que o limite: o modelo recebe a recusa e ainda fecha a resposta.
         stopWhen: stepCountIs(e.ferramentasPorTurno + 2),
-        ...(e.provedor.pagador === "assinatura_plataforma" ? { providerOptions: { openai: { store: false } } } : {}),
         onError: ({ error }) => {
           erroDoStream = error;
         },
@@ -177,17 +174,7 @@ export async function rodarTurno(e: EntradaDoTurno): Promise<ResultadoDoTurno> {
     }
   };
 
-  let tentativa = await tentar(e.provedor.model);
-  if (
-    !tentativa.ok &&
-    statusEDetalheDoErro(tentativa.erro).status === 401 &&
-    e.provedor.renovarApos401 &&
-    !emissor.escreveuAlgo() &&
-    chamadas === 0
-  ) {
-    const renovado = await e.provedor.renovarApos401();
-    if (renovado) tentativa = await tentar(renovado);
-  }
+  const tentativa = await tentar(e.provedor.model);
 
   if (!tentativa.ok) {
     return {

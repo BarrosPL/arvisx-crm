@@ -7,8 +7,8 @@
  *   `desligado`              o padrão. Vale também com a chave ausente ou com
  *                            valor desconhecido (falha fechada). O botão some
  *                            e as rotas recusam.
- *   `assinatura_plataforma`  a assinatura ChatGPT/Codex da plataforma, pela
- *                            conta de uma organização designada.
+ *   `hermes`                 o Vix raciocina no Hermes (perfil `vix-crm`, Claude
+ *                            pela assinatura da plataforma) e o CRM executa.
  *   `chave_plataforma`       um modelo pequeno pela chave de API da instalação.
  *
  * Editada em Painel › Configuração, por quem administra a instalação. Um
@@ -19,8 +19,8 @@
 import { valorDaInstalacao } from "@/lib/instalacao/config";
 import type { createAdminClient } from "@/lib/supabase/admin";
 
-import { assinaturaDaPlataforma } from "./assinatura-da-plataforma";
 import { chaveDaPlataforma } from "./chave-da-plataforma";
+import { hermesDaPlataforma } from "./hermes";
 import { PAGADORES, type Pagador, type ProvedorDoVix } from "./tipos";
 
 /** O pagador em vigor. Ausente, ilegível ou desconhecido = `desligado`. */
@@ -30,11 +30,11 @@ export async function pagadorDoVix(): Promise<Pagador> {
 }
 
 /** O provedor do pagador escolhido, pronto para chamar, ou o motivo de não estar. */
-export async function provedorDoVix(admin: ReturnType<typeof createAdminClient>): Promise<ProvedorDoVix> {
+export async function provedorDoVix(_admin?: ReturnType<typeof createAdminClient>): Promise<ProvedorDoVix> {
   const pagador = await pagadorDoVix();
   switch (pagador) {
-    case "assinatura_plataforma":
-      return assinaturaDaPlataforma(admin);
+    case "hermes":
+      return hermesDaPlataforma();
     case "chave_plataforma":
       return chaveDaPlataforma();
     default:

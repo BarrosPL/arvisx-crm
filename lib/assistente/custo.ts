@@ -77,7 +77,7 @@ export const COLUNA_DA_ORIGEM_DA_CHAVE = "origem_da_chave";
  * Se a decisão for um valor só para o Vix, troca-se aqui e em mais lugar nenhum.
  */
 export const ORIGEM_DA_CHAVE_DO_VIX = {
-  assinatura_plataforma: "assinatura_plataforma",
+  hermes: "assinatura_plataforma",
   chave_plataforma: "assistente_chave_plataforma",
 } as const satisfies Record<PagadorLigado, string>;
 

@@ -12,20 +12,17 @@
 import type { LanguageModel } from "ai";
 
 /** Os valores de `VIX_PAGADOR`. Ausente ou desconhecido vale `desligado`. */
-export const PAGADORES = ["desligado", "assinatura_plataforma", "chave_plataforma"] as const;
+export const PAGADORES = ["desligado", "hermes", "chave_plataforma"] as const;
 export type Pagador = (typeof PAGADORES)[number];
 
 /** Por que o assistente não pode responder agora. Vai para o log e a auditoria, nunca cru para o usuário. */
 export type MotivoDeIndisponibilidade =
   | "desligado"
-  | "sem_organizacao_designada"
-  | "organizacao_designada_invalida"
-  | "sem_conta"
-  | "sem_modelo"
+  | "sem_hermes"
   | "sem_chave"
   | "limite_de_uso"
-  | "token_expirado"
   | "sem_autorizacao"
+  | "resposta_invalida"
   | "falha_do_provedor"
   | "erro_de_pedido"
   | "rede";
@@ -40,15 +37,10 @@ export interface ProvedorPronto {
   provedor: string;
   modelo: string;
   model: LanguageModel;
-  /** O custo da chamada em centavos de dólar. Assinatura: zero (mensalidade fixa). */
+  /** O custo da chamada em centavos de dólar. Hermes (assinatura da plataforma): zero. */
   custoUsdCents: (uso: UsoDeTokens) => number;
   /** Classifica um erro da chamada. */
   classificarFalha: (erro: unknown) => MotivoDeIndisponibilidade;
-  /**
-   * Só a assinatura: o provedor respondeu 401. Renova UMA vez pelo caminho que
-   * já existe e devolve o modelo com o token novo, ou `null` se não renovou.
-   */
-  renovarApos401?: () => Promise<LanguageModel | null>;
 }
 
 export type ProvedorDoVix =
