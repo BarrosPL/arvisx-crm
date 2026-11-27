@@ -1,8 +1,8 @@
 # Vix: como ligar (passo a passo do dono)
 
-O Vix sobe **desligado**. Nada neste roteiro foi executado por quem escreveu o código: a organização designada, a conta conectada e os valores abaixo são passos do Lucas, feitos à mão depois do deploy. Enquanto ninguém os fizer, o botão do assistente não aparece para ninguém.
+O Vix sobe **desligado**. Nada neste roteiro foi executado por quem escreveu o código: o perfil do Hermes, o endereço, o segredo e os valores abaixo são passos do Lucas, feitos à mão depois do deploy. Enquanto ninguém os fizer, o botão do assistente não aparece para ninguém.
 
-**Antes de ligar em qualquer organização:** a conferência dos termos de uso da assinatura (uso dela dentro de um produto vendido a terceiros) ainda **não foi verificada**. Está com o Lucas e o Dr. Renan. O código não depende do resultado, só a decisão de ligar.
+**Antes de ligar em qualquer organização:** o Lucas conferiu os termos de uso da assinatura e liberou (decisão dele, registrada aqui; não é uma verificação nossa). O Vix continua nascendo desligado e quem liga é ele.
 
 ## O que decide se o Vix responde
 
@@ -11,7 +11,7 @@ Quatro condições, todas necessárias. Faltou uma, o assistente não responde e
 1. A instalação escolheu um pagador (`VIX_PAGADOR` diferente de `desligado`).
 2. A empresa não desligou o assistente (linha de `assistente_estado_da_empresa`; sem linha vale ligado).
 3. A empresa tem acesso: tem assinatura ativa, em qualquer plano (novo ou antigo), ou tem a marca `isenta`, que só a plataforma grava.
-4. O pagador escolhido está utilizável (conta conectada, modelo definido, ou a chave do servidor presente).
+4. O pagador escolhido está utilizável (o endereço e o segredo do Hermes preenchidos, ou a chave do servidor presente).
 
 ## Passo 1: escolher o pagador
 
@@ -20,22 +20,20 @@ Em Painel › Configuração, a chave `VIX_PAGADOR` aceita três valores:
 | Valor | O que faz | Custo registrado |
 |---|---|---|
 | `desligado` | Padrão. O assistente não existe | nenhum |
-| `assinatura_plataforma` | Chama a IA pela assinatura conectada na organização designada | tokens reais, custo zero |
+| `hermes` | O assistente raciocina no Hermes (perfil `vix-crm`, Claude, pela assinatura da plataforma) e o CRM executa tudo | tokens que o Hermes devolver, custo zero |
 | `chave_plataforma` | Chama `claude-haiku-5-5` pela chave de IA do servidor (`ANTHROPIC_API_KEY`) | tokens reais e custo real pela tabela de preços |
 
 Vazio ou qualquer outro texto vale `desligado`.
 
-**Não existe queda automática entre os dois.** Se a assinatura falhar, o assistente avisa que está indisponível e nada sai pela chave de API. Trocar de pagador é sempre uma decisão escrita nesta chave.
+**Não existe queda automática entre os dois.** Se o Hermes falhar, o assistente avisa que está indisponível e nada sai pela chave de API. Trocar de pagador é sempre uma decisão escrita nesta chave.
 
-## Passo 2 (só para `assinatura_plataforma`): a organização designada
+## Passo 2 (só para `hermes`): o perfil e as duas chaves
 
-1. Criar uma organização nova na instalação, só para isso, sem agentes e sem canal. Ela existe para guardar a conta.
-2. Ligar o módulo de login por assinatura (Painel › Sistema), se ainda não estiver ligado.
-3. Entrar nessa organização e conectar a assinatura em IA › Credenciais.
-4. Copiar o identificador da organização para a chave `VIX_ORGANIZACAO_DA_CONTA`.
-5. Escolher o modelo entre os que a conta lista e gravar em `VIX_MODELO`. Vazio deixa o assistente indisponível nesse pagador.
+1. Criar no Hermes o perfil `vix-crm`, isolado: sem ferramentas, sem terminal, sem arquivos, sem memória, sem canal público e com chave própria (`API_SERVER_KEY`) que abre só esse perfil. Este passo é nosso, feito do lado do Hermes; o código do CRM não cria nem altera nada lá.
+2. Em Painel › Configuração, gravar `VIX_HERMES_URL` (o endereço https do perfil, terminando em `/p/vix-crm`) e `VIX_HERMES_SEGREDO` (a chave desse perfil). Falta uma das duas, ou o endereço não é https (http só em máquina local): o assistente fica indisponível.
+3. Só então `VIX_PAGADOR = hermes`.
 
-O código lê essa conta num lugar só, `lib/assistente/provedor/assinatura-da-plataforma.ts`, e a organização vem sempre da chave da instalação, nunca de quem está perguntando.
+O código lê as duas chaves num lugar só, `lib/assistente/provedor/hermes.ts`, e o endereço e o segredo nunca vêm de quem está perguntando.
 
 ## Passo 3: quem tem acesso
 
@@ -113,6 +111,6 @@ Painel do administrador da instalação › Chamados (`/admin/chamados`). Lista 
 A spec `tests/e2e/assistente-painel-pela-tela.spec.ts` prova pela tela o botão ausente quando desligado, a abertura pelo botão e pelo Ctrl+J, a recusa de chave colada, a frase de indisponível e a chave por empresa. Ela **não** prova a resposta em stream, porque isso exige um modelo que responda e o ambiente do e2e não tem como injetar um:
 
 - o pagador `chave_plataforma` lê `ANTHROPIC_API_KEY` do ambiente do `next start`, e o `.env.e2e` não tem chave de IA (várias specs medem justamente a instalação sem chave);
-- o pagador `assinatura_plataforma` exige uma conta conectada de verdade.
+- o pagador `hermes` exige um Hermes de verdade (ou um dublê HTTP do perfil, no formato `/v1/chat/completions`).
 
 O gancho mínimo, sem código de produto: um dublê HTTP do provedor (nos moldes de `scripts/duble-jev-e2e.mjs`) que responda o formato de stream da API de mensagens, e uma parte do e2e cujo `next start` suba com `ANTHROPIC_BASE_URL` apontando para o dublê e uma `ANTHROPIC_API_KEY` de mentira. A biblioteca do provedor já lê `ANTHROPIC_BASE_URL` do ambiente. O custo é que, nessa parte, as specs deixam de ver o estado "sem chave de IA", então ela precisa ser uma parte só para isso. Não foi feito nesta entrega.

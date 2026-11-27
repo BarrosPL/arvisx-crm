@@ -544,6 +544,8 @@ git ls-files 'tests/invariants/*.test.ts' | wc -l                               
 
 ## 9. Revisão de 25/11/2026: o Vix roda na assinatura da própria ArvisX
 
+> **Substituída em 27/11/2026 pela seção 11.** O pagador por assinatura do ChatGPT/Codex, a organização designada, `VIX_ORGANIZACAO_DA_CONTA` e `VIX_MODELO` (9.1, 9.4, 9.5, 9.6, 9.8 e as perguntas P2 e P8) foram desfeitos: o Vix roda no Hermes, pela assinatura Claude da ArvisX. As partes de limite, isenção, linha em `llm_calls` e freio técnico seguem valendo.
+
 Decisão do Lucas, depois do desenho acima: o Vix não usa chave de API. Ele roda na assinatura ChatGPT/Codex da ArvisX. Esta seção **substitui** o que as seções 2.8 (teto em dólar), 2.9 (chave e modelo), 2.10 (desligar geral) e as decisões D1, D2 e D4 diziam. O resto do desenho (catálogo, níveis, cartões, filtro de segredo, taxa, auditoria, testes de ataque, painel) não muda.
 
 Nada desta seção está implementado. O que já estava no branch do caminho antigo e sai, por commit novo: as colunas `pagador` e `teto_mensal_usd_cents` de `assistente_planos` e a função de gasto em dólar da migration 9830 (ainda não mesclada nem aplicada em lugar nenhum). A variável `VIX_ANTHROPIC_API_KEY`, o módulo `assistente` e o script de tetos em dólar nunca chegaram a ser commitados e foram descartados.
@@ -714,3 +716,50 @@ O registro em `llm_calls` continua desligado até a coluna existir na `main` (ve
 - O chamado tem leitor: a equipe da plataforma, em Painel › Chamados.
 - A chave por empresa tem tela: Configurações › Empresa.
 - Catálogo: 25 leituras do MCP. A segunda onda fica para outro PR.
+
+## 11. Correção de 27/11/2026: o Vix roda no Hermes (substitui 9.1, 9.4, 9.5, 9.6, 9.8, P2 e P8)
+
+**O erro corrigido.** A seção 9 entendeu "a nossa assinatura" como a do ChatGPT. A assinatura que o Lucas usa na ArvisX é a do Claude, no Hermes, onde o Vix já existe como perfil. O caminho do ChatGPT (login por assinatura, organização designada, leitor único de `login-codex`, `VIX_ORGANIZACAO_DA_CONTA`, `VIX_MODELO`, renovação no 401) foi desfeito em commit novo.
+
+**A decisão do Lucas.** O Vix do CRM raciocina no Hermes (perfil novo `vix-crm`, isolado do Vix de vendas do WhatsApp) e o CRM continua dono de tudo que toca dado. Termos da assinatura: o Lucas conferiu e liberou; registrado como decisão dele, não como verificação nossa. O Vix nasce desligado.
+
+### 11.1 O desenho: o Hermes só raciocina
+
+O `api_server` do Hermes só executa as ferramentas do **próprio perfil** (`_get_platform_tools(user_config, "api_server")`); ferramentas mandadas na requisição não são executadas. Então o perfil `vix-crm` não tem ferramenta nenhuma e as capacidades ficam todas no CRM:
+
+1. `lib/assistente/provedor/modelo-hermes.ts` é um `LanguageModel` do AI SDK. Ele descreve o catálogo ao Hermes em texto, junto do prompt.
+2. Quando o Hermes quer um dado, escreve um **pedido** (`<pedido_vix_NONCE>{"capacidade": "...", "parametros": {...}}</pedido_vix_NONCE>`). O modelo o transforma numa chamada de ferramenta do SDK.
+3. O laço de sempre (`turno.ts`) valida contra o catálogo, confere permissão e plano, executa com a sessão do usuário e devolve o resultado como dado, que sobe ao Hermes dentro de `<resultado_vix>`.
+4. Nada do `turno.ts`, do executor, do filtro de segredo, da confirmação por clique, da contagem nem do freio muda.
+
+### 11.2 As defesas, cada uma com teste
+
+| Risco | Defesa | Teste |
+|---|---|---|
+| Texto do banco ou da pessoa forjar um pedido | O marcador leva um NONCE sorteado a cada chamada; qualquer ocorrência do nome do marcador nas entradas é neutralizada antes do envio | `modelo-hermes.test.ts`, "o texto que vem de fora não fabrica pedido" |
+| O Hermes pedir o que o catálogo não oferece | Só vale capacidade listada para aquele usuário; o resto é descartado; sem pedido válido e sem texto, a resposta é inválida (indisponível por ora) | idem |
+| Pedido em excesso | No máximo 4 por resposta; o laço já tem 8 ferramentas por turno | idem |
+| O Hermes alcançar o CRM | O modelo não importa banco, sessão, cliente de serviço nem leitor de credencial; só `hermes.ts` o importa e só o índice importa `hermes.ts` | `assistente-provedor-cerca.test.ts` |
+| Chave do Hermes vazar | Só no cabeçalho de autorização; sem log; erros sem URL nem corpo; a chamada não segue redirecionamento | `modelo-hermes.test.ts`, cerca e `provedor.test.ts` |
+| Endereço do Hermes apontar para outro lugar | Só https (http só em máquina local), sem usuário, senha, parâmetros ou fragmento | `urlDoHermesValida` |
+| Resposta gigante ou travada | Teto de 256 KB e prazo de 90 s | `modelo-hermes.test.ts` |
+| Hermes cair ou responder lixo | Frase fixa "indisponível por ora"; sem queda para outro pagador e sem nova tentativa | `turno.test.ts`, `provedor.test.ts` |
+| Assinatura ChatGPT voltar pela porta dos fundos | Nada em `lib/assistente` importa `login-codex`; `VIX_ORGANIZACAO_DA_CONTA` não existe | cerca |
+
+### 11.3 Configuração
+
+Três chaves da instalação, no catálogo: `VIX_PAGADOR` (`desligado` padrão, `hermes`, `chave_plataforma`), `VIX_HERMES_URL` e `VIX_HERMES_SEGREDO` (segredo). O valor `hermes` grava a origem `assinatura_plataforma` em `llm_calls` (quando o registro for ligado) e `hermes` em `assistente_usos.pagador`. Os quatro testes de origem seguem valendo: o Vix nunca grava `plataforma` nem `cliente`.
+
+### 11.4 Custo
+
+O custo do Hermes é zero (mensalidade fixa). Os tokens são os que o Hermes devolve em `usage`. Se o Hermes não devolver, o registro mostra zero e **a medição precisa ser marcada como incompleta**, nunca com número inventado. Isso ainda não está resolvido no código: depende do teste real contra o perfil (11.6).
+
+### 11.5 O que ainda é risco real
+
+- **A cota da assinatura é compartilhada** com o resto do uso do Hermes na ArvisX; um cliente com muito uso pode consumir a cota de todos. O aviso de uso (10.3) é só aviso.
+- **O Hermes guarda o que recebe** no histórico dele. O CRM envia o histórico inteiro a cada chamada e não usa sessão do Hermes; falta confirmar, no perfil `vix-crm`, que a conversa não fica retida além do necessário (LGPD).
+- **O Sonnet precisa respeitar o formato do pedido.** Pedido mal formado é descartado, e sem texto vira "indisponível". A taxa real só se mede no teste.
+
+### 11.6 O que não foi provado
+
+Nada disto foi rodado contra um Hermes de verdade: o perfil `vix-crm` ainda não existe, e os testes usam um dublê do `fetch`. Faltam: criar o perfil, o teste real na organização `teste-auditoria-agentes`, a medição de tokens devolvidos, a taxa de pedidos bem formados e os testes de ataque contra o modelo real.
