@@ -253,7 +253,7 @@ describe("/ — landing v3", () => {
     const { container } = await montar();
     expect(container.querySelector("section#agentes")).toBeTruthy();
     const para = [...container.querySelectorAll('a[href="#agentes"]')].map((a) => a.textContent);
-    expect(para).toEqual(["Conheça os Agentes Arvisx", "Agentes de IA sob medida", "Agentes Arvisx"]);
+    expect(para).toEqual(["Conheça os Agentes Arvisx", "Conheça os Agentes Arvisx", "Agentes de IA sob medida", "Agentes Arvisx"]);
     expect(within(screen.getByRole("navigation", { name: "Rodapé" })).getByRole("link", { name: "Agentes Arvisx" })).toHaveAttribute("href", "#agentes");
   });
 
@@ -304,6 +304,16 @@ describe("/ — landing v3", () => {
     expect(within(cards[0]!).queryByText("Mais escolhido")).toBeNull();
     expect(within(cards[2]!).queryByText("Mais escolhido")).toBeNull();
     expect(container.querySelector("#plano")!.textContent).toMatch(/Sem cartão de crédito|sem cartão de crédito/);
+  });
+
+  it("⭐ Equipe pronta (padrão, no CRM) e Agentes Arvisx (do zero, até fora do CRM) são ofertas distintas e dizem isso", async () => {
+    const { container } = await montar();
+    const ag = container.querySelector("#agentes")!.textContent!;
+    expect(ag).toMatch(/Equipe pronta\s+são quatro agentes padrão, que você instala em minutos dentro do CRM\./);
+    expect(ag).toMatch(/Agentes Arvisx\s+são projetados do zero para o seu processo e podem trabalhar fora do CRM/);
+    expect(container.querySelector("#black-friday")!.textContent).toMatch(/feito do zero para o seu processo, até fora do CRM/);
+    expect(container.querySelector("#black-friday a[href='#agentes']")).toBeTruthy();
+    expect(container.querySelector("#faq")!.textContent).toMatch(/Não é a Equipe pronta: ela traz quatro agentes padrão/);
   });
 
   it("o carrossel tem as seis telas e a primeira começa selecionada", async () => {

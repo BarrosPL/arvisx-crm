@@ -309,7 +309,7 @@ export default async function HomePage() {
               <p className="eyebrow">{t("Black Friday · por tempo limitado")}</p>
               <h2>{t("A Equipe de IA pronta agora vem em todos os planos.")}</h2>
               <p>
-                {t("Quatro agentes já escritos para o seu negócio, instalados em minutos pelo próprio CRM, sem custo a mais no plano. Quem contratar durante a promoção mantém a Equipe pronta.")}
+                {t("Quatro agentes padrão para o dia a dia de vendas e atendimento, instalados em minutos pelo próprio CRM, sem custo a mais no plano. Quem contratar durante a promoção mantém a Equipe pronta.")}
               </p>
             </div>
             <ol className="bf-fluxo" aria-label={t("Como a IA atende à noite")}>
@@ -343,6 +343,10 @@ export default async function HomePage() {
             <div className="bf-rodape">
               <BotaoDeCadastro className="btn primario grande" comSeta t={t} />
               <p>{t("Tudo nasce em ensaio: só os telefones de teste falam com os agentes até você ativar.")}</p>
+              <p className="bf-do-zero">
+                {t("Precisa de um agente feito do zero para o seu processo, até fora do CRM?")}{" "}
+                <a href="#agentes">{t("Conheça os Agentes Arvisx")}</a>
+              </p>
             </div>
           </div>
         </section>
@@ -765,7 +769,7 @@ export default async function HomePage() {
               </article>
             </div>
             <p className="chaves-nota">
-              {t("Prefere que a Arvisx desenvolva os agentes para a sua operação? Esse é um serviço à parte, os Agentes Arvisx, contratado depois de uma reunião.")}
+              {t("Precisa de um agente feito do zero para a sua operação, dentro ou fora do CRM? Esse é um serviço à parte, os Agentes Arvisx, contratado depois de uma reunião.")}
             </p>
             <p className="chaves-link">
               <a href="#agentes">{t("Conheça os Agentes Arvisx")}</a>
@@ -959,6 +963,10 @@ export default async function HomePage() {
             <div>
               <p className="eyebrow">{t("Agentes Arvisx · Soluções sob medida")}</p>
               <h2>{t("Quer ir além do CRM? Agentes de IA feitos para a sua operação.")}</h2>
+              <p className="ag-diferenca">
+                <b>{t("Equipe pronta")}</b>{" "}{t("são quatro agentes padrão, que você instala em minutos dentro do CRM.")}{" "}
+                <b>{t("Agentes Arvisx")}</b>{" "}{t("são projetados do zero para o seu processo e podem trabalhar fora do CRM, nos sistemas que você já usa.")}
+              </p>
               <p className="lede" style={{ marginTop: 16 }}>
                 {t("A nossa equipe entende como o seu negócio funciona e")}{" "}
                 <strong>{t("desenvolve agentes de IA sob medida")}</strong>{t(", conectados à sua operação: ao Arvisx CRM ou aos sistemas que você já usa. É um serviço contratado à parte, depois de uma conversa, e não depende de plano.")}
@@ -1083,7 +1091,7 @@ export default async function HomePage() {
               <details>
                 <summary>{t("O que são os Agentes Arvisx?")}</summary>
                 <p>
-                  {t("São agentes de IA desenvolvidos pela nossa equipe depois de entender a sua operação, conectados à sua operação, no Arvisx CRM ou em outros sistemas. É um serviço contratado à parte, por reunião e proposta, e não depende de plano.")}
+                  {t("São agentes de IA desenvolvidos pela nossa equipe depois de entender a sua operação, conectados à sua operação, no Arvisx CRM ou em outros sistemas. É um serviço contratado à parte, por reunião e proposta, e não depende de plano. Não é a Equipe pronta: ela traz quatro agentes padrão, que você instala sozinho no CRM.")}
                 </p>
               </details>
               <details>

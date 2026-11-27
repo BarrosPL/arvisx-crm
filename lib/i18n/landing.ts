@@ -149,7 +149,7 @@ export const TEXTOS_LANDING = {
   "Escolha onde a IA entra: no atendimento, nas respostas, nos agentes. A decisão é da sua empresa.": { es: "Elige dónde entra la IA: en la atención, en las respuestas, en los agentes. La decisión es de tu empresa." },
   "Franquia mensal": { es: "Franquicia mensual" },
   "Cada plano traz uma franquia mensal de conversas com IA. Com a sua própria chave, o consumo fica na conta do seu provedor.": { es: "Cada plan incluye una franquicia mensual de conversaciones con IA. Con tu propia clave, el consumo queda en la cuenta de tu proveedor." },
-  "Prefere que a Arvisx desenvolva os agentes para a sua operação? Esse é um serviço à parte, os Agentes Arvisx, contratado depois de uma reunião.": { es: "¿Prefieres que Arvisx desarrolle los agentes para tu operación? Ese es un servicio aparte, los Agentes Arvisx, que se contrata después de una reunión." },
+  "Precisa de um agente feito do zero para a sua operação, dentro ou fora do CRM? Esse é um serviço à parte, os Agentes Arvisx, contratado depois de uma reunião.": { es: "¿Necesitas un agente hecho desde cero para tu operación, dentro o fuera del CRM? Es un servicio aparte, los Agentes Arvisx, contratado tras una reunión." },
   "Conheça os Agentes Arvisx": { es: "Conoce los Agentes Arvisx" },
 
   // ── Mais recursos ──
@@ -233,7 +233,7 @@ export const TEXTOS_LANDING = {
   "Como funciona a IA?": { es: "¿Cómo funciona la IA?" },
   "A IA vem incluída em todos os planos, com uma franquia mensal de conversas com IA. Usar a sua própria chave de IA é opcional. Você configura e gerencia os seus agentes no próprio CRM.": { es: "La IA viene incluida en todos los planes, con una franquicia mensual de conversaciones con IA. Usar tu propia clave de IA es opcional. Tú configuras y gestionas tus agentes en el propio CRM." },
   "O que são os Agentes Arvisx?": { es: "¿Qué son los Agentes Arvisx?" },
-  "São agentes de IA desenvolvidos pela nossa equipe depois de entender a sua operação, conectados à sua operação, no Arvisx CRM ou em outros sistemas. É um serviço contratado à parte, por reunião e proposta, e não depende de plano.": { es: "Son agentes de IA que nuestro equipo desarrolla después de entender tu operación, conectados a ella, en Arvisx CRM o en otros sistemas. Es un servicio que se contrata aparte, con reunión y propuesta, y no depende de ningún plan." },
+  "São agentes de IA desenvolvidos pela nossa equipe depois de entender a sua operação, conectados à sua operação, no Arvisx CRM ou em outros sistemas. É um serviço contratado à parte, por reunião e proposta, e não depende de plano. Não é a Equipe pronta: ela traz quatro agentes padrão, que você instala sozinho no CRM.": { es: "Son agentes de IA que nuestro equipo desarrolla después de entender tu operación, conectados a ella, en Arvisx CRM o en otros sistemas. Es un servicio que se contrata aparte, con reunión y propuesta, y no depende de ningún plan. No es el Equipo listo: este trae cuatro agentes estándar que instalas tú mismo en el CRM." },
   "Onde ficam os meus dados?": { es: "¿Dónde se guardan mis datos?" },
   "Cada empresa fica isolada das outras, com registro de ações.": { es: "Cada empresa queda aislada de las demás, con registro de acciones." },
   "Posso cancelar quando quiser?": { es: "¿Puedo cancelar cuando quiera?" },
@@ -282,6 +282,10 @@ export const TEXTOS_LANDING = {
   "© 2026 Arvisx. Todos os direitos reservados.": { es: "© 2026 Arvisx. Todos los derechos reservados." },
 
   // ── Black Friday e Equipe pronta (app/page.tsx) ──
+  "Agentes Arvisx": { es: "Agentes Arvisx" },
+  "Precisa de um agente feito do zero para o seu processo, até fora do CRM?": { es: "¿Necesitas un agente hecho desde cero para tu proceso, incluso fuera del CRM?" },
+  "são quatro agentes padrão, que você instala em minutos dentro do CRM.": { es: "son cuatro agentes estándar, que instalas en minutos dentro del CRM." },
+  "são projetados do zero para o seu processo e podem trabalhar fora do CRM, nos sistemas que você já usa.": { es: "se diseñan desde cero para tu proceso y pueden trabajar fuera del CRM, en los sistemas que ya usas." },
   "Black Friday · Equipe de IA pronta em todos os planos": { es: "Black Friday · Equipo de IA listo en todos los planes" },
   "Seu WhatsApp vendendo sozinho.": { es: "Tu WhatsApp vendiendo solo." },
   "Sua equipe só fecha.": { es: "Tu equipo solo cierra." },
@@ -291,7 +295,7 @@ export const TEXTOS_LANDING = {
   "Equipe de IA pronta, incluída em todos os planos.": { es: "Equipo de IA listo, incluido en todos los planes." },
   "Black Friday · por tempo limitado": { es: "Black Friday · por tiempo limitado" },
   "A Equipe de IA pronta agora vem em todos os planos.": { es: "El Equipo de IA listo ahora viene en todos los planes." },
-  "Quatro agentes já escritos para o seu negócio, instalados em minutos pelo próprio CRM, sem custo a mais no plano. Quem contratar durante a promoção mantém a Equipe pronta.": { es: "Cuatro agentes ya escritos para tu negocio, instalados en minutos desde el propio CRM, sin costo extra en el plan. Quien contrate durante la promoción conserva el Equipo listo." },
+  "Quatro agentes padrão para o dia a dia de vendas e atendimento, instalados em minutos pelo próprio CRM, sem custo a mais no plano. Quem contratar durante a promoção mantém a Equipe pronta.": { es: "Cuatro agentes estándar para el día a día de ventas y atención, instalados en minutos desde el propio CRM, sin costo extra en el plan. Quien contrate durante la promoción conserva el Equipo listo." },
   "Como a IA atende à noite": { es: "Cómo atiende la IA de noche" },
   "22h": { es: "22 h" },
   "O cliente chama no WhatsApp": { es: "El cliente escribe por WhatsApp" },

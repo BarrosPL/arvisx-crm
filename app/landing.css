@@ -3436,3 +3436,26 @@ html:has(.lp) {
     display: none;
   }
 }
+
+.lp .bf-do-zero {
+  color: var(--apoio);
+}
+.lp .bf-do-zero a {
+  color: var(--ouro-claro);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.lp .ag-diferenca {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--ouro);
+  border-radius: 0 var(--r) var(--r) 0;
+  background: rgba(212, 175, 55, 0.08);
+  color: var(--texto);
+  font-size: 15px;
+  line-height: 1.55;
+}
+.lp .ag-diferenca b {
+  color: var(--ouro-claro);
+}
