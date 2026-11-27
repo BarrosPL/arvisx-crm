@@ -15,6 +15,7 @@ import {
   VERSAO_DAS_REGRAS_COMUNS,
   papelPorId,
 } from "./index";
+import { TERMOS_DE_NICHO_DOS_PAPEIS } from "./nichos/termos-de-nicho";
 
 /**
  * A REGRA DE UNIVERSALIDADE, como cerca.
@@ -36,46 +37,12 @@ import {
  * empresa, e é lá que a palavra do ramo dela pode aparecer.
  */
 
-/** Radicais de ramo. Radical, e não palavra, para pegar plural e derivado. */
-const TERMOS_DE_NICHO = [
-  "clínic",
-  "clinic",
-  "pacient",
-  "odonto",
-  "dentist",
-  "dental",
-  "médic",
-  "medic",
-  "consultório",
-  "exame",
-  "cirurgi",
-  "tratamento",
-  "procedimento",
-  "imóve",
-  "imóvel",
-  "imovel",
-  "imobili",
-  "corretor",
-  "alun",
-  "matrícul",
-  "matricul",
-  "escola",
-  "curso",
-  "advog",
-  "jurídic",
-  "juridic",
-  "processo judicial",
-  "cidadania",
-  "visto",
-  "imigra",
-  "restaurante",
-  "cardápio",
-  "salão",
-  "estétic",
-  "petshop",
-  "veterin",
-  "academia",
-];
+/**
+ * Radicais de ramo. A lista saiu deste arquivo para `nichos/termos-de-nicho.ts`,
+ * sem mudar um item, para a cerca dos nichos usar a MESMA régua. O conteúdo é
+ * fixado em `nichos/nichos.test.ts`.
+ */
+const TERMOS_DE_NICHO = TERMOS_DE_NICHO_DOS_PAPEIS;
 
 /** Valor em moeda: símbolo, código ou a palavra, com ou sem número. */
 const MOEDA = /R\$|US\$|€|\$\s?\d|\b(?:BRL|EUR|USD)\b|\b\d+(?:[.,]\d+)?\s?(?:reais|real|euros?|d[oó]lar(?:es)?)\b/i;

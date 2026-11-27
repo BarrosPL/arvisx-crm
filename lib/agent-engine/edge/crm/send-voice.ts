@@ -158,6 +158,10 @@ export function registrarCustoDeVoz(params: {
           job_id: params.jobId,
           purpose: "sintese_de_voz",
           provider: "elevenlabs",
+          // A ElevenLabs não tem chave de instalação: `resolveOrgLlmConfig` só cai no
+          // `.env` para Anthropic, OpenAI e OpenRouter. A chave da voz é sempre a
+          // credencial da organização (migration 9825).
+          origem_da_chave: "cliente",
           model: params.modelId,
           input_tokens: 0,
           output_tokens: 0,

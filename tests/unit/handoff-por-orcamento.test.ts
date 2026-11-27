@@ -43,6 +43,13 @@ import {
 import type { DesfechoDoAviso } from "@/lib/agent-engine/agent/aviso-de-escalacao";
 import { corpoDoBloqueio } from "@/lib/agent-engine/edge/llm/orcamento";
 import { LlmBudgetExceededError } from "@/lib/agent-engine/edge/llm/run-model-call";
+import {
+  HANDOFF_REASON_IA_DO_PLANO,
+  MOTIVO_DO_BLOQUEIO_DO_PLANO,
+  RESUMO_DO_HANDOFF_PELO_PLANO,
+  SAIDAS_DA_IA_DO_PLANO,
+  TITULO_DO_HANDOFF_PELO_PLANO,
+} from "@/lib/agent-engine/edge/llm/orcamento";
 import { montarBriefingDaPassagem } from "@/lib/escalacao/briefing-da-passagem";
 
 const RAIZ = process.cwd();
@@ -187,6 +194,55 @@ describe("a escolta do orçamento", () => {
     expect(passagem, "a passagem por teto de gasto não virou registro").toBeDefined();
     expect(passagem?.params).toContain("teto_de_gasto");
     expect(passagem?.params).toContain("orcamento_de_ia");
+  });
+
+  // Tarefa 8, parte 1: quando é o PLANO que recusa, a razão e o resumo são
+  // próprios. Antes os dois tetos gravavam `orcamento_de_ia` e mandavam o
+  // atendente a "Uso de IA › Orçamento", que não resolve o caso do plano.
+  it.each(["plano_sem_teto", "teto_do_plano", "franquia_do_plano"] as const)(
+    "⭐ recusa do PLANO (%s): razão própria em last_handoff_reason, e o resumo aponta o remédio certo",
+    async (causa) => {
+      const { pool, chamadas } = poolFalso();
+      const erro = new LlmBudgetExceededError(MOTIVO_DO_BLOQUEIO_DO_PLANO[causa], causa);
+
+      await expect(
+        comHandoffSeOrcamentoAcabar(contexto(pool, logFalso()), async () => {
+          throw erro;
+        }),
+      ).rejects.toBe(erro);
+
+      // A conversa vai para a equipe, com a razão do PLANO e não a do orçamento.
+      const conversa = chamadas.find((c) => c.sql.includes("update conversations"));
+      expect(conversa?.sql).toContain("'ai_handling' then 'pending'");
+      expect(conversa?.params).toContain(HANDOFF_REASON_IA_DO_PLANO);
+      expect(conversa?.params).not.toContain(HANDOFF_REASON_ORCAMENTO);
+
+      const inbox = chamadas.find((c) => c.sql.includes("agent_inbox_items"));
+      expect(inbox?.params).toContain(TITULO_DO_HANDOFF_PELO_PLANO);
+
+      // O resumo que o atendente lê: as duas saídas, e nada de "Uso de IA › Orçamento".
+      const passagem = chamadas.find((c) => c.sql.includes("insert into passagens_de_atendimento"));
+      const corpo = String(
+        passagem?.params?.find((p) => typeof p === "string" && p.includes(RESUMO_DO_HANDOFF_PELO_PLANO[causa])) ?? "",
+      );
+      expect(corpo).toContain(SAIDAS_DA_IA_DO_PLANO);
+      expect(corpo).toContain(RESUMO_DO_CHECKPOINT);
+      expect(corpo).not.toContain("Uso de IA › Orçamento");
+      // A linha da passagem tem CHECK no banco: segue no vocabulário de sempre.
+      expect(passagem?.params).toContain("teto_de_gasto");
+    },
+  );
+
+  it("controle: a recusa do orçamento da EMPRESA continua com a razão e o resumo de sempre", async () => {
+    const { pool, chamadas } = poolFalso();
+    await expect(
+      comHandoffSeOrcamentoAcabar(contexto(pool, logFalso()), async () => {
+        throw new LlmBudgetExceededError();
+      }),
+    ).rejects.toThrow();
+    const conversa = chamadas.find((c) => c.sql.includes("update conversations"));
+    expect(conversa?.params).toContain(HANDOFF_REASON_ORCAMENTO);
+    expect(conversa?.params).not.toContain(HANDOFF_REASON_IA_DO_PLANO);
   });
 
   it("o resumo do handoff é texto fixo + checkpoint — nunca um resumo gerado", async () => {

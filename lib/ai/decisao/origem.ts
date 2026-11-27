@@ -103,3 +103,15 @@ export function provedorDaCredencial(origem: OrigemDoJev = ORIGEM_PADRAO): "type
 export function caminhoDaProva(origem: OrigemDoJev = ORIGEM_PADRAO): string {
   return CAMINHO_DA_PROVA[origem];
 }
+
+/**
+ * De quem é a chave de toda chamada do Jev (`llm_calls.origem_da_chave`,
+ * migration 9825): da ORGANIZAÇÃO, sempre. A chave do Jev é a credencial que a
+ * empresa cadastrou — a `typesafe` no caminho de sempre, a da OpenRouter quando
+ * ligado por ela — e nunca uma chave de ambiente (`destinoDasTarefas`, em
+ * `./ponto.ts`). Por isso nenhuma linha do Jev conta no teto do plano.
+ *
+ * Os escritores pelo `pg` (`./pool.ts`, `./roteador.ts`, `./manipulacao.ts`,
+ * `./urgencia.ts`, `./followup.ts`) gravam o mesmo valor como literal no SQL.
+ */
+export const ORIGEM_DA_CHAVE_DO_JEV = "cliente" as const;

@@ -70,7 +70,7 @@ import { LIMIAR_PADRAO_PCT } from "@/lib/agent-engine/edge/llm/orcamento";
 import type { EventRow } from "@/lib/event-log/dispatcher";
 import { elegivelParaWorkerLegado } from "@/lib/ai/agents/no-ar";
 import { resolverModeloDoPonto } from "@/lib/ai/gateway-binding";
-import { TITULO_TETO_DO_PLANO } from "@/lib/agent-engine/edge/llm/orcamento";
+import { SAIDAS_DA_IA_DO_PLANO, TITULO_PLANO_SEM_TETO, TITULO_TETO_DO_PLANO } from "@/lib/agent-engine/edge/llm/orcamento";
 
 const ORG_ID = "22222222-2222-4222-8222-222222222222";
 const CONV_ID = "44444444-4444-4444-8444-444444444444";
@@ -251,8 +251,12 @@ function makeAdminStub(
       data:
         name === "fn_service_boundary"
           ? SERVICE
-          : name === "fn_limite_do_plano"
-            ? (contagens.tetoDoPlano ?? null)
+          : name === "fn_ia_do_plano"
+            ? // A IA do plano (migration 9825): sem `tetoDoPlano`, a empresa não tem
+              // assinatura; com ele, tem, e o gasto da chave da plataforma é 1500.
+              contagens.tetoDoPlano === undefined
+              ? [{ com_assinatura: false, teto: null, gasto: null, franquia: null, conversas: null }]
+              : [{ com_assinatura: true, teto: contagens.tetoDoPlano, gasto: 1500, franquia: null, conversas: 0 }]
             : [],
       error: null,
     });
@@ -387,12 +391,42 @@ describe("o teto de IA do plano no caminho legado (forçado: hoje o veto é inal
     expect(await processMessageReceived(eventRow)).toEqual({ status: "skipped", reason: "budget_exceeded" });
     expect(itensDoPlano(operacoes)).toHaveLength(1);
     expect(itensDoPlano(operacoes)[0]!.row.title).toBe(TITULO_TETO_DO_PLANO);
+    // Tarefa 8: a razão do PLANO é própria (`ia_do_plano`), distinta da do
+    // orçamento da empresa (`orcamento_de_ia`), porque o remédio é outro.
     expect(
       operacoes.filter(
-        (o) => o.table === "conversations" && o.tipo === "update" && o.row.last_handoff_reason === "orcamento_de_ia",
+        (o) => o.table === "conversations" && o.tipo === "update" && o.row.last_handoff_reason === "ia_do_plano",
       ).length,
       "o teto do plano parou a IA sem passar a conversa para a equipe",
     ).toBeGreaterThan(0);
+    expect(
+      operacoes.filter(
+        (o) => o.table === "conversations" && o.tipo === "update" && o.row.last_handoff_reason === "orcamento_de_ia",
+      ),
+      "o plano gravou a razão do orçamento da empresa",
+    ).toEqual([]);
+  });
+
+  it("⭐ FALHA FECHADA no legado: plano com assinatura e SEM teto, chave da instalação → equipe assume, com o título próprio", async () => {
+    const { operacoes } = montar(
+      { enforcement_mode: "off", current_month_consumed_cents: 0 },
+      { avisosNoMes: 0, itensAbertos: 0, tetoDoPlano: null },
+    );
+    comOrigem("padrao");
+    expect(await processMessageReceived(eventRow)).toEqual({ status: "skipped", reason: "budget_exceeded" });
+    expect(itensDoPlano(operacoes)[0]!.row.title).toBe(TITULO_PLANO_SEM_TETO);
+    expect(String(itensDoPlano(operacoes)[0]!.row.body)).toContain(SAIDAS_DA_IA_DO_PLANO);
+  });
+
+  it("⭐ empresa sem assinatura (isenta) com a chave da instalação: o plano não a barra", async () => {
+    const { operacoes, rpcs } = montar(
+      { enforcement_mode: "off", current_month_consumed_cents: 1500 },
+      { avisosNoMes: 0, itensAbertos: 0 },
+    );
+    comOrigem("padrao");
+    await processMessageReceived(eventRow).catch(() => null);
+    expect(rpcs, "a leitura do plano nem saiu").toContain("fn_ia_do_plano");
+    expect(itensDoPlano(operacoes)).toEqual([]);
   });
 
   it("chave da organização (BYOK): o teto do plano nem é lido", async () => {
@@ -402,7 +436,7 @@ describe("o teto de IA do plano no caminho legado (forçado: hoje o veto é inal
     );
     comOrigem("credencial_da_organizacao");
     await processMessageReceived(eventRow).catch(() => null);
-    expect(rpcs).not.toContain("fn_limite_do_plano");
+    expect(rpcs).not.toContain("fn_ia_do_plano");
     expect(itensDoPlano(operacoes)).toEqual([]);
   });
 
@@ -413,7 +447,7 @@ describe("o teto de IA do plano no caminho legado (forçado: hoje o veto é inal
     );
     comOrigem("padrao");
     await processMessageReceived(eventRow).catch(() => null);
-    expect(rpcs).not.toContain("fn_limite_do_plano");
+    expect(rpcs).not.toContain("fn_ia_do_plano");
     expect(itensDoPlano(operacoes)).toEqual([]);
   });
 });

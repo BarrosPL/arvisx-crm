@@ -13,9 +13,11 @@ import { publishAgentVersion } from "@/lib/ai/agents/publish";
 import { publicarMemoriaDaOrg } from "@/lib/ai/memoria-da-org";
 import { provedorOferecido } from "@/lib/ai/pontos/provedores-oferecidos";
 import { BUCKET_DE_CONHECIMENTO } from "@/lib/ai/rag/ingest/documento";
+import { chaveDePlataforma } from "@/lib/ai/runtime/agent";
 import { publishFollowupFlowVersion } from "@/lib/followup/publish";
 import { AgentSetupError, resolveSetupModel } from "@/lib/prospecting/agent-setup";
 import { EquipeProntaError, type PortasDoInstalador } from "./instalar";
+import { escolherModeloDaEquipe } from "./modelo-padrao";
 
 export function portasDeProducao(admin: SupabaseClient): PortasDoInstalador {
   return {
@@ -98,8 +100,17 @@ export function portasDeProducao(admin: SupabaseClient): PortasDoInstalador {
 
     async escolherModelo(db, orgId, canalId) {
       try {
-        const m = await resolveSetupModel(db, orgId, canalId, await provedorOferecido(admin));
-        return { provider: m.provider, model: m.model, credential_id: m.credential_id };
+        const oferece = await provedorOferecido(admin);
+        // Com a chave da plataforma no ambiente, o agente novo nasce no modelo
+        // padrão dela; sem ela, vale a escolha de sempre (`modelo-padrao.ts`).
+        return await escolherModeloDaEquipe(db, orgId, {
+          temChaveDaPlataforma: (provider) => chaveDePlataforma(provider) !== null,
+          oferece,
+          escolhaDeSempre: async () => {
+            const m = await resolveSetupModel(db, orgId, canalId, oferece);
+            return { provider: m.provider, model: m.model, credential_id: m.credential_id };
+          },
+        });
       } catch (e) {
         if (e instanceof AgentSetupError) {
           throw new EquipeProntaError("sem_chave_de_ia", e.message, 422);

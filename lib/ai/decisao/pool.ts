@@ -74,8 +74,8 @@ export async function registrarFalhaQuePedeAcao(
     const { rows } = await pool.query<{ id: string }>(
       `insert into public.llm_calls
          (organization_id, contact_id, job_id, purpose, provider, model,
-          input_tokens, output_tokens, cost_cents, latency_ms, status, error_code, http_status, origem_da_escolha)
-       values ($1, $2, $3, $4, 'typesafe', $5, 0, 0, 0, $6, 'erro', $7, $8, 'jev_observacao')
+          input_tokens, output_tokens, cost_cents, latency_ms, status, error_code, http_status, origem_da_chave, origem_da_escolha)
+       values ($1, $2, $3, $4, 'typesafe', $5, 0, 0, 0, $6, 'erro', $7, $8, 'cliente', 'jev_observacao')
        returning id`,
       [
         entrada.organizationId,

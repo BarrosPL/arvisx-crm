@@ -59,8 +59,10 @@ describe("rodada: a régua passa por toda assinatura, mesmo além de 1.000", () 
     const avisadas = new Set<string>();
     const rpc = (nome: string, args: Record<string, unknown>): Resposta => {
       if (nome === "fn_cobranca_reconciliaveis") return { data: [] };
-      if (nome === "fn_gasto_de_ia_do_mes") return { data: 85 };
-      if (nome === "fn_cobranca_avisar_teto_de_ia") avisadas.add(args.p_org as string);
+      if (nome === "fn_ia_do_plano") {
+        return { data: [{ com_assinatura: true, teto: 100, franquia: null, gasto: 85, conversas: 0, ciclo_inicio: "2026-11-01T00:00:00.000Z" }] };
+      }
+      if (nome === "fn_cobranca_avisar_uso_de_ia") avisadas.add(args.p_org as string);
       return { data: true };
     };
     const banco = bancoFalso(responder, rpc);

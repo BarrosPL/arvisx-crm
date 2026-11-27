@@ -26,6 +26,7 @@
  * ligação em curso. A falha vai para o log.
  */
 import { codigoDoErro, provedorDaChamada } from "@/lib/ai/log-invocation";
+import type { OrigemDaChave } from "@/lib/ai/usage/origem-da-chave";
 import { logger } from "@/lib/logger";
 import type { createAdminClient } from "@/lib/supabase/admin";
 
@@ -51,6 +52,11 @@ export interface ChamadaDeIa {
   latency_ms: number;
   /** Presente = a chamada falhou. `status` HTTP opcional, lido por `codigoDoErro`. */
   erro?: { message: string; status?: number } | null;
+  /**
+   * De quem é a chave que pagou (`llm_calls.origem_da_chave`, migration 9825).
+   * Ausente = o padrão da coluna, `plataforma`.
+   */
+  origem_da_chave?: OrigemDaChave;
 }
 
 export async function registrarChamadaDeIa(admin: Admin, chamada: ChamadaDeIa): Promise<void> {
@@ -74,6 +80,7 @@ export async function registrarChamadaDeIa(admin: Admin, chamada: ChamadaDeIa): 
       status: erro ? "erro" : "ok",
       error_code: erro ? codigoDoErro({ ...erro }) : null,
       error_message: erro ? erro.message.slice(0, 500) : null,
+      ...(chamada.origem_da_chave ? { origem_da_chave: chamada.origem_da_chave } : {}),
     });
     if (error) {
       logger.warn("[llm-calls] insert failed", {

@@ -57,7 +57,10 @@ import { join, posix } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const RAIZ = process.cwd();
-const MIGRATION = join(RAIZ, "supabase", "migrations", "20260814210000_0159_o_teto_que_vincula.sql");
+// A função nasceu na 0159 e foi redefinida na 9825 (Tarefa 8), que passou a
+// ignorar o que roda na assinatura da plataforma. A migration que vale é a
+// ÚLTIMA que a define; o baseline continua criando a função uma vez só.
+const MIGRATION = join(RAIZ, "supabase", "migrations", "20261125120000_9825_ia_por_plano.sql");
 const BASELINE = join(RAIZ, "supabase", "baseline.sql");
 const ORCAMENTO = "lib/agent-engine/edge/llm/orcamento.ts";
 
@@ -134,7 +137,7 @@ describe("uma régua só de gasto de IA", () => {
     it("a definição é IDÊNTICA na migration e no baseline", () => {
       const naMigration = definicaoDaFuncao(migration);
       const noBaseline = definicaoDaFuncao(baseline);
-      expect(naMigration, "função não encontrada na migration 0159").not.toBeNull();
+      expect(naMigration, "função não encontrada na migration 9825").not.toBeNull();
       expect(noBaseline, "função não encontrada no baseline.sql").not.toBeNull();
       expect(
         normalizar(noBaseline ?? ""),
@@ -159,7 +162,7 @@ describe("uma régua só de gasto de IA", () => {
       // Medido em pg17 (2026-08-14) removendo a linha: proacl passa a ter
       // `anon=X` e `authenticated=X`, nos dois caminhos (install e update).
       for (const [nome, texto] of [
-        ["migration 0159", migration],
+        ["migration 9825", migration],
         ["baseline.sql", baseline],
       ] as const) {
         expect(texto, `revoke ausente em ${nome}`).toMatch(

@@ -170,9 +170,19 @@ cliente, conectados a essa operação: ao Arvisx CRM ou aos sistemas que ele já
 
 ## Quem cuida dos agentes de IA
 
-Regra comercial (Lucas e Dr. Renan): no Essencial, no Standard e no Premium, a
-gestão e a configuração dos agentes de IA dentro da plataforma são do cliente. A
-Arvisx só desenvolve soluções personalizadas pelo serviço à parte Agentes Arvisx.
+Regra comercial (Lucas e Dr. Renan): em qualquer plano, a gestão e a
+configuração dos agentes de IA dentro da plataforma são do cliente. A Arvisx só
+desenvolve soluções personalizadas pelo serviço à parte Agentes Arvisx.
+
+Desde 25/11/2026 (Tarefa 8) o aviso também diz quem paga a IA: ela vem incluída
+em todos os planos, com uma franquia mensal de conversas com IA, e a chave
+própria é opcional. O aviso não cita nome de plano.
+
+**Atenção na subida:** esse texto descreve os planos novos (com franquia e teto,
+`docs/arvisx/ci/PLANOS-NOVOS-2026-11.sql`). Ele e o texto novo da página inicial
+só devem ir ao ar junto com a vitrine dos planos novos, que é um passo de quem
+opera. Com os planos antigos na vitrine, "a IA vem incluída" não vale para quem
+os assina (eles não têm teto nem franquia).
 
 A reunião não depende de plano cadastrado: /agendar e o botão da seção dos
 Agentes Arvisx na página inicial funcionam mesmo sem nenhum plano em

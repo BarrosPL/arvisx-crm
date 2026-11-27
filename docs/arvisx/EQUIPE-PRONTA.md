@@ -434,6 +434,71 @@ Subir `versao` de um papel no código faz o `GET` de estado devolver
 `atualizacao_disponivel`, com `notasDaVersao`. Aplicar é instalar de novo.
 Nunca é automático.
 
+## Pacotes de nicho
+
+Os quatro papéis continuam universais e proibidos de citar ramo. O que é próprio
+de um ramo mora em `lib/ai/equipe-pronta/nichos/`, num `PacoteDeNicho`, e entra
+por duas portas só:
+
+1. **Pré-preenche o questionário.** O primeiro passo ("Seu negócio") pergunta o
+   tipo de negócio. Com um ramo escolhido, as perguntas de qualificação, as
+   situações de chamar uma pessoa e o modelo de perguntas frequentes do pacote
+   aparecem como padrão dos campos que a empresa ainda não respondeu. O que ela
+   já respondeu não é trocado, e nada vira resposta antes de ela salvar o passo.
+2. **Complementa o bloco "Esta empresa".** As regras duras e o vocabulário do
+   ramo entram no fim do bloco, na seção "Regras do ramo desta empresa".
+
+Sem ramo ("Outro (genérico)", que é o padrão, e todo perfil gravado antes do
+campo existir), o texto gerado é o de antes, byte a byte.
+
+O pacote não cria agente, não muda ferramenta e não ativa nada: a equipe
+continua nascendo em ensaio. No modelo de perguntas frequentes, o item que a
+empresa deixar com o campo `[PREENCHER: …]` não vai para a base de conhecimento.
+
+Mudar o conteúdo de um pacote muda o que o renderizador gera, e a atualização
+segue a regra de sempre: o agente que está como foi instalado fica
+"desatualizado" e reinstalar o atualiza; o que foi editado à mão faz a
+instalação parar antes de gravar.
+
+Hoje existe um pacote, o de **advocacia**, que é **rascunho, não validado com
+cliente real, a revisar pelo Dr. Renan**. Para acrescentar um ramo: um arquivo
+novo na pasta e uma linha em `nichos/index.ts`.
+
+Quem vigia: `lib/ai/equipe-pronta/nichos/nichos.test.ts` (a cerca "só `nichos/`
+cita ramo", as regras duras no prompt montado, e a atualização).
+
+## Modelo com que a equipe nasce e a chave da plataforma
+
+A IA incluída no plano é paga pela **chave da plataforma**: a variável de
+ambiente `ANTHROPIC_API_KEY`. Ela é lida pelo app (`lib/env.ts`) e pelo worker
+(`lib/agent-engine/env.ts`), e os dois serviços a recebem do mesmo `.env` da
+instalação (`env_file: .env` no `docker-compose.prod.yml`). Para configurar:
+preencher `ANTHROPIC_API_KEY=` no `.env` do servidor (no Easypanel, nas
+variáveis de ambiente do serviço) e recriar o `app` e o `worker`. Vazio é o
+mesmo que ausente. A chave nunca aparece em tela, log, resposta de API nem
+teste: quem precisa saber dela pergunta só "existe?" (`chaveDePlataforma`,
+`lerAmbiente().chavesDeProvedor`).
+
+Com a chave da plataforma no ambiente, o agente **novo** da equipe pronta nasce
+com `provider: anthropic`, `model: claude-haiku-5-5` e sem credencial escolhida
+(`lib/ai/equipe-pronta/modelo-padrao.ts`). Fica a escolha de antes
+(`resolveSetupModel`) em três casos: a chave da plataforma não existe; a
+empresa tem credencial própria ativa e validada (ela trouxe a chave dela); ou o
+modelo não está no catálogo da instalação. Sem chave nenhuma, a instalação
+termina no erro de sempre, `sem_chave_de_ia`.
+
+O agente que já existe mantém o modelo que tem: instalar de novo não troca
+modelo nem credencial. Quem foi instalado antes desta mudança com a chave da
+plataforma continua no modelo com que nasceu, até alguém trocar no editor.
+
+Preço do `claude-haiku-5-5`, conferido na página oficial da Anthropic em
+25/11/2026: US$ 0,10 de entrada e US$ 0,50 de saída por milhão de tokens,
+igual ao de `lib/agent-engine/edge/llm/pricing.ts`. **Limite conhecido:** uma
+requisição com mais de 100 mil tokens de prompt é cobrada a 5 vezes esse preço,
+e o cálculo de custo do produto não aplica essa faixa (o motivo está no
+comentário da tabela). Nessa situação o custo gravado, e portanto o teto em
+dólar do plano, fica abaixo do cobrado. Corrigir ou não é decisão pendente.
+
 ## Limites conhecidos
 
 - **Régua em canal oficial**: num canal que exige modelo aprovado fora da

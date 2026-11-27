@@ -41,6 +41,7 @@ import {
   type OrigemDaTranscricao,
 } from "@/lib/messaging/media/escada-de-transcricao";
 import { TranscriptionTooLargeError, type TranscriptionProvider } from "@/lib/messaging/media/transcription";
+import { origemDaChaveGravada } from "@/lib/ai/usage/origem-da-chave";
 import { logger } from "@/lib/logger";
 import { validarParProvedorModelo } from "@/lib/ai/par-provedor-modelo";
 import { reagirAConclusaoDeDerivacao } from "@/lib/escalacao/handoff-tecnico";
@@ -360,12 +361,21 @@ export async function deriveMessageMedia(row: EventRow): Promise<HandlerResult> 
 
     // Thunk, não valor: a credencial OpenAI só é LIDA se o serviço de
     // transcrição da instalação (degrau 1) não valer.
+    // De quem é a chave de cada degrau (migration 9825): quem RESOLVE a chave é
+    // quem sabe, então a origem é anotada aqui, no mesmo ponto, e não deduzida
+    // depois pelo nome do degrau.
+    let origemDaChaveOpenai: OrgLlmConfig["origemDaChave"] | null = null;
+    let origemDaChaveElevenlabs: OrgLlmConfig["origemDaChave"] | null = null;
     const chaveOpenai = async (): Promise<string | null> => {
-      if (llm.provider === "openai") return llm.apiKey;
+      if (llm.provider === "openai") {
+        origemDaChaveOpenai = llm.origemDaChave;
+        return llm.apiKey;
+      }
       try {
         const oa = await resolveOrgLlmConfig(derivePool(), llmCfg, row.organization_id, {
           provider: "openai",
         });
+        origemDaChaveOpenai = oa.origemDaChave;
         return oa.apiKey;
       } catch {
         return null; // sem credencial e sem chave da instalação: nenhum degrau OpenAI
@@ -397,6 +407,7 @@ export async function deriveMessageMedia(row: EventRow): Promise<HandlerResult> 
             provider: "elevenlabs",
             credentialId: binding.credential_id,
           });
+          origemDaChaveElevenlabs = el.origemDaChave;
           return { apiKey: el.apiKey, modelId: binding.model_id || "scribe_v1" };
         } catch (err) {
           logger.warn("[media-derive] ElevenLabs escolhido para transcrever, sem credencial utilizável; seguindo a escada", {
@@ -456,7 +467,28 @@ export async function deriveMessageMedia(row: EventRow): Promise<HandlerResult> 
 
     // O 5º argumento é a `base_url` do binding: o factory precisa dela para não
     // cair no endpoint padrão do provedor (ver o comentário lá em cima).
-    const deps = buildDeriveDeps(llm, decisao, row.organization_id, admin, baseUrlDaVisao, chaveEhDaInstalacao, origemDoModelo);
+    // A chave do degrau escolhido: o serviço de transcrição do `.env` é da
+    // instalação; os outros degraus usam a chave que o resolvedor devolveu.
+    const origemDaChaveDaTranscricao: OrgLlmConfig["origemDaChave"] | null =
+      decisao.origem === "servico_da_instalacao"
+        ? "chave_da_instalacao"
+        : decisao.origem === "elevenlabs_escolhido"
+          ? origemDaChaveElevenlabs
+          : decisao.origem === "padrao_openai_compativel"
+            ? origemDaChaveOpenai
+            : decisao.origem === "padrao_openrouter" || decisao.origem === "modelo_da_organizacao"
+              ? (conversa?.origemDaChave ?? null)
+              : null;
+    const deps = buildDeriveDeps(
+      llm,
+      decisao,
+      row.organization_id,
+      admin,
+      baseUrlDaVisao,
+      chaveEhDaInstalacao,
+      origemDoModelo,
+      origemDaChaveDaTranscricao,
+    );
 
     const text = await deriveMediaText(msg.type, buffer, msg.media_mime ?? "application/octet-stream", deps);
 
@@ -664,6 +696,9 @@ function buildDeriveDeps(
   // De onde veio o MODELO (issue #2377): o log da recusa de par precisa dizer
   // se veio do binding do ponto ou do padrao da organizacao.
   origemDoModelo = "padrao",
+  // De quem é a chave do degrau de transcrição escolhido. `null` = ninguém soube
+  // dizer, e a linha fica com o padrão da coluna (`plataforma`).
+  origemDaChaveDaTranscricao: OrgLlmConfig["origemDaChave"] | null = null,
 ): DeriveDeps {
   const registry = createDefaultRegistry();
   // Thunk, não consulta: nada vai ao banco até a visão ser de fato perguntada,
@@ -849,6 +884,9 @@ function buildDeriveDeps(
       return MARCADOR_NAO_LIDA;
     }
     const inicio = Date.now();
+    // A linha de custo da visão diz de quem é a chave que pagou (migration 9825).
+    const registrarVisao = (montar: Parameters<typeof registrarChamadaDeMidia>[2]) =>
+      registrarChamadaDeMidia(admin, orgId, montar, llm.origemDaChave);
     let res: Awaited<ReturnType<typeof generateText>>;
     try {
       res = await generateText({
@@ -870,12 +908,12 @@ function buildDeriveDeps(
         maxOutputTokens: tetoDeSaida(tetoDeSaidaDaOrganizacao(llm.params), undefined),
       });
     } catch (err) {
-      registrarChamadaDeMidia(admin, orgId, () =>
+      registrarVisao(() =>
         linhaDeFalha(err, { purpose: PONTO_VISAO_DE_IMAGEM, provider: llm.provider, model: modelo, inicio }),
       );
       throw err;
     }
-    registrarChamadaDeMidia(admin, orgId, () => {
+    registrarVisao(() => {
       const latency_ms = Date.now() - inicio;
       const uso = {
         inputTokens: res.usage.inputTokens ?? 0,
@@ -966,6 +1004,7 @@ function buildDeriveDeps(
           : decisao.anuncio.provider,
       model: decisao.anuncio.modelId ?? "desconhecido",
       origem: decisao.origem,
+      origemDaChave: origemDaChaveDaTranscricao,
     });
   // O degrau 4 é o modelo de conversa da organização: chamada de LLM cobrada
   // por token, então passa pelo teto antes de o áudio sair, como a visão.
@@ -1081,6 +1120,12 @@ function registrarChamadaDeMidia(
   admin: ReturnType<typeof createAdminClient>,
   orgId: string,
   montar: () => ChamadaDeMidia | Promise<ChamadaDeMidia>,
+  /**
+   * De quem é a chave que pagou, quando o chamador sabe (a visão sabe; a
+   * transcrição resolve a chave por outro caminho e não informa). Ausente = o
+   * padrão da coluna, `plataforma`: conta no teto do plano.
+   */
+  origemDaChave?: Parameters<typeof origemDaChaveGravada>[0],
 ): void {
   const avisoDeMontagem = (err: unknown) => {
     logger.warn("[media-derive] não consegui montar a linha de custo", {
@@ -1096,6 +1141,7 @@ function registrarChamadaDeMidia(
           status: "ok",
           ...linha,
           provider: provedorDaChamada(linha.provider, linha.model),
+          ...(origemDaChave ? { origem_da_chave: origemDaChaveGravada(origemDaChave) } : {}),
         }),
       ).then(
         ({ error }) => {
@@ -1173,6 +1219,8 @@ function comCustoRegistrado(
     provider: string;
     model: string;
     origem: OrigemDaTranscricao;
+    /** De quem é a chave do degrau. `null` = o padrão da coluna. */
+    origemDaChave?: OrgLlmConfig["origemDaChave"] | null;
   },
 ): TranscriptionProvider {
   return {
@@ -1198,6 +1246,7 @@ function comCustoRegistrado(
             inicio,
             origem: ctx.origem,
           }),
+          ctx.origemDaChave ?? undefined,
         );
         throw err;
       }
@@ -1219,7 +1268,7 @@ function comCustoRegistrado(
         // OpenAI) vence; o modelo de conversa (degrau 4) vai pela régua do seam.
         if (custoInformado !== undefined) return linhaCom(custoInformado);
         return uso ? custoComCatalogo(ctx.model, ctx.provider, uso, linhaCom) : linhaCom(null);
-      });
+      }, ctx.origemDaChave ?? undefined);
       return texto;
     },
   };

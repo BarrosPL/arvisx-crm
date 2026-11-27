@@ -512,6 +512,14 @@ const PARES: Array<{
     simbolo: "MOEDAS",
   },
   {
+    // De quem é a chave que pagou a chamada (9825): é por este valor que o teto
+    // e a franquia do plano somam só o que a plataforma pagou.
+    tabela: "llm_calls",
+    coluna: "origem_da_chave",
+    arquivo: "lib/ai/usage/origem-da-chave.ts",
+    simbolo: "ORIGENS_DA_CHAVE",
+  },
+  {
     tabela: "cobranca_assinaturas",
     coluna: "estado",
     arquivo: "lib/cobranca/vocabulario.ts",

@@ -29,6 +29,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   decidirOrcamento,
   SQL_ORCAMENTO,
+  SAIDAS_DA_IA_DO_PLANO,
+  TITULO_PLANO_SEM_TETO,
   TITULO_TETO_DO_PLANO,
 } from "@/lib/agent-engine/edge/llm/orcamento";
 
@@ -74,8 +76,16 @@ interface Estado {
   gate?: Record<string, unknown> | "erro" | "vazio";
   /** O `left join` levanta 42703 (clone cujo `update.sh` engoliu o apêndice). */
   resolvedorQuebrado?: boolean;
-  /** O statement do teto do PLANO. Ausente = sem teto (a cobrança desligada). */
-  plano?: { teto: number | null; gasto?: string } | "42883";
+  /**
+   * O statement da IA do PLANO (`fn_ia_do_plano`). Ausente = empresa SEM
+   * assinatura (isenta): tudo nulo, e a IA segue. Presente = empresa COM
+   * assinatura; `teto: null` é o plano sem teto, que BLOQUEIA (falha fechada).
+   */
+  plano?:
+    | { teto: number | null; gasto?: string; franquia?: number | null; conversas?: number }
+    | "42883";
+  /** `fn_contato_na_franquia`: o contato desta chamada já foi contado no ciclo? */
+  contatoNaFranquia?: boolean;
   /** A organização tem credencial própria: a chave NÃO é a da instalação. */
   byok?: boolean;
   /** A chave MODULO_COBRANCA (`fn_cobranca_ligada`). Ausente = ligada. */
@@ -95,14 +105,35 @@ function poolFalso(estado: Estado) {
       }
       return { rows: [{ ligada: estado.cobranca ?? true }] };
     }
-    if (sql.includes("fn_limite_do_plano")) {
+    if (sql.includes("fn_ia_do_plano")) {
       if (estado.plano === "42883") {
-        throw Object.assign(new Error("function public.fn_limite_do_plano(uuid, text) does not exist"), {
+        throw Object.assign(new Error("function public.fn_ia_do_plano(uuid) does not exist"), {
           code: "42883",
         });
       }
-      const p = estado.plano ?? { teto: null };
-      return { rows: [{ teto: p.teto, gasto: p.teto === null ? null : (p.gasto ?? "0") }] };
+      if (estado.plano === undefined) {
+        return {
+          rows: [{ teto: null, gasto: null, com_assinatura: false, franquia: null, conversas: null, ciclo_inicio: null, ciclo_fim: null, pelo_periodo_pago: null }],
+        };
+      }
+      const p = estado.plano;
+      return {
+        rows: [
+          {
+            teto: p.teto,
+            gasto: p.gasto ?? "0",
+            com_assinatura: true,
+            franquia: p.franquia ?? null,
+            conversas: p.conversas ?? 0,
+            ciclo_inicio: new Date("2026-11-01T00:00:00Z"),
+            ciclo_fim: new Date("2026-12-01T00:00:00Z"),
+            pelo_periodo_pago: false,
+          },
+        ],
+      };
+    }
+    if (sql.includes("fn_contato_na_franquia")) {
+      return { rows: [{ ja: estado.contatoNaFranquia ?? false }] };
     }
     // ⚠️ A ORDEM DESTES RAMOS É LOAD-BEARING: o statement do gate TAMBÉM contém
     // `insert into agent_inbox_items` (a CTE `avisa`), e a query joinada também
@@ -409,13 +440,13 @@ describe("o gate de orçamento lê ai_budgets e executa o veredito", () => {
     it("AI_BUDGET_ENFORCEMENT=off desliga o teto do plano e nem o consulta (D-9)", async () => {
       const r = await chamar({ plano: ESTOURADO }, { budgetEnforcement: "off" });
       expect(r.lancou).toBe(SENTINELA);
-      expect(r.sqls.some((s) => s.includes("fn_limite_do_plano"))).toBe(false);
+      expect(r.sqls.some((s) => s.includes("fn_ia_do_plano"))).toBe(false);
     });
 
     it("BYOK: a chave da organização nunca consulta o teto do plano", async () => {
       const r = await chamar({ byok: true, config: { modo: "off" }, plano: ESTOURADO });
       expect(r.lancou).toBe(SENTINELA);
-      expect(r.sqls.some((s) => s.includes("fn_limite_do_plano"))).toBe(false);
+      expect(r.sqls.some((s) => s.includes("fn_ia_do_plano"))).toBe(false);
     });
 
     it("purpose isento segue mesmo com o plano estourado", async () => {
@@ -435,7 +466,7 @@ describe("o gate de orçamento lê ai_budgets e executa o veredito", () => {
       expect(JSON.stringify(aviso?.campos)).toMatch(/42883/);
       const config = r.sqls.find((s) => s.includes("left join ai_budgets"));
       expect(config).toBeDefined();
-      expect(config).not.toMatch(/fn_limite_do_plano/);
+      expect(config).not.toMatch(/fn_ia_do_plano/);
       expect(r.sqls.filter((s) => s.includes("settings->'llm'"))).toHaveLength(1);
     });
 
@@ -450,7 +481,7 @@ describe("o gate de orçamento lê ai_budgets e executa o veredito", () => {
     it("⭐ cobrança DESLIGADA: o statement do teto do plano nem sai", async () => {
       const r = await chamar({ cobranca: false, config: { modo: "off" }, plano: ESTOURADO });
       expect(r.lancou).toBe(SENTINELA);
-      expect(r.sqls.some((s) => s.includes("fn_limite_do_plano"))).toBe(false);
+      expect(r.sqls.some((s) => s.includes("fn_ia_do_plano"))).toBe(false);
     });
 
     it("⭐ a chave da cobrança é lida UMA vez por janela do memo, não a cada chamada", async () => {
@@ -463,7 +494,79 @@ describe("o gate de orçamento lê ai_budgets e executa o veredito", () => {
     it("leitura da chave da cobrança falha: o teto do plano não roda e a chamada SEGUE (falha aberta, como o 42883)", async () => {
       const r = await chamar({ cobranca: "erro", config: { modo: "off" }, plano: ESTOURADO });
       expect(r.lancou).toBe(SENTINELA);
-      expect(r.sqls.some((s) => s.includes("fn_limite_do_plano"))).toBe(false);
+      expect(r.sqls.some((s) => s.includes("fn_ia_do_plano"))).toBe(false);
+    });
+
+    // ── Tarefa 8, parte 1: falha fechada, franquia e a origem da chave ──────
+    it("⭐ FALHA FECHADA: empresa com assinatura em plano SEM teto não chama o modelo com a chave da instalação", async () => {
+      const r = await chamar({ config: { modo: "off" }, plano: { teto: null } });
+      expect(r.lancou).toBeInstanceOf(LlmBudgetExceededError);
+      expect((r.lancou as LlmBudgetExceededError).causaDoPlano).toBe("plano_sem_teto");
+      expect(r.invocacoes, "o modelo foi chamado num plano sem teto").toEqual([]);
+      expect((r.inboxInserts[0] as unknown[])[1]).toBe(TITULO_PLANO_SEM_TETO);
+      // A mensagem na Central traz as DUAS saídas.
+      expect(String((r.inboxInserts[0] as unknown[])[2])).toContain(SAIDAS_DA_IA_DO_PLANO);
+    });
+
+    it("⭐ empresa SEM assinatura (isenta) segue com a chave da instalação: a falha fechada não a alcança", async () => {
+      const r = await chamar({ config: { modo: "off" } });
+      expect(r.lancou).toBe(SENTINELA);
+      expect(r.sqls.some((s) => s.includes("fn_ia_do_plano")), "a leitura do plano nem saiu").toBe(true);
+      expect(r.inboxInserts).toEqual([]);
+    });
+
+    it("plano sem teto com a chave da PRÓPRIA empresa segue: quem paga é ela", async () => {
+      const r = await chamar({ byok: true, config: { modo: "off" }, plano: { teto: null } });
+      expect(r.lancou).toBe(SENTINELA);
+    });
+
+    it("⭐ franquia cheia e contato NOVO: bloqueia com a causa da franquia, e a mensagem traz as duas saídas", async () => {
+      const r = await chamar(
+        { config: { modo: "off" }, plano: { teto: 1200, gasto: "100", franquia: 300, conversas: 300 }, contatoNaFranquia: false },
+        {},
+        { leadId: "44444444-4444-4444-8444-444444444444" },
+      );
+      expect(r.lancou).toBeInstanceOf(LlmBudgetExceededError);
+      expect((r.lancou as LlmBudgetExceededError).causaDoPlano).toBe("franquia_do_plano");
+      expect(String((r.inboxInserts[0] as unknown[])[2])).toContain(SAIDAS_DA_IA_DO_PLANO);
+      expect(r.invocacoes).toEqual([]);
+    });
+
+    it("⭐ franquia cheia e contato que JÁ estava nela: continua atendido", async () => {
+      const r = await chamar(
+        { config: { modo: "off" }, plano: { teto: 1200, gasto: "100", franquia: 300, conversas: 300 }, contatoNaFranquia: true },
+        {},
+        { leadId: "44444444-4444-4444-8444-444444444444" },
+      );
+      expect(r.lancou).toBe(SENTINELA);
+    });
+
+    it("franquia com folga: o contato nem é perguntado ao banco", async () => {
+      const r = await chamar(
+        { config: { modo: "off" }, plano: { teto: 1200, gasto: "100", franquia: 300, conversas: 299 } },
+        {},
+        { leadId: "44444444-4444-4444-8444-444444444444" },
+      );
+      expect(r.lancou).toBe(SENTINELA);
+      expect(r.sqls.some((s) => s.includes("fn_contato_na_franquia"))).toBe(false);
+    });
+
+    it("o teto em dólar vem antes: estourado, bloqueia mesmo com a franquia com folga", async () => {
+      const r = await chamar({ config: { modo: "off" }, plano: { teto: 1200, gasto: "1200", franquia: 300, conversas: 10 } });
+      expect((r.lancou as LlmBudgetExceededError).causaDoPlano).toBe("teto_do_plano");
+    });
+
+    it("⭐ a recusa grava em llm_calls a ORIGEM DA CHAVE: plataforma, quando a chave é a da instalação", async () => {
+      const r = await chamar({ config: { modo: "off" }, plano: ESTOURADO });
+      const sqlDaLinha = r.sqls.find((s) => s.startsWith("insert into llm_calls"));
+      expect(sqlDaLinha).toMatch(/origem_da_chave/);
+      expect(r.llmCallInserts[0] as unknown[]).toContain("plataforma");
+    });
+
+    it("o erro do orçamento da ORGANIZAÇÃO não carrega causa de plano", async () => {
+      const r = await chamar({});
+      expect(r.lancou).toBeInstanceOf(LlmBudgetExceededError);
+      expect((r.lancou as LlmBudgetExceededError).causaDoPlano).toBeNull();
     });
   });
 

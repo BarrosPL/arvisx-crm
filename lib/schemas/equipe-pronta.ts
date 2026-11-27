@@ -21,6 +21,7 @@
 import { z } from "zod";
 
 import { ETAPAS_DA_EQUIPE } from "@/lib/ai/equipe-pronta/etapas";
+import { TIPOS_DE_NEGOCIO } from "@/lib/ai/equipe-pronta/nichos/tipos";
 
 const linha = (max: number) => z.string().trim().min(1).max(max);
 const listaCurta = (itens: number, max: number) => z.array(linha(max)).max(itens);
@@ -36,6 +37,13 @@ const negocioSchema = z.object({
   cidade: z.string().trim().max(120).default(""),
   fuso: z.string().trim().min(1).max(64).default("America/Sao_Paulo"),
   idioma: z.enum(IDIOMAS_DA_EQUIPE).default("pt-BR"),
+  /**
+   * O tipo de negócio (Tarefa 8). `generico` = sem pacote de nicho: tudo como
+   * sempre foi. Um ramo com pacote (`lib/ai/equipe-pronta/nichos/`) pré-preenche
+   * o questionário e acrescenta as regras do ramo ao contexto dos agentes.
+   * Perfil gravado antes deste campo não o tem, e o padrão o lê como `generico`.
+   */
+  tipo_de_negocio: z.enum(TIPOS_DE_NEGOCIO).default("generico"),
 });
 
 /** 2 — o atendente: como os agentes se apresentam e falam. */

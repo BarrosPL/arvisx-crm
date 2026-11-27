@@ -211,7 +211,14 @@ describe("mapas de arquitetura — coerência interna", () => {
     expect(m.nodes.some((n) => n.id === "eventLog"), "o event_log não tem mapa próprio: ele mora aqui").toBe(true);
     const liga = (de: string, para: string) => m.edges.some((e) => e.from === de && e.to === para);
     expect(liga("acaoModulo", "fnLiberar"), "desligar a chave não libera quem foi suspenso por cobrança").toBe(true);
-    expect(liga("fnLimite", "tetoPlano"), "o teto de IA do plano não sai da régua única de limites").toBe(true);
+    // Desde a 9825 (Tarefa 8) a IA do plano não sai mais de `fn_limite_do_plano`: o teto,
+    // a franquia, o ciclo e o uso vêm juntos de `fn_ia_do_plano`, que soma só a chave da
+    // plataforma. `fn_limite_do_plano` segue sendo a régua de pessoas e de números.
+    expect(liga("fnIaDoPlano", "tetoPlano"), "o teto e a franquia de IA do plano não saem da função que soma só a chave da plataforma").toBe(true);
+    expect(liga("fnLimite", "tetoPlano"), "o mapa ainda diz que a IA do plano sai de fn_limite_do_plano").toBe(false);
+    expect(liga("fnLimite", "trgAssentos") && liga("fnLimite", "trgCanais"), "pessoas e números não saem da régua única de limites").toBe(true);
+    expect(liga("fnIaDoPlano", "cronCobranca") && liga("cronCobranca", "itens"), "o aviso de 80% não lê a mesma função do bloqueio, ou não chega à Central").toBe(true);
+    expect(liga("fnIaDoPlano", "billing"), "a franquia não chega à tela de Plano e cobrança").toBe(true);
     expect(liga("trgCanais", "rotasCanais"), "o limite de números não volta como mensagem para a tela").toBe(true);
   });
 

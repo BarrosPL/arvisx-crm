@@ -90,7 +90,9 @@ export type MotivoDoAviso =
 export function motivoDoAviso(reason: string): MotivoDoAviso {
   if (reason === "requested_human") return "pediu_humano";
   if (reason === "suspected_optout") return "suspeita_de_opt_out";
-  if (reason === "orcamento_de_ia") return "orcamento_de_ia";
+  // `ia_do_plano` (Tarefa 8): o plano parou a IA. Para o CLIENTE FINAL a frase é
+  // a mesma do teto de gasto — o que muda é o remédio, que é assunto da empresa.
+  if (reason === "orcamento_de_ia" || reason === "ia_do_plano") return "orcamento_de_ia";
   return "outro";
 }
 

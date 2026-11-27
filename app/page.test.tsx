@@ -152,11 +152,63 @@ describe("/ — landing v3", () => {
     expect(secao.textContent).not.toMatch(/€|\d+ agentes|assinatura/);
   });
 
-  it("o hero não promete IA em todos os planos: a IA começa no Standard", async () => {
+  // Tarefa 8 (25/11/2026): a decisão comercial virou. Este caso cobrava o contrário
+  // ("a IA começa no Standard, com as credenciais da sua empresa"); a frase antiga
+  // saiu da página e é cobrada, como ausência, no caso seguinte.
+  it("⭐ o hero diz que a IA vem incluída em todos os planos, com franquia mensal", async () => {
     const { container } = await montar();
     const hero = container.querySelector(".hero") as HTMLElement;
-    expect(hero.textContent).not.toMatch(/Em todos os planos · IA/);
-    expect(within(hero).getByText("IA a partir do Standard, com as credenciais da sua empresa")).toBeTruthy();
+    expect(within(hero).getByText("IA incluída em todos os planos, com franquia mensal")).toBeTruthy();
+  });
+
+  it("⭐ a landing não diz mais que a IA depende das credenciais do cliente nem que começa no Standard", async () => {
+    const { container } = await montar();
+    // O que a Tarefa 8 trocou: o hero, a seção da IA, a pergunta "Como funciona a IA?" e,
+    // por decisão do Lucas em 25/11/2026, o aviso "Quem cuida dos agentes de IA", para os
+    // dois não se contradizerem.
+    const hero = container.querySelector(".hero")!.textContent!;
+    const secao = container.querySelector("#suas-chaves")!.textContent!;
+    const faq = container.querySelector("#faq")!.textContent!;
+    const aviso = container.querySelector("#plano [data-quem-cuida-dos-agentes]")!.textContent!;
+    // Guarda de vacuidade: os quatro trechos existem e têm texto.
+    for (const trecho of [hero, secao, faq, aviso]) expect(trecho.length).toBeGreaterThan(100);
+    for (const antiga of [/não tem agentes de IA na plataforma/, /começa no Standard/, /conecta a sua credencial de IA/, /nunca pela Arvisx/]) {
+      expect(aviso).not.toMatch(antiga);
+    }
+    expect(aviso).toMatch(/A IA vem incluída, com uma franquia mensal de conversas com IA/);
+    for (const trecho of [hero, secao, faq, aviso]) {
+      for (const antiga of [
+        /com as credenciais da sua empresa/,
+        /a partir do (plano )?Standard/,
+        /é responsável por configurar e gerenciar/,
+        /O consumo é cobrado pelo seu provedor de IA, nunca pela Arvisx/,
+        /IA com as suas credenciais/,
+        /Sua IA, suas chaves/,
+        /Do CRM, você paga só o plano/,
+      ]) {
+        expect(trecho).not.toMatch(antiga);
+      }
+    }
+    expect(secao).toMatch(/já vem incluída em todos os planos, com uma franquia mensal de conversas\./);
+    expect(secao).toMatch(/a sua empresa pode usar a própria chave de IA\./);
+    expect(faq).toMatch(/A IA vem incluída em todos os planos, com uma franquia mensal de conversas com IA\./);
+    expect(faq).toMatch(/Usar a sua própria chave de IA é opcional\./);
+  });
+
+  it("⭐ os textos novos da IA têm tradução em espanhol e as chaves antigas não ficaram órfãs", async () => {
+    const { TEXTOS_LANDING } = await import("@/lib/i18n/landing");
+    const dicionario = TEXTOS_LANDING as Record<string, { es: string }>;
+    for (const nova of [
+      "IA incluída em todos os planos, com franquia mensal",
+      "A IA do Arvisx CRM já vem incluída em todos os planos, com uma franquia mensal de conversas. Se preferir, a sua empresa pode usar a própria chave de IA.",
+      "A IA vem incluída em todos os planos, com uma franquia mensal de conversas com IA. Usar a sua própria chave de IA é opcional. Você configura e gerencia os seus agentes no próprio CRM.",
+    ]) {
+      expect(dicionario[nova]?.es, nova).toBeTruthy();
+      expect(dicionario[nova]!.es).not.toBe(nova);
+    }
+    for (const antiga of Object.keys(dicionario)) {
+      expect(antiga).not.toMatch(/credenciais da sua empresa|a partir do (plano )?Standard|Suas credenciais|O consumo é seu/);
+    }
   });
 
   it("⭐ o aviso 'Quem cuida dos agentes de IA' aparece abaixo da grade de planos, com as frases da constante", async () => {

@@ -214,7 +214,7 @@ export default async function HomePage() {
                 <BotaoDeCadastro className="btn primario grande" comSeta t={t} />
                 <div className="cta-info">
                   <strong>{t(OFERTA.trial)}</strong>
-                  <span>{t("IA a partir do Standard, com as credenciais da sua empresa")}</span>
+                  <span>{t("IA incluída em todos os planos, com franquia mensal")}</span>
                 </div>
               </div>
             </div>
@@ -652,16 +652,16 @@ export default async function HomePage() {
         <section className="faixa chaves" id="suas-chaves">
           <div className="miolo">
             <div className="cabeca">
-              <p className="eyebrow">{t("IA com as suas credenciais")}</p>
-              <h2>{t("Sua IA, suas chaves, seu controle.")}</h2>
+              <p className="eyebrow">{t("IA incluída no plano")}</p>
+              <h2>{t("IA incluída, com a sua empresa no controle.")}</h2>
               <p>
-                {t("A IA do Arvisx CRM funciona com as credenciais da sua empresa. Você conecta as chaves ou os planos de IA que já tem e usa como quiser.")}
+                {t("A IA do Arvisx CRM já vem incluída em todos os planos, com uma franquia mensal de conversas. Se preferir, a sua empresa pode usar a própria chave de IA.")}
               </p>
             </div>
             <div className="fluxo" aria-label={t("Como a IA se conecta")}>
               <div className="nodo">
-                <b>{t("Suas credenciais")}</b>
-                <small>{t("Chaves ou planos de IA")}</small>
+                <b>{t("IA incluída")}</b>
+                <small>{t("Ou a sua própria chave de IA")}</small>
               </div>
               <span className="seta" aria-hidden="true">
                 <ArrowRight {...negrito} />
@@ -686,9 +686,9 @@ export default async function HomePage() {
                   </span>
                   <span className="n">01</span>
                 </div>
-                <h3>{t("Você conecta")}</h3>
+                <h3>{t("Já vem incluída")}</h3>
                 <p>
-                  {t("Cadastre no CRM as chaves de API ou os planos de IA que a sua empresa já contrata. Sem programar.")}
+                  {t("A IA do plano funciona sem cadastrar chave nenhuma. Se a sua empresa já contrata IA, pode cadastrar a própria chave. Sem programar.")}
                 </p>
               </article>
               <article className="cartao">
@@ -710,9 +710,9 @@ export default async function HomePage() {
                   </span>
                   <span className="n">03</span>
                 </div>
-                <h3>{t("O consumo é seu")}</h3>
+                <h3>{t("Franquia mensal")}</h3>
                 <p>
-                  {t("O uso da IA fica na sua conta, com o provedor que você escolheu. Do CRM, você paga só o plano.")}
+                  {t("Cada plano traz uma franquia mensal de conversas com IA. Com a sua própria chave, o consumo fica na conta do seu provedor.")}
                 </p>
               </article>
             </div>
@@ -1022,7 +1022,7 @@ export default async function HomePage() {
               <details>
                 <summary>{t("Como funciona a IA?")}</summary>
                 <p>
-                  {t("A IA é integrada ao CRM a partir do plano Standard. Você conecta as suas próprias chaves ou planos de IA e é responsável por configurar e gerenciar os seus agentes. O consumo é cobrado pelo seu provedor de IA, nunca pela Arvisx.")}
+                  {t("A IA vem incluída em todos os planos, com uma franquia mensal de conversas com IA. Usar a sua própria chave de IA é opcional. Você configura e gerencia os seus agentes no próprio CRM.")}
                 </p>
               </details>
               <details>

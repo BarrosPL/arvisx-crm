@@ -14,8 +14,13 @@ interface Mundo {
   planos: Array<{ id: string; teto_ia_usd_cents: number }>;
   assinaturasDePlano: Array<{ organization_id: string; plano_id: string }>;
   orgs: Array<{ id: string; status: string; locale: string | null }>;
+  /** Gasto da chave da PLATAFORMA no ciclo (`fn_ia_do_plano`). */
   gasto: Record<string, number>;
+  conversas: Record<string, number>;
+  teto: number | null;
+  franquia: number | null;
 }
+const CICLO = "2026-11-10T00:00:00.000Z";
 let m: Mundo;
 let banco: BancoFalso;
 
@@ -27,13 +32,27 @@ function responder(c: Cadeia): Resposta {
 }
 function rpc(nome: string, args: Record<string, unknown>): Resposta {
   if (nome === "fn_cobranca_reconciliaveis") return { data: m.reconciliaveis };
-  if (nome === "fn_gasto_de_ia_do_mes") return { data: m.gasto[String(args.p_org)] ?? 0 };
+  if (nome === "fn_ia_do_plano") {
+    const org = String(args.p_org);
+    return {
+      data: [
+        {
+          com_assinatura: true,
+          teto: m.teto,
+          franquia: m.franquia,
+          gasto: m.gasto[org] ?? 0,
+          conversas: m.conversas[org] ?? 0,
+          ciclo_inicio: CICLO,
+        },
+      ],
+    };
+  }
   return { data: true };
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
-  m = { reconciliaveis: [], todas: [], planos: [], assinaturasDePlano: [], orgs: [], gasto: {} };
+  m = { reconciliaveis: [], todas: [], planos: [], assinaturasDePlano: [], orgs: [], gasto: {}, conversas: {}, teto: 1000, franquia: null };
   banco = bancoFalso(responder, rpc);
   h.sincronizar.mockResolvedValue({ tipo: "aplicada", estado: "ativa", mudou: false, acao: "nada" });
   h.aplicarRegua.mockResolvedValue("nada");
@@ -103,9 +122,58 @@ describe("rodadaDaCobranca", () => {
     ];
     m.gasto = { A: 850, B: 900, C: 1000 };
     const r = await rodar();
-    const avisos = banco.rpcs.filter((x) => x.nome === "fn_cobranca_avisar_teto_de_ia");
+    const avisos = banco.rpcs.filter((x) => x.nome === "fn_cobranca_avisar_uso_de_ia");
     expect(avisos.map((a) => a.args.p_org)).toEqual(["A"]);
-    expect(String(avisos[0]?.args.p_corpo)).toContain("US$ 8.50 de US$ 10.00");
+    // Sem franquia no plano, o texto fala no percentual do uso incluído.
+    expect(String(avisos[0]?.args.p_corpo)).toContain("já usou 85% do uso de IA incluído no plano");
+    // Um aviso por CICLO: a função do banco deduplica desde o início dele.
+    expect(avisos[0]?.args.p_desde).toBe(CICLO);
     expect(r.avisosDeIa).toBe(1);
+  });
+
+  it("⭐ com franquia, o aviso de 80% fala em conversas e traz as duas saídas", async () => {
+    m.planos = [{ id: "p1", teto_ia_usd_cents: 1200 }];
+    m.teto = 1200;
+    m.franquia = 300;
+    m.assinaturasDePlano = [
+      { organization_id: "A", plano_id: "p1" },
+      { organization_id: "B", plano_id: "p1" },
+      { organization_id: "C", plano_id: "p1" },
+    ];
+    m.orgs = ["A", "B", "C"].map((id) => ({ id, status: "active", locale: "pt-BR" }));
+    m.conversas = { A: 240, B: 239, C: 300 };
+    m.gasto = { A: 100, B: 100, C: 100 };
+    const r = await rodar();
+    const avisos = banco.rpcs.filter((x) => x.nome === "fn_cobranca_avisar_uso_de_ia");
+    // 240 de 300 = 80%: avisa. 239 ainda não. 300 já é o bloqueio: quem fala é o motor.
+    expect(avisos.map((a) => a.args.p_org)).toEqual(["A"]);
+    const corpo = String(avisos[0]?.args.p_corpo);
+    expect(corpo).toContain("já usou 240 de 300 conversas com IA incluídas no plano");
+    expect(corpo).toContain("fale com a ArvisX para contratar um pacote extra");
+    expect(corpo).toContain("cadastre uma chave de IA própria em IA › Credenciais");
+    expect(r.avisosDeIa).toBe(1);
+  });
+
+  it("o teto em dólar a 80% avisa mesmo com a franquia com folga", async () => {
+    m.planos = [{ id: "p1", teto_ia_usd_cents: 1200 }];
+    m.teto = 1200;
+    m.franquia = 300;
+    m.assinaturasDePlano = [{ organization_id: "A", plano_id: "p1" }];
+    m.orgs = [{ id: "A", status: "active", locale: "pt-BR" }];
+    m.conversas = { A: 10 };
+    m.gasto = { A: 1000 };
+    await rodar();
+    const avisos = banco.rpcs.filter((x) => x.nome === "fn_cobranca_avisar_uso_de_ia");
+    expect(String(avisos[0]?.args.p_corpo)).toContain("já usou 83% do uso de IA incluído no plano");
+  });
+
+  it("o aviso antigo, que deduplicava por mês-calendário e somava todas as chaves, não é mais chamado", async () => {
+    m.planos = [{ id: "p1", teto_ia_usd_cents: 1000 }];
+    m.assinaturasDePlano = [{ organization_id: "A", plano_id: "p1" }];
+    m.orgs = [{ id: "A", status: "active", locale: "pt-BR" }];
+    m.gasto = { A: 850 };
+    await rodar();
+    expect(banco.rpcs.map((x) => x.nome)).not.toContain("fn_cobranca_avisar_teto_de_ia");
+    expect(banco.rpcs.map((x) => x.nome)).not.toContain("fn_gasto_de_ia_do_mes");
   });
 });
