@@ -61,20 +61,6 @@ function importsDe(arquivo: string): string[] {
   return saida;
 }
 
-/** Os nomes que um arquivo exporta em VALOR (tipo não conta). */
-function exportsDeValor(arquivo: string): string[] {
-  const ast = ts.createSourceFile(arquivo, ler(arquivo), ts.ScriptTarget.Latest, true);
-  const nomes: string[] = [];
-  ast.forEachChild((no) => {
-    const exportado = ts.canHaveModifiers(no) && ts.getModifiers(no)?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword);
-    if (!exportado) return;
-    if (ts.isFunctionDeclaration(no) && no.name) nomes.push(no.name.text);
-    if (ts.isVariableStatement(no)) for (const d of no.declarationList.declarations) nomes.push(d.name.getText(ast));
-    if (ts.isClassDeclaration(no) && no.name) nomes.push(no.name.text);
-  });
-  return nomes;
-}
-
 describe("o Hermes tem uma porta só", () => {
   it("os arquivos do provedor existem (controle: a cerca enxerga o que vigia)", () => {
     for (const a of [HERMES, MODELO, CHAVE, INDICE]) expect(DO_ASSISTENTE, a).toContain(a);
